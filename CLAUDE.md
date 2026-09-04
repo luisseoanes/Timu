@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Qué es este repositorio
 
 Scaffold de TIMU, plataforma de gestión veterinaria por afiliación. El contrato funcional
-vive en `docs/Propuesta_TIMU_Puntos_15-19.docx` y el desglose ejecutable en
+vive en `docs/Propuesta_TIMU_Puntos_15-19.md` y el desglose ejecutable en
 `docs/BACKLOG.md` (101 unidades con ID `fase-módulo-consecutivo`, p. ej. `F1-CAR-08`).
 
 Los comentarios del código citan requisitos por número (`6.10`, `6.16`, `sección C`): son

@@ -1,6 +1,6 @@
 # TIMU — Plataforma integral
 
-Scaffold del proyecto descrito en `docs/Propuesta_TIMU_Puntos_15-19.docx`
+Scaffold del proyecto descrito en `docs/Propuesta_TIMU_Puntos_15-19.md`
 (sección 15.C — Tecnología). Arquitectura modular por dominios: familias, cartera,
 planes, servicios, preventivos, clínica, rutas, comunicaciones, campañas, encuestas,
 clínicas aliadas, portal y dashboard.

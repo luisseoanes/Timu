@@ -1,6 +1,6 @@
 # Backlog de desarrollo — Backend
 
-Desglose del trabajo de servidor comprometido en la propuesta técnica (`docs/Propuesta_TIMU_Puntos_15-19.docx`): los 23 requisitos funcionales del documento base más los cinco módulos de escalabilidad incorporados desde la Fase 1.
+Desglose del trabajo de servidor comprometido en la propuesta técnica (`docs/Propuesta_TIMU_Puntos_15-19.md`): los 23 requisitos funcionales del documento base más los cinco módulos de escalabilidad incorporados desde la Fase 1.
 
 Versión navegable con filtros: [https://claude.ai/code/artifact/15e07e31-e456-40c7-a743-e503b84a2681](https://claude.ai/code/artifact/15e07e31-e456-40c7-a743-e503b84a2681)
 
