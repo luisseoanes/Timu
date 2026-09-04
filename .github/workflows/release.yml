@@ -1,0 +1,96 @@
+name: Release
+
+# Los releases sólo salen de main. Cada empuje analiza los commits nuevos y publica
+# una única versión vX.Y.Z del monorepo, o ninguna si nada la mueve.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verificar-backend:
+    name: Verificar backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Instalar dependencias
+        working-directory: backend
+        run: pip install -r requirements-dev.txt
+
+      - name: Análisis estático
+        working-directory: backend
+        run: ruff check .
+
+      - name: Pruebas
+        working-directory: backend
+        run: pytest
+        # La suite usa SQLite en memoria (tests/conftest.py): no necesita Postgres ni Redis.
+
+  verificar-frontend:
+    name: Verificar panel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        working-directory: frontend
+        run: npm ci
+
+      - name: Tipos
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Construcción
+        working-directory: frontend
+        run: npm run build
+        # `npm run lint` queda fuera a propósito: el script existe pero no hay
+        # configuración de ESLint en el repositorio, así que hoy siempre falla.
+
+  release:
+    name: Publicar
+    needs: [verificar-backend, verificar-frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # crear el tag y el release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # semantic-release necesita el historial y los tags completos
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Instalar herramientas de publicación
+        run: npm ci
+
+      - name: Revisar la convención de los commits
+        run: node .github/scripts/commits-sin-convencion.mjs
+
+      - name: semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
