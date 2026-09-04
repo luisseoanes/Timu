@@ -2,7 +2,7 @@ from enum import StrEnum
 
 
 class Rol(StrEnum):
-    """Perfiles de la seccion E (capacitacion por perfil)."""
+    """Perfiles de acceso a la plataforma."""
 
     ADMIN = "admin"
     COMERCIAL = "comercial"
