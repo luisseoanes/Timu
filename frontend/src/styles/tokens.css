@@ -1,0 +1,67 @@
+/* ------------------------------------------------------------------
+   Tokens de diseño — TIMU
+   Única fuente de verdad del sistema visual. Ningún componente escribe
+   un color, un radio o una sombra a mano: todo sale de aquí.
+   ------------------------------------------------------------------ */
+
+:root {
+  /* --- Marca: verde menta --------------------------------------- */
+  --verde-50:  #edf8f6;
+  --verde-100: #d7f0ec;
+  --verde-200: #aee2db;
+  --verde-300: #7cd0c7;
+  --verde-400: #4fc3b7;
+  --verde-500: #2fb7aa;  /* color principal: botones, activo, énfasis */
+  --verde-600: #20998e;  /* hover y estados presionados */
+  --verde-700: #177b73;  /* texto de marca sobre fondo claro */
+  --verde-800: #12615b;
+
+  /* --- Neutros con sesgo verde ---------------------------------- */
+  --fondo:        #e9f4f1;  /* lienzo de la aplicación */
+  --superficie:   #ffffff;  /* tarjetas */
+  --superficie-2: #f5faf9;  /* zonas hundidas: buscador, filas alternas */
+  --tinta:        #1d2e33;  /* títulos */
+  --texto:        #3a4e54;  /* cuerpo */
+  --apagado:      #7a9198;  /* etiquetas y texto secundario */
+  --linea:        #e4efec;  /* bordes y separadores */
+  --linea-fuerte: #cfe0dc;  /* bordes de campos e interactivos */
+
+  /* --- Semánticos: siempre par fondo + texto -------------------- */
+  --ok-bg: #e4f5ec;      --ok-tx: #257f52;
+  --alerta-bg: #fdf1e3;  --alerta-tx: #a9631f;
+  --info-bg: #e6f1fa;    --info-tx: #2b6f9e;
+  --peligro-bg: #fbe9e7; --peligro-tx: #b23f34;
+
+  /* --- Tipografía ----------------------------------------------- */
+  --fuente-titulo: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --fuente-texto:  "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --t-display: 30px;  /* saludo del dashboard */
+  --t-titulo:  20px;  /* título de página */
+  --t-seccion: 16px;  /* encabezado de tarjeta */
+  --t-cuerpo:  14px;
+  --t-menor:   13px;
+  --t-etiqueta:11px;  /* mayúsculas con letter-spacing */
+
+  /* --- Espaciado: escala de 4 ----------------------------------- */
+  --e1: 4px;  --e2: 8px;  --e3: 12px; --e4: 16px;
+  --e5: 20px; --e6: 24px; --e7: 32px; --e8: 40px;
+
+  /* --- Radios: mientras más grande el bloque, más redondo ------- */
+  --r-pastilla: 999px;
+  --r-campo: 12px;
+  --r-tarjeta: 16px;
+  --r-panel: 24px;
+
+  /* --- Sombras: difusas y de baja opacidad ---------------------- */
+  --sombra-1: 0 1px 2px rgba(29, 46, 51, .04);
+  --sombra-2: 0 4px 16px rgba(29, 46, 51, .06);
+  --sombra-3: 0 12px 32px rgba(29, 46, 51, .10);
+
+  /* --- Estructura ------------------------------------------------ */
+  --ancho-sidebar: 236px;
+  --ancho-rail: 300px;   /* columna derecha de widgets */
+  --alto-topbar: 68px;
+
+  color-scheme: light;
+}

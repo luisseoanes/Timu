@@ -1,0 +1,188 @@
+/* Componentes reutilizables. Un componente = una clase raíz + modificadores. */
+
+/* --- Botones --------------------------------------------------- */
+.btn {
+  font-family: var(--fuente-texto);
+  font-size: var(--t-cuerpo);
+  font-weight: 700;
+  padding: 10px var(--e5);
+  border-radius: var(--r-pastilla);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  transition: background-color .15s ease, color .15s ease;
+}
+.btn-primario { background: var(--verde-500); color: #fff; }
+.btn-primario:hover:not(:disabled) { background: var(--verde-600); }
+.btn-suave { background: var(--verde-50); color: var(--verde-700); }
+.btn-suave:hover:not(:disabled) { background: var(--verde-100); }
+.btn-plano { background: transparent; color: var(--apagado); }
+.btn-plano:hover:not(:disabled) { color: var(--tinta); }
+.btn:disabled { opacity: .55; cursor: default; }
+.btn-bloque { width: 100%; }
+
+.btn-icono {
+  width: 38px; height: 38px;
+  display: grid; place-items: center;
+  border-radius: var(--r-pastilla);
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  color: var(--apagado);
+  cursor: pointer;
+}
+.btn-icono:hover { color: var(--verde-600); border-color: var(--verde-200); }
+
+/* --- Campos ---------------------------------------------------- */
+.campo { display: grid; gap: 6px; }
+.campo > span { font-size: var(--t-menor); font-weight: 700; color: var(--tinta); }
+.input {
+  font: inherit;
+  padding: 10px var(--e4);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--r-campo);
+  background: var(--superficie);
+  color: var(--texto);
+  width: 100%;
+}
+.input::placeholder { color: var(--apagado); }
+.input:focus { border-color: var(--verde-400); outline: none; box-shadow: 0 0 0 3px var(--verde-50); }
+
+/* Variante subrayada: sólo en el login, siguiendo la referencia */
+.input-linea {
+  border: 0;
+  border-bottom: 1.5px solid var(--linea-fuerte);
+  border-radius: 0;
+  padding: 8px 28px 8px 0;
+  background: transparent;
+}
+.input-linea:focus { border-bottom-color: var(--verde-500); box-shadow: none; }
+
+.buscador {
+  display: flex; align-items: center; gap: var(--e2);
+  background: var(--superficie-2);
+  border: 1px solid var(--linea);
+  border-radius: var(--r-pastilla);
+  padding: 8px var(--e4);
+  min-width: 260px;
+  color: var(--apagado);
+}
+.buscador input { border: 0; background: transparent; font: inherit; color: var(--texto); width: 100%; }
+.buscador input:focus { outline: none; }
+
+/* --- Tarjetas -------------------------------------------------- */
+.tarjeta {
+  background: var(--superficie);
+  border-radius: var(--r-panel);
+  padding: var(--e5);
+  box-shadow: var(--sombra-2);
+}
+.tarjeta-plana { box-shadow: none; border: 1px solid var(--linea); }
+.tarjeta-cabeza {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--e3); margin-bottom: var(--e4);
+}
+.tarjeta-cabeza a { font-size: var(--t-menor); font-weight: 700; }
+
+/* --- Distintivos de estado ------------------------------------- */
+.distintivo {
+  display: inline-block;
+  font-size: var(--t-etiqueta);
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--r-pastilla);
+  white-space: nowrap;
+}
+.distintivo-ok      { background: var(--ok-bg);      color: var(--ok-tx); }
+.distintivo-alerta  { background: var(--alerta-bg);  color: var(--alerta-tx); }
+.distintivo-info    { background: var(--info-bg);    color: var(--info-tx); }
+.distintivo-peligro { background: var(--peligro-bg); color: var(--peligro-tx); }
+.distintivo-neutro  { background: var(--superficie-2); color: var(--apagado); }
+
+/* --- Fila con icono cuadrado: citas, servicios, movimientos ----- */
+.fila {
+  display: flex; align-items: center; gap: var(--e3);
+  padding: var(--e3) 0;
+  border-bottom: 1px solid var(--linea);
+}
+.fila:last-child { border-bottom: 0; }
+.fila-icono {
+  width: 38px; height: 38px; flex: none;
+  display: grid; place-items: center;
+  border-radius: var(--r-campo);
+  background: var(--verde-50);
+  color: var(--verde-700);
+}
+.fila-cuerpo { flex: 1; min-width: 0; }
+.fila-cuerpo strong { display: block; color: var(--tinta); font-size: var(--t-cuerpo); }
+.fila-cuerpo span { display: block; font-size: var(--t-menor); color: var(--apagado); }
+.fila-lado { text-align: right; font-size: var(--t-menor); color: var(--apagado); white-space: nowrap; }
+
+/* --- Accesos rápidos ------------------------------------------- */
+.accesos { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--e3); }
+.acceso {
+  display: grid; justify-items: center; gap: 6px;
+  padding: var(--e4) var(--e2);
+  border-radius: var(--r-tarjeta);
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  color: var(--texto);
+  font-size: var(--t-menor);
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+}
+.acceso:hover { border-color: var(--verde-200); color: var(--verde-700); }
+.acceso[aria-current="true"] { background: var(--verde-500); border-color: var(--verde-500); color: #fff; }
+
+/* --- Tablas ---------------------------------------------------- */
+.tabla { width: 100%; border-collapse: collapse; }
+.tabla th {
+  text-align: left;
+  font-size: var(--t-etiqueta);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--apagado);
+  font-weight: 700;
+  padding: var(--e2) var(--e3);
+  border-bottom: 1px solid var(--linea);
+}
+.tabla td { padding: var(--e3); border-bottom: 1px solid var(--linea); color: var(--texto); }
+.tabla tbody tr:last-child td { border-bottom: 0; }
+.tabla tbody tr:hover td { background: var(--superficie-2); }
+.tabla .principal { color: var(--tinta); font-weight: 700; }
+
+/* --- Anillo de progreso ---------------------------------------- */
+.anillo { position: relative; display: grid; place-items: center; }
+.anillo svg { transform: rotate(-90deg); }
+.anillo-pista { fill: none; stroke: var(--verde-100); }
+.anillo-valor { fill: none; stroke: var(--verde-500); stroke-linecap: round; }
+.anillo-cifra {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-family: var(--fuente-titulo); font-size: 26px; font-weight: 600; color: var(--tinta);
+}
+
+/* --- Métrica compacta ------------------------------------------ */
+.metricas { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e2); }
+.metrica {
+  display: grid; justify-items: center; gap: 2px;
+  padding: var(--e3) var(--e2);
+  border-radius: var(--r-tarjeta);
+  background: var(--superficie-2);
+}
+.metrica b { font-family: var(--fuente-titulo); font-size: var(--t-seccion); color: var(--tinta); }
+.metrica span { font-size: var(--t-etiqueta); color: var(--apagado); text-align: center; }
+
+/* --- Aviso ----------------------------------------------------- */
+.aviso {
+  padding: var(--e4);
+  border-radius: var(--r-tarjeta);
+  background: var(--verde-50);
+  color: var(--verde-800);
+  font-size: var(--t-menor);
+}
+.aviso b { color: var(--verde-700); }
+.error { color: var(--peligro-tx); font-size: var(--t-menor); }

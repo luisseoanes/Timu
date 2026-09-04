@@ -1,0 +1,54 @@
+/* Base: reinicio corto, tipografía y utilidades de texto. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--fuente-texto);
+  font-size: var(--t-cuerpo);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-family: var(--fuente-titulo);
+  color: var(--tinta);
+  font-weight: 600;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+h1 { font-size: var(--t-display); }
+h2 { font-size: var(--t-titulo); }
+h3 { font-size: var(--t-seccion); }
+p  { margin: 0; }
+
+a { color: var(--verde-700); text-decoration: none; }
+a:hover { color: var(--verde-600); }
+
+:focus-visible {
+  outline: 2px solid var(--verde-500);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Utilidades de texto */
+.apagado   { color: var(--apagado); }
+.etiqueta  {
+  font-size: var(--t-etiqueta);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--apagado);
+  font-weight: 700;
+}
+.numero { font-variant-numeric: tabular-nums; }
+.centrado { display: grid; place-items: center; min-height: 60vh; color: var(--apagado); }
+
+/* Pantallas con scroll horizontal propio: tablas, gráficas */
+.scroll-x { overflow-x: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}

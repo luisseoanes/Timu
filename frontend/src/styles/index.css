@@ -1,0 +1,6 @@
+/* Orden obligatorio: tokens, base, componentes, vistas.
+   Cambiarlo rompe la cascada del sistema. */
+@import "./tokens.css";
+@import "./base.css";
+@import "./componentes.css";
+@import "./vistas.css";

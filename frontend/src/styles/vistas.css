@@ -1,0 +1,156 @@
+/* Plantillas de página. Aquí vive la estructura; los componentes no la conocen. */
+
+/* ================= Shell del panel ================= */
+.shell {
+  display: grid;
+  grid-template-columns: var(--ancho-sidebar) 1fr;
+  min-height: 100vh;
+  padding: var(--e4);
+  gap: var(--e4);
+}
+
+.sidebar {
+  background: var(--superficie);
+  border-radius: var(--r-panel);
+  padding: var(--e5) var(--e4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+  box-shadow: var(--sombra-2);
+  position: sticky;
+  top: var(--e4);
+  height: calc(100vh - var(--e7));
+}
+.marca {
+  display: flex; align-items: center; gap: var(--e2);
+  font-family: var(--fuente-titulo); font-size: 19px; font-weight: 600; color: var(--tinta);
+}
+.marca-icono {
+  width: 34px; height: 34px; display: grid; place-items: center;
+  border-radius: var(--r-campo); background: var(--verde-500); color: #fff;
+}
+.nav { display: grid; gap: var(--e1); flex: 1; align-content: start; }
+.nav a {
+  display: flex; align-items: center; gap: var(--e3);
+  padding: 10px var(--e3);
+  border-radius: var(--r-campo);
+  color: var(--texto);
+  font-weight: 600;
+  font-size: var(--t-cuerpo);
+}
+.nav a:hover { background: var(--verde-50); color: var(--verde-700); }
+.nav a.active { background: var(--verde-50); color: var(--verde-700); box-shadow: inset 3px 0 0 var(--verde-500); }
+.nav svg { flex: none; }
+
+.usuario {
+  display: grid; gap: var(--e2);
+  padding-top: var(--e4);
+  border-top: 1px solid var(--linea);
+}
+.usuario-datos { display: flex; align-items: center; gap: var(--e3); }
+.avatar {
+  width: 38px; height: 38px; flex: none;
+  border-radius: var(--r-pastilla);
+  background: var(--verde-100); color: var(--verde-700);
+  display: grid; place-items: center;
+  font-family: var(--fuente-titulo); font-weight: 600;
+}
+.usuario-datos strong { display: block; color: var(--tinta); font-size: var(--t-menor); }
+.usuario-datos span { display: block; font-size: var(--t-etiqueta); color: var(--apagado); text-transform: capitalize; }
+
+/* ================= Cabecera y contenido ================= */
+.principal { display: flex; flex-direction: column; gap: var(--e4); min-width: 0; }
+.topbar {
+  display: flex; align-items: center; gap: var(--e3);
+  min-height: var(--alto-topbar);
+}
+.topbar-titulo { flex: 1; min-width: 0; }
+.topbar-titulo h2 { font-size: var(--t-titulo); }
+.topbar-titulo p { font-size: var(--t-menor); color: var(--apagado); }
+
+.contenido { display: grid; gap: var(--e4); align-content: start; padding-bottom: var(--e7); }
+
+/* Dashboard: contenido principal + columna de widgets */
+.con-rail { display: grid; grid-template-columns: minmax(0, 1fr) var(--ancho-rail); gap: var(--e4); }
+.rail { display: grid; gap: var(--e4); align-content: start; }
+.dos-columnas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e4); }
+
+/* Saludo con figura, equivalente al bloque de bienvenida de la referencia */
+.bienvenida {
+  position: relative;
+  display: grid; gap: var(--e3);
+  padding: var(--e6);
+  border-radius: var(--r-panel);
+  background: linear-gradient(120deg, var(--verde-50) 0%, var(--superficie) 62%);
+  box-shadow: var(--sombra-2);
+  overflow: hidden;
+}
+.bienvenida h1 { display: flex; align-items: center; gap: var(--e2); }
+.bienvenida .apagado { max-width: 46ch; }
+.bienvenida-datos { display: flex; flex-wrap: wrap; gap: var(--e2); margin-top: var(--e2); }
+
+.filtros { display: flex; flex-wrap: wrap; gap: var(--e2); align-items: center; }
+
+/* ================= Login ================= */
+.login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--e6);
+  background:
+    radial-gradient(120% 90% at 12% 0%, var(--verde-100) 0%, transparent 55%),
+    radial-gradient(100% 80% at 100% 100%, var(--verde-200) 0%, transparent 50%),
+    var(--verde-50);
+}
+.login-tarjeta {
+  width: min(940px, 100%);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--superficie);
+  border-radius: var(--r-panel);
+  box-shadow: var(--sombra-3);
+  overflow: hidden;
+}
+.login-lado {
+  position: relative;
+  padding: var(--e7);
+  color: #fff;
+  background: linear-gradient(160deg, var(--verde-400) 0%, var(--verde-600) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--e6);
+  min-height: 460px;
+}
+.login-lado h2 {
+  color: #fff;
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+.login-lado .pie { font-size: var(--t-etiqueta); letter-spacing: .16em; text-transform: uppercase; opacity: .9; }
+.login-arte { display: grid; place-items: center; flex: 1; }
+
+.login-form { padding: var(--e7); display: grid; align-content: center; gap: var(--e5); }
+.login-form h1 {
+  font-size: 30px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--verde-600); text-align: center;
+}
+.campo-icono { position: relative; }
+.campo-icono svg { position: absolute; right: 4px; bottom: 12px; color: var(--verde-500); }
+.login-pie { display: grid; justify-items: end; gap: var(--e1); font-size: var(--t-menor); }
+
+/* ================= Adaptación a pantallas menores ================= */
+@media (max-width: 1180px) {
+  .con-rail { grid-template-columns: minmax(0, 1fr); }
+  .rail { grid-template-columns: repeat(2, 1fr); display: grid; }
+}
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; }
+  .nav { grid-template-columns: repeat(2, 1fr); }
+  .dos-columnas, .rail { grid-template-columns: 1fr; }
+  .accesos { grid-template-columns: repeat(2, 1fr); }
+  .login-tarjeta { grid-template-columns: 1fr; }
+  .login-lado { min-height: 220px; }
+}
