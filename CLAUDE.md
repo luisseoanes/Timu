@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Qué es este repositorio
 
 Scaffold de TIMU, plataforma de gestión veterinaria por afiliación. El contrato funcional
-vive en `docs/Propuesta_TIMU_Puntos_15-19.md` y el desglose ejecutable en
-`docs/BACKLOG.md` (101 unidades con ID `fase-módulo-consecutivo`, p. ej. `F1-CAR-08`).
+vive en `docs/propuesta-timu-puntos-15-19.md` y el desglose ejecutable en
+`docs/backlog.md` (101 unidades con ID `fase-módulo-consecutivo`, p. ej. `F1-CAR-08`).
 
 Los comentarios del código citan requisitos por número (`6.10`, `6.16`, `sección C`): son
 referencias a ese documento. Al implementar un módulo pendiente, busca su ID en el backlog
@@ -105,8 +105,8 @@ cuando la usan dos dominios. Las rutas de módulos aún no implementados renderi
 - Toda lectura va por React Query con clave que incluya los filtros (`['familias', filtros]`)
   y toda pantalla cubre carga, error y vacío.
 
-`docs/frontend/` (DESIGN-SYSTEM, COMPONENTS, LAYOUTS, CONVENTIONS) es normativo para
-cualquier pantalla nueva: léelo antes de escribir UI. `CONVENTIONS.md` incluye la checklist
+`docs/frontend/` (design-system, components, layouts, conventions) es normativo para
+cualquier pantalla nueva: léelo antes de escribir UI. `conventions.md` incluye la checklist
 de revisión y la deuda conocida (sin tema oscuro, sin librería de componentes, datos de
 ejemplo en el panel de inicio hasta `F4-DAS-02`).
 

@@ -1,6 +1,6 @@
 # TIMU — Plataforma integral
 
-Scaffold del proyecto descrito en `docs/Propuesta_TIMU_Puntos_15-19.md`
+Scaffold del proyecto descrito en `docs/propuesta-timu-puntos-15-19.md`
 (sección 15.C — Tecnología). Arquitectura modular por dominios: familias, cartera,
 planes, servicios, preventivos, clínica, rutas, comunicaciones, campañas, encuestas,
 clínicas aliadas, portal y dashboard.
@@ -82,7 +82,7 @@ frontend/
 
 | Documento | Contenido |
 |---|---|
-| [docs/BACKLOG.md](docs/BACKLOG.md) | Backlog completo del backend: 101 unidades con criterio de aceptación, por fase |
+| [docs/backlog.md](docs/backlog.md) | Backlog completo del backend: 101 unidades con criterio de aceptación, por fase |
 | [docs/frontend/](docs/frontend/) | Sistema visual del panel: tokens, componentes, plantillas y convenciones |
 
 ## Estado del scaffold

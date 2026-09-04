@@ -12,10 +12,10 @@ Antes de escribir una pantalla nueva, lee estos cuatro documentos en orden:
 
 | Documento | Qué resuelve |
 | --- | --- |
-| [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md) | Color, tipografía, espaciado, radios, sombras e iconografía. Los tokens y cómo se usan. |
-| [COMPONENTS.md](COMPONENTS.md) | Inventario de componentes con su anatomía, estados y cuándo corresponde cada uno. |
-| [LAYOUTS.md](LAYOUTS.md) | Plantillas de página: ingreso, shell del panel, inicio con widgets y listados. |
-| [CONVENTIONS.md](CONVENTIONS.md) | Estructura de carpetas, nombres, datos, accesibilidad y qué revisar antes de fusionar. |
+| [design-system.md](design-system.md) | Color, tipografía, espaciado, radios, sombras e iconografía. Los tokens y cómo se usan. |
+| [components.md](components.md) | Inventario de componentes con su anatomía, estados y cuándo corresponde cada uno. |
+| [layouts.md](layouts.md) | Plantillas de página: ingreso, shell del panel, inicio con widgets y listados. |
+| [conventions.md](conventions.md) | Estructura de carpetas, nombres, datos, accesibilidad y qué revisar antes de fusionar. |
 
 ## Dónde vive cada cosa
 
