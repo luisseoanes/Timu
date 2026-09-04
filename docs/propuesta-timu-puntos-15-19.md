@@ -1,34 +1,26 @@
 ---
-titulo: "Propuesta técnica y económica — TIMU (puntos 15-19)"
+titulo: "Propuesta técnica TIMU — alcance funcional y arquitectura"
 tipo: contrato-funcional
 estado: normativo
+alcance: >
+  Versión podada para consulta durante el desarrollo. Conserva la descripción de la
+  solución (A), la tabla de cumplimiento de los requisitos 6.1 a 6.23 y los módulos de
+  escalabilidad (B), el stack tecnológico (C) y el reparto de alcance por fases (D).
+  Los comentarios del código citan estas secciones por su letra.
+retirado: >
+  Capacitación, soporte, garantía, costos de terceros, modelo económico, criterios de
+  evaluación y los cierres comerciales: nada de eso condiciona una decisión de código.
 procedencia:
   fichero_original: Propuesta_TIMU_Puntos_15-19.docx
   sha256_original: ce6e40a3474ab8fd0765872b14f73f0acbd68bd534e919d3cf1f4b464f3f84da
   commit_con_el_original: ed34dcaf44eb04a7bbc8a3266501f9ff715d647b
   recuperar_original: "git show ed34dcaf44eb04a7bbc8a3266501f9ff715d647b:docs/Propuesta_TIMU_Puntos_15-19.docx > Propuesta_TIMU_Puntos_15-19.docx"
-metadatos_del_documento:
-  autor: "Un-named"
-  ultima_modificacion_por: "luis seoanes"
-  revision: 2
-  creado: 2026-08-27T19:36:00Z
-  modificado: 2026-08-27T20:33:00Z
-  paginas: 5
-  palabras: 1989
-  caracteres_con_espacios: 12904
-conversion:
-  conserva: "los 195 bloques de texto, las 4 tablas (51 filas), los 5 encabezados de nivel 1, los 8 de nivel 2, los 21 elementos de lista y las 15 marcas de negrita ajenas a encabezados"
-  notas:
-    - "En los encabezados no se replican las marcas de énfasis: el nivel del encabezado ya cumple esa función."
-    - "Las celdas con varios párrafos separan su contenido con <br> para no romper la fila de la tabla."
-    - "El documento original no contenía imágenes, notas al pie, comentarios, encabezados de página ni hipervínculos."
+  version_integra_en_markdown: "git show 416796e:docs/propuesta-timu-puntos-15-19.md"
 ---
 
-**PROPUESTA TÉCNICA Y ECONÓMICA**
+**PROPUESTA TÉCNICA**
 
 *Plataforma Integral de Gestión, Operación, Comercialización y Automatización — TIMU*
-
-En respuesta al Documento de Requerimientos Funcionales compartido por TIMU S.A.S., presentamos a continuación nuestra propuesta técnica y económica, siguiendo la estructura solicitada en la sección 15 del documento base.
 
 # 15. PROPUESTA DEL PROVEEDOR
 
@@ -45,7 +37,7 @@ La arquitectura se diseña modular por dominios (familias, cartera, servicios, c
 La siguiente tabla detalla el estado de cumplimiento para cada requerimiento del documento base, incluyendo los módulos de escalabilidad futura que se incorporan desde la Fase 1.
 
 | **Requerimiento** | **Estado** | **Observación** |
-| --- | --- | --- |
+| --- | --- |
 | 6.1 Gestión de familias, usuarios y mascotas | Cumple | Incluye autollenado de formularios al perfil. |
 | 6.2 Gestión de cartera | Cumple | Alertas, mora, congelamiento y reactivación automatizados. |
 | 6.3 Cambios en planes grupales | Cumple | Motor de reglas configurable sin tocar código base. |
@@ -93,79 +85,13 @@ La solución se construye sobre un stack moderno, de código abierto en su mayor
 
 ## D. Implementación
 
-Proponemos una implementación por fases, cada una con entregables funcionales verificables, en lugar de una única entrega al final del proyecto. El uso de herramientas de asistencia de IA en el desarrollo (generación de código base, pruebas y documentación) permite acelerar los tiempos de escritura de código, aunque los tiempos de aprobación de terceros (verificación de cuenta de WhatsApp Business, habilitación de pasarela de pago) dependen de esos proveedores externos y corren en paralelo.
+La construcción avanza por fases, cada una con entregables funcionales verificables.
 
-| **Fase** | **Duración estimada** | **Alcance** |
-| --- | --- | --- |
-| Fase 1 — Núcleo operativo | 4 semanas | Familias/mascotas/usuarios, cartera y pagos recurrentes, planes grupales, programación de servicios, estados, WhatsApp (mensajería base), autenticación y roles. |
-| Fase 2 — Operación y clínica | 3 semanas | Rutas domiciliarias y optimización, servicios preventivos, autorización preventiva, gestión clínica veterinaria, carnet digital, clínicas aliadas. |
-| Fase 3 — Portal, pagos y autogestión | 6 semanas | Portal de usuarios, consulta de historia, autogestión de servicios, pagos en línea, encuestas, seguimiento post atención, segmentación y campañas. |
-| Fase 4 — Inteligencia y cierre | 6 semanas | Dashboard gerencial, automatizaciones transversales adicionales, apoyo de IA en atención comercial/virtual, migración final de datos, pruebas integradas y estabilización. |
+| **Fase** | **Alcance** |
+| --- | --- |
+| Fase 1 — Núcleo operativo | Familias/mascotas/usuarios, cartera y pagos recurrentes, planes grupales, programación de servicios, estados, WhatsApp (mensajería base), autenticación y roles. |
+| Fase 2 — Operación y clínica | Rutas domiciliarias y optimización, servicios preventivos, autorización preventiva, gestión clínica veterinaria, carnet digital, clínicas aliadas. |
+| Fase 3 — Portal, pagos y autogestión | Portal de usuarios, consulta de historia, autogestión de servicios, pagos en línea, encuestas, seguimiento post atención, segmentación y campañas. |
+| Fase 4 — Inteligencia y cierre | Dashboard gerencial, automatizaciones transversales adicionales, apoyo de IA en atención comercial/virtual, migración final de datos, pruebas integradas y estabilización. |
 
 Al cierre de cada fase se realiza una entrega funcional en ambiente de pruebas, validación conjunta con TIMU, y ajustes antes de pasar a producción.
-
-## E. Capacitación
-
-- 4 sesiones de capacitación (una al cierre de cada fase), de 2 horas cada una, por videollamada o presencial según disponibilidad.
-- Material entregado: manual de usuario por perfil (administrador, comercial, operaciones, personal médico) y guías en video de los flujos principales.
-- Acompañamiento inicial de 2 semanas posteriores a la puesta en producción de cada fase, para resolver dudas de uso en caliente.
-
-## F. Soporte
-
-- Canal: WhatsApp y correo electrónico dedicados durante el periodo de soporte incluido.
-- Horario: lunes a viernes, horario laboral (8:00 a.m. – 6:00 p.m.).
-- Tiempo de respuesta: máximo 24 horas hábiles para incidencias, prioridad inmediata para caídas del sistema.
-- Soporte incluido: 3 meses posteriores a la entrega final (Fase 4). Soporte posterior se cotiza aparte, bajo modalidad mensual o por bolsa de horas.
-
-## G. Garantía
-
-Garantía de 90 días posteriores a la entrega de cada fase sobre errores o defectos de funcionamiento ("bugs") atribuibles al desarrollo, sin costo adicional. No cubre cambios de alcance ni nuevas funcionalidades no contempladas en esta propuesta.
-
-## H. Costos adicionales
-
-Para mantener la transparencia solicitada en el documento base, se listan explícitamente los costos que no dependen del proveedor sino de terceros, y que TIMU asumirá de forma directa:
-
-- WhatsApp Business (Meta Cloud API): costo por conversación/plantilla, facturado directamente por Meta según su tarifario vigente.
-- Pasarela de pago (Wompi/PayU/Refacil): comisión por transacción, definida por el proveedor de pagos, no por nosotros, Refacil contempla 1.200 pesos por transacción, sin comisión.
-- Hosting/infraestructura cloud: costo mensual estimado entre $150.000 y $400.000 COP, según volumen de uso, facturado directamente por el proveedor cloud (AWS/DigitalOcean).
-- Dominio y certificado SSL: costo anual menor, si TIMU no cuenta ya con uno.
-- No hay costos de licenciamiento por usuario ni por módulo — la plataforma es propiedad de TIMU sin cobros recurrentes hacia nosotros salvo soporte post-garantía si se contrata.
-
-# 16. MODELO ECONÓMICO
-
-El valor total de la propuesta cubre el desarrollo completo descrito en la sección 15, incluyendo los cinco módulos de escalabilidad futura incorporados desde la Fase 1 (portal de usuarios, consulta de historia, carnet digital, pagos y autogestión de servicios).
-
-| **Concepto** | **Valor** |
-| --- | --- |
-| Implementación inicial (Fases 1 a 4, desarrollo completo) | $8.500.000 COP |
-| Licencia / suscripción / alquiler recurrente | $0 — no aplica (propiedad 100% de TIMU, sin licenciamiento por uso) |
-| Desarrollo personalizado | Incluido en la implementación inicial |
-| Integraciones (WhatsApp, pasarela de pago, calendario) | Incluido en la implementación inicial |
-| Migración de información | Incluido en la implementación inicial |
-| Capacitación | Incluido en la implementación inicial |
-| Soporte (primeros 3 meses post-entrega) | Incluido — ver sección F |
-| Otros (hosting, WhatsApp API, pasarela de pago) | A cargo de TIMU, pagados directamente al proveedor externo — ver sección H |
-| **VALOR TOTAL DE LA PROPUESTA** | **$8.500.000 COP + IVA si aplica** |
-
-**Forma de pago propuesta (por hitos)**
-
-| **Hito** | **%** | **Valor** |
-| --- | --- | --- |
-| Hito 1 — Firma de contrato | 30% | $2.550.000 COP |
-| Hito 2 — Entrega Fase 2 (fin operación/clínica) | 30% | $2.550.000 COP |
-| Hito 3 — Entrega Fase 3 (portal, pagos, autogestión) | 20% | $1.700.000 COP |
-| Hito 4 — Entrega final Fase 4 y puesta en producción | 20% | $1.700.000 COP |
-
-Los valores no incluyen IVA. Cualquier funcionalidad adicional no contemplada explícitamente en el documento de requerimientos ni en esta propuesta (por ejemplo, PWA empaquetada, nuevos módulos comerciales o ampliaciones de IA más allá de lo descrito) se cotizará de forma independiente una vez definido su alcance.
-
-# 17. CRITERIOS DE EVALUACIÓN
-
-Entendemos que TIMU evaluará esta propuesta bajo los criterios y pesos definidos en el documento base (cumplimiento funcional 30%, automatización 15%, integraciones 10%, seguridad 10%, escalabilidad 10%, implementación y soporte 10%, experiencia del proveedor 5%, costo total 10%). Consideramos que la incorporación temprana de los módulos de portal, pagos y autogestión fortalece particularmente los criterios de escalabilidad y automatización, sin sacrificar el cumplimiento del alcance funcional base.
-
-# 18. RESULTADO ESPERADO
-
-Nuestro compromiso es entregar una plataforma que permita a TIMU recorrer el ciclo completo descrito en el documento base — captar, convertir, afiliar, gestionar, prevenir, atender, hacer seguimiento, medir y fidelizar — de forma integrada desde la primera fase, y que la incorporación temprana del portal de usuarios y la autogestión permitan que las familias empiecen a interactuar directamente con la plataforma sin esperar a una fase posterior. La arquitectura modular garantiza que futuras funcionalidades (nuevas integraciones, nuevos servicios, ampliación de IA) se incorporen sin reconstruir la infraestructura base.
-
-# 19. CONSIDERACIÓN FINAL
-
-Entendemos que TIMU no busca únicamente un CRM, sino una infraestructura digital propia que acompañe el crecimiento de la operación comercial, preventiva, veterinaria y de experiencia del usuario. Por eso proponemos construir la plataforma completa desde ahora, con una arquitectura pensada para escalar, en lugar de entregar un producto parcial que deba reconstruirse más adelante. Quedamos atentos a cualquier ajuste de alcance, cronograma o condiciones que TIMU considere pertinente antes de la firma del contrato.
