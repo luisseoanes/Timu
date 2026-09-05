@@ -95,6 +95,18 @@ Reglas que atraviesan todo el backend:
   `app/core/database.py`. Celery no es async: `asyncio.run()` dentro de una tarea crea
   un event loop por ejecución y no reaprovecha conexiones. Los endpoints siguen async;
   los workers, no. Cada tarea abre su `with sesion_worker() as db:`.
+- **Los tokens se firman y verifican con PyJWT**, y `decode_access_token` declara el
+  algoritmo de forma explícita en lugar de aceptar el que venga en el token: confiar en
+  esa cabecera permite un ataque de confusión de algoritmos. No vuelvas a introducir
+  `python-jose`, que está sin mantener desde 2021 y arrastra CVE conocidas.
+- **OR-Tools vive sólo en `requirements-worker.txt`**, no en la imagen de la API. La
+  optimización de rutas (6.7) es CPU-bound: llamarla desde un endpoint async bloquearía
+  el event loop, así que `app/integrations/routing.py` se invoca siempre desde una tarea
+  de Celery. Una dependencia pesada que sólo use el worker va en ese fichero.
+- **Los registros salen por `structlog`, no por `logging` a pelo.** Cada petición lleva
+  su identificador en `X-Request-ID` (F0-02), que el middleware propaga a todas las
+  líneas de log para poder seguirla de punta a punta. Sentry se activa solo si hay
+  `SENTRY_DSN`, así que en local no estorba y en producción no se olvida.
 - **Los adjuntos van a `app/integrations/storage.py`**, que habla S3. En desarrollo
   apunta a MinIO (`docker compose up minio`) y en producción al bucket del cliente:
   cambian las variables `STORAGE_*`, no el código. Nada se sirve público, todo con
@@ -201,10 +213,35 @@ estático, tipos, pruebas unitarias, de integración y de extremo a extremo. El 
 un job más, condicionado a `main`, así que no existe forma de publicar una versión que
 no haya pasado la batería completa.
 
+## Commits y publicación de versiones
+
+Los commits no son sólo historial: **alimentan el release**. `semantic-release` los lee
+en cada empuje a `main` y decide la versión a partir de ellos, así que un mensaje mal
+formado es trabajo que no aparece en ninguna parte.
+
+- Formato Conventional Commits: `tipo(scope): asunto`, en español y en minúscula.
+- `feat` sube la *minor*, `fix`/`perf`/`revert` la *patch*; `docs`, `test`, `chore`,
+  `ci`, `build`, `style` y `refactor` no publican versión.
+- El **scope es libre** y sirve para agrupar el changelog: `feat(clinica)`,
+  `fix(cartera)` o `feat(backend)` entran todos en el mismo release. También vale sin
+  scope.
+- Un cambio rompiente se marca con `!` en la cabecera (`feat(servicios)!: …`), no sólo
+  con `BREAKING CHANGE` en el pie.
+- `.github/scripts/commits-sin-convencion.mjs` avisa en el CI de los mensajes que
+  `semantic-release` no sabría clasificar.
+
+**Mientras la versión sea 0.x**, `release.config.js` mantiene la regla
+`{ breaking: true, release: 'minor' }` para que un cambio rompiente no dispare el salto
+a 1.0.0. **Al publicar la 1.0.0 hay que borrar esa línea**: si se queda, un breaking
+daría 1.1.0 en lugar de 2.0.0.
+
 ## Convenciones de escritura
 
 Todo el repositorio está en español: identificadores de dominio (`familias`, `mascotas`,
 `cartera`), clases CSS en singular (`.tarjeta`, `.distintivo-alerta`), docstrings, mensajes
-de error de la API y commits (`feat(backend): …`). El código del backend evita tildes en
+de error de la API y commits (`feat(backend): …`). Los ficheros de `docs/` se nombran en
+**kebab-case** (`design-system.md`, `propuesta-timu-puntos-15-19.md`); el código sigue la
+convención de su lenguaje: `snake_case` en Python, `PascalCase` para los componentes de
+React. El código del backend evita tildes en
 docstrings y comentarios; el frontend y la documentación sí las usan. Sigue lo que ya haga
 cada fichero.
