@@ -19,6 +19,41 @@ services:
     ports:
       - "6379:6379"
 
+  # S3 de desarrollo. Cuando el cliente entregue su bucket basta con apuntar
+  # STORAGE_ENDPOINT_URL y las credenciales al real: el codigo no cambia.
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:-minioadmin}
+    volumes:
+      - miniodata:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      retries: 10
+
+  # Base de datos exclusiva de las pruebas de integracion: efimera y en tmpfs,
+  # para no ensuciar la de desarrollo ni pagar la escritura a disco.
+  db-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: timu
+      POSTGRES_PASSWORD: timu
+      POSTGRES_DB: timu_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U timu"]
+      interval: 5s
+      retries: 10
+
   api:
     build: ./backend
     env_file: ./backend/.env
@@ -33,7 +68,10 @@ services:
         condition: service_started
 
   worker:
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        REQUIREMENTS: requirements-worker.txt
     env_file: ./backend/.env
     command: celery -A app.workers.celery_app.celery_app worker -l info
     volumes:
@@ -41,9 +79,13 @@ services:
     depends_on:
       - api
       - redis
+      - minio
 
   beat:
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        REQUIREMENTS: requirements-worker.txt
     env_file: ./backend/.env
     command: celery -A app.workers.celery_app.celery_app beat -l info
     volumes:
@@ -63,3 +105,4 @@ services:
 
 volumes:
   pgdata:
+  miniodata:

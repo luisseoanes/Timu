@@ -14,9 +14,7 @@ def verificar_firma_wompi(raw_body: bytes, firma: str) -> bool:
     if not settings.WOMPI_EVENTS_SECRET:
         logger.warning("WOMPI_EVENTS_SECRET sin configurar; firma no verificada")
         return settings.ENVIRONMENT == "local"
-    esperado = hmac.new(
-        settings.WOMPI_EVENTS_SECRET.encode(), raw_body, hashlib.sha256
-    ).hexdigest()
+    esperado = hmac.new(settings.WOMPI_EVENTS_SECRET.encode(), raw_body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(esperado, firma)
 
 

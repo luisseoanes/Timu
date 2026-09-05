@@ -1,18 +1,26 @@
-import logging
 from contextlib import asynccontextmanager
 
+import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import settings
+from app.core.observabilidad import (
+    MiddlewareIdPeticion,
+    configurar_logging,
+    configurar_sentry,
+)
 
-logging.basicConfig(level=logging.DEBUG if settings.DEBUG else logging.INFO)
+configurar_logging(json=settings.LOG_JSON, debug=settings.DEBUG)
+configurar_sentry(settings.SENTRY_DSN, settings.ENVIRONMENT)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logging.getLogger(__name__).info("Iniciando %s (%s)", settings.APP_NAME, settings.ENVIRONMENT)
+    structlog.get_logger(__name__).info(
+        "arranque", app=settings.APP_NAME, entorno=settings.ENVIRONMENT
+    )
     yield
 
 
@@ -24,9 +32,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(MiddlewareIdPeticion)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
+    # La sesion viaja en cookie: sin credenciales el navegador no la enviaria.
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
