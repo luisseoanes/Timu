@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, create_engine, func
+from sqlalchemy import DateTime, MetaData, create_engine, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
@@ -29,8 +29,22 @@ SessionWorker = sessionmaker(sync_engine, class_=Session, expire_on_commit=False
 JSONTipo = JSON().with_variant(JSONB(), "postgresql")
 
 
+# F0-01: los indices y las restricciones se nombran segun esta convencion en lugar
+# de dejar que PostgreSQL invente el nombre. Sin ella, una migracion que quiera
+# borrar o alterar una restriccion no tiene forma estable de referirse a ella.
+CONVENCION_NOMBRES = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+
+
 class Base(DeclarativeBase):
     """Base declarativa. Todos los modelos de dominio heredan de aqui."""
+
+    metadata = MetaData(naming_convention=CONVENCION_NOMBRES)
 
 
 class TimestampMixin:

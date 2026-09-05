@@ -15,9 +15,9 @@ y respeta el criterio de aceptación que ya está escrito allí.
 ## Comandos
 
 ```bash
-# Todo el stack (api, worker, beat, db, redis, web)
+# Todo el stack (api, worker, beat, db, redis, minio, web)
 docker compose up --build
-docker compose exec api alembic upgrade head
+docker compose exec api alembic upgrade head       # aplica el esquema
 docker compose exec api python scripts/seed.py     # admin@timu.co / cambiar123
 
 # Backend sin Docker
@@ -51,12 +51,18 @@ de dominios tiene modelos definidos y un router placeholder que devuelve
 
 Reglas que atraviesan todo el backend:
 
-- **`app/models.py` es el registro único de modelos.** Alembic (`autogenerate`) y los tests
-  (`create_all`) sólo ven lo importado ahí. Un modelo nuevo que no se añada a ese fichero
-  no existe para las migraciones ni para las pruebas.
-- **`alembic/versions/` está vacío.** No hay migración inicial todavía (`F0-01`); un
-  `alembic upgrade head` contra base limpia no crea nada. La primera migración hay que
-  generarla con `alembic revision --autogenerate`.
+- **`app/models.py` es el registro único de modelos.** `autogenerate` sólo ve lo
+  importado ahí: un modelo que no se añada a ese fichero no llega a las migraciones y,
+  por tanto, tampoco a ninguna base de datos.
+- **El esquema se aplica con `alembic upgrade head`**, nunca con `create_all`. La
+  migración inicial (`F0-01`) crea las 21 tablas y está verificada en los dos sentidos:
+  `upgrade` sobre base vacía y `downgrade base` que la deja limpia.
+- **Un modelo nuevo exige su migración en el mismo cambio.** Las pruebas construyen el
+  esquema aplicando las migraciones, y `tests/test_migraciones.py` compara el resultado
+  contra los metadatos: si falta una migración, la suite falla en vez de descubrirse en
+  el despliegue. Los índices y restricciones siguen la convención de nombres de
+  `CONVENCION_NOMBRES` en `app/core/database.py`, para que una migración posterior
+  pueda referirse a ellos por un nombre estable.
 - **La transacción la cierra `get_db`**, no los servicios. Las funciones de `service.py`
   hacen `flush()` para obtener IDs; el commit ocurre al terminar la petición, y el rollback
   ante cualquier excepción. No metas `commit()` en un servicio.
@@ -148,6 +154,32 @@ cuando la usan dos dominios. Las rutas de módulos aún no implementados renderi
 cualquier pantalla nueva: léelo antes de escribir UI. `conventions.md` incluye la checklist
 de revisión y la deuda conocida (sin tema oscuro, datos de ejemplo en el panel de inicio
 hasta `F4-DAS-02`).
+
+## Migraciones
+
+```bash
+# generar, tras cambiar o anadir un modelo
+docker compose exec api alembic revision --autogenerate -m "descripcion"
+# aplicar
+docker compose exec api alembic upgrade head
+# deshacer la ultima
+docker compose exec api alembic downgrade -1
+```
+
+Dónde se aplica `alembic upgrade head`:
+
+| Entorno | Cuándo |
+| --- | --- |
+| Desarrollo | tras `docker compose up`, y cada vez que se trae una migración nueva |
+| Pruebas | automático: `tests/conftest.py` levanta el esquema con las migraciones |
+| Producción | como paso del despliegue, **antes** de arrancar la API, con el servicio anterior aún sirviendo |
+
+Sin Docker se corre desde `backend/` con el `.env` apuntando a la base; para lanzarlo
+contra otra distinta, `DATABASE_URL_OVERRIDE` la sustituye sin tocar el `.env`.
+
+Una migración que borra o renombra columnas necesita dos despliegues si no se quiere
+cortar el servicio: primero el código que tolera las dos formas, después la migración
+destructiva. La primera migración no tiene ese problema porque parte de una base vacía.
 
 ## Pruebas
 
