@@ -5,10 +5,11 @@
 export type NombreIcono =
   | 'panel' | 'familias' | 'cartera' | 'servicios' | 'preventivos'
   | 'clinica' | 'rutas' | 'campanas' | 'buscar' | 'campana' | 'ayuda'
-  | 'salir' | 'usuario' | 'llave' | 'calendario' | 'pago' | 'mas'
+  | 'salir' | 'usuario' | 'llave' | 'calendario' | 'pago' | 'mas' | 'cerrar'
 
 const TRAZOS: Record<NombreIcono, string> = {
   panel: 'M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z',
+  cerrar: 'M18 6 6 18M6 6l12 12',
   familias: 'M17 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm12.5 10v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8',
   cartera: 'M3 7h18v12H3zM3 7l2-3h14l2 3M7 12h5',
   servicios: 'M8 3v4M16 3v4M3 10h18M5 7h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z',

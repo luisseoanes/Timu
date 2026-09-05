@@ -186,3 +186,79 @@
 }
 .aviso b { color: var(--verde-700); }
 .error { color: var(--peligro-tx); font-size: var(--t-menor); }
+
+/* ============================================================
+   Modal (Radix Dialog). El comportamiento lo pone Radix; el
+   aspecto sale entero de tokens.css.
+   ============================================================ */
+
+.velo {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 45%);
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - var(--e5)));
+  max-height: calc(100vh - var(--e5));
+  overflow-y: auto;
+  background: var(--superficie);
+  border-radius: var(--r-panel);
+  box-shadow: var(--sombra-3);
+  padding: var(--e5);
+}
+
+.modal-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e1);
+}
+
+.modal-titulo {
+  font-family: var(--fuente-titulo);
+  font-size: var(--t-seccion);
+  color: var(--tinta);
+  margin: 0;
+}
+
+.modal-descripcion {
+  color: var(--apagado);
+  font-size: var(--t-menor);
+  margin: var(--e1) 0 0;
+}
+
+.modal-cuerpo {
+  margin-top: var(--e5);
+}
+
+.modal-pie {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--e1);
+  margin-top: var(--e5);
+  padding-top: var(--e1);
+  border-top: 1px solid var(--linea);
+}
+
+.boton-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--r-campo);
+  background: transparent;
+  color: var(--apagado);
+  cursor: pointer;
+}
+
+.boton-icono:hover {
+  background: var(--superficie-2);
+  color: var(--tinta);
+}
