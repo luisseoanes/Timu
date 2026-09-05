@@ -1,0 +1,5 @@
+# Dependencias exclusivas del worker de Celery.
+# OR-Tools son ~100 MB que la API no necesita: la optimizacion de rutas (6.7)
+# es CPU-bound y corre siempre en el worker, nunca en un endpoint async.
+-r requirements.txt
+ortools==9.12.4544

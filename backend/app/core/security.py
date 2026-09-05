@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import bcrypt
-from jose import JWTError, jwt
+import jwt
 
 from app.core.config import settings
 
@@ -32,7 +32,9 @@ def create_access_token(subject: str, extra: dict[str, Any] | None = None) -> st
 
 
 def decode_access_token(token: str) -> dict[str, Any] | None:
+    """Devuelve el payload o None. El algoritmo se fija explicitamente: aceptar el
+    del propio token permitiria un ataque de confusion de algoritmos."""
     try:
         return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-    except JWTError:
+    except jwt.PyJWTError:
         return None
