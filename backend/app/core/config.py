@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -36,6 +37,37 @@ class Settings(BaseSettings):
     WOMPI_EVENTS_SECRET: str = ""
 
     GOOGLE_MAPS_API_KEY: str = ""
+
+    # --- Sesion del navegador (6.x portal): el token viaja en cookie httpOnly ---
+    # SECURE debe quedar en True en cualquier ambiente servido por HTTPS.
+    COOKIE_NAME: str = "timu_sesion"
+    COOKIE_SECURE: bool = False
+    COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
+    COOKIE_DOMAIN: str | None = None
+
+    # --- Almacenamiento de adjuntos (F0-11), compatible S3 ---
+    # En desarrollo apunta a MinIO; en produccion, al S3 que entregue el cliente.
+    # Cambiar de uno a otro es cambiar estas variables, no el codigo.
+    STORAGE_ENDPOINT_URL: str | None = "http://minio:9000"
+    STORAGE_REGION: str = "us-east-1"
+    STORAGE_BUCKET: str = "timu-adjuntos"
+    STORAGE_ACCESS_KEY: str = "minioadmin"
+    STORAGE_SECRET_KEY: str = "minioadmin"
+    STORAGE_URL_TTL_SEGUNDOS: int = 300
+
+    # --- Observabilidad (F0-08) ---
+    SENTRY_DSN: str = ""
+    LOG_JSON: bool = False
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def DATABASE_URL_SYNC(self) -> str:
+        """URL sincrona para Alembic y para los workers de Celery.
+
+        Celery no es async: sus tareas usan una sesion sincrona (ver
+        app.core.database.sesion_worker), asi que necesitan el driver psycopg.
+        """
+        return self.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql+psycopg://")
 
     @computed_field  # type: ignore[prop-decorator]
     @property

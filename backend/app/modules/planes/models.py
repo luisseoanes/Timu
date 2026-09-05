@@ -1,9 +1,9 @@
 from uuid import UUID
 
-from sqlalchemy import JSON, Boolean, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.database import Base, TimestampMixin, UUIDMixin
+from app.core.database import Base, JSONTipo, TimestampMixin, UUIDMixin
 
 
 class Plan(Base, UUIDMixin, TimestampMixin):
@@ -26,7 +26,7 @@ class ReglaPlan(Base, UUIDMixin, TimestampMixin):
 
     plan_id: Mapped[UUID | None] = mapped_column(ForeignKey("planes.id", ondelete="CASCADE"))
     nombre: Mapped[str] = mapped_column(String(160))
-    condicion: Mapped[dict] = mapped_column(JSON, default=dict)
-    accion: Mapped[dict] = mapped_column(JSON, default=dict)
+    condicion: Mapped[dict] = mapped_column(JSONTipo, default=dict)
+    accion: Mapped[dict] = mapped_column(JSONTipo, default=dict)
     prioridad: Mapped[int] = mapped_column(Integer, default=100)
     activa: Mapped[bool] = mapped_column(Boolean, default=True)
