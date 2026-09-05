@@ -1,29 +1,24 @@
 import axios from 'axios'
 
-const TOKEN_KEY = 'timu.token'
-
+/**
+ * Único punto de contacto con la API.
+ *
+ * La sesión viaja en una cookie httpOnly que pone el backend al iniciar sesión, así
+ * que aquí no se guarda ni se lee ningún token: `localStorage` es legible desde
+ * JavaScript y una XSS se llevaría la sesión, con historia clínica de por medio.
+ * `withCredentials` es lo que hace que el navegador envíe esa cookie.
+ */
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '/api/v1',
+  withCredentials: true,
 })
 
-export const tokenStorage = {
-  get: () => localStorage.getItem(TOKEN_KEY),
-  set: (token: string) => localStorage.setItem(TOKEN_KEY, token),
-  clear: () => localStorage.removeItem(TOKEN_KEY),
-}
-
-api.interceptors.request.use((config) => {
-  const token = tokenStorage.get()
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
-
-// Sesion expirada: limpiar y devolver al login.
+// Sesión expirada o ausente: devolver al ingreso. La cookie la limpia el backend.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && window.location.pathname !== '/login') {
-      tokenStorage.clear()
+    const enLogin = window.location.pathname === '/login'
+    if (error.response?.status === 401 && !enLogin) {
       window.location.assign('/login')
     }
     return Promise.reject(error)

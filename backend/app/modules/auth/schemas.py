@@ -22,7 +22,7 @@ class UsuarioRead(BaseModel):
     activo: bool
 
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
+class Sesion(BaseModel):
+    """Respuesta del login. No lleva el token: viaja en la cookie httpOnly."""
+
     usuario: UsuarioRead

@@ -1,14 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { api, tokenStorage } from '@/api/client'
+import { api } from '@/api/client'
 import type { Usuario } from '@/types'
 
 interface AuthState {
   usuario: Usuario | null
   cargando: boolean
   login: (email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -17,15 +17,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null)
   const [cargando, setCargando] = useState(true)
 
+  // Con cookie httpOnly el frontend no puede inspeccionar la sesión: la única
+  // forma de saber si sigue viva es preguntárselo al backend.
   useEffect(() => {
-    if (!tokenStorage.get()) {
-      setCargando(false)
-      return
-    }
     api
       .get<Usuario>('/auth/me')
       .then((r) => setUsuario(r.data))
-      .catch(() => tokenStorage.clear())
+      .catch(() => setUsuario(null))
       .finally(() => setCargando(false))
   }, [])
 
@@ -35,12 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = await api.post('/auth/login', body, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     })
-    tokenStorage.set(data.access_token)
     setUsuario(data.usuario)
   }, [])
 
-  const logout = useCallback(() => {
-    tokenStorage.clear()
+  const logout = useCallback(async () => {
+    await api.post('/auth/logout').catch(() => undefined)
     setUsuario(null)
   }, [])
 

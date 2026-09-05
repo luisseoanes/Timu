@@ -1,24 +1,41 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.core.deps import CurrentUser, DbSession, require_roles
+from app.core.deps import (
+    CurrentUser,
+    DbSession,
+    borrar_cookie_sesion,
+    establecer_cookie_sesion,
+    require_roles,
+)
 from app.core.enums import Rol
 from app.core.security import create_access_token
 from app.modules.auth import service
-from app.modules.auth.schemas import Token, UsuarioCreate, UsuarioRead
+from app.modules.auth.schemas import Sesion, UsuarioCreate, UsuarioRead
+from app.schemas.common import Mensaje
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login", response_model=Token)
-async def login(db: DbSession, form: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
+@router.post("/login", response_model=Sesion)
+async def login(
+    db: DbSession, response: Response, form: Annotated[OAuth2PasswordRequestForm, Depends()]
+) -> Sesion:
+    """El token se entrega en una cookie httpOnly, no en el cuerpo: el navegador no
+    debe poder leerlo desde JavaScript."""
     usuario = await service.authenticate(db, form.username, form.password)
     if usuario is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Email o contrasena incorrectos")
-    token = create_access_token(str(usuario.id), {"rol": usuario.rol})
-    return Token(access_token=token, usuario=UsuarioRead.model_validate(usuario))
+    establecer_cookie_sesion(response, create_access_token(str(usuario.id), {"rol": usuario.rol}))
+    return Sesion(usuario=UsuarioRead.model_validate(usuario))
+
+
+@router.post("/logout", response_model=Mensaje)
+async def logout(response: Response) -> Mensaje:
+    borrar_cookie_sesion(response)
+    return Mensaje(detail="Sesion cerrada")
 
 
 @router.post(

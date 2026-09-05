@@ -22,9 +22,8 @@ export interface Usuario {
   activo: boolean
 }
 
-export interface Token {
-  access_token: string
-  token_type: string
+export interface Sesion {
+  /** El token no viaja en el cuerpo: va en la cookie httpOnly que pone el backend. */
   usuario: Usuario
 }
 
