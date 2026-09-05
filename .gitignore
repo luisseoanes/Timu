@@ -23,3 +23,11 @@ dist/
 Thumbs.db
 .idea/
 .vscode/
+
+# Artefactos de pruebas y cobertura
+.coverage
+coverage.xml
+coverage/
+htmlcov/
+playwright-report/
+test-results/

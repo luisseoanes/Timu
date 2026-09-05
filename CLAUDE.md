@@ -23,21 +23,23 @@ docker compose exec api python scripts/seed.py     # admin@timu.co / cambiar123
 # Backend sin Docker
 cd backend && pip install -r requirements-dev.txt
 uvicorn app.main:app --reload
-pytest                              # suite completa (SQLite en memoria)
-pytest tests/test_familias.py::test_crear_y_listar_familia   # una sola prueba
-ruff check . && ruff format .
-mypy app
+
+docker compose up -d db-test        # PostgreSQL de pruebas (puerto 5433). Sin esto, pytest aborta.
+pytest                              # suite completa, con cobertura y umbral del 70%
+pytest -m unit                      # sólo lo que no toca la base de datos
+pytest tests/test_alcance.py::test_una_familia_solo_se_ve_a_si_misma   # una sola prueba
+ruff format . && ruff check . && mypy app
 
 # Frontend
 cd frontend && npm install
 npm run dev                         # 5173, con proxy /api → localhost:8000
-npm run typecheck                   # tsc --noEmit
-npm run build
+npm run verificar                   # lint + typecheck + cobertura + build (lo mismo que CI)
+npm run test:watch                  # pruebas de componentes en vigilancia
+npm run test:e2e                    # Playwright (requiere: npx playwright install chromium)
 ```
 
-`npm run lint` está declarado en `package.json` pero **no hay configuración de ESLint** en
-el repositorio; el comando falla. Usa `npm run typecheck` como puerta de calidad del
-frontend hasta que se añada `eslint.config.js`.
+En el backend `python3 -m venv` no funciona en la máquina de Pedro: usa
+`uv venv --python 3.12` (ver la memoria del proyecto).
 
 ## Arquitectura del backend
 
@@ -64,10 +66,33 @@ Reglas que atraviesan todo el backend:
 - **Enums de dominio en `app/core/enums.py`**, no en cada módulo. Son `StrEnum` y viajan
   como cadenas en la API.
 - **Los estados de servicio pasan por `app/modules/servicios/state_machine.py`.** Rutas,
-  portal y comunicaciones deben llamar a `transicionar()`; ningún módulo reimplementa el
-  grafo de transiciones ni asigna un estado a mano.
+  portal y comunicaciones llaman a `aplicar()`; ningún módulo reimplementa el grafo de
+  transiciones ni asigna un estado a mano.
 - **Los listados devuelven `Page[T]`** de `app/schemas/common.py` (`items`, `total`,
   `limit`, `offset`), con filtros combinables como en `familias.service.listar`.
+- **Toda consulta pasa por `restringir()` de `app/core/scope.py`.** `require_roles`
+  dice *quién puede llamar*; el alcance dice *qué filas ve*, y el portal de familias
+  necesita las dos. Los servicios reciben un `Alcance` como primer argumento tras la
+  sesión, y cada modelo visible desde el portal declara `__columna_familia__`. Un
+  modelo que no lo declare hace fallar la consulta: **se falla cerrado, nunca abierto**.
+  `familias` es la referencia del patrón.
+- **Ningún módulo llama a `tarea.delay()` dentro de una transacción.** Se publica un
+  evento con `app.core.outbox.publicar()`, que escribe en la misma transacción; si
+  ésta revienta, el efecto externo se va con ella. El worker `outbox.drenar` lo
+  despacha después. Los manejadores se registran con `@al_ocurrir("nombre.evento")`.
+- **El estado de un servicio se cambia con `state_machine.aplicar()`**, no asignando
+  `servicio.estado` ni llamando a `transicionar()` suelta: `aplicar` valida la
+  transición *y* deja publicado el evento que dispara los efectos de 6.10.
+- **Los campos JSON usan `JSONTipo`** de `app/core/database.py`, que es JSONB en
+  PostgreSQL (indexable con GIN) y JSON en el resto. Nunca el `JSON` de SQLAlchemy.
+- **Las tareas de Celery usan `sesion_worker()`**, la sesión síncrona de
+  `app/core/database.py`. Celery no es async: `asyncio.run()` dentro de una tarea crea
+  un event loop por ejecución y no reaprovecha conexiones. Los endpoints siguen async;
+  los workers, no. Cada tarea abre su `with sesion_worker() as db:`.
+- **Los adjuntos van a `app/integrations/storage.py`**, que habla S3. En desarrollo
+  apunta a MinIO (`docker compose up minio`) y en producción al bucket del cliente:
+  cambian las variables `STORAGE_*`, no el código. Nada se sirve público, todo con
+  `url_firmada()`.
 
 Integraciones (`app/integrations/`) y webhooks (`app/api/v1/webhooks.py`) están separados a
 propósito: los webhooks son públicos y se validan por token de verificación (Meta) o firma
@@ -93,9 +118,17 @@ con su `api.ts` (React Query) y sus pantallas; una pieza sube a `src/components/
 cuando la usan dos dominios. Las rutas de módulos aún no implementados renderizan
 `<Placeholder>` con su ticket del backlog.
 
-- **`src/api/client.ts` es el único que habla con la API.** Inyecta el JWT desde
-  `localStorage` y ante un 401 limpia el token y vuelve a `/login`. Ningún componente arma
-  una URL ni usa `fetch`.
+- **`src/api/client.ts` es el único que habla con la API.** Ningún componente arma una
+  URL ni usa `fetch`; ESLint lo impide.
+- **La sesión vive en una cookie httpOnly + SameSite=lax que pone el backend.** El
+  frontend no guarda ni lee tokens: `localStorage` es legible por JavaScript y una XSS
+  se llevaría la sesión, con historia clínica de por medio. Por eso el cliente va con
+  `withCredentials: true` y `AuthContext` averigua si hay sesión preguntando a
+  `/auth/me`. Hay una regla de ESLint que rechaza `localStorage`.
+- **Los componentes interactivos se construyen sobre primitivas de Radix** (diálogo,
+  select, tooltip, tabs, toast…). Radix aporta sólo comportamiento —foco atrapado,
+  Escape, roles ARIA—; el aspecto sale íntegro de `tokens.css`. `src/components/Modal.tsx`
+  es la referencia. No se escribe a mano un componente que Radix ya resuelve.
 - **`src/types/` es el espejo tipado de los schemas de Pydantic.** Si cambias un schema del
   backend, actualiza el tipo en el mismo cambio.
 - **Los estilos son CSS propio con cascada de orden fijo**: `tokens → base → componentes →
@@ -104,11 +137,37 @@ cuando la usan dos dominios. Las rutas de módulos aún no implementados renderi
   `#` en el diff de un componente es un rechazo en revisión.
 - Toda lectura va por React Query con clave que incluya los filtros (`['familias', filtros]`)
   y toda pantalla cubre carga, error y vacío.
+- **Toda pantalla nueva llega con sus pruebas.** Vitest + Testing Library para
+  componentes, con la API simulada por MSW en `src/test/handlers.ts` — nunca con mock
+  de axios, para que se pruebe también cómo se arma la petición. Playwright en `e2e/`
+  para los recorridos. Se consulta por rol y etiqueta accesible (`getByRole`,
+  `getByLabelText`), no por clase CSS: si la prueba no encuentra el control, un lector
+  de pantalla tampoco.
 
 `docs/frontend/` (design-system, components, layouts, conventions) es normativo para
 cualquier pantalla nueva: léelo antes de escribir UI. `conventions.md` incluye la checklist
-de revisión y la deuda conocida (sin tema oscuro, sin librería de componentes, datos de
-ejemplo en el panel de inicio hasta `F4-DAS-02`).
+de revisión y la deuda conocida (sin tema oscuro, datos de ejemplo en el panel de inicio
+hasta `F4-DAS-02`).
+
+## Pruebas
+
+Las del backend corren **contra PostgreSQL**, no contra SQLite: el esquema usa JSONB,
+UUID nativo y `FOR UPDATE SKIP LOCKED`, y ninguna de las tres existe en SQLite; una
+suite verde sobre SQLite no diría nada sobre producción. `docker compose up -d db-test`
+levanta una base efímera en tmpfs en el puerto 5433, y `tests/conftest.py` aborta con
+instrucciones si no la encuentra.
+
+Cada prueba corre dentro de una transacción que se revierte al terminar, así que no se
+ven entre sí y no hay que limpiar tablas. Los marcadores `unit` e `integration` separan
+lo que necesita base de datos de lo que no (`--strict-markers` rechaza los inventados).
+
+Umbrales de cobertura: 70% en el backend, 60% en el panel. Están para que no se
+degraden solos, no como objetivo; bajarlos requiere una razón escrita en el PR.
+
+`.github/workflows/ci.yml` corre en **cada push y cada pull request**: formato, análisis
+estático, tipos, pruebas unitarias, de integración y de extremo a extremo. El release es
+un job más, condicionado a `main`, así que no existe forma de publicar una versión que
+no haya pasado la batería completa.
 
 ## Convenciones de escritura
 

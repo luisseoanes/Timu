@@ -1,0 +1,187 @@
+name: CI
+
+# Todo push y todo pull request pasan la bateria completa. El release es un job mas
+# de este mismo workflow, condicionado a main: asi es imposible publicar una version
+# que no haya pasado por lint, tipos, pruebas unitarias, de integracion y e2e.
+on:
+  push:
+  pull_request:
+
+concurrency:
+  # En main no se cancela nada (un release a medias es peor que esperar);
+  # en una rama de trabajo, el push nuevo cancela el anterior.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '24'
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: timu
+          POSTGRES_PASSWORD: timu
+          POSTGRES_DB: timu_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U timu"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Instalar dependencias
+        working-directory: backend
+        run: pip install -r requirements-dev.txt
+
+      - name: Formato
+        working-directory: backend
+        run: ruff format --check .
+
+      - name: Análisis estático
+        working-directory: backend
+        run: ruff check .
+
+      - name: Tipos
+        working-directory: backend
+        run: mypy app
+
+      - name: Pruebas unitarias y de integración
+        working-directory: backend
+        env:
+          TEST_DATABASE_URL: postgresql+asyncpg://timu:timu@localhost:5433/timu_test
+        run: pytest
+
+      - name: Cobertura
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cobertura-backend
+          path: backend/coverage.xml
+          retention-days: 7
+
+  frontend:
+    name: Panel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        working-directory: frontend
+        run: npm ci
+
+      - name: Análisis estático
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Tipos
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Pruebas de componentes
+        working-directory: frontend
+        run: npm run test:coverage
+
+      - name: Construcción
+        working-directory: frontend
+        run: npm run build
+
+      - name: Cobertura
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cobertura-panel
+          path: frontend/coverage/lcov.info
+          retention-days: 7
+
+  e2e:
+    name: Extremo a extremo
+    runs-on: ubuntu-latest
+    needs: frontend # si no compila, no hay nada que recorrer
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        working-directory: frontend
+        run: npm ci
+
+      - name: Instalar navegador
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Construcción
+        working-directory: frontend
+        run: npm run build
+
+      - name: Pruebas de extremo a extremo
+        working-directory: frontend
+        run: npm run test:e2e
+
+      - name: Informe
+        uses: actions/upload-artifact@v4
+        if: failure() # sólo interesa cuando hay algo que mirar
+        with:
+          name: informe-e2e
+          path: frontend/playwright-report/
+          retention-days: 7
+
+  release:
+    name: Publicar
+    needs: [backend, frontend, e2e]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # crear el tag y el release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # semantic-release necesita el historial y los tags completos
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Instalar herramientas de publicación
+        run: npm ci
+
+      - name: Revisar la convención de los commits
+        run: node .github/scripts/commits-sin-convencion.mjs
+
+      - name: semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
