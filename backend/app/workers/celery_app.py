@@ -14,6 +14,7 @@ celery_app = Celery(
         "app.workers.tasks.preventivos",
         "app.workers.tasks.comunicaciones",
         "app.workers.tasks.encuestas",
+        "app.workers.tasks.outbox",
     ],
 )
 
@@ -21,6 +22,12 @@ celery_app.conf.update(
     task_track_started=True,
     timezone="America/Bogota",
     beat_schedule={
+        # Efectos externos pendientes (ver app/core/outbox.py). Cada minuto para que
+        # un WhatsApp no espere mas de eso desde que se confirmo la transaccion.
+        "outbox-drenar": {
+            "task": "outbox.drenar",
+            "schedule": 60.0,
+        },
         # 6.2 mora, alertas, congelamiento y reactivacion
         "cartera-revisar-mora": {
             "task": "cartera.revisar_mora",

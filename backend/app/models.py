@@ -4,6 +4,7 @@ Importar aqui todo modelo nuevo, o su tabla no aparecera en las migraciones.
 """
 
 from app.core.database import Base  # noqa: F401
+from app.core.outbox import EventoSaliente  # noqa: F401
 from app.modules.aliadas.models import ClinicaAliada, RemisionAliada  # noqa: F401
 from app.modules.auth.models import Usuario  # noqa: F401
 from app.modules.campanas.models import Campana  # noqa: F401
