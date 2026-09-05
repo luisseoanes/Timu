@@ -12,6 +12,8 @@ class Familia(Base, UUIDMixin, TimestampMixin):
     """6.1 Gestion de familias. Titular + contacto + ubicacion (usada por rutas 6.7)."""
 
     __tablename__ = "familias"
+    # Una familia se ata a si misma: el portal solo ve su propia ficha (ver core/scope.py).
+    __columna_familia__ = "id"
 
     titular_nombre: Mapped[str] = mapped_column(String(160))
     documento: Mapped[str] = mapped_column(String(32), unique=True, index=True)
@@ -37,6 +39,7 @@ class Mascota(Base, UUIDMixin, TimestampMixin):
     """6.1 Gestion de mascotas. Ancla de historia clinica (6.14) y carnet digital (6.15)."""
 
     __tablename__ = "mascotas"
+    __columna_familia__ = "familia_id"
 
     familia_id: Mapped[UUID] = mapped_column(
         ForeignKey("familias.id", ondelete="CASCADE"), index=True

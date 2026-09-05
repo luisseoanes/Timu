@@ -4,12 +4,14 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import EstadoAfiliacion
+from app.core.scope import Alcance, restringir
 from app.modules.familias.models import Familia, Mascota
 from app.modules.familias.schemas import FamiliaCreate, FamiliaUpdate, MascotaCreate
 
 
 async def listar(
     db: AsyncSession,
+    alcance: Alcance,
     *,
     q: str | None = None,
     ciudad: str | None = None,
@@ -17,8 +19,12 @@ async def listar(
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[Familia], int]:
-    """6.16 Segmentacion: filtros combinables para campanas y reportes."""
-    stmt = select(Familia)
+    """6.16 Segmentacion: filtros combinables para campanas y reportes.
+
+    El alcance se aplica antes que cualquier filtro: para el portal, una familia solo
+    se ve a si misma por mucho que juegue con los parametros de busqueda.
+    """
+    stmt = restringir(select(Familia), Familia, alcance)
     if q:
         patron = f"%{q}%"
         stmt = stmt.where(
@@ -38,8 +44,11 @@ async def listar(
     return list(result.scalars().all()), total
 
 
-async def obtener(db: AsyncSession, familia_id: UUID) -> Familia | None:
-    return await db.get(Familia, familia_id)
+async def obtener(db: AsyncSession, alcance: Alcance, familia_id: UUID) -> Familia | None:
+    """Lectura por id, tambien acotada: pedir el id de otra familia devuelve None,
+    que el router traduce a 404. No se distingue "no existe" de "no es tuya"."""
+    stmt = restringir(select(Familia).where(Familia.id == familia_id), Familia, alcance)
+    return await db.scalar(stmt)
 
 
 async def crear(db: AsyncSession, data: FamiliaCreate) -> Familia:
