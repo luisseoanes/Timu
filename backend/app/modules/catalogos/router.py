@@ -35,6 +35,15 @@ class EspecieRead(BaseModel):
     activa: bool
 
 
+class PasoTipoRead(BaseModel):
+    """Paso de la atencion (F1-SER-02): el panel arma con esto el formulario de cada paso."""
+
+    codigo: str
+    nombre: str
+    obligatorio: bool = True
+    campos: list[str] = []
+
+
 class TipoServicioRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     codigo: str
@@ -43,6 +52,7 @@ class TipoServicioRead(BaseModel):
     duracion_min: int
     requiere_autorizacion: bool
     activo: bool
+    pasos: list[PasoTipoRead] = []
 
 
 class EsquemaPreventivoRead(BaseModel):

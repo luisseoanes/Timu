@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 
-import type { CiudadRead, EspecieRead, FamiliaRead, Usuario } from '@/types'
+import type { CiudadRead, EspecieRead, FamiliaRead, TipoServicioRead, Usuario } from '@/types'
 
 export const USUARIO_ADMIN: Usuario = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -51,6 +51,30 @@ export const ESPECIES: EspecieRead[] = [
   { codigo: 'gato', nombre: 'Gato', activa: true },
 ]
 
+export const TIPOS_SERVICIO: TipoServicioRead[] = [
+  {
+    codigo: 'consulta_domiciliaria',
+    nombre: 'Consulta domiciliaria',
+    modalidad: 'domiciliario',
+    duracion_min: 45,
+    requiere_autorizacion: false,
+    activo: true,
+    pasos: [
+      { codigo: 'valoracion', nombre: 'Valoracion clinica', obligatorio: true, campos: ['hallazgos'] },
+      { codigo: 'plan', nombre: 'Plan y recomendaciones', obligatorio: true, campos: ['recomendaciones'] },
+    ],
+  },
+  {
+    codigo: 'vacunacion',
+    nombre: 'Vacunación',
+    modalidad: 'preventivo',
+    duracion_min: 30,
+    requiere_autorizacion: true,
+    activo: true,
+    pasos: [],
+  },
+]
+
 const API = '*/api/v1'
 const vacia = { items: [], total: 0, limit: 50, offset: 0 }
 
@@ -60,6 +84,10 @@ export const handlers = [
   http.post(`${API}/auth/logout`, () => HttpResponse.json({ detail: 'Sesion cerrada' })),
   http.get(`${API}/catalogos/ciudades`, () => HttpResponse.json(CIUDADES)),
   http.get(`${API}/catalogos/especies`, () => HttpResponse.json(ESPECIES)),
+  http.get(`${API}/catalogos/tipos-servicio`, () => HttpResponse.json(TIPOS_SERVICIO)),
+  http.get(`${API}/agenda/franjas`, () => HttpResponse.json([])),
+  http.get(`${API}/pendientes`, () => HttpResponse.json([])),
+  http.get(`${API}/servicios/:id/pasos`, () => HttpResponse.json([])),
   http.get(`${API}/familias`, () =>
     HttpResponse.json({ items: [FAMILIA], total: 1, limit: 50, offset: 0 }),
   ),

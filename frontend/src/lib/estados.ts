@@ -112,6 +112,24 @@ const REMISION: Record<string, Estado> = {
   anulada: { label: 'Anulada', tono: 'neutro' },
 }
 
+const PENDIENTE: Record<string, Estado> = {
+  pendiente_autorizacion: { label: 'Por autorizar', tono: 'alerta' },
+  autorizado: { label: 'Autorizado', tono: 'info' },
+  en_gestion: { label: 'En gestión', tono: 'info' },
+  resuelto: { label: 'Resuelto', tono: 'ok' },
+  rechazado: { label: 'Rechazado', tono: 'neutro' },
+}
+
+const MENSAJE: Record<string, Estado> = {
+  encolado: { label: 'En cola', tono: 'neutro' },
+  enviado: { label: 'Enviado', tono: 'info' },
+  entregado: { label: 'Entregado', tono: 'info' },
+  leido: { label: 'Leído', tono: 'ok' },
+  fallido: { label: 'Fallido', tono: 'peligro' },
+  recibido: { label: 'Recibido', tono: 'info' },
+  omitido: { label: 'Omitido', tono: 'neutro' },
+}
+
 export const ESTADOS = {
   afiliacion: AFILIACION,
   servicio: SERVICIO,
@@ -126,6 +144,8 @@ export const ESTADOS = {
   campana: CAMPANA,
   etapa: ETAPA,
   remision: REMISION,
+  pendiente: PENDIENTE,
+  mensaje: MENSAJE,
 } as const
 
 export type Dominio = keyof typeof ESTADOS

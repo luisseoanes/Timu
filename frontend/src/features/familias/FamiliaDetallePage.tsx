@@ -5,6 +5,7 @@ import { Distintivo } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Pestanas } from '@/components/Pestanas'
 import { useAuth } from '@/features/auth/AuthContext'
+import { useNombreTipoServicio } from '@/features/catalogos/api'
 import { fecha, fechaHora } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
 import type { CambioHistorial, FamiliaRead } from '@/types'
@@ -57,6 +58,7 @@ export function FamiliaDetallePage() {
 
 function ServiciosFamilia({ familia }: { familia: FamiliaRead }) {
   const servicios = useServiciosFamilia(familia.id)
+  const nombreTipo = useNombreTipoServicio()
   return (
     <section className="tarjeta">
       <Consulta
@@ -80,7 +82,7 @@ function ServiciosFamilia({ familia }: { familia: FamiliaRead }) {
               <tbody>
                 {d.items.map((s) => (
                   <tr key={s.id}>
-                    <td className="principal">{s.tipo}</td>
+                    <td className="principal">{nombreTipo(s.tipo_codigo)}</td>
                     <td>{familia.mascotas?.find((m) => m.id === s.mascota_id)?.nombre ?? '—'}</td>
                     <td className="numero">{fechaHora(s.programado_para)}</td>
                     <td>

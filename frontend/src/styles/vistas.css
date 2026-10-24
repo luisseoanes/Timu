@@ -140,7 +140,7 @@
 }
 .marca-nombre { font-family: var(--fuente-titulo); font-weight: 700; font-size: 22px; letter-spacing: .14em; color: var(--tinta); line-height: 1; }
 .marca-sub { font-size: var(--t-etiqueta); letter-spacing: .12em; text-transform: uppercase; color: var(--apagado); }
-.sidebar .marca-sub { letter-spacing: .04em; white-space: nowrap; }
+.sidebar .marca-sub { font-size: 10px; letter-spacing: .04em; white-space: nowrap; }
 .marca-clara .marca-sello { background: var(--sobre-marca-velo); border: 1px solid var(--sobre-marca-borde); }
 .marca-clara .marca-nombre { color: var(--sobre-marca); }
 .marca-clara .marca-sub { color: var(--sobre-marca-suave); }

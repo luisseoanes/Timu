@@ -38,3 +38,10 @@ export function usePlanes() {
     queryFn: async () => (await api.get<PlanRead[]>('/planes')).data,
   })
 }
+
+/** Nombre legible de un tipo de servicio por su código. `ServicioRead.tipo` es la
+ * modalidad (domiciliario, preventivo…); el nombre vive en el catálogo. */
+export function useNombreTipoServicio(): (codigo: string) => string {
+  const tipos = useTiposServicio()
+  return (codigo) => tipos.data?.find((t) => t.codigo === codigo)?.nombre ?? codigo.replace(/_/g, ' ')
+}

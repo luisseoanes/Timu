@@ -78,11 +78,32 @@ export interface EspecieRead {
   activa: boolean
 }
 
+export interface PasoTipoRead {
+  codigo: string
+  nombre: string
+  obligatorio?: boolean
+  campos?: string[]
+}
+
 export interface TipoServicioRead {
   codigo: string
   nombre: string
   modalidad: string
   duracion_min: number
+  requiere_autorizacion: boolean
+  activo: boolean
+  pasos?: PasoTipoRead[]
+}
+
+export interface EsquemaPreventivoRead {
+  codigo: string
+  especie_codigo: string
+  tipo: string
+  nombre: string
+  edad_minima_semanas: number
+  dosis_iniciales: number
+  intervalo_inicial_dias: number
+  intervalo_refuerzo_dias: number | null
   requiere_autorizacion: boolean
   activo: boolean
 }
@@ -523,6 +544,96 @@ export interface RespuestaRead {
   cuerpo: string
   variables: string[]
   estado: string
+}
+
+export interface ReglaRead {
+  id: string
+  codigo: string
+  nombre: string
+  descripcion: string | null
+  evento: string
+  condicion: Record<string, unknown>
+  accion: Record<string, unknown>
+  prioridad: number
+  detener: boolean
+  plan_id: string | null
+  vigente_desde: string | null
+  vigente_hasta: string | null
+  activa: boolean
+}
+
+export interface BajaRead {
+  id: string
+  destino: string
+  canal: string
+  motivo: string | null
+  created_at: string
+}
+
+export interface ConfiguracionRead {
+  tipo_servicio_codigo?: string | null
+  encuesta_activa?: boolean
+  demora_horas?: number
+  plantilla_encuesta?: string
+  seguimiento_dias?: number | null
+  plantilla_seguimiento?: string
+  umbral_alerta?: number
+  comentario?: string | null
+  id: string
+}
+
+export interface ServicioPortalRead {
+  id: string
+  mascota_id: string | null
+  tipo_codigo: string
+  estado: string
+  programado_para: string | null
+  termina_en: string | null
+}
+
+export interface PagoPortalRead {
+  id: string
+  referencia_externa: string
+  valor: string
+  estado: string
+  fecha_pago: string | null
+  created_at: string
+}
+
+export interface InicioPago {
+  pago: PagoPortalRead
+  enlace_pago: string
+}
+
+export interface MedioPagoRead {
+  id: string
+  familia_id: string
+  proveedor: string
+  marca: string | null
+  ultimos4: string | null
+  autorizado_en: string
+  activo: boolean
+}
+
+export interface Recomendacion {
+  plan: PlanRead
+  motivo: string
+  regla: string
+}
+
+export interface CambioPlanRead {
+  id: string
+  contrato_id: string
+  tipo: string
+  plan_anterior_id: string | null
+  plan_nuevo_id: string | null
+  valor_anterior: string
+  valor_nuevo: string
+  ajuste: string
+  modo: string | null
+  regla_codigo: string | null
+  fecha_efectiva: unknown
+  aplicado: boolean
 }
 
 export interface SolicitudVirtualRead {

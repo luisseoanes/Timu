@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
 import { Distintivo } from '@/components/Distintivo'
@@ -24,7 +24,8 @@ const POR_PAGINA = 25
 export function CarteraPage() {
   const [q, setQ] = useState('')
   const [estado, setEstado] = useState<EstadoAfiliacion | ''>('')
-  const [soloMora, setSoloMora] = useState(false)
+  const [params] = useSearchParams()
+  const [soloMora, setSoloMora] = useState(params.get('mora') === '1')
   const [offset, setOffset] = useState(0)
   const contratos = useContratos({
     q: q || undefined,

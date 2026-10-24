@@ -5,7 +5,7 @@ import { Consulta } from '@/components/Consulta'
 import { Distintivo } from '@/components/Distintivo'
 import { Icono, type NombreIcono } from '@/components/Icono'
 import { useAuth } from '@/features/auth/AuthContext'
-import { useCiudades } from '@/features/catalogos/api'
+import { useCiudades, useNombreTipoServicio } from '@/features/catalogos/api'
 import { descargar } from '@/lib/descargas'
 import { mensajeError } from '@/lib/errores'
 import { fecha, fechaHora, hoyISO, moneda, porcentaje } from '@/lib/formato'
@@ -230,6 +230,7 @@ function TableroIndicadores({ datos }: { datos: Indicadores }) {
 
 function ProximosServicios() {
   const servicios = useProximosServicios(hoyISO())
+  const nombreTipo = useNombreTipoServicio()
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
@@ -250,7 +251,7 @@ function ProximosServicios() {
                 <Icono nombre="servicios" size={18} />
               </span>
               <div className="fila-cuerpo">
-                <strong>{s.tipo}</strong>
+                <strong>{nombreTipo(s.tipo_codigo)}</strong>
                 <span>{s.ciudad}</span>
               </div>
               <div className="fila-lado">{fechaHora(s.programado_para)}</div>

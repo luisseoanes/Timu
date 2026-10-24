@@ -13,6 +13,9 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { FamiliaDetallePage } from '@/features/familias/FamiliaDetallePage'
 import { FamiliasPage } from '@/features/familias/FamiliasPage'
 import { Placeholder } from '@/features/Placeholder'
+import { ServicioDetallePage } from '@/features/servicios/ServicioDetallePage'
+import { ServiciosPage } from '@/features/servicios/ServiciosPage'
+import { TareasPage } from '@/features/tareas/TareasPage'
 import { AppLayout } from '@/layouts/AppLayout'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 
@@ -43,16 +46,9 @@ export default function App() {
                 <Route path="familias" element={<FamiliasPage />} />
                 <Route path="familias/:id" element={<FamiliaDetallePage />} />
                 <Route path="cartera" element={<CarteraPage />} />
-                <Route
-                  path="servicios"
-                  element={
-                    <Placeholder
-                      titulo="Servicios"
-                      ticket="F1-SER"
-                      detalle="Programación, pendientes y máquina de estados (6.5, 6.6 y 6.10)."
-                    />
-                  }
-                />
+                <Route path="servicios" element={<ServiciosPage />} />
+                <Route path="servicios/:id" element={<ServicioDetallePage />} />
+                <Route path="tareas" element={<TareasPage />} />
                 <Route
                   path="preventivos"
                   element={

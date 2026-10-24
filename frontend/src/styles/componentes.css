@@ -346,3 +346,41 @@
 a.fila { color: inherit; }
 a.fila:hover strong { color: var(--verde-700); }
 a.acceso { text-decoration: none; }
+
+/* --- Selector con búsqueda (familia, mascota) ------------------- */
+.seleccion {
+  display: flex; align-items: center; gap: var(--e3);
+  padding: var(--e2) var(--e3);
+  border: 1px solid var(--verde-200); border-radius: var(--r-campo);
+  background: var(--verde-50);
+}
+.opciones { list-style: none; margin: 0; padding: var(--e1); display: grid; gap: 2px;
+  border: 1px solid var(--linea); border-radius: var(--r-campo); background: var(--superficie); box-shadow: var(--sombra-2); }
+.opciones > li.apagado { padding: var(--e2) var(--e3); }
+.opcion {
+  width: 100%; display: grid; gap: 2px; text-align: left;
+  padding: var(--e2) var(--e3); border: 0; border-radius: var(--r-campo);
+  background: transparent; font: inherit; color: var(--texto); cursor: pointer;
+}
+.opcion strong { color: var(--tinta); }
+.opcion span { font-size: var(--t-menor); color: var(--apagado); }
+.opcion:hover, .opcion:focus-visible { background: var(--verde-50); }
+
+/* --- Chips de franja horaria ----------------------------------- */
+.cupos { display: flex; flex-wrap: wrap; gap: var(--e2); }
+.cupo {
+  font: inherit; font-size: var(--t-menor); font-weight: 700;
+  padding: 8px var(--e3); border-radius: var(--r-pastilla);
+  border: 1px solid var(--linea-fuerte); background: var(--superficie); color: var(--texto); cursor: pointer;
+}
+.cupo[aria-pressed="true"] { background: var(--verde-500); border-color: var(--verde-500); color: var(--sobre-marca); }
+.cupo:disabled { opacity: .45; cursor: default; }
+
+/* --- Línea de tiempo (pasos, historia) ------------------------- */
+.linea-tiempo { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e4); }
+.linea-tiempo > li { position: relative; padding-left: var(--e6); }
+.linea-tiempo > li::before {
+  content: ""; position: absolute; left: 6px; top: 6px; width: 10px; height: 10px;
+  border-radius: var(--r-pastilla); background: var(--linea-fuerte);
+}
+.linea-tiempo > li.hecho::before { background: var(--verde-500); }

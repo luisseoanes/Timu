@@ -408,6 +408,19 @@ async def test_esquemas_por_especie(client: AsyncClient, headers):
     assert {e["especie_codigo"] for e in resp.json()} == {"felino"}
 
 
+async def test_tipos_de_servicio_exponen_sus_pasos(client: AsyncClient, headers):
+    """El panel arma el formulario de la atencion con los pasos de cada tipo (F1-SER-02)."""
+    resp = await client.get("/api/v1/catalogos/tipos-servicio", headers=headers)
+    consulta = next(t for t in resp.json() if t["codigo"] == "consulta_domiciliaria")
+    valoracion = next(p for p in consulta["pasos"] if p["codigo"] == "valoracion")
+    assert valoracion == {
+        "codigo": "valoracion",
+        "nombre": "Valoracion clinica",
+        "obligatorio": True,
+        "campos": ["hallazgos"],
+    }
+
+
 # --- Sesion por cookie (pruebas que trajo el remoto) ------------------------------------------
 
 
