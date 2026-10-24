@@ -233,3 +233,11 @@ async def test_liquidacion_por_periodo(client, db, headers, escenario, aliada):
     )
     assert csv.headers["content-type"].startswith("text/csv")
     assert remision["codigo"] in csv.text and "TOTAL" in csv.text
+
+
+async def test_la_aliada_tiene_sesion_reconocible_y_la_cierra(client, aliada):
+    """El panel sabe quien inicio sesion por /auth/me; sin el, la aliada quedaba por fuera."""
+    me = await client.get("/api/v1/auth/me", headers=aliada)
+    assert me.status_code == 200
+    assert me.json()["rol"] == "aliada"
+    assert (await client.post("/api/v1/auth/logout", headers=aliada)).status_code == 200

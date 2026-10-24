@@ -15,7 +15,6 @@ from sqlalchemy import select
 from app.core.config import settings
 from app.core.deps import (
     INTERNOS,
-    TODOS,
     Admin,
     DbSession,
     borrar_cookie_sesion,
@@ -23,6 +22,7 @@ from app.core.deps import (
     publico,
     require_roles,
 )
+from app.core.enums import Rol
 from app.modules.auth import service, sesiones
 from app.modules.auth.models import Usuario
 from app.modules.auth.schemas import (
@@ -40,7 +40,9 @@ from app.schemas.common import Mensaje, Page, ParamsListado, paginar
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-Autenticado = Annotated[Usuario, Depends(require_roles(*TODOS))]
+# Cualquier sesion valida, la de una clinica aliada incluida: sin /me ni /logout esa cuenta
+# podia ingresar pero el panel no la reconocia ni podia cerrarla.
+Autenticado = Annotated[Usuario, Depends(require_roles(*Rol))]
 
 
 def _sesion(usuario: Usuario) -> Sesion:
