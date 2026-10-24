@@ -229,7 +229,7 @@ describe('FamiliaDetallePage', () => {
               id: 's1',
               familia_id: FAMILIA.id,
               mascota_id: FAMILIA.mascotas?.[0]?.id,
-              tipo_codigo: 'consulta',
+              tipo_codigo: 'consulta_domiciliaria',
               tipo: 'Consulta domiciliaria',
               estado: 'agendado',
               ciudad: 'Bogota',
