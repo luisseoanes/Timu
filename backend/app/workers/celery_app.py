@@ -4,6 +4,10 @@ from celery import Celery
 from celery.schedules import crontab
 from celery.signals import worker_process_init
 
+# El worker no carga app.main: sin el registro unico de modelos, SQLAlchemy no resuelve
+# las llaves foraneas hacia tablas de otros modulos (p. ej. rutas -> usuarios) y el
+# primer flush que las toque revienta.
+import app.models  # noqa: F401
 from app.core.config import settings
 from app.core.observabilidad import configurar_logging, configurar_sentry
 

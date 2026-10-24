@@ -11,6 +11,7 @@ procesadores, asi que tambien lleva el identificador y sale en JSON cuando toca.
 
 import logging
 import re
+import sys
 import time
 import uuid
 from contextvars import ContextVar
@@ -53,7 +54,9 @@ def configurar_logging(*, json: bool, debug: bool) -> None:
         ),
         cache_logger_on_first_use=True,
     )
-    handler = logging.StreamHandler()
+    # Al stderr real del proceso: en un hijo de Celery sys.stderr esta redirigido al propio
+    # logging, y escribir ahi se descarta por recursion (las tareas quedaban sin registro).
+    handler = logging.StreamHandler(sys.__stderr__)
     handler.setFormatter(
         structlog.stdlib.ProcessorFormatter(
             foreign_pre_chain=compartidos,
