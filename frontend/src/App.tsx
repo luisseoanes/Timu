@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { AuthProvider } from '@/features/auth/AuthContext'
 import { LoginPage } from '@/features/auth/LoginPage'
+import { CarteraPage } from '@/features/cartera/CarteraPage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { FamiliaDetallePage } from '@/features/familias/FamiliaDetallePage'
 import { FamiliasPage } from '@/features/familias/FamiliasPage'
@@ -26,16 +27,7 @@ export default function App() {
                 <Route index element={<DashboardPage />} />
                 <Route path="familias" element={<FamiliasPage />} />
                 <Route path="familias/:id" element={<FamiliaDetallePage />} />
-                <Route
-                  path="cartera"
-                  element={
-                    <Placeholder
-                      titulo="Cartera"
-                      ticket="F1-CAR"
-                      detalle="Mora, congelamiento, reactivación y renovación anual (6.2 y 6.4)."
-                    />
-                  }
-                />
+                <Route path="cartera" element={<CarteraPage />} />
                 <Route
                   path="servicios"
                   element={
