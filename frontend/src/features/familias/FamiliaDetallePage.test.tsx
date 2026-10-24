@@ -168,4 +168,178 @@ describe('FamiliaDetallePage', () => {
     await user.click(within(modal).getByRole('button', { name: 'Confirmar baja' }))
     await waitFor(() => expect(motivo).toBe('Se muda del país'))
   })
+
+  it('edita los datos y envía sólo los campos que cambiaron', async () => {
+    let enviado: unknown = null
+    server.use(
+      http.patch(`${API}/familias/:id`, async ({ request }) => {
+        enviado = await request.json()
+        return HttpResponse.json({ ...FAMILIA, direccion: 'Calle 1 # 2-3' })
+      }),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('button', { name: 'Editar' }))
+    await user.type(screen.getByLabelText('Dirección'), 'Calle 1 # 2-3')
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(enviado).toEqual({ direccion: 'Calle 1 # 2-3' }))
+    expect(await screen.findByText('Cambios guardados.')).toBeInTheDocument()
+  })
+
+  it('muestra el error del servidor al editar', async () => {
+    server.use(
+      http.patch(`${API}/familias/:id`, () =>
+        HttpResponse.json({ detail: 'Teléfono inválido' }, { status: 422 }),
+      ),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('button', { name: 'Editar' }))
+    await user.type(screen.getByLabelText('Dirección'), 'x')
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Teléfono inválido')
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument()
+  })
+
+  it('cuenta en el historial qué cambió, campo por campo', async () => {
+    server.use(
+      http.get(`${API}/familias/:id/historial`, () =>
+        HttpResponse.json([
+          { fecha: '2026-10-01T15:00:00Z', accion: 'cambio_estado', usuario_id: null, cambios: { estado: ['activa', 'congelada'] } },
+          { fecha: '2026-09-01T15:00:00Z', accion: 'editar', usuario_id: null, cambios: { direccion: [null, 'Calle 1'] } },
+          { fecha: '2026-08-01T15:00:00Z', accion: 'crear', usuario_id: null, cambios: {} },
+        ]),
+      ),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Historial' }))
+    expect(await screen.findByText('estado: activa → congelada')).toBeInTheDocument()
+    expect(screen.getByText('direccion: vacío → Calle 1')).toBeInTheDocument()
+    expect(screen.getByText('Registro creado')).toBeInTheDocument()
+  })
+
+  it('lista los servicios de la familia con su mascota', async () => {
+    server.use(
+      http.get(`${API}/servicios`, () =>
+        HttpResponse.json({
+          items: [
+            {
+              id: 's1',
+              familia_id: FAMILIA.id,
+              mascota_id: FAMILIA.mascotas?.[0]?.id,
+              tipo_codigo: 'consulta',
+              tipo: 'Consulta domiciliaria',
+              estado: 'agendado',
+              ciudad: 'Bogota',
+              programado_para: '2026-11-02T15:00:00Z',
+            },
+          ],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        }),
+      ),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Servicios' }))
+    expect(await screen.findByText('Consulta domiciliaria')).toBeInTheDocument()
+    expect(screen.getByText('Luna')).toBeInTheDocument()
+    expect(screen.getByText('Agendado')).toBeInTheDocument()
+  })
+
+  it('avisa que la familia está dada de baja y no ofrece acciones', async () => {
+    server.use(
+      http.get(`${API}/familias/:id`, () =>
+        HttpResponse.json({
+          ...FAMILIA,
+          estado: 'cancelada',
+          dada_de_baja_en: '2026-10-01T10:00:00Z',
+          motivo_baja: 'Se mudó',
+          usuario_portal_id: 'u1',
+        }),
+      ),
+    )
+    abrirFicha()
+    expect(await screen.findByText(/dada de baja el 01\/10\/2026: se mudó/i)).toBeInTheDocument()
+    expect(screen.getByText('Con portal')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cambiar estado' })).not.toBeInTheDocument()
+  })
+
+  it('cambia el estado con su motivo', async () => {
+    let enviado: unknown = null
+    server.use(
+      http.post(`${API}/familias/:id/estado`, async ({ request }) => {
+        enviado = await request.json()
+        return HttpResponse.json({ ...FAMILIA, estado: 'congelada' })
+      }),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('button', { name: 'Cambiar estado' }))
+    const modal = await screen.findByRole('dialog')
+    await user.selectOptions(within(modal).getByLabelText('Nuevo estado'), 'congelada')
+    await user.type(within(modal).getByLabelText('Motivo'), 'Viaje largo')
+    await user.click(within(modal).getByRole('button', { name: 'Cambiar estado' }))
+    await waitFor(() => expect(enviado).toEqual({ estado: 'congelada', motivo: 'Viaje largo' }))
+  })
+
+  it('habilita el portal y dice el resultado', async () => {
+    server.use(
+      http.post(`${API}/familias/:id/acceso-portal`, () =>
+        HttpResponse.json({ ...FAMILIA, usuario_portal_id: 'u1' }),
+      ),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('button', { name: 'Habilitar portal' }))
+    expect(await screen.findByText(/portal habilitado/i)).toBeInTheDocument()
+  })
+
+  it('informa si no se pudo habilitar el portal', async () => {
+    server.use(
+      http.post(`${API}/familias/:id/acceso-portal`, () =>
+        HttpResponse.json({ detail: 'La familia no tiene un celular válido' }, { status: 409 }),
+      ),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('button', { name: 'Habilitar portal' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('no tiene un celular válido')
+  })
+
+  it('agrega una mascota y da de baja otra', async () => {
+    let nueva: unknown = null
+    let baja: unknown = null
+    server.use(
+      http.post(`${API}/familias/:id/mascotas`, async ({ request }) => {
+        nueva = await request.json()
+        return HttpResponse.json({}, { status: 201 })
+      }),
+      http.post(`${API}/mascotas/:id/baja`, async ({ request }) => {
+        baja = await request.json()
+        return HttpResponse.json({})
+      }),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Mascotas' }))
+
+    await user.click(await screen.findByRole('button', { name: 'Agregar mascota' }))
+    let modal = await screen.findByRole('dialog')
+    await user.type(within(modal).getByLabelText('Nombre'), 'Michi')
+    await user.selectOptions(within(modal).getByLabelText('Especie'), 'gato')
+    await user.click(within(modal).getByRole('button', { name: 'Agregar' }))
+    await waitFor(() => expect(nueva).toEqual({ nombre: 'Michi', especie: 'gato' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+    const tabla = screen.getByRole('table')
+    await user.click(within(tabla).getByRole('button', { name: 'Dar de baja' }))
+    modal = await screen.findByRole('dialog', { name: 'Dar de baja a Luna' })
+    await user.type(within(modal).getByLabelText('Motivo'), 'Falleció')
+    await user.click(within(modal).getByRole('button', { name: 'Confirmar baja' }))
+    await waitFor(() => expect(baja).toEqual({ motivo: 'Falleció' }))
+  })
 })
