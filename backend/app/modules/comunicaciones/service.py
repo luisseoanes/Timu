@@ -364,6 +364,12 @@ def _registrar_entrante(db: Session, msg: dict[str, Any]) -> None:
         conversacion.familia_id = conversacion.familia_id or familia_id
     if texto and texto.strip().upper() in PALABRAS_BAJA:
         registrar_baja(db, telefono, motivo="Solicitada por WhatsApp")
+    elif texto:
+        # F3-ENC-02 Un "1" a "5" en respuesta a una encuesta reciente es su calificacion.
+        from app.modules.encuestas import service as encuestas
+
+        with db.begin_nested():
+            encuestas.respuesta_whatsapp(db, telefono, texto)
 
 
 def procesar_evento_whatsapp(db: Session, payload: dict[str, Any]) -> dict[str, int]:

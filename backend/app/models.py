@@ -41,7 +41,7 @@ from app.modules.comunicaciones.models import (  # noqa: F401
     Mensaje,
     PlantillaWhatsApp,
 )
-from app.modules.encuestas.models import Encuesta  # noqa: F401
+from app.modules.encuestas.models import ConfiguracionEncuesta, Encuesta  # noqa: F401
 from app.modules.familias.models import Familia, Mascota  # noqa: F401
 from app.modules.planes.models import Beneficio, CambioPlan, Plan  # noqa: F401
 from app.modules.preventivos.models import CarnetEmitido, EventoPreventivo  # noqa: F401

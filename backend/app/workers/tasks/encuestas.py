@@ -1,11 +1,11 @@
 """6.20 / 6.21 Encuestas de satisfaccion y seguimiento post atencion."""
 
-import structlog
+from uuid import UUID
 
+from app.core.database import sesion_worker
 from app.core.eventos import EventoDominio, al_ocurrir
+from app.modules.encuestas import service
 from app.workers.celery_app import celery_app
-
-logger = structlog.get_logger(__name__)
 
 TAREA_ENCUESTA = "encuestas.enviar_encuesta"
 
@@ -17,13 +17,14 @@ def _al_completar_servicio(evento: EventoDominio) -> None:
 
 
 @celery_app.task(name=TAREA_ENCUESTA)
-def enviar_encuesta(servicio_id: str) -> dict[str, str]:
-    """Disparo automatico al pasar el servicio a COMPLETADO."""
-    logger.info("encuestas.enviar_encuesta", servicio_id=servicio_id)
-    return {"servicio_id": servicio_id, "status": "enviada"}
+def programar_encuesta(servicio_id: str) -> dict[str, int]:
+    """F3-ENC-01 Programa la encuesta (y el seguimiento) con la demora del tipo de atencion."""
+    with sesion_worker() as db:
+        return {"programadas": len(service.programar(db, UUID(servicio_id)))}
 
 
-@celery_app.task(name="encuestas.enviar_seguimientos")
-def enviar_seguimientos() -> dict[str, int]:
-    """6.21 Seguimiento configurable por tipo de atencion."""
-    return {"seguimientos_enviados": 0}
+@celery_app.task(name="encuestas.enviar_pendientes")
+def enviar_pendientes() -> dict[str, int]:
+    """Envia las encuestas y seguimientos cuya hora ya llego."""
+    with sesion_worker() as db:
+        return service.enviar_pendientes(db)

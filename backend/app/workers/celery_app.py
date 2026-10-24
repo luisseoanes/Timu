@@ -76,10 +76,10 @@ celery_app.conf.update(
             "task": "preventivos.generar_agenda",
             "schedule": crontab(hour=5, minute=30),
         },
-        # 6.21 seguimiento post atencion
-        "encuestas-seguimiento": {
-            "task": "encuestas.enviar_seguimientos",
-            "schedule": crontab(hour=15, minute=0),
+        # F3-ENC-01 / 03 encuestas y seguimientos cuya hora llego
+        "encuestas-enviar-pendientes": {
+            "task": "encuestas.enviar_pendientes",
+            "schedule": crontab(minute="*/15"),
         },
     },
 )
