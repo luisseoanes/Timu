@@ -89,6 +89,17 @@ class Settings(BaseSettings):
     # Preventivos (F2-PRE-04): con cuantos dias se avisa a la familia que se acerca la fecha.
     PREVENTIVO_ANTICIPACION_DIAS: int = 7
 
+    # Rutas (F2-RUT): jornada, capacidad por tecnico y ventana de llegada acordada.
+    RUTA_JORNADA_INICIO: str = "07:00"
+    RUTA_JORNADA_FIN: str = "19:00"
+    RUTA_MAX_ATENCIONES: int = 8
+    RUTA_VENTANA_LLEGADA_MIN: int = 60
+    RUTA_AVISO_MARGEN_MIN: int = 30
+    RUTA_VELOCIDAD_KMH: float = 22.0
+    RUTA_SEGUNDOS_OPTIMIZACION: int = 2
+    # Distance Matrix se factura por elemento: tope diario antes de pasar a estimar.
+    MAPS_TOPE_DIARIO: int = 2000
+
     # --- Sesion del navegador: el token viaja en cookie httpOnly ---
     # SECURE debe quedar en True en cualquier ambiente servido por HTTPS.
     COOKIE_NAME: str = "timu_sesion"

@@ -46,7 +46,13 @@ from app.modules.familias.models import Familia, Mascota  # noqa: F401
 from app.modules.planes.models import Beneficio, CambioPlan, Plan  # noqa: F401
 from app.modules.preventivos.models import CarnetEmitido, EventoPreventivo  # noqa: F401
 from app.modules.reglas.models import Regla  # noqa: F401
-from app.modules.rutas.models import ParadaRuta, Ruta  # noqa: F401
+from app.modules.rutas.models import (  # noqa: F401
+    ConsumoMapas,
+    DistanciaCache,
+    ParadaRuta,
+    PlanificacionRuta,
+    Ruta,
+)
 from app.modules.servicios.models import (  # noqa: F401
     BloqueoAgenda,
     Franja,

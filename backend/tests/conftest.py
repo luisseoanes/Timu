@@ -32,6 +32,7 @@ import app.workers.tasks.cartera  # noqa: E402, F401  registra los manejadores d
 import app.workers.tasks.comunicaciones  # noqa: E402, F401
 import app.workers.tasks.encuestas  # noqa: E402, F401
 import app.workers.tasks.familias  # noqa: E402, F401
+import app.workers.tasks.rutas  # noqa: E402, F401
 from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
 from app.core.config import settings  # noqa: E402

@@ -17,6 +17,7 @@ celery_app = Celery(
         "app.workers.tasks.comunicaciones",
         "app.workers.tasks.encuestas",
         "app.workers.tasks.familias",
+        "app.workers.tasks.rutas",
         "app.workers.tasks.outbox",
     ],
 )
