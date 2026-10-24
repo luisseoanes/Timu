@@ -14,7 +14,18 @@ export const api = axios.create({
 })
 
 // Rutas que no se reintentan tras renovar: o son la propia sesión o no la necesitan.
-const SIN_RENOVACION = ['/auth/login', '/auth/refresh', '/auth/logout']
+const SIN_RENOVACION = [
+  '/auth/login',
+  '/auth/refresh',
+  '/auth/logout',
+  '/auth/codigo',
+  '/auth/codigo/verificacion',
+  '/auth/recuperar',
+  '/auth/restablecer',
+]
+
+// Páginas que se abren sin sesión: un 401 ahí no debe mandar al ingreso.
+const PAGINAS_PUBLICAS = ['/login', '/recuperar', '/restablecer', '/activar', '/encuesta', '/verificar', '/afiliacion']
 
 type Reintento = InternalAxiosRequestConfig & { _renovada?: boolean }
 
@@ -58,8 +69,8 @@ api.interceptors.response.use(
     }
 
     // Sesión expirada o ausente: devolver al ingreso. La cookie la limpia el backend.
-    const enLogin = window.location.pathname === '/login'
-    if (error.response?.status === 401 && !enLogin && !url.endsWith('/auth/me')) {
+    const enPublica = PAGINAS_PUBLICAS.some((p) => window.location.pathname.startsWith(p))
+    if (error.response?.status === 401 && !enPublica && !url.endsWith('/auth/me')) {
       window.location.assign('/login')
     }
     return Promise.reject(error)

@@ -9,6 +9,9 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // En Docker sobre Windows o macOS los cambios del volumen no llegan como eventos:
+    // el compose activa el sondeo para que la recarga en caliente funcione.
+    watch: process.env.VITE_SONDEO ? { usePolling: true, interval: 300 } : undefined,
     // El panel llama al backend por /api; en produccion lo sirve el mismo dominio.
     // En Docker Compose la API es otro contenedor: VITE_API_PROXY=http://api:8000.
     proxy: {

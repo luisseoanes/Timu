@@ -10,6 +10,13 @@ export const PERMISOS = {
   gestionarAfiliacion: ['admin', 'comercial'],
 } as const satisfies Record<string, readonly Rol[]>
 
+/** Pantalla de inicio de cada perfil: las familias y las aliadas tienen su propio espacio. */
+export function inicioDeRol(rol: Rol): string {
+  if (rol === 'familia') return '/portal'
+  if (rol === 'aliada') return '/aliada'
+  return '/'
+}
+
 export function puede(usuario: Usuario | null | undefined, accion: keyof typeof PERMISOS): boolean {
   return Boolean(usuario && (PERMISOS[accion] as readonly Rol[]).includes(usuario.rol))
 }

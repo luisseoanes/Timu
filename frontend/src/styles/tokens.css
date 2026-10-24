@@ -32,6 +32,13 @@
   --info-bg: #e6f1fa;    --info-tx: #2b6f9e;
   --peligro-bg: #fbe9e7; --peligro-tx: #b23f34;
 
+  /* --- Sobre la marca: texto y superficies encima de un fondo verde --- */
+  --sobre-marca:        #ffffff;
+  --sobre-marca-suave:  rgba(255, 255, 255, .78);  /* texto secundario sobre verde */
+  --sobre-marca-velo:   rgba(255, 255, 255, .12);  /* tarjetas translúcidas sobre verde */
+  --sobre-marca-borde:  rgba(255, 255, 255, .22);
+  --marca-profunda:     #0d4f4a;                    /* fondo del panel de marca del ingreso */
+
   /* --- Tipografía ----------------------------------------------- */
   --fuente-titulo: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
   --fuente-texto:  "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;

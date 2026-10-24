@@ -7,6 +7,8 @@ export type NombreIcono =
   | 'clinica' | 'rutas' | 'campanas' | 'buscar' | 'campana' | 'ayuda'
   | 'salir' | 'usuario' | 'llave' | 'calendario' | 'pago' | 'mas' | 'cerrar'
   | 'tareas' | 'comercial' | 'aliadas' | 'encuestas' | 'ajustes' | 'descargar' | 'volver'
+  | 'ojo' | 'ojo-cerrado' | 'escudo' | 'huella' | 'telefono' | 'correo' | 'pulso' | 'check'
+  | 'ia' | 'mensaje' | 'subir' | 'editar' | 'portal' | 'candado'
 
 const TRAZOS: Record<NombreIcono, string> = {
   panel: 'M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z',
@@ -34,6 +36,20 @@ const TRAZOS: Record<NombreIcono, string> = {
   ajustes: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-3a7.4 7.4 0 0 0-.1-1.3l2-1.6-2-3.4-2.4 1a7.3 7.3 0 0 0-2.2-1.3L14.4 3h-4l-.4 2.4a7.3 7.3 0 0 0-2.2 1.3l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 0 0 0 2.6l-2 1.6 2 3.4 2.4-1c.7.6 1.4 1 2.2 1.3l.4 2.4h4l.4-2.4c.8-.3 1.5-.7 2.2-1.3l2.4 1 2-3.4-2-1.6c.1-.4.1-.9.1-1.3Z',
   descargar: 'M12 3v12M7 10l5 5 5-5M5 21h14',
   volver: 'M19 12H5M11 18l-6-6 6-6',
+  ojo: 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Zm10 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+  'ojo-cerrado': 'M3 3l18 18M10.6 5.1A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6A17.4 17.4 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2',
+  escudo: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Zm-3-10 2 2 4-4',
+  huella: 'M12 12.5c-2.6 0-5 2.7-5 4.8 0 1.5 1.1 2.2 2.4 2.2 1.1 0 1.7-.6 2.6-.6s1.5.6 2.6.6c1.3 0 2.4-.7 2.4-2.2 0-2.1-2.4-4.8-5-4.8ZM7 8a1.6 2.1 0 1 0 3.2 0a1.6 2.1 0 1 0-3.2 0ZM13.8 8a1.6 2.1 0 1 0 3.2 0a1.6 2.1 0 1 0-3.2 0ZM3.6 12.3a1.4 1.8 0 1 0 2.8 0a1.4 1.8 0 1 0-2.8 0ZM17.6 12.3a1.4 1.8 0 1 0 2.8 0a1.4 1.8 0 1 0-2.8 0Z',
+  telefono: 'M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Zm4 16h2',
+  correo: 'M3 6h18v12H3zM3 7l9 6 9-6',
+  pulso: 'M3 12h4l2-5 4 10 2-5h6',
+  check: 'M5 12.5l4.5 4.5L19 7.5',
+  ia: 'M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3Zm6.5 11 .9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1Z',
+  mensaje: 'M21 12a8 8 0 0 1-11.8 7L4 20l1-4.6A8 8 0 1 1 21 12Z',
+  subir: 'M12 21V9M7 14l5-5 5 5M5 3h14',
+  editar: 'M4 20h4L19 9l-4-4L4 16v4Zm10-14 4 4',
+  candado: 'M6 11h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1Zm2 0V7a4 4 0 0 1 8 0v4m-4 4v2',
+  portal: 'M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z',
 }
 
 export function Icono({ nombre, size = 20 }: { nombre: NombreIcono; size?: number }) {

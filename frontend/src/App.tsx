@@ -3,6 +3,11 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { AuthProvider } from '@/features/auth/AuthContext'
 import { LoginPage } from '@/features/auth/LoginPage'
+import { RecuperarPage, RestablecerPage } from '@/features/auth/RecuperarPage'
+import { AfiliacionPage, AfiliacionResultadoPage } from '@/features/publico/AfiliacionPage'
+import { EncuestaPage } from '@/features/publico/EncuestaPage'
+import { VerificarCarnetPage } from '@/features/publico/VerificarCarnetPage'
+import type { Rol } from '@/types'
 import { CarteraPage } from '@/features/cartera/CarteraPage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { FamiliaDetallePage } from '@/features/familias/FamiliaDetallePage'
@@ -10,6 +15,9 @@ import { FamiliasPage } from '@/features/familias/FamiliasPage'
 import { Placeholder } from '@/features/Placeholder'
 import { AppLayout } from '@/layouts/AppLayout'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
+
+// El panel es del equipo interno; las familias y las aliadas tienen su propio espacio.
+const EQUIPO: Rol[] = ['admin', 'comercial', 'operaciones', 'medico']
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -22,7 +30,14 @@ export default function App() {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route element={<ProtectedRoute />}>
+            <Route path="/recuperar" element={<RecuperarPage />} />
+            <Route path="/restablecer" element={<RestablecerPage modo="restablecer" />} />
+            <Route path="/activar" element={<RestablecerPage modo="activar" />} />
+            <Route path="/encuesta/:token" element={<EncuestaPage />} />
+            <Route path="/verificar/:codigo" element={<VerificarCarnetPage />} />
+            <Route path="/afiliacion" element={<AfiliacionPage />} />
+            <Route path="/afiliacion/resultado" element={<AfiliacionResultadoPage />} />
+            <Route element={<ProtectedRoute roles={EQUIPO} />}>
               <Route element={<AppLayout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="familias" element={<FamiliasPage />} />

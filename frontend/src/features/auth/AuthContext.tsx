@@ -2,12 +2,14 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react'
 
 import { api } from '@/api/client'
-import type { Usuario } from '@/types'
+import type { Sesion, Usuario } from '@/types'
 
 interface AuthState {
   usuario: Usuario | null
   cargando: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<Usuario>
+  /** Ingreso del portal: celular más el código que llegó por WhatsApp (F3-POR-07). */
+  ingresarConCodigo: (telefono: string, codigo: string) => Promise<Usuario>
   logout: () => Promise<void>
 }
 
@@ -34,6 +36,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     })
     setUsuario(data.usuario)
+    return data.usuario as Usuario
+  }, [])
+
+  const ingresarConCodigo = useCallback(async (telefono: string, codigo: string) => {
+    const { data } = await api.post<Sesion>('/auth/codigo/verificacion', { telefono, codigo })
+    setUsuario(data.usuario)
+    return data.usuario
   }, [])
 
   const logout = useCallback(async () => {
@@ -42,8 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ usuario, cargando, login, logout }),
-    [usuario, cargando, login, logout],
+    () => ({ usuario, cargando, login, ingresarConCodigo, logout }),
+    [usuario, cargando, login, ingresarConCodigo, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

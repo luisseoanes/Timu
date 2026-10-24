@@ -1,16 +1,72 @@
+import * as Tabs from '@radix-ui/react-tabs'
+import { isAxiosError } from 'axios'
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 
+import { api } from '@/api/client'
 import { Icono } from '@/components/Icono'
+import { mensajeError } from '@/lib/errores'
+import { inicioDeRol } from '@/lib/permisos'
+import type { Usuario } from '@/types'
 
+import { AccesoLayout, MarcaTimu } from './AccesoLayout'
 import { useAuth } from './AuthContext'
 
+/**
+ * Ingreso. El equipo entra con correo y contraseña; las familias afiliadas, con su
+ * celular y un código que les llega por WhatsApp, sin contraseña que recordar.
+ */
 export function LoginPage() {
-  const { login } = useAuth()
+  const { usuario, cargando } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+
+  if (!cargando && usuario) return <Navigate to={inicioDeRol(usuario.rol)} replace />
+
+  function entrar(usuario: Usuario) {
+    const desde = (location.state as { from?: string } | null)?.from
+    navigate(desde ?? inicioDeRol(usuario.rol), { replace: true })
+  }
+
+  return (
+    <AccesoLayout>
+      <div className="ingreso-panel">
+        <MarcaTimu />
+        <div className="ingreso-titulo">
+          <h1>Bienvenido de nuevo</h1>
+          <p>Ingresa para gestionar visitas, historias clínicas y afiliaciones.</p>
+        </div>
+
+        <Tabs.Root defaultValue="equipo" className="ingreso-form">
+          <Tabs.List className="segmento" aria-label="Tipo de ingreso">
+            <Tabs.Trigger value="equipo" className="segmento-opcion">
+              <Icono nombre="clinica" size={16} /> Equipo TIMU
+            </Tabs.Trigger>
+            <Tabs.Trigger value="familia" className="segmento-opcion">
+              <Icono nombre="huella" size={16} /> Familias
+            </Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Content value="equipo">
+            <IngresoEquipo onEntrar={entrar} />
+          </Tabs.Content>
+          <Tabs.Content value="familia">
+            <IngresoFamilia onEntrar={entrar} />
+          </Tabs.Content>
+        </Tabs.Root>
+
+        <p className="ingreso-pie">
+          <Icono nombre="escudo" size={16} /> Conexión cifrada · tu sesión vive sólo en este navegador
+        </p>
+      </div>
+    </AccesoLayout>
+  )
+}
+
+function IngresoEquipo({ onEntrar }: { onEntrar: (u: Usuario) => void }) {
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [visible, setVisible] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
@@ -19,86 +75,181 @@ export function LoginPage() {
     setEnviando(true)
     setError(null)
     try {
-      await login(email, password)
-      const destino = (location.state as { from?: string } | null)?.from ?? '/'
-      navigate(destino, { replace: true })
-    } catch {
-      setError('El correo o la contraseña no coinciden. Intenta de nuevo.')
+      onEntrar(await login(email, password))
+    } catch (err) {
+      // 401 es credenciales: se dice en palabras propias. Bloqueo o caída, con su causa.
+      setError(
+        isAxiosError(err) && err.response?.status === 401
+          ? 'El correo o la contraseña no coinciden. Intenta de nuevo.'
+          : mensajeError(err, 'No fue posible ingresar. Intenta de nuevo en un momento.'),
+      )
     } finally {
       setEnviando(false)
     }
   }
 
   return (
-    <div className="login">
-      <div className="login-tarjeta">
-        <aside className="login-lado">
-          <h2>Bienvenido</h2>
-          <div className="login-arte" aria-hidden="true">
-            <IlustracionPanel />
-          </div>
-          <p className="pie">Plataforma de gestión y operación TIMU</p>
-        </aside>
+    <form className="ingreso-form" onSubmit={onSubmit}>
+      <label className="campo">
+        <span>Correo</span>
+        <span className="campo-adorno">
+          <Icono nombre="correo" size={18} />
+          <input
+            className="input"
+            type="email"
+            autoComplete="username"
+            placeholder="nombre@timu.co"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </span>
+      </label>
 
-        <form className="login-form" onSubmit={onSubmit}>
-          <h1>Ingresar</h1>
-
-          <label className="campo campo-icono">
-            <span>Correo</span>
-            <input
-              className="input input-linea"
-              type="email"
-              autoComplete="username"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <Icono nombre="usuario" size={18} />
-          </label>
-
-          <label className="campo campo-icono">
-            <span>Contraseña</span>
-            <input
-              className="input input-linea"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <Icono nombre="llave" size={18} />
-          </label>
-
-          {error && <p className="error">{error}</p>}
-
-          <button className="btn btn-primario btn-bloque" type="submit" disabled={enviando}>
-            {enviando ? 'Ingresando…' : 'Ingresar'}
+      <label className="campo">
+        <span>Contraseña</span>
+        <span className="campo-adorno">
+          <Icono nombre="candado" size={18} />
+          <input
+            className="input"
+            type={visible ? 'text' : 'password'}
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button
+            type="button"
+            className="campo-accion"
+            aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            aria-pressed={visible}
+            onClick={() => setVisible((v) => !v)}
+          >
+            <Icono nombre={visible ? 'ojo-cerrado' : 'ojo'} size={18} />
           </button>
+        </span>
+      </label>
 
-          <div className="login-pie">
-            <a href="#recuperar">Olvidé mi contraseña</a>
-            <a href="#ayuda">Ayuda</a>
-          </div>
-        </form>
+      <div className="ingreso-ayuda">
+        <Link to="/recuperar">¿Olvidaste tu contraseña?</Link>
       </div>
-    </div>
+
+      {error && (
+        <p className="aviso-error" role="alert">
+          {error}
+        </p>
+      )}
+
+      <button className="btn btn-primario btn-bloque btn-grande" type="submit" disabled={enviando}>
+        {enviando ? 'Ingresando…' : 'Ingresar'}
+      </button>
+    </form>
   )
 }
 
-/** Ilustración plana del panel, en la línea isométrica de la referencia. */
-function IlustracionPanel() {
+function IngresoFamilia({ onEntrar }: { onEntrar: (u: Usuario) => void }) {
+  const { ingresarConCodigo } = useAuth()
+  const [telefono, setTelefono] = useState('')
+  const [codigo, setCodigo] = useState('')
+  const [enviado, setEnviado] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
+
+  async function pedirCodigo(e: React.FormEvent) {
+    e.preventDefault()
+    setEnviando(true)
+    setError(null)
+    try {
+      await api.post('/auth/codigo', { telefono })
+      setEnviado(true)
+    } catch (err) {
+      setError(mensajeError(err, 'No pudimos enviar el código. Revisa el número e intenta de nuevo.'))
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  async function verificar(e: React.FormEvent) {
+    e.preventDefault()
+    setEnviando(true)
+    setError(null)
+    try {
+      onEntrar(await ingresarConCodigo(telefono, codigo))
+    } catch (err) {
+      setError(mensajeError(err, 'El código no es válido o ya venció. Pide uno nuevo.'))
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  if (!enviado) {
+    return (
+      <form className="ingreso-form" onSubmit={pedirCodigo}>
+        <label className="campo">
+          <span>Celular registrado</span>
+          <span className="campo-adorno">
+            <Icono nombre="telefono" size={18} />
+            <input
+              className="input"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="300 123 4567"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              required
+            />
+          </span>
+        </label>
+        <p className="apagado">Te enviaremos un código de un solo uso por WhatsApp.</p>
+        {error && (
+          <p className="aviso-error" role="alert">
+            {error}
+          </p>
+        )}
+        <button className="btn btn-primario btn-bloque btn-grande" type="submit" disabled={enviando}>
+          {enviando ? 'Enviando…' : 'Recibir código'}
+        </button>
+      </form>
+    )
+  }
+
   return (
-    <svg width="200" height="180" viewBox="0 0 200 180" fill="none">
-      <ellipse cx="100" cy="150" rx="78" ry="14" fill="#ffffff" opacity=".16" />
-      <rect x="46" y="26" width="108" height="112" rx="14" fill="#ffffff" opacity=".95" />
-      <rect x="60" y="42" width="52" height="7" rx="3.5" fill="var(--verde-500)" opacity=".5" />
-      <rect x="60" y="58" width="80" height="5" rx="2.5" fill="var(--apagado)" opacity=".35" />
-      <rect x="60" y="96" width="14" height="28" rx="4" fill="var(--verde-400)" />
-      <rect x="82" y="82" width="14" height="42" rx="4" fill="var(--verde-500)" />
-      <rect x="104" y="90" width="14" height="34" rx="4" fill="var(--verde-300)" />
-      <rect x="126" y="72" width="14" height="52" rx="4" fill="var(--verde-600)" />
-      <circle cx="152" cy="40" r="16" fill="#ffffff" opacity=".9" />
-      <path d="M146 40.5l4.5 4.5 8-9" stroke="var(--verde-600)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <form className="ingreso-form" onSubmit={verificar}>
+      <p className="aviso-ok" role="status">
+        <Icono nombre="mensaje" size={16} /> Enviamos un código por WhatsApp al {telefono}.
+      </p>
+      <label className="campo">
+        <span>Código</span>
+        <input
+          className="input codigo-input"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={6}
+          value={codigo}
+          onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ''))}
+          required
+        />
+      </label>
+      {error && (
+        <p className="aviso-error" role="alert">
+          {error}
+        </p>
+      )}
+      <button className="btn btn-primario btn-bloque btn-grande" type="submit" disabled={enviando}>
+        {enviando ? 'Verificando…' : 'Entrar al portal'}
+      </button>
+      <button
+        className="btn btn-plano"
+        type="button"
+        onClick={() => {
+          setEnviado(false)
+          setCodigo('')
+          setError(null)
+        }}
+      >
+        Cambiar número
+      </button>
+    </form>
   )
 }

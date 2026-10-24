@@ -306,3 +306,17 @@
   display: flex; align-items: center; justify-content: flex-end; gap: var(--e2);
   margin-top: var(--e4); font-size: var(--t-menor); color: var(--apagado);
 }
+
+/* --- Calificación de 1 a 5 (encuestas) ------------------------- */
+.calificacion { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--e2); }
+.calificacion legend { font-weight: 700; color: var(--tinta); margin-bottom: var(--e2); font-size: var(--t-menor); }
+.calificacion-opcion {
+  display: grid; justify-items: center; gap: 4px;
+  padding: var(--e3) var(--e1);
+  border: 1px solid var(--linea-fuerte); border-radius: var(--r-campo);
+  font-size: var(--t-etiqueta); color: var(--apagado); text-align: center; cursor: pointer;
+}
+.calificacion-opcion input { position: absolute; opacity: 0; pointer-events: none; }
+.calificacion-numero { font-family: var(--fuente-titulo); font-size: 20px; color: var(--tinta); }
+.calificacion-opcion:has(input:checked) { border-color: var(--verde-500); background: var(--verde-50); color: var(--verde-700); }
+.calificacion-opcion:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--verde-100); }

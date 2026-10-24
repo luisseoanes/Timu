@@ -91,55 +91,6 @@
 
 .filtros { display: flex; flex-wrap: wrap; gap: var(--e2); align-items: center; }
 
-/* ================= Login ================= */
-.login {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: var(--e6);
-  background:
-    radial-gradient(120% 90% at 12% 0%, var(--verde-100) 0%, transparent 55%),
-    radial-gradient(100% 80% at 100% 100%, var(--verde-200) 0%, transparent 50%),
-    var(--verde-50);
-}
-.login-tarjeta {
-  width: min(940px, 100%);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  background: var(--superficie);
-  border-radius: var(--r-panel);
-  box-shadow: var(--sombra-3);
-  overflow: hidden;
-}
-.login-lado {
-  position: relative;
-  padding: var(--e7);
-  color: #fff;
-  background: linear-gradient(160deg, var(--verde-400) 0%, var(--verde-600) 100%);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: var(--e6);
-  min-height: 460px;
-}
-.login-lado h2 {
-  color: #fff;
-  font-size: 40px;
-  font-weight: 600;
-  letter-spacing: .04em;
-}
-.login-lado .pie { font-size: var(--t-etiqueta); letter-spacing: .16em; text-transform: uppercase; opacity: .9; }
-.login-arte { display: grid; place-items: center; flex: 1; }
-
-.login-form { padding: var(--e7); display: grid; align-content: center; gap: var(--e5); }
-.login-form h1 {
-  font-size: 30px; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--verde-600); text-align: center;
-}
-.campo-icono { position: relative; }
-.campo-icono svg { position: absolute; right: 4px; bottom: 12px; color: var(--verde-500); }
-.login-pie { display: grid; justify-items: end; gap: var(--e1); font-size: var(--t-menor); }
-
 /* ================= Adaptación a pantallas menores ================= */
 @media (max-width: 1180px) {
   .con-rail { grid-template-columns: minmax(0, 1fr); }
@@ -151,8 +102,6 @@
   .nav { grid-template-columns: repeat(2, 1fr); }
   .dos-columnas, .rail { grid-template-columns: 1fr; }
   .accesos { grid-template-columns: repeat(2, 1fr); }
-  .login-tarjeta { grid-template-columns: 1fr; }
-  .login-lado { min-height: 220px; }
 }
 
 /* ================= Detalle de un registro ================= */
@@ -163,4 +112,186 @@
 
 @media (max-width: 900px) {
   .formulario { grid-template-columns: 1fr; }
+}
+
+/* ================= Ingreso, recuperación y activación ================= */
+/* Ver features/auth/AccesoLayout.tsx */
+.ingreso {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  background: var(--superficie);
+}
+
+/* --- Panel de marca --- */
+.ingreso-marca {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e7);
+  padding: var(--e8) clamp(var(--e6), 5vw, 72px);
+  color: var(--sobre-marca);
+  background:
+    radial-gradient(70% 55% at 85% 10%, var(--verde-500) 0%, transparent 70%),
+    radial-gradient(60% 50% at 0% 100%, var(--verde-600) 0%, transparent 70%),
+    linear-gradient(160deg, var(--verde-700) 0%, var(--marca-profunda) 100%);
+}
+
+.marca { display: inline-grid; grid-template-columns: auto auto; justify-content: start; column-gap: var(--e3); row-gap: 2px; align-items: center; width: fit-content; }
+.marca-sello {
+  grid-row: span 2;
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border-radius: var(--r-tarjeta);
+  background: var(--verde-500);
+  color: var(--sobre-marca);
+  box-shadow: var(--sombra-2);
+}
+.marca-nombre { font-family: var(--fuente-titulo); font-weight: 700; font-size: 22px; letter-spacing: .14em; color: var(--tinta); line-height: 1; }
+.marca-sub { font-size: var(--t-etiqueta); letter-spacing: .12em; text-transform: uppercase; color: var(--apagado); }
+.marca-clara .marca-sello { background: var(--sobre-marca-velo); border: 1px solid var(--sobre-marca-borde); }
+.marca-clara .marca-nombre { color: var(--sobre-marca); }
+.marca-clara .marca-sub { color: var(--sobre-marca-suave); }
+
+.ingreso-mensaje { display: grid; gap: var(--e5); max-width: 520px; margin-top: auto; }
+.ingreso-kicker {
+  display: inline-flex; align-items: center; gap: var(--e2);
+  width: fit-content;
+  padding: 6px var(--e3);
+  border-radius: var(--r-pastilla);
+  background: var(--sobre-marca-velo);
+  border: 1px solid var(--sobre-marca-borde);
+  font-size: var(--t-menor); font-weight: 700;
+}
+.ingreso-mensaje h2 {
+  color: var(--sobre-marca);
+  font-size: clamp(26px, 2.6vw, 38px);
+  line-height: 1.2;
+  font-weight: 600;
+}
+.ingreso-pilares { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e4); }
+.ingreso-pilares li { display: grid; grid-template-columns: auto 1fr; gap: var(--e3); align-items: start; }
+.ingreso-pilares strong { display: block; color: var(--sobre-marca); font-size: var(--t-cuerpo); }
+.ingreso-pilares li span span { color: var(--sobre-marca-suave); font-size: var(--t-menor); }
+.ingreso-pilar-icono {
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border-radius: var(--r-campo);
+  background: var(--sobre-marca-velo);
+  border: 1px solid var(--sobre-marca-borde);
+}
+
+/* Tarjeta de vista previa: vidrio esmerilado sobre la marca. */
+.ingreso-vista {
+  max-width: 420px;
+  padding: var(--e4) var(--e5);
+  border-radius: var(--r-tarjeta);
+  background: var(--sobre-marca-velo);
+  border: 1px solid var(--sobre-marca-borde);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--sombra-3);
+  display: grid; gap: var(--e3);
+}
+.ingreso-vista-cabeza { display: grid; grid-template-columns: auto 1fr auto; gap: var(--e3); align-items: center; }
+.ingreso-vista-cabeza strong { display: block; color: var(--sobre-marca); font-size: var(--t-cuerpo); }
+.ingreso-vista-cabeza span span { color: var(--sobre-marca-suave); font-size: var(--t-menor); }
+.ingreso-avatar {
+  width: 38px; height: 38px; display: grid; place-items: center;
+  border-radius: var(--r-pastilla); background: var(--sobre-marca); color: var(--verde-700);
+}
+.ingreso-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: var(--r-pastilla);
+  background: var(--ok-bg); color: var(--ok-tx);
+  font-size: var(--t-etiqueta); font-weight: 700;
+}
+.ingreso-pulso { width: 100%; height: 40px; }
+.ingreso-pulso path { fill: none; stroke: var(--verde-200); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ingreso-vista-pie { display: flex; flex-wrap: wrap; gap: var(--e4); font-size: var(--t-menor); color: var(--sobre-marca-suave); }
+.ingreso-vista-pie span { display: inline-flex; align-items: center; gap: 6px; }
+.ingreso-legal { display: inline-flex; align-items: center; gap: var(--e2); font-size: var(--t-menor); color: var(--sobre-marca-suave); }
+
+/* --- Formulario --- */
+.ingreso-contenido {
+  display: grid;
+  place-items: center;
+  padding: var(--e8) var(--e6);
+  background:
+    radial-gradient(80% 60% at 100% 0%, var(--verde-50) 0%, transparent 60%),
+    var(--superficie);
+}
+.ingreso-panel { width: min(400px, 100%); display: grid; gap: var(--e6); }
+.ingreso-panel > .marca { display: none; }
+.ingreso-titulo { display: grid; gap: var(--e2); }
+.ingreso-titulo h1 { font-size: var(--t-display); font-weight: 600; }
+.ingreso-titulo p { color: var(--apagado); }
+.ingreso-form { display: grid; gap: var(--e4); }
+.ingreso-ayuda { display: flex; justify-content: flex-end; align-items: center; gap: var(--e2); font-size: var(--t-menor); }
+.ingreso-pie {
+  display: flex; align-items: center; justify-content: center; gap: var(--e2);
+  font-size: var(--t-menor); color: var(--apagado);
+  padding-top: var(--e4); border-top: 1px solid var(--linea);
+}
+.ingreso-pie svg { color: var(--verde-600); }
+
+/* Selector Equipo / Familias */
+.segmento {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  padding: 4px; gap: 4px;
+  border-radius: var(--r-pastilla);
+  background: var(--superficie-2);
+  border: 1px solid var(--linea);
+}
+.segmento-opcion {
+  font: inherit; font-weight: 700; font-size: var(--t-menor);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--e2);
+  padding: 9px var(--e3);
+  border: 0; border-radius: var(--r-pastilla);
+  background: transparent; color: var(--apagado); cursor: pointer;
+  transition: background .15s, color .15s, box-shadow .15s;
+}
+.segmento-opcion[data-state="active"] { background: var(--superficie); color: var(--verde-700); box-shadow: var(--sombra-2); }
+
+/* Campo con icono a la izquierda y acción opcional a la derecha */
+.campo-adorno { position: relative; display: flex; align-items: center; }
+.campo-adorno > svg { position: absolute; left: 14px; color: var(--apagado); pointer-events: none; }
+.campo-adorno:focus-within > svg { color: var(--verde-600); }
+.campo-adorno .input { width: 100%; padding-left: 42px; min-height: 48px; }
+.campo-adorno .input:has(+ .campo-accion) { padding-right: 46px; }
+.campo-accion {
+  position: absolute; right: 6px;
+  width: 36px; height: 36px; display: grid; place-items: center;
+  border: 0; border-radius: var(--r-pastilla); background: transparent;
+  color: var(--apagado); cursor: pointer;
+}
+.campo-accion:hover { color: var(--verde-700); background: var(--verde-50); }
+
+.btn-grande { min-height: 48px; font-size: 15px; }
+.codigo-input { letter-spacing: .5em; font-size: 20px; text-align: center; font-family: var(--fuente-titulo); }
+
+.aviso-error, .aviso-ok {
+  display: flex; gap: var(--e2); align-items: flex-start;
+  padding: var(--e3) var(--e4);
+  border-radius: var(--r-campo);
+  font-size: var(--t-menor);
+}
+.aviso-error { background: var(--peligro-bg); color: var(--peligro-tx); }
+.aviso-ok { background: var(--ok-bg); color: var(--ok-tx); }
+
+/* Página pública sencilla: encuesta, verificación de carnet, afiliación */
+.publica { min-height: 100vh; display: grid; place-items: start center; gap: var(--e5); padding: var(--e8) var(--e4); background: var(--fondo); }
+.publica-tarjeta {
+  width: min(560px, 100%);
+  display: grid; gap: var(--e5);
+  padding: var(--e7);
+  background: var(--superficie);
+  border-radius: var(--r-panel);
+  box-shadow: var(--sombra-3);
+}
+.publica-ancha { width: min(760px, 100%); }
+
+@media (max-width: 900px) {
+  .ingreso { grid-template-columns: 1fr; }
+  .ingreso-marca { display: none; }
+  .ingreso-panel > .marca { display: inline-grid; }
+  .publica-tarjeta { padding: var(--e5); }
 }
