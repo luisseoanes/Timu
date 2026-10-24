@@ -37,7 +37,7 @@
 
 /* --- Campos ---------------------------------------------------- */
 .campo { display: grid; gap: 6px; }
-.campo > span { font-size: var(--t-menor); font-weight: 700; color: var(--tinta); }
+.campo > span, .campo > label { font-size: var(--t-menor); font-weight: 700; color: var(--tinta); }
 .input {
   font: inherit;
   padding: 10px var(--e4);

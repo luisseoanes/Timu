@@ -26,7 +26,7 @@ test.describe('sesión', () => {
 
     await page.goto('/login')
     await page.getByLabel(/correo|email/i).fill('admin@timu.co')
-    await page.getByLabel(/contrase/i).fill('secreto123')
+    await page.getByLabel('Contraseña', { exact: true }).fill('secreto123')
     await page.getByRole('button', { name: /ingresar|entrar/i }).click()
 
     await expect(page).not.toHaveURL(/\/login/)

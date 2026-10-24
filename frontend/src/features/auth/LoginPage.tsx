@@ -106,11 +106,12 @@ function IngresoEquipo({ onEntrar }: { onEntrar: (u: Usuario) => void }) {
         </span>
       </label>
 
-      <label className="campo">
-        <span>Contraseña</span>
+      <div className="campo">
+        <label htmlFor="clave-ingreso">Contraseña</label>
         <span className="campo-adorno">
           <Icono nombre="candado" size={18} />
           <input
+            id="clave-ingreso"
             className="input"
             type={visible ? 'text' : 'password'}
             autoComplete="current-password"
@@ -128,7 +129,7 @@ function IngresoEquipo({ onEntrar }: { onEntrar: (u: Usuario) => void }) {
             <Icono nombre={visible ? 'ojo-cerrado' : 'ojo'} size={18} />
           </button>
         </span>
-      </label>
+      </div>
 
       <div className="ingreso-ayuda">
         <Link to="/recuperar">¿Olvidaste tu contraseña?</Link>

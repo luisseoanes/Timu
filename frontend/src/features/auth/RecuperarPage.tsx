@@ -125,11 +125,12 @@ export function RestablecerPage({ modo }: { modo: 'restablecer' | 'activar' }) {
               if (!noCoinciden) definir.mutate()
             }}
           >
-            <label className="campo">
-              <span>Contraseña nueva</span>
+            <div className="campo">
+              <label htmlFor="clave-nueva">Contraseña nueva</label>
               <span className="campo-adorno">
                 <Icono nombre="candado" size={18} />
                 <input
+                  id="clave-nueva"
                   className="input"
                   type={visible ? 'text' : 'password'}
                   autoComplete="new-password"
@@ -148,7 +149,7 @@ export function RestablecerPage({ modo }: { modo: 'restablecer' | 'activar' }) {
                   <Icono nombre={visible ? 'ojo-cerrado' : 'ojo'} size={18} />
                 </button>
               </span>
-            </label>
+            </div>
             <label className="campo">
               <span>Confirma la contraseña</span>
               <span className="campo-adorno">
