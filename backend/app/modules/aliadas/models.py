@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import Boolean, ForeignKey, Numeric, String
@@ -26,5 +27,5 @@ class RemisionAliada(Base, UUIDMixin, TimestampMixin):
     clinica_id: Mapped[UUID] = mapped_column(ForeignKey("clinicas_aliadas.id"), index=True)
     servicio_id: Mapped[UUID] = mapped_column(ForeignKey("servicios.id"), index=True)
     beneficio_aplicado: Mapped[str | None] = mapped_column(String(120))
-    valor_cubierto: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    valor_cubierto: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     estado: Mapped[str] = mapped_column(String(24), default="emitida", index=True)

@@ -1,10 +1,10 @@
 """6.8 / 6.13 Calendario preventivo: agenda diaria y calculo de proximas fechas."""
 
-import logging
+import structlog
 
 from app.workers.celery_app import celery_app
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @celery_app.task(name="preventivos.generar_agenda")

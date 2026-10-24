@@ -1,3 +1,5 @@
+import hashlib
+import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -25,9 +27,14 @@ def verify_password(plain: str, hashed: str) -> bool:
         return False
 
 
+def password_inutilizable() -> str:
+    """Hash de una clave aleatoria que nadie conoce: la cuenta se activa por enlace."""
+    return hash_password(secrets.token_urlsafe(32))
+
+
 def create_access_token(subject: str, extra: dict[str, Any] | None = None) -> str:
     expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    payload: dict[str, Any] = {"sub": subject, "exp": expire, **(extra or {})}
+    payload: dict[str, Any] = {"sub": subject, "exp": expire, "tipo": "acceso", **(extra or {})}
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
@@ -38,3 +45,12 @@ def decode_access_token(token: str) -> dict[str, Any] | None:
         return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     except jwt.PyJWTError:
         return None
+
+
+def generar_token_opaco() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def hash_token(token: str) -> str:
+    """Los tokens opacos (refresh, enlaces) se guardan solo como SHA-256."""
+    return hashlib.sha256(token.encode()).hexdigest()

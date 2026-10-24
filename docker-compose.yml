@@ -93,6 +93,25 @@ services:
     depends_on:
       - redis
 
+  # F0-07 Respaldo diario (2:00 a.m.). Copia fuera del servidor si se define
+  # RESPALDO_BUCKET: un bucket distinto al de adjuntos, con su regla de retencion.
+  respaldos:
+    build: ./infra/respaldos
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-timu}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-timu}
+      PGDATABASE: ${POSTGRES_DB:-timu}
+      S3_BUCKET: ${RESPALDO_BUCKET:-}
+      S3_ENDPOINT_URL: ${STORAGE_ENDPOINT_URL:-}
+      AWS_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY:-}
+      AWS_SECRET_ACCESS_KEY: ${STORAGE_SECRET_KEY:-}
+    volumes:
+      - respaldos:/respaldos
+    depends_on:
+      db:
+        condition: service_healthy
+
   web:
     build: ./frontend
     volumes:
@@ -106,3 +125,4 @@ services:
 volumes:
   pgdata:
   miniodata:
+  respaldos:

@@ -44,7 +44,7 @@ def aplicar(db: Any, servicio: Any, destino: E, *, actor_id: UUID | None = None)
     solo valida, y usarla suelta deja los disparadores de 6.10 sin ejecutar. El
     evento se escribe en el outbox dentro de esta misma transaccion.
     """
-    anterior = servicio.estado
+    anterior = E(servicio.estado)
     servicio.estado = transicionar(anterior, destino)
     evento = EventoDominio(
         nombre=f"servicio.{destino.value}",

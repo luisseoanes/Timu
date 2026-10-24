@@ -4,10 +4,11 @@ from uuid import UUID
 from sqlalchemy import Date, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.auditoria import Auditable
 from app.core.database import Base, TimestampMixin, UUIDMixin
 
 
-class HistoriaClinica(Base, UUIDMixin, TimestampMixin):
+class HistoriaClinica(Base, UUIDMixin, TimestampMixin, Auditable):
     """6.14 Registro clinico estructurado. Solo lectura desde el portal de familias."""
 
     __tablename__ = "historias_clinicas"
@@ -22,7 +23,7 @@ class HistoriaClinica(Base, UUIDMixin, TimestampMixin):
     tratamiento: Mapped[str | None] = mapped_column(Text)
 
 
-class AdjuntoClinico(Base, UUIDMixin, TimestampMixin):
+class AdjuntoClinico(Base, UUIDMixin, TimestampMixin, Auditable):
     __tablename__ = "adjuntos_clinicos"
 
     historia_id: Mapped[UUID] = mapped_column(

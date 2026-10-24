@@ -1,6 +1,6 @@
 """Seed inicial: crea el usuario administrador y un par de planes de ejemplo.
 
-Uso: docker compose exec api python scripts_seed.py
+Uso: docker compose exec api python -m scripts.seed (despues de scripts.cargar_catalogos)
 """
 
 import asyncio
@@ -33,8 +33,18 @@ async def main() -> None:
         if not await db.scalar(select(Plan).limit(1)):
             db.add_all(
                 [
-                    Plan(nombre="Plan Individual", valor_mensual=45000, cupos_mascotas=1),
-                    Plan(nombre="Plan Familiar", valor_mensual=75000, cupos_mascotas=3),
+                    Plan(
+                        codigo="individual",
+                        nombre="Plan Individual",
+                        valor_mensual=45000,
+                        cupos_mascotas=1,
+                    ),
+                    Plan(
+                        codigo="familiar",
+                        nombre="Plan Familiar",
+                        valor_mensual=75000,
+                        cupos_mascotas=3,
+                    ),
                 ]
             )
             print("Planes de ejemplo creados")

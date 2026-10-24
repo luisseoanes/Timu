@@ -1,18 +1,24 @@
 """Webhooks entrantes de terceros: Meta Cloud API (WhatsApp) y pasarela de pagos.
 
 Ambos endpoints son publicos por diseno (los llama el proveedor), asi que la
-validacion es por token/firma, no por JWT.
+validacion es por token/firma, no por JWT. Responden rapido y encolan el procesamiento.
 """
 
-import logging
+import json
 
-from fastapi import APIRouter, HTTPException, Request, Response, status
+import structlog
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from app.core.config import settings
-from app.integrations.payments import verificar_firma_wompi
+from app.core.deps import DbSession, publico
+from app.core.eventos import EventoDominio
+from app.core.outbox import publicar
+from app.integrations.payments import verificar_evento_wompi
+from app.integrations.whatsapp import verificar_firma
+from app.modules.cartera import pasarela
 
-logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/webhooks", tags=["webhooks"])
+logger = structlog.get_logger(__name__)
+router = APIRouter(prefix="/webhooks", tags=["webhooks"], dependencies=[Depends(publico)])
 
 
 @router.get("/whatsapp")
@@ -28,20 +34,25 @@ async def verificar_whatsapp(request: Request) -> Response:
 
 
 @router.post("/whatsapp", status_code=status.HTTP_202_ACCEPTED)
-async def recibir_whatsapp(request: Request) -> dict[str, str]:
-    """Mensajes entrantes y estados de entrega. Se encolan para no bloquear a Meta."""
-    payload = await request.json()
-    logger.info("whatsapp.webhook", extra={"payload": payload})
-    # TODO: encolar app.workers.tasks.comunicaciones.procesar_evento_whatsapp.delay(payload)
-    return {"status": "encolado"}
-
-
-@router.post("/pagos", status_code=status.HTTP_202_ACCEPTED)
-async def recibir_pago(request: Request) -> dict[str, str]:
-    """Conciliacion automatica de pagos (seccion C: manejo de webhooks)."""
+async def recibir_whatsapp(db: DbSession, request: Request) -> dict[str, str]:
+    """Mensajes entrantes y estados de entrega (F1-WHA-02). Se guarda en el outbox y se
+    responde: Meta reintenta si tarda, y el procesamiento corre en el worker."""
     raw = await request.body()
-    firma = request.headers.get("x-event-checksum", "")
-    if not verificar_firma_wompi(raw, firma):
+    if not verificar_firma(raw, request.headers.get("x-hub-signature-256", "")):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Firma invalida")
-    # TODO: encolar app.workers.tasks.cartera.conciliar_pago.delay(payload)
+    publicar(db, EventoDominio("whatsapp.webhook_recibido", {"payload": json.loads(raw)}))
     return {"status": "encolado"}
+
+
+@router.post("/pagos", status_code=status.HTTP_200_OK)
+async def recibir_pago(db: DbSession, request: Request) -> dict[str, str]:
+    """F1-CAR-09 Conciliacion: el evento se guarda (una sola vez aunque llegue repetido) y
+    se procesa en segundo plano. Wompi reintenta si no recibe 200."""
+    try:
+        evento = json.loads(await request.body())
+    except ValueError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Cuerpo invalido") from e
+    if not verificar_evento_wompi(evento):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Firma invalida")
+    _, nuevo = await db.run_sync(pasarela.registrar_evento, evento)
+    return {"status": "encolado" if nuevo else "duplicado"}

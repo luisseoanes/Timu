@@ -1,13 +1,34 @@
 """6.19 Cliente de Meta Cloud API (WhatsApp) con plantillas aprobadas."""
 
-import logging
+import hashlib
+import hmac
 from typing import Any
 
 import httpx
+import structlog
 
 from app.core.config import settings
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
+
+
+class ErrorWhatsApp(Exception):
+    """`temporal` indica si vale la pena reintentar (red, 429, 5xx)."""
+
+    def __init__(self, mensaje: str, *, temporal: bool) -> None:
+        super().__init__(mensaje)
+        self.temporal = temporal
+
+
+def verificar_firma(raw_body: bytes, firma: str) -> bool:
+    """Valida X-Hub-Signature-256 con el secreto de la app. Sin secreto, solo en local."""
+    if not settings.WHATSAPP_APP_SECRET:
+        return settings.ENVIRONMENT in ("local", "test")
+    esperado = (
+        "sha256="
+        + hmac.new(settings.WHATSAPP_APP_SECRET.encode(), raw_body, hashlib.sha256).hexdigest()
+    )
+    return hmac.compare_digest(esperado, firma)
 
 
 class WhatsAppClient:
@@ -22,18 +43,25 @@ class WhatsAppClient:
     def configurado(self) -> bool:
         return bool(settings.WHATSAPP_ACCESS_TOKEN and settings.WHATSAPP_PHONE_NUMBER_ID)
 
-    async def _post(self, payload: dict[str, Any]) -> dict[str, Any]:
+    def _post(self, payload: dict[str, Any]) -> str:
+        """Devuelve el id del mensaje en Meta (wamid)."""
         if not self.configurado:
-            logger.warning("WhatsApp sin credenciales; mensaje no enviado: %s", payload)
-            return {"status": "no_configurado"}
+            logger.warning("WhatsApp sin credenciales; mensaje no enviado a %s", payload["to"])
+            return "no_configurado"
         headers = {"Authorization": f"Bearer {settings.WHATSAPP_ACCESS_TOKEN}"}
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            resp = await client.post(f"{self._base}/messages", json=payload, headers=headers)
-            resp.raise_for_status()
-            return resp.json()
+        try:
+            with httpx.Client(timeout=self._timeout) as client:
+                resp = client.post(f"{self._base}/messages", json=payload, headers=headers)
+        except httpx.TransportError as e:
+            raise ErrorWhatsApp(f"Error de red: {e}", temporal=True) from e
+        if resp.status_code == 429 or resp.status_code >= 500:
+            raise ErrorWhatsApp(f"Meta respondio {resp.status_code}", temporal=True)
+        if resp.status_code >= 400:
+            raise ErrorWhatsApp(f"Meta rechazo el mensaje: {resp.text[:500]}", temporal=False)
+        return str(resp.json()["messages"][0]["id"])
 
-    async def enviar_texto(self, telefono: str, texto: str) -> dict[str, Any]:
-        return await self._post(
+    def enviar_texto(self, telefono: str, texto: str) -> str:
+        return self._post(
             {
                 "messaging_product": "whatsapp",
                 "to": telefono,
@@ -42,15 +70,15 @@ class WhatsAppClient:
             }
         )
 
-    async def enviar_plantilla(
+    def enviar_plantilla(
         self, telefono: str, plantilla: str, parametros: list[str] | None = None, idioma: str = "es"
-    ) -> dict[str, Any]:
+    ) -> str:
         componentes = (
             [{"type": "body", "parameters": [{"type": "text", "text": p} for p in parametros]}]
             if parametros
             else []
         )
-        return await self._post(
+        return self._post(
             {
                 "messaging_product": "whatsapp",
                 "to": telefono,

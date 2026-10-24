@@ -11,6 +11,7 @@ class Encuesta(Base, UUIDMixin, TimestampMixin):
     """6.20 / 6.21 Encuesta disparada al cierre de la atencion y su seguimiento."""
 
     __tablename__ = "encuestas"
+    __columna_familia__ = "familia_id"
 
     servicio_id: Mapped[UUID] = mapped_column(ForeignKey("servicios.id"), index=True)
     familia_id: Mapped[UUID] = mapped_column(ForeignKey("familias.id"), index=True)

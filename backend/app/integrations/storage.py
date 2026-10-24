@@ -12,6 +12,7 @@ Nada se sirve publico: los adjuntos se entregan con URL firmada de vida corta
 from __future__ import annotations
 
 from functools import lru_cache
+from io import BytesIO
 from typing import BinaryIO
 from uuid import uuid4
 
@@ -54,12 +55,27 @@ def guardar(fichero: BinaryIO, *, nombre: str, content_type: str, prefijo: str =
     return clave
 
 
-def url_firmada(clave: str, *, ttl: int | None = None) -> str:
-    """URL temporal de lectura. Nunca se devuelve al cliente la clave desnuda."""
+def guardar_contenido(contenido: bytes, *, clave: str, content_type: str) -> None:
+    """Sube un contenido ya validado (o generado por el sistema, como el PDF del
+    contrato) bajo una clave que decide quien llama."""
+    _cliente().upload_fileobj(
+        BytesIO(contenido),
+        settings.STORAGE_BUCKET,
+        clave,
+        ExtraArgs={"ContentType": content_type},
+    )
+
+
+def url_firmada(clave: str, *, ttl: int | None = None, nombre: str | None = None) -> str:
+    """URL temporal de lectura. Nunca se devuelve al cliente la clave desnuda.
+
+    Con `nombre`, el navegador lo usa al guardar en lugar de la clave interna.
+    """
+    params = {"Bucket": settings.STORAGE_BUCKET, "Key": clave}
+    if nombre:
+        params["ResponseContentDisposition"] = f'inline; filename="{nombre}"'
     return _cliente().generate_presigned_url(
-        "get_object",
-        Params={"Bucket": settings.STORAGE_BUCKET, "Key": clave},
-        ExpiresIn=ttl or settings.STORAGE_URL_TTL_SEGUNDOS,
+        "get_object", Params=params, ExpiresIn=ttl or settings.STORAGE_URL_TTL_SEGUNDOS
     )
 
 

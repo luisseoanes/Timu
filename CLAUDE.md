@@ -45,9 +45,9 @@ En el backend `python3 -m venv` no funciona en la máquina de Pedro: usa
 
 Un directorio por dominio en `app/modules/<dominio>/`, con hasta cuatro piezas:
 `models.py` (SQLAlchemy) · `schemas.py` (Pydantic) · `service.py` (lógica y consultas) ·
-`router.py` (HTTP). `app/modules/familias/` es la referencia completa del patrón; el resto
-de dominios tiene modelos definidos y un router placeholder que devuelve
-`Mensaje(detail="Modulo X: pendiente de implementar")`.
+`router.py` (HTTP). `app/modules/familias/` es la referencia completa del patrón; los
+dominios de fases posteriores que aún no se implementan tienen modelos definidos y un
+router placeholder que devuelve `Mensaje(detail="Modulo X: pendiente de implementar")`.
 
 Reglas que atraviesan todo el backend:
 
@@ -63,12 +63,22 @@ Reglas que atraviesan todo el backend:
   el despliegue. Los índices y restricciones siguen la convención de nombres de
   `CONVENCION_NOMBRES` en `app/core/database.py`, para que una migración posterior
   pueda referirse a ellos por un nombre estable.
+- **Los servicios de dominio son síncronos** (reciben `sqlalchemy.orm.Session`). Así los
+  comparten los endpoints y los workers de Celery sin duplicar lógica: un router los
+  llama con `await db.run_sync(service.funcion, arg1, ...)` —el puente oficial de
+  SQLAlchemy, que no bloquea el event loop porque la E/S de base de datos sigue siendo
+  async por debajo— y una tarea, dentro de `with sesion_worker() as db:`. Lo único que
+  queda async en un servicio es E/S propia del endpoint (p. ej. `archivos.leer` de un
+  `UploadFile`). Las integraciones HTTP (`httpx.Client`) también son síncronas: se usan
+  desde los workers.
 - **La transacción la cierra `get_db`**, no los servicios. Las funciones de `service.py`
   hacen `flush()` para obtener IDs; el commit ocurre al terminar la petición, y el rollback
   ante cualquier excepción. No metas `commit()` en un servicio.
 - **Autorización con `require_roles`** de `app/core/deps.py`:
-  `dependencies=[Depends(require_roles(Rol.ADMIN))]`. Los alias `DbSession` y `CurrentUser`
-  son los que se inyectan en los endpoints; un endpoint sin `CurrentUser` queda público.
+  `dependencies=[Depends(require_roles(Rol.ADMIN))]`. **Ningún endpoint queda abierto por
+  omisión** (F1-AUT-02): uno abierto a propósito declara `Depends(publico)`, y
+  `tests/test_permisos.py` recorre todas las rutas y falla si alguna no declara ninguna
+  de las dos, o si aparece una pública que no está en su lista.
 - **Enums de dominio en `app/core/enums.py`**, no en cada módulo. Son `StrEnum` y viajan
   como cadenas en la API.
 - **Los estados de servicio pasan por `app/modules/servicios/state_machine.py`.** Rutas,
@@ -85,7 +95,14 @@ Reglas que atraviesan todo el backend:
 - **Ningún módulo llama a `tarea.delay()` dentro de una transacción.** Se publica un
   evento con `app.core.outbox.publicar()`, que escribe en la misma transacción; si
   ésta revienta, el efecto externo se va con ella. El worker `outbox.drenar` lo
-  despacha después. Los manejadores se registran con `@al_ocurrir("nombre.evento")`.
+  despacha después. Los manejadores se registran con `@al_ocurrir("nombre.evento")`
+  en `app/workers/tasks/<dominio>.py`, junto a la tarea que encolan, y se limitan a
+  `celery_app.send_task(...)`: el trabajo pesado va en la tarea, no en el drenado.
+- **Una tarea que llama a un tercero con efectos (cobrar, enviar) no lo hace dentro de
+  la transacción del lote.** Se registra el intento y se confirma, se llama al tercero
+  fuera de cualquier transacción y se anota el resultado en otra
+  (`cartera.pasarela.cobrar_recurrentes`). Los procesos diarios que recorren muchos
+  registros aíslan cada uno en un savepoint: un dato raro no revierte el lote entero.
 - **El estado de un servicio se cambia con `state_machine.aplicar()`**, no asignando
   `servicio.estado` ni llamando a `transicionar()` suelta: `aplicar` valida la
   transición *y* deja publicado el evento que dispara los efectos de 6.10.
@@ -95,6 +112,11 @@ Reglas que atraviesan todo el backend:
   `app/core/database.py`. Celery no es async: `asyncio.run()` dentro de una tarea crea
   un event loop por ejecución y no reaprovecha conexiones. Los endpoints siguen async;
   los workers, no. Cada tarea abre su `with sesion_worker() as db:`.
+- **La sesión son dos cookies httpOnly**: la de acceso (JWT corto, lleva el `sid` de una
+  fila de `sesiones` para poder revocarlo al instante) y la de renovación (opaca, rota en
+  cada uso y solo viaja a `/api/v1/auth`). Reusar una de renovación ya rotada se trata
+  como robo y cierra todas las sesiones del usuario; por eso el frontend comparte una
+  única renovación entre peticiones simultáneas (`src/api/client.ts`).
 - **Los tokens se firman y verifican con PyJWT**, y `decode_access_token` declara el
   algoritmo de forma explícita en lugar de aceptar el que venga en el token: confiar en
   esa cabecera permite un ataque de confusión de algoritmos. No vuelvas a introducir
@@ -124,10 +146,14 @@ cadena.
 Configuración: `Settings` de `pydantic-settings` con `.env`. `DATABASE_URL` es un campo
 computado a partir de las variables `POSTGRES_*`; `DATABASE_URL_OVERRIDE` la sustituye.
 
-Tests: `httpx.AsyncClient` sobre ASGI, SQLite en memoria y `dependency_overrides[get_db]`
+Tests: `httpx.AsyncClient` sobre ASGI contra PostgreSQL y `dependency_overrides[get_db]`
 (ver `tests/conftest.py`). `pytest.ini` fija `asyncio_mode = auto`, así que las pruebas
-async no necesitan decorador. Ojo: con el override, la sesión de test no pasa por el commit
-de `get_db`, así que la prueba hace `await db.commit()` cuando necesita datos previos.
+async no necesitan decorador. Los servicios se llaman como en los routers, con
+`await db.run_sync(...)`. El fixture `tareas` drena el outbox de la transacción de la
+prueba con sus manejadores reales y registra lo que se habría encolado en Celery
+(`await tareas.de("comunicaciones.enviar_mensaje")`); el fixture `almacenamiento`
+sustituye S3 por memoria. `login(client, email)` devuelve la cabecera `Cookie` de esa
+sesión, para las pruebas que alternan usuarios.
 
 ## Arquitectura del frontend
 
