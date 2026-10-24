@@ -53,7 +53,7 @@ async def test_familia_inexistente_responde_404(client: AsyncClient, headers):
     assert resp.json()["detail"] == "Familia no encontrada"
 
 
-# --- F1-FAM-04 Validaciones colombianas ------------------------------------------------------
+# --- F1-FAM-04 Validaciones colombianas -------------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -115,7 +115,7 @@ async def test_especie_fuera_del_catalogo(client: AsyncClient, headers):
     assert resp.status_code == 422
 
 
-# --- F1-FAM-01 Ficha, baja logica e historial ---------------------------------------------
+# --- F1-FAM-01 Ficha, baja logica e historial -------------------------------------------------
 
 
 async def test_baja_logica_oculta_pero_conserva(client: AsyncClient, headers):
@@ -172,7 +172,7 @@ async def test_operaciones_no_cambia_estado_de_afiliacion(client: AsyncClient, d
     assert resp.status_code == 403
 
 
-# --- F1-FAM-02 Mascotas ----------------------------------------------------------------------
+# --- F1-FAM-02 Mascotas -----------------------------------------------------------------------
 
 
 async def test_ciclo_de_mascota(client: AsyncClient, headers):
@@ -223,7 +223,7 @@ async def test_fecha_de_nacimiento_futura(client: AsyncClient, headers):
     assert resp.status_code == 422
 
 
-# --- F0-11 Foto de mascota con enlace firmado ---------------------------------------------
+# --- F0-11 Foto de mascota con enlace firmado -------------------------------------------------
 
 
 async def test_foto_con_enlace_firmado(client: AsyncClient, headers, almacenamiento):
@@ -275,7 +275,7 @@ def test_url_firmada_de_vida_corta_y_con_nombre(monkeypatch, almacenamiento):
     assert params["ResponseContentDisposition"] == 'inline; filename="kira.png"'
 
 
-# --- F1-FAM-05 Geocodificacion ---------------------------------------------------------------
+# --- F1-FAM-05 Geocodificacion ----------------------------------------------------------------
 
 
 async def test_guardar_direccion_programa_geocodificacion(client: AsyncClient, headers, tareas):
@@ -320,7 +320,7 @@ async def test_cambiar_direccion_limpia_coordenadas(client: AsyncClient, headers
     assert await tareas.de("familias.geocodificar") == [(familia["id"],)]
 
 
-# --- F1-FAM-03 Formularios publicos ------------------------------------------------------
+# --- F1-FAM-03 Formularios publicos -----------------------------------------------------------
 
 
 FORMULARIO = {
@@ -372,7 +372,7 @@ async def test_formulario_ignora_bots(client: AsyncClient, db):
     assert await db.scalar(select(func.count()).select_from(Familia)) == 0
 
 
-# --- F0-09 Catalogos -------------------------------------------------------------------------
+# --- F0-09 Catalogos --------------------------------------------------------------------------
 
 
 async def test_carga_de_catalogos_es_repetible(db):

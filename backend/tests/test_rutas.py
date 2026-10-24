@@ -26,7 +26,7 @@ CASAS = [(3.4600, -76.5300), (3.4700, -76.5250), (3.4400, -76.5400), (3.4550, -7
 H = 3600
 
 
-# --- Optimizador (sin base de datos) --------------------------------------------------------------
+# --- Optimizador (sin base de datos) ----------------------------------------------------------
 
 
 @pytest.mark.unit
@@ -72,7 +72,7 @@ def test_insercion_mas_barata_respeta_lo_recorrido():
     assert insertar_mas_barato(t, [1, 2], 3, desde=1) >= 1
 
 
-# --- Datos ---------------------------------------------------------------------------------------
+# --- Datos ------------------------------------------------------------------------------------
 
 
 @pytest.fixture
@@ -138,7 +138,7 @@ def _plantilla(db, nombre: str, variables: int) -> None:
     )
 
 
-# --- F2-RUT-01..03 Planeacion ---------------------------------------------------------------------
+# --- F2-RUT-01..03 Planeacion -----------------------------------------------------------------
 
 
 async def test_planificacion_se_encola_al_worker(client: AsyncClient, db, headers, tecnico, tareas):
@@ -290,7 +290,7 @@ async def test_no_se_sale_hacia_dos_paradas_a_la_vez(db, dia_con_servicios, tecn
         await db.run_sync(service.en_camino, segunda, tecnico.id)
 
 
-# --- F2-RUT-05 Cambios en caliente -------------------------------------------------------------
+# --- F2-RUT-05 Cambios en caliente ------------------------------------------------------------
 
 
 async def test_omitir_renumera_y_libera_el_servicio(db, dia_con_servicios, tecnico):

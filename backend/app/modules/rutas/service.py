@@ -45,7 +45,7 @@ def _hora(texto: str) -> int:
     return h * 3600 + m * 60
 
 
-# --- F2-RUT-01 Planeacion -----------------------------------------------------------------------
+# --- F2-RUT-01 Planeacion ---------------------------------------------------------------------
 
 
 def solicitar(
@@ -216,7 +216,7 @@ def fallo_planificacion(db: Session, planificacion_id: UUID, error: str) -> None
         db.flush()
 
 
-# --- Consultas ----------------------------------------------------------------------------------
+# --- Consultas --------------------------------------------------------------------------------
 
 
 def obtener(db: Session, ruta_id: UUID) -> Ruta:
@@ -246,7 +246,7 @@ def cancelar(db: Session, ruta: Ruta) -> Ruta:
     return ruta
 
 
-# --- F2-RUT-04 Ejecucion ------------------------------------------------------------------------
+# --- F2-RUT-04 Ejecucion ----------------------------------------------------------------------
 
 
 def _servicio(db: Session, parada: ParadaRuta) -> Servicio:
@@ -353,7 +353,7 @@ def _quizas_finalizar(ruta: Ruta) -> None:
         ruta.fin_real = ahora()
 
 
-# --- F2-RUT-05 Cambios en caliente --------------------------------------------------------------
+# --- F2-RUT-05 Cambios en caliente ------------------------------------------------------------
 
 
 def _coordenada(parada: ParadaRuta) -> Coordenada:
@@ -483,7 +483,7 @@ def agregar(db: Session, ruta: Ruta, servicio_id: UUID) -> ParadaRuta:
     return parada
 
 
-# --- F2-RUT-06 Avisos ---------------------------------------------------------------------------
+# --- F2-RUT-06 Avisos -------------------------------------------------------------------------
 
 
 def _aviso(db: Session, parada: ParadaRuta, plantilla: str, marca: str) -> None:

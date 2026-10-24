@@ -56,7 +56,7 @@ def obtener(db: Session, servicio_id: UUID) -> Servicio:
     return servicio
 
 
-# --- F1-SER-05 Elegibilidad -------------------------------------------------------------
+# --- F1-SER-05 Elegibilidad -------------------------------------------------------------------
 
 
 @dataclass
@@ -130,7 +130,7 @@ def _usos(db: Session, familia_id: UUID, beneficio: Beneficio) -> int:
     )
 
 
-# --- F1-SER-01 Disponibilidad y agendamiento -------------------------------------------------
+# --- F1-SER-01 Disponibilidad y agendamiento --------------------------------------------------
 
 
 def _local(dt: datetime) -> datetime:
@@ -294,7 +294,7 @@ def reprogramar(db: Session, servicio: Servicio, nuevo_inicio: datetime, motivo:
     return servicio
 
 
-# --- F1-SER-03 Estados con disparadores -----------------------------------------------------
+# --- F1-SER-03 Estados con disparadores -------------------------------------------------------
 
 
 def cambiar_estado(
@@ -384,7 +384,7 @@ def autorizar(db: Session, servicio: Servicio, usuario_id: UUID) -> Servicio:
     return servicio
 
 
-# --- F1-SER-02 Pasos configurables --------------------------------------------------------
+# --- F1-SER-02 Pasos configurables ------------------------------------------------------------
 
 
 def pasos_faltantes(db: Session, servicio: Servicio) -> list[str]:
@@ -429,7 +429,7 @@ def completar_paso(
     return registro
 
 
-# --- F1-SER-04 Pendientes ------------------------------------------------------------------
+# --- F1-SER-04 Pendientes ---------------------------------------------------------------------
 
 _SIGUIENTE_PENDIENTE = {
     EstadoPendiente.AUTORIZADO: (EstadoPendiente.EN_GESTION, EstadoPendiente.RESUELTO),

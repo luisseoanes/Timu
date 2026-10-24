@@ -35,8 +35,9 @@ class Alcance:
 
     @property
     def es_interno(self) -> bool:
-        """El personal de TIMU ve toda la operacion; la familia solo lo suyo."""
-        return self.rol != Rol.FAMILIA
+        """El personal de TIMU ve toda la operacion; la familia solo lo suyo. Una clinica
+        aliada no es personal interno: nunca pasa por aqui como si lo fuera."""
+        return self.rol not in (Rol.FAMILIA, Rol.ALIADA)
 
 
 def restringir(stmt: Select[Any], modelo: type, alcance: Alcance) -> Select[Any]:
@@ -49,9 +50,9 @@ def restringir(stmt: Select[Any], modelo: type, alcance: Alcance) -> Select[Any]
     if alcance.es_interno:
         return stmt
 
-    if alcance.familia_id is None:
+    if alcance.rol == Rol.ALIADA or alcance.familia_id is None:
         raise AlcanceNoDefinido(
-            f"Usuario {alcance.usuario_id} tiene rol familia pero no hay familia asociada"
+            f"Usuario {alcance.usuario_id} ({alcance.rol}) no tiene familia asociada"
         )
 
     nombre_columna = getattr(modelo, "__columna_familia__", None)

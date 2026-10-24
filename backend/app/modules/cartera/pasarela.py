@@ -58,7 +58,7 @@ def al_aprobar(prefijo: str) -> Callable[[AlAprobar], AlAprobar]:
     return registrar
 
 
-# --- F1-CAR-09 Eventos --------------------------------------------------------------------
+# --- F1-CAR-09 Eventos ------------------------------------------------------------------------
 
 
 def _id_evento(evento: dict[str, Any]) -> str:
@@ -164,7 +164,7 @@ def recuperar_transaccion(
     return registro
 
 
-# --- F1-CAR-08 Cobro recurrente -------------------------------------------------------------
+# --- F1-CAR-08 Cobro recurrente ---------------------------------------------------------------
 
 
 def registrar_medio(

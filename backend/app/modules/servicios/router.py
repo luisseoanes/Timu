@@ -155,7 +155,7 @@ class PendienteRead(BaseModel):
     resolucion: str | None
 
 
-# --- Agenda (F1-SER-01) --------------------------------------------------------------------
+# --- Agenda (F1-SER-01) -----------------------------------------------------------------------
 
 
 @agenda_router.get("/disponibilidad", response_model=list[CupoRead], dependencies=[EQUIPO])
@@ -212,7 +212,7 @@ async def bloquear(db: DbSession, data: BloqueoIn) -> dict[str, str]:
     return {"detail": f"Agenda bloqueada el {data.fecha:%d/%m/%Y}"}
 
 
-# --- Servicios -------------------------------------------------------------------------------
+# --- Servicios --------------------------------------------------------------------------------
 
 
 @router.get("/elegibilidad", response_model=ElegibilidadRead, dependencies=[EQUIPO])

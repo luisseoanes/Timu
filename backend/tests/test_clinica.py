@@ -64,7 +64,7 @@ async def _firmada(client, equipo, mascota_id) -> dict:
     return resp.json()
 
 
-# --- F2-CLI-01 Historia firmada y versiones -----------------------------------------------------
+# --- F2-CLI-01 Historia firmada y versiones ---------------------------------------------------
 async def test_firmada_no_se_edita_se_corrige_con_version(client, equipo, mascota_id):
     firmada = await _firmada(client, equipo, mascota_id)
     url = f"/api/v1/clinica/historias/{firmada['id']}"
@@ -140,7 +140,7 @@ async def test_plantilla_es_el_punto_de_partida(client, equipo, mascota_id):
     assert entrada["anamnesis"] == "Sin novedad"
 
 
-# --- F2-CLI-05 Permisos -------------------------------------------------------------------------
+# --- F2-CLI-05 Permisos -----------------------------------------------------------------------
 
 
 async def test_solo_el_medico_escribe(client, equipo, mascota_id):
@@ -163,7 +163,7 @@ async def test_cada_perfil_ve_lo_suyo(client, equipo, mascota_id):
     assert completa["notas_internas"] == "Ojo"
 
 
-# --- F2-CLI-02 Adjuntos -------------------------------------------------------------------------
+# --- F2-CLI-02 Adjuntos -----------------------------------------------------------------------
 
 
 async def test_adjunto_solo_por_url_firmada_y_con_permiso(
@@ -198,7 +198,7 @@ async def test_adjunto_rechaza_tipo_no_permitido(client, equipo, mascota_id):
     assert resp.status_code == 422
 
 
-# --- F2-CLI-03 Formula --------------------------------------------------------------------------
+# --- F2-CLI-03 Formula ------------------------------------------------------------------------
 
 
 async def test_formula_en_pdf(client, equipo, mascota_id, almacenamiento):
@@ -223,7 +223,7 @@ async def test_formula_en_pdf(client, equipo, mascota_id, almacenamiento):
     assert pdf.startswith(b"%PDF-")
 
 
-# --- F2-CLI-04 Atencion virtual -----------------------------------------------------------------
+# --- F2-CLI-04 Atencion virtual ---------------------------------------------------------------
 RESPUESTA = {
     "codigo": "observacion_casa",
     "titulo": "Observacion en casa",

@@ -100,7 +100,10 @@ class Settings(BaseSettings):
     # Distance Matrix se factura por elemento: tope diario antes de pasar a estimar.
     MAPS_TOPE_DIARIO: int = 2000
 
-    # --- Sesion del navegador: el token viaja en cookie httpOnly ---
+    # Clinicas aliadas (F2-ALI-02): dias de vigencia de una remision.
+    REMISION_VIGENCIA_DIAS: int = 30
+
+    # --- Sesion del navegador: el token viaja en cookie httpOnly -------------------------------
     # SECURE debe quedar en True en cualquier ambiente servido por HTTPS.
     COOKIE_NAME: str = "timu_sesion"
     COOKIE_REFRESH_NAME: str = "timu_renovacion"
@@ -108,7 +111,7 @@ class Settings(BaseSettings):
     COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
     COOKIE_DOMAIN: str | None = None
 
-    # --- Almacenamiento de adjuntos (F0-11), compatible S3 ---
+    # --- Almacenamiento de adjuntos (F0-11), compatible S3 -------------------------------------
     # En desarrollo apunta a MinIO; en produccion, al S3 que entregue el cliente.
     # Cambiar de uno a otro es cambiar estas variables, no el codigo.
     STORAGE_ENDPOINT_URL: str | None = "http://minio:9000"
@@ -125,7 +128,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_FROM: str = "TIMU <no-responder@timu.co>"
 
-    # --- Observabilidad (F0-08) ---
+    # --- Observabilidad (F0-08) ----------------------------------------------------------------
     SENTRY_DSN: str = ""
     LOG_JSON: bool = False
 

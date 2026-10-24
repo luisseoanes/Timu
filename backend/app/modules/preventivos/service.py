@@ -89,7 +89,7 @@ def calendario_inicial(db: Session, mascota: Mascota, desde: date) -> list[Event
     return eventos
 
 
-# --- Consultas -------------------------------------------------------------------------------
+# --- Consultas --------------------------------------------------------------------------------
 
 
 def consulta(
@@ -138,7 +138,7 @@ def _esquema(db: Session, codigo: str | None) -> EsquemaPreventivo | None:
     return db.scalar(select(EsquemaPreventivo).where(EsquemaPreventivo.codigo == codigo))
 
 
-# --- F2-PRE-03 Autorizacion ------------------------------------------------------------------
+# --- F2-PRE-03 Autorizacion -------------------------------------------------------------------
 
 
 def autorizar(
@@ -161,7 +161,7 @@ def autorizar(
     return evento
 
 
-# --- F2-PRE-02 Aplicacion y proxima fecha ----------------------------------------------------
+# --- F2-PRE-02 Aplicacion y proxima fecha -----------------------------------------------------
 
 
 def _siguiente(db: Session, evento: EventoPreventivo, numero: int) -> EventoPreventivo | None:
@@ -240,7 +240,7 @@ def cancelar(db: Session, evento: EventoPreventivo, motivo: str) -> EventoPreven
     return evento
 
 
-# --- F2-PRE-04 Agenda preventiva -------------------------------------------------------------
+# --- F2-PRE-04 Agenda preventiva --------------------------------------------------------------
 
 
 def _vigente(db: Session, familia_id: UUID) -> bool:
@@ -326,7 +326,7 @@ def agendar(
     return evento
 
 
-# --- F2-PRE-05 / 06 Carnet ---------------------------------------------------------------------
+# --- F2-PRE-05 / 06 Carnet --------------------------------------------------------------------
 
 
 def _fila_carnet(evento: EventoPreventivo, esquemas: dict[str, str]) -> dict[str, Any]:

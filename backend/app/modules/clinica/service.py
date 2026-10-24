@@ -54,7 +54,7 @@ def presentar(entrada: HistoriaClinica, vista: Vista) -> dict[str, Any]:
     return datos
 
 
-# --- F2-CLI-01 Historia ------------------------------------------------------------------------
+# --- F2-CLI-01 Historia -----------------------------------------------------------------------
 
 
 def _mascota(db: Session, mascota_id: UUID) -> Mascota:
@@ -198,7 +198,7 @@ def historia(
     )
 
 
-# --- F2-CLI-02 Adjuntos ------------------------------------------------------------------------
+# --- F2-CLI-02 Adjuntos -----------------------------------------------------------------------
 
 
 def adjuntar(
@@ -256,7 +256,7 @@ def url_adjunto(db: Session, adjunto_id: UUID, vista: Vista) -> dict[str, str]:
     return {"url": archivos.url(archivo), "nombre": adjunto.nombre_archivo}
 
 
-# --- F2-CLI-03 Formula ----------------------------------------------------------------------
+# --- F2-CLI-03 Formula ------------------------------------------------------------------------
 
 
 def emitir_formula(

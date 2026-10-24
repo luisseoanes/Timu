@@ -45,7 +45,7 @@ T = TypeVar("T")
 GENERAN_CUOTAS = (EstadoAfiliacion.ACTIVA, EstadoAfiliacion.EN_MORA)
 
 
-# --- F1-CAR-01 Contrato ---------------------------------------------------------------------
+# --- F1-CAR-01 Contrato -----------------------------------------------------------------------
 
 
 def _numero(db: Session, dia: date) -> str:
@@ -143,7 +143,7 @@ def _abonar(cuota: Cuota, valor: Decimal) -> None:
     )
 
 
-# --- F1-CAR-02 Generacion de cuotas ----------------------------------------------------------
+# --- F1-CAR-02 Generacion de cuotas -----------------------------------------------------------
 
 
 def generar_cuotas(db: Session, dia: date | None = None) -> int:
@@ -187,7 +187,7 @@ def _aislado(db: Session, contrato: Contrato, fn: Callable[[], T]) -> T | None:
         return None
 
 
-# --- F1-CAR-03 / 05 Estados de cartera ------------------------------------------------------
+# --- F1-CAR-03 / 05 Estados de cartera --------------------------------------------------------
 
 
 def cuotas_abiertas(db: Session, contrato_id: UUID) -> list[Cuota]:
@@ -280,7 +280,7 @@ def _notificar(db: Session, contrato: Contrato, plantilla: str, extra: list[str]
     return mensaje.id
 
 
-# --- F1-CAR-04 Avisos de mora ---------------------------------------------------------------
+# --- F1-CAR-04 Avisos de mora -----------------------------------------------------------------
 
 
 def avisar_mora(db: Session, contrato: Contrato, dia: date | None = None) -> str | None:
@@ -358,7 +358,7 @@ def _revisar_contrato(db: Session, contrato: Contrato, dia: date) -> tuple[str, 
     return transicion, avisado
 
 
-# --- F1-CAR-06 Pagos ------------------------------------------------------------------------
+# --- F1-CAR-06 Pagos --------------------------------------------------------------------------
 
 
 def aplicar_pago(db: Session, pago: Pago) -> list[AplicacionPago]:
@@ -433,7 +433,7 @@ def registrar_pago_manual(
     return pago
 
 
-# --- F1-CAR-07 Renovacion -------------------------------------------------------------------
+# --- F1-CAR-07 Renovacion ---------------------------------------------------------------------
 
 VENTANA_RENOVACION_DIAS = 90
 
@@ -520,7 +520,7 @@ def url_documento(db: Session, contrato: Contrato) -> dict[str, str]:
     return {"url": archivos.url(archivo), "sha256": archivo.sha256}
 
 
-# --- F1-CAR-10 Estado de cuenta -------------------------------------------------------------
+# --- F1-CAR-10 Estado de cuenta ---------------------------------------------------------------
 
 
 def obtener_contrato(db: Session, contrato_id: UUID) -> Contrato:

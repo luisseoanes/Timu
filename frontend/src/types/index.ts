@@ -1,6 +1,6 @@
 // Espejo tipado de los schemas Pydantic del backend (app/schemas, app/modules/*/schemas.py).
 
-export type Rol = 'admin' | 'comercial' | 'operaciones' | 'medico' | 'familia'
+export type Rol = 'admin' | 'comercial' | 'operaciones' | 'medico' | 'familia' | 'aliada'
 
 export type EstadoAfiliacion = 'prospecto' | 'activa' | 'en_mora' | 'congelada' | 'cancelada'
 

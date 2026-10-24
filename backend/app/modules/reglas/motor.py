@@ -97,7 +97,7 @@ def validar_condicion(condicion: dict[str, Any]) -> None:
         raise CondicionInvalida(f"El operador '{op}' necesita una lista en 'valor'")
 
 
-# --- Acciones por evento ------------------------------------------------------------------
+# --- Acciones por evento ----------------------------------------------------------------------
 
 
 class AccionEstadoCartera(BaseModel):

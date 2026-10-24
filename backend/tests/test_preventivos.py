@@ -47,7 +47,7 @@ async def _autorizado(db, evento, usuario_id) -> None:
     await db.run_sync(service.autorizar, evento, usuario_id, "whatsapp", True)
 
 
-# --- F2-PRE-01 Calendario segun esquema --------------------------------------------------------
+# --- F2-PRE-01 Calendario segun esquema -------------------------------------------------------
 
 
 async def test_cachorro_recibe_la_serie_y_el_adulto_un_refuerzo(db):
@@ -99,7 +99,7 @@ async def test_serie_sin_intervalo_se_rechaza(client: AsyncClient, headers):
     assert resp.status_code == 422
 
 
-# --- F2-PRE-02 / 03 Autorizacion y aplicacion ------------------------------------------------
+# --- F2-PRE-02 / 03 Autorizacion y aplicacion -------------------------------------------------
 
 
 async def test_sin_autorizacion_no_se_aplica(db, admin):
@@ -181,7 +181,7 @@ async def test_flujo_http_autorizar_y_aplicar(client: AsyncClient, db, headers):
     assert aplicado.json()["proxima_fecha"] == str(HOY + timedelta(days=365))
 
 
-# --- F2-PRE-04 Agenda --------------------------------------------------------------------------
+# --- F2-PRE-04 Agenda -------------------------------------------------------------------------
 
 
 async def test_agenda_diaria_avisa_una_sola_vez(db):
@@ -244,7 +244,7 @@ async def test_agendar_crea_el_servicio(client: AsyncClient, db, headers):
     assert otra.status_code == 422
 
 
-# --- F2-PRE-05 / 06 Carnet -----------------------------------------------------------------------
+# --- F2-PRE-05 / 06 Carnet --------------------------------------------------------------------
 
 
 async def test_carnet_separa_aplicado_vencido_y_proximo(db, admin):

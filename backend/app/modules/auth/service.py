@@ -79,6 +79,7 @@ def create_usuario(db: Session, data: UsuarioCreate) -> Usuario:
         nombre=data.nombre,
         rol=data.rol,
         hashed_password=hash_password(data.password),
+        clinica_aliada_id=data.clinica_aliada_id,
     )
     db.add(usuario)
     db.flush()
@@ -94,8 +95,12 @@ def actualizar_usuario(
     cambios = data.model_dump(exclude_unset=True)
     if usuario.id == actor.id and ("rol" in cambios or cambios.get("activo") is False):
         raise ReglaNegocio("No puede cambiar su propio perfil ni desactivarse")
+    if cambios.get("rol") == Rol.ALIADA and usuario.clinica_aliada_id is None:
+        raise ReglaNegocio("Un usuario aliado se crea con su clinica; no se convierte")
     for campo, valor in cambios.items():
         setattr(usuario, campo, valor)
+    if usuario.rol != Rol.ALIADA:
+        usuario.clinica_aliada_id = None
     if cambios.get("activo") is False or "rol" in cambios:
         # El rol viaja en el token: cualquier cambio obliga a volver a iniciar sesion.
         sesiones.cerrar_todas(db, usuario.id)
@@ -110,7 +115,7 @@ def authenticate(db: Session, identificador: str, password: str) -> Usuario | No
     return usuario if usuario.activo else None
 
 
-# --- Enlaces de un solo uso (F1-AUT-03 / F1-AUT-04) ---------------------------------------
+# --- Enlaces de un solo uso (F1-AUT-03 / F1-AUT-04) -------------------------------------------
 
 
 def emitir_enlace(db: Session, usuario: Usuario, proposito: Proposito) -> str:
@@ -198,7 +203,7 @@ def restablecer(db: Session, token: str, password: str) -> Usuario:
     return usuario
 
 
-# --- Usuario de portal (F1-AUT-04) ---------------------------------------------------------
+# --- Usuario de portal (F1-AUT-04) ------------------------------------------------------------
 
 
 def crear_usuario_portal(

@@ -38,7 +38,7 @@ async def _renovar(client: AsyncClient, renovacion: str):
     return resp
 
 
-# --- F1-AUT-01 -------------------------------------------------------------------------------
+# --- F1-AUT-01 --------------------------------------------------------------------------------
 
 
 async def test_la_cookie_de_renovacion_solo_viaja_a_auth(client: AsyncClient, admin):
@@ -109,7 +109,7 @@ async def test_login_por_telefono(client: AsyncClient, db):
     assert sesion["usuario"]["email"] == "tel@timu.co"
 
 
-# --- F1-AUT-03 -------------------------------------------------------------------------------
+# --- F1-AUT-03 --------------------------------------------------------------------------------
 
 
 def _token_del_correo(contenido: str) -> str:
@@ -164,7 +164,7 @@ async def test_nuevo_enlace_invalida_el_anterior(client: AsyncClient, db, admin)
     assert resp.status_code == 400
 
 
-# --- F1-AUT-04 -------------------------------------------------------------------------------
+# --- F1-AUT-04 --------------------------------------------------------------------------------
 
 FAMILIA = {
     "titular_nombre": "Ana Ruiz",

@@ -67,7 +67,7 @@ async def _enviar(client, headers, **extra):
     )
 
 
-# --- F1-WHA-03 Plantillas ------------------------------------------------------------------
+# --- F1-WHA-03 Plantillas ---------------------------------------------------------------------
 
 
 async def test_version_nueva_vuelve_a_borrador(client: AsyncClient, headers):
@@ -132,7 +132,7 @@ async def test_envio_con_variables_incompletas(client: AsyncClient, headers):
     assert resp.status_code == 422
 
 
-# --- F1-WHA-01 Cola y reintentos -----------------------------------------------------------
+# --- F1-WHA-01 Cola y reintentos --------------------------------------------------------------
 
 
 async def test_envio_se_encola_despues_del_commit(client: AsyncClient, headers, tareas):
@@ -192,7 +192,7 @@ async def test_traza_por_familia(client: AsyncClient, db, headers):
     assert traza.json()["total"] == 1
 
 
-# --- F1-WHA-02 Webhook: estados y entrantes ---------------------------------------------
+# --- F1-WHA-02 Webhook: estados y entrantes ---------------------------------------------------
 
 
 def _evento(**valor) -> dict:

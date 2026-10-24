@@ -11,11 +11,11 @@ from sqlalchemy.types import JSON
 
 from app.core.config import settings
 
-# --- Capa async: la usan los endpoints de FastAPI ---
+# --- Capa async: la usan los endpoints de FastAPI ----------------------------------------------
 engine = create_async_engine(settings.DATABASE_URL, echo=settings.DEBUG, future=True)
 SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-# --- Capa sincrona: la usan las tareas de Celery ---
+# --- Capa sincrona: la usan las tareas de Celery -----------------------------------------------
 # Celery no es async. Mezclar asyncio.run() con sesiones async dentro de una tarea
 # produce loops por tarea y conexiones que no se reutilizan, asi que los workers
 # hablan con la base de datos en modo sincrono. Ver sesion_worker().

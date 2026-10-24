@@ -209,7 +209,7 @@ def familia_de_usuario(db: Session, usuario_id: UUID) -> Familia:
     return familia
 
 
-# --- Mascotas (F1-FAM-02) -------------------------------------------------------------------
+# --- Mascotas (F1-FAM-02) ---------------------------------------------------------------------
 
 
 def obtener_mascota(db: Session, mascota_id: UUID) -> Mascota:

@@ -39,7 +39,7 @@ VENTANA = timedelta(hours=24)
 PALABRAS_BAJA = {"BAJA", "STOP", "NO MAS", "NO MÁS", "DETENER"}
 
 
-# --- Plantillas (F1-WHA-03) -------------------------------------------------------------
+# --- Plantillas (F1-WHA-03) -------------------------------------------------------------------
 
 
 def render(cuerpo: str, variables: list[str]) -> str:
@@ -104,7 +104,7 @@ def cambiar_estado_plantilla(
     return plantilla
 
 
-# --- Bajas y ventana (F1-WHA-04) ---------------------------------------------------------
+# --- Bajas y ventana (F1-WHA-04) --------------------------------------------------------------
 
 
 def esta_de_baja(db: Session, destino: str) -> bool:
@@ -141,7 +141,7 @@ def ventana_abierta(db: Session, telefono: str) -> bool:
     return ultimo is not None and ahora() - con_zona(ultimo) < VENTANA
 
 
-# --- Encolado (F1-WHA-01) ------------------------------------------------------------------
+# --- Encolado (F1-WHA-01) ---------------------------------------------------------------------
 
 
 def _encolar(db: Session, mensaje: Mensaje) -> Mensaje:
@@ -231,7 +231,7 @@ def encolar_correo(
     return mensaje
 
 
-# --- Envio (ejecutado por el worker) -----------------------------------------------------
+# --- Envio (ejecutado por el worker) ----------------------------------------------------------
 
 
 def procesar_envio(db: Session, mensaje_id: UUID, cliente: WhatsAppClient | None = None) -> str:
@@ -281,7 +281,7 @@ def pendientes_por_reencolar(db: Session, antiguedad: timedelta) -> list[UUID]:
     return list(ids)
 
 
-# --- Webhook de Meta (F1-WHA-02) -----------------------------------------------------------
+# --- Webhook de Meta (F1-WHA-02) --------------------------------------------------------------
 
 _ESTADOS_META = {
     "sent": EstadoMensaje.ENVIADO,

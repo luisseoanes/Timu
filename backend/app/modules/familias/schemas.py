@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.core.enums import EstadoAfiliacion
+from app.core.tiempo import hoy
 from app.core.validaciones import DocumentoCO, TelefonoCO, TipoDocumento
 
 Sexo = Literal["macho", "hembra"]
@@ -22,7 +23,7 @@ class MascotaBase(BaseModel):
     @field_validator("fecha_nacimiento")
     @classmethod
     def _no_futura(cls, v: date | None) -> date | None:
-        if v and v > date.today():
+        if v and v > hoy():
             raise ValueError("La fecha de nacimiento no puede ser futura")
         return v
 

@@ -152,7 +152,7 @@ class ResponderIn(BaseModel):
     notas_internas: str | None = None
 
 
-# --- F2-CLI-01 / 05 Historia -------------------------------------------------------------------
+# --- F2-CLI-01 / 05 Historia ------------------------------------------------------------------
 
 
 @router.get("/mascotas/{mascota_id}/historia")
@@ -228,7 +228,7 @@ async def corregir(
     )
 
 
-# --- F2-CLI-02 Adjuntos --------------------------------------------------------------------------
+# --- F2-CLI-02 Adjuntos -----------------------------------------------------------------------
 
 
 @router.post(
@@ -270,7 +270,7 @@ async def url_adjunto(db: DbSession, usuario: Equipo, adjunto_id: UUID) -> dict[
     return await db.run_sync(service.url_adjunto, adjunto_id, service.vista_para(usuario.rol))
 
 
-# --- F2-CLI-03 Plantillas y formulas -----------------------------------------------------------
+# --- F2-CLI-03 Plantillas y formulas ----------------------------------------------------------
 
 
 @router.post(
@@ -323,7 +323,7 @@ async def crear_plantilla(db: DbSession, data: PlantillaIn) -> PlantillaConsulta
     return plantilla
 
 
-# --- F2-CLI-04 Atencion virtual ----------------------------------------------------------------
+# --- F2-CLI-04 Atencion virtual ---------------------------------------------------------------
 
 
 @router.get("/respuestas-virtuales", response_model=list[RespuestaRead], dependencies=[GESTION])

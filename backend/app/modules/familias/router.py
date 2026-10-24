@@ -133,7 +133,7 @@ async def agregar_mascota(db: DbSession, familia_id: UUID, data: MascotaCreate) 
     return await db.run_sync(service.agregar_mascota, familia, data)
 
 
-# --- Mascotas (F1-FAM-02) -------------------------------------------------------------------
+# --- Mascotas (F1-FAM-02) ---------------------------------------------------------------------
 
 
 @mascotas_router.get("/{mascota_id}", response_model=MascotaRead, dependencies=[EQUIPO])

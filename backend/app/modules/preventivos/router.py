@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.deps import INTERNOS, DbSession, publico, requiere
 from app.core.enums import Rol
+from app.core.tiempo import hoy
 from app.modules.archivos import service as archivos
 from app.modules.archivos.models import Archivo
 from app.modules.auth.models import Usuario
@@ -116,7 +117,7 @@ async def listar(
 async def calendarizar(db: DbSession, mascota_id: UUID) -> list[EventoPreventivo]:
     """Programa los esquemas que la mascota aun no tenga (p. ej. tras crear uno nuevo)."""
     mascota = await db.run_sync(service._mascota, mascota_id)
-    return await db.run_sync(service.calendario_inicial, mascota, date.today())
+    return await db.run_sync(service.calendario_inicial, mascota, hoy())
 
 
 @router.post("/{evento_id}/autorizacion", response_model=EventoRead)

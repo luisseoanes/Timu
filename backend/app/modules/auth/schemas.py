@@ -12,11 +12,14 @@ class UsuarioCreate(BaseModel):
     nombre: str = Field(min_length=2, max_length=160)
     password: str = Field(min_length=8, max_length=128)
     rol: Rol = Rol.OPERACIONES
+    clinica_aliada_id: UUID | None = None
 
     @model_validator(mode="after")
     def _con_identificador(self) -> "UsuarioCreate":
         if not self.email and not self.telefono:
             raise ValueError("Se requiere email o telefono")
+        if (self.rol == Rol.ALIADA) != (self.clinica_aliada_id is not None):
+            raise ValueError("La clinica aliada se indica si y solo si el rol es aliada")
         return self
 
 
@@ -35,6 +38,7 @@ class UsuarioRead(BaseModel):
     nombre: str
     rol: Rol
     activo: bool
+    clinica_aliada_id: UUID | None = None
 
 
 class Sesion(BaseModel):

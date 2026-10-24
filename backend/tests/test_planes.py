@@ -51,7 +51,7 @@ async def test_beneficio_con_tipo_inexistente(client: AsyncClient, headers):
     assert resp.status_code == 404
 
 
-# --- F1-PLA-04 ------------------------------------------------------------------------------
+# --- F1-PLA-04 --------------------------------------------------------------------------------
 
 
 async def test_recomendacion_por_composicion(client: AsyncClient, db, headers):
@@ -82,7 +82,7 @@ async def test_recomendacion_salta_plan_de_otra_ciudad(db):
     assert regla == "por_defecto"
 
 
-# --- F1-PLA-02 ------------------------------------------------------------------------------
+# --- F1-PLA-02 --------------------------------------------------------------------------------
 
 
 async def test_subir_de_plan_cobra_prorrateo(db):
@@ -145,7 +145,7 @@ async def test_cambio_al_proximo_ciclo_por_regla(db):
     assert dinero(siguiente.valor) == Decimal("75000.00")
 
 
-# --- F1-PLA-03 ------------------------------------------------------------------------------
+# --- F1-PLA-03 --------------------------------------------------------------------------------
 
 
 async def test_mascota_sobre_el_cupo_se_rechaza(client: AsyncClient, db, headers):

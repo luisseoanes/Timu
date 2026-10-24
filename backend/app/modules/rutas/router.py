@@ -116,7 +116,7 @@ async def cancelar(db: DbSession, _: Operaciones, ruta_id: UUID) -> dict[str, An
     )
 
 
-# --- F2-RUT-04 Ejecucion -------------------------------------------------------------------------
+# --- F2-RUT-04 Ejecucion ----------------------------------------------------------------------
 
 
 @router.post("/{ruta_id}/inicio")
@@ -169,7 +169,7 @@ async def salida(
     )
 
 
-# --- F2-RUT-05 Cambios en caliente ----------------------------------------------------------------
+# --- F2-RUT-05 Cambios en caliente ------------------------------------------------------------
 
 
 @router.post("/paradas/{parada_id}/omision")

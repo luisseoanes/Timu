@@ -9,6 +9,8 @@ class Rol(StrEnum):
     OPERACIONES = "operaciones"
     MEDICO = "medico"
     FAMILIA = "familia"  # portal de usuarios
+    # F2-ALI-03 Clinica aliada: valida remisiones de SU clinica y reporta la atencion.
+    ALIADA = "aliada"
 
 
 class EstadoAfiliacion(StrEnum):

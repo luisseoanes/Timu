@@ -29,7 +29,7 @@ async def _cuotas(db, contrato) -> list[Cuota]:
     )
 
 
-# --- F1-CAR-01 / 02 -------------------------------------------------------------------------
+# --- F1-CAR-01 / 02 ---------------------------------------------------------------------------
 
 
 async def test_contrato_con_corte_renovacion_y_primera_cuota(db):
@@ -81,7 +81,7 @@ async def test_saldo_a_favor_se_descuenta_de_la_cuota(db):
     assert dinero(contrato.saldo_a_favor) == 0
 
 
-# --- F1-CAR-03 / 05 Estados, congelamiento y reactivacion -----------------------------------
+# --- F1-CAR-03 / 05 Estados, congelamiento y reactivacion -------------------------------------
 
 
 async def test_estados_por_dias_de_mora_y_reactivacion(db, tareas):
@@ -124,7 +124,7 @@ async def test_estados_por_dias_de_mora_y_reactivacion(db, tareas):
     assert {"afiliacion_congelada", "afiliacion_reactivada"} <= plantillas
 
 
-# --- F1-CAR-04 Avisos -----------------------------------------------------------------------
+# --- F1-CAR-04 Avisos -------------------------------------------------------------------------
 
 
 async def test_avisos_escalonados_sin_repetir(db):
@@ -156,7 +156,7 @@ async def test_revision_diaria(db):
     assert resumen.avisos == 2
 
 
-# --- F1-CAR-06 Pagos manuales ---------------------------------------------------------------
+# --- F1-CAR-06 Pagos manuales -----------------------------------------------------------------
 
 
 async def test_pago_se_aplica_de_la_cuota_mas_antigua_y_sobra_saldo(
@@ -215,7 +215,7 @@ async def test_pago_a_cuota_de_otra_familia(client: AsyncClient, db, headers):
     assert resp.status_code == 422
 
 
-# --- F1-CAR-10 Estado de cuenta -------------------------------------------------------------
+# --- F1-CAR-10 Estado de cuenta ---------------------------------------------------------------
 
 
 async def test_estado_de_cuenta(client: AsyncClient, db, headers):
@@ -232,7 +232,7 @@ async def test_estado_de_cuenta(client: AsyncClient, db, headers):
     assert len(cuenta["cuotas"]) == 1
 
 
-# --- F1-CAR-07 Renovacion -------------------------------------------------------------------
+# --- F1-CAR-07 Renovacion ---------------------------------------------------------------------
 
 
 async def test_renovacion_genera_una_tarea(db):
@@ -247,7 +247,7 @@ async def test_renovacion_genera_una_tarea(db):
     assert contrato.fecha_renovacion == sumar_meses(anterior, 12)
 
 
-# --- F1-CAR-09 Webhook de la pasarela --------------------------------------------------------
+# --- F1-CAR-09 Webhook de la pasarela ---------------------------------------------------------
 
 
 def _evento(referencia: str, centavos: int, estado: str = "APPROVED", tx_id: str = "tx-1") -> dict:
@@ -360,7 +360,7 @@ async def test_evento_perdido_se_recupera(db):
     assert pago.estado == "aprobado"
 
 
-# --- F1-CAR-08 Cobro recurrente -------------------------------------------------------------
+# --- F1-CAR-08 Cobro recurrente ---------------------------------------------------------------
 
 
 async def _cobrar(db, dia, wompi) -> dict:

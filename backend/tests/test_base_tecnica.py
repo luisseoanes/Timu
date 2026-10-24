@@ -8,7 +8,7 @@ from app.core.config import ConfiguracionInvalida, Settings
 from app.main import app
 from tests.conftest import PASSWORD
 
-# --- F0-02 Formato de errores e identificador de peticion ---------------------------
+# --- F0-02 Formato de errores e identificador de peticion --------------------------------------
 
 _router_prueba = APIRouter()
 
@@ -54,7 +54,7 @@ async def test_error_no_controlado_no_filtra_detalles(client: AsyncClient):
     assert resp.json()["request_id"] == resp.headers["X-Request-ID"]
 
 
-# --- F0-05 Configuracion por ambiente ------------------------------------------------
+# --- F0-05 Configuracion por ambiente ---------------------------------------------------------
 
 PRODUCCION_VALIDA = {
     "ENVIRONMENT": "production",
@@ -110,7 +110,7 @@ def test_local_no_exige_secretos():
     assert not Settings(_env_file=None, ENVIRONMENT="local").es_desplegado
 
 
-# --- F0-06 Endurecimiento HTTP ---------------------------------------------------------
+# --- F0-06 Endurecimiento HTTP ----------------------------------------------------------------
 
 
 async def test_encabezados_de_seguridad(client: AsyncClient):
@@ -163,7 +163,7 @@ async def test_cors_solo_para_origenes_permitidos(client: AsyncClient):
     assert "access-control-allow-origin" not in ajeno.headers
 
 
-# --- F0-10 Contrato de listados -------------------------------------------------------
+# --- F0-10 Contrato de listados ---------------------------------------------------------------
 
 
 async def _crear_familias(client: AsyncClient, headers, nombres: list[str]) -> None:

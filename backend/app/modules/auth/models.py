@@ -26,6 +26,8 @@ class Usuario(Base, UUIDMixin, TimestampMixin, Auditable):
     hashed_password: Mapped[str] = mapped_column(String(255))
     rol: Mapped[Rol] = mapped_column(String(32), default=Rol.OPERACIONES)
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    # F2-ALI-03 Solo para el rol aliada: la clinica cuyas remisiones puede ver.
+    clinica_aliada_id: Mapped[UUID | None] = mapped_column(ForeignKey("clinicas_aliadas.id"))
 
 
 class Sesion(Base, UUIDMixin, TimestampMixin):

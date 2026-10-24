@@ -150,7 +150,7 @@ def ajustar_por_mascotas(
     return cambio
 
 
-# --- F1-PLA-02 Cambio de plan ----------------------------------------------------------------
+# --- F1-PLA-02 Cambio de plan -----------------------------------------------------------------
 
 
 def _ciclo_actual(contrato: Contrato, dia: date) -> tuple[date, date]:
@@ -285,7 +285,7 @@ def aplicar_cambios_programados(db: Session, contrato: Contrato, hasta: date) ->
     db.flush()
 
 
-# --- F1-PLA-04 Recomendacion ---------------------------------------------------------------
+# --- F1-PLA-04 Recomendacion ------------------------------------------------------------------
 
 
 def recomendar(db: Session, ciudad: str, especies: list[str]) -> tuple[Plan, str, str]:
