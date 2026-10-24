@@ -11,6 +11,7 @@ Nunca contra produccion: se niega si ENVIRONMENT no es local.
 """
 
 import os
+import re
 import sys
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -78,6 +79,13 @@ FAMILIAS: list[dict[str, Any]] = [
     },
 ]
 
+INTERESADOS = [
+    ("Paula Diaz", "3005551234", "whatsapp"),
+    ("Andres Mejia", "3112223344", "referido"),
+    ("Sofia Herrera", "3206667788", "evento"),
+    ("Camilo Rojas", "3013334455", "formulario"),
+]
+
 # Barrios del norte de Bogota, para que el optimizador de rutas tenga donde trabajar.
 UBICACIONES = [
     (4.6683, -74.0548),
@@ -92,6 +100,7 @@ BENEFICIOS = [
     {"tipo_servicio_codigo": "desparasitacion", "cupo": 4, "periodo_cupo": "anual"},
     {"tipo_servicio_codigo": "control_post", "cupo": 4, "periodo_cupo": "anual"},
     {"tipo_servicio_codigo": "orientacion_virtual", "cupo": None, "periodo_cupo": "anual"},
+    {"tipo_servicio_codigo": "atencion_aliada", "cupo": 2, "periodo_cupo": "anual"},
 ]
 
 
@@ -145,7 +154,8 @@ def main() -> None:
     print("Planes y beneficios")
     planes = {p["codigo"]: p for p in c.get("/planes")}
     for plan in planes.values():
-        if not plan["beneficios"]:
+        codigos = {b["tipo_servicio_codigo"] for b in plan["beneficios"]}
+        if codigos != {b["tipo_servicio_codigo"] for b in BENEFICIOS}:
             c.put(f"/planes/{plan['id']}/beneficios", BENEFICIOS)
 
     print("Franjas de agenda")
@@ -326,8 +336,110 @@ def main() -> None:
                 {"fecha": hoy.isoformat(), "ciudad": "Bogota", "responsables": equipo[:2]},
             )
 
+    print("Comercial")
+    if c.get("/comercial/interesados", limit=1)["total"] == 0:
+        for nombre, telefono, origen in INTERESADOS:
+            c.post(
+                "/comercial/interesados",
+                {"nombre": nombre, "telefono": telefono, "ciudad": "Bogota", "origen": origen},
+            )
+        for i, interesado in enumerate(c.get("/comercial/interesados", limit=10)["items"]):
+            etapa = ("contactado", "cotizado", "en_afiliacion")[i % 3]
+            c.http.patch(f"/comercial/interesados/{interesado['id']}", json={"etapa": etapa})
+
+    print("Campanas")
+    plantillas = {p["nombre"]: p for p in c.get("/comunicaciones/plantillas")}
+    if "recordatorio_renovacion" not in plantillas:
+        nueva = c.post(
+            "/comunicaciones/plantillas",
+            {
+                "nombre": "recordatorio_renovacion",
+                "categoria": "utility",
+                "cuerpo": "Hola {{1}}, tu {{2}} se renueva pronto. Gracias por confiar en TIMU.",
+                "variables": ["1", "2"],
+            },
+        )
+        if nueva:
+            c.http.patch(
+                f"/comunicaciones/plantillas/{nueva['id']}/estado",
+                json={"estado_aprobacion": "aprobada", "activa": True},
+            )
+    if not c.get("/campanas"):
+        c.post(
+            "/campanas",
+            {
+                "nombre": "Renovaciones del mes",
+                "plantilla": "recordatorio_renovacion",
+                "variables": ["titular_nombre", "plan"],
+                "segmento": {"estados": ["activa"], "renovacion_en_dias": 400},
+            },
+        )
+
+    print("Clinicas aliadas")
+    if not c.get("/aliadas"):
+        clinica = c.post(
+            "/aliadas",
+            {
+                "nombre": "Clinica Veterinaria del Norte",
+                "nit": "900123456",
+                "ciudad": "Bogota",
+                "direccion": "Calle 127 # 15-30",
+                "telefono": "6017654321",
+                "servicios": "Rayos X, ecografia, hospitalizacion y cirugia",
+            },
+        )
+        if clinica:
+            c.post(
+                f"/aliadas/{clinica['id']}/convenios",
+                {
+                    "beneficio": "Radiografia",
+                    "cobertura_pct": 80,
+                    "tarifa": "120000",
+                    "tope_cubierto": "200000",
+                    "vigente_desde": (hoy - timedelta(days=30)).isoformat(),
+                },
+            )
+            c.post(
+                "/auth/usuarios",
+                {
+                    "email": "aliada@timu.co",
+                    "nombre": "Recepcion Clinica del Norte",
+                    "rol": "aliada",
+                    "password": CLAVE_EQUIPO,
+                    "clinica_aliada_id": clinica["id"],
+                },
+            )
+    clinicas = c.get("/aliadas")
+    if clinicas and not c.get("/aliadas/remisiones"):
+        c.post(
+            "/aliadas/remisiones",
+            {
+                "clinica_id": clinicas[0]["id"],
+                "mascota_id": familias[3]["mascotas"][0]["id"],
+                "motivo": "Radiografia de cadera por cojera",
+            },
+        )
+
+    print("Portal de Ana Ruiz")
+    ana = c.get(f"/familias/{familias[0]['id']}")
+    puede_entrar = httpx.post(
+        f"{API}/auth/login", data={"username": ana["email"], "password": CLAVE_EQUIPO}
+    ).is_success
+    if not puede_entrar:
+        if not ana.get("usuario_portal_id"):
+            c.post(f"/familias/{ana['id']}/acceso-portal")
+        # Sin WhatsApp ni correo configurados el enlace queda en el mensaje: se toma de ahi.
+        # El aviso de activacion va al usuario, no a la familia: se busca entre los recientes.
+        recientes = c.get("/comunicaciones/mensajes", limit=50, orden="-created_at")["items"]
+        for mensaje in recientes:
+            token = re.search(r"activar\?token=([\w-]+)", mensaje.get("contenido") or "")
+            if token:
+                c.post("/auth/restablecer", {"token": token.group(1), "password": CLAVE_EQUIPO})
+                break
+
     print("Listo. Ingresa a http://localhost:5173 con admin@timu.co / cambiar123")
     print(f"Equipo de prueba (clave {CLAVE_EQUIPO}): " + ", ".join(e for e, _, _ in EQUIPO))
+    print(f"Clinica aliada: aliada@timu.co · Portal: ana@example.com (clave {CLAVE_EQUIPO})")
 
 
 if __name__ == "__main__":

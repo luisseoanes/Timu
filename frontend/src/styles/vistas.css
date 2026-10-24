@@ -271,7 +271,7 @@
 .aviso-ok { background: var(--ok-bg); color: var(--ok-tx); }
 
 /* Página pública sencilla: encuesta, verificación de carnet, afiliación */
-.publica { min-height: 100vh; display: grid; place-items: start center; gap: var(--e5); padding: var(--e8) var(--e4); background: var(--fondo); }
+.publica { min-height: 100vh; display: grid; place-items: start center; align-content: start; gap: var(--e5); padding: var(--e8) var(--e4); background: var(--fondo); }
 .publica-tarjeta {
   width: min(560px, 100%);
   display: grid; gap: var(--e5);
