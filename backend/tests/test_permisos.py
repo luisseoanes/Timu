@@ -65,6 +65,7 @@ PUBLICAS_ESPERADAS = {
     "GET /api/v1/webhooks/whatsapp",
     "POST /api/v1/webhooks/whatsapp",  # autorizada por firma de Meta
     "POST /api/v1/webhooks/pagos",  # autorizada por firma de la pasarela
+    "GET /api/v1/verificacion/carnets/{codigo}",  # F2-PRE-06 la valida un tercero
 }
 
 

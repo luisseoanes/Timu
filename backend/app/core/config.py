@@ -86,6 +86,9 @@ class Settings(BaseSettings):
 
     GOOGLE_MAPS_API_KEY: str = ""
 
+    # Preventivos (F2-PRE-04): con cuantos dias se avisa a la familia que se acerca la fecha.
+    PREVENTIVO_ANTICIPACION_DIAS: int = 7
+
     # --- Sesion del navegador: el token viaja en cookie httpOnly ---
     # SECURE debe quedar en True en cualquier ambiente servido por HTTPS.
     COOKIE_NAME: str = "timu_sesion"

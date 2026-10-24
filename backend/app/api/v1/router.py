@@ -16,6 +16,7 @@ from app.modules.familias.router import router as familias_router
 from app.modules.planes.router import router as planes_router
 from app.modules.portal.router import router as portal_router
 from app.modules.preventivos.router import router as preventivos_router
+from app.modules.preventivos.router import verificacion_router
 from app.modules.reglas.router import router as reglas_router
 from app.modules.rutas.router import router as rutas_router
 from app.modules.servicios.router import agenda_router, pendientes_router
@@ -40,6 +41,7 @@ for r in (
     agenda_router,
     pendientes_router,
     preventivos_router,
+    verificacion_router,
     clinica_router,
     rutas_router,
     comunicaciones_router,
