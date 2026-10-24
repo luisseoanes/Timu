@@ -40,6 +40,11 @@ from app.modules.clinica.models import (  # noqa: F401
     RespuestaVirtual,
     SolicitudVirtual,
 )
+from app.modules.comercial.models import (  # noqa: F401
+    ArbolConversacion,
+    ConversacionComercial,
+    Interesado,
+)
 from app.modules.comunicaciones.models import (  # noqa: F401
     BajaComunicaciones,
     ConversacionWhatsApp,

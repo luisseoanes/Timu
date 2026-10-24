@@ -368,8 +368,20 @@ def _registrar_entrante(db: Session, msg: dict[str, Any]) -> None:
         # F3-ENC-02 Un "1" a "5" en respuesta a una encuesta reciente es su calificacion.
         from app.modules.encuestas import service as encuestas
 
-        with db.begin_nested():
-            encuestas.respuesta_whatsapp(db, telefono, texto)
+        # Encuesta y conversacion van aisladas: si fallan, el mensaje entrante y los
+        # estados de entrega del mismo webhook se registran igual.
+        calificacion = None
+        try:
+            with db.begin_nested():
+                calificacion = encuestas.respuesta_whatsapp(db, telefono, texto)
+            if calificacion is None:
+                # F3-COM-02 Todo lo demas lo atiende la conversacion comercial (o el asesor).
+                from app.modules.comercial import conversacion as comercial
+
+                with db.begin_nested():
+                    comercial.procesar_entrante(db, telefono, texto, familia_id)
+        except Exception:  # noqa: BLE001
+            logger.exception("Respuesta automatica fallida para %s", telefono)
 
 
 def procesar_evento_whatsapp(db: Session, payload: dict[str, Any]) -> dict[str, int]:

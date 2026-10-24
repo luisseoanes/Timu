@@ -318,6 +318,24 @@ _CAMPOS_COMPLETABLES = ("email", "direccion", "titular_nombre")
 
 
 def desde_formulario(db: Session, data: FormularioFamilia) -> ResultadoFormulario:
+    """Crea o completa el perfil y deja al interesado en el embudo comercial (F3-COM-01)."""
+    from app.modules.comercial import service as comercial
+
+    resultado = _desde_formulario(db, data)
+    comercial.registrar(
+        db,
+        origen=data.origen[:24],
+        telefono=data.telefono,
+        email=str(data.email) if data.email else None,
+        nombre=data.titular_nombre,
+        ciudad=data.ciudad,
+        familia_id=resultado.familia_id,
+        datos={"mascotas": [m.especie for m in data.mascotas]},
+    )
+    return resultado
+
+
+def _desde_formulario(db: Session, data: FormularioFamilia) -> ResultadoFormulario:
     """Crea la familia o completa la existente con el mismo documento.
 
     Como el formulario es publico, sobre una familia existente solo se llenan campos vacios

@@ -98,6 +98,7 @@ def iniciar(
     db.flush()  # la solicitud referencia al pago
     db.add(solicitud)
     db.flush()
+    _al_embudo(db, familia, "en_afiliacion", origen, plan.codigo)
     enlace = construir_link_pago(
         referencia,
         centavos(valor),
@@ -202,10 +203,28 @@ def _completar(db: Session, solicitud: SolicitudAfiliacion, pago: Pago) -> None:
     _calendario_preventivo(db, familia, hoy())
     _bienvenida(db, familia, plan)
 
+    _al_embudo(db, familia, "afiliado", solicitud.origen, plan.codigo)
     solicitud.contrato_id = contrato.id
     solicitud.estado = EstadoSolicitud.COMPLETADA
     solicitud.completada_en = ahora()
     solicitud.error = None
+
+
+def _al_embudo(db: Session, familia: Familia, etapa: str, origen: str, plan: str) -> None:
+    """F3-COM-01 La afiliacion tambien mueve el embudo comercial."""
+    from app.modules.comercial import service as comercial
+
+    interesado = comercial.registrar(
+        db,
+        origen="afiliacion" if origen in ("formulario", "landing") else origen[:24],
+        telefono=familia.telefono,
+        email=familia.email,
+        nombre=familia.titular_nombre,
+        ciudad=familia.ciudad,
+        familia_id=familia.id,
+        etapa=etapa,
+    )
+    interesado.plan_sugerido = interesado.plan_sugerido or plan
 
 
 def _documento(db: Session, contrato: Contrato, familia: Familia, plan: Plan) -> None:
