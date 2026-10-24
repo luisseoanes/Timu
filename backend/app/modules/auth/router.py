@@ -14,6 +14,7 @@ from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.deps import (
+    INTERNOS,
     TODOS,
     Admin,
     DbSession,
@@ -26,6 +27,7 @@ from app.modules.auth import service, sesiones
 from app.modules.auth.models import Usuario
 from app.modules.auth.schemas import (
     CodigoIn,
+    MiembroEquipo,
     RecuperarIn,
     RestablecerIn,
     Sesion,
@@ -152,6 +154,20 @@ async def verificar_codigo(
 @router.get("/me", response_model=UsuarioRead)
 async def me(usuario: Autenticado) -> Usuario:
     return usuario
+
+
+@router.get(
+    "/equipo",
+    response_model=list[MiembroEquipo],
+    dependencies=[Depends(require_roles(*INTERNOS))],
+)
+async def equipo(db: DbSession, rol: str | None = None) -> list[Usuario]:
+    """Personas activas del equipo interno, para asignar rutas y tareas. Cualquier perfil
+    interno lo consulta; la gestion de usuarios sigue siendo de admin."""
+    stmt = select(Usuario).where(Usuario.activo.is_(True), Usuario.rol.in_(INTERNOS))
+    if rol:
+        stmt = stmt.where(Usuario.rol == rol)
+    return list((await db.scalars(stmt.order_by(Usuario.nombre))).all())
 
 
 @router.get("/usuarios", response_model=Page[UsuarioRead])

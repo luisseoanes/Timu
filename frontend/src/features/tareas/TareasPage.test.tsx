@@ -36,7 +36,7 @@ describe('TareasPage', () => {
     let asignacion: unknown = null
     server.use(
       http.get(`${API}/tareas`, () => HttpResponse.json(pagina([TAREA]))),
-      http.get(`${API}/auth/usuarios`, () => HttpResponse.json(pagina([]))),
+      http.get(`${API}/auth/equipo`, () => HttpResponse.json([])),
       http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'operaciones' })),
       http.patch(`${API}/tareas/t1/asignacion`, async ({ request }) => {
         asignacion = await request.json()

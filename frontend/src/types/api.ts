@@ -63,6 +63,12 @@ export interface UsuarioRead {
   clinica_aliada_id?: string | null
 }
 
+export interface MiembroEquipo {
+  id: string
+  nombre: string
+  rol: Rol
+}
+
 export interface CiudadRead {
   codigo: string
   nombre: string

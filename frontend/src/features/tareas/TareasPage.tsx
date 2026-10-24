@@ -10,7 +10,6 @@ import { useAuth } from '@/features/auth/AuthContext'
 import { SelectorFamilia } from '@/features/familias/SelectorFamilia'
 import { mensajeError } from '@/lib/errores'
 import { fecha, hoyISO } from '@/lib/formato'
-import { puede } from '@/lib/permisos'
 import type { FamiliaRead, TareaRead } from '@/types'
 
 import {
@@ -18,9 +17,9 @@ import {
   useAsignarTarea,
   useCerrarTarea,
   useCrearTarea,
+  useEquipo,
   useIniciarTarea,
   useTareas,
-  useUsuariosEquipo,
   type Area,
   type FiltrosTareas,
 } from './api'
@@ -46,8 +45,7 @@ export function TareasPage() {
   const [offset, setOffset] = useState(0)
   const [nueva, setNueva] = useState(false)
   const [cerrando, setCerrando] = useState<TareaRead | null>(null)
-  const esAdmin = puede(usuario, 'administrar')
-  const usuarios = useUsuariosEquipo(esAdmin)
+  const usuarios = useEquipo()
 
   const filtros: FiltrosTareas = {
     area: area || undefined,
@@ -151,7 +149,7 @@ export function TareasPage() {
                         </td>
                         <td className={`numero${vencida ? ' error' : ''}`}>{fecha(t.vence_el)}</td>
                         <td>
-                          {esAdmin && t.estado !== 'cerrada' ? (
+                          {t.estado !== 'cerrada' ? (
                             <select
                               className="input"
                               value={t.asignada_a_id ?? ''}

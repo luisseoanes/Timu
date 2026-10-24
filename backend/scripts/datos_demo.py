@@ -78,6 +78,14 @@ FAMILIAS: list[dict[str, Any]] = [
     },
 ]
 
+# Barrios del norte de Bogota, para que el optimizador de rutas tenga donde trabajar.
+UBICACIONES = [
+    (4.6683, -74.0548),
+    (4.7016, -74.0306),
+    (4.6858, -74.0567),
+    (4.7239, -74.0402),
+]
+
 BENEFICIOS = [
     {"tipo_servicio_codigo": "consulta_domiciliaria", "cupo": 6, "periodo_cupo": "anual"},
     {"tipo_servicio_codigo": "vacunacion", "cupo": 4, "periodo_cupo": "anual"},
@@ -180,6 +188,15 @@ def main() -> None:
                         "fecha_inicio": inicio,
                     },
                 )
+
+    print("Ubicaciones (sin Google Maps no se geocodifica: se fijan a mano)")
+    for familia, (lat, lng) in zip(familias, UBICACIONES, strict=False):
+        if familia.get("latitud") is None and familia["ciudad"] == "Bogota":
+            resp = c.http.patch(
+                f"/familias/{familia['id']}", json={"latitud": lat, "longitud": lng}
+            )
+            if resp.is_success:
+                familia.update(resp.json())
 
     print("Servicios")
     if c.get("/servicios", limit=1)["total"] == 0:
@@ -299,6 +316,15 @@ def main() -> None:
                 "prioridad": "baja",
             },
         )
+
+    print("Rutas de hoy")
+    if not c.get("/rutas", fecha=hoy.isoformat(), ciudad="Bogota"):
+        equipo = [m["id"] for m in c.get("/auth/equipo") if m["rol"] in ("medico", "operaciones")]
+        if equipo and c.get("/rutas/por-rutear", fecha=hoy.isoformat(), ciudad="Bogota"):
+            c.post(
+                "/rutas/planificaciones",
+                {"fecha": hoy.isoformat(), "ciudad": "Bogota", "responsables": equipo[:2]},
+            )
 
     print("Listo. Ingresa a http://localhost:5173 con admin@timu.co / cambiar123")
     print(f"Equipo de prueba (clave {CLAVE_EQUIPO}): " + ", ".join(e for e, _, _ in EQUIPO))

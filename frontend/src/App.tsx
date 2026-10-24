@@ -17,6 +17,7 @@ import { EntradaPage } from '@/features/clinica/EntradaPage'
 import { HistoriaMascotaPage } from '@/features/clinica/HistoriaMascotaPage'
 import { Placeholder } from '@/features/Placeholder'
 import { PreventivosPage } from '@/features/preventivos/PreventivosPage'
+import { RutasPage } from '@/features/rutas/RutasPage'
 import { ServicioDetallePage } from '@/features/servicios/ServicioDetallePage'
 import { ServiciosPage } from '@/features/servicios/ServiciosPage'
 import { TareasPage } from '@/features/tareas/TareasPage'
@@ -57,16 +58,7 @@ export default function App() {
                 <Route path="clinica" element={<ClinicaPage />} />
                 <Route path="clinica/mascotas/:mascotaId" element={<HistoriaMascotaPage />} />
                 <Route path="clinica/historias/:id" element={<EntradaPage />} />
-                <Route
-                  path="rutas"
-                  element={
-                    <Placeholder
-                      titulo="Rutas"
-                      ticket="F2-RUT"
-                      detalle="Planeación y optimización de rutas domiciliarias (6.7)."
-                    />
-                  }
-                />
+                <Route path="rutas" element={<RutasPage />} />
                 <Route
                   path="campanas"
                   element={

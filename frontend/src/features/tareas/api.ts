@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { Page, TareaRead, UsuarioRead } from '@/types'
+import type { MiembroEquipo, Page, TareaRead } from '@/types'
 
 export type Area = 'comercial' | 'operaciones' | 'medico' | 'cartera' | 'servicio_cliente'
 
@@ -41,16 +41,12 @@ export function useTareas(filtros: FiltrosTareas) {
   })
 }
 
-/** Sólo admin puede listar usuarios (GET /auth/usuarios); los demás se asignan a sí mismos. */
-export function useUsuariosEquipo(habilitado: boolean) {
+/** Personas del equipo interno para asignar (GET /auth/equipo, abierto a todo perfil interno). */
+export function useEquipo(rol?: string) {
   return useQuery({
-    queryKey: ['usuarios', 'equipo'],
-    enabled: habilitado,
+    queryKey: ['equipo', rol ?? null],
     staleTime: 5 * 60 * 1000,
-    queryFn: async () =>
-      (await api.get<Page<UsuarioRead>>('/auth/usuarios', { params: { limit: 200 } })).data.items.filter(
-        (u) => u.activo && u.rol !== 'familia' && u.rol !== 'aliada',
-      ),
+    queryFn: async () => (await api.get<MiembroEquipo[]>('/auth/equipo', { params: { rol } })).data,
   })
 }
 

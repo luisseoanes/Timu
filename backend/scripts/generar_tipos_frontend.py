@@ -29,6 +29,7 @@ ESQUEMAS = [
     "FamiliaRead",
     "CambioHistorial",
     "UsuarioRead",
+    "MiembroEquipo",
     "CiudadRead",
     "EspecieRead",
     "PasoTipoRead",

@@ -225,3 +225,34 @@ async def test_portal_no_reutiliza_cuenta_interna(client: AsyncClient, db, heade
     familia = (await client.post("/api/v1/familias", json=FAMILIA, headers=headers)).json()
     resp = await client.post(f"/api/v1/familias/{familia['id']}/acceso-portal", headers=headers)
     assert resp.status_code == 409
+
+
+# --- Equipo para asignar (rutas, tareas) --------------------------------------------------------
+
+
+async def test_el_equipo_lo_consulta_cualquier_interno_sin_datos_de_contacto(
+    client: AsyncClient, db
+):
+    from tests.conftest import login
+
+    await crear_usuario(db, "operaciones@timu.co", Rol.OPERACIONES)
+    await crear_usuario(db, "sara@timu.co", Rol.MEDICO)
+    await crear_usuario(db, "inactivo@timu.co", Rol.MEDICO, activo=False)
+    await crear_usuario(db, "familia@timu.co", Rol.FAMILIA)
+    cabecera = await login(client, "operaciones@timu.co")
+
+    resp = await client.get("/api/v1/auth/equipo", params={"rol": "medico"}, headers=cabecera)
+    assert resp.status_code == 200
+    assert [m["nombre"] for m in resp.json()] == ["sara"]
+    assert set(resp.json()[0]) == {"id", "nombre", "rol"}
+
+    todos = await client.get("/api/v1/auth/equipo", headers=cabecera)
+    assert {m["rol"] for m in todos.json()} <= {"admin", "comercial", "operaciones", "medico"}
+
+
+async def test_una_familia_no_ve_el_equipo(client: AsyncClient, db):
+    from tests.conftest import login
+
+    await crear_usuario(db, "familia@timu.co", Rol.FAMILIA)
+    cabecera = await login(client, "familia@timu.co")
+    assert (await client.get("/api/v1/auth/equipo", headers=cabecera)).status_code == 403

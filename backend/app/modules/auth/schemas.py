@@ -41,6 +41,17 @@ class UsuarioRead(BaseModel):
     clinica_aliada_id: UUID | None = None
 
 
+class MiembroEquipo(BaseModel):
+    """Lo minimo para elegir a alguien del equipo (responsables de ruta, tareas): sin
+    datos de contacto, porque lo ve cualquier perfil interno."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    nombre: str
+    rol: Rol
+
+
 class Sesion(BaseModel):
     """Respuesta del login y de la renovacion. No lleva tokens: viajan en cookies httpOnly."""
 
