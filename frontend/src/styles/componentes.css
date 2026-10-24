@@ -397,3 +397,16 @@ a.acceso { text-decoration: none; }
 
 /* Mosaico de mascotas para elegir (clínica, portal) */
 .mascotas { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--e3); }
+
+/* --- Etapas del embudo: cada una filtra el listado ------------- */
+.etapas { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--e2); }
+.etapa {
+  display: grid; gap: 4px; text-align: left;
+  padding: var(--e3) var(--e4);
+  border: 1px solid var(--linea); border-radius: var(--r-tarjeta);
+  background: var(--superficie-2); font: inherit; cursor: pointer;
+}
+.etapa[aria-pressed="true"] { border-color: var(--verde-500); background: var(--verde-50); }
+.codigo { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: var(--t-menor); }
+.grupo-chips { display: flex; flex-wrap: wrap; gap: var(--e2); }
+.mensaje-ejemplo { padding: var(--e3) var(--e4); border-radius: var(--r-tarjeta); background: var(--ok-bg); display: grid; gap: 4px; }

@@ -9,13 +9,14 @@ import { EncuestaPage } from '@/features/publico/EncuestaPage'
 import { VerificarCarnetPage } from '@/features/publico/VerificarCarnetPage'
 import type { Rol } from '@/types'
 import { CarteraPage } from '@/features/cartera/CarteraPage'
+import { ComercialPage } from '@/features/comercial/ComercialPage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { FamiliaDetallePage } from '@/features/familias/FamiliaDetallePage'
 import { FamiliasPage } from '@/features/familias/FamiliasPage'
+import { CampanasPage } from '@/features/campanas/CampanasPage'
 import { ClinicaPage } from '@/features/clinica/ClinicaPage'
 import { EntradaPage } from '@/features/clinica/EntradaPage'
 import { HistoriaMascotaPage } from '@/features/clinica/HistoriaMascotaPage'
-import { Placeholder } from '@/features/Placeholder'
 import { PreventivosPage } from '@/features/preventivos/PreventivosPage'
 import { RutasPage } from '@/features/rutas/RutasPage'
 import { ServicioDetallePage } from '@/features/servicios/ServicioDetallePage'
@@ -59,16 +60,8 @@ export default function App() {
                 <Route path="clinica/mascotas/:mascotaId" element={<HistoriaMascotaPage />} />
                 <Route path="clinica/historias/:id" element={<EntradaPage />} />
                 <Route path="rutas" element={<RutasPage />} />
-                <Route
-                  path="campanas"
-                  element={
-                    <Placeholder
-                      titulo="Campañas"
-                      ticket="F3-CAM"
-                      detalle="Segmentación, envío masivo y trazabilidad (6.16, 6.18 y 6.19)."
-                    />
-                  }
-                />
+                <Route path="campanas" element={<CampanasPage />} />
+                <Route path="comercial" element={<ComercialPage />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
