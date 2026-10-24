@@ -20,6 +20,7 @@ docker compose up --build
 docker compose exec api alembic upgrade head       # aplica el esquema
 docker compose exec api python -m scripts.cargar_catalogos   # ciudades, especies, reglas
 docker compose exec api python -m scripts.seed     # admin@timu.co / cambiar123
+docker compose exec api python -m scripts.datos_demo   # familias, servicios, rutas… de prueba (solo local)
 
 # Backend sin Docker
 cd backend && pip install -r requirements-dev.txt
@@ -160,8 +161,9 @@ sesión, para las pruebas que alternan usuarios.
 
 React 18 + Vite, alias `@/` → `src/`. Un directorio por dominio en `src/features/<dominio>/`
 con su `api.ts` (React Query) y sus pantallas; una pieza sube a `src/components/` sólo
-cuando la usan dos dominios. Las rutas de módulos aún no implementados renderizan
-`<Placeholder>` con su ticket del backlog.
+cuando la usan dos dominios. Hay tres espacios con su propio layout: el panel del equipo
+(`AppLayout`, menú según el perfil), el portal de familias (`/portal`) y el de la clínica
+aliada (`/aliada`); `ProtectedRoute` lleva a cada perfil al suyo.
 
 - **`src/api/client.ts` es el único que habla con la API.** Ningún componente arma una
   URL ni usa `fetch`; ESLint lo impide.
@@ -191,8 +193,7 @@ cuando la usan dos dominios. Las rutas de módulos aún no implementados renderi
 
 `docs/frontend/` (design-system, components, layouts, conventions) es normativo para
 cualquier pantalla nueva: léelo antes de escribir UI. `conventions.md` incluye la checklist
-de revisión y la deuda conocida (sin tema oscuro, datos de ejemplo en el panel de inicio
-hasta `F4-DAS-02`).
+de revisión y la deuda conocida (sin tema oscuro).
 
 ## Migraciones
 

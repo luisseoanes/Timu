@@ -57,7 +57,7 @@ está en `FamiliasPage.tsx` y es el que se replica en el resto de módulos:
 | Congelada | `neutro` |
 | Cancelada | `peligro` |
 
-`-neutro` también marca datos de ejemplo mientras un módulo no tenga backend.
+`-neutro` también marca lo inactivo o archivado.
 
 ## Filas — `.fila`
 
@@ -154,3 +154,45 @@ El formulario lleva un `id` y el botón de guardar, en el `pie` del `Modal`, lo 
 `form="<id>"`. Los campos vacíos no viajan (`undefined`, no `""`). Mientras guarda, el
 botón dice «Guardando…» y queda deshabilitado; el error del servidor aparece con
 `role="alert"` dentro del formulario, y al cerrar el modal se limpia (`mutation.reset()`).
+
+## Indicadores — `.indicadores` / `.indicador`
+
+Tarjetas de cifra para el panel, la satisfacción y el gasto de IA: título en mayúsculas,
+valor grande y una línea de detalle. La fórmula del indicador va en `title`.
+
+## Barras de una serie — `.barras`
+
+Para comparar magnitudes de una sola serie (servicios por tipo): un único tono
+(`--verde-600`, validado contra la superficie), valor rotulado en cada barra y sin leyenda.
+Es una lista accesible con `aria-label`; cada barra repite su valor en `title`.
+
+## Selector de familia — `SelectorFamilia`
+
+`features/familias/SelectorFamilia.tsx`. Buscar y elegir una familia dentro de un
+formulario (servicios, tareas, remisiones, orientación virtual). Con la familia elegida
+muestra su resumen y un botón *Cambiar*.
+
+## Franjas y opciones — `.cupo`
+
+Chips con `aria-pressed` para elegir un horario disponible, un estado o una ciudad en un
+filtro. Los agotados quedan deshabilitados.
+
+## Línea de tiempo — `.linea-tiempo`
+
+Lista ordenada con un punto por elemento; `li.hecho` lo pinta de verde. La usan los pasos
+de una atención, la historia clínica, las paradas de una ruta y el carnet.
+
+## Borrador de IA — `.borrador-ia`
+
+Recuadro punteado en tono informativo para todo lo que sugiere la IA. Siempre dice que el
+profesional lo revisa y nunca se envía solo.
+
+## Descargas — `lib/descargas.ts`
+
+`descargar(ruta, params, nombrePorDefecto)` baja un CSV, Excel o PDF de la API con la
+sesión del usuario y respeta el nombre de `Content-Disposition`.
+
+## Permisos — `lib/permisos.ts`
+
+`puede(usuario, accion)` decide qué se muestra y `inicioDeRol(rol)` a dónde va cada perfil
+al ingresar (panel, `/portal` o `/aliada`). El mapa repite el del backend.

@@ -100,4 +100,3 @@ resultado.
 ## Deuda conocida
 
 - **Sin tema oscuro.** Decisión de producto; los tokens están listos para agregarlo.
-- **Datos de ejemplo en el panel de inicio** hasta que existan los endpoints de `F4-DAS-02`.

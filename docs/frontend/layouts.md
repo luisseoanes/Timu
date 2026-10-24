@@ -3,29 +3,38 @@
 La estructura vive en [`vistas.css`](../../frontend/src/styles/vistas.css). Los componentes
 no saben en qué página están: la grilla siempre la pone la plantilla.
 
-## Ingreso — `.login`
+## Ingreso — `.ingreso` (`AccesoLayout`)
 
-Referencia: tarjeta partida en dos mitades iguales.
+La misma plantilla sirve al ingreso, la recuperación y la activación de la cuenta.
 
 ```
-┌──────────────────────────┬──────────────────────────┐
-│  Bienvenido              │        INGRESAR          │
-│                          │                          │
-│      [ ilustración ]     │  Correo        ______ 👤 │
-│                          │  Contraseña    ______ 🔑 │
-│                          │  [    Ingresar        ]  │
-│  PLATAFORMA TIMU         │      Olvidé mi contraseña│
-└──────────────────────────┴──────────────────────────┘
+┌───────────────────────────────┬────────────────────────────┐
+│ [sello] TIMU                  │                            │
+│                               │  Bienvenido de nuevo       │
+│ (Plataforma clínica)          │  [ Equipo TIMU | Familias ]│
+│ El cuidado de cada mascota…   │  Correo        [✉ ______ ] │
+│  ▢ Historia clínica           │  Contraseña    [🔒 _____ 👁]│
+│  ▢ Visitas a domicilio        │        ¿Olvidaste tu…?     │
+│  ▢ Preventivos al día         │  [        Ingresar       ] │
+│ ┌ vista previa de una visita ┐│  ─────────────────────────  │
+│ └────────────────────────────┘│  🛡 Conexión cifrada        │
+│ 🛡 Datos clínicos protegidos   │                            │
+└───────────────────────────────┴────────────────────────────┘
 ```
 
-- El lienzo es un degradado radial de verdes claros; la tarjeta flota con `--sombra-3`.
-- **Lado izquierdo**: degradado de `--verde-400` a `--verde-600`, saludo arriba,
-  ilustración plana al centro y el nombre de la plataforma abajo en mayúsculas espaciadas.
-  La ilustración es un SVG local: no se cargan imágenes externas.
-- **Lado derecho**: título en mayúsculas espaciadas y `--verde-600`, campos subrayados con
-  icono al final, botón principal de ancho completo y los enlaces de apoyo alineados a la
-  derecha.
-- Bajo 900 px las mitades se apilan y el lado de color se reduce a 220 px de alto.
+- **Panel de marca**: degradado de `--verde-700` a `--marca-profunda` con dos halos
+  radiales. Todo lo que va encima usa los tokens `--sobre-marca*`: texto, tarjetas de
+  vidrio (`--sobre-marca-velo`) y bordes (`--sobre-marca-borde`). La vista previa de una
+  visita es decorativa (`aria-hidden`).
+- **Formulario**: selector segmentado (Radix Tabs) entre **Equipo** (correo y contraseña,
+  con botón para ver la clave) y **Familias** (celular y código de un solo uso por
+  WhatsApp). Los campos llevan icono a la izquierda (`.campo-adorno`).
+- Los errores van en `.aviso-error` con `role="alert"`; las confirmaciones en `.aviso-ok`.
+- Bajo 900 px el panel de marca desaparece y la marca sube encima del formulario.
+
+Las páginas públicas sencillas (encuesta, verificación de carnet, afiliación, espacio de
+la clínica aliada) usan `.publica` + `.publica-tarjeta`: marca arriba y una tarjeta
+centrada.
 
 ## Shell del panel — `.shell`
 
@@ -66,8 +75,9 @@ Contenido principal más columna derecha de widgets de 300 px, tal como la refer
 
 Bajo 1180 px la columna derecha baja y se reparte en dos columnas; bajo 900 px queda en una.
 
-Los datos son de ejemplo y están marcados con un distintivo neutro hasta que existan los
-endpoints del backlog (`F4-DAS-02`). Al conectarlos se retira ese distintivo.
+Los indicadores salen de `GET /dashboard/indicadores` (período y ciudad) y la fórmula de
+cada uno aparece al pasar el cursor. El perfil médico ve su jornada en lugar del panel
+gerencial.
 
 ## Listados — tarjeta única
 
@@ -75,6 +85,12 @@ Patrón de `FamiliasPage`: una tarjeta que contiene encabezado con conteo, fila 
 —buscador, selector de estado y acción principal empujada a la derecha— y la tabla dentro
 de `.scroll-x`. Todo módulo de listado se construye así para que no aparezcan tres
 gramáticas distintas de filtro en la aplicación.
+
+## Portal de familias — `.portal`
+
+Primero para el celular: cabecera corta con la marca y navegación fija abajo (cinco
+destinos). Desde 900 px la navegación sube a la cabecera como pastillas. El saludo usa el
+degradado de marca (`.portal-hola`) con los accesos rápidos encima.
 
 ## Reglas de adaptación
 
