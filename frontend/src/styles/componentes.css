@@ -262,3 +262,47 @@
   background: var(--superficie-2);
   color: var(--tinta);
 }
+
+/* --- Formulario: rejilla de campos ------------------------------ */
+.formulario { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e4); }
+.formulario .ancho { grid-column: 1 / -1; }
+.formulario fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--e3); }
+.formulario legend { font-family: var(--fuente-titulo); font-size: var(--t-cuerpo); color: var(--tinta); margin-bottom: var(--e2); }
+.exito { color: var(--ok-tx); font-size: var(--t-menor); }
+
+/* --- Ficha de datos: pares etiqueta y valor --------------------- */
+.ficha { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--e4); margin: 0; }
+.ficha div { display: grid; gap: 2px; }
+.ficha dt {
+  font-size: var(--t-etiqueta);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--apagado);
+  font-weight: 700;
+}
+.ficha dd { margin: 0; color: var(--tinta); font-weight: 700; }
+
+/* --- Acciones: fila de botones de una tarjeta ------------------- */
+.acciones { display: flex; flex-wrap: wrap; gap: var(--e2); align-items: center; }
+
+/* --- Pestañas (Radix Tabs) -------------------------------------- */
+.pestanas-lista {
+  display: flex; gap: var(--e1); flex-wrap: wrap;
+  border-bottom: 1px solid var(--linea);
+  margin-bottom: var(--e4);
+}
+.pestana {
+  font: inherit; font-weight: 700; font-size: var(--t-menor);
+  padding: var(--e2) var(--e4);
+  border: 0; border-bottom: 3px solid transparent;
+  background: transparent; color: var(--apagado);
+  cursor: pointer;
+}
+.pestana:hover { color: var(--tinta); }
+.pestana[data-state="active"] { color: var(--verde-700); border-bottom-color: var(--verde-500); }
+
+/* --- Paginación ------------------------------------------------- */
+.paginacion {
+  display: flex; align-items: center; justify-content: flex-end; gap: var(--e2);
+  margin-top: var(--e4); font-size: var(--t-menor); color: var(--apagado);
+}

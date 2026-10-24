@@ -1,18 +1,10 @@
 // Espejo tipado de los schemas Pydantic del backend (app/schemas, app/modules/*/schemas.py).
+// Lo generado desde el OpenAPI vive en api.ts (backend/scripts/generar_tipos_frontend.py);
+// aquí quedan los tipos que el panel usa con su propia forma.
 
-export type Rol = 'admin' | 'comercial' | 'operaciones' | 'medico' | 'familia' | 'aliada'
+import type { EstadoAfiliacion, Rol } from './api'
 
-export type EstadoAfiliacion = 'prospecto' | 'activa' | 'en_mora' | 'congelada' | 'cancelada'
-
-export type EstadoServicio =
-  | 'solicitado'
-  | 'agendado'
-  | 'en_ruta'
-  | 'en_atencion'
-  | 'completado'
-  | 'pendiente_autorizacion'
-  | 'reprogramado'
-  | 'cancelado'
+export * from './api'
 
 export interface Usuario {
   id: string

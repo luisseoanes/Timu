@@ -154,3 +154,13 @@
   .login-tarjeta { grid-template-columns: 1fr; }
   .login-lado { min-height: 220px; }
 }
+
+/* ================= Detalle de un registro ================= */
+/* Columna principal con pestañas y columna derecha de acciones (misma grilla del panel). */
+.detalle-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e3); margin-bottom: var(--e4); }
+.detalle-cabeza h1 { font-size: var(--t-titulo); }
+.pila { display: grid; gap: var(--e4); align-content: start; }
+
+@media (max-width: 900px) {
+  .formulario { grid-template-columns: 1fr; }
+}

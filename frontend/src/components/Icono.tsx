@@ -6,6 +6,7 @@ export type NombreIcono =
   | 'panel' | 'familias' | 'cartera' | 'servicios' | 'preventivos'
   | 'clinica' | 'rutas' | 'campanas' | 'buscar' | 'campana' | 'ayuda'
   | 'salir' | 'usuario' | 'llave' | 'calendario' | 'pago' | 'mas' | 'cerrar'
+  | 'tareas' | 'comercial' | 'aliadas' | 'encuestas' | 'ajustes' | 'descargar' | 'volver'
 
 const TRAZOS: Record<NombreIcono, string> = {
   panel: 'M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z',
@@ -26,6 +27,13 @@ const TRAZOS: Record<NombreIcono, string> = {
   calendario: 'M8 3v4M16 3v4M3 10h18M5 7h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z',
   pago: 'M3 10h18M3 7h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Zm4 8h4',
   mas: 'M12 5v14M5 12h14',
+  tareas: 'M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9',
+  comercial: 'M3 4h18l-7 9v6l-4 2v-8L3 4Z',
+  aliadas: 'M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M10 10h4',
+  encuestas: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z',
+  ajustes: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-3a7.4 7.4 0 0 0-.1-1.3l2-1.6-2-3.4-2.4 1a7.3 7.3 0 0 0-2.2-1.3L14.4 3h-4l-.4 2.4a7.3 7.3 0 0 0-2.2 1.3l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 0 0 0 2.6l-2 1.6 2 3.4 2.4-1c.7.6 1.4 1 2.2 1.3l.4 2.4h4l.4-2.4c.8-.3 1.5-.7 2.2-1.3l2.4 1 2-3.4-2-1.6c.1-.4.1-.9.1-1.3Z',
+  descargar: 'M12 3v12M7 10l5 5 5-5M5 21h14',
+  volver: 'M19 12H5M11 18l-6-6 6-6',
 }
 
 export function Icono({ nombre, size = 20 }: { nombre: NombreIcono; size?: number }) {

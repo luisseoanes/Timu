@@ -98,3 +98,45 @@ Los tres son obligatorios en cualquier pantalla que consulte la API:
 - **Error** — `.error` con la causa y qué hacer.
 - **Vacío** — fila de tabla o texto apagado que explica por qué no hay nada:
   *Ninguna familia coincide con el filtro.* Nunca una tabla en blanco.
+
+## Formularios — `.formulario`
+
+Rejilla de dos columnas para los campos de un modal o una tarjeta; `.ancho` hace que un
+campo ocupe la fila completa (dirección, notas). Bajo 900 px pasa a una columna. Cada
+control va en un `.campo` con su etiqueta visible. El resultado de guardar se dice con
+`.error` o `.exito` bajo el formulario, nunca sólo con color.
+
+## Ficha de datos — `.ficha`
+
+Lista de definiciones (`<dl>`) para mostrar un registro: etiqueta en mayúsculas pequeñas
+y valor en tinta. Se acomoda sola en tantas columnas como quepan.
+
+## Acciones — `.acciones`
+
+Fila de botones de una tarjeta o una ficha, con su espaciado. Sigue valiendo la regla de
+un solo botón principal por vista.
+
+## Pestañas — `Pestanas`
+
+Sobre Radix Tabs (`src/components/Pestanas.tsx`): flechas, roles `tab`/`tabpanel` y foco
+los pone Radix; el aspecto, `.pestanas-lista` y `.pestana`. La activa lleva texto
+`--verde-700` y subrayado `--verde-500`. Se usan para las secciones de un registro
+(datos, mascotas, cartera, historial), no como navegación entre módulos.
+
+## Paginación — `Paginacion`
+
+Para listados que devuelven `Page<T>`: rango visible (*1–50 de 120*) y botones planos
+*Anterior* y *Siguiente*. No aparece cuando todo cabe en una página.
+
+## Estados de una consulta — `Consulta`
+
+`src/components/Consulta.tsx` resuelve las tres pantallas obligatorias: recibe la consulta
+de React Query y los textos de carga, error y vacío, y entrega los datos al contenido. El
+error agrega la causa que devuelve el servidor (`detail`), que ya viene escrita para quien
+usa el sistema.
+
+## Distintivo de estado — `Distintivo`
+
+`<Distintivo dominio="servicio" valor="agendado" />` toma etiqueta y tono del mapeo único
+de `src/lib/estados.ts`, para que un estado se vea igual en todos los módulos. Un estado
+que el mapeo no conozca se muestra en tono neutro en vez de romper la pantalla.
