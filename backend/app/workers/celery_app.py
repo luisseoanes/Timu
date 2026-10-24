@@ -19,6 +19,7 @@ celery_app = Celery(
         "app.workers.tasks.familias",
         "app.workers.tasks.rutas",
         "app.workers.tasks.campanas",
+        "app.workers.tasks.dashboard",
         "app.workers.tasks.outbox",
     ],
 )
@@ -85,6 +86,11 @@ celery_app.conf.update(
         "campanas-despachar": {
             "task": "campanas.despachar",
             "schedule": 60.0,
+        },
+        # F4-DAS-03 reportes gerenciales por correo
+        "dashboard-reportes": {
+            "task": "dashboard.enviar_reportes",
+            "schedule": crontab(hour=7, minute=0),
         },
         # F3-ENC-01 / 03 encuestas y seguimientos cuya hora llego
         "encuestas-enviar-pendientes": {

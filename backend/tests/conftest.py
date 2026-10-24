@@ -183,6 +183,16 @@ def almacenamiento(monkeypatch) -> AlmacenamientoMemoria:
 
 
 @pytest.fixture(autouse=True)
+def cache_limpia() -> Iterator[None]:
+    """La cache del dashboard vive en memoria del proceso: cada prueba arranca sin ella."""
+    from app.core import cache
+
+    cache.obtener().limpiar()
+    yield
+    cache.obtener().limpiar()
+
+
+@pytest.fixture(autouse=True)
 def sin_envios_reales(monkeypatch) -> None:
     """Ningun manejador del outbox llega a Redis aunque la prueba no pida `tareas`."""
     monkeypatch.setattr(celery_app, "send_task", lambda *a, **k: None)

@@ -20,12 +20,18 @@ def configurado() -> bool:
     return bool(settings.SMTP_HOST)
 
 
-def _enviar(destino: str, asunto: str, cuerpo: str) -> None:
+Adjunto = tuple[str, bytes, str]  # (nombre, contenido, tipo MIME)
+
+
+def _enviar(destino: str, asunto: str, cuerpo: str, adjuntos: list[Adjunto] | None = None) -> None:
     msg = EmailMessage()
     msg["From"] = settings.SMTP_FROM
     msg["To"] = destino
     msg["Subject"] = asunto
     msg.set_content(cuerpo)
+    for nombre, contenido, tipo in adjuntos or []:
+        principal, _, secundario = tipo.partition("/")
+        msg.add_attachment(contenido, maintype=principal, subtype=secundario, filename=nombre)
     try:
         with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as smtp:
             smtp.starttls()
@@ -38,9 +44,9 @@ def _enviar(destino: str, asunto: str, cuerpo: str) -> None:
         raise ErrorCorreo(str(e), temporal=True) from e
 
 
-def enviar(destino: str, asunto: str, cuerpo: str) -> str:
+def enviar(destino: str, asunto: str, cuerpo: str, adjuntos: list[Adjunto] | None = None) -> str:
     if not configurado():
         logger.warning("SMTP sin configurar; correo a %s no enviado: %s", destino, asunto)
         return "no_configurado"
-    _enviar(destino, asunto, cuerpo)
+    _enviar(destino, asunto, cuerpo, adjuntos)
     return "enviado"
