@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { Modal } from '@/components/Modal'
 import { useEspecies } from '@/features/catalogos/api'
@@ -59,6 +60,9 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
                     )}
                   </td>
                   <td>
+                    <Link to={`/clinica/mascotas/${m.id}`} className="btn btn-plano">
+                      Historia
+                    </Link>
                     {m.activa && (
                       <button className="btn btn-plano" type="button" onClick={() => setDeBaja(m)}>
                         Dar de baja

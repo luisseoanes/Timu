@@ -51,7 +51,7 @@
 .usuario-datos div span { display: block; font-size: var(--t-etiqueta); color: var(--apagado); text-transform: capitalize; }
 
 /* ================= Cabecera y contenido ================= */
-.principal { display: flex; flex-direction: column; gap: var(--e4); min-width: 0; }
+.shell > .principal { display: flex; flex-direction: column; gap: var(--e4); min-width: 0; }
 .topbar {
   display: flex; align-items: center; gap: var(--e3);
   min-height: var(--alto-topbar);
@@ -288,3 +288,7 @@
   .ingreso-panel > .marca { display: inline-grid; }
   .publica-tarjeta { padding: var(--e5); }
 }
+
+/* Tres columnas iguales que bajan a una en pantallas angostas (carnet: aplicados, vencidos, próximos). */
+.tres-columnas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e5); }
+@media (max-width: 900px) { .tres-columnas { grid-template-columns: 1fr; } }

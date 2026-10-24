@@ -87,12 +87,18 @@ BENEFICIOS = [
 ]
 
 
+EQUIPO = [
+    ("medico@timu.co", "Dra. Sara Martinez", "medico"),
+    ("operaciones@timu.co", "Carlos Pena", "operaciones"),
+    ("comercial@timu.co", "Valentina Rios", "comercial"),
+]
+CLAVE_EQUIPO = "demo12345"
+
+
 class Cliente:
-    def __init__(self) -> None:
+    def __init__(self, email: str = "admin@timu.co", clave: str = "cambiar123") -> None:
         self.http = httpx.Client(base_url=API, timeout=30)
-        resp = self.http.post(
-            "/auth/login", data={"username": "admin@timu.co", "password": "cambiar123"}
-        )
+        resp = self.http.post("/auth/login", data={"username": email, "password": clave})
         resp.raise_for_status()
 
     def get(self, ruta: str, **params: Any) -> Any:
@@ -226,7 +232,76 @@ def main() -> None:
                 },
             )
 
+    print("Equipo de prueba")
+    existentes_u = {u["email"] for u in c.get("/auth/usuarios", limit=200)["items"]}
+    for email, nombre, rol in EQUIPO:
+        if email not in existentes_u:
+            c.post(
+                "/auth/usuarios",
+                {"email": email, "nombre": nombre, "rol": rol, "password": CLAVE_EQUIPO},
+            )
+
+    print("Preventivos")
+    for familia in familias:
+        for mascota in familia.get("mascotas") or []:
+            if c.get("/preventivos", mascota_id=mascota["id"], limit=1)["total"] == 0:
+                c.post(f"/preventivos/mascotas/{mascota['id']}/calendario", permitir=(422,))
+
+    print("Clinica")
+    medico = Cliente("medico@timu.co", CLAVE_EQUIPO)
+    luna = familias[0]["mascotas"][0]
+    if not medico.get(f"/clinica/mascotas/{luna['id']}/historia"):
+        entrada = medico.post(
+            "/clinica/historias",
+            {
+                "mascota_id": luna["id"],
+                "tipo": "domiciliaria",
+                "fecha": (hoy - timedelta(days=20)).isoformat(),
+                "motivo": "Rasca el oido izquierdo desde hace una semana",
+                "anamnesis": "Sin cambios en alimentacion. Bano hace 10 dias.",
+                "examen_fisico": "Conducto auditivo izquierdo eritematoso, cerumen oscuro.",
+                "diagnostico": "Otitis externa izquierda",
+                "tratamiento": "Limpieza otica y gotas cada 12 horas por 7 dias.",
+            },
+        )
+        if entrada:
+            medico.post(f"/clinica/historias/{entrada['id']}/firma")
+        medico.post(
+            "/clinica/historias",
+            {
+                "mascota_id": luna["id"],
+                "tipo": "domiciliaria",
+                "motivo": "Control de otitis",
+                "examen_fisico": "Conducto sin eritema.",
+            },
+        )
+    respuestas = {r["codigo"] for r in c.get("/clinica/respuestas-virtuales")}
+    if "control_alimentacion" not in respuestas:
+        c.post(
+            "/clinica/respuestas-virtuales",
+            {
+                "codigo": "control_alimentacion",
+                "titulo": "Cambio de alimento",
+                "cuerpo": (
+                    "Para {{1}} recomendamos hacer el cambio de alimento en 7 dias, mezclando "
+                    "cada dia un poco mas del nuevo. Si hay vomito o diarrea, escribenos."
+                ),
+                "variables": ["mascota"],
+            },
+        )
+        c.post("/clinica/respuestas-virtuales/control_alimentacion/aprobacion")
+    if not c.get("/clinica/virtual/cola"):
+        c.post(
+            "/clinica/virtual",
+            {
+                "mascota_id": familias[1]["mascotas"][0]["id"],
+                "motivo": "Queremos cambiarle el concentrado, como lo hacemos?",
+                "prioridad": "baja",
+            },
+        )
+
     print("Listo. Ingresa a http://localhost:5173 con admin@timu.co / cambiar123")
+    print(f"Equipo de prueba (clave {CLAVE_EQUIPO}): " + ", ".join(e for e, _, _ in EQUIPO))
 
 
 if __name__ == "__main__":

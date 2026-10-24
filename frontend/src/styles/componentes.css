@@ -384,3 +384,16 @@ a.acceso { text-decoration: none; }
   border-radius: var(--r-pastilla); background: var(--linea-fuerte);
 }
 .linea-tiempo > li.hecho::before { background: var(--verde-500); }
+
+/* --- Borrador de IA: siempre se distingue de lo que escribe el profesional --- */
+.borrador-ia {
+  display: grid; gap: var(--e2);
+  padding: var(--e4);
+  border-radius: var(--r-tarjeta);
+  border: 1px dashed var(--info-tx);
+  background: var(--info-bg);
+}
+.borrador-ia svg { color: var(--info-tx); }
+
+/* Mosaico de mascotas para elegir (clínica, portal) */
+.mascotas { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--e3); }

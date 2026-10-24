@@ -12,7 +12,11 @@ import { CarteraPage } from '@/features/cartera/CarteraPage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { FamiliaDetallePage } from '@/features/familias/FamiliaDetallePage'
 import { FamiliasPage } from '@/features/familias/FamiliasPage'
+import { ClinicaPage } from '@/features/clinica/ClinicaPage'
+import { EntradaPage } from '@/features/clinica/EntradaPage'
+import { HistoriaMascotaPage } from '@/features/clinica/HistoriaMascotaPage'
 import { Placeholder } from '@/features/Placeholder'
+import { PreventivosPage } from '@/features/preventivos/PreventivosPage'
 import { ServicioDetallePage } from '@/features/servicios/ServicioDetallePage'
 import { ServiciosPage } from '@/features/servicios/ServiciosPage'
 import { TareasPage } from '@/features/tareas/TareasPage'
@@ -49,26 +53,10 @@ export default function App() {
                 <Route path="servicios" element={<ServiciosPage />} />
                 <Route path="servicios/:id" element={<ServicioDetallePage />} />
                 <Route path="tareas" element={<TareasPage />} />
-                <Route
-                  path="preventivos"
-                  element={
-                    <Placeholder
-                      titulo="Preventivos"
-                      ticket="F2-PRE"
-                      detalle="Calendario preventivo, autorizaciones y carnet digital (6.8, 6.9 y 6.15)."
-                    />
-                  }
-                />
-                <Route
-                  path="clinica"
-                  element={
-                    <Placeholder
-                      titulo="Clínica"
-                      ticket="F2-CLI"
-                      detalle="Historia clínica estructurada y atención virtual (6.14 y 6.17)."
-                    />
-                  }
-                />
+                <Route path="preventivos" element={<PreventivosPage />} />
+                <Route path="clinica" element={<ClinicaPage />} />
+                <Route path="clinica/mascotas/:mascotaId" element={<HistoriaMascotaPage />} />
+                <Route path="clinica/historias/:id" element={<EntradaPage />} />
                 <Route
                   path="rutas"
                   element={
