@@ -27,7 +27,14 @@ from app.modules.catalogos.models import (  # noqa: F401
     EsquemaPreventivo,
     TipoServicioCatalogo,
 )
-from app.modules.clinica.models import AdjuntoClinico, HistoriaClinica  # noqa: F401
+from app.modules.clinica.models import (  # noqa: F401
+    AdjuntoClinico,
+    Formula,
+    HistoriaClinica,
+    PlantillaConsulta,
+    RespuestaVirtual,
+    SolicitudVirtual,
+)
 from app.modules.comunicaciones.models import (  # noqa: F401
     BajaComunicaciones,
     ConversacionWhatsApp,
@@ -37,7 +44,7 @@ from app.modules.comunicaciones.models import (  # noqa: F401
 from app.modules.encuestas.models import Encuesta  # noqa: F401
 from app.modules.familias.models import Familia, Mascota  # noqa: F401
 from app.modules.planes.models import Beneficio, CambioPlan, Plan  # noqa: F401
-from app.modules.preventivos.models import EventoPreventivo  # noqa: F401
+from app.modules.preventivos.models import CarnetEmitido, EventoPreventivo  # noqa: F401
 from app.modules.reglas.models import Regla  # noqa: F401
 from app.modules.rutas.models import ParadaRuta, Ruta  # noqa: F401
 from app.modules.servicios.models import (  # noqa: F401
