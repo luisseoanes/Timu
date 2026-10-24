@@ -18,6 +18,7 @@ celery_app = Celery(
         "app.workers.tasks.encuestas",
         "app.workers.tasks.familias",
         "app.workers.tasks.rutas",
+        "app.workers.tasks.campanas",
         "app.workers.tasks.outbox",
     ],
 )
@@ -75,6 +76,15 @@ celery_app.conf.update(
         "preventivos-generar-agenda": {
             "task": "preventivos.generar_agenda",
             "schedule": crontab(hour=5, minute=30),
+        },
+        # F3-CAM-02 / 04 campanas: lanzar las programadas y despachar al ritmo permitido
+        "campanas-lanzar-programadas": {
+            "task": "campanas.lanzar_programadas",
+            "schedule": crontab(minute="*/5"),
+        },
+        "campanas-despachar": {
+            "task": "campanas.despachar",
+            "schedule": 60.0,
         },
         # F3-ENC-01 / 03 encuestas y seguimientos cuya hora llego
         "encuestas-enviar-pendientes": {

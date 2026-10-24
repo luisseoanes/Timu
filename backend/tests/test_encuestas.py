@@ -69,7 +69,7 @@ async def _enviada(db) -> Encuesta:
     return encuesta
 
 
-# --- F3-ENC-01 / 03 Programacion y envio --------------------------------------------------------
+# --- F3-ENC-01 / 03 Programacion y envio ------------------------------------------------------
 
 
 async def test_completar_el_servicio_programa_la_encuesta(db, tareas):
@@ -116,7 +116,7 @@ async def test_sin_plantilla_queda_pendiente(db):
     assert resumen["fallidas"] == 1 and encuesta.estado == "pendiente"
 
 
-# --- F3-ENC-02 / 04 Respuesta y alerta ----------------------------------------------------------
+# --- F3-ENC-02 / 04 Respuesta y alerta --------------------------------------------------------
 
 
 async def test_respuesta_por_enlace(client: AsyncClient, db):

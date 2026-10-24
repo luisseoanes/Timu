@@ -10,7 +10,12 @@ from app.modules.afiliaciones.models import SolicitudAfiliacion  # noqa: F401
 from app.modules.aliadas.models import ClinicaAliada, ConvenioAliada, RemisionAliada  # noqa: F401
 from app.modules.archivos.models import Archivo  # noqa: F401
 from app.modules.auth.models import Sesion, TokenUsoUnico, Usuario  # noqa: F401
-from app.modules.campanas.models import Campana  # noqa: F401
+from app.modules.campanas.models import (  # noqa: F401
+    Campana,
+    DestinatarioCampana,
+    EjecucionCampana,
+    Segmento,
+)
 from app.modules.cartera.models import (  # noqa: F401
     AplicacionPago,
     AvisoCartera,

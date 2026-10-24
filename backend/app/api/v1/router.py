@@ -5,6 +5,7 @@ from app.modules.afiliaciones.router import router as afiliaciones_router
 from app.modules.aliadas.router import router as aliadas_router
 from app.modules.auth.router import router as auth_router
 from app.modules.campanas.router import router as campanas_router
+from app.modules.campanas.router import segmentos_router
 from app.modules.cartera.router import router as cartera_router
 from app.modules.catalogos.router import router as catalogos_router
 from app.modules.clinica.router import router as clinica_router
@@ -46,6 +47,7 @@ for r in (
     rutas_router,
     comunicaciones_router,
     campanas_router,
+    segmentos_router,
     encuestas_router,
     aliadas_router,
     portal_router,

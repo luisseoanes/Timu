@@ -105,6 +105,9 @@ class Settings(BaseSettings):
     # Distance Matrix se factura por elemento: tope diario antes de pasar a estimar.
     MAPS_TOPE_DIARIO: int = 2000
 
+    # Campanas (F3-CAM-02): mensajes encolados por minuto, al ritmo que permite Meta.
+    CAMPANA_MENSAJES_POR_MINUTO: int = 60
+
     # Clinicas aliadas (F2-ALI-02): dias de vigencia de una remision.
     REMISION_VIGENCIA_DIAS: int = 30
 
