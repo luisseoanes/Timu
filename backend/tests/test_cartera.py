@@ -550,3 +550,19 @@ async def test_un_contrato_con_error_no_frena_la_generacion(db, monkeypatch):
     monkeypatch.setattr(service.planes, "aplicar_cambios_programados", falla_para_uno)
     assert await db.run_sync(service.generar_cuotas, date(2026, 2, 8)) == 1
     assert len(await _cuotas(db, sano)) == 2
+
+
+async def test_listado_de_cartera_los_mas_atrasados_primero(client: AsyncClient, db, headers):
+    al_dia, _ = await fabricas.afiliada(db, hoy(), telefono="+573001000001")
+    moroso, _ = await fabricas.afiliada(db, hoy() - timedelta(days=40), telefono="+573001000002")
+    await db.run_sync(service.generar_cuotas, hoy())
+    await db.commit()
+    todos = (await client.get("/api/v1/cartera/contratos", headers=headers)).json()
+    assert todos["total"] == 2
+    primero = todos["items"][0]
+    assert primero["familia_id"] == str(moroso.id) and primero["dias_mora"] >= 30
+    assert float(primero["saldo_vencido"]) > 0
+    solo = (
+        await client.get("/api/v1/cartera/contratos", params={"solo_mora": True}, headers=headers)
+    ).json()
+    assert [c["familia_id"] for c in solo["items"]] == [str(moroso.id)]

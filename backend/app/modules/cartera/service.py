@@ -520,6 +520,82 @@ def url_documento(db: Session, contrato: Contrato) -> dict[str, str]:
     return {"url": archivos.url(archivo), "sha256": archivo.sha256}
 
 
+# --- Listado de cartera ----------------------------------------------------------------------
+
+
+def listar_contratos(
+    db: Session,
+    *,
+    estado: str | None = None,
+    ciudad: str | None = None,
+    q: str | None = None,
+    solo_mora: bool = False,
+    limit: int = 50,
+    offset: int = 0,
+) -> tuple[list[dict[str, Any]], int]:
+    """Contratos con su saldo vencido y dias de mora (de la cuota abierta mas antigua),
+    los mas atrasados primero."""
+    dia = hoy()
+    vencidas = (
+        select(
+            Cuota.contrato_id,
+            func.sum(Cuota.valor - Cuota.valor_pagado).label("saldo"),
+            func.min(Cuota.fecha_vencimiento).label("desde"),
+        )
+        .where(Cuota.estado.in_(EstadoCuota.ABIERTAS), Cuota.fecha_vencimiento < dia)
+        .group_by(Cuota.contrato_id)
+        .subquery()
+    )
+    stmt = (
+        select(
+            Contrato,
+            Familia.titular_nombre,
+            Familia.ciudad,
+            Plan.nombre,
+            vencidas.c.saldo,
+            vencidas.c.desde,
+        )
+        .join(Familia, Familia.id == Contrato.familia_id)
+        .join(Plan, Plan.id == Contrato.plan_id)
+        .outerjoin(vencidas, vencidas.c.contrato_id == Contrato.id)
+    )
+    if estado:
+        stmt = stmt.where(Contrato.estado == estado)
+    if ciudad:
+        stmt = stmt.where(Familia.ciudad == ciudad)
+    if q:
+        patron = f"%{q}%"
+        stmt = stmt.where(
+            Familia.titular_nombre.ilike(patron)
+            | Familia.documento.ilike(patron)
+            | Contrato.numero.ilike(patron)
+        )
+    if solo_mora:
+        stmt = stmt.where(vencidas.c.saldo > 0)
+    total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+    filas = db.execute(
+        stmt.order_by(vencidas.c.desde.asc().nulls_last(), Contrato.numero)
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    return [
+        {
+            "id": c.id,
+            "numero": c.numero,
+            "familia_id": c.familia_id,
+            "titular": titular,
+            "ciudad": ciudad_familia,
+            "plan": plan,
+            "estado": c.estado,
+            "valor_mensual": dinero(c.valor_mensual),
+            "saldo_vencido": dinero(saldo),
+            "dias_mora": (dia - desde).days if desde else 0,
+            "fecha_renovacion": c.fecha_renovacion,
+        }
+        for c, titular, ciudad_familia, plan, saldo, desde in filas
+    ], int(total)
+
+
 # --- F1-CAR-10 Estado de cuenta ---------------------------------------------------------------
 
 

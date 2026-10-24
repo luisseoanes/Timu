@@ -27,6 +27,22 @@ class ContratoRead(BaseModel):
     medio_aceptacion: str | None
 
 
+class ContratoListado(BaseModel):
+    """Fila del listado de cartera: el contrato con lo que hace falta para gestionarlo."""
+
+    id: UUID
+    numero: str
+    familia_id: UUID
+    titular: str
+    ciudad: str
+    plan: str
+    estado: str
+    valor_mensual: Decimal
+    saldo_vencido: Decimal
+    dias_mora: int
+    fecha_renovacion: date
+
+
 class CuotaRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

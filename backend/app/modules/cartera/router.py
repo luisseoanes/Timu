@@ -3,7 +3,7 @@
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import select
 
 from app.core.deps import INTERNOS, DbSession, requiere
@@ -15,6 +15,7 @@ from app.modules.cartera.models import EventoPasarela, MedioPagoRecurrente
 from app.modules.cartera.schemas import (
     Cancelacion,
     ContratoCreate,
+    ContratoListado,
     ContratoRead,
     EstadoCuenta,
     EventoPasarelaRead,
@@ -50,6 +51,33 @@ async def crear_contrato(db: DbSession, data: ContratoCreate) -> Any:
         service.crear_contrato, familia, plan, fecha_inicio=data.fecha_inicio
     )
     return contrato
+
+
+@router.get("/contratos", response_model=Page[ContratoListado], dependencies=[EQUIPO])
+async def listar_contratos(
+    db: DbSession,
+    estado: str | None = None,
+    ciudad: str | None = None,
+    q: str | None = None,
+    solo_mora: bool = False,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+) -> Page[ContratoListado]:
+    """Cartera para gestionar: los contratos mas atrasados primero."""
+    filas, total = await db.run_sync(
+        lambda s: service.listar_contratos(
+            s,
+            estado=estado,
+            ciudad=ciudad,
+            q=q,
+            solo_mora=solo_mora,
+            limit=limit,
+            offset=offset,
+        )
+    )
+    return Page(
+        items=[ContratoListado(**f) for f in filas], total=total, limit=limit, offset=offset
+    )
 
 
 @router.get("/contratos/{contrato_id}", response_model=ContratoRead, dependencies=[EQUIPO])
