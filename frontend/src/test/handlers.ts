@@ -70,6 +70,27 @@ export const handlers = [
     HttpResponse.json({ detail: 'La familia no tiene contrato' }, { status: 404 }),
   ),
   http.get(`${API}/servicios`, () => HttpResponse.json(vacia)),
+  http.get(`${API}/tareas`, () => HttpResponse.json(vacia)),
+  http.get(`${API}/preventivos`, () => HttpResponse.json(vacia)),
+  http.get(`${API}/cartera/contratos`, () => HttpResponse.json(vacia)),
+  http.get(`${API}/dashboard/definiciones`, () => HttpResponse.json([])),
+  http.get(`${API}/dashboard/indicadores`, () =>
+    HttpResponse.json({
+      periodo: { desde: '2026-10-01', hasta: '2026-10-24', ciudad: null },
+      indicadores: {
+        afiliaciones: 0,
+        retiros: 0,
+        vigentes: 0,
+        recaudo: 0,
+        facturado: 0,
+        recaudo_del_facturado: null,
+        mora: { contratos_en_mora: 0, saldo_vencido: 0, porcentaje: null },
+        cumplimiento_rutas: { paradas_planeadas: 0, paradas_completadas: 0, cumplimiento: null, puntualidad: null },
+        servicios_por_tipo: {},
+        satisfaccion: { enviadas: 0, respondidas: 0, promedio: null, tasa_respuesta: null },
+      },
+    }),
+  ),
 ]
 
 /** Respuesta de sesión ausente, para probar la rama de no autenticado. */

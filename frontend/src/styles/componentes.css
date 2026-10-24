@@ -320,3 +320,29 @@
 .calificacion-numero { font-family: var(--fuente-titulo); font-size: 20px; color: var(--tinta); }
 .calificacion-opcion:has(input:checked) { border-color: var(--verde-500); background: var(--verde-50); color: var(--verde-700); }
 .calificacion-opcion:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--verde-100); }
+
+/* --- Indicadores (dashboard) ----------------------------------- */
+.indicadores { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--e3); }
+.indicador {
+  display: grid; gap: 4px; align-content: start;
+  padding: var(--e4);
+  border-radius: var(--r-tarjeta);
+  background: var(--superficie-2);
+  border: 1px solid var(--linea);
+}
+.indicador-titulo { font-size: var(--t-etiqueta); letter-spacing: .08em; text-transform: uppercase; color: var(--apagado); font-weight: 700; }
+.indicador-valor { font-family: var(--fuente-titulo); font-size: 24px; color: var(--tinta); line-height: 1.2; }
+.indicador-detalle { font-size: var(--t-menor); color: var(--apagado); }
+.subtitulo { font-size: var(--t-cuerpo); margin-bottom: var(--e3); }
+
+/* Barras horizontales de una sola serie: un tono, valor rotulado, sin leyenda. */
+.barras { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e2); }
+.barra { display: grid; grid-template-columns: minmax(120px, 30%) 1fr auto; gap: var(--e3); align-items: center; font-size: var(--t-menor); }
+.barra-etiqueta { color: var(--texto); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barra-pista { height: 12px; border-radius: 0 4px 4px 0; background: var(--superficie-2); }
+.barra-valor { display: block; height: 100%; min-width: 2px; border-radius: 0 4px 4px 0; background: var(--verde-600); }
+.barra:hover .barra-valor { background: var(--verde-700); }
+.barra-cifra { color: var(--tinta); font-weight: 700; min-width: 3ch; text-align: right; }
+a.fila { color: inherit; }
+a.fila:hover strong { color: var(--verde-700); }
+a.acceso { text-decoration: none; }

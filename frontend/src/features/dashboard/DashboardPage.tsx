@@ -1,143 +1,334 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+
+import { Consulta } from '@/components/Consulta'
+import { Distintivo } from '@/components/Distintivo'
 import { Icono, type NombreIcono } from '@/components/Icono'
-import { AnilloProgreso } from '@/components/AnilloProgreso'
 import { useAuth } from '@/features/auth/AuthContext'
+import { useCiudades } from '@/features/catalogos/api'
+import { descargar } from '@/lib/descargas'
+import { mensajeError } from '@/lib/errores'
+import { fecha, fechaHora, hoyISO, moneda, porcentaje } from '@/lib/formato'
+import { puede } from '@/lib/permisos'
 
-/**
- * Panel de inicio. Los indicadores llegarán de `F4-DAS-02`; mientras tanto la
- * pantalla muestra datos de ejemplo, señalados como tales, para que el diseño
- * se pueda validar contra la referencia.
- */
+import {
+  useAlertas,
+  useDefiniciones,
+  useIndicadores,
+  useMisTareas,
+  useProximosServicios,
+  type FiltrosIndicadores,
+  type Indicadores,
+} from './api'
 
-const ACCESOS: { icono: NombreIcono; label: string }[] = [
-  { icono: 'servicios', label: 'Agendar servicio' },
-  { icono: 'clinica', label: 'Historia clínica' },
-  { icono: 'pago', label: 'Registrar pago' },
-  { icono: 'familias', label: 'Nueva familia' },
+const ACCESOS: { icono: NombreIcono; label: string; to: string }[] = [
+  { icono: 'servicios', label: 'Agendar servicio', to: '/servicios?nuevo=1' },
+  { icono: 'clinica', label: 'Historia clínica', to: '/clinica' },
+  { icono: 'rutas', label: 'Rutas del día', to: '/rutas' },
+  { icono: 'familias', label: 'Familias', to: '/familias' },
 ]
 
-const PROXIMOS = [
-  { icono: 'servicios' as NombreIcono, titulo: 'Vacunación · Kira', sub: 'Ana Ruiz · Bogotá', lado: 'Hoy, 10:30 a.m.' },
-  { icono: 'rutas' as NombreIcono, titulo: 'Ruta norte · 6 paradas', sub: 'Téc. Carlos Peña', lado: 'Hoy, 8:00 a.m.' },
-  { icono: 'clinica' as NombreIcono, titulo: 'Control · Nube', sub: 'Dr. Sara Martínez', lado: 'Mañana, 2:00 p.m.' },
+type Periodo = 'mes' | '30' | 'trimestre' | 'anio'
+
+const PERIODOS: { valor: Periodo; label: string }[] = [
+  { valor: 'mes', label: 'Este mes' },
+  { valor: '30', label: 'Últimos 30 días' },
+  { valor: 'trimestre', label: 'Últimos 90 días' },
+  { valor: 'anio', label: 'Este año' },
 ]
 
-const CARTERA = [
-  { titulo: 'Cuotas al día', valor: '412 familias', estado: 'ok' as const, etiqueta: 'Al día' },
-  { titulo: 'En mora', valor: '38 familias', estado: 'alerta' as const, etiqueta: 'Por gestionar' },
-  { titulo: 'Renovaciones del mes', valor: '17 contratos', estado: 'info' as const, etiqueta: 'Programadas' },
-]
+function restarDias(iso: string, dias: number): string {
+  const d = new Date(`${iso}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() - dias)
+  return d.toISOString().slice(0, 10)
+}
+
+function rango(periodo: Periodo): { desde: string; hasta: string } {
+  const hoy = hoyISO()
+  if (periodo === 'mes') return { desde: `${hoy.slice(0, 8)}01`, hasta: hoy }
+  if (periodo === 'anio') return { desde: `${hoy.slice(0, 4)}-01-01`, hasta: hoy }
+  return { desde: restarDias(hoy, periodo === '30' ? 29 : 89), hasta: hoy }
+}
 
 export function DashboardPage() {
   const { usuario } = useAuth()
   const nombre = usuario?.nombre?.split(' ')[0] ?? ''
+  const gerencial = puede(usuario, 'verIndicadores')
 
   return (
     <div className="con-rail">
-      <div className="contenido">
+      <div className="pila">
         <section className="bienvenida">
           <h1>Hola {nombre}</h1>
           <p className="apagado">
-            Esto es lo que la operación tiene entre manos hoy: servicios agendados, rutas en
-            camino y la cartera que necesita gestión.
+            {gerencial
+              ? 'Así va la operación: afiliaciones, recaudo, rutas y satisfacción del período.'
+              : 'Tu jornada: próximas visitas y las tareas que tienes asignadas.'}
           </p>
-          <div className="bienvenida-datos">
-            <span className="distintivo distintivo-ok">14 servicios hoy</span>
-            <span className="distintivo distintivo-info">3 rutas activas</span>
-            <span className="distintivo distintivo-neutro">Datos de ejemplo</span>
-          </div>
         </section>
 
-        <div className="accesos">
+        <nav className="accesos" aria-label="Accesos rápidos">
           {ACCESOS.map((a) => (
-            <button className="acceso" type="button" key={a.label}>
+            <Link className="acceso" to={a.to} key={a.label}>
               <Icono nombre={a.icono} />
               {a.label}
-            </button>
+            </Link>
           ))}
-        </div>
+        </nav>
 
-        <div className="dos-columnas">
-          <section className="tarjeta">
-            <div className="tarjeta-cabeza">
-              <h3>Próximos servicios</h3>
-              <a href="#servicios">Ver todos</a>
-            </div>
-            {PROXIMOS.map((p) => (
-              <div className="fila" key={p.titulo}>
-                <span className="fila-icono"><Icono nombre={p.icono} size={18} /></span>
-                <div className="fila-cuerpo">
-                  <strong>{p.titulo}</strong>
-                  <span>{p.sub}</span>
-                </div>
-                <div className="fila-lado">{p.lado}</div>
-              </div>
-            ))}
-          </section>
-
-          <section className="tarjeta">
-            <div className="tarjeta-cabeza">
-              <h3>Estado de cartera</h3>
-              <a href="#cartera">Ver detalle</a>
-            </div>
-            {CARTERA.map((c) => (
-              <div className="fila" key={c.titulo}>
-                <span className="fila-icono"><Icono nombre="cartera" size={18} /></span>
-                <div className="fila-cuerpo">
-                  <strong>{c.titulo}</strong>
-                  <span>{c.valor}</span>
-                </div>
-                <span className={`distintivo distintivo-${c.estado}`}>{c.etiqueta}</span>
-              </div>
-            ))}
-          </section>
-        </div>
+        {gerencial ? <PanelGerencial /> : <MisTareas />}
       </div>
 
       <aside className="rail">
-        <section className="tarjeta">
-          <div className="tarjeta-cabeza"><h3>Cumplimiento de hoy</h3></div>
-          <AnilloProgreso valor={72} />
-          <p className="apagado" style={{ textAlign: 'center', fontSize: 'var(--t-menor)' }}>
-            10 de 14 servicios completados
-          </p>
-          <div className="metricas" style={{ marginTop: 'var(--e4)' }}>
-            <div className="metrica"><b className="numero">10</b><span>Completados</span></div>
-            <div className="metrica"><b className="numero">3</b><span>En ruta</span></div>
-            <div className="metrica"><b className="numero">1</b><span>Reprogramado</span></div>
-          </div>
-        </section>
-
-        <section className="tarjeta">
-          <div className="tarjeta-cabeza"><h3>Requiere atención</h3></div>
-          <div className="aviso">
-            <b>38 familias en mora</b> superan los 10 días. El congelamiento automático se
-            aplica a los 30 días y hoy hay 6 en ese límite.
-          </div>
-          <button className="btn btn-suave btn-bloque" type="button" style={{ marginTop: 'var(--e3)' }}>
-            Gestionar cartera
-          </button>
-        </section>
-
-        <section className="tarjeta">
-          <div className="tarjeta-cabeza"><h3>Preventivos por vencer</h3></div>
-          <div className="fila">
-            <span className="fila-icono"><Icono nombre="preventivos" size={18} /></span>
-            <div className="fila-cuerpo">
-              <strong>Vacunación anual</strong>
-              <span>22 mascotas este mes</span>
-            </div>
-            <span className="distintivo distintivo-alerta">En 20 días</span>
-          </div>
-          <div className="fila">
-            <span className="fila-icono"><Icono nombre="preventivos" size={18} /></span>
-            <div className="fila-cuerpo">
-              <strong>Desparasitación</strong>
-              <span>9 mascotas vencidas</span>
-            </div>
-            <span className="distintivo distintivo-peligro">Vencido</span>
-          </div>
-        </section>
+        <ProximosServicios />
+        {gerencial && <RequiereAtencion />}
       </aside>
     </div>
   )
 }
+
+function PanelGerencial() {
+  const [periodo, setPeriodo] = useState<Periodo>('mes')
+  const [ciudad, setCiudad] = useState('')
+  const ciudades = useCiudades()
+  const filtros: FiltrosIndicadores = { ...rango(periodo), ciudad: ciudad || undefined }
+  const indicadores = useIndicadores(filtros)
+  const [errorDescarga, setErrorDescarga] = useState<string | null>(null)
+
+  async function exportar(formato: 'csv' | 'xlsx') {
+    setErrorDescarga(null)
+    try {
+      await descargar('/dashboard/indicadores', { ...filtros, formato }, `indicadores.${formato}`)
+    } catch (e) {
+      setErrorDescarga(mensajeError(e, 'No fue posible generar el archivo.'))
+    }
+  }
+
+  return (
+    <section className="tarjeta" aria-labelledby="titulo-indicadores">
+      <div className="tarjeta-cabeza">
+        <h3 id="titulo-indicadores">Indicadores</h3>
+        <span className="apagado numero">
+          {fecha(filtros.desde)} – {fecha(filtros.hasta)}
+        </span>
+      </div>
+      <div className="filtros" style={{ marginBottom: 'var(--e4)' }}>
+        <select
+          className="input"
+          style={{ width: 'auto' }}
+          value={periodo}
+          onChange={(e) => setPeriodo(e.target.value as Periodo)}
+          aria-label="Período"
+        >
+          {PERIODOS.map((p) => (
+            <option key={p.valor} value={p.valor}>{p.label}</option>
+          ))}
+        </select>
+        <select
+          className="input"
+          style={{ width: 'auto' }}
+          value={ciudad}
+          onChange={(e) => setCiudad(e.target.value)}
+          aria-label="Ciudad"
+        >
+          <option value="">Todas las ciudades</option>
+          {ciudades.data?.map((c) => (
+            <option key={c.codigo} value={c.nombre}>{c.nombre}</option>
+          ))}
+        </select>
+        <div className="acciones" style={{ marginLeft: 'auto' }}>
+          <button className="btn btn-suave" type="button" onClick={() => exportar('xlsx')}>
+            <Icono nombre="descargar" size={16} /> Excel
+          </button>
+          <button className="btn btn-plano" type="button" onClick={() => exportar('csv')}>
+            CSV
+          </button>
+        </div>
+      </div>
+      {errorDescarga && (
+        <p className="error" role="alert">
+          {errorDescarga}
+        </p>
+      )}
+      <Consulta consulta={indicadores} cargando="Calculando indicadores…" error="No fue posible calcular los indicadores.">
+        {(d) => <TableroIndicadores datos={d} />}
+      </Consulta>
+    </section>
+  )
+}
+
+function TableroIndicadores({ datos }: { datos: Indicadores }) {
+  const i = datos.indicadores
+  const definiciones = useDefiniciones()
+  const formula = (codigo: string) => definiciones.data?.find((d) => d.codigo === codigo)?.formula
+
+  const tiles: { codigo: string; titulo: string; valor: string; detalle?: string }[] = [
+    { codigo: 'afiliaciones', titulo: 'Afiliaciones', valor: String(i.afiliaciones), detalle: `${i.retiros} retiros` },
+    { codigo: 'vigentes', titulo: 'Afiliados vigentes', valor: String(i.vigentes) },
+    {
+      codigo: 'recaudo',
+      titulo: 'Recaudo',
+      valor: moneda(i.recaudo),
+      detalle: `${porcentaje(i.recaudo_del_facturado)} de ${moneda(i.facturado)} facturado`,
+    },
+    {
+      codigo: 'mora',
+      titulo: 'En mora',
+      valor: String(i.mora.contratos_en_mora),
+      detalle: `${porcentaje(i.mora.porcentaje)} · ${moneda(i.mora.saldo_vencido)} vencido`,
+    },
+    {
+      codigo: 'cumplimiento_rutas',
+      titulo: 'Cumplimiento de rutas',
+      valor: porcentaje(i.cumplimiento_rutas.cumplimiento),
+      detalle: `${i.cumplimiento_rutas.paradas_completadas} de ${i.cumplimiento_rutas.paradas_planeadas} paradas · puntualidad ${porcentaje(i.cumplimiento_rutas.puntualidad)}`,
+    },
+    {
+      codigo: 'satisfaccion',
+      titulo: 'Satisfacción',
+      valor: i.satisfaccion.promedio === null ? '—' : `${i.satisfaccion.promedio.toFixed(1)} / 5`,
+      detalle: `${i.satisfaccion.respondidas} de ${i.satisfaccion.enviadas} encuestas · respuesta ${porcentaje(i.satisfaccion.tasa_respuesta)}`,
+    },
+  ]
+
+  const tipos = Object.entries(i.servicios_por_tipo).sort((a, b) => b[1] - a[1])
+  const maximo = Math.max(1, ...tipos.map(([, n]) => n))
+
+  return (
+    <div className="pila">
+      <div className="indicadores">
+        {tiles.map((t) => (
+          <div className="indicador" key={t.codigo} title={formula(t.codigo)}>
+            <span className="indicador-titulo">{t.titulo}</span>
+            <strong className="indicador-valor numero">{t.valor}</strong>
+            {t.detalle && <span className="indicador-detalle">{t.detalle}</span>}
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <h4 className="subtitulo">Servicios completados por tipo</h4>
+        {tipos.length === 0 ? (
+          <p className="apagado">No hay servicios completados en el período.</p>
+        ) : (
+          <ul className="barras" aria-label="Servicios completados por tipo">
+            {tipos.map(([tipo, n]) => (
+              <li key={tipo} className="barra" title={`${tipo}: ${n} servicios`}>
+                <span className="barra-etiqueta">{tipo}</span>
+                <span className="barra-pista">
+                  <span className="barra-valor" style={{ width: `${(n / maximo) * 100}%` }} />
+                </span>
+                <span className="barra-cifra numero">{n}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ProximosServicios() {
+  const servicios = useProximosServicios(hoyISO())
+  return (
+    <section className="tarjeta">
+      <div className="tarjeta-cabeza">
+        <h3>Próximos servicios</h3>
+        <Link to="/servicios">Ver todos</Link>
+      </div>
+      <Consulta
+        consulta={servicios}
+        cargando="Cargando servicios…"
+        error="No fue posible cargar los servicios."
+        vacio="No hay servicios agendados desde hoy."
+        estaVacio={(d) => d.items.length === 0}
+      >
+        {(d) =>
+          d.items.map((s) => (
+            <Link className="fila" key={s.id} to={`/servicios/${s.id}`}>
+              <span className="fila-icono">
+                <Icono nombre="servicios" size={18} />
+              </span>
+              <div className="fila-cuerpo">
+                <strong>{s.tipo}</strong>
+                <span>{s.ciudad}</span>
+              </div>
+              <div className="fila-lado">{fechaHora(s.programado_para)}</div>
+            </Link>
+          ))
+        }
+      </Consulta>
+    </section>
+  )
+}
+
+function RequiereAtencion() {
+  const alertas = useAlertas()
+  return (
+    <section className="tarjeta">
+      <div className="tarjeta-cabeza">
+        <h3>Requiere atención</h3>
+      </div>
+      <Consulta consulta={alertas} cargando="Revisando pendientes…" error="No fue posible revisar los pendientes.">
+        {(a) => (
+          <>
+            <Alerta to="/cartera?mora=1" icono="cartera" titulo="Contratos en mora" cantidad={a.enMora} />
+            <Alerta to="/preventivos?autorizacion=1" icono="preventivos" titulo="Preventivos por autorizar" cantidad={a.preventivosPorAutorizar} />
+            <Alerta to="/tareas?vencidas=1" icono="tareas" titulo="Tareas vencidas" cantidad={a.tareasVencidas} />
+          </>
+        )}
+      </Consulta>
+    </section>
+  )
+}
+
+function Alerta({ to, icono, titulo, cantidad }: { to: string; icono: NombreIcono; titulo: string; cantidad: number }) {
+  return (
+    <Link className="fila" to={to}>
+      <span className="fila-icono">
+        <Icono nombre={icono} size={18} />
+      </span>
+      <div className="fila-cuerpo">
+        <strong>{titulo}</strong>
+      </div>
+      <span className={`distintivo distintivo-${cantidad > 0 ? 'alerta' : 'ok'}`}>
+        {cantidad > 0 ? cantidad : 'Al día'}
+      </span>
+    </Link>
+  )
+}
+
+function MisTareas() {
+  const tareas = useMisTareas()
+  return (
+    <section className="tarjeta">
+      <div className="tarjeta-cabeza">
+        <h3>Mis tareas abiertas</h3>
+        <Link to="/tareas">Ver todas</Link>
+      </div>
+      <Consulta
+        consulta={tareas}
+        cargando="Cargando tareas…"
+        error="No fue posible cargar tus tareas."
+        vacio="No tienes tareas abiertas."
+        estaVacio={(d) => d.items.length === 0}
+      >
+        {(d) =>
+          d.items.map((t) => (
+            <div className="fila" key={t.id}>
+              <span className="fila-icono">
+                <Icono nombre="tareas" size={18} />
+              </span>
+              <div className="fila-cuerpo">
+                <strong>{t.titulo}</strong>
+                <span>{t.vence_el ? `Vence ${fecha(t.vence_el)}` : 'Sin fecha límite'}</span>
+              </div>
+              <Distintivo dominio="prioridad" valor={t.prioridad} />
+            </div>
+          ))
+        }
+      </Consulta>
+    </section>
+  )
+}
+

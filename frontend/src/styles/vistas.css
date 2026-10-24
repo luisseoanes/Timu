@@ -21,14 +21,6 @@
   top: var(--e4);
   height: calc(100vh - var(--e7));
 }
-.marca {
-  display: flex; align-items: center; gap: var(--e2);
-  font-family: var(--fuente-titulo); font-size: 19px; font-weight: 600; color: var(--tinta);
-}
-.marca-icono {
-  width: 34px; height: 34px; display: grid; place-items: center;
-  border-radius: var(--r-campo); background: var(--verde-500); color: #fff;
-}
 .nav { display: grid; gap: var(--e1); flex: 1; align-content: start; }
 .nav a {
   display: flex; align-items: center; gap: var(--e3);
@@ -56,7 +48,7 @@
   font-family: var(--fuente-titulo); font-weight: 600;
 }
 .usuario-datos strong { display: block; color: var(--tinta); font-size: var(--t-menor); }
-.usuario-datos span { display: block; font-size: var(--t-etiqueta); color: var(--apagado); text-transform: capitalize; }
+.usuario-datos div span { display: block; font-size: var(--t-etiqueta); color: var(--apagado); text-transform: capitalize; }
 
 /* ================= Cabecera y contenido ================= */
 .principal { display: flex; flex-direction: column; gap: var(--e4); min-width: 0; }
@@ -148,6 +140,7 @@
 }
 .marca-nombre { font-family: var(--fuente-titulo); font-weight: 700; font-size: 22px; letter-spacing: .14em; color: var(--tinta); line-height: 1; }
 .marca-sub { font-size: var(--t-etiqueta); letter-spacing: .12em; text-transform: uppercase; color: var(--apagado); }
+.sidebar .marca-sub { letter-spacing: .04em; white-space: nowrap; }
 .marca-clara .marca-sello { background: var(--sobre-marca-velo); border: 1px solid var(--sobre-marca-borde); }
 .marca-clara .marca-nombre { color: var(--sobre-marca); }
 .marca-clara .marca-sub { color: var(--sobre-marca-suave); }

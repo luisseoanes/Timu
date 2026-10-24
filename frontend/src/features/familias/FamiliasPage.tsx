@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
 import { Distintivo } from '@/components/Distintivo'
@@ -24,10 +24,19 @@ const POR_PAGINA = 25
 
 export function FamiliasPage() {
   const { usuario } = useAuth()
-  const [q, setQ] = useState('')
+  const [params] = useSearchParams()
+  const qUrl = params.get('q') ?? ''
+  const [q, setQ] = useState(qUrl)
   const [estado, setEstado] = useState<EstadoAfiliacion | ''>('')
   const [offset, setOffset] = useState(0)
   const [nueva, setNueva] = useState(false)
+  // El buscador de la cabecera llega por ?q=: una búsqueda nueva reemplaza la escrita aquí.
+  const [qPrevio, setQPrevio] = useState(qUrl)
+  if (qUrl !== qPrevio) {
+    setQPrevio(qUrl)
+    setQ(qUrl)
+    setOffset(0)
+  }
   const familias = useFamilias({
     q: q || undefined,
     estado: estado || undefined,
