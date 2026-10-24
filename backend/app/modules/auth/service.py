@@ -1,6 +1,8 @@
+import hmac
+import secrets
 from datetime import timedelta
 from typing import Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import structlog
 from sqlalchemy import or_, select, update
@@ -238,4 +240,95 @@ def crear_usuario_portal(
     db.add(usuario)
     db.flush()
     emitir_enlace(db, usuario, "activacion")
+    return usuario
+
+
+# --- F3-POR-07 Ingreso con codigo de un solo uso por WhatsApp ---------------------------------
+
+PROPOSITO_CODIGO = "codigo_ingreso"
+
+
+def _usuario_portal_por_telefono(db: Session, telefono: str) -> Usuario | None:
+    try:
+        normalizado = normalizar_telefono(telefono)
+    except ValueError:
+        return None
+    return db.scalar(
+        select(Usuario).where(
+            Usuario.telefono == normalizado,
+            Usuario.rol == Rol.FAMILIA,
+            Usuario.activo.is_(True),
+        )
+    )
+
+
+def solicitar_codigo(db: Session, telefono: str) -> None:
+    """Envia un codigo de 6 digitos. Siempre responde igual: no revela si el numero
+    tiene cuenta. Un codigo nuevo invalida el anterior."""
+    from app.modules.comunicaciones import service as comunicaciones
+
+    usuario = _usuario_portal_por_telefono(db, telefono)
+    if usuario is None or usuario.telefono is None:
+        logger.info("Codigo de ingreso pedido para un numero sin cuenta de portal")
+        return
+    db.execute(
+        update(TokenUsoUnico)
+        .where(
+            TokenUsoUnico.usuario_id == usuario.id,
+            TokenUsoUnico.proposito == PROPOSITO_CODIGO,
+            TokenUsoUnico.usado_en.is_(None),
+        )
+        .values(usado_en=ahora())
+    )
+    codigo = f"{secrets.randbelow(10**6):06d}"
+    registro = TokenUsoUnico(
+        id=uuid4(),
+        usuario_id=usuario.id,
+        proposito=PROPOSITO_CODIGO,
+        expira_en=ahora() + timedelta(minutes=settings.TOKEN_CODIGO_MINUTOS),
+        intentos=0,
+    )
+    # El id del registro sala el hash: dos codigos iguales en momentos distintos no chocan.
+    registro.token_hash = hash_token(f"{registro.id}:{codigo}")
+    db.add(registro)
+    db.flush()
+    try:
+        comunicaciones.encolar_plantilla(
+            db,
+            telefono=usuario.telefono,
+            plantilla="codigo_ingreso",
+            variables=[usuario.nombre, codigo],
+        )
+    except ReglaNegocio:
+        logger.error("No se pudo enviar el codigo de ingreso: falta la plantilla codigo_ingreso")
+
+
+def verificar_codigo(db: Session, telefono: str, codigo: str) -> Usuario | None:
+    """Devuelve el usuario si el codigo es valido. Un fallo cuenta como intento y, al tope,
+    invalida el codigo. No levanta excepcion: quien llama responde 401 y la transaccion
+    se confirma, para que el intento quede contado."""
+    usuario = _usuario_portal_por_telefono(db, telefono)
+    if usuario is None:
+        return None
+    registro = db.scalar(
+        select(TokenUsoUnico)
+        .where(
+            TokenUsoUnico.usuario_id == usuario.id,
+            TokenUsoUnico.proposito == PROPOSITO_CODIGO,
+            TokenUsoUnico.usado_en.is_(None),
+        )
+        .order_by(TokenUsoUnico.created_at.desc())
+        .limit(1)
+        .with_for_update()
+    )
+    if registro is None or con_zona(registro.expira_en) <= ahora():
+        return None
+    if not hmac.compare_digest(hash_token(f"{registro.id}:{codigo.strip()}"), registro.token_hash):
+        registro.intentos += 1
+        if registro.intentos >= settings.CODIGO_MAX_INTENTOS:
+            registro.usado_en = ahora()
+        db.flush()
+        return None
+    registro.usado_en = ahora()
+    db.flush()
     return usuario

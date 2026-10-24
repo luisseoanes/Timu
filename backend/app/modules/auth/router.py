@@ -25,12 +25,14 @@ from app.core.deps import (
 from app.modules.auth import service, sesiones
 from app.modules.auth.models import Usuario
 from app.modules.auth.schemas import (
+    CodigoIn,
     RecuperarIn,
     RestablecerIn,
     Sesion,
     UsuarioCreate,
     UsuarioRead,
     UsuarioUpdate,
+    VerificacionCodigoIn,
 )
 from app.schemas.common import Mensaje, Page, ParamsListado, paginar
 
@@ -116,6 +118,35 @@ async def recuperar(db: DbSession, data: RecuperarIn) -> Mensaje:
 async def restablecer(db: DbSession, data: RestablecerIn) -> None:
     """Define la contrasena con un enlace de recuperacion o de activacion del portal."""
     await db.run_sync(service.restablecer, data.token, data.password)
+
+
+@router.post("/codigo", status_code=status.HTTP_202_ACCEPTED, dependencies=[Depends(publico)])
+async def solicitar_codigo(db: DbSession, data: CodigoIn) -> Mensaje:
+    """F3-POR-07 Codigo de ingreso de un solo uso por WhatsApp para el portal. La
+    respuesta es la misma exista o no la cuenta."""
+    await db.run_sync(service.solicitar_codigo, data.telefono)
+    return Mensaje(detail="Si el numero tiene cuenta, enviamos un codigo por WhatsApp")
+
+
+@router.post("/codigo/verificacion", response_model=Sesion, dependencies=[Depends(publico)])
+async def verificar_codigo(
+    db: DbSession, request: Request, response: Response, data: VerificacionCodigoIn
+) -> Sesion | JSONResponse:
+    """Intentos limitados y expiracion corta. Un codigo errado no levanta excepcion: el
+    intento debe quedar contado aunque la respuesta sea 401."""
+    usuario = await db.run_sync(service.verificar_codigo, data.telefono, data.codigo)
+    if usuario is None:
+        return JSONResponse(
+            {"detail": "Codigo invalido o vencido", "codigo": "no_autenticado"}, status_code=401
+        )
+    access, refresh = await db.run_sync(
+        sesiones.crear,
+        usuario,
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    establecer_cookie_sesion(response, access, refresh)
+    return _sesion(usuario)
 
 
 @router.get("/me", response_model=UsuarioRead)

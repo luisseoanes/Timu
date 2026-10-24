@@ -49,6 +49,11 @@ class Settings(BaseSettings):
     # F1-AUT-03 / F1-AUT-04 Enlaces de un solo uso
     TOKEN_RECUPERACION_MINUTOS: int = 30
     TOKEN_ACTIVACION_HORAS: int = 72
+    # F3-POR-07 Ingreso del portal con codigo por WhatsApp
+    TOKEN_CODIGO_MINUTOS: int = 10
+    CODIGO_MAX_INTENTOS: int = 5
+    # F3-POR-04 Anticipacion minima para que la familia cambie un servicio desde el portal
+    PORTAL_ANTELACION_HORAS: int = 4
     FRONTEND_URL: str = "http://localhost:5173"
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:5173"]
 

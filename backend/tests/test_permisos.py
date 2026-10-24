@@ -60,6 +60,8 @@ PUBLICAS_ESPERADAS = {
     "POST /api/v1/auth/refresh",
     "POST /api/v1/auth/recuperar",
     "POST /api/v1/auth/restablecer",
+    "POST /api/v1/auth/codigo",  # F3-POR-07 ingreso del portal por WhatsApp
+    "POST /api/v1/auth/codigo/verificacion",
     "POST /api/v1/formularios/familia",
     "POST /api/v1/afiliaciones",  # formulario publico de afiliacion
     "GET /api/v1/webhooks/whatsapp",

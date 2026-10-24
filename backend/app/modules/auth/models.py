@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, String
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.auditoria import Auditable
@@ -55,7 +55,9 @@ class TokenUsoUnico(Base, UUIDMixin, TimestampMixin):
     usuario_id: Mapped[UUID] = mapped_column(
         ForeignKey("usuarios.id", ondelete="CASCADE"), index=True
     )
-    proposito: Mapped[str] = mapped_column(String(24))  # recuperacion | activacion
+    proposito: Mapped[str] = mapped_column(String(24))  # recuperacion | activacion | codigo_ingreso
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     expira_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     usado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # F3-POR-07 Intentos fallidos con un codigo de ingreso; al tope, el codigo se invalida.
+    intentos: Mapped[int] = mapped_column(Integer, default=0)

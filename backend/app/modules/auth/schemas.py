@@ -54,3 +54,12 @@ class RecuperarIn(BaseModel):
 class RestablecerIn(BaseModel):
     token: str
     password: str = Field(min_length=8, max_length=128)
+
+
+class CodigoIn(BaseModel):
+    telefono: str = Field(max_length=32)
+
+
+class VerificacionCodigoIn(BaseModel):
+    telefono: str = Field(max_length=32)
+    codigo: str = Field(pattern=r"^\s*\d{6}\s*$")

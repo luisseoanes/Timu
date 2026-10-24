@@ -59,7 +59,7 @@ app.add_middleware(
     login_por_minuto=settings.RATE_LIMIT_LOGIN_POR_MINUTO,
     rutas_sensibles=tuple(
         f"{settings.API_V1_PREFIX}/auth/{r}"
-        for r in ("login", "refresh", "recuperar", "restablecer")
+        for r in ("login", "refresh", "recuperar", "restablecer", "codigo", "codigo/verificacion")
     ),
     exentas=("/health", "/health/live"),
 )
