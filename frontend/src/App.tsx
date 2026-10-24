@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from '@/features/auth/AuthContext'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
+import { FamiliaDetallePage } from '@/features/familias/FamiliaDetallePage'
 import { FamiliasPage } from '@/features/familias/FamiliasPage'
 import { Placeholder } from '@/features/Placeholder'
 import { AppLayout } from '@/layouts/AppLayout'
@@ -24,6 +25,7 @@ export default function App() {
               <Route element={<AppLayout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="familias" element={<FamiliasPage />} />
+                <Route path="familias/:id" element={<FamiliaDetallePage />} />
                 <Route
                   path="cartera"
                   element={

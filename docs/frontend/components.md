@@ -140,3 +140,17 @@ usa el sistema.
 `<Distintivo dominio="servicio" valor="agendado" />` toma etiqueta y tono del mapeo único
 de `src/lib/estados.ts`, para que un estado se vea igual en todos los módulos. Un estado
 que el mapeo no conozca se muestra en tono neutro en vez de romper la pantalla.
+
+## Acciones según el rol — `puede`
+
+`puede(usuario, 'gestionarAfiliacion')` (de `src/lib/permisos.ts`) decide si se muestra
+un botón. El mapa repite los roles que exige el backend en cada `requiere(...)`: si cambia
+un permiso allá, se cambia aquí en el mismo commit. Ocultar un botón no autoriza nada; el
+servidor sigue respondiendo 403 y `mensajeError` lo dice en palabras.
+
+## Formularios en modal
+
+El formulario lleva un `id` y el botón de guardar, en el `pie` del `Modal`, lo envía con
+`form="<id>"`. Los campos vacíos no viajan (`undefined`, no `""`). Mientras guarda, el
+botón dice «Guardando…» y queda deshabilitado; el error del servidor aparece con
+`role="alert"` dentro del formulario, y al cerrar el modal se limpia (`mutation.reset()`).
