@@ -18,7 +18,8 @@ y respeta el criterio de aceptación que ya está escrito allí.
 # Todo el stack (api, worker, beat, db, redis, minio, web)
 docker compose up --build
 docker compose exec api alembic upgrade head       # aplica el esquema
-docker compose exec api python scripts/seed.py     # admin@timu.co / cambiar123
+docker compose exec api python -m scripts.cargar_catalogos   # ciudades, especies, reglas
+docker compose exec api python -m scripts.seed     # admin@timu.co / cambiar123
 
 # Backend sin Docker
 cd backend && pip install -r requirements-dev.txt

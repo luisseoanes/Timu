@@ -114,6 +114,8 @@ services:
 
   web:
     build: ./frontend
+    environment:
+      VITE_API_PROXY: http://api:8000
     volumes:
       - ./frontend:/app
       - /app/node_modules

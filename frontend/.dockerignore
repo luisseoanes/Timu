@@ -1,0 +1,6 @@
+# Los node_modules del anfitrión traen binarios nativos de otro sistema (esbuild, rollup).
+node_modules
+dist
+coverage
+playwright-report
+test-results
