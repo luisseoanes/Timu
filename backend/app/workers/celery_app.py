@@ -20,6 +20,7 @@ celery_app = Celery(
         "app.workers.tasks.rutas",
         "app.workers.tasks.campanas",
         "app.workers.tasks.dashboard",
+        "app.workers.tasks.ia",
         "app.workers.tasks.outbox",
     ],
 )

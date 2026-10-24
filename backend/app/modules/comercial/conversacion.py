@@ -226,7 +226,32 @@ def _responder(
             conversacion.fallos = 0
             _ir(db, conversacion, destino, nodos, turno)
             return
+        if _pregunta_abierta(db, conversacion, texto, turno):
+            return
     _fallo(db, conversacion, nodos, turno)
+
+
+def _pregunta_abierta(
+    db: Session, conversacion: ConversacionComercial, texto: str, turno: _Turno
+) -> bool:
+    """F4-IAA-02 Una pregunta que no es una opcion del menu: la IA responde dentro del
+    guion aprobado o, si sale de el, pasa a un asesor. Sin IA disponible, no hace nada y la
+    conversacion sigue su camino (cuenta como no entendida)."""
+    from app.modules.ia import service as ia
+
+    if len(texto.strip()) < 8:
+        return False  # "ok", "si", "???": no es una pregunta
+    try:
+        respuesta = ia.responder_comercial(db, texto, conversacion.telefono)
+    except ia.IANoDisponible:
+        return False
+    if respuesta is None:
+        _asesor(db, conversacion, f"Pregunta fuera del guion: {texto[:200]}", turno)
+        return True
+    conversacion.fallos = 0
+    turno.decir(respuesta)
+    turno.decir("Escribe *menu* para ver las opciones.")
+    return True
 
 
 def _fallo(

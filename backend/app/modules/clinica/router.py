@@ -142,6 +142,8 @@ class SolicitudRead(BaseModel):
     asignada_a_id: UUID | None
     respuesta: str | None
     historia_id: UUID | None
+    borrador_ia: dict[str, Any] | None = None
+    borrador_en: datetime | None = None
     created_at: datetime
 
 
@@ -378,6 +380,25 @@ async def solicitar(db: DbSession, data: SolicitudIn) -> SolicitudVirtual:
 async def tomar(db: DbSession, medico: Medico, solicitud_id: UUID) -> SolicitudVirtual:
     solicitud = await db.run_sync(service.obtener_solicitud, solicitud_id)
     return await db.run_sync(service.tomar, solicitud, medico.id)
+
+
+@router.post(
+    "/virtual/{solicitud_id}/borrador",
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def pedir_borrador(db: DbSession, medico: Medico, solicitud_id: UUID) -> dict[str, str]:
+    """F4-IAA-03 Pide a la IA un borrador para revisar. Llega a la solicitud en segundos;
+    nunca se envia a la familia: la respuesta sigue saliendo de una plantilla aprobada."""
+    from app.core.eventos import EventoDominio
+    from app.core.outbox import publicar
+
+    solicitud = await db.run_sync(service.obtener_solicitud, solicitud_id)
+    if solicitud.asignada_a_id != medico.id:
+        from app.core.errores import ReglaNegocio
+
+        raise ReglaNegocio("Tome la solicitud antes de pedir un borrador")
+    publicar(db, EventoDominio("ia.borrador_solicitado", {"solicitud_id": str(solicitud.id)}))
+    return {"detail": "Borrador solicitado"}
 
 
 @router.post("/virtual/{solicitud_id}/respuesta", response_model=SolicitudRead)

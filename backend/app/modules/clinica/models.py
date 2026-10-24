@@ -125,3 +125,6 @@ class SolicitudVirtual(Base, UUIDMixin, TimestampMixin, Auditable):
     respuesta: Mapped[str | None] = mapped_column(Text)
     respondida_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     historia_id: Mapped[UUID | None] = mapped_column(ForeignKey("historias_clinicas.id"))
+    # F4-IAA-03 Borrador de la IA para el profesional: nunca se envia a la familia.
+    borrador_ia: Mapped[dict[str, Any] | None] = mapped_column(JSONTipo)
+    borrador_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

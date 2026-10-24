@@ -136,6 +136,13 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_FROM: str = "TIMU <no-responder@timu.co>"
 
+    # --- Apoyo de IA (F4-IAA) ------------------------------------------------------------------
+    # Sin clave la capa queda apagada: todo sigue funcionando con el flujo sin IA.
+    ANTHROPIC_API_KEY: str = ""
+    IA_MODELO: str = "claude-opus-5-5"
+    IA_PRESUPUESTO_MENSUAL_USD: float = 50.0
+    IA_TIMEOUT_SEGUNDOS: float = 30.0
+
     # --- Observabilidad (F0-08) ----------------------------------------------------------------
     SENTRY_DSN: str = ""
     LOG_JSON: bool = False
