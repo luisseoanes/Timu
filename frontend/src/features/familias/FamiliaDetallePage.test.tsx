@@ -111,6 +111,39 @@ describe('FamiliaDetallePage', () => {
     expect(await screen.findByText(/aún no tiene contrato/i)).toBeInTheDocument()
   })
 
+  it('afilia a una familia sin contrato y registra el pago recibido', async () => {
+    const pedidos: unknown[] = []
+    server.use(
+      http.get(`${API}/planes`, () =>
+        HttpResponse.json([{ id: 'p1', codigo: 'familiar', nombre: 'Plan Familiar', valor_mensual: '75000.00', cupos_mascotas: 3, activo: true, beneficios: [] }]),
+      ),
+      http.post(`${API}/afiliaciones/asistida`, async ({ request }) => {
+        pedidos.push(await request.json())
+        return HttpResponse.json({ solicitud_id: 'sol1', valor: '75000.00', enlace_pago: 'https://pago/abc' }, { status: 201 })
+      }),
+      http.post(`${API}/afiliaciones/sol1/pago-manual`, async ({ request }) => {
+        pedidos.push(await request.json())
+        return HttpResponse.json({})
+      }),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Cartera' }))
+    await user.click(await screen.findByRole('button', { name: 'Afiliar a un plan' }))
+    const modal = await screen.findByRole('dialog')
+    await waitFor(() => expect(within(modal).getByRole('option', { name: /plan familiar/i })).toBeInTheDocument())
+    await user.selectOptions(within(modal).getByLabelText('Plan'), 'p1')
+    await user.click(within(modal).getByRole('button', { name: 'Iniciar afiliación' }))
+    expect(await within(modal).findByLabelText('Enlace de pago')).toHaveValue('https://pago/abc')
+    await user.type(within(modal).getByLabelText('Comprobante'), 'TRF-99')
+    await user.click(within(modal).getByRole('button', { name: 'Registrar pago recibido' }))
+    expect(await within(modal).findByText(/la afiliación quedó activa/i)).toBeInTheDocument()
+    expect(pedidos).toEqual([
+      { familia_id: FAMILIA.id, plan_id: 'p1', medio_aceptacion: 'whatsapp' },
+      { medio: 'transferencia', comprobante: 'TRF-99' },
+    ])
+  })
+
   it('registra un pago manual sobre la cuota elegida', async () => {
     let enviado: unknown = null
     server.use(

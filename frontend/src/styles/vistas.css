@@ -292,3 +292,51 @@
 /* Tres columnas iguales que bajan a una en pantallas angostas (carnet: aplicados, vencidos, próximos). */
 .tres-columnas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e5); }
 @media (max-width: 900px) { .tres-columnas { grid-template-columns: 1fr; } }
+
+/* ================= Portal de familias ================= */
+.portal { min-height: 100vh; background: var(--fondo); padding-bottom: 84px; }
+.portal-cabeza {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--e4);
+  padding: var(--e3) var(--e5);
+  background: var(--superficie);
+  box-shadow: var(--sombra-1);
+}
+.portal-nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  background: var(--superficie);
+  border-top: 1px solid var(--linea);
+  box-shadow: var(--sombra-3);
+}
+.portal-nav a {
+  display: grid; justify-items: center; gap: 2px;
+  padding: var(--e2) 0 var(--e3);
+  font-size: var(--t-etiqueta); font-weight: 700; color: var(--apagado);
+}
+.portal-nav a.active { color: var(--verde-700); }
+.portal-contenido { width: min(960px, 100%); margin: 0 auto; padding: var(--e5) var(--e4); }
+.portal-hola {
+  display: grid; gap: var(--e3);
+  padding: var(--e6);
+  border-radius: var(--r-panel);
+  color: var(--sobre-marca);
+  background: linear-gradient(150deg, var(--verde-500) 0%, var(--verde-700) 100%);
+}
+.portal-hola h1 { color: var(--sobre-marca); }
+.portal-hola p { color: var(--sobre-marca-suave); }
+.portal-hola .acceso { color: var(--texto); }
+
+@media (min-width: 900px) {
+  .portal { padding-bottom: 0; }
+  .portal-nav {
+    position: static; display: flex; gap: var(--e1);
+    background: transparent; border: 0; box-shadow: none;
+  }
+  .portal-nav a {
+    display: flex; align-items: center; gap: var(--e2);
+    padding: var(--e2) var(--e3); border-radius: var(--r-pastilla);
+    font-size: var(--t-menor);
+  }
+  .portal-nav a.active { background: var(--verde-50); }
+}

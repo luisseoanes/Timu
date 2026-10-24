@@ -9,6 +9,7 @@ import { fecha, moneda } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
 import type { CuotaRead, FamiliaRead } from '@/types'
 
+import { AfiliarModal } from './AfiliarModal'
 import { useEstadoCuenta } from './api'
 
 const MEDIOS: { valor: MedioPago; label: string }[] = [
@@ -24,6 +25,7 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
   const { usuario } = useAuth()
   const cuenta = useEstadoCuenta(familia.id)
   const [pagando, setPagando] = useState(false)
+  const [afiliando, setAfiliando] = useState(false)
 
   if (cuenta.isPending) return <p className="apagado">Cargando estado de cuenta…</p>
   if (cuenta.isError) {
@@ -34,7 +36,17 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
     )
   }
   if (cuenta.data === null) {
-    return <p className="apagado">Esta familia aún no tiene contrato: no hay cuotas ni pagos.</p>
+    return (
+      <section className="tarjeta">
+        <p className="apagado">Esta familia aún no tiene contrato: no hay cuotas ni pagos.</p>
+        {puede(usuario, 'gestionarAfiliacion') && (
+          <button className="btn btn-primario" type="button" style={{ marginTop: 'var(--e3)' }} onClick={() => setAfiliando(true)}>
+            Afiliar a un plan
+          </button>
+        )}
+        <AfiliarModal familia={familia} abierto={afiliando} onCerrar={() => setAfiliando(false)} />
+      </section>
+    )
   }
 
   const c = cuenta.data

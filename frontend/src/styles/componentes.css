@@ -410,3 +410,20 @@ a.acceso { text-decoration: none; }
 .codigo { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: var(--t-menor); }
 .grupo-chips { display: flex; flex-wrap: wrap; gap: var(--e2); }
 .mensaje-ejemplo { padding: var(--e3) var(--e4); border-radius: var(--r-tarjeta); background: var(--ok-bg); display: grid; gap: 4px; }
+
+/* --- Planes (administración) ----------------------------------- */
+.planes { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--e4); }
+.plan {
+  display: grid; gap: var(--e2); align-content: start;
+  padding: var(--e5);
+  border: 1px solid var(--linea); border-radius: var(--r-tarjeta);
+  background: var(--superficie-2);
+}
+.beneficios { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: var(--t-menor); }
+.beneficios svg { color: var(--verde-600); vertical-align: -2px; }
+.bloque-codigo {
+  margin: 0; padding: var(--e3); max-height: 320px; overflow: auto;
+  border-radius: var(--r-campo); background: var(--superficie-2); white-space: pre-wrap;
+}
+.barra-presupuesto { height: 10px; border-radius: var(--r-pastilla); background: var(--superficie-2); overflow: hidden; }
+.barra-presupuesto span { display: block; height: 100%; background: var(--verde-600); border-radius: var(--r-pastilla); }
