@@ -5,7 +5,7 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['dist', 'coverage', 'playwright-report', 'test-results', 'node_modules'] },
+  { ignores: ['dist', 'coverage', 'playwright-report', 'playwright-report-stack', 'test-results', 'node_modules'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -38,7 +38,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.test.{ts,tsx}', 'src/test/**', 'e2e/**'],
+    files: ['**/*.test.{ts,tsx}', 'src/test/**', 'e2e/**', 'e2e-stack/**'],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
     rules: {
       // Las pruebas comprueban justamente que la aplicación NO usa localStorage,

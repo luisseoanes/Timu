@@ -30,6 +30,9 @@ coverage.xml
 coverage/
 htmlcov/
 playwright-report/
+playwright-report-stack/
+# Sesiones que guardan los recorridos contra el stack (cookies de usuarios de demo)
+frontend/playwright/.auth/
 test-results/
 
 # Estado local del planificador de Celery (lo genera el contenedor beat)

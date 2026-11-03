@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:stack": "playwright test -c playwright.stack.config.ts",
     "verificar": "npm run lint && npm run typecheck && npm run test:coverage && npm run build"
   },
   "dependencies": {
