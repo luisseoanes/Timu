@@ -15,7 +15,7 @@ Antes de escribir una pantalla nueva, lee estos cuatro documentos en orden:
 | [design-system.md](design-system.md) | Color, tipografía, espaciado, radios, sombras e iconografía. Los tokens y cómo se usan. |
 | [components.md](components.md) | Inventario de componentes con su anatomía, estados y cuándo corresponde cada uno. |
 | [layouts.md](layouts.md) | Plantillas de página: ingreso, shell del panel, inicio con widgets y listados. |
-| [conventions.md](conventions.md) | Estructura de carpetas, nombres, datos, accesibilidad y qué revisar antes de fusionar. |
+| [conventions.md](conventions.md) | Estructura de carpetas, nombres, datos, sesión, pruebas, accesibilidad y qué revisar antes de empujar. |
 
 ## Dónde vive cada cosa
 
@@ -27,11 +27,14 @@ frontend/src/
     componentes.css  Botones, campos, tarjetas, distintivos, filas, tablas, anillo
     vistas.css       Estructura de página: shell, dashboard, login, adaptación responsiva
     index.css        Índice que impone el orden de la cascada
-  components/        Piezas compartidas sin lógica de dominio (Icono, AnilloProgreso)
+  components/        Piezas compartidas sin lógica de dominio (Modal, Consulta, Pestanas,
+                     Paginacion, Distintivo, Icono, AnilloProgreso)
   features/<dominio>/  Pantallas y consultas por dominio (auth, familias, dashboard, …)
-  layouts/           AppLayout: barra lateral, cabecera y contenido
+  layouts/           AppLayout: barra lateral, cabecera y contenido del panel
+  lib/               errores (mensajeError, esErrorPasajero), permisos, formato, estados
   routes/            ProtectedRoute y guardas por perfil
-  types/             Espejo tipado de los schemas del backend
+  types/             api.ts, generado desde el OpenAPI del backend (no se edita a mano)
+  test/              MSW (handlers, server), setup y guardas de la suite
 ```
 
 ## Las tres reglas que no se negocian
@@ -48,7 +51,7 @@ frontend/src/
 ```bash
 cd frontend
 npm install
-npm run dev        # http://localhost:5173
-npm run typecheck  # tipos
-npm run build      # compilación de producción
+npm run dev          # http://localhost:5173 (proxy /api → localhost:8000)
+npm run verificar    # lint + tipos + pruebas con cobertura + build: lo mismo que el CI
+npm run test:e2e     # recorridos con la API interceptada
 ```

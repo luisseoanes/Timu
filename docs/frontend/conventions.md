@@ -48,6 +48,14 @@ ingresar. El frontend no guarda ni lee tokens, y hay una regla de ESLint que rec
 `localStorage`: es legible desde JavaScript y una XSS se llevaría la sesión, con
 historia clínica de por medio. Para saber si hay sesión se pregunta a `/auth/me`.
 
+**Un fallo pasajero nunca cierra la sesión.** Sin respuesta, 408, 429 o 5xx
+(`esErrorPasajero` en `src/lib/errores.ts`) no dicen nada de la sesión: `AuthContext`
+reintenta con espera creciente y, si el servidor sigue sin contestar, `ProtectedRoute`
+muestra un aviso con «Reintentar» en vez de mandar al ingreso. Una renovación con fallo
+pasajero llega a la pantalla como un error más. Solo una respuesta firme (401 u otro 4xx)
+termina la sesión. Una pantalla que trate cualquier error como «sin sesión» saca a la
+gente de su trabajo por un pico de carga.
+
 ## Permisos
 
 `ProtectedRoute` acepta la lista de perfiles que pueden entrar. El frontend esconde lo que
@@ -57,13 +65,23 @@ filas. Un botón oculto sin permiso en el servidor es un defecto.
 
 ## Pruebas
 
-Toda pantalla nueva llega con las suyas. No es una aspiración: el CI las exige en cada
-push y hay umbral de cobertura del 60%.
+Toda pantalla nueva llega con las suyas. No es una aspiración: el CI las ejecuta todas en
+cada push, falla si alguna está desactivada o fuera de los patrones (`src/test/suite.test.ts`)
+y exige los umbrales de cobertura de `vitest.config.ts` (ver la invariante del CI en el
+`CLAUDE.md` de la raíz).
 
 - **Componentes**: Vitest + Testing Library. La API se simula con **MSW**
   (`src/test/handlers.ts`), a nivel de red y nunca haciendo mock de axios, para que se
-  pruebe también cómo se arma la petición.
-- **Recorridos**: Playwright en `e2e/`, sobre la aplicación compilada.
+  pruebe también cómo se arma la petición. **Una petición sin handler hace fallar la
+  prueba** (`src/test/setup.ts`): lo que cargan todas las pantallas (catálogos, equipo,
+  planes) va en `src/test/handlers.ts`.
+- **MSW usa el primer handler que coincide**: en `server.use(...base, override)` gana
+  `base`. Los handlers comunes de un fichero van en un `beforeEach` y cada prueba los
+  sustituye con su propio `server.use`.
+- **Recorridos**: Playwright en `e2e/` sobre la aplicación compilada y con la API
+  interceptada, y en `e2e-stack/` contra el stack real con los usuarios de `datos_demo`.
+  Un fallo de contrato entre panel y API (un valor que la API rechaza) solo lo detecta el
+  segundo.
 - Se consulta por **rol y etiqueta accesible** (`getByRole`, `getByLabelText`), jamás por
   clase CSS. Si la prueba no encuentra el control, un lector de pantalla tampoco: la
   prueba es también una comprobación de accesibilidad.
@@ -87,7 +105,7 @@ resultado.
 - Con `prefers-reduced-motion` se desactivan transiciones y animaciones (ya está en
   `base.css`).
 
-## Qué revisar antes de fusionar
+## Qué revisar antes de empujar
 
 1. ¿La pantalla usa sólo tokens? Buscar `#` en el diff: un color literal es un rechazo.
 2. ¿Reutiliza los componentes existentes en vez de crear una variante casi igual?
