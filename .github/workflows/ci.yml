@@ -177,6 +177,22 @@ jobs:
       - name: Versiones
         run: docker version --format '{{.Server.Version}}' && docker compose version
 
+      # Antes de levantar el stack: el contenedor web monta ./frontend con un volumen
+      # anonimo en node_modules, y Docker crearia ese directorio como root.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias del panel
+        working-directory: frontend
+        run: npm ci
+
+      - name: Instalar navegador
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
       # `up -d` ya espera las condiciones de depends_on: si `inicializar` falla, la API no
       # arranca y el comando sale con error.
       - name: Levantar el stack
@@ -207,20 +223,6 @@ jobs:
       # portal de familias y clinica aliada con los usuarios que crea datos_demo.
       - name: Datos de demostracion
         run: docker compose exec -T api python -m scripts.datos_demo
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Instalar dependencias del panel
-        working-directory: frontend
-        run: npm ci
-
-      - name: Instalar navegador
-        working-directory: frontend
-        run: npx playwright install --with-deps chromium
 
       - name: Recorridos contra el stack real
         run: |
