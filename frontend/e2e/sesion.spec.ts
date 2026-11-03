@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 const USUARIO = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -8,15 +8,23 @@ const USUARIO = {
   activo: true,
 }
 
+// Sin sesión, el backend responde 401 también a la renovación. Hay que simularlo: sin
+// backend, la renovación falla por red, el panel lo trata como un fallo pasajero y ofrece
+// reintentar en vez de mandar al ingreso.
+const sinRenovacion = (page: Page) =>
+  page.route('**/api/v1/auth/refresh', (ruta) => ruta.fulfill({ status: 401, body: '' }))
+
 test.describe('sesión', () => {
   test('sin sesión, cualquier ruta lleva al ingreso', async ({ page }) => {
     await page.route('**/api/v1/auth/me', (ruta) => ruta.fulfill({ status: 401, body: '' }))
+    await sinRenovacion(page)
     await page.goto('/familias')
     await expect(page).toHaveURL(/\/login/)
   })
 
   test('el ingreso no deja credenciales en localStorage', async ({ page }) => {
     await page.route('**/api/v1/auth/me', (ruta) => ruta.fulfill({ status: 401, body: '' }))
+    await sinRenovacion(page)
     await page.route('**/api/v1/auth/login', (ruta) =>
       ruta.fulfill({ json: { usuario: USUARIO } }),
     )
