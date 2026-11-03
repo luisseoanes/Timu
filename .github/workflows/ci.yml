@@ -65,6 +65,9 @@ jobs:
         working-directory: backend
         run: mypy app
 
+      # La suite entera, sin -m ni -k: conftest marca cada prueba unit o integration y
+      # hace fallar la ejecucion si alguna se salta; tests/test_suite.py, si alguna vive
+      # donde pytest no la recoge. Ver «Pruebas» en CLAUDE.md.
       - name: Pruebas unitarias y de integración
         working-directory: backend
         env:
@@ -103,6 +106,8 @@ jobs:
         working-directory: frontend
         run: npm run typecheck
 
+      # Todas, sin filtros. src/test/suite.test.ts falla si alguna prueba esta fuera de
+      # los patrones de Vitest o Playwright, o desactivada con .only/.skip/.todo/.fixme.
       - name: Pruebas de componentes
         working-directory: frontend
         run: npm run test:coverage
@@ -156,9 +161,90 @@ jobs:
           path: frontend/playwright-report/
           retention-days: 7
 
+  # La invariante de CLAUDE.md: desde un clon limpio, `docker compose up --build` deja el
+  # stack funcionando sin pasos manuales. Sin .env en el runner, igual que un clon recien
+  # hecho. Solo en main porque es la unica rama a la que se empuja.
+  stack:
+    name: Stack con un solo comando
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Versiones
+        run: docker version --format '{{.Server.Version}}' && docker compose version
+
+      # `up -d` ya espera las condiciones de depends_on: si `inicializar` falla, la API no
+      # arranca y el comando sale con error.
+      - name: Levantar el stack
+        run: docker compose up --build -d
+
+      - name: Inicializacion terminada sin errores
+        run: |
+          estado=$(docker inspect -f '{{.State.Status}} {{.State.ExitCode}}' \
+            "$(docker compose ps -aq inicializar)")
+          echo "inicializar: $estado"
+          test "$estado" = "exited 0"
+
+      # /health responde 503 hasta que el worker se registra en Redis; se reintenta.
+      - name: Salud de la API (db, redis y workers)
+        run: |
+          api=$(docker compose port api 8000)
+          curl -fsS --retry 30 --retry-delay 2 --retry-all-errors "http://$api/health"
+
+      # Recorre panel -> proxy de Vite -> API -> base sembrada por `inicializar`.
+      - name: Ingreso del administrador a traves del panel
+        run: |
+          web=$(docker compose port web 5173)
+          curl -fsS --retry 30 --retry-delay 2 --retry-all-errors -o /dev/null "http://$web/"
+          curl -fsS -o /dev/null -d 'username=admin@timu.co&password=cambiar123' \
+            "http://$web/api/v1/auth/login"
+
+      # Recorridos de extremo a extremo contra este mismo stack, sin nada simulado: panel,
+      # portal de familias y clinica aliada con los usuarios que crea datos_demo.
+      - name: Datos de demostracion
+        run: docker compose exec -T api python -m scripts.datos_demo
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias del panel
+        working-directory: frontend
+        run: npm ci
+
+      - name: Instalar navegador
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Recorridos contra el stack real
+        run: |
+          base="http://$(docker compose port web 5173)"
+          cd frontend
+          E2E_BASE_URL="$base" npm run test:e2e:stack
+
+      - name: Informe de los recorridos
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: informe-e2e-stack
+          path: frontend/playwright-report-stack/
+          retention-days: 7
+
+      - name: Estado y registros
+        if: failure()
+        run: |
+          docker compose ps -a
+          docker compose logs --no-color --tail 200
+
   release:
     name: Publicar
-    needs: [backend, frontend, e2e]
+    needs: [backend, frontend, e2e, stack]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
