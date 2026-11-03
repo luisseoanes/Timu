@@ -4,9 +4,9 @@
  * Un único release por repositorio: backend y panel comparten número de versión y
  * se publican juntos, igual que los despliega docker-compose. El tag es `vX.Y.Z`.
  *
- * El scope del commit es libre y sirve para agrupar las notas: `feat(clinica): …`,
- * `feat(backend): …` o `fix(cartera): …` aparecen todos en el mismo release, cada
- * uno con su scope en negrita delante del asunto. Un commit sin scope también vale.
+ * El scope agrupa las notas: `feat(clinica): …` o `fix(cartera): …` aparecen en el
+ * mismo release, cada uno con su scope en negrita delante del asunto. La lista de
+ * scopes y el resto de la convención están en CONTRIBUTING.md; aquí no se validan.
  *
  * Qué mueve la versión:
  *   feat                    -> minor

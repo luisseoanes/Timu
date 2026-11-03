@@ -2,9 +2,9 @@
  * Avisa de los commits que no siguen Conventional Commits: semantic-release no los
  * puede clasificar, así que el trabajo que traigan no aparecerá en ningún release.
  *
- * El scope es libre —`feat(clinica):`, `fix(backend):` o `feat:` sin scope valen
- * igual—; lo único que se comprueba es que la cabecera tenga la forma
- * `tipo(scope opcional)!?: asunto` con un tipo conocido.
+ * Solo se comprueba que la cabecera tenga la forma `tipo(scope opcional)!?: asunto`
+ * con un tipo conocido. La lista de scopes y la longitud están en CONTRIBUTING.md
+ * y no se validan aquí.
  *
  * Uso:  node .github/scripts/commits-sin-convencion.mjs [rango-de-git]
  * Por defecto revisa desde el último tag de versión; si no hay tags, todo el historial.
