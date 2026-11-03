@@ -7,8 +7,9 @@ from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.enums import Rol
+from app.modules.auth.models import Usuario
 from app.modules.comunicaciones.models import Mensaje
-from tests.conftest import PASSWORD, crear_usuario
+from tests.conftest import PASSWORD, crear_usuario, login
 
 LOGIN = "/api/v1/auth/login"
 
@@ -256,3 +257,127 @@ async def test_una_familia_no_ve_el_equipo(client: AsyncClient, db):
     await crear_usuario(db, "familia@timu.co", Rol.FAMILIA)
     cabecera = await login(client, "familia@timu.co")
     assert (await client.get("/api/v1/auth/equipo", headers=cabecera)).status_code == 403
+
+
+# --- Alta de usuarios por la administracion ---------------------------------------------------
+
+
+async def test_la_administracion_da_de_alta_usuarios_sin_duplicar(client: AsyncClient, db, headers):
+    url = "/api/v1/auth/usuarios"
+    alta = await client.post(
+        url,
+        json={
+            "email": "Nueva@TIMU.co",
+            "telefono": "300 777 8899",
+            "nombre": "Nueva",
+            "password": "clave-segura",
+            "rol": "medico",
+        },
+        headers=headers,
+    )
+    assert alta.status_code == 201, alta.text
+    assert (alta.json()["email"], alta.json()["telefono"], alta.json()["rol"]) == (
+        "nueva@timu.co",
+        "+573007778899",
+        "medico",
+    )
+    await _login(client, "nueva@timu.co", "clave-segura")
+
+    mismo_email = {"email": "NUEVA@timu.co", "nombre": "Otra", "password": "clave-segura"}
+    assert (await client.post(url, json=mismo_email, headers=headers)).status_code == 409
+    mismo_telefono = {"telefono": "3007778899", "nombre": "Otra", "password": "clave-segura"}
+    assert (await client.post(url, json=mismo_telefono, headers=headers)).status_code == 409
+    sin_identificador = {"nombre": "Nadie", "password": "clave-segura"}
+    assert (await client.post(url, json=sin_identificador, headers=headers)).status_code == 422
+    aliada_sin_clinica = {
+        "email": "a@b.co",
+        "nombre": "Aliada",
+        "password": "clave-segura",
+        "rol": "aliada",
+    }
+    assert (await client.post(url, json=aliada_sin_clinica, headers=headers)).status_code == 422
+
+
+async def test_solo_la_administracion_da_de_alta_usuarios(client: AsyncClient, db):
+    await crear_usuario(db, "ops@timu.co", Rol.OPERACIONES)
+    ops = await login(client, "ops@timu.co")
+    nuevo = {"email": "x@timu.co", "nombre": "Equis", "password": "clave-segura"}
+    assert (await client.post("/api/v1/auth/usuarios", json=nuevo, headers=ops)).status_code == 403
+
+
+async def test_un_usuario_interno_no_se_convierte_en_aliado(client: AsyncClient, db, headers):
+    from uuid import uuid4
+
+    otro = await crear_usuario(db, "ops@timu.co", Rol.OPERACIONES)
+    url = f"/api/v1/auth/usuarios/{otro.id}"
+    convertir = await client.patch(url, json={"rol": "aliada"}, headers=headers)
+    assert convertir.status_code == 422 and "clinica" in convertir.json()["detail"]
+    assert (
+        await client.patch(
+            f"/api/v1/auth/usuarios/{uuid4()}", json={"nombre": "Nadie"}, headers=headers
+        )
+    ).status_code == 404
+
+
+async def test_un_identificador_que_no_es_email_ni_telefono_no_entra(client: AsyncClient, admin):
+    resp = await client.post(
+        "/api/v1/auth/login", data={"username": "no-soy-nadie", "password": PASSWORD}
+    )
+    assert resp.status_code == 401
+
+
+async def test_un_usuario_desactivado_no_restablece_con_un_enlace_vigente(
+    client: AsyncClient, db, admin, headers
+):
+    otro = await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    await client.post("/api/v1/auth/recuperar", json={"identificador": otro.email})
+    token = _token_del_correo((await _correo_para(db, otro.email)).contenido)
+    await client.patch(f"/api/v1/auth/usuarios/{otro.id}", json={"activo": False}, headers=headers)
+    resp = await client.post(
+        "/api/v1/auth/restablecer", json={"token": token, "password": "nueva-clave-1"}
+    )
+    assert (resp.status_code, resp.json()["codigo"]) == (400, "enlace_invalido")
+
+
+async def test_sin_plantilla_de_whatsapp_el_enlace_no_rompe_la_peticion(client: AsyncClient, db):
+    """Una cuenta solo con celular recibe el enlace por plantilla; si la plantilla aun no
+    esta aprobada se registra el error y la respuesta sigue siendo la misma."""
+    db.add(
+        Usuario(
+            telefono="+573004445566",
+            nombre="Solo Celular",
+            rol=Rol.OPERACIONES,
+            hashed_password="x",
+        )
+    )
+    await db.commit()
+    resp = await client.post("/api/v1/auth/recuperar", json={"identificador": "300 444 5566"})
+    assert resp.status_code == 202
+    assert await db.scalar(select(Mensaje).where(Mensaje.destino == "+573004445566")) is None
+
+
+# --- Acceso al portal ---------------------------------------------------------------------------
+
+
+async def test_el_acceso_al_portal_reutiliza_la_cuenta_de_la_familia(
+    client: AsyncClient, db, headers
+):
+    existente = Usuario(email="ana@correo.com", nombre="Ana", rol=Rol.FAMILIA, hashed_password="x")
+    db.add(existente)
+    await db.commit()
+    familia = (await client.post("/api/v1/familias", json=FAMILIA, headers=headers)).json()
+    resp = await client.post(f"/api/v1/familias/{familia['id']}/acceso-portal", headers=headers)
+    assert resp.json()["usuario_portal_id"] == str(existente.id)
+
+
+async def test_email_y_celular_de_cuentas_distintas_no_se_mezclan(client: AsyncClient, db, headers):
+    db.add_all(
+        [
+            Usuario(email="ana@correo.com", nombre="Ana", rol=Rol.FAMILIA, hashed_password="x"),
+            Usuario(telefono="+573001112233", nombre="Otra", rol=Rol.FAMILIA, hashed_password="x"),
+        ]
+    )
+    await db.commit()
+    familia = (await client.post("/api/v1/familias", json=FAMILIA, headers=headers)).json()
+    resp = await client.post(f"/api/v1/familias/{familia['id']}/acceso-portal", headers=headers)
+    assert resp.status_code == 409 and "distintas" in resp.json()["detail"]

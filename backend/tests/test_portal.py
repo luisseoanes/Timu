@@ -362,3 +362,212 @@ async def test_familia_no_entra_a_lo_interno(client, portal):
     ):
         resp = await client.get(ruta, headers=portal["headers"])
         assert resp.status_code in (403, 422), ruta
+
+
+# --- Lo que el portal no deja hacer y lo que lista -------------------------------------------
+
+
+async def test_el_plan_muestra_cada_beneficio_con_lo_que_queda(client, db, portal):
+    from app.modules.cartera.models import Contrato
+    from app.modules.planes.models import Beneficio
+
+    contrato = await db.get(Contrato, portal["contrato_id"])
+    db.add_all(
+        [
+            Beneficio(
+                plan_id=contrato.plan_id,
+                tipo_servicio_codigo="consulta_domiciliaria",
+                cupo=6,
+                periodo_cupo="anual",
+                cobertura_pct=100,
+            ),
+            Beneficio(
+                plan_id=contrato.plan_id,
+                tipo_servicio_codigo="orientacion_virtual",
+                cupo=None,
+                cobertura_pct=100,
+            ),
+        ]
+    )
+    await db.commit()
+    beneficios = (await client.get("/api/v1/portal/plan", headers=portal["headers"])).json()[
+        "beneficios"
+    ]
+    por_tipo = {b["tipo_servicio"]: b for b in beneficios}
+    assert (
+        por_tipo["consulta_domiciliaria"]["usados"],
+        por_tipo["consulta_domiciliaria"]["disponibles"],
+    ) == (0, 6)
+    assert (
+        por_tipo["orientacion_virtual"]["disponibles"] is None
+    ), "sin cupo no hay tope que mostrar"
+
+
+async def test_sin_contrato_vigente_no_hay_plan_ni_pago(client, db, portal):
+    from app.modules.cartera import service as cartera
+    from app.modules.cartera.models import Contrato
+
+    contrato = await db.get(Contrato, portal["contrato_id"])
+    await db.run_sync(cartera.cancelar, contrato, "Se muda")
+    await db.commit()
+    h = portal["headers"]
+    assert (await client.get("/api/v1/portal/plan", headers=h)).status_code == 404
+    pago = await client.post("/api/v1/portal/pagos", json={}, headers=h)
+    assert pago.status_code == 422 and "contrato vigente" in pago.json()["detail"]
+
+
+async def test_lista_sus_pagos_y_no_paga_lo_que_no_debe(client, db, portal):
+    from uuid import uuid4
+
+    h = portal["headers"]
+    iniciado = (await client.post("/api/v1/portal/pagos", json={}, headers=h)).json()["pago"]
+    assert [p["id"] for p in (await client.get("/api/v1/portal/pagos", headers=h)).json()] == [
+        iniciado["id"]
+    ]
+    cuota_ajena = await client.post(
+        "/api/v1/portal/pagos", json={"cuota_id": str(uuid4())}, headers=h
+    )
+    assert cuota_ajena.status_code == 404
+
+    registro, _ = await db.run_sync(
+        pasarela.registrar_evento, _evento(iniciado["referencia_externa"], 4_500_000)
+    )
+    await db.run_sync(pasarela.procesar_evento, registro.id)
+    await db.commit()
+    sin_saldo = await client.post("/api/v1/portal/pagos", json={}, headers=h)
+    assert sin_saldo.status_code == 422 and "saldo" in sin_saldo.json()["detail"]
+
+
+async def test_sus_servicios_activos_y_los_pasados_a_pedido(client, portal):
+    h = portal["headers"]
+    agendado = await client.post(
+        "/api/v1/portal/servicios",
+        json={
+            "mascota_id": str(portal["mascota_id"]),
+            "tipo_codigo": "consulta_domiciliaria",
+            "inicio": _hora(9),
+        },
+        headers=h,
+    )
+    servicio_id = agendado.json()["id"]
+    assert [s["id"] for s in (await client.get("/api/v1/portal/servicios", headers=h)).json()] == [
+        servicio_id
+    ]
+
+    await client.post(
+        f"/api/v1/portal/servicios/{servicio_id}/cancelacion", json={"motivo": "Viaje"}, headers=h
+    )
+    assert (await client.get("/api/v1/portal/servicios", headers=h)).json() == []
+    pasados = (
+        await client.get("/api/v1/portal/servicios", params={"incluir_pasados": True}, headers=h)
+    ).json()
+    assert [s["estado"] for s in pasados] == ["cancelado"]
+
+    # Lo cancelado ya no se mueve ni se vuelve a cancelar desde el portal.
+    otra_vez = await client.post(
+        f"/api/v1/portal/servicios/{servicio_id}/cancelacion", json={"motivo": "Viaje"}, headers=h
+    )
+    assert otra_vez.status_code == 422
+    mover = await client.post(
+        f"/api/v1/portal/servicios/{servicio_id}/reprogramacion",
+        json={"inicio": _hora(10), "motivo": "Otro dia"},
+        headers=h,
+    )
+    assert mover.status_code == 422 and "reprogramar" in mover.json()["detail"]
+
+
+async def test_actualizar_sin_cambios_se_rechaza(client, portal):
+    resp = await client.patch("/api/v1/portal/mi-familia", json={}, headers=portal["headers"])
+    assert resp.status_code == 422 and "cambios" in resp.json()["detail"]
+
+
+async def test_adjuntos_solo_de_su_historia_firmada(client, db, portal, almacenamiento):
+    from uuid import uuid4
+
+    medico = await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    firmada = await db.run_sync(
+        clinica.crear_entrada,
+        portal["mascota_id"],
+        {"motivo": "Control", "diagnostico": "Sano"},
+        medico.id,
+    )
+    await db.run_sync(clinica.firmar, firmada, medico.id)
+    borrador = await db.run_sync(
+        clinica.crear_entrada, portal["mascota_id"], {"motivo": "Borrador"}, medico.id
+    )
+    pdf = b"%PDF-1.4 examen"
+    adjunto = await db.run_sync(
+        lambda s: clinica.adjuntar(
+            s, firmada, pdf, nombre="examen.pdf", descripcion="Hemograma", usuario_id=medico.id
+        )
+    )
+    oculto = await db.run_sync(
+        lambda s: clinica.adjuntar(
+            s, borrador, pdf, nombre="borrador.pdf", descripcion=None, usuario_id=medico.id
+        )
+    )
+    ids = {
+        "firmada": firmada.id,
+        "borrador": borrador.id,
+        "adjunto": adjunto.id,
+        "oculto": oculto.id,
+    }
+    await db.commit()
+    h = portal["headers"]
+
+    lista = (
+        await client.get(f"/api/v1/portal/historias/{ids['firmada']}/adjuntos", headers=h)
+    ).json()
+    assert [(a["nombre"], a["descripcion"]) for a in lista] == [("examen.pdf", "Hemograma")]
+    assert (
+        await client.get(f"/api/v1/portal/historias/{ids['borrador']}/adjuntos", headers=h)
+    ).status_code == 404
+    assert (
+        await client.get(f"/api/v1/portal/historias/{uuid4()}/adjuntos", headers=h)
+    ).status_code == 404
+
+    url = (await client.get(f"/api/v1/portal/adjuntos/{ids['adjunto']}/url", headers=h)).json()
+    assert url["nombre"] == "examen.pdf" and url["url"].startswith("https://")
+    assert (
+        await client.get(f"/api/v1/portal/adjuntos/{ids['oculto']}/url", headers=h)
+    ).status_code == 404
+    assert (
+        await client.get(f"/api/v1/portal/adjuntos/{uuid4()}/url", headers=h)
+    ).status_code == 404
+
+
+async def test_adjuntos_de_otra_familia_no(client, db, portal):
+    medico = await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    ajena = await db.run_sync(
+        clinica.crear_entrada,
+        portal["mascota_ajena_id"],
+        {"motivo": "Control", "diagnostico": "Sano"},
+        medico.id,
+    )
+    await db.run_sync(clinica.firmar, ajena, medico.id)
+    adjunto = await db.run_sync(
+        lambda s: clinica.adjuntar(
+            s, ajena, b"%PDF-1.4 x", nombre="ajeno.pdf", descripcion=None, usuario_id=medico.id
+        )
+    )
+    ids = (ajena.id, adjunto.id)
+    await db.commit()
+    h = portal["headers"]
+    assert (
+        await client.get(f"/api/v1/portal/historias/{ids[0]}/adjuntos", headers=h)
+    ).status_code == 404
+    assert (await client.get(f"/api/v1/portal/adjuntos/{ids[1]}/url", headers=h)).status_code == 404
+
+
+async def test_codigo_sin_plantilla_o_para_numeros_que_no_son_de_una_cuenta(client, db, portal):
+    client.cookies.clear()
+    # Sin la plantilla aprobada el codigo no sale, pero la respuesta no lo delata.
+    assert (
+        await client.post("/api/v1/auth/codigo", json={"telefono": "300 111 0001"})
+    ).status_code == 202
+    assert await db.scalar(select(Mensaje).where(Mensaje.plantilla == "codigo_ingreso")) is None
+    for telefono in ("3009990000", "no es un celular"):
+        resp = await client.post(
+            "/api/v1/auth/codigo/verificacion", json={"telefono": telefono, "codigo": "123456"}
+        )
+        assert resp.status_code == 401, telefono
