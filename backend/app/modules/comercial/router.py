@@ -60,6 +60,9 @@ class PerdidaIn(BaseModel):
     motivo: str = Field(min_length=3, max_length=255)
 
 
+EstadoConversacion = Literal["automatica", "con_asesor"]
+
+
 class ConversacionRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -68,7 +71,7 @@ class ConversacionRead(BaseModel):
     interesado_id: UUID | None
     nodo: str
     datos: dict[str, Any]
-    estado: str
+    estado: EstadoConversacion
     asesor_id: UUID | None
     tarea_id: UUID | None
     updated_at: datetime
@@ -185,7 +188,7 @@ async def embudo(db: DbSession, desde: date, hasta: date) -> dict[str, Any]:
     "/conversaciones", response_model=list[ConversacionRead], dependencies=[EQUIPO_COMERCIAL]
 )
 async def conversaciones(
-    db: DbSession, estado: Literal["automatica", "con_asesor"] | None = "con_asesor"
+    db: DbSession, estado: EstadoConversacion | None = "con_asesor"
 ) -> list[ConversacionComercial]:
     stmt = select(ConversacionComercial).order_by(ConversacionComercial.updated_at.desc())
     if estado:

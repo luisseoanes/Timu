@@ -100,7 +100,7 @@ describe('ComercialPage', () => {
       ...base,
       http.get(`${API}/comercial/conversaciones`, () =>
         HttpResponse.json([
-          { id: 'cv1', telefono: '573005551234', interesado_id: 'i1', nodo: 'asesor', datos: { ciudad: 'Bogota' }, estado: 'asesor', asesor_id: null, tarea_id: null, updated_at: '2026-10-24T14:00:00Z' },
+          { id: 'cv1', telefono: '573005551234', interesado_id: 'i1', nodo: 'asesor', datos: { ciudad: 'Bogota' }, estado: 'con_asesor', asesor_id: null, tarea_id: null, updated_at: '2026-10-24T14:00:00Z' },
         ]),
       ),
       http.post(`${API}/comercial/conversaciones/cv1/mensajes`, async ({ request }) => {

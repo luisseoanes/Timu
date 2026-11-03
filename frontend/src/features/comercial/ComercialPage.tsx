@@ -321,7 +321,8 @@ function PerdidaModal({ interesado, onCerrar }: { interesado: InteresadoRead | n
 
 function Conversaciones() {
   const { usuario } = useAuth()
-  const [estado, setEstado] = useState('asesor')
+  // Los valores son los del backend (comercial/router.py): automatica | con_asesor.
+  const [estado, setEstado] = useState('con_asesor')
   const conversaciones = useConversaciones(estado || undefined)
   const responder = useResponderConversacion()
   const liberar = useLiberarConversacion()
@@ -333,7 +334,7 @@ function Conversaciones() {
       <div className="tarjeta-cabeza">
         <h3>Conversaciones de WhatsApp</h3>
         <select className="input" style={{ width: 'auto' }} value={estado} onChange={(e) => setEstado(e.target.value)} aria-label="Estado de la conversación">
-          <option value="asesor">Esperan a un asesor</option>
+          <option value="con_asesor">Esperan a un asesor</option>
           <option value="automatica">Atiende el bot</option>
           <option value="">Todas</option>
         </select>
@@ -350,8 +351,8 @@ function Conversaciones() {
             <div key={c.id} className="pila" style={{ gap: 'var(--e2)', paddingBlock: 'var(--e3)', borderBottom: '1px solid var(--linea)' }}>
               <div className="acciones">
                 <strong className="numero">{c.telefono}</strong>
-                <span className={`distintivo distintivo-${c.estado === 'asesor' ? 'alerta' : 'info'}`}>
-                  {c.estado === 'asesor' ? 'Espera asesor' : c.estado === 'automatica' ? 'Bot' : c.estado}
+                <span className={`distintivo distintivo-${c.estado === 'con_asesor' ? 'alerta' : 'info'}`}>
+                  {c.estado === 'con_asesor' ? 'Espera asesor' : c.estado === 'automatica' ? 'Bot' : c.estado}
                 </span>
                 <span className="apagado">
                   Paso «{c.nodo}» · {fechaHora(c.updated_at)}
@@ -360,7 +361,7 @@ function Conversaciones() {
                   <button className="btn btn-suave" type="button" onClick={() => { setAbierta(abierta === c.id ? null : c.id); setTexto('') }}>
                     Responder
                   </button>
-                  {c.estado === 'asesor' && (
+                  {c.estado === 'con_asesor' && (
                     <button className="btn btn-plano" type="button" disabled={liberar.isPending} onClick={() => liberar.mutate(c.id)}>
                       Devolver al bot
                     </button>

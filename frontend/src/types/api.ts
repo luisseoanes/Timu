@@ -402,7 +402,7 @@ export interface ConversacionRead {
   interesado_id: string | null
   nodo: string
   datos: Record<string, unknown>
-  estado: string
+  estado: 'automatica' | 'con_asesor'
   asesor_id: string | null
   tarea_id: string | null
   updated_at: string
