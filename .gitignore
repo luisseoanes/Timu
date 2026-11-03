@@ -34,3 +34,5 @@ test-results/
 
 # Estado local del planificador de Celery (lo genera el contenedor beat)
 celerybeat-schedule*
+
+CLAUDE.local.md
