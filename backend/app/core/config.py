@@ -123,6 +123,9 @@ class Settings(BaseSettings):
     # En desarrollo apunta a MinIO; en produccion, al S3 que entregue el cliente.
     # Cambiar de uno a otro es cambiar estas variables, no el codigo.
     STORAGE_ENDPOINT_URL: str | None = "http://minio:9000"
+    # Host con el que el navegador llega al almacenamiento, si no es el mismo que usa la
+    # API (en docker compose: minio:9000 por dentro, localhost por fuera). Vacio con S3 real.
+    STORAGE_PUBLIC_ENDPOINT_URL: str | None = None
     STORAGE_REGION: str = "us-east-1"
     STORAGE_BUCKET: str = "timu-adjuntos"
     STORAGE_ACCESS_KEY: str = "minioadmin"
@@ -171,6 +174,8 @@ class Settings(BaseSettings):
             errores.append("COOKIE_SECURE debe estar encendido (el ambiente se sirve por HTTPS)")
         if self.STORAGE_ACCESS_KEY == "minioadmin" or self.STORAGE_SECRET_KEY == "minioadmin":
             errores.append("STORAGE_ACCESS_KEY y STORAGE_SECRET_KEY no pueden ser las de MinIO")
+        if self.STORAGE_PUBLIC_ENDPOINT_URL and "localhost" in self.STORAGE_PUBLIC_ENDPOINT_URL:
+            errores.append("STORAGE_PUBLIC_ENDPOINT_URL no admite localhost")
         if any("localhost" in o or o == "*" for o in self.BACKEND_CORS_ORIGINS):
             errores.append("BACKEND_CORS_ORIGINS no admite localhost ni comodin")
         if errores:

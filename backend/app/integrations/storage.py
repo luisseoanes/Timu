@@ -23,16 +23,38 @@ from botocore.exceptions import ClientError
 from app.core.config import settings
 
 
-@lru_cache
-def _cliente():
+def _crear_cliente(endpoint_url: str | None):
     return boto3.client(
         "s3",
-        endpoint_url=settings.STORAGE_ENDPOINT_URL,  # None => AWS S3 real
+        endpoint_url=endpoint_url,  # None => AWS S3 real
         region_name=settings.STORAGE_REGION,
         aws_access_key_id=settings.STORAGE_ACCESS_KEY,
         aws_secret_access_key=settings.STORAGE_SECRET_KEY,
         config=Config(signature_version="s3v4", retries={"max_attempts": 3}),
     )
+
+
+@lru_cache
+def _cliente():
+    return _crear_cliente(settings.STORAGE_ENDPOINT_URL)
+
+
+@lru_cache
+def _cliente_publico():
+    return _crear_cliente(settings.STORAGE_PUBLIC_ENDPOINT_URL)
+
+
+def _cliente_firmas():
+    """Cliente con el que se firman las URL que abre el navegador.
+
+    La firma S3v4 incluye el host, asi que no basta con reescribirlo despues: en docker
+    compose la API habla con `minio:9000`, que el navegador no resuelve, y la URL hay que
+    firmarla ya con el host publico. Firmar no abre conexion, solo calcula la URL.
+    Sin STORAGE_PUBLIC_ENDPOINT_URL (S3 real) se firma con el cliente de siempre.
+    """
+    if settings.STORAGE_PUBLIC_ENDPOINT_URL:
+        return _cliente_publico()
+    return _cliente()
 
 
 def asegurar_bucket() -> None:
@@ -74,7 +96,7 @@ def url_firmada(clave: str, *, ttl: int | None = None, nombre: str | None = None
     params = {"Bucket": settings.STORAGE_BUCKET, "Key": clave}
     if nombre:
         params["ResponseContentDisposition"] = f'inline; filename="{nombre}"'
-    return _cliente().generate_presigned_url(
+    return _cliente_firmas().generate_presigned_url(
         "get_object", Params=params, ExpiresIn=ttl or settings.STORAGE_URL_TTL_SEGUNDOS
     )
 

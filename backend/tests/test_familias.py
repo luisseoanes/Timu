@@ -267,12 +267,31 @@ def test_url_firmada_de_vida_corta_y_con_nombre(monkeypatch, almacenamiento):
             pedidos.append((operacion, Params, ExpiresIn))
             return "https://s3/firmada"
 
+    monkeypatch.setattr(settings, "STORAGE_PUBLIC_ENDPOINT_URL", None)
     monkeypatch.setattr(storage, "_cliente", lambda: ClienteFalso())
     assert almacenamiento.url_firmada_real("foto/x.png", nombre="kira.png") == "https://s3/firmada"
     ((operacion, params, expira),) = pedidos
     assert operacion == "get_object"
     assert expira == settings.STORAGE_URL_TTL_SEGUNDOS <= 600
     assert params["ResponseContentDisposition"] == 'inline; filename="kira.png"'
+
+
+@pytest.mark.unit
+def test_url_firmada_con_el_host_que_ve_el_navegador(monkeypatch, almacenamiento):
+    """En docker compose la API sube a minio:9000, pero el navegador solo llega por
+    localhost: la URL se firma con el host publico, porque la firma lo incluye."""
+    from app.core.config import settings
+    from app.integrations import storage
+
+    monkeypatch.setattr(settings, "STORAGE_ENDPOINT_URL", "http://minio:9000")
+    monkeypatch.setattr(settings, "STORAGE_PUBLIC_ENDPOINT_URL", "http://localhost:9002")
+    storage._cliente_publico.cache_clear()
+    try:
+        url = almacenamiento.url_firmada_real("foto/x.png")
+    finally:
+        storage._cliente_publico.cache_clear()
+    assert url.startswith(f"http://localhost:9002/{settings.STORAGE_BUCKET}/foto/x.png?")
+    assert "X-Amz-Signature=" in url
 
 
 # --- F1-FAM-05 Geocodificacion ----------------------------------------------------------------

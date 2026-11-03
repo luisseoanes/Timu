@@ -99,6 +99,7 @@ def test_produccion_sin_variable_obligatoria_no_arranca():
         {"POSTGRES_PASSWORD": "timu"},
         {"COOKIE_SECURE": False},
         {"STORAGE_ACCESS_KEY": "minioadmin"},
+        {"STORAGE_PUBLIC_ENDPOINT_URL": "http://localhost:9000"},
     ],
 )
 def test_produccion_con_valores_inseguros_no_arranca(cambio):
