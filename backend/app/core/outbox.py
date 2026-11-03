@@ -6,17 +6,23 @@ reales eso son incidencias, no teoria.
 
 La solucion: el evento se ESCRIBE en esta tabla dentro de la misma transaccion que el
 cambio de datos. Si la transaccion revienta, el evento se va con ella. Un worker drena
-la tabla despues (ver app/workers/tasks/outbox.py).
+la tabla despues con `procesar_pendientes` (la tarea `outbox.drenar` la invoca).
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import DateTime, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+import structlog
+from sqlalchemy import DateTime, Integer, String, Text, select
+from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from app.core.database import Base, JSONTipo, TimestampMixin, UUIDMixin
-from app.core.eventos import EventoDominio
+from app.core.eventos import EventoDominio, manejadores
+
+logger = structlog.get_logger(__name__)
+
+LOTE = 100
+MAX_INTENTOS = 5
 
 
 class EventoSaliente(Base, UUIDMixin, TimestampMixin):
@@ -41,3 +47,40 @@ def publicar(db: Any, evento: EventoDominio) -> EventoSaliente:
     fila = EventoSaliente(nombre=evento.nombre, datos=evento.datos)
     db.add(fila)
     return fila
+
+
+def procesar_pendientes(db: Session, lote: int = LOTE) -> dict[str, int]:
+    """Despacha los eventos pendientes con sus manejadores y los marca como procesados.
+
+    `with_for_update(skip_locked=True)` permite que varios workers drenen a la vez sin
+    pisarse: cada uno se lleva las filas que el otro no bloqueo. Un manejador que falla
+    deja la fila pendiente con el error anotado y se reintenta en el siguiente drenado,
+    hasta MAX_INTENTOS. La entrega es al menos una vez: si un evento tiene dos manejadores
+    y falla el segundo, el primero se repite en el reintento.
+
+    No confirma: lo hace quien abre la sesion (`sesion_worker` en la tarea).
+    """
+    despachados = fallidos = 0
+    pendientes = db.scalars(
+        select(EventoSaliente)
+        .where(EventoSaliente.procesado_en.is_(None))
+        .where(EventoSaliente.intentos < MAX_INTENTOS)
+        .order_by(EventoSaliente.created_at)
+        .limit(lote)
+        .with_for_update(skip_locked=True)
+    ).all()
+
+    for fila in pendientes:
+        evento = EventoDominio(nombre=fila.nombre, datos=fila.datos)
+        try:
+            for manejador in manejadores(fila.nombre):
+                manejador(evento)
+            fila.procesado_en = datetime.now(UTC)
+            despachados += 1
+        except Exception as exc:  # noqa: BLE001  se reintenta hasta MAX_INTENTOS
+            fila.intentos += 1
+            fila.ultimo_error = str(exc)[:2000]
+            fallidos += 1
+            logger.warning("outbox.fallo", evento=fila.nombre, error=str(exc))
+    db.flush()
+    return {"despachados": despachados, "fallidos": fallidos}

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import EstadoServicio
 from app.core.eventos import EventoDominio, al_ocurrir, manejadores
-from app.core.outbox import EventoSaliente, publicar
+from app.core.outbox import EventoSaliente, procesar_pendientes, publicar
 
 pytestmark = pytest.mark.integration
 
@@ -88,3 +88,177 @@ def test_registro_de_manejadores():
 
     assert _manejador in manejadores("prueba.ocurrida")
     assert manejadores("prueba.inexistente") == []
+
+
+# --- Drenado (outbox.drenar) ------------------------------------------------------------------
+# `procesar_pendientes` es lo que corre en produccion y lo que usa el fixture `tareas`.
+
+
+@pytest.fixture
+def registrar(monkeypatch):
+    """Registra manejadores solo durante la prueba: el registro es global al proceso."""
+    from app.core import eventos
+
+    def _registrar(nombre: str, *funciones) -> None:
+        monkeypatch.setitem(eventos._MANEJADORES, nombre, list(funciones))
+
+    return _registrar
+
+
+async def _evento(db: AsyncSession, nombre: str, **datos) -> EventoSaliente:
+    fila = publicar(db, EventoDominio(nombre=nombre, datos=datos))
+    await db.flush()
+    return fila
+
+
+async def test_drenar_despacha_en_orden_y_marca_procesado(db: AsyncSession, registrar):
+    vistos: list[tuple[str, dict]] = []
+    registrar("prueba.a", lambda e: vistos.append((e.nombre, e.datos)))
+    registrar("prueba.b", lambda e: vistos.append((e.nombre, e.datos)))
+    primero = await _evento(db, "prueba.a", n=1)
+    segundo = await _evento(db, "prueba.b", n=2)
+
+    resultado = await db.run_sync(procesar_pendientes)
+
+    assert resultado == {"despachados": 2, "fallidos": 0}
+    assert vistos == [("prueba.a", {"n": 1}), ("prueba.b", {"n": 2})]
+    assert primero.procesado_en is not None and segundo.procesado_en is not None
+    # Ya procesados: un segundo drenado no los repite.
+    assert await db.run_sync(procesar_pendientes) == {"despachados": 0, "fallidos": 0}
+    assert len(vistos) == 2
+
+
+async def test_evento_sin_manejadores_se_da_por_procesado(db: AsyncSession):
+    fila = await _evento(db, "prueba.sin_manejador")
+    assert await db.run_sync(procesar_pendientes) == {"despachados": 1, "fallidos": 0}
+    assert fila.procesado_en is not None
+
+
+async def test_un_manejador_que_falla_deja_el_evento_pendiente_y_no_frena_el_lote(
+    db: AsyncSession, registrar
+):
+    def revienta(_):
+        raise RuntimeError("redis no responde " + "x" * 3000)
+
+    vistos: list[str] = []
+    registrar("prueba.falla", revienta)
+    registrar("prueba.bien", lambda e: vistos.append(e.nombre))
+    malo = await _evento(db, "prueba.falla")
+    bueno = await _evento(db, "prueba.bien")
+
+    assert await db.run_sync(procesar_pendientes) == {"despachados": 1, "fallidos": 1}
+    assert bueno.procesado_en is not None and vistos == ["prueba.bien"]
+    assert malo.procesado_en is None
+    assert malo.intentos == 1
+    assert malo.ultimo_error.startswith("redis no responde")
+    assert len(malo.ultimo_error) == 2000, "el error se recorta para no inflar la tabla"
+
+
+async def test_se_reintenta_hasta_max_intentos_y_luego_se_abandona(db: AsyncSession, registrar):
+    from app.core.outbox import MAX_INTENTOS
+
+    llamadas: list[int] = []
+
+    def revienta(_):
+        llamadas.append(1)
+        raise RuntimeError("caido")
+
+    registrar("prueba.falla", revienta)
+    fila = await _evento(db, "prueba.falla")
+
+    for _ in range(MAX_INTENTOS + 2):
+        await db.run_sync(procesar_pendientes)
+
+    assert len(llamadas) == MAX_INTENTOS
+    assert fila.intentos == MAX_INTENTOS
+    assert fila.procesado_en is None
+
+
+async def test_un_reintento_que_sale_bien_cierra_el_evento(db: AsyncSession, registrar):
+    respuestas = [RuntimeError("temporal"), None]
+
+    def a_veces(_):
+        error = respuestas.pop(0)
+        if error:
+            raise error
+
+    registrar("prueba.intermitente", a_veces)
+    fila = await _evento(db, "prueba.intermitente")
+
+    assert await db.run_sync(procesar_pendientes) == {"despachados": 0, "fallidos": 1}
+    assert await db.run_sync(procesar_pendientes) == {"despachados": 1, "fallidos": 0}
+    assert fila.procesado_en is not None and fila.intentos == 1
+
+
+async def test_el_lote_limita_cuantos_eventos_se_llevan(db: AsyncSession):
+    for i in range(3):
+        await _evento(db, "prueba.lote", i=i)
+    assert await db.run_sync(procesar_pendientes, 2) == {"despachados": 2, "fallidos": 0}
+    assert await db.run_sync(procesar_pendientes, 2) == {"despachados": 1, "fallidos": 0}
+
+
+async def test_el_fixture_tareas_no_esconde_un_manejador_roto(db: AsyncSession, tareas, registrar):
+    """En produccion el fallo se reintenta en silencio; en una prueba tiene que explotar."""
+
+    def revienta(_):
+        raise RuntimeError("manejador roto")
+
+    registrar("prueba.falla", revienta)
+    await _evento(db, "prueba.falla")
+    with pytest.raises(AssertionError, match="manejador roto"):
+        await tareas.drenar()
+
+
+@pytest.mark.integration
+def test_dos_workers_no_se_pisan_gracias_a_skip_locked(registrar, monkeypatch):
+    """Con filas confirmadas de verdad (fuera de la transaccion de la prueba): mientras una
+    conexion tiene bloqueado un evento, la tarea `outbox.drenar` lo salta en lugar de
+    esperar o despacharlo dos veces, y se lleva el resto."""
+    from contextlib import contextmanager
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    from app.workers.tasks import outbox as tarea
+    from tests.conftest import URL_SYNC
+
+    vistos: list[str] = []
+    registrar("prueba.concurrente", lambda e: vistos.append(e.datos["n"]))
+    engine = create_engine(URL_SYNC)
+    try:
+        with Session(engine) as preparar:
+            filas = [EventoSaliente(nombre="prueba.concurrente", datos={"n": n}) for n in "ab"]
+            preparar.add_all(filas)
+            preparar.commit()
+            ids = [f.id for f in filas]
+
+        with Session(engine) as otro_worker:
+            # El otro worker se ha llevado el evento "a" y aun no ha confirmado.
+            otro_worker.scalars(
+                select(EventoSaliente).where(EventoSaliente.id == ids[0]).with_for_update()
+            ).one()
+
+            @contextmanager
+            def sesion_real():
+                with Session(engine) as s:
+                    yield s
+                    s.commit()
+
+            monkeypatch.setattr(tarea, "sesion_worker", sesion_real)
+            assert tarea.drenar() == {"despachados": 1, "fallidos": 0}
+            assert vistos == ["b"]
+            otro_worker.rollback()
+
+        with Session(engine) as comprobar:
+            estado = {
+                f.datos["n"]: f.procesado_en is not None
+                for f in comprobar.scalars(select(EventoSaliente).where(EventoSaliente.id.in_(ids)))
+            }
+        assert estado == {"a": False, "b": True}
+    finally:
+        with Session(engine) as limpiar:
+            limpiar.query(EventoSaliente).filter(
+                EventoSaliente.nombre == "prueba.concurrente"
+            ).delete()
+            limpiar.commit()
+        engine.dispose()

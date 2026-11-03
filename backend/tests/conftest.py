@@ -18,7 +18,6 @@ os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("DEBUG", "false")
 
 from collections.abc import AsyncGenerator, Iterator  # noqa: E402
-from datetime import UTC, datetime  # noqa: E402
 from pathlib import Path  # noqa: E402
 from typing import Any  # noqa: E402
 
@@ -39,8 +38,7 @@ from alembic.config import Config  # noqa: E402
 from app.core.config import settings  # noqa: E402
 from app.core.database import Base, get_db  # noqa: E402
 from app.core.enums import Rol  # noqa: E402
-from app.core.eventos import EventoDominio, manejadores  # noqa: E402
-from app.core.outbox import EventoSaliente  # noqa: E402
+from app.core.outbox import EventoSaliente, procesar_pendientes  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
 from app.integrations import storage  # noqa: E402
 from app.main import app  # noqa: E402
@@ -127,7 +125,8 @@ async def db() -> AsyncGenerator[AsyncSession, None]:
 
 class Despachadas:
     """Lo que el outbox encolo en Celery. `de()` drena los eventos pendientes de la
-    transaccion de la prueba con sus manejadores reales, como haria `outbox.drenar`."""
+    transaccion de la prueba con `procesar_pendientes`, la misma funcion que usa la
+    tarea `outbox.drenar`, y con los manejadores reales."""
 
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
@@ -137,17 +136,20 @@ class Despachadas:
         self.enviadas.append((nombre, tuple(args or ())))
 
     async def drenar(self) -> None:
-        await self.db.flush()
-        filas = await self.db.scalars(
-            select(EventoSaliente)
-            .where(EventoSaliente.procesado_en.is_(None))
-            .order_by(EventoSaliente.created_at)
-        )
-        for fila in filas.all():
-            for manejador in manejadores(fila.nombre):
-                manejador(EventoDominio(nombre=fila.nombre, datos=fila.datos))
-            fila.procesado_en = datetime.now(UTC)
-        await self.db.flush()
+        """Drena por lotes hasta vaciar. En produccion un manejador que falla se reintenta
+        en silencio; en una prueba eso esconderia el fallo, asi que se hace explotar."""
+        while True:
+            resultado = await self.db.run_sync(procesar_pendientes)
+            if resultado["fallidos"]:
+                errores = await self.db.scalars(
+                    select(EventoSaliente.ultimo_error).where(
+                        EventoSaliente.procesado_en.is_(None),
+                        EventoSaliente.ultimo_error.is_not(None),
+                    )
+                )
+                raise AssertionError(f"un manejador del outbox fallo: {errores.all()}")
+            if not resultado["despachados"]:
+                return
 
     async def de(self, tarea: str) -> list[tuple[Any, ...]]:
         await self.drenar()
