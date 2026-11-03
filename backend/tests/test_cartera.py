@@ -566,3 +566,163 @@ async def test_listado_de_cartera_los_mas_atrasados_primero(client: AsyncClient,
         await client.get("/api/v1/cartera/contratos", params={"solo_mora": True}, headers=headers)
     ).json()
     assert [c["familia_id"] for c in solo["items"]] == [str(moroso.id)]
+
+
+# --- Endpoints de contratos, medios de pago y eventos de la pasarela ---------------------------
+
+
+async def test_contrato_por_api_se_crea_renueva_y_cancela(client: AsyncClient, db, headers):
+    from uuid import uuid4
+
+    from app.core.enums import Rol
+    from tests.conftest import crear_usuario, login
+
+    familia = await db.run_sync(fabricas.familia)
+    plan = await db.run_sync(fabricas.plan, codigo="api")
+    await db.commit()
+    inicio = hoy() - timedelta(days=320)  # la renovacion cae dentro de la ventana de 90 dias
+    creado = await client.post(
+        "/api/v1/cartera/contratos",
+        json={"familia_id": str(familia.id), "plan_id": str(plan.id), "fecha_inicio": str(inicio)},
+        headers=headers,
+    )
+    assert creado.status_code == 201
+    contrato = creado.json()
+    url = f"/api/v1/cartera/contratos/{contrato['id']}"
+    assert (await client.get(url, headers=headers)).json()["numero"] == contrato["numero"]
+
+    renovado = (await client.post(f"{url}/renovar", headers=headers)).json()
+    anterior = date.fromisoformat(contrato["fecha_renovacion"])
+    assert date.fromisoformat(renovado["fecha_renovacion"]) == sumar_meses(anterior, 12)
+    fuera_de_ventana = await client.post(f"{url}/renovar", headers=headers)
+    assert fuera_de_ventana.status_code == 422 and "ventana" in fuera_de_ventana.json()["detail"]
+
+    sin_motivo = await client.post(f"{url}/cancelar", json={"motivo": ""}, headers=headers)
+    assert sin_motivo.status_code == 422
+    cancelado = (
+        await client.post(f"{url}/cancelar", json={"motivo": "Se muda"}, headers=headers)
+    ).json()
+    assert (cancelado["estado"], cancelado["fecha_fin"]) == ("cancelada", str(hoy()))
+    assert (await client.post(f"{url}/renovar", headers=headers)).status_code == 422
+    assert (
+        await client.get(f"/api/v1/cartera/contratos/{uuid4()}", headers=headers)
+    ).status_code == 404
+
+    # Operaciones consulta el contrato pero no lo gestiona.
+    await crear_usuario(db, "ops@timu.co", Rol.OPERACIONES)
+    ops = await login(client, "ops@timu.co")
+    assert (await client.get(url, headers=ops)).status_code == 200
+    assert (await client.post(f"{url}/renovar", headers=ops)).status_code == 403
+
+
+async def test_medio_de_pago_por_api_se_registra_y_se_revoca(
+    client: AsyncClient, db, headers, monkeypatch
+):
+    from uuid import uuid4
+
+    from app.modules.cartera.models import MedioPagoRecurrente
+
+    monkeypatch.setattr(pasarela, "ClienteWompi", lambda: WompiFalso([]))
+    familia = await db.run_sync(fabricas.familia)
+    await db.commit()
+    registrado = await client.post(
+        "/api/v1/cartera/medios-pago",
+        json={
+            "familia_id": str(familia.id),
+            "token_tarjeta": "tok_test_1",
+            "email": "a@b.co",
+            "marca": "VISA",
+            "ultimos4": "4242",
+        },
+        headers=headers,
+    )
+    assert registrado.status_code == 201
+    medio = registrado.json()
+    assert (medio["activo"], medio["marca"], medio["ultimos4"]) == (True, "VISA", "4242")
+    con_tarjeta_completa = await client.post(
+        "/api/v1/cartera/medios-pago",
+        json={
+            "familia_id": str(familia.id),
+            "token_tarjeta": "tok_test_1",
+            "email": "a@b.co",
+            "ultimos4": "4242424242424242",
+        },
+        headers=headers,
+    )
+    assert con_tarjeta_completa.status_code == 422, "nunca se aceptan mas de los ultimos 4 digitos"
+
+    revocado = await client.delete(f"/api/v1/cartera/medios-pago/{medio['id']}", headers=headers)
+    assert revocado.status_code == 204
+    from uuid import UUID
+
+    assert (await db.get(MedioPagoRecurrente, UUID(medio["id"]))).activo is False
+    assert (
+        await client.delete(f"/api/v1/cartera/medios-pago/{uuid4()}", headers=headers)
+    ).status_code == 404
+
+
+async def test_eventos_de_la_pasarela_se_listan_reprocesan_y_recuperan(
+    client: AsyncClient, db, headers, secreto_wompi, monkeypatch
+):
+    familia, contrato = await fabricas.afiliada(db, date(2026, 1, 10))
+    pago = await _pago_pendiente(db, familia, contrato, valor=100)
+    registro, _ = await db.run_sync(pasarela.registrar_evento, _evento("WEB-1", 4_500_000))
+    assert await db.run_sync(pasarela.procesar_evento, registro.id) == "error"
+    await db.commit()
+
+    errores = (
+        await client.get(
+            "/api/v1/cartera/eventos-pasarela", params={"estado": "error"}, headers=headers
+        )
+    ).json()
+    assert [e["id"] for e in errores["items"]] == [str(registro.id)]
+    assert (
+        await client.get(
+            "/api/v1/cartera/eventos-pasarela", params={"estado": "procesado"}, headers=headers
+        )
+    ).json()["total"] == 0
+    assert (await client.get("/api/v1/cartera/eventos-pasarela", headers=headers)).json()[
+        "total"
+    ] == 1
+
+    # Corregido el dato que lo hizo fallar, el reproceso lo concilia.
+    pago.valor = 45_000
+    await db.commit()
+    reprocesado = (
+        await client.post(
+            f"/api/v1/cartera/eventos-pasarela/{registro.id}/reprocesar", headers=headers
+        )
+    ).json()
+    assert (reprocesado["estado"], reprocesado["error"]) == ("procesado", None)
+
+
+async def test_un_evento_perdido_se_recupera_por_api(client: AsyncClient, db, headers, monkeypatch):
+    familia, contrato = await fabricas.afiliada(db, date(2026, 1, 10))
+    pago = await _pago_pendiente(db, familia, contrato)
+    await db.commit()
+    monkeypatch.setattr(pasarela, "ClienteWompi", lambda: WompiFalso([]))
+    recuperado = await client.post("/api/v1/cartera/transacciones/tx-77/recuperar", headers=headers)
+    assert recuperado.status_code == 200
+    assert (recuperado.json()["referencia"], recuperado.json()["estado"]) == ("WEB-1", "procesado")
+    await db.refresh(pago)
+    assert pago.estado == "aprobado"
+
+
+async def test_solo_la_administracion_ve_y_reprocesa_eventos(client: AsyncClient, db):
+    from uuid import uuid4
+
+    from app.core.enums import Rol
+    from tests.conftest import crear_usuario, login
+
+    await crear_usuario(db, "comercial@timu.co", Rol.COMERCIAL)
+    comercial = await login(client, "comercial@timu.co")
+    assert (
+        await client.get("/api/v1/cartera/eventos-pasarela", headers=comercial)
+    ).status_code == 403
+    reproceso = await client.post(
+        f"/api/v1/cartera/eventos-pasarela/{uuid4()}/reprocesar", headers=comercial
+    )
+    assert reproceso.status_code == 403
+    assert (
+        await client.post("/api/v1/cartera/transacciones/tx-1/recuperar", headers=comercial)
+    ).status_code == 403

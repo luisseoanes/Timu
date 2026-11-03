@@ -205,3 +205,82 @@ async def test_resumen_por_responsable(client: AsyncClient, db, headers):
         headers=headers,
     )
     assert resp.status_code == 200
+
+
+# --- Listado y configuracion por API ----------------------------------------------------------
+
+
+async def _respondida(db, telefono: str, puntaje: int) -> Encuesta:
+    servicio = await _atendido(db, telefono=telefono)
+    await db.run_sync(servicios.cambiar_estado, servicio, EstadoServicio.COMPLETADO)
+    (encuesta,) = await db.run_sync(service.programar, servicio.id)
+    encuesta.estado, encuesta.puntaje, encuesta.respondida_en = "respondida", puntaje, ahora()
+    await db.flush()
+    return encuesta
+
+
+async def test_listado_de_encuestas_combina_filtros(client: AsyncClient, db, headers):
+    baja = await _respondida(db, "+573001110001", puntaje=2)
+    alta = await _respondida(db, "+573001110002", puntaje=5)
+    pendiente = await _completado_con_encuesta(db)
+    await db.commit()
+
+    async def ids(**filtros) -> set[str]:
+        resp = await client.get("/api/v1/encuestas", params=filtros, headers=headers)
+        return {e["id"] for e in resp.json()["items"]}
+
+    assert await ids() == {str(baja.id), str(alta.id), str(pendiente.id)}
+    assert await ids(estado="respondida") == {str(baja.id), str(alta.id)}
+    assert await ids(estado="respondida", puntaje_max=3) == {str(baja.id)}
+    assert await ids(responsable_id=str(alta.responsable_id)) == {str(alta.id)}
+    assert await ids(tipo="seguimiento") == set()
+    assert await ids(tipo="satisfaccion", estado="pendiente") == {str(pendiente.id)}
+
+
+async def test_configuracion_general_y_por_tipo_se_reemplaza(client: AsyncClient, headers):
+    url = "/api/v1/encuestas/configuracion"
+    assert (await client.get(url, headers=headers)).json() == []
+
+    general = (
+        await client.put(url, json={"demora_horas": 4, "umbral_alerta": 2}, headers=headers)
+    ).json()
+    assert (general["tipo_servicio_codigo"], general["demora_horas"], general["umbral_alerta"]) == (
+        None,
+        4,
+        2,
+    )
+    otra_vez = (await client.put(url, json={"demora_horas": 6}, headers=headers)).json()
+    assert (otra_vez["id"], otra_vez["demora_horas"], otra_vez["umbral_alerta"]) == (
+        general["id"],
+        6,
+        3,
+    ), "la general se reemplaza entera, no se acumula"
+    control = (
+        await client.put(
+            url,
+            json={"tipo_servicio_codigo": "control_post", "seguimiento_dias": 7},
+            headers=headers,
+        )
+    ).json()
+    assert control["id"] != general["id"]
+    assert {c["tipo_servicio_codigo"] for c in (await client.get(url, headers=headers)).json()} == {
+        None,
+        "control_post",
+    }
+
+    assert (await client.put(url, json={"umbral_alerta": 6}, headers=headers)).status_code == 422
+    assert (await client.put(url, json={"seguimiento_dias": 0}, headers=headers)).status_code == 422
+
+
+async def test_solo_la_administracion_configura_las_encuestas(client: AsyncClient, db):
+    from tests.conftest import login
+
+    await crear_usuario(db, "comercial@timu.co", Rol.COMERCIAL)
+    comercial = await login(client, "comercial@timu.co")
+    assert (await client.get("/api/v1/encuestas", headers=comercial)).status_code == 200
+    assert (
+        await client.get("/api/v1/encuestas/configuracion", headers=comercial)
+    ).status_code == 403
+    assert (
+        await client.put("/api/v1/encuestas/configuracion", json={}, headers=comercial)
+    ).status_code == 403

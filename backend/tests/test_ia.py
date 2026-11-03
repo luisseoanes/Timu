@@ -273,3 +273,109 @@ async def test_borrador_para_el_profesional_nunca_se_envia(
         select(func.count()).select_from(Mensaje).where(Mensaje.familia_id == familia.id)
     )
     assert enviados == 0
+
+
+# --- Administracion de la capa de IA por API --------------------------------------------------
+
+
+async def test_versiones_de_prompt_por_api(client: AsyncClient, db, headers):
+    url = "/api/v1/ia/prompts"
+    sembrado = (await client.post(f"{url}/sembrar", headers=headers)).json()
+    assert sembrado["creados"] > 0
+    assert (await client.post(f"{url}/sembrar", headers=headers)).json() == {
+        "creados": 0
+    }, "sembrar no duplica lo que ya existe"
+
+    nueva = await client.post(
+        url,
+        json={"codigo": "comercial_guion", "sistema": "Instrucciones nuevas " * 5, "nota": "v2"},
+        headers=headers,
+    )
+    assert nueva.status_code == 201
+    assert (nueva.json()["version"], nueva.json()["estado"]) == (2, "borrador")
+    corta = await client.post(
+        url, json={"codigo": "comercial_guion", "sistema": "corto"}, headers=headers
+    )
+    assert corta.status_code == 422
+    desconocido = await client.post(
+        url, json={"codigo": "otro", "sistema": "x" * 60}, headers=headers
+    )
+    assert desconocido.status_code == 422
+
+    comerciales = (
+        await client.get(url, params={"codigo": "comercial_guion"}, headers=headers)
+    ).json()
+    assert [p["version"] for p in comerciales] == [2, 1], "la mas reciente primero"
+    todos = (await client.get(url, headers=headers)).json()
+    assert {p["codigo"] for p in todos} == {"comercial_guion", "veterinario_borrador"}
+
+
+async def test_casos_de_prueba_por_api(client: AsyncClient, headers):
+    url = "/api/v1/ia/casos"
+    caso = {
+        "prompt_codigo": "veterinario_borrador",
+        "nombre": "Sangrado",
+        "entrada": "Vomita sangre",
+        "esperado": {"presencial": True},
+    }
+    creado = await client.post(url, json=caso, headers=headers)
+    assert creado.status_code == 201 and creado.json()["esperado"] == {"presencial": True}
+    await client.post(
+        url, json={**caso, "prompt_codigo": "comercial_guion", "nombre": "Precio"}, headers=headers
+    )
+    assert (
+        await client.post(url, json={**caso, "nombre": "x"}, headers=headers)
+    ).status_code == 422
+
+    assert [c["nombre"] for c in (await client.get(url, headers=headers)).json()] == [
+        "Precio",
+        "Sangrado",
+    ]
+    vet = (
+        await client.get(url, params={"prompt_codigo": "veterinario_borrador"}, headers=headers)
+    ).json()
+    assert [c["nombre"] for c in vet] == ["Sangrado"]
+
+
+async def test_consultas_y_consumo_por_api(client: AsyncClient, db, headers):
+    for codigo, estado, costo in (
+        ("comercial_guion", "ok", "0.01"),
+        ("comercial_guion", "error", "0"),
+        ("veterinario_borrador", "ok", "0.02"),
+    ):
+        db.add(ConsultaIA(prompt_codigo=codigo, estado=estado, costo_usd=Decimal(costo)))
+        await db.flush()
+    await db.commit()
+
+    url = "/api/v1/ia/consultas"
+    assert len((await client.get(url, headers=headers)).json()) == 3
+    assert [
+        c["estado"]
+        for c in (await client.get(url, params={"estado": "error"}, headers=headers)).json()
+    ] == ["error"]
+    vet = (
+        await client.get(url, params={"prompt_codigo": "veterinario_borrador"}, headers=headers)
+    ).json()
+    assert [c["prompt_codigo"] for c in vet] == ["veterinario_borrador"]
+
+    consumo = (await client.get("/api/v1/ia/consumo", headers=headers)).json()
+    assert consumo["gasto_usd"] == pytest.approx(0.03)
+    assert consumo["disponible_usd"] == pytest.approx(consumo["presupuesto_usd"] - 0.03)
+    assert {(p["prompt"], p["estado"]) for p in consumo["por_prompt"]} == {
+        ("comercial_guion", "ok"),
+        ("comercial_guion", "error"),
+        ("veterinario_borrador", "ok"),
+    }
+
+
+async def test_solo_la_administracion_gobierna_la_ia(client: AsyncClient, db):
+    await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    medico = await login(client, "vet@timu.co")
+    for ruta in (
+        "/api/v1/ia/prompts",
+        "/api/v1/ia/casos",
+        "/api/v1/ia/consultas",
+        "/api/v1/ia/consumo",
+    ):
+        assert (await client.get(ruta, headers=medico)).status_code == 403, ruta
+    assert (await client.post("/api/v1/ia/prompts/sembrar", headers=medico)).status_code == 403

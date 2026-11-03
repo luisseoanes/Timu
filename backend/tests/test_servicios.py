@@ -310,3 +310,206 @@ async def test_bandeja_asigna_prioriza_y_cierra(client: AsyncClient, admin, head
         f"/api/v1/tareas/{tarea_id}/cerrar", json={"resolucion": "x" * 5}, headers=headers
     )
     assert otra_vez.status_code == 422
+
+
+# --- Agenda: franjas (F1-SER-02) y listados ---------------------------------------------------
+
+
+async def test_operaciones_crea_franjas_con_la_ciudad_del_catalogo(client: AsyncClient, db):
+    from app.core.enums import Rol
+    from tests.conftest import crear_usuario, login
+
+    await crear_usuario(db, "ops@timu.co", Rol.OPERACIONES)
+    cabecera = await login(client, "ops@timu.co")
+    franja = {
+        "modalidad": "domiciliario",
+        "dia_semana": 2,
+        "hora_inicio": "08:00",
+        "hora_fin": "12:00",
+    }
+
+    creada = await client.post(
+        "/api/v1/agenda/franjas", json={**franja, "ciudad": " cali "}, headers=cabecera
+    )
+    assert creada.status_code == 201
+    assert (creada.json()["ciudad"], creada.json()["capacidad"]) == ("Cali", 1)
+
+    fuera = await client.post(
+        "/api/v1/agenda/franjas", json={**franja, "ciudad": "Gotham"}, headers=cabecera
+    )
+    assert fuera.status_code == 422 and "catalogo" in fuera.json()["detail"]
+    al_reves = await client.post(
+        "/api/v1/agenda/franjas",
+        json={**franja, "ciudad": "Cali", "hora_inicio": "12:00", "hora_fin": "08:00"},
+        headers=cabecera,
+    )
+    assert al_reves.status_code == 422
+
+
+async def test_un_medico_consulta_franjas_pero_no_las_administra(client: AsyncClient, db, agenda):
+    from app.core.enums import Rol
+    from tests.conftest import crear_usuario, login
+
+    await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    cabecera = await login(client, "vet@timu.co")
+    assert len((await client.get("/api/v1/agenda/franjas", headers=cabecera)).json()) == 2
+    nueva = await client.post(
+        "/api/v1/agenda/franjas",
+        json={
+            "ciudad": "Cali",
+            "modalidad": "virtual",
+            "dia_semana": 0,
+            "hora_inicio": "08:00",
+            "hora_fin": "09:00",
+        },
+        headers=cabecera,
+    )
+    assert nueva.status_code == 403
+
+
+async def test_franjas_se_filtran_por_ciudad_y_se_ajustan(client: AsyncClient, headers, db, agenda):
+    db.add(
+        Franja(
+            ciudad="Bogota",
+            modalidad="domiciliario",
+            dia_semana=0,
+            hora_inicio=time(8),
+            hora_fin=time(9),
+        )
+    )
+    await db.flush()
+    todas = (await client.get("/api/v1/agenda/franjas", headers=headers)).json()
+    cali = (
+        await client.get("/api/v1/agenda/franjas", params={"ciudad": "Cali"}, headers=headers)
+    ).json()
+    assert len(todas) == 3 and {f["ciudad"] for f in cali} == {"Cali"}
+
+    url = f"/api/v1/agenda/franjas/{cali[0]['id']}"
+    ajustada = (await client.patch(url, params={"capacidad": 4}, headers=headers)).json()
+    assert (ajustada["capacidad"], ajustada["activa"]) == (4, True)
+    apagada = (await client.patch(url, params={"activa": False}, headers=headers)).json()
+    assert (apagada["capacidad"], apagada["activa"]) == (4, False), "cambiar uno no toca el otro"
+
+    from uuid import uuid4
+
+    inexistente = await client.patch(
+        f"/api/v1/agenda/franjas/{uuid4()}", params={"activa": True}, headers=headers
+    )
+    assert inexistente.status_code == 404
+
+
+async def test_listado_de_servicios_combina_filtros(client: AsyncClient, db, headers, afiliada):
+    servicio = (await _agendar(client, headers, afiliada)).json()
+    otra, _ = await fabricas.afiliada(db, hoy())
+    await db.commit()
+    await _agendar(client, headers, ids(otra), inicio=_hora(10))
+
+    def contar(**filtros):
+        return client.get("/api/v1/servicios", params=filtros, headers=headers)
+
+    assert (await contar()).json()["total"] == 2
+    propios = (await contar(familia_id=str(afiliada.id))).json()
+    assert [s["id"] for s in propios["items"]] == [servicio["id"]]
+    assert (await contar(estado="agendado", ciudad="Cali")).json()["total"] == 2
+    assert (await contar(estado="completado")).json()["total"] == 0
+    assert (await contar(ciudad="Bogota")).json()["total"] == 0
+    assert (await contar(desde=str(DIA), hasta=str(DIA))).json()["total"] == 2
+    assert (await contar(desde=str(DIA + timedelta(days=1)))).json()["total"] == 0
+    assert (await contar(hasta=str(DIA - timedelta(days=1)))).json()["total"] == 0
+    recientes = (await contar(orden="-programado_para")).json()["items"]
+    assert recientes[0]["programado_para"] > recientes[1]["programado_para"]
+
+
+async def test_un_servicio_inexistente_da_404_tambien_en_sus_pasos(
+    client: AsyncClient, headers, afiliada
+):
+    from uuid import uuid4
+
+    servicio = (await _agendar(client, headers, afiliada)).json()
+    assert (await client.get(f"/api/v1/servicios/{servicio['id']}", headers=headers)).json()[
+        "id"
+    ] == servicio["id"]
+    assert (
+        await client.get(f"/api/v1/servicios/{servicio['id']}/pasos", headers=headers)
+    ).json() == []
+    assert (await client.get(f"/api/v1/servicios/{uuid4()}", headers=headers)).status_code == 404
+    assert (
+        await client.get(f"/api/v1/servicios/{uuid4()}/pasos", headers=headers)
+    ).status_code == 404
+
+
+async def test_pendientes_se_filtran_por_estado_y_servicio(client: AsyncClient, headers, afiliada):
+    primero = (await _agendar(client, headers, afiliada)).json()
+    segundo = (await _agendar(client, headers, afiliada, inicio=_hora(10))).json()
+    for servicio, descripcion in ((primero, "Radiografia"), (segundo, "Ecografia")):
+        await client.post(
+            f"/api/v1/servicios/{servicio['id']}/pendientes",
+            json={"descripcion": descripcion},
+            headers=headers,
+        )
+
+    def pendientes(**filtros):
+        return client.get("/api/v1/pendientes", params=filtros, headers=headers)
+
+    assert [p["descripcion"] for p in (await pendientes()).json()] == ["Radiografia", "Ecografia"]
+    del_segundo = (await pendientes(servicio_id=segundo["id"])).json()
+    assert [p["descripcion"] for p in del_segundo] == ["Ecografia"]
+    assert len((await pendientes(estado="pendiente_autorizacion")).json()) == 2
+    assert (await pendientes(estado="resuelto")).json() == []
+
+
+# --- Bandeja de tareas: filtros y ciclo ----------------------------------------------------------
+
+
+async def test_la_bandeja_combina_area_estado_asignacion_vencimiento_y_familia(
+    client: AsyncClient, db, admin, headers, afiliada
+):
+    async def crear(titulo: str, area: str = "operaciones", **extra) -> str:
+        resp = await client.post(
+            "/api/v1/tareas", json={"titulo": titulo, "area": area, **extra}, headers=headers
+        )
+        assert resp.status_code == 201, resp.text
+        return resp.json()["id"]
+
+    de_la_familia = await crear("Llamar a la familia", familia_id=str(afiliada.id))
+    await crear("Cotizar plan", area="comercial", asignada_a_id=str(admin.id))
+    vencida = await crear("Revisar ruta", vence_en_dias=0)
+    tarea = await db.get(Tarea, UUID(vencida))
+    tarea.vence_el = hoy() - timedelta(days=2)
+    await db.commit()
+
+    async def titulos(**filtros) -> set[str]:
+        resp = await client.get("/api/v1/tareas", params=filtros, headers=headers)
+        return {t["titulo"] for t in resp.json()["items"]}
+
+    assert await titulos(area="comercial") == {"Cotizar plan"}
+    assert await titulos(sin_asignar=True) == {"Llamar a la familia", "Revisar ruta"}
+    assert await titulos(mias=True) == {"Cotizar plan"}
+    assert await titulos(vencidas=True) == {"Revisar ruta"}
+    assert await titulos(familia_id=str(afiliada.id)) == {"Llamar a la familia"}
+
+    iniciada = (
+        await client.post(f"/api/v1/tareas/{de_la_familia}/iniciar", headers=headers)
+    ).json()
+    assert iniciada["estado"] == "en_progreso"
+    assert (
+        await client.post(f"/api/v1/tareas/{de_la_familia}/iniciar", headers=headers)
+    ).status_code == 422
+    assert await titulos(estado="en_progreso") == {"Llamar a la familia"}
+
+    await client.post(
+        f"/api/v1/tareas/{vencida}/cerrar", json={"resolucion": "Ruta revisada"}, headers=headers
+    )
+    assert await titulos(vencidas=True) == set(), "una tarea cerrada ya no esta vencida"
+    reasignar = await client.patch(
+        f"/api/v1/tareas/{vencida}/asignacion", json={"usuario_id": str(admin.id)}, headers=headers
+    )
+    assert reasignar.status_code == 422 and "cerrada" in reasignar.json()["detail"]
+
+
+async def test_una_tarea_inexistente_da_404(client: AsyncClient, headers):
+    from uuid import uuid4
+
+    assert (
+        await client.post(f"/api/v1/tareas/{uuid4()}/iniciar", headers=headers)
+    ).status_code == 404

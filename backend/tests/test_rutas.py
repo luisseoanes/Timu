@@ -338,3 +338,94 @@ async def test_cancelar_ruta_devuelve_los_servicios(db, dia_con_servicios, tecni
     await db.run_sync(service.cancelar, ruta)
     pendientes = await db.run_sync(service.por_rutear, DIA, "Cali")
     assert len(pendientes) == 4
+
+
+# --- Endpoints de consulta y ajuste de rutas --------------------------------------------------
+
+
+async def test_planificacion_y_servicios_por_rutear_por_api(
+    client: AsyncClient, db, headers, dia_con_servicios, tecnico
+):
+    from uuid import uuid4
+
+    params = {"fecha": str(DIA), "ciudad": "Cali"}
+    antes = (await client.get("/api/v1/rutas/por-rutear", params=params, headers=headers)).json()
+    assert {s["id"] for s in antes} == {str(s.id) for s in dia_con_servicios}
+
+    plan = await _planificar(db, [tecnico.id])
+    await db.commit()
+    consultada = (
+        await client.get(f"/api/v1/rutas/planificaciones/{plan.id}", headers=headers)
+    ).json()
+    assert (consultada["id"], consultada["estado"]) == (str(plan.id), plan.estado)
+    assert (
+        await client.get(f"/api/v1/rutas/planificaciones/{uuid4()}", headers=headers)
+    ).status_code == 404
+
+    despues = (await client.get("/api/v1/rutas/por-rutear", params=params, headers=headers)).json()
+    pendientes = await db.run_sync(service.por_rutear, DIA, "Cali")
+    assert {s["id"] for s in despues} == {str(s.id) for s in pendientes}
+    assert len(despues) < len(antes), "lo ruteado ya no esta por rutear"
+
+
+async def test_listado_de_rutas_por_dia_ciudad_y_responsable(
+    client: AsyncClient, db, headers, dia_con_servicios, tecnico
+):
+    await _planificar(db, [tecnico.id])
+    ruta = await db.scalar(select(Ruta))
+    ruta_id = str(ruta.id)
+    await db.commit()
+
+    def listar(**filtros):
+        return client.get("/api/v1/rutas", params={"fecha": str(DIA), **filtros}, headers=headers)
+
+    assert [r["id"] for r in (await listar()).json()] == [ruta_id]
+    assert (await listar(ciudad="Bogota")).json() == []
+    assert [r["id"] for r in (await listar(responsable_id=str(tecnico.id))).json()] == [ruta_id]
+    assert (await listar(fecha=str(DIA + timedelta(days=1)))).json() == []
+
+    cancelada = await client.post(f"/api/v1/rutas/{ruta_id}/cancelacion", headers=headers)
+    assert cancelada.json()["estado"] == "cancelada"
+    assert (await listar()).json() == [], "las canceladas no salen por defecto"
+    assert [r["id"] for r in (await listar(incluir_canceladas=True)).json()] == [ruta_id]
+
+
+async def test_en_campo_se_omite_una_parada_y_operaciones_agrega_otra(
+    client: AsyncClient, db, headers, dia_con_servicios, tecnico
+):
+    await _planificar(db, [tecnico.id])
+    ruta = await db.scalar(select(Ruta))
+    ruta_id, primera = str(ruta.id), ruta.paradas[0].id
+    extra = await _servicio(db, CASAS[3], 15, "+573001000009")
+    extra_id = str(extra.id)
+    await db.commit()
+    campo = await login(client, tecnico.email)
+
+    corta = await client.post(
+        f"/api/v1/rutas/paradas/{primera}/omision", json={"motivo": "no"}, headers=campo
+    )
+    assert corta.status_code == 422
+    omitida = (
+        await client.post(
+            f"/api/v1/rutas/paradas/{primera}/omision",
+            json={"motivo": "La familia no esta"},
+            headers=campo,
+        )
+    ).json()
+    parada = next(p for p in omitida["paradas"] if p["id"] == str(primera))
+    assert (parada["estado"], parada["motivo_omision"]) == ("omitida", "La familia no esta")
+
+    # Agregar es de operaciones: quien sale a campo no reorganiza la ruta.
+    assert (
+        await client.post(
+            f"/api/v1/rutas/{ruta_id}/paradas", json={"servicio_id": extra_id}, headers=campo
+        )
+    ).status_code == 403
+    agregada = await client.post(
+        f"/api/v1/rutas/{ruta_id}/paradas", json={"servicio_id": extra_id}, headers=headers
+    )
+    assert agregada.status_code == 201
+    assert extra_id in {p["servicio_id"] for p in agregada.json()["paradas"]}
+    assert (
+        await client.post(f"/api/v1/rutas/{ruta_id}/cancelacion", headers=campo)
+    ).status_code == 403
