@@ -25,8 +25,6 @@ from tests import fabricas
 from tests.conftest import crear_usuario, login
 from tests.test_comercial import Chat
 
-pytestmark = pytest.mark.integration
-
 
 class ProveedorFalso:
     """Responde lo que la prueba programe y guarda lo que se le pidio."""

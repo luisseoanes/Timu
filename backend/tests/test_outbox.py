@@ -8,8 +8,6 @@ from app.core.enums import EstadoServicio
 from app.core.eventos import EventoDominio, al_ocurrir, manejadores
 from app.core.outbox import EventoSaliente, procesar_pendientes, publicar
 
-pytestmark = pytest.mark.integration
-
 
 async def test_publicar_deja_el_evento_en_la_misma_transaccion(db: AsyncSession):
     publicar(db, EventoDominio(nombre="servicio.completado", datos={"servicio_id": "abc"}))

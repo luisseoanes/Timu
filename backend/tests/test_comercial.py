@@ -17,8 +17,6 @@ from app.modules.tareas.models import Tarea
 from tests import fabricas
 from tests.conftest import crear_usuario
 
-pytestmark = pytest.mark.integration
-
 NUMERO = "573150001122"
 TEL = "+573150001122"
 

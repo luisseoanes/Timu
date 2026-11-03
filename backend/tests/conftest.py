@@ -55,6 +55,52 @@ URL_SYNC = URL_ASYNC.replace("postgresql+asyncpg://", "postgresql+psycopg://")
 PASSWORD = "secreto123"
 
 
+# --- Guardas de la suite ----------------------------------------------------------------------
+# El CI tiene que ejecutar todas las pruebas y todas tienen que comprobar algo. pytest no
+# falla ni ante una prueba saltada ni ante un marcador que miente, asi que se fuerza aqui.
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Cada prueba queda marcada `unit` o `integration`, sin depender de que alguien se
+    acuerde: la que usa el fixture `db` es de integracion. `pytest -m unit` y
+    `pytest -m integration` suman asi la suite entera, sin pruebas huerfanas de marcador.
+    Una marcada `integration` a mano sin `db` se respeta (puede tocar la base por otra via,
+    como las migraciones); una marcada `unit` que usa la base es un error."""
+    for item in items:
+        usa_db = "db" in getattr(item, "fixturenames", ())
+        marcas = {m.name for m in item.iter_markers()} & {"unit", "integration"}
+        if usa_db and "unit" in marcas:
+            raise pytest.UsageError(f"{item.nodeid} esta marcada unit pero usa la base de datos")
+        if len(marcas) == 2:
+            # Pasa con un `pytestmark` de modulo y una marca distinta en la funcion: pytest
+            # aplica las dos y la prueba cuenta en ambos grupos.
+            raise pytest.UsageError(f"{item.nodeid} esta marcada unit e integration a la vez")
+        if not marcas:
+            item.add_marker("integration" if usa_db else "unit")
+
+
+_no_ejecutadas: set[str] = set()
+
+
+def pytest_runtest_logreport(report: pytest.TestReport) -> None:
+    if report.skipped or hasattr(report, "wasxfail"):
+        _no_ejecutadas.add(report.nodeid)
+
+
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    """Una prueba saltada o marcada xfail no comprueba nada y deja la suite en verde: se
+    trata como un fallo. Si no puede pasar, se arregla o se borra."""
+    if _no_ejecutadas and exitstatus == pytest.ExitCode.OK:
+        session.exitstatus = pytest.ExitCode.TESTS_FAILED
+
+
+def pytest_terminal_summary(terminalreporter: Any) -> None:
+    if _no_ejecutadas:
+        terminalreporter.section("pruebas saltadas o xfail (no se admiten)", red=True)
+        for nodeid in sorted(_no_ejecutadas):
+            terminalreporter.write_line(nodeid)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def esquema() -> Iterator[None]:
     """Crea el esquema aplicando las MIGRACIONES, no `create_all`.

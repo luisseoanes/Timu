@@ -15,8 +15,6 @@ from app.modules.auth.models import Usuario
 from app.modules.familias.models import Familia, Mascota
 from tests.conftest import autenticar
 
-pytestmark = pytest.mark.integration
-
 
 async def _familia_con_portal(db: AsyncSession, nombre: str, documento: str, email: str):
     usuario = Usuario(
