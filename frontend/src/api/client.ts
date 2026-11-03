@@ -1,5 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 
+import { esErrorPasajero } from '@/lib/errores'
+
 /**
  * Único punto de contacto con la API.
  *
@@ -60,12 +62,18 @@ api.interceptors.response.use(
 
     if (renovable) {
       original._renovada = true
+      let renovada = false
       try {
         await renovarSesion()
-        return await api.request(original)
-      } catch {
-        // La renovación falló: la sesión terminó de verdad. Se cae a la redirección.
+        renovada = true
+      } catch (fallo) {
+        // Un 429 (el límite de renovaciones es por IP y lo comparte una oficina entera), un
+        // 5xx o la red caída son pasajeros: la pantalla recibe ese error y lo muestra, sin
+        // sacar a nadie de su trabajo. Cualquier otra respuesta: la sesión terminó.
+        if (esErrorPasajero(fallo)) return Promise.reject(fallo)
       }
+      // Lo que falle al repetir la petición llega tal cual: ya pasó por este interceptor.
+      if (renovada) return api.request(original)
     }
 
     // Sesión expirada o ausente: devolver al ingreso. La cookie la limpia el backend.

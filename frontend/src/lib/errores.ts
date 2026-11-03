@@ -15,3 +15,14 @@ export function mensajeError(error: unknown, porDefecto = 'No fue posible comple
   }
   return porDefecto
 }
+
+/**
+ * Un fallo que se arregla solo esperando: sin respuesta (red caída o servidor reiniciando),
+ * 408, 429 (límite de peticiones) o 5xx. No dice nada de la sesión ni de los datos, así que
+ * se reintenta o se avisa; un 4xx distinto es una respuesta firme del servidor.
+ */
+export function esErrorPasajero(error: unknown): boolean {
+  if (!isAxiosError(error)) return false
+  const estado = error.response?.status
+  return estado === undefined || estado === 408 || estado === 429 || estado >= 500
+}
