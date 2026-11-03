@@ -30,6 +30,10 @@ describe('Portal: navegación y mascotas', () => {
     server.use(
       http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'familia' })),
       http.get(`${API}/portal/mi-familia`, () => HttpResponse.json(FAMILIA)),
+      // Al llegar a la ficha de la mascota se pide su carnet.
+      http.get(`${API}/portal/mascotas/:id/carnet`, () =>
+        HttpResponse.json({ mascota: { id: LUNA.id, nombre: 'Luna', especie: 'Canino', raza: null, fecha_nacimiento: null }, aplicados: [], vencidos: [], proximos: [] }),
+      ),
     )
     const user = userEvent.setup()
     abrir('/portal/mascotas')

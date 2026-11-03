@@ -82,6 +82,14 @@ export const handlers = [
   http.get(`${API}/auth/me`, () => HttpResponse.json(USUARIO_ADMIN)),
   http.post(`${API}/auth/login`, () => HttpResponse.json({ usuario: USUARIO_ADMIN })),
   http.post(`${API}/auth/logout`, () => HttpResponse.json({ detail: 'Sesion cerrada' })),
+  // Sin cookie de renovación: cuando /auth/me responde 401, el cliente intenta renovar y
+  // esto es lo que contestaría el backend a un navegador sin sesión.
+  http.post(`${API}/auth/refresh`, () => HttpResponse.json({ detail: 'Sesion invalida' }, { status: 401 })),
+  // Catálogos que cargan los selectores de varios formularios aunque la prueba no los mire.
+  http.get(`${API}/auth/equipo`, () => HttpResponse.json([])),
+  http.get(`${API}/planes`, () => HttpResponse.json([])),
+  http.get(`${API}/aliadas`, () => HttpResponse.json([])),
+  http.get(`${API}/clinica/plantillas`, () => HttpResponse.json([])),
   http.get(`${API}/catalogos/ciudades`, () => HttpResponse.json(CIUDADES)),
   http.get(`${API}/catalogos/especies`, () => HttpResponse.json(ESPECIES)),
   http.get(`${API}/catalogos/tipos-servicio`, () => HttpResponse.json(TIPOS_SERVICIO)),
