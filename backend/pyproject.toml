@@ -12,3 +12,11 @@ known-first-party = ["app"]
 python_version = "3.12"
 plugins = []
 ignore_missing_imports = true
+
+[tool.coverage.run]
+# Los servicios corren dentro de `db.run_sync`, que SQLAlchemy ejecuta en un greenlet.
+# Sin `greenlet`, coverage pierde el rastro tras la primera consulta y da por no
+# ejecutado el resto de la funcion: el informe salia hasta 30 puntos por debajo.
+concurrency = ["thread", "greenlet"]
+# Mide tambien ramas: una linea cubierta no dice si se probo el `if` en los dos sentidos.
+branch = true
