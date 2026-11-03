@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Qué es este repositorio
 
-Scaffold de TIMU, plataforma de gestión veterinaria por afiliación. El contrato funcional
+TIMU, plataforma de gestión veterinaria por afiliación. El contrato funcional
 vive en `docs/propuesta-timu-puntos-15-19.md` y el desglose ejecutable en
 `docs/backlog.md` (101 unidades con ID `fase-módulo-consecutivo`, p. ej. `F1-CAR-08`).
 
@@ -15,253 +15,143 @@ y respeta el criterio de aceptación que ya está escrito allí.
 ## Comandos
 
 ```bash
-# Todo el stack (api, worker, beat, db, redis, minio, web)
+# Todo el stack (api, worker, beat, db, redis, minio, web) en un solo comando.
+# El servicio `inicializar` migra, carga catálogos, crea admin@timu.co / cambiar123 y el
+# bucket antes de que arranquen api, worker y beat. No hace falta copiar ningún .env:
+# backend/.env.example es la base y backend/.env (si existe) la sobrescribe.
+# Puertos del host ocupados por otro proyecto → .env de la raíz (ver .env.example).
 docker compose up --build
-docker compose exec api alembic upgrade head       # aplica el esquema
-docker compose exec api python -m scripts.cargar_catalogos   # ciudades, especies, reglas
-docker compose exec api python -m scripts.seed     # admin@timu.co / cambiar123
 docker compose exec api python -m scripts.datos_demo   # familias, servicios, rutas… de prueba (solo local)
+docker compose run --rm inicializar   # tras traer una migración nueva, sin reiniciar el stack
 
 # Backend sin Docker
 cd backend && pip install -r requirements-dev.txt
 uvicorn app.main:app --reload
 
-docker compose up -d db-test        # PostgreSQL de pruebas (puerto 5433). Sin esto, pytest aborta.
-pytest                              # suite completa, con cobertura y umbral del 70%
+docker compose up -d db-test        # PostgreSQL de pruebas (puerto 5433, perfil `test`: el up general no la levanta). Sin esto, pytest aborta.
+pytest                              # suite completa, con cobertura y umbral del 89%
 pytest -m unit                      # sólo lo que no toca la base de datos
 pytest tests/test_alcance.py::test_una_familia_solo_se_ve_a_si_misma   # una sola prueba
 ruff format . && ruff check . && mypy app
+python scripts/generar_tipos_frontend.py   # regenera frontend/src/types/api.ts desde el OpenAPI; no se edita a mano
 
 # Frontend
 cd frontend && npm install
 npm run dev                         # 5173, con proxy /api → localhost:8000
 npm run verificar                   # lint + typecheck + cobertura + build (lo mismo que CI)
 npm run test:watch                  # pruebas de componentes en vigilancia
-npm run test:e2e                    # Playwright (requiere: npx playwright install chromium)
+npm run test:e2e                    # Playwright con la API interceptada (requiere: npx playwright install chromium)
+npm run test:e2e:stack              # recorridos contra el stack real: docker compose up + datos_demo antes
 ```
 
 En el backend `python3 -m venv` no funciona en la máquina de Pedro: usa
 `uv venv --python 3.12` (ver la memoria del proyecto).
 
-## Arquitectura del backend
+## Entorno de desarrollo: un solo comando
 
-Un directorio por dominio en `app/modules/<dominio>/`, con hasta cuatro piezas:
-`models.py` (SQLAlchemy) · `schemas.py` (Pydantic) · `service.py` (lógica y consultas) ·
-`router.py` (HTTP). `app/modules/familias/` es la referencia completa del patrón; los
-dominios de fases posteriores que aún no se implementan tienen modelos definidos y un
-router placeholder que devuelve `Mensaje(detail="Modulo X: pendiente de implementar")`.
+**Desde un clon limpio, `docker compose up --build` deja el stack completo funcionando,
+sin pasos manuales ni ficheros que copiar.** Es una invariante del proyecto: ningún
+cambio —de infraestructura, backend, frontend o dependencias— se da por terminado si la
+rompe, y el compose se actualiza en el mismo cambio que lo hace necesario.
 
-Reglas que atraviesan todo el backend:
+| Si el cambio… | …también tiene que |
+| --- | --- |
+| añade una variable de entorno | ir en `backend/.env.example` con un valor que funcione en local (o vacía si la función se apaga sin ella). Si depende del host (un puerto, una URL que abre el navegador), va en el `environment` del compose, derivada de `TIMU_*_PORT`, como `STORAGE_PUBLIC_ENDPOINT_URL`. |
+| añade una dependencia | ir con versión fija en `requirements.txt` (API) o `requirements-worker.txt` (solo worker), o en `package.json` con su lockfile. Si una transitiva rompe el arranque, se fija también, con un comentario del porqué (ver `kombu`). |
+| necesita un paso de preparación (datos base, un bucket, un recurso externo) | ir en `backend/scripts/inicializar.py`, idempotente. Nunca como «después ejecuta X» en la documentación. |
+| añade una migración | nada más: `inicializar` aplica `upgrade head` en cada arranque. |
+| añade un servicio | ir en el compose con `healthcheck` si otros dependen de él, `depends_on` con condición (`service_healthy`, `service_completed_successfully`), puerto del host configurable (`TIMU_<SERVICIO>_PORT`, documentado en el `.env.example` de la raíz) y `profiles` si no es del día a día (como `db-test` y `respaldos`). |
+| toca un Dockerfile, el contexto de build o la estructura de directorios que montan los volúmenes | comprobarse con `--build`, no con la imagen que ya estaba. |
 
-- **`app/models.py` es el registro único de modelos.** `autogenerate` sólo ve lo
-  importado ahí: un modelo que no se añada a ese fichero no llega a las migraciones y,
-  por tanto, tampoco a ninguna base de datos.
-- **El esquema se aplica con `alembic upgrade head`**, nunca con `create_all`. La
-  migración inicial (`F0-01`) crea las 21 tablas y está verificada en los dos sentidos:
-  `upgrade` sobre base vacía y `downgrade base` que la deja limpia.
-- **Un modelo nuevo exige su migración en el mismo cambio.** Las pruebas construyen el
-  esquema aplicando las migraciones, y `tests/test_migraciones.py` compara el resultado
-  contra los metadatos: si falta una migración, la suite falla en vez de descubrirse en
-  el despliegue. Los índices y restricciones siguen la convención de nombres de
-  `CONVENCION_NOMBRES` en `app/core/database.py`, para que una migración posterior
-  pueda referirse a ellos por un nombre estable.
-- **Los servicios de dominio son síncronos** (reciben `sqlalchemy.orm.Session`). Así los
-  comparten los endpoints y los workers de Celery sin duplicar lógica: un router los
-  llama con `await db.run_sync(service.funcion, arg1, ...)` —el puente oficial de
-  SQLAlchemy, que no bloquea el event loop porque la E/S de base de datos sigue siendo
-  async por debajo— y una tarea, dentro de `with sesion_worker() as db:`. Lo único que
-  queda async en un servicio es E/S propia del endpoint (p. ej. `archivos.leer` de un
-  `UploadFile`). Las integraciones HTTP (`httpx.Client`) también son síncronas: se usan
-  desde los workers.
-- **La transacción la cierra `get_db`**, no los servicios. Las funciones de `service.py`
-  hacen `flush()` para obtener IDs; el commit ocurre al terminar la petición, y el rollback
-  ante cualquier excepción. No metas `commit()` en un servicio.
-- **Autorización con `require_roles`** de `app/core/deps.py`:
-  `dependencies=[Depends(require_roles(Rol.ADMIN))]`. **Ningún endpoint queda abierto por
-  omisión** (F1-AUT-02): uno abierto a propósito declara `Depends(publico)`, y
-  `tests/test_permisos.py` recorre todas las rutas y falla si alguna no declara ninguna
-  de las dos, o si aparece una pública que no está en su lista.
-- **Enums de dominio en `app/core/enums.py`**, no en cada módulo. Son `StrEnum` y viajan
-  como cadenas en la API.
-- **Los estados de servicio pasan por `app/modules/servicios/state_machine.py`.** Rutas,
-  portal y comunicaciones llaman a `aplicar()`; ningún módulo reimplementa el grafo de
-  transiciones ni asigna un estado a mano.
-- **Los listados devuelven `Page[T]`** de `app/schemas/common.py` (`items`, `total`,
-  `limit`, `offset`), con filtros combinables como en `familias.service.listar`.
-- **Toda consulta pasa por `restringir()` de `app/core/scope.py`.** `require_roles`
-  dice *quién puede llamar*; el alcance dice *qué filas ve*, y el portal de familias
-  necesita las dos. Los servicios reciben un `Alcance` como primer argumento tras la
-  sesión, y cada modelo visible desde el portal declara `__columna_familia__`. Un
-  modelo que no lo declare hace fallar la consulta: **se falla cerrado, nunca abierto**.
-  `familias` es la referencia del patrón.
-- **Ningún módulo llama a `tarea.delay()` dentro de una transacción.** Se publica un
-  evento con `app.core.outbox.publicar()`, que escribe en la misma transacción; si
-  ésta revienta, el efecto externo se va con ella. El worker `outbox.drenar` lo
-  despacha después. Los manejadores se registran con `@al_ocurrir("nombre.evento")`
-  en `app/workers/tasks/<dominio>.py`, junto a la tarea que encolan, y se limitan a
-  `celery_app.send_task(...)`: el trabajo pesado va en la tarea, no en el drenado.
-- **Una tarea que llama a un tercero con efectos (cobrar, enviar) no lo hace dentro de
-  la transacción del lote.** Se registra el intento y se confirma, se llama al tercero
-  fuera de cualquier transacción y se anota el resultado en otra
-  (`cartera.pasarela.cobrar_recurrentes`). Los procesos diarios que recorren muchos
-  registros aíslan cada uno en un savepoint: un dato raro no revierte el lote entero.
-- **El estado de un servicio se cambia con `state_machine.aplicar()`**, no asignando
-  `servicio.estado` ni llamando a `transicionar()` suelta: `aplicar` valida la
-  transición *y* deja publicado el evento que dispara los efectos de 6.10.
-- **Los campos JSON usan `JSONTipo`** de `app/core/database.py`, que es JSONB en
-  PostgreSQL (indexable con GIN) y JSON en el resto. Nunca el `JSON` de SQLAlchemy.
-- **Las tareas de Celery usan `sesion_worker()`**, la sesión síncrona de
-  `app/core/database.py`. Celery no es async: `asyncio.run()` dentro de una tarea crea
-  un event loop por ejecución y no reaprovecha conexiones. Los endpoints siguen async;
-  los workers, no. Cada tarea abre su `with sesion_worker() as db:`.
-- **La sesión son dos cookies httpOnly**: la de acceso (JWT corto, lleva el `sid` de una
-  fila de `sesiones` para poder revocarlo al instante) y la de renovación (opaca, rota en
-  cada uso y solo viaja a `/api/v1/auth`). Reusar una de renovación ya rotada se trata
-  como robo y cierra todas las sesiones del usuario; por eso el frontend comparte una
-  única renovación entre peticiones simultáneas (`src/api/client.ts`).
-- **Los tokens se firman y verifican con PyJWT**, y `decode_access_token` declara el
-  algoritmo de forma explícita en lugar de aceptar el que venga en el token: confiar en
-  esa cabecera permite un ataque de confusión de algoritmos. No vuelvas a introducir
-  `python-jose`, que está sin mantener desde 2021 y arrastra CVE conocidas.
-- **OR-Tools vive sólo en `requirements-worker.txt`**, no en la imagen de la API. La
-  optimización de rutas (6.7) es CPU-bound: llamarla desde un endpoint async bloquearía
-  el event loop, así que `app/integrations/routing.py` se invoca siempre desde una tarea
-  de Celery. Una dependencia pesada que sólo use el worker va en ese fichero.
-- **Los registros salen por `structlog`, no por `logging` a pelo.** Cada petición lleva
-  su identificador en `X-Request-ID` (F0-02), que el middleware propaga a todas las
-  líneas de log para poder seguirla de punta a punta. Sentry se activa solo si hay
-  `SENTRY_DSN`, así que en local no estorba y en producción no se olvida.
-- **Los adjuntos van a `app/integrations/storage.py`**, que habla S3. En desarrollo
-  apunta a MinIO (`docker compose up minio`) y en producción al bucket del cliente:
-  cambian las variables `STORAGE_*`, no el código. Nada se sirve público, todo con
-  `url_firmada()`.
-
-Integraciones (`app/integrations/`) y webhooks (`app/api/v1/webhooks.py`) están separados a
-propósito: los webhooks son públicos y se validan por token de verificación (Meta) o firma
-HMAC (pasarela), nunca por JWT. Su trabajo es responder rápido y encolar en Celery.
-
-Celery (`app/workers/`) corre en dos contenedores distintos: `worker` ejecuta y `beat`
-programa. El `beat_schedule` está en `celery_app.py` en zona `America/Bogota`; las tareas
-llevan nombre explícito (`cartera.revisar_mora`) porque el schedule las referencia por
-cadena.
-
-Configuración: `Settings` de `pydantic-settings` con `.env`. `DATABASE_URL` es un campo
-computado a partir de las variables `POSTGRES_*`; `DATABASE_URL_OVERRIDE` la sustituye.
-
-Tests: `httpx.AsyncClient` sobre ASGI contra PostgreSQL y `dependency_overrides[get_db]`
-(ver `tests/conftest.py`). `pytest.ini` fija `asyncio_mode = auto`, así que las pruebas
-async no necesitan decorador. Los servicios se llaman como en los routers, con
-`await db.run_sync(...)`. El fixture `tareas` drena el outbox de la transacción de la
-prueba con sus manejadores reales y registra lo que se habría encolado en Celery
-(`await tareas.de("comunicaciones.enviar_mensaje")`); el fixture `almacenamiento`
-sustituye S3 por memoria. `login(client, email)` devuelve la cabecera `Cookie` de esa
-sesión, para las pruebas que alternan usuarios.
-
-## Arquitectura del frontend
-
-React 18 + Vite, alias `@/` → `src/`. Un directorio por dominio en `src/features/<dominio>/`
-con su `api.ts` (React Query) y sus pantallas; una pieza sube a `src/components/` sólo
-cuando la usan dos dominios. Hay tres espacios con su propio layout: el panel del equipo
-(`AppLayout`, menú según el perfil), el portal de familias (`/portal`) y el de la clínica
-aliada (`/aliada`); `ProtectedRoute` lleva a cada perfil al suyo.
-
-- **`src/api/client.ts` es el único que habla con la API.** Ningún componente arma una
-  URL ni usa `fetch`; ESLint lo impide.
-- **La sesión vive en una cookie httpOnly + SameSite=lax que pone el backend.** El
-  frontend no guarda ni lee tokens: `localStorage` es legible por JavaScript y una XSS
-  se llevaría la sesión, con historia clínica de por medio. Por eso el cliente va con
-  `withCredentials: true` y `AuthContext` averigua si hay sesión preguntando a
-  `/auth/me`. Hay una regla de ESLint que rechaza `localStorage`.
-- **Los componentes interactivos se construyen sobre primitivas de Radix** (diálogo,
-  select, tooltip, tabs, toast…). Radix aporta sólo comportamiento —foco atrapado,
-  Escape, roles ARIA—; el aspecto sale íntegro de `tokens.css`. `src/components/Modal.tsx`
-  es la referencia. No se escribe a mano un componente que Radix ya resuelve.
-- **`src/types/` es el espejo tipado de los schemas de Pydantic.** Si cambias un schema del
-  backend, actualiza el tipo en el mismo cambio.
-- **Los estilos son CSS propio con cascada de orden fijo**: `tokens → base → componentes →
-  vistas`, impuesto por `src/styles/index.css`. Alterar ese orden rompe las vistas.
-- **Ningún color, radio o sombra literal en un componente**: todo sale de `tokens.css`. Un
-  `#` en el diff de un componente es un rechazo en revisión.
-- Toda lectura va por React Query con clave que incluya los filtros (`['familias', filtros]`)
-  y toda pantalla cubre carga, error y vacío.
-- **Toda pantalla nueva llega con sus pruebas.** Vitest + Testing Library para
-  componentes, con la API simulada por MSW en `src/test/handlers.ts` — nunca con mock
-  de axios, para que se pruebe también cómo se arma la petición. Playwright en `e2e/`
-  para los recorridos. Se consulta por rol y etiqueta accesible (`getByRole`,
-  `getByLabelText`), no por clase CSS: si la prueba no encuentra el control, un lector
-  de pantalla tampoco.
-
-`docs/frontend/` (design-system, components, layouts, conventions) es normativo para
-cualquier pantalla nueva: léelo antes de escribir UI. `conventions.md` incluye la checklist
-de revisión y la deuda conocida (sin tema oscuro).
-
-## Migraciones
+Cómo se verifica cuando el cambio toca cualquiera de esas filas. Se usa un proyecto
+aparte para no borrar los datos del habitual, y hay que pararlo antes porque comparten
+puertos:
 
 ```bash
-# generar, tras cambiar o anadir un modelo
-docker compose exec api alembic revision --autogenerate -m "descripcion"
-# aplicar
-docker compose exec api alembic upgrade head
-# deshacer la ultima
-docker compose exec api alembic downgrade -1
+docker compose stop
+docker compose -p timu-verificacion up --build -d
+docker compose -p timu-verificacion ps -a        # inicializar «Exited (0)», el resto en marcha
+curl -fsS "$(docker compose -p timu-verificacion port api 8000)/health"   # db, redis y workers en «ok»
+docker compose -p timu-verificacion down -v --rmi local
+docker compose up -d
 ```
 
-Dónde se aplica `alembic upgrade head`:
+Si no se ha hecho esta comprobación, se dice explícitamente al entregar el cambio. El
+job **Stack con un solo comando** de `.github/workflows/ci.yml` repite lo mismo en cada
+empuje a `main` y bloquea el release si falla, pero para entonces el commit ya está en
+`main`: la verificación local es la que evita romperlo.
 
-| Entorno | Cuándo |
+## Dónde está cada cosa
+
+Este fichero es lo transversal. Las reglas de cada lado viven junto a su código y se
+cargan al trabajar allí:
+
+- [`backend/CLAUDE.md`](backend/CLAUDE.md): arquitectura del backend, migraciones y cómo
+  se prueba contra PostgreSQL.
+- [`frontend/CLAUDE.md`](frontend/CLAUDE.md): arquitectura del panel, sesión en el
+  navegador, estilos y pruebas con MSW.
+
+Un cambio que cruza los dos lados (un schema nuevo, una regla de sesión) lee los dos.
+
+## Invariante: el CI ejecuta todas las pruebas, y todas pasan
+
+Ninguna prueba existe sin que el CI la ejecute en cada empuje a `main`, y ningún cambio
+se da por terminado si la deja fuera, saltada o en rojo. Lo vigilan guardas que forman
+parte de las propias suites; ninguno se desactiva:
+
+| Guarda | Qué hace fallar |
 | --- | --- |
-| Desarrollo | tras `docker compose up`, y cada vez que se trae una migración nueva |
-| Pruebas | automático: `tests/conftest.py` levanta el esquema con las migraciones |
-| Producción | como paso del despliegue, **antes** de arrancar la API, con el servicio anterior aún sirviendo |
+| `backend/tests/conftest.py` (`pytest_sessionfinish`) | Cualquier prueba saltada o `xfail` en el backend. |
+| `backend/tests/conftest.py` (`pytest_collection_modifyitems`) | Una prueba `unit` que usa la base, o una con las dos marcas. |
+| `backend/tests/test_suite.py` | Una prueba del backend fuera de `tests/test_*.py`. |
+| `frontend/src/test/suite.test.ts` | Una prueba del panel fuera de los patrones de Vitest (`src/**/*.{test,spec}.ts(x)`) o de Playwright (`e2e/`, `e2e-stack/`), o desactivada con `.only`, `.skip`, `.todo` o `.fixme`. |
+| `frontend/src/test/setup.ts` | Una petición del panel que ninguna prueba simuló con MSW: la prueba falla en lugar de seguir en verde con un error de red que nadie miró. Los catálogos comunes van en `frontend/src/test/handlers.ts`. |
+| `forbidOnly` en `frontend/playwright.config.ts` y `frontend/playwright.stack.config.ts` | Un `.only` en e2e cuando corre en CI. |
+| Umbrales de cobertura | Que la cobertura baje del mínimo (abajo). |
 
-Sin Docker se corre desde `backend/` con el `.env` apuntando a la base; para lanzarlo
-contra otra distinta, `DATABASE_URL_OVERRIDE` la sustituye sin tocar el `.env`.
+Reglas que mantienen esto vivo:
 
-Una migración que borra o renombra columnas necesita dos despliegues si no se quiere
-cortar el servicio: primero el código que tolera las dos formas, después la migración
-destructiva. La primera migración no tiene ese problema porque parte de una base vacía.
+- **Los pasos de pruebas del CI corren las suites enteras**: `pytest`,
+  `npm run test:coverage`, `npm run test:e2e` y, en el job del stack, `npm run test:e2e:stack`,
+  sin `-m`, `-k`, rutas ni filtros. Para ir rápido en local se filtra; el CI nunca.
+- **Hay dos e2e y no se sustituyen**: `e2e/` intercepta la API y prueba el panel aislado,
+  rápido y determinista; `e2e-stack/` recorre panel, portal y clínica aliada contra el stack
+  real con los usuarios de `scripts.datos_demo`, en el job «Stack con un solo comando». Un
+  recorrido nuevo que dependa de datos los crea `datos_demo`, no la prueba. Ingresan una vez
+  por perfil (`e2e-stack/sesiones.setup.ts`): login y renovación comparten un límite de 10
+  por minuto y por IP, y una suite que ingresa en cada prueba se bloquea a sí misma.
+  El perfil de equipo es `comercial@timu.co`, no el admin: `datos_demo` gasta el cupo de
+  120 por minuto del admin justo antes.
+- **Una prueba que no puede pasar se arregla o se borra**, con la razón en el cuerpo del
+  commit. No se salta, no se marca `xfail` y no se comenta.
+- **Un tipo de prueba nuevo llega cableado al CI en el mismo cambio**: un runner, una
+  carpeta fuera de los patrones, un proyecto de Playwright o un servicio que necesiten
+  las pruebas. Ese cambio actualiza también `ci.yml`, el guarda correspondiente y esta
+  tabla. Si no, esas pruebas no las corre nadie.
+- **Todo cambio de comportamiento llega con sus pruebas**, y toda corrección con la
+  prueba que habría detectado el fallo. Esa prueba debe fallar sin el arreglo.
+- **Antes de empujar se corre en local lo que el cambio toca**. No hay pull requests,
+  así que el CI llega cuando el commit ya está en `main`.
 
-## Pruebas
+Umbrales de cobertura: backend **89%** combinando líneas y ramas (`--cov-fail-under` en
+`pytest.ini`; la cobertura de ramas está activada en `pyproject.toml`), y panel **87%**
+de líneas, **86%** de sentencias y funciones y **76%** de ramas (`vitest.config.ts`).
+Están justo por debajo de lo medido para que no se degraden solos, no como objetivo.
+Cuando la cobertura sube, se suben en el mismo commit; bajarlos requiere una razón
+escrita en el cuerpo del commit. La cobertura del backend se mide con
+`concurrency = greenlet` porque los servicios corren dentro de `db.run_sync`. Sin eso,
+coverage deja de contar las líneas posteriores a la primera consulta y el informe miente.
 
-Las del backend corren **contra PostgreSQL**, no contra SQLite: el esquema usa JSONB,
-UUID nativo y `FOR UPDATE SKIP LOCKED`, y ninguna de las tres existe en SQLite; una
-suite verde sobre SQLite no diría nada sobre producción. `docker compose up -d db-test`
-levanta una base efímera en tmpfs en el puerto 5433, y `tests/conftest.py` aborta con
-instrucciones si no la encuentra.
-
-Cada prueba corre dentro de una transacción que se revierte al terminar, así que no se
-ven entre sí y no hay que limpiar tablas. Los marcadores `unit` e `integration` separan
-lo que necesita base de datos de lo que no (`--strict-markers` rechaza los inventados).
-
-Umbrales de cobertura: 70% en el backend, 60% en el panel. Están para que no se
-degraden solos, no como objetivo; bajarlos requiere una razón escrita en el PR.
-
-`.github/workflows/ci.yml` corre en **cada push y cada pull request**: formato, análisis
-estático, tipos, pruebas unitarias, de integración y de extremo a extremo. El release es
-un job más, condicionado a `main`, así que no existe forma de publicar una versión que
-no haya pasado la batería completa.
+`.github/workflows/ci.yml` ejecuta formato, análisis estático, tipos, todas las pruebas y el
+job del stack; el release depende de todos ellos, así que no sale una versión sin la
+batería completa.
 
 ## Commits y publicación de versiones
 
-Los commits no son sólo historial: **alimentan el release**. `semantic-release` los lee
-en cada empuje a `main` y decide la versión a partir de ellos, así que un mensaje mal
-formado es trabajo que no aparece en ninguna parte.
-
-- Formato Conventional Commits: `tipo(scope): asunto`, en español y en minúscula.
-- `feat` sube la *minor*, `fix`/`perf`/`revert` la *patch*; `docs`, `test`, `chore`,
-  `ci`, `build`, `style` y `refactor` no publican versión.
-- El **scope es libre** y sirve para agrupar el changelog: `feat(clinica)`,
-  `fix(cartera)` o `feat(backend)` entran todos en el mismo release. También vale sin
-  scope.
-- Un cambio rompiente se marca con `!` en la cabecera (`feat(servicios)!: …`), no sólo
-  con `BREAKING CHANGE` en el pie.
-- `.github/scripts/commits-sin-convencion.mjs` avisa en el CI de los mensajes que
-  `semantic-release` no sabría clasificar.
-
-**Mientras la versión sea 0.x**, `release.config.js` mantiene la regla
-`{ breaking: true, release: 'minor' }` para que un cambio rompiente no dispare el salto
-a 1.0.0. **Al publicar la 1.0.0 hay que borrar esa línea**: si se queda, un breaking
-daría 1.1.0 en lugar de 2.0.0.
+Todo está en [`CONTRIBUTING.md`](CONTRIBUTING.md): **léelo antes de cada commit**. Fija
+qué va en cada commit, el formato `tipo(scope): descripción`, la lista de scopes, la
+longitud, los pies permitidos (ningún `Co-Authored-By` ni enlace de sesión de Claude) y
+cómo `semantic-release` decide la versión.
 
 ## Convenciones de escritura
 
