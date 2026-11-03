@@ -18,7 +18,9 @@ export default defineConfig({
       include: ['src/**/*.{ts,tsx}'],
       // Sin lógica que probar: tipos, punto de entrada y utilidades de las propias pruebas.
       exclude: ['src/types/**', 'src/main.tsx', 'src/test/**', 'src/**/*.d.ts'],
-      thresholds: { lines: 60, functions: 60, branches: 60, statements: 60 },
+      // Justo por debajo de lo medido: frenan la degradación. Se suben cuando la
+      // cobertura sube y no se bajan sin una razón en el cuerpo del commit.
+      thresholds: { lines: 87, functions: 86, branches: 76, statements: 86 },
     },
   },
 })
