@@ -53,10 +53,6 @@ def get_by_identificador(db: Session, identificador: str) -> Usuario | None:
     return db.scalar(select(Usuario).where(columna == valor))
 
 
-def get_by_email(db: Session, email: str) -> Usuario | None:
-    return db.scalar(select(Usuario).where(Usuario.email == email.lower()))
-
-
 def _verificar_disponible(
     db: Session, email: str | None, telefono: str | None, excluir: UUID | None = None
 ) -> None:
