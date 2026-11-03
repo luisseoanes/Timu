@@ -98,7 +98,8 @@ def test_produccion_sin_variable_obligatoria_no_arranca():
         {"BACKEND_CORS_ORIGINS": ["*"]},
         {"POSTGRES_PASSWORD": "timu"},
         {"COOKIE_SECURE": False},
-        {"STORAGE_ACCESS_KEY": "minioadmin"},
+        {"STORAGE_ACCESS_KEY": "timu-local"},
+        {"STORAGE_SECRET_KEY": "timu-local-secreto"},
         {"STORAGE_PUBLIC_ENDPOINT_URL": "http://localhost:9000"},
     ],
 )

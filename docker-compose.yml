@@ -11,11 +11,11 @@ x-backend-env: &backend-env
   - path: ./backend/.env
     required: false
 
-# La API sube a MinIO por la red interna (minio:9000), pero las URL firmadas las abre el
-# navegador, que solo llega por el puerto publicado en el host. Va aqui y no en
-# backend/.env para que siga al puerto si se cambia TIMU_MINIO_PORT.
+# La API sube al almacenamiento por la red interna (almacenamiento:8333), pero las URL
+# firmadas las abre el navegador, que solo llega por el puerto publicado en el host. Va
+# aqui y no en backend/.env para que siga al puerto si se cambia TIMU_S3_PORT.
 x-backend-environment: &backend-environment
-  STORAGE_PUBLIC_ENDPOINT_URL: ${STORAGE_PUBLIC_ENDPOINT_URL:-http://localhost:${TIMU_MINIO_PORT:-9000}}
+  STORAGE_PUBLIC_ENDPOINT_URL: ${STORAGE_PUBLIC_ENDPOINT_URL:-http://localhost:${TIMU_S3_PORT:-9000}}
 
 services:
   db:
@@ -38,23 +38,29 @@ services:
     ports:
       - "${TIMU_REDIS_PORT:-6379}:6379"
 
-  # S3 de desarrollo. Cuando el cliente entregue su bucket basta con apuntar
-  # STORAGE_ENDPOINT_URL y las credenciales al real: el codigo no cambia.
-  minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:-minioadmin}
+  # S3 de desarrollo con SeaweedFS. MinIO dejo de publicar imagenes (Docker Hub y quay.io
+  # ya no las sirven), asi que un clon limpio no podia levantarlo. Cuando el cliente
+  # entregue su bucket basta con apuntar STORAGE_ENDPOINT_URL y las credenciales al real:
+  # el codigo no cambia. Las credenciales salen del mismo .env que la API y la identidad
+  # S3 exige firma, asi que las URL firmadas se validan como en S3.
+  almacenamiento:
+    image: chrislusf/seaweedfs:4.48
+    env_file: *backend-env
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        printf '{"identities":[{"name":"timu","credentials":[{"accessKey":"%s","secretKey":"%s"}],"actions":["Admin","Read","List","Write","Tagging"]}]}' \
+          "$$STORAGE_ACCESS_KEY" "$$STORAGE_SECRET_KEY" > /tmp/s3.json
+        exec weed server -dir=/data -s3 -s3.port=8333 -s3.config=/tmp/s3.json
     volumes:
-      - miniodata:/data
+      - almacenamiento:/data
     ports:
-      - "${TIMU_MINIO_PORT:-9000}:9000"
-      - "${TIMU_MINIO_CONSOLE_PORT:-9001}:9001"
+      - "${TIMU_S3_PORT:-9000}:8333"
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8333/healthz"]
       interval: 5s
-      retries: 10
+      start_period: 10s
+      retries: 20
 
   # Base de datos exclusiva de las pruebas de integracion: efimera y en tmpfs,
   # para no ensuciar la de desarrollo ni pagar la escritura a disco.
@@ -87,7 +93,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      minio:
+      almacenamiento:
         condition: service_healthy
 
   api:
@@ -176,5 +182,5 @@ services:
 
 volumes:
   pgdata:
-  miniodata:
+  almacenamiento:
   respaldos:

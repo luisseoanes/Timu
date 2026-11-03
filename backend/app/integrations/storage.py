@@ -1,7 +1,7 @@
 """F0-11 Almacenamiento de adjuntos clinicos (6.14), compatible S3.
 
 El cliente todavia no entrego el bucket, y esperarlo seria construir un apano local
-que luego habria que tirar. En su lugar hablamos S3 desde el primer dia contra MinIO
+que luego habria que tirar. En su lugar hablamos S3 desde el primer dia contra SeaweedFS
 —que implementa el mismo protocolo— levantado en docker compose. El dia que llegue el
 S3 real se cambian cuatro variables de entorno y no se toca una linea de codigo.
 
@@ -48,7 +48,7 @@ def _cliente_firmas():
     """Cliente con el que se firman las URL que abre el navegador.
 
     La firma S3v4 incluye el host, asi que no basta con reescribirlo despues: en docker
-    compose la API habla con `minio:9000`, que el navegador no resuelve, y la URL hay que
+    compose la API habla con `almacenamiento:8333`, que el navegador no resuelve, y la URL hay que
     firmarla ya con el host publico. Firmar no abre conexion, solo calcula la URL.
     Sin STORAGE_PUBLIC_ENDPOINT_URL (S3 real) se firma con el cliente de siempre.
     """
@@ -58,7 +58,7 @@ def _cliente_firmas():
 
 
 def asegurar_bucket() -> None:
-    """Crea el bucket si no existe. Solo para desarrollo con MinIO; en produccion el
+    """Crea el bucket si no existe. Solo para desarrollo con SeaweedFS; en produccion el
     bucket lo aprovisiona quien administra la cuenta."""
     cliente = _cliente()
     try:

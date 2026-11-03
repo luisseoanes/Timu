@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 /**
  * Recorridos de extremo a extremo contra el stack real (docker compose): panel, API,
- * PostgreSQL, Redis y MinIO de verdad, sin nada simulado. Los corre el job «Stack con un
+ * PostgreSQL, Redis y el almacenamiento S3 de verdad, sin nada simulado. Los corre el job «Stack con un
  * solo comando» del CI después de `scripts.datos_demo`, que crea los usuarios y datos que
  * recorren. `e2e/` sigue siendo la suite rápida con la API interceptada.
  *

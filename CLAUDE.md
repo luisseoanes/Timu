@@ -15,7 +15,7 @@ y respeta el criterio de aceptación que ya está escrito allí.
 ## Comandos
 
 ```bash
-# Todo el stack (api, worker, beat, db, redis, minio, web) en un solo comando.
+# Todo el stack (api, worker, beat, db, redis, almacenamiento S3, web) en un solo comando.
 # El servicio `inicializar` migra, carga catálogos, crea admin@timu.co / cambiar123 y el
 # bucket antes de que arranquen api, worker y beat. No hace falta copiar ningún .env:
 # backend/.env.example es la base y backend/.env (si existe) la sobrescribe.

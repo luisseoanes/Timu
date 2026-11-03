@@ -39,8 +39,8 @@ test.describe('equipo', () => {
     })
     expect(subida.ok()).toBeTruthy()
     const { foto_url } = await subida.json()
-    // La URL apunta al MinIO publicado en el host, no al nombre interno del contenedor.
-    expect(foto_url).not.toContain('minio:9000')
+    // La URL apunta al almacenamiento publicado en el host, no al nombre interno del contenedor.
+    expect(foto_url).not.toContain('almacenamiento:8333')
     const imagen = await page.request.get(foto_url)
     expect(imagen.status()).toBe(200)
     expect(imagen.headers()['content-type']).toBe('image/png')

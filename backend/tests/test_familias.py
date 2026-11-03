@@ -278,12 +278,12 @@ def test_url_firmada_de_vida_corta_y_con_nombre(monkeypatch, almacenamiento):
 
 @pytest.mark.unit
 def test_url_firmada_con_el_host_que_ve_el_navegador(monkeypatch, almacenamiento):
-    """En docker compose la API sube a minio:9000, pero el navegador solo llega por
+    """En docker compose la API sube a almacenamiento:8333, pero el navegador solo llega por
     localhost: la URL se firma con el host publico, porque la firma lo incluye."""
     from app.core.config import settings
     from app.integrations import storage
 
-    monkeypatch.setattr(settings, "STORAGE_ENDPOINT_URL", "http://minio:9000")
+    monkeypatch.setattr(settings, "STORAGE_ENDPOINT_URL", "http://almacenamiento:8333")
     monkeypatch.setattr(settings, "STORAGE_PUBLIC_ENDPOINT_URL", "http://localhost:9002")
     storage._cliente_publico.cache_clear()
     try:

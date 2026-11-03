@@ -16,7 +16,7 @@ operaciones y médicos), el **portal de familias** y el de la **clínica aliada*
 | Frontend | React 18 + TypeScript + Vite + React Query |
 | Base de datos | PostgreSQL 16 + SQLAlchemy 2 + Alembic |
 | Tareas programadas | Celery + Redis (`worker` ejecuta, `beat` programa) |
-| Adjuntos | S3 compatible (MinIO en desarrollo), siempre con URL firmada |
+| Adjuntos | S3 compatible (SeaweedFS en desarrollo), siempre con URL firmada |
 | Sesión | Cookies httpOnly: acceso corto y renovación que rota en cada uso |
 | WhatsApp | Meta Cloud API oficial |
 | Pagos | Wompi (webhooks firmados para la conciliación) |
@@ -31,7 +31,7 @@ docker compose up --build
 ```
 
 Un solo comando: el servicio `inicializar` aplica las migraciones, carga los catálogos,
-crea el usuario `admin@timu.co / cambiar123` y el bucket de adjuntos en MinIO, y solo
+crea el usuario `admin@timu.co / cambiar123` y el bucket de adjuntos, y solo
 entonces arrancan `api`, `worker` y `beat`. No hace falta copiar ningún `.env`:
 `backend/.env.example` es la base y `backend/.env`, si existe, la sobrescribe. Las
 integraciones externas (WhatsApp, Wompi, Maps, SMTP) se apagan solas mientras sus
@@ -40,7 +40,7 @@ variables estén vacías.
 Si otro proyecto ocupa algún puerto del host, cópialo en la raíz y cámbialo ahí:
 
 ```bash
-cp .env.example .env   # TIMU_API_PORT, TIMU_DB_PORT, TIMU_MINIO_PORT…
+cp .env.example .env   # TIMU_API_PORT, TIMU_DB_PORT, TIMU_S3_PORT…
 ```
 
 Servicios (puertos por defecto):
@@ -48,7 +48,7 @@ Servicios (puertos por defecto):
 - Panel: http://localhost:5173
 - API + Swagger: http://localhost:8000/docs
 - Health check: http://localhost:8000/health (base, Redis y workers)
-- Consola de MinIO: http://localhost:9001
+- Almacenamiento S3 (SeaweedFS): http://localhost:9000
 
 Datos de demostración (solo local) y migraciones nuevas con el stack ya arriba:
 

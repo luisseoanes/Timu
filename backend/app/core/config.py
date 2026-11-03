@@ -9,6 +9,8 @@ Ambiente = Literal["local", "test", "staging", "production"]
 # Valores de desarrollo que nunca pueden llegar a un ambiente desplegado.
 _SECRET_KEY_LOCAL = "cambiar-en-produccion"
 _POSTGRES_PASSWORD_LOCAL = "timu"
+_STORAGE_ACCESS_KEY_LOCAL = "timu-local"
+_STORAGE_SECRET_KEY_LOCAL = "timu-local-secreto"
 
 # F0-05 Variables sin las que el servicio no arranca, por ambiente desplegado.
 OBLIGATORIAS: dict[str, tuple[str, ...]] = {
@@ -120,16 +122,16 @@ class Settings(BaseSettings):
     COOKIE_DOMAIN: str | None = None
 
     # --- Almacenamiento de adjuntos (F0-11), compatible S3 -------------------------------------
-    # En desarrollo apunta a MinIO; en produccion, al S3 que entregue el cliente.
-    # Cambiar de uno a otro es cambiar estas variables, no el codigo.
-    STORAGE_ENDPOINT_URL: str | None = "http://minio:9000"
-    # Host con el que el navegador llega al almacenamiento, si no es el mismo que usa la
-    # API (en docker compose: minio:9000 por dentro, localhost por fuera). Vacio con S3 real.
+    # En desarrollo apunta al SeaweedFS del compose; en produccion, al S3 que entregue el
+    # cliente. Cambiar de uno a otro es cambiar estas variables, no el codigo.
+    STORAGE_ENDPOINT_URL: str | None = "http://almacenamiento:8333"
+    # Host con el que el navegador llega al almacenamiento, si no es el mismo que usa la API
+    # (en docker compose: almacenamiento:8333 por dentro, localhost por fuera). Vacio con S3.
     STORAGE_PUBLIC_ENDPOINT_URL: str | None = None
     STORAGE_REGION: str = "us-east-1"
     STORAGE_BUCKET: str = "timu-adjuntos"
-    STORAGE_ACCESS_KEY: str = "minioadmin"
-    STORAGE_SECRET_KEY: str = "minioadmin"
+    STORAGE_ACCESS_KEY: str = _STORAGE_ACCESS_KEY_LOCAL
+    STORAGE_SECRET_KEY: str = _STORAGE_SECRET_KEY_LOCAL
     STORAGE_URL_TTL_SEGUNDOS: int = 300
 
     # Correo saliente (recuperacion de clave, reportes). Vacio = solo se registra en el log.
@@ -172,8 +174,13 @@ class Settings(BaseSettings):
             errores.append("DEBUG debe estar apagado")
         if not self.COOKIE_SECURE:
             errores.append("COOKIE_SECURE debe estar encendido (el ambiente se sirve por HTTPS)")
-        if self.STORAGE_ACCESS_KEY == "minioadmin" or self.STORAGE_SECRET_KEY == "minioadmin":
-            errores.append("STORAGE_ACCESS_KEY y STORAGE_SECRET_KEY no pueden ser las de MinIO")
+        if (
+            self.STORAGE_ACCESS_KEY == _STORAGE_ACCESS_KEY_LOCAL
+            or self.STORAGE_SECRET_KEY == _STORAGE_SECRET_KEY_LOCAL
+        ):
+            errores.append(
+                "STORAGE_ACCESS_KEY y STORAGE_SECRET_KEY no pueden ser las de desarrollo"
+            )
         if self.STORAGE_PUBLIC_ENDPOINT_URL and "localhost" in self.STORAGE_PUBLIC_ENDPOINT_URL:
             errores.append("STORAGE_PUBLIC_ENDPOINT_URL no admite localhost")
         if any("localhost" in o or o == "*" for o in self.BACKEND_CORS_ORIGINS):

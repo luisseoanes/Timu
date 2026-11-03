@@ -223,7 +223,7 @@ class AlmacenamientoMemoria:
 
 @pytest.fixture(autouse=True)
 def almacenamiento(monkeypatch) -> AlmacenamientoMemoria:
-    """Sin MinIO en las pruebas: los adjuntos quedan en memoria."""
+    """Sin almacenamiento S3 en las pruebas: los adjuntos quedan en memoria."""
     falso = AlmacenamientoMemoria()
     falso.url_firmada_real = storage.url_firmada  # type: ignore[attr-defined]
     monkeypatch.setattr(storage, "guardar_contenido", falso.guardar_contenido)

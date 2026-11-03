@@ -88,7 +88,8 @@ Reglas que atraviesan todo el backend:
   líneas de log para poder seguirla de punta a punta. Sentry se activa solo si hay
   `SENTRY_DSN`, así que en local no estorba y en producción no se olvida.
 - **Los adjuntos van a `app/integrations/storage.py`**, que habla S3. En desarrollo
-  apunta a MinIO y en producción al bucket del cliente: cambian las variables `STORAGE_*`,
+  apunta al servicio `almacenamiento` del compose (SeaweedFS; MinIO dejó de publicar
+  imágenes) y en producción al bucket del cliente: cambian las variables `STORAGE_*`,
   no el código. Nada se sirve público, todo con `url_firmada()`, que firma con
   `STORAGE_PUBLIC_ENDPOINT_URL` (el host que ve el navegador; en compose lo fija el propio
   compose).
