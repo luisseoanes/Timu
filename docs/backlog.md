@@ -22,8 +22,8 @@ Revisado el 2026-11-04 contra el código de `main`. Cada unidad lleva uno de tre
 | Fase 1 — Núcleo operativo | 36 | 36 | 0 | 0 |
 | Fase 2 — Operación y clínica | 21 | 21 | 0 | 0 |
 | Fase 3 — Portal, pagos y autogestión | 20 | 20 | 0 | 0 |
-| Fase 4 — Inteligencia y cierre | 12 | 6 | 3 | 3 |
-| **Total** | **101** | **93** | **5** | **3** |
+| Fase 4 — Inteligencia y cierre | 12 | 7 | 3 | 2 |
+| **Total** | **101** | **94** | **5** | **2** |
 
 ## Base técnica transversal
 
@@ -242,7 +242,7 @@ Dashboard, apoyo de IA, migración y estabilización.
 | ID | Trabajo | Criterio de aceptación | Req. | Estado |
 | --- | --- | --- | --- | --- |
 | `F4-QAA-01` | Pruebas integradas de los ciclos completos | Los recorridos de captar, afiliar, cobrar, agendar, atender, prevenir y fidelizar corren de extremo a extremo en automático. | Sección 18 | Parcial: hay ciclos parciales (afiliación, vacunación, atención virtual) y cinco recorridos en `e2e-stack/`; ninguno recorre el ciclo completo. |
-| `F4-QAA-02` | Pruebas de carga y ajuste de índices | El sistema sostiene el volumen proyectado a doce meses dentro de los tiempos acordados. | Escalabilidad | Pendiente |
+| `F4-QAA-02` | Pruebas de carga y ajuste de índices | El sistema sostiene el volumen proyectado a doce meses dentro de los tiempos acordados. | Escalabilidad | Hecho: `scripts/datos_volumen.py` (5.000 familias a 12 meses) e `infra/carga/recorrido.js` (k6, 20 usuarios): p95 de 54 ms en consultas y 7,85 ms en el dashboard frente a 500 ms y 2 s. Índices de la `0024` y la `0025` y guarda de `EXPLAIN` sobre los caminos calientes. Versión reducida en el job del stack. |
 | `F4-DOC-01` | Documentación técnica y de operación | Manual por perfil, documentación de la API y guía de despliegue y recuperación, entregadas a TIMU. | Sección E | Parcial: hay OpenAPI, README, guía del panel y guía de respaldos; faltan el manual por perfil y la guía de despliegue. |
 | `F4-EST-01` | Estabilización y salida a producción | Lista de verificación de seguridad, respaldos, monitoreo y plan de reversa ejecutados antes del corte. | Sección D | Pendiente |
 

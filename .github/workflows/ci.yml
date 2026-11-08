@@ -238,6 +238,18 @@ jobs:
           path: frontend/playwright-report-stack/
           retention-days: 7
 
+      # Despues de los recorridos, para no cambiarles los datos. Version reducida de la prueba
+      # de carga (F4-QAA-02): el 10 % del volumen proyectado y 4 usuarios durante un minuto.
+      # La completa se corre en local (CLAUDE.md, "Prueba de carga").
+      - name: Volumen sintetico
+        run: docker compose exec -T api python -m scripts.datos_volumen --escala 0.1
+
+      - name: Prueba de carga reducida
+        env:
+          CARGA_VUS: 4
+          CARGA_DURACION: 1m
+        run: docker compose --profile carga run --rm carga
+
       - name: Estado y registros
         if: failure()
         run: |

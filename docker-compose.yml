@@ -217,6 +217,21 @@ services:
       db:
         condition: service_healthy
 
+  # Prueba de carga (F4-QAA-02) sobre el volumen de scripts.datos_volumen; ver CLAUDE.md.
+  # Va por la red interna directo a la API, que es lo que se mide.
+  carga:
+    profiles: [carga]
+    image: grafana/k6:2.2.0
+    command: run /carga/recorrido.js
+    environment:
+      VUS: ${CARGA_VUS:-20}
+      DURACION: ${CARGA_DURACION:-5m}
+    volumes:
+      - ./infra/carga:/carga:ro
+    depends_on:
+      api:
+        condition: service_healthy
+
   web:
     build: ./frontend
     environment:

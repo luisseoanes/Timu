@@ -56,6 +56,28 @@ npm run test:e2e                    # Playwright con la API interceptada (requie
 npm run test:e2e:stack              # recorridos contra el stack real: docker compose up + datos_demo antes
 ```
 
+### Prueba de carga
+
+Mide el volumen proyectado a 12 meses (5.000 familias, un año de cartera, servicios y
+mensajes) con 20 usuarios simultáneos, y falla si el p95 pasa de 500 ms en las consultas o
+de 2 s en el dashboard, o si falla más del 1 % de las peticiones (F4-QAA-02). Mete datos
+sintéticos en la base, así que se corre en un proyecto aparte:
+
+```bash
+docker compose stop
+docker compose -p timu-carga up --build -d
+docker compose -p timu-carga exec api python -m scripts.datos_demo
+docker compose -p timu-carga exec api python -m scripts.datos_volumen   # ~1 min; --escala para otro tamaño
+docker compose -p timu-carga --profile carga run --rm carga             # k6, 5 min; CARGA_VUS y CARGA_DURACION
+docker compose -p timu-carga down -v --rmi local && docker compose up -d
+```
+
+El escenario está en `infra/carga/recorrido.js`. Cada usuario virtual ingresa con su propio
+usuario (`datos_volumen` crea 25 del equipo y 25 del portal) y deja de 1 a 3 s entre
+peticiones: con una sesión compartida se mediría el límite de 120 peticiones por minuto y
+por usuario, no la aplicación. El CI corre una versión reducida (10 % del volumen, 4
+usuarios, 1 minuto) en el job del stack.
+
 En el backend `python3 -m venv` no funciona en la máquina de Pedro: usa
 `uv venv --python 3.12` (ver la memoria del proyecto).
 
@@ -122,12 +144,15 @@ parte de las propias suites; ninguno se desactiva:
 | `frontend/src/test/setup.ts` | Una petición del panel que ninguna prueba simuló con MSW: la prueba falla en lugar de seguir en verde con un error de red que nadie miró. Los catálogos comunes van en `frontend/src/test/handlers.ts`. |
 | `forbidOnly` en `frontend/playwright.config.ts` y `frontend/playwright.stack.config.ts` | Un `.only` en e2e cuando corre en CI. |
 | Umbrales de cobertura | Que la cobertura baje del mínimo (abajo). |
+| Umbrales `count>0` de `infra/carga/recorrido.js` | Una prueba de carga que no llegó a hacer peticiones: sin muestras, k6 da por cumplido cualquier umbral de tiempos. |
 
 Reglas que mantienen esto vivo:
 
 - **Los pasos de pruebas del CI corren las suites enteras**: `pytest`,
   `npm run test:coverage`, `npm run test:e2e` y, en el job del stack, `npm run test:e2e:stack`,
-  sin `-m`, `-k`, rutas ni filtros. Para ir rápido en local se filtra; el CI nunca.
+  sin `-m`, `-k`, rutas ni filtros. Para ir rápido en local se filtra; el CI nunca. La única
+  excepción, decidida a propósito, es la prueba de carga: el CI corre el mismo escenario con
+  menos volumen, usuarios y duración, y la completa se corre en local.
 - **Hay dos e2e y no se sustituyen**: `e2e/` intercepta la API y prueba el panel aislado,
   rápido y determinista; `e2e-stack/` recorre panel, portal y clínica aliada contra el stack
   real con los usuarios de `scripts.datos_demo`, en el job «Stack con un solo comando». Un
