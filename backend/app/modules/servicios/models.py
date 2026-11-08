@@ -8,6 +8,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -118,6 +119,7 @@ class Pendiente(Base, UUIDMixin, TimestampMixin, Auditable):
     """6.6 Pendiente derivado de una atencion. Si requiere autorizacion, no avanza sin ella."""
 
     __tablename__ = "pendientes"
+    __table_args__ = (Index("ix_pendientes_created_at", "created_at"),)
 
     servicio_origen_id: Mapped[UUID] = mapped_column(ForeignKey("servicios.id"), index=True)
     descripcion: Mapped[str] = mapped_column(Text)

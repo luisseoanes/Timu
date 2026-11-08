@@ -18,6 +18,7 @@ os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("DEBUG", "false")
 
 from collections.abc import AsyncGenerator, Iterator  # noqa: E402
+from contextlib import contextmanager  # noqa: E402
 from pathlib import Path  # noqa: E402
 from typing import Any  # noqa: E402
 
@@ -28,11 +29,15 @@ from httpx import ASGITransport, AsyncClient  # noqa: E402
 from sqlalchemy import create_engine, make_url, select, text  # noqa: E402
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine  # noqa: E402
 
+import app.workers.tasks.campanas  # noqa: E402, F401
 import app.workers.tasks.cartera  # noqa: E402, F401  registra los manejadores del outbox
 import app.workers.tasks.comunicaciones  # noqa: E402, F401
+import app.workers.tasks.dashboard  # noqa: E402, F401
 import app.workers.tasks.encuestas  # noqa: E402, F401
 import app.workers.tasks.familias  # noqa: E402, F401
 import app.workers.tasks.ia  # noqa: E402, F401
+import app.workers.tasks.outbox  # noqa: E402, F401
+import app.workers.tasks.preventivos  # noqa: E402, F401
 import app.workers.tasks.rutas  # noqa: E402, F401
 from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
@@ -57,6 +62,7 @@ from app.models import Base as _  # noqa: E402, F401  asegura el registro de tod
 from app.modules.auth.models import Usuario  # noqa: E402
 from app.modules.catalogos.service import cargar as cargar_catalogos  # noqa: E402
 from app.modules.reglas.service import sembrar as sembrar_reglas  # noqa: E402
+from app.workers import tasks as _tareas  # noqa: E402
 from app.workers.celery_app import celery_app  # noqa: E402
 
 # Dueno del esquema: solo aplica las migraciones y da LOGIN al rol de la aplicacion.
@@ -248,6 +254,40 @@ async def db() -> AsyncGenerator[AsyncSession, None]:
         await trans.rollback()
         await conn.close()
         await engine.dispose()
+
+
+MODULOS_CON_SESION_WORKER = (
+    _tareas.campanas,
+    _tareas.cartera,
+    _tareas.comunicaciones,
+    _tareas.dashboard,
+    _tareas.encuestas,
+    _tareas.familias,
+    _tareas.ia,
+    _tareas.outbox,
+    _tareas.preventivos,
+    _tareas.rutas,
+)
+
+
+@pytest.fixture
+def en_worker(db, monkeypatch):
+    """Ejecuta una tarea como lo haria el worker, pero con la sesion de la prueba: cada
+    `with sesion_worker()` de la tarea recibe esa sesion, que se revierte al terminar."""
+
+    async def ejecutar(tarea, *args):
+        def dentro(sesion):
+            @contextmanager
+            def sesion_de_la_prueba():
+                yield sesion
+
+            for modulo in MODULOS_CON_SESION_WORKER:
+                monkeypatch.setattr(modulo, "sesion_worker", sesion_de_la_prueba)
+            return tarea(*args)
+
+        return await db.run_sync(dentro)
+
+    return ejecutar
 
 
 class Despachadas:

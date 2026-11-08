@@ -57,7 +57,7 @@ class Contrato(Base, UUIDMixin, TimestampMixin, Auditable):
     numero: Mapped[str] = mapped_column(String(20), unique=True)
     familia_id: Mapped[UUID] = mapped_column(ForeignKey("familias.id"), index=True)
     plan_id: Mapped[UUID] = mapped_column(ForeignKey("planes.id"), index=True)
-    fecha_inicio: Mapped[date] = mapped_column(Date)
+    fecha_inicio: Mapped[date] = mapped_column(Date, index=True)
     fecha_renovacion: Mapped[date] = mapped_column(Date, index=True)
     fecha_fin: Mapped[date | None] = mapped_column(Date)
     dia_corte: Mapped[int] = mapped_column(Integer, default=1)

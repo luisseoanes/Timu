@@ -6,7 +6,6 @@ devuelva lo que espera quien la mira en Flower, y sus ramas propias (reintentos,
 la planificacion, IA no disponible).
 """
 
-from contextlib import contextmanager
 from uuid import uuid4
 
 import pytest
@@ -26,39 +25,6 @@ from app.workers.tasks import (
     preventivos,
     rutas,
 )
-
-MODULOS = (
-    campanas,
-    cartera,
-    comunicaciones,
-    dashboard,
-    encuestas,
-    familias,
-    ia,
-    outbox,
-    preventivos,
-    rutas,
-)
-
-
-@pytest.fixture
-def en_worker(db, monkeypatch):
-    """Ejecuta una tarea como lo haria el worker, pero con la sesion de la prueba: cada
-    `with sesion_worker()` de la tarea recibe esa sesion, que se revierte al terminar."""
-
-    async def ejecutar(tarea, *args):
-        def dentro(sesion):
-            @contextmanager
-            def sesion_de_la_prueba():
-                yield sesion
-
-            for modulo in MODULOS:
-                monkeypatch.setattr(modulo, "sesion_worker", sesion_de_la_prueba)
-            return tarea(*args)
-
-        return await db.run_sync(dentro)
-
-    return ejecutar
 
 
 @pytest.mark.unit

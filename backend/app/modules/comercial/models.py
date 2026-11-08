@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.auditoria import Auditable
@@ -15,6 +15,8 @@ class Interesado(Base, UUIDMixin, TimestampMixin, Auditable):
     responsable. Al afiliarse queda atada a la familia."""
 
     __tablename__ = "interesados"
+    # Listado del embudo: los mas recientes primero, paginado.
+    __table_args__ = (Index("ix_interesados_created_at", "created_at"),)
     __checks__ = {
         "telefono_formato": "telefono IS NULL OR telefono ~ '^\\+[1-9][0-9]{7,14}$'",
         "email_formato": "email IS NULL OR email ~ '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$'",

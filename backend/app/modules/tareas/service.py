@@ -4,16 +4,16 @@ from datetime import timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Select, String, case, cast, select
+from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
 from app.modules.tareas.models import Tarea
 
-ORDEN_PRIORIDAD = case(
-    {"alta": 0, "media": 1, "baja": 2}, value=cast(Tarea.prioridad, String), else_=3
-)
+# El enum `prioridad` se declara alta, media, baja: ordenar por la columna es ordenar por
+# urgencia, y lo sirve el indice ix_tareas_bandeja (un CASE no lo podria usar).
+ORDEN_PRIORIDAD = Tarea.prioridad
 
 
 def crear(

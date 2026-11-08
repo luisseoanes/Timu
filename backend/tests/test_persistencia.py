@@ -15,7 +15,7 @@ from uuid import uuid4
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import CheckConstraint, create_engine, text
+from sqlalchemy import CheckConstraint, create_engine, make_url, text
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -36,6 +36,7 @@ from app.core.database import (
 )
 from app.core.deps import get_alcance, get_current_user
 from app.core.enums import Rol
+from app.core.permisos_db import CATALOGOS
 from app.core.security import hash_password
 from app.modules.auth.models import Usuario
 from app.modules.catalogos.models import Especie
@@ -947,3 +948,105 @@ async def test_la_aplicacion_tiene_limites_de_tiempo(db: AsyncSession):
         "lock_timeout": "10s",
         "idle_in_transaction_session_timeout": "1min",
     }
+
+
+# Tablas acotadas por naturaleza: configuracion y catalogos, que no crecen con el negocio.
+# Recorrerlas enteras es lo correcto.
+_ACOTADAS = frozenset(
+    {
+        "arboles_conversacion",
+        "campanas",
+        "casos_prueba_ia",
+        "clinicas_aliadas",
+        "configuraciones_encuesta",
+        "consumo_mapas",
+        "convenios_aliadas",
+        "plantillas_consulta",
+        "prompts_ia",
+        "reportes_programados",
+        "respuestas_virtuales",
+        "segmentos",
+        "transiciones_estado",
+    }
+)
+# Recorridos completos a proposito: procesos por lotes que leen casi toda la tabla, donde
+# el Seq Scan es el plan optimo. (tabla, inicio del FROM) -> motivo.
+_RECORRIDOS_A_PROPOSITO = {
+    (
+        "contratos",
+        "FROM contratos WHERE contratos.estado != ",
+    ): "revision diaria de cartera: todos los contratos no cancelados",
+}
+# Caminos calientes: los listados del panel y las tareas periodicas del worker.
+_LISTADOS = (
+    "/api/v1/familias?q=Ana",
+    "/api/v1/familias?orden=titular_nombre",
+    "/api/v1/tareas",
+    "/api/v1/tareas?mias=true",
+    "/api/v1/servicios",
+    "/api/v1/pendientes",
+    "/api/v1/cartera/contratos?solo_mora=true",
+    "/api/v1/encuestas",
+    "/api/v1/comercial/interesados",
+    "/api/v1/rutas?fecha=2026-11-05",
+    "/api/v1/dashboard/indicadores?desde=2026-10-01&hasta=2026-10-31",
+    "/api/v1/preventivos",
+)
+
+
+def _tablas_recorridas(plan: dict[str, Any]) -> set[str]:
+    propias = {plan["Relation Name"]} if plan.get("Node Type") == "Seq Scan" else set()
+    return propias.union(*(_tablas_recorridas(hijo) for hijo in plan.get("Plans", [])))
+
+
+async def test_los_caminos_calientes_no_recorren_tablas_enteras(
+    client: AsyncClient, db: AsyncSession, headers, en_worker
+):
+    """Guarda de volumen: cada sentencia de los listados y de las tareas periodicas se
+    analiza con EXPLAIN (GENERIC_PLAN) y enable_seqscan = off. Si aun asi recorre entera una
+    tabla que crece con el negocio, ningun indice la sirve: con volumen real seria lenta."""
+    import psycopg
+    from sqlalchemy import event
+    from sqlalchemy.engine import Engine
+
+    from app.workers.celery_app import celery_app
+
+    capturadas: set[str] = set()
+
+    def capturar(conn, cursor, statement, parameters, context, executemany) -> None:
+        if re.match(r"\s*(SELECT|UPDATE|DELETE|WITH)\b", statement, re.I) and (
+            "set_config" not in statement
+        ):
+            capturadas.add(statement)
+
+    event.listen(Engine, "before_cursor_execute", capturar)
+    try:
+        for url in _LISTADOS:
+            resp = await client.get(url, headers=headers)
+            assert resp.status_code == 200, (url, resp.text)
+        celery_app.loader.import_default_modules()
+        for entrada in celery_app.conf.beat_schedule.values():
+            await en_worker(celery_app.tasks[entrada["task"]])
+    finally:
+        event.remove(Engine, "before_cursor_execute", capturar)
+
+    # Protocolo simple (ClientCursor): un plan generico admite $1 sin valores.
+    dsn = make_url(URL_SYNC).set(drivername="postgresql").render_as_string(hide_password=False)
+    recorridas: dict[str, set[str]] = {}
+    with psycopg.connect(dsn, cursor_factory=psycopg.ClientCursor, autocommit=True) as conn:
+        conn.execute("SET enable_seqscan = off")
+        for sql in capturadas:
+            fila = conn.execute("EXPLAIN (GENERIC_PLAN, FORMAT JSON) " + sql).fetchone()
+            assert fila is not None
+            tablas = _tablas_recorridas(fila[0][0]["Plan"]) - _ACOTADAS - set(CATALOGOS)
+            plano = " ".join(sql.split())
+            tablas = {
+                t
+                for t in tablas
+                if not any(t == tp and desde in plano for tp, desde in _RECORRIDOS_A_PROPOSITO)
+            }
+            for tabla in tablas:
+                recorridas.setdefault(tabla, set()).add(plano[plano.find(" FROM ") :][:300])
+    assert recorridas == {}, "Recorren la tabla entera:\n" + "\n".join(
+        f"{t}: {q}" for t, qs in sorted(recorridas.items()) for q in sorted(qs)
+    )

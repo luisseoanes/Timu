@@ -226,8 +226,16 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
   segunda capa y para responder 404, y lo que filtra columnas (la vista por perfil de la
   historia clínica) también sigue en Python: RLS filtra filas.
 - **Lo que crece con el negocio se consulta por índice.** Toda clave foránea lleva
-  `index=True` (`test_toda_llave_foranea_tiene_indice`): cruzar por una llave foránea sin
-  índice, y las políticas de RLS que la consultan, recorre la tabla entera.
+  `index=True` (`test_toda_llave_foranea_tiene_indice`).
+  `test_los_caminos_calientes_no_recorren_tablas_enteras` recorre los listados del panel y
+  todas las tareas del beat, captura cada sentencia y la analiza con
+  `EXPLAIN (GENERIC_PLAN)` y `enable_seqscan = off`. Si aun así una tabla que crece con el
+  negocio se recorre entera, ningún índice sirve esa consulta y la prueba falla. Un listado
+  o una tarea nueva se añade a `_LISTADOS`, o entra sola si es del beat. Las tablas acotadas
+  por naturaleza van en `_ACOTADAS`, y los procesos por lotes que leen casi toda la tabla a
+  propósito en `_RECORRIDOS_A_PROPOSITO`, siempre con su motivo. Ordenar por una expresión
+  (`CASE`) impide usar un índice: la bandeja de tareas ordena por el enum `prioridad`, cuyo
+  orden de declaración es el de urgencia.
 - **Límites y pool.** `timu_app` tiene `statement_timeout` de 30 s, `lock_timeout` de 10 s e
   `idle_in_transaction_session_timeout` de 60 s (migración `0024`). En compose, API, worker y
   beat llegan a la base por PgBouncer en modo transacción (`APP_DB_HOST`); el contexto de RLS
@@ -297,4 +305,4 @@ Trampas conocidas:
 
 - **Nunca dos `pytest` a la vez contra `db-test`**: el fixture `esquema` borra y recrea el esquema al arrancar y rompe la otra ejecución.
 - Dentro de una prueba todo comparte transacción y `created_at`: no se compara orden por fecha de creación; se comparan conjuntos.
-- Clientes de terceros: se sustituye `httpx.Client` por uno con `httpx.MockTransport` (fixture `red` en `tests/test_integraciones.py`); tareas de Celery con la sesión de la prueba: fixture `en_worker` en `tests/test_tareas_celery.py`.
+- Clientes de terceros: se sustituye `httpx.Client` por uno con `httpx.MockTransport` (fixture `red` en `tests/test_integraciones.py`); tareas de Celery con la sesión de la prueba: fixture `en_worker` en `tests/conftest.py`.

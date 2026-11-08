@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import Date, DateTime, ForeignKey, String, Text
+from sqlalchemy import Date, DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.auditoria import Auditable
@@ -13,6 +13,9 @@ class Tarea(Base, UUIDMixin, TimestampMixin, Auditable):
     """F1-SER-06 Tarea interna. `clave` evita que un proceso diario cree la misma dos veces."""
 
     __tablename__ = "tareas"
+    # Orden de la bandeja: prioridad (enum: alta, media, baja), vencimiento con los sin fecha
+    # al final (el orden por defecto de un indice btree), antiguedad y desempate.
+    __table_args__ = (Index("ix_tareas_bandeja", "prioridad", "vence_el", "created_at", "id"),)
     __checks__ = {
         "cierre_coherente": "(estado = 'cerrada') = (cerrada_en IS NOT NULL)",
         "titulo_no_vacio": "btrim(titulo) <> ''",

@@ -312,6 +312,35 @@ async def test_bandeja_asigna_prioriza_y_cierra(client: AsyncClient, admin, head
     assert otra_vez.status_code == 422
 
 
+async def test_bandeja_desempata_por_vencimiento_con_las_sin_fecha_al_final(
+    client: AsyncClient, headers
+):
+    """Mismo orden que sirve el indice ix_tareas_bandeja: prioridad y luego vencimiento."""
+    for titulo, prioridad, dias in (
+        ("Sin fecha", "alta", None),
+        ("En una semana", "alta", 7),
+        ("Manana", "alta", 1),
+        ("Baja hoy", "baja", 0),
+    ):
+        await client.post(
+            "/api/v1/tareas",
+            json={
+                "titulo": titulo,
+                "area": "operaciones",
+                "prioridad": prioridad,
+                "vence_en_dias": dias,
+            },
+            headers=headers,
+        )
+    bandeja = (await client.get("/api/v1/tareas", headers=headers)).json()
+    assert [t["titulo"] for t in bandeja["items"]] == [
+        "Manana",
+        "En una semana",
+        "Sin fecha",
+        "Baja hoy",
+    ]
+
+
 # --- Agenda: franjas (F1-SER-02) y listados ---------------------------------------------------
 
 
