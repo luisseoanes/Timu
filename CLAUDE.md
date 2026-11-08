@@ -7,10 +7,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 TIMU, plataforma de gestión veterinaria por afiliación. El contrato funcional
 vive en `docs/propuesta-timu-puntos-15-19.md` y el desglose ejecutable en
 `docs/backlog.md` (101 unidades con ID `fase-módulo-consecutivo`, p. ej. `F1-CAR-08`).
+Lo que TIMU pidió está en
+[`docs/documento-requerimientos-funcionales.md`](docs/documento-requerimientos-funcionales.md),
+transcripción literal del documento de requerimientos al que responde la propuesta; no se
+edita.
 
-Los comentarios del código citan requisitos por número (`6.10`, `6.16`, `sección C`): son
-referencias a ese documento. Al implementar un módulo pendiente, busca su ID en el backlog
-y respeta el criterio de aceptación que ya está escrito allí.
+El código y el backlog citan los dos documentos así:
+
+- Requisito por número (`6.10`, `6.16`) o sección por número (`Sección 8`, `Sección 14`): el
+  documento de requerimientos. La propuesta repite los números `6.x` en su tabla B y
+  reutiliza los números 15 a 19 porque responde a esos puntos, pero lo que se pide está en
+  el documento de requerimientos.
+- Sección por letra (`sección A`, `Sección C`): los apartados A a H de la sección 15 de la
+  propuesta.
+
+Al implementar un módulo pendiente, busca su ID en el backlog y respeta el criterio de
+aceptación que ya está escrito allí.
 
 ## Comandos
 
