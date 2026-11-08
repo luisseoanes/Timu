@@ -41,7 +41,7 @@ cd backend && pip install -r requirements-dev.txt
 uvicorn app.main:app --reload
 
 docker compose up -d db-test        # PostgreSQL de pruebas (puerto 5433, perfil `test`: el up general no la levanta). Sin esto, pytest aborta.
-pytest                              # suite completa, con cobertura y umbral del 89%
+pytest                              # suite completa, con cobertura y umbral del 91%
 pytest -m unit                      # sólo lo que no toca la base de datos
 pytest tests/test_alcance.py::test_una_familia_solo_se_ve_a_si_misma   # una sola prueba
 ruff format . && ruff check . && mypy app
@@ -172,7 +172,7 @@ Reglas que mantienen esto vivo:
 - **Antes de empujar se corre en local lo que el cambio toca**. No hay pull requests,
   así que el CI llega cuando el commit ya está en `main`.
 
-Umbrales de cobertura: backend **89%** combinando líneas y ramas (`--cov-fail-under` en
+Umbrales de cobertura: backend **91%** combinando líneas y ramas (`--cov-fail-under` en
 `pytest.ini`; la cobertura de ramas está activada en `pyproject.toml`), y panel **87%**
 de líneas, **86%** de sentencias y funciones y **76%** de ramas (`vitest.config.ts`).
 Están justo por debajo de lo medido para que no se degraden solos, no como objetivo.
