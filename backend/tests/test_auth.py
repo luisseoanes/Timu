@@ -110,6 +110,27 @@ async def test_login_por_telefono(client: AsyncClient, db):
     assert sesion["usuario"]["email"] == "tel@timu.co"
 
 
+async def test_un_email_que_ya_no_pasa_la_validacion_no_tumba_el_ingreso_ni_el_listado(
+    client: AsyncClient, db, headers
+):
+    """Al leer no se revalida (como FamiliaRead): un email guardado por SQL o por una
+    migracion, o uno que una version nueva de email-validator pase a rechazar (dominio
+    reservado), no puede dejar a esa cuenta sin ingresar ni romper la lista entera."""
+    await crear_usuario(db, "vieja@cuenta.test", Rol.COMERCIAL)
+    sesion = await _login(client, "vieja@cuenta.test")
+    assert sesion["usuario"]["email"] == "vieja@cuenta.test"
+    resp = await client.get("/api/v1/auth/usuarios", headers=headers)
+    assert resp.status_code == 200, resp.text
+    assert "vieja@cuenta.test" in {u["email"] for u in resp.json()["items"]}
+    # Al escribir si se valida: por la API no entra uno nuevo con ese dominio.
+    resp = await client.post(
+        "/api/v1/auth/usuarios",
+        json={"email": "nueva@cuenta.test", "nombre": "Nueva", "rol": "comercial"},
+        headers=headers,
+    )
+    assert resp.status_code == 422
+
+
 # --- F1-AUT-03 --------------------------------------------------------------------------------
 
 

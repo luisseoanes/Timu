@@ -33,7 +33,10 @@ class UsuarioRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    email: EmailStr | None
+    # Al leer no se revalida (como FamiliaRead): un email guardado por SQL o que una version
+    # nueva de email-validator pase a rechazar no puede dejar a la cuenta sin ingresar ni
+    # tumbar el listado entero con un 500. Se valida al escribir (UsuarioCreate).
+    email: str | None
     telefono: str | None
     nombre: str
     rol: Rol
