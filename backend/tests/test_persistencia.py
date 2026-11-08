@@ -12,7 +12,7 @@ import re
 from datetime import date
 from enum import StrEnum
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from httpx import AsyncClient
@@ -26,10 +26,12 @@ from app.core.config import ROL_APLICACION
 from app.core.database import (
     BORRABLES,
     CLAVE_CONTEXTO,
+    LLAVES_PUBLICAS,
     SISTEMA,
     SQL_ROL_CONECTADO,
     Base,
     ContextoDb,
+    acotar_publico,
     fijar_contexto,
     motivo_rol_privilegiado,
     nombre_enum_db,
@@ -37,7 +39,7 @@ from app.core.database import (
 )
 from app.core.deps import get_alcance, get_current_user
 from app.core.enums import Rol
-from app.core.permisos_db import CATALOGOS
+from app.core.permisos_db import CATALOGOS, CONDICIONES
 from app.core.security import hash_password
 from app.modules.auth.models import Usuario
 from app.modules.catalogos.models import Especie
@@ -917,6 +919,132 @@ async def test_una_aliada_no_alcanza_familias_sin_remision_de_su_clinica(db: Asy
             " VALUES ('x', 'operaciones', 'media', 'abierta', :f)",
             f=familia.id,
         )
+
+
+def _publico(**llaves: object) -> ContextoDb:
+    return ContextoDb(rol="publico", llaves=tuple(sorted((k, str(v)) for k, v in llaves.items())))
+
+
+async def _usuario(db: AsyncSession, email: str, rol: str = "familia") -> UUID:
+    return await db.scalar(
+        text(
+            "INSERT INTO usuarios (nombre, email, hashed_password, rol, activo)"
+            " VALUES ('Prueba', :e, 'h', CAST(:r AS rol), true) RETURNING id"
+        ),
+        {"e": email, "r": rol},
+    )
+
+
+async def test_publico_sin_llaves_no_ve_ninguna_fila(db: AsyncSession):
+    """Sin declarar sobre quien actua, una peticion publica no ve nada fuera de los catalogos,
+    tampoco con SQL directo."""
+    await db.run_sync(fabricas.familia)
+    await _usuario(db, "sin-llaves@timu.co")
+    con_datos = []
+    for tabla in CONDICIONES["publico"]:
+        if await db.scalar(text(f"SELECT count(*) FROM {tabla}")):
+            con_datos.append(tabla)
+            assert await _como(db, _publico(), f"SELECT count(*) FROM {tabla}") == 0, tabla
+    assert {"familias", "mascotas", "usuarios"} <= set(con_datos)
+
+
+async def test_un_formulario_publico_solo_alcanza_la_familia_de_su_documento(db: AsyncSession):
+    ana = await db.run_sync(fabricas.familia, telefono="+573001110201")
+    beto = await db.run_sync(fabricas.familia, telefono="+573001110202")
+    como_ana = _publico(tipo_documento=ana.tipo_documento, documento=ana.documento)
+    assert await _como(db, como_ana, "SELECT array_agg(id) FROM familias") == [ana.id]
+    ajenas = "SELECT count(*) FROM mascotas WHERE familia_id <> :a"
+    assert await _como(db, como_ana, ajenas, a=ana.id) == 0
+    propias = "SELECT count(*) FROM mascotas WHERE familia_id = :a"
+    assert await _como(db, como_ana, propias, a=ana.id) == 1
+    with pytest.raises(Exception, match="row-level security"):
+        await _como(
+            db,
+            como_ana,
+            "INSERT INTO mascotas (familia_id, nombre, especie, activa)"
+            " VALUES (:b, 'Intrusa', 'canino', true)",
+            b=beto.id,
+        )
+
+
+_NUEVA_SESION = (
+    "INSERT INTO sesiones (usuario_id, refresh_hash, expira_en)"
+    " VALUES (:u, :h, now() + interval '1 day') RETURNING usuario_id"
+)
+_CAMBIAR_CLAVE = (
+    "WITH c AS (UPDATE usuarios SET hashed_password = 'otra' WHERE id = :u RETURNING 1)"
+    " SELECT count(*) FROM c"
+)
+
+
+async def _negado(db: AsyncSession, contexto: ContextoDb, sql: str, **parametros: Any) -> None:
+    """La base rechaza la sentencia; el savepoint deja la transaccion de la prueba utilizable."""
+    with pytest.raises(Exception, match="row-level security"):
+        async with db.begin_nested():
+            await _como(db, contexto, sql, **parametros)
+
+
+async def test_identificar_una_cuenta_no_basta_para_abrirle_sesion(db: AsyncSession):
+    """Recuperar la contrasena o pedir un codigo identifican la cuenta (llave `usuario`);
+    abrir una sesion o cambiar la contrasena exige una credencial probada (`autenticado`)."""
+    cuenta = await _usuario(db, "identificada@timu.co")
+    identificada = _publico(usuario=cuenta)
+    assert await _como(db, identificada, "SELECT count(*) FROM usuarios") == 1
+    assert await _como(db, identificada, _CAMBIAR_CLAVE, u=cuenta) == 0
+    await _negado(db, identificada, _NUEVA_SESION, u=cuenta, h="h1")
+
+    autenticada = _publico(autenticado=cuenta)
+    assert await _como(db, autenticada, _CAMBIAR_CLAVE, u=cuenta) == 1
+    assert await _como(db, autenticada, _NUEVA_SESION, u=cuenta, h="h2") == cuenta
+    otra = await _usuario(db, "otra@timu.co")
+    await _negado(db, autenticada, _NUEVA_SESION, u=otra, h="h3")
+
+
+async def test_un_token_reutilizado_revoca_las_sesiones_pero_no_abre_otra(db: AsyncSession):
+    cuenta = await _usuario(db, "robada@timu.co")
+    await db.execute(text(_NUEVA_SESION), {"u": cuenta, "h": "vigente"})
+    revocar = _publico(revocar=cuenta)
+    revocadas = await _como(
+        db,
+        revocar,
+        "WITH c AS (UPDATE sesiones SET revocada_en = now() WHERE usuario_id = :u"
+        " AND revocada_en IS NULL RETURNING 1) SELECT count(*) FROM c",
+        u=cuenta,
+    )
+    assert revocadas == 1
+    with pytest.raises(Exception, match="row-level security"):
+        await _como(db, revocar, _NUEVA_SESION, u=cuenta, h="nueva")
+
+
+async def test_el_reparto_comercial_cuenta_todos_los_interesados_aunque_pregunte_publico(
+    db: AsyncSession,
+):
+    """Un formulario publico solo ve sus interesados; el reparto por carga los cuenta todos
+    con comercial_con_menos_carga(), sin exponerlos."""
+    cargado = await _usuario(db, "cargado@timu.co", "comercial")
+    await _usuario(db, "libre@timu.co", "comercial")
+    for k in range(2):
+        await db.execute(
+            text(
+                "INSERT INTO interesados (telefono, origen, etapa, responsable_id, datos)"
+                " VALUES (:t, 'web', 'nuevo', :r, '{}')"
+            ),
+            {"t": f"+57300222000{k}", "r": cargado},
+        )
+    consulta = "SELECT comercial_con_menos_carga(ARRAY['nuevo', 'contactado'])"
+    assert await _como(db, _publico(), "SELECT count(*) FROM interesados") == 0
+    elegido = await _como(db, _publico(), consulta)
+    assert elegido is not None and elegido != cargado
+    assert elegido == await db.scalar(text(consulta))
+
+
+def test_las_politicas_de_publico_solo_usan_llaves_conocidas():
+    """Una llave mal escrita en una politica nunca casaria y negaria en silencio; una llave
+    que ninguna politica usa no acota nada."""
+    usadas = set(re.findall(r"app_llave\('(\w+)'\)", json.dumps(CONDICIONES["publico"])))
+    assert usadas == LLAVES_PUBLICAS
+    with pytest.raises(ValueError, match="desconocidas"):
+        acotar_publico(None, cuenta="x")  # type: ignore[arg-type]
 
 
 # --- Volumen ------------------------------------------------------------------------------------

@@ -26,7 +26,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.database import ContextoDb, contexto_de, fijar_contexto, get_db
+from app.core.database import ContextoDb, acotar_publico, contexto_de, fijar_contexto, get_db
 from app.core.enums import Rol
 from app.core.scope import Alcance
 from app.core.security import decode_access_token
@@ -86,15 +86,16 @@ def borrar_cookie_sesion(response: Response) -> None:
     )
 
 
-async def _sesion_vigente(db: AsyncSession, payload: dict[str, Any]) -> bool:
-    """F1-AUT-01 Cerrar sesion revoca el token de inmediato, aunque el JWT no haya vencido."""
-    sid = payload.get("sid")
-    if not sid:
-        return False
+def _uuid(valor: Any) -> UUID | None:
     try:
-        sesion = await db.get(Sesion, UUID(sid))
+        return UUID(str(valor))
     except ValueError:
-        return False
+        return None
+
+
+async def _sesion_vigente(db: AsyncSession, sid: UUID) -> bool:
+    """F1-AUT-01 Cerrar sesion revoca el token de inmediato, aunque el JWT no haya vencido."""
+    sesion = await db.get(Sesion, sid)
     return sesion is not None and sesion.revocada_en is None
 
 
@@ -105,9 +106,14 @@ async def get_current_user(request: Request, db: DbSession) -> Usuario:
     payload = decode_access_token(token)
     if payload is None or "sub" not in payload or payload.get("tipo", "acceso") != "acceso":
         raise _ERROR_CREDENCIALES
-    if not await _sesion_vigente(db, payload):
+    sid, sub = _uuid(payload.get("sid")), _uuid(payload["sub"])
+    if sid is None or sub is None:
         raise _ERROR_CREDENCIALES
-    usuario = await db.get(Usuario, UUID(payload["sub"]))
+    # Aun como `publico`: la base solo deja leer la sesion y la cuenta del JWT, ya verificado.
+    await db.run_sync(acotar_publico, sesion=sid, autenticado=sub)
+    if not await _sesion_vigente(db, sid):
+        raise _ERROR_CREDENCIALES
+    usuario = await db.get(Usuario, sub)
     if usuario is None or not usuario.activo:
         raise _ERROR_CREDENCIALES
     request.state.sid = payload["sid"]

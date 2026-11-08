@@ -222,7 +222,24 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
   efectos: cambiar el estado de un servicio ejecuta reglas configurables que crean tareas y
   mensajes, y quien cambia ese estado tiene esos permisos aunque hoy ninguna regla los use.
   `test_toda_tabla_tiene_rls_y_las_politicas_de_la_matriz` compara cada política con lo que
-  genera hoy la matriz, a través de su comentario. `restringir()` sigue en Python como
+  genera hoy la matriz, a través de su comentario.
+- **`publico` solo ve las filas de quien declara la petición.** Es el perfil de toda petición
+  sin sesión y del comienzo de cada petición autenticada, hasta que `get_current_user`
+  reconoce al usuario. Sin llaves no ve nada. El código fija las llaves con
+  `acotar_publico(db, …)` (`LLAVES_PUBLICAS` en `app/core/database.py`), donde ya conoce el
+  valor y con el mismo valor que usa la consulta: el email o el teléfono de ingreso, el hash
+  del token, el documento del formulario, el token de la encuesta, el código del carnet. Hay
+  dos llaves de cuenta distintas: `usuario` (identificada, basta para enviarle un enlace) y
+  `autenticado` (probó una credencial). Solo `autenticado` abre una sesión o cambia la
+  contraseña, y un token de renovación reutilizado solo da `revocar`. Una ruta pública nueva,
+  o una que pase a leer otra fila, declara sus llaves y amplía la condición de `publico` en la
+  matriz (`CONDICIONES` admite una expresión por operación). Ojo: una lectura que la base
+  filtra no da error, devuelve menos filas, y el código que trata ese dato como opcional sigue
+  adelante con un resultado peor (así se detectó la encuesta que nombraba al profesional como
+  «sin asignar»). Lo que necesite ver lo de todos, como el reparto por carga de los
+  comerciales, va en una función `SECURITY DEFINER` que solo devuelve el resultado
+  (`comercial_con_menos_carga()`). Límite: el contexto se fija con `set_config`, así que esto
+  protege de errores de la aplicación, no de quien ejecute SQL arbitrario con su conexión. `restringir()` sigue en Python como
   segunda capa y para responder 404, y lo que filtra columnas (la vista por perfil de la
   historia clínica) también sigue en Python: RLS filtra filas.
 - **Lo que crece con el negocio se consulta por índice.** Toda clave foránea lleva

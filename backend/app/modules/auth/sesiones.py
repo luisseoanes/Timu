@@ -15,6 +15,7 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import acotar_publico
 from app.core.errores import ErrorDominio
 from app.core.security import create_access_token, generar_token_opaco, hash_token
 from app.core.tiempo import ahora, con_zona
@@ -53,6 +54,7 @@ def renovar(db: Session, refresh: str) -> tuple[Usuario, str, str] | None:
     ese caso se revocan todas las sesiones del usuario y quien llama responde 401 SIN
     levantar excepcion, para que la transaccion se confirme y la revocacion persista."""
     h = hash_token(refresh)
+    acotar_publico(db, renovacion=h)
     sesion = db.scalar(select(Sesion).where(Sesion.refresh_hash == h))
     if sesion is None:
         robada = db.scalar(select(Sesion).where(Sesion.refresh_hash_anterior == h))
@@ -60,6 +62,8 @@ def renovar(db: Session, refresh: str) -> tuple[Usuario, str, str] | None:
             logger.warning(
                 "Refresh token reutilizado; se revocan las sesiones de %s", robada.usuario_id
             )
+            # Revocar, no autenticar: un token ya rotado no permite abrir sesion.
+            acotar_publico(db, revocar=robada.usuario_id)
             cerrar_todas(db, robada.usuario_id)
             return None
         raise SesionInvalida("Sesion invalida")
@@ -67,6 +71,7 @@ def renovar(db: Session, refresh: str) -> tuple[Usuario, str, str] | None:
         raise SesionInvalida("Sesion invalida")
     if con_zona(sesion.expira_en) <= ahora():
         raise SesionInvalida("La sesion expiro; inicie sesion de nuevo")
+    acotar_publico(db, autenticado=sesion.usuario_id)
     usuario = db.get(Usuario, sesion.usuario_id)
     if usuario is None or not usuario.activo:
         raise SesionInvalida("Sesion invalida")

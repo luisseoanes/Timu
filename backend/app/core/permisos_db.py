@@ -14,10 +14,21 @@ Una ruta nueva, o una ruta que pasa a tocar otra tabla, exige actualizar esta ma
 escribir la migracion que cambia la politica. Si no, la propia prueba de esa ruta falla con
 la base negando el acceso: es el aviso.
 
-`familia` y `aliada` ademas solo ven sus filas (CONDICIONES). Los catalogos (CATALOGOS) los
-leen sin condicion. `publico` lee las tablas de autenticacion y de los formularios publicos
-sin condicion de fila: esas rutas buscan al usuario o a la familia antes de saber quien
-pregunta; acotarlas con identificadores del contexto es una mejora pendiente.
+`familia`, `aliada` y `publico` ademas solo ven sus filas (CONDICIONES). Los catalogos
+(CATALOGOS) los leen sin condicion.
+
+`publico` es toda peticion sin sesion, y tambien el comienzo de cada peticion autenticada,
+hasta que `get_current_user` reconoce al usuario. Solo ve las filas de quien la peticion
+declaro con `acotar_publico` (app/core/database.py): la cuenta del email o el telefono con
+que se ingresa, la sesion del token, la familia del documento del formulario, la encuesta
+del enlace, el carnet del codigo. Sin llaves no ve nada. Crear una sesion o cambiar una
+contrasena exige la llave `autenticado`, que solo se fija tras probar una credencial: un
+error en una ruta que solo identifica (recuperar la contrasena, pedir un codigo) no puede
+abrir una sesion ajena.
+
+Limite de este modelo: el contexto lo fija la aplicacion con set_config, que cualquier
+sentencia puede llamar. Protege de errores de la aplicacion (una consulta sin filtro, un id
+equivocado), no de quien logre ejecutar SQL arbitrario con la conexion de la aplicacion.
 """
 
 # perfil -> tabla -> operaciones (S select, I insert, U update, D delete, L bloquear).
@@ -337,9 +348,26 @@ def _contactos(familias: str) -> str:
     )
 
 
-# perfil -> tabla -> condicion de fila. Una tabla de `familia` o `aliada` que no este aqui ni
-# en CATALOGOS no se puede generar: la migracion se niega, nada queda abierto por omision.
-CONDICIONES: dict[str, dict[str, str]] = {
+# Llaves de `publico` (LLAVES_PUBLICAS en app/core/database.py).
+_SUJETO = "app_llave('usuario')::uuid"
+_AUTENTICADO = "app_llave('autenticado')::uuid"
+_FAMILIA_PUBLICA = (
+    "(SELECT id FROM familias WHERE id = app_llave('familia')::uuid"
+    " OR (tipo_documento = app_llave('tipo_documento')::tipo_documento"
+    " AND documento = app_llave('documento')))"
+)
+_ATENCION_ENCUESTADA = "(SELECT servicio_id FROM encuestas WHERE token = app_llave('encuesta'))"
+_SESIONES_PUBLICAS = (
+    "id = app_llave('sesion')::uuid OR refresh_hash = app_llave('renovacion')"
+    f" OR refresh_hash_anterior = app_llave('renovacion') OR usuario_id = {_AUTENTICADO}"
+    " OR usuario_id = app_llave('revocar')::uuid"
+)
+
+# perfil -> tabla -> condicion de fila: una expresion para todas las operaciones, o una por
+# letra ({"S": ..., "I": ...}; la que falte usa la de "S"). Una tabla de un perfil acotado
+# que no este aqui ni en CATALOGOS no se puede generar: la migracion se niega, nada queda
+# abierto por omision.
+CONDICIONES: dict[str, dict[str, str | dict[str, str]]] = {
     "familia": {
         "familias": f"id = {_F} OR usuario_portal_id = app_usuario()",
         "mascotas": f"familia_id = {_F}",
@@ -384,6 +412,51 @@ CONDICIONES: dict[str, dict[str, str]] = {
         "sesiones": "usuario_id = app_usuario()",
         "usuarios": "id = app_usuario()",
     },
+    "publico": {
+        # Ingreso, recuperacion y codigo buscan la cuenta por email o telefono; la encuesta
+        # nombra al profesional en la tarea que abre. Cambiar la contrasena exige haber
+        # probado el enlace.
+        "usuarios": {
+            "S": (
+                f"id = {_SUJETO} OR id = {_AUTENTICADO}"
+                " OR email = app_llave('ingreso_email') OR telefono = app_llave('ingreso_telefono')"
+                " OR id IN (SELECT profesional_id FROM servicios"
+                f" WHERE id IN {_ATENCION_ENCUESTADA})"
+            ),
+            "U": f"id = {_AUTENTICADO}",
+        },
+        # La sesion del JWT, la del token de renovacion y las de la cuenta autenticada o cuyo
+        # token se reuso (para revocarlas). Crear una exige credencial.
+        "sesiones": {"S": _SESIONES_PUBLICAS, "I": f"usuario_id = {_AUTENTICADO}"},
+        "tokens_uso_unico": f"token_hash = app_llave('token') OR usuario_id = {_SUJETO}",
+        # El enlace o el codigo solo va a un contacto de la cuenta identificada.
+        "mensajes": (
+            f"destino IN (SELECT email FROM usuarios WHERE id = {_SUJETO}"
+            f" UNION SELECT telefono FROM usuarios WHERE id = {_SUJETO})"
+        ),
+        # Formularios: la familia del documento y lo suyo.
+        "familias": (
+            "id = app_llave('familia')::uuid"
+            " OR (tipo_documento = app_llave('tipo_documento')::tipo_documento"
+            " AND documento = app_llave('documento'))"
+        ),
+        "mascotas": (
+            f"familia_id IN {_FAMILIA_PUBLICA}"
+            f" OR id IN (SELECT mascota_id FROM servicios WHERE id IN {_ATENCION_ENCUESTADA})"
+        ),
+        "contratos": f"familia_id IN {_FAMILIA_PUBLICA}",
+        "pagos": f"familia_id IN {_FAMILIA_PUBLICA}",
+        "solicitudes_afiliacion": f"familia_id IN {_FAMILIA_PUBLICA}",
+        "interesados": (
+            "telefono = app_llave('contacto_telefono') OR email = app_llave('contacto_email')"
+            f" OR familia_id IN {_FAMILIA_PUBLICA}"
+        ),
+        # Enlace de encuesta: la encuesta, su atencion y la tarea que abre una mala nota.
+        "encuestas": "token = app_llave('encuesta')",
+        "servicios": f"id IN {_ATENCION_ENCUESTADA}",
+        "tareas": f"servicio_id IN {_ATENCION_ENCUESTADA}",
+        "carnets_emitidos": "codigo = app_llave('carnet')",
+    },
 }
 
 # Lo que cualquier perfil que lo use lee sin condicion de fila: configuracion, no datos de
@@ -393,6 +466,7 @@ CATALOGOS = frozenset(
         "beneficios_plan",
         "bloqueos_agenda",
         "ciudades",
+        "configuraciones_encuesta",
         "especies",
         "esquemas_preventivos",
         "eventos_salientes",
@@ -406,19 +480,26 @@ CATALOGOS = frozenset(
 
 
 # Perfiles cuyas filas se acotan siempre: toda tabla suya lleva condicion o es un catalogo.
-_ACOTADOS = ("familia", "aliada")
+_ACOTADOS = ("familia", "aliada", "publico")
 _COMANDOS = {"S": "SELECT", "I": "INSERT", "U": "UPDATE", "D": "DELETE"}
 
 
-def _expresion(tabla: str, letras: str) -> str:
+def _condicion(rol: str, tabla: str, letra: str) -> str | None:
+    condicion = CONDICIONES.get(rol, {}).get(tabla)
+    if isinstance(condicion, dict):
+        return condicion.get(letra, condicion["S"])
+    return condicion
+
+
+def _expresion(tabla: str, letras: str, operacion: str) -> str:
     """Quien tiene alguna de `letras` sobre `tabla`: `sistema` siempre; el resto, segun la
-    matriz."""
+    matriz, con la condicion de fila de `operacion`."""
     libres = ["sistema"]
     acotados: list[str] = []
     for rol in sorted(PERMISOS):
         if not set(letras) & set(PERMISOS[rol].get(tabla, "")):
             continue
-        condicion = CONDICIONES.get(rol, {}).get(tabla)
+        condicion = _condicion(rol, tabla, operacion)
         if condicion is not None:
             acotados.append(f"(app_rol() = '{rol}' AND ({condicion}))")
         elif rol in _ACOTADOS and tabla not in CATALOGOS:
@@ -436,8 +517,10 @@ def politicas(tablas: list[str]) -> list[tuple[str, str, str, str, str | None, s
     for tabla in sorted(tablas):
         for letra, comando in _COMANDOS.items():
             # El USING de UPDATE tambien admite a quien solo bloquea (L); el WITH CHECK no.
-            usar = None if letra == "I" else _expresion(tabla, "UL" if letra == "U" else letra)
-            comprobar = _expresion(tabla, letra) if letra in ("I", "U") else None
+            usar = (
+                None if letra == "I" else _expresion(tabla, "UL" if letra == "U" else letra, letra)
+            )
+            comprobar = _expresion(tabla, letra, letra) if letra in ("I", "U") else None
             salida.append(
                 (f"p_{tabla}_{comando.lower()}", tabla, comando, "timu_app", usar, comprobar)
             )

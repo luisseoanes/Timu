@@ -4,10 +4,11 @@ from datetime import date, datetime, time, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import String, cast, func, or_, select
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Session
 
-from app.core.enums import Rol
+from app.core.database import acotar_publico
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ZONA_NEGOCIO, ahora
 from app.core.validaciones import normalizar_telefono
@@ -27,22 +28,10 @@ def _telefono(valor: str | None) -> str | None:
 
 
 def asignar_responsable(db: Session) -> UUID | None:
-    """El comercial activo con menos interesados abiertos (reparto por carga)."""
-    from app.modules.auth.models import Usuario
-
-    carga = (
-        select(Interesado.responsable_id, func.count().label("n"))
-        .where(Interesado.etapa.in_(ABIERTAS))
-        .group_by(Interesado.responsable_id)
-        .subquery()
-    )
-    return db.scalar(
-        select(Usuario.id)
-        .outerjoin(carga, carga.c.responsable_id == Usuario.id)
-        .where(Usuario.rol == Rol.COMERCIAL, Usuario.activo.is_(True))
-        .order_by(func.coalesce(carga.c.n, 0), Usuario.created_at)
-        .limit(1)
-    )
+    """El comercial activo con menos interesados abiertos (reparto por carga). Lo calcula la
+    funcion comercial_con_menos_carga() de la base, que ve a todos los interesados: un
+    formulario publico, que solo ve los suyos, tambien reparte bien."""
+    return db.scalar(select(func.comercial_con_menos_carga(cast(list(ABIERTAS), ARRAY(String)))))
 
 
 def registrar(
@@ -61,6 +50,7 @@ def registrar(
     ya se sabia ni lo hace retroceder en el embudo."""
     telefono = _telefono(telefono)
     email = email.lower() if email else None
+    acotar_publico(db, contacto_telefono=telefono, contacto_email=email)
     condiciones = []
     if telefono:
         condiciones.append(Interesado.telefono == telefono)

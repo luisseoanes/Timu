@@ -4,6 +4,7 @@ from sqlalchemy import Select, and_, or_, select, text
 from sqlalchemy.orm import Session
 
 from app.core.auditoria import Accion, RegistroAuditoria
+from app.core.database import acotar_publico
 from app.core.enums import EstadoAfiliacion
 from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
 from app.core.eventos import EventoDominio
@@ -342,6 +343,7 @@ def _desde_formulario(db: Session, data: FormularioFamilia) -> ResultadoFormular
     Como el formulario es publico, sobre una familia existente solo se llenan campos vacios
     y se agregan mascotas nuevas: nunca se sobrescribe lo que el equipo ya valido.
     """
+    acotar_publico(db, tipo_documento=data.tipo_documento, documento=data.documento)
     familia = db.scalar(
         select(Familia).where(
             and_(Familia.tipo_documento == data.tipo_documento, Familia.documento == data.documento)
@@ -359,6 +361,7 @@ def _desde_formulario(db: Session, data: FormularioFamilia) -> ResultadoFormular
             mascotas=data.mascotas,
         )
         familia = crear(db, nueva, origen=data.origen)
+        acotar_publico(db, familia=familia.id)
         return ResultadoFormulario(
             familia_id=familia.id,
             creada=True,
@@ -366,6 +369,7 @@ def _desde_formulario(db: Session, data: FormularioFamilia) -> ResultadoFormular
             mascotas_agregadas=[m.nombre for m in familia.mascotas],
         )
 
+    acotar_publico(db, familia=familia.id)
     completados = []
     for campo in _CAMPOS_COMPLETABLES:
         valor = getattr(data, campo)

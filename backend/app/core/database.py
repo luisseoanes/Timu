@@ -1,7 +1,8 @@
+import json
 import re
 from collections.abc import AsyncGenerator, Iterator
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from enum import StrEnum
 from typing import Any
@@ -83,16 +84,47 @@ CLAVE_ROL_CONEXION = "app.rol"
 @dataclass(frozen=True)
 class ContextoDb:
     """Quien hace la transaccion. `rol` es un `Rol`, "sistema" (workers, scripts, webhooks
-    validados por firma) o "publico" (peticion sin sesion)."""
+    validados por firma) o "publico" (peticion sin sesion). `llaves` son los identificadores
+    sobre los que actua una peticion publica (ver `acotar_publico`)."""
 
     rol: str
     usuario_id: UUID | None = None
     familia_id: UUID | None = None
     clinica_id: UUID | None = None
     request_id: str | None = None
+    llaves: tuple[tuple[str, str], ...] = ()
 
 
 SISTEMA = ContextoDb(rol="sistema")
+PUBLICO = "publico"
+
+# Identificadores con los que una peticion publica declara sobre quien actua. Las politicas
+# de `publico` (app/core/permisos_db.py) solo admiten las filas que casan con ellos:
+# - lo que trae la peticion: ingreso_email e ingreso_telefono (buscar la cuenta), renovacion
+#   y token (hash del token de renovacion o del enlace), documento y tipo_documento, contacto_*
+#   (formularios), encuesta (token del enlace), carnet (codigo);
+# - lo que se deduce: usuario (cuenta identificada, aun sin credencial), autenticado (cuenta
+#   que probo una credencial: contrasena, codigo, token o JWT firmado), sesion (sid del JWT),
+#   revocar (cuenta cuyas sesiones se revocan por reuso de un token), familia.
+LLAVES_PUBLICAS = frozenset(
+    {
+        "autenticado",
+        "carnet",
+        "contacto_email",
+        "contacto_telefono",
+        "documento",
+        "encuesta",
+        "familia",
+        "ingreso_email",
+        "ingreso_telefono",
+        "renovacion",
+        "revocar",
+        "sesion",
+        "tipo_documento",
+        "token",
+        "usuario",
+    }
+)
 
 # Las unicas tablas en las que la aplicacion puede borrar: estado tecnico, sin valor de
 # negocio ni de rastro. En el resto, las bajas y anulaciones son estados, y el unico borrado
@@ -105,7 +137,8 @@ _SQL_CONTEXTO = text(
     "SELECT set_config('app.rol', :rol, true), set_config('app.usuario_id', :usuario_id, true),"
     " set_config('app.familia_id', :familia_id, true),"
     " set_config('app.clinica_id', :clinica_id, true),"
-    " set_config('app.request_id', :request_id, true)"
+    " set_config('app.request_id', :request_id, true),"
+    " set_config('app.llaves', :llaves, true)"
 )
 
 
@@ -119,6 +152,7 @@ def _parametros(contexto: ContextoDb) -> dict[str, str]:
         "familia_id": texto(contexto.familia_id),
         "clinica_id": texto(contexto.clinica_id),
         "request_id": texto(contexto.request_id),
+        "llaves": json.dumps(dict(contexto.llaves)) if contexto.llaves else "",
     }
 
 
@@ -142,6 +176,22 @@ def fijar_contexto(session: Session, contexto: ContextoDb) -> None:
 
 def contexto_de(session: Session) -> ContextoDb | None:
     return session.info.get(CLAVE_CONTEXTO)
+
+
+def acotar_publico(session: Session, **llaves: object) -> None:
+    """Declara sobre quien actua una peticion publica: la base solo le deja ver y escribir
+    las filas que casan con estas llaves (LLAVES_PUBLICAS). Se llama donde el codigo ya sabe
+    a quien busca o a quien identifico, con el mismo valor que usa la consulta. Con cualquier
+    otro perfil no hace nada: los servicios que la llaman tambien los usa el equipo.
+    Las llaves se acumulan; una llave en None no se fija."""
+    desconocidas = set(llaves) - LLAVES_PUBLICAS
+    if desconocidas:
+        raise ValueError(f"Llaves publicas desconocidas: {sorted(desconocidas)}")
+    contexto = contexto_de(session)
+    if contexto is None or contexto.rol != PUBLICO:
+        return
+    nuevas = dict(contexto.llaves) | {k: str(v) for k, v in llaves.items() if v is not None}
+    fijar_contexto(session, replace(contexto, llaves=tuple(sorted(nuevas.items()))))
 
 
 def habilitar_rol_aplicacion(conexion: Connection, clave: str) -> None:
@@ -260,7 +310,7 @@ async def get_db(request: Request) -> AsyncGenerator[AsyncSession, None]:
     por el del usuario (`app.core.deps`)."""
     async with SessionLocal() as session:
         session.sync_session.info[CLAVE_CONTEXTO] = ContextoDb(
-            rol="publico", request_id=getattr(request.state, "request_id", None)
+            rol=PUBLICO, request_id=getattr(request.state, "request_id", None)
         )
         try:
             yield session

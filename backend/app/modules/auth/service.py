@@ -9,7 +9,7 @@ from sqlalchemy import or_, select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.database import nuevo_id
+from app.core.database import acotar_publico, nuevo_id
 from app.core.enums import Rol
 from app.core.errores import Conflicto, ErrorDominio, NoEncontrado, ReglaNegocio
 from app.core.security import (
@@ -51,6 +51,7 @@ def get_by_identificador(db: Session, identificador: str) -> Usuario | None:
         return None
     campo, valor = par
     columna = Usuario.email if campo == "email" else Usuario.telefono
+    acotar_publico(db, **{f"ingreso_{campo}": valor})
     return db.scalar(select(Usuario).where(columna == valor))
 
 
@@ -111,13 +112,17 @@ def authenticate(db: Session, identificador: str, password: str) -> Usuario | No
     usuario = get_by_identificador(db, identificador)
     if usuario is None or not verify_password(password, usuario.hashed_password):
         return None
-    return usuario if usuario.activo else None
+    if not usuario.activo:
+        return None
+    acotar_publico(db, autenticado=usuario.id)
+    return usuario
 
 
 # --- Enlaces de un solo uso (F1-AUT-03 / F1-AUT-04) -------------------------------------------
 
 
 def emitir_enlace(db: Session, usuario: Usuario, proposito: Proposito) -> str:
+    acotar_publico(db, usuario=usuario.id)
     # Un enlace nuevo invalida los anteriores del mismo proposito.
     db.execute(
         update(TokenUsoUnico)
@@ -189,9 +194,13 @@ def solicitar_recuperacion(db: Session, identificador: str) -> None:
 
 
 def restablecer(db: Session, token: str, password: str) -> Usuario:
-    registro = db.scalar(select(TokenUsoUnico).where(TokenUsoUnico.token_hash == hash_token(token)))
+    token_hash = hash_token(token)
+    acotar_publico(db, token=token_hash)
+    registro = db.scalar(select(TokenUsoUnico).where(TokenUsoUnico.token_hash == token_hash))
     if registro is None or registro.usado_en is not None or con_zona(registro.expira_en) <= ahora():
         raise EnlaceInvalido("El enlace no es valido o ya expiro; solicite uno nuevo")
+    # Un enlace vigente es la credencial: permite cambiar la contrasena y cerrar sus sesiones.
+    acotar_publico(db, autenticado=registro.usuario_id)
     usuario = db.get(Usuario, registro.usuario_id)
     if usuario is None or not usuario.activo:
         raise EnlaceInvalido("El enlace no es valido o ya expiro; solicite uno nuevo")
@@ -250,13 +259,17 @@ def _usuario_portal_por_telefono(db: Session, telefono: str) -> Usuario | None:
         normalizado = normalizar_telefono(telefono)
     except ValueError:
         return None
-    return db.scalar(
+    acotar_publico(db, ingreso_telefono=normalizado)
+    usuario = db.scalar(
         select(Usuario).where(
             Usuario.telefono == normalizado,
             Usuario.rol == Rol.FAMILIA,
             Usuario.activo.is_(True),
         )
     )
+    if usuario is not None:
+        acotar_publico(db, usuario=usuario.id)
+    return usuario
 
 
 def solicitar_codigo(db: Session, telefono: str) -> None:
@@ -328,4 +341,5 @@ def verificar_codigo(db: Session, telefono: str, codigo: str) -> Usuario | None:
         return None
     registro.usado_en = ahora()
     db.flush()
+    acotar_publico(db, autenticado=usuario.id)
     return usuario

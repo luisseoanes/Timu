@@ -11,6 +11,7 @@ from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import acotar_publico
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
 from app.modules.catalogos.models import Especie, EsquemaPreventivo
@@ -422,9 +423,9 @@ def emitir_carnet(db: Session, mascota_id: UUID, usuario_id: UUID | None) -> Car
 def verificar_carnet(db: Session, codigo: str) -> dict[str, Any]:
     """Lo que ve un tercero con el codigo: la mascota y lo aplicado al emitir, sin datos
     de la familia. Mismo 404 para codigo inexistente que para mal escrito."""
-    registro = db.scalar(
-        select(CarnetEmitido).where(CarnetEmitido.codigo == codigo.strip().upper())
-    )
+    codigo = codigo.strip().upper()
+    acotar_publico(db, carnet=codigo)
+    registro = db.scalar(select(CarnetEmitido).where(CarnetEmitido.codigo == codigo))
     if registro is None:
         raise NoEncontrado("Carnet no encontrado")
     mascota = registro.contenido["mascota"]

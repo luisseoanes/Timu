@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import acotar_publico
 from app.core.enums import EstadoServicio
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ZONA_NEGOCIO, ahora, con_zona
@@ -137,6 +138,7 @@ def enviar_pendientes(db: Session, momento: datetime | None = None) -> dict[str,
 
 
 def por_token(db: Session, token: str) -> Encuesta:
+    acotar_publico(db, encuesta=token)
     encuesta = db.scalar(select(Encuesta).where(Encuesta.token == token))
     if encuesta is None or encuesta.estado in ("pendiente", "omitida"):
         raise NoEncontrado("Encuesta no encontrada")
