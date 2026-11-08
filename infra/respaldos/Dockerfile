@@ -1,5 +1,5 @@
-# F0-07 Contenedor de respaldos: cliente de PostgreSQL 16 + AWS CLI (S3 compatible) + cron.
-FROM postgres:16-alpine
+# F0-07 Contenedor de respaldos: cliente de PostgreSQL 18 + AWS CLI (S3 compatible) + cron.
+FROM postgres:18-alpine
 
 RUN apk add --no-cache aws-cli tzdata
 

@@ -14,7 +14,7 @@ operaciones y médicos), el **portal de familias** y el de la **clínica aliada*
 |---|---|
 | Backend | Python 3.12 + FastAPI (async, OpenAPI autogenerado) |
 | Frontend | React 18 + TypeScript + Vite + React Query |
-| Base de datos | PostgreSQL 16 + SQLAlchemy 2 + Alembic |
+| Base de datos | PostgreSQL 18 + SQLAlchemy 2 + Alembic |
 | Tareas programadas | Celery + Redis (`worker` ejecuta, `beat` programa) |
 | Adjuntos | S3 compatible (SeaweedFS en desarrollo), siempre con URL firmada |
 | Sesión | Cookies httpOnly: acceso corto y renovación que rota en cada uso |

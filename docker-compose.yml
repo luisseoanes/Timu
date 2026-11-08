@@ -19,13 +19,16 @@ x-backend-environment: &backend-environment
 
 services:
   db:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-timu}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-timu}
       POSTGRES_DB: ${POSTGRES_DB:-timu}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # PostgreSQL 18 guarda los datos en un subdirectorio por version
+      # (/var/lib/postgresql/18/docker), asi que el volumen se monta en el padre. Un volumen
+      # de la 16 no arranca con la 18: por eso este tiene otro nombre.
+      - pgdata18:/var/lib/postgresql
     ports:
       - "${TIMU_DB_PORT:-5432}:5432"
     healthcheck:
@@ -67,13 +70,13 @@ services:
   # Puerto fijo: tests/conftest.py la busca en localhost:5433 (TEST_DATABASE_URL lo cambia).
   db-test:
     profiles: [test]
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_USER: timu
       POSTGRES_PASSWORD: timu
       POSTGRES_DB: timu_test
     tmpfs:
-      - /var/lib/postgresql/data
+      - /var/lib/postgresql
     ports:
       - "5433:5432"
     healthcheck:
@@ -181,6 +184,6 @@ services:
         condition: service_healthy
 
 volumes:
-  pgdata:
+  pgdata18:
   almacenamiento:
   respaldos:
