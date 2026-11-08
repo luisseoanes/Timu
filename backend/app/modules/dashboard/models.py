@@ -5,7 +5,8 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.auditoria import Auditable
-from app.core.database import Base, JSONTipo, TimestampMixin, UUIDMixin
+from app.core.database import Base, EnumDb, JSONTipo, TimestampMixin, UUIDMixin
+from app.core.enums import PeriodicidadReporte
 
 
 class ReporteProgramado(Base, UUIDMixin, TimestampMixin, Auditable):
@@ -15,11 +16,13 @@ class ReporteProgramado(Base, UUIDMixin, TimestampMixin, Auditable):
 
     nombre: Mapped[str] = mapped_column(String(160))
     # diaria | semanal (lunes) | mensual (dia 1)
-    periodicidad: Mapped[str] = mapped_column(String(12))
+    periodicidad: Mapped[str] = mapped_column(EnumDb(PeriodicidadReporte))
     destinatarios: Mapped[list[str]] = mapped_column(JSONTipo, default=list)
     indicadores: Mapped[list[str]] = mapped_column(JSONTipo, default=list)  # vacio = todos
-    ciudad: Mapped[str | None] = mapped_column(String(80))
+    ciudad: Mapped[str | None] = mapped_column(
+        String(80), ForeignKey("ciudades.nombre", onupdate="CASCADE"), index=True
+    )
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     ultimo_envio: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     ultimo_error: Mapped[str | None] = mapped_column(Text)
-    creado_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"))
+    creado_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)

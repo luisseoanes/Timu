@@ -49,3 +49,296 @@ class EstadoPago(StrEnum):
     APROBADO = "aprobado"
     RECHAZADO = "rechazado"
     REVERSADO = "reversado"
+    ANULADO = "anulado"  # enlace de pago reemplazado antes de pagarse (afiliaciones)
+
+
+# --- Conjuntos cerrados de la base -------------------------------------------------------------
+# Cada StrEnum que tipa una columna tiene un enum de PostgreSQL con su nombre en snake_case
+# (`EnumDb` en app/core/database.py). Anadir un valor exige la migracion que lo anada a la
+# base: `test_persistencia` compara las dos listas. Ver docs/plan-persistencia.md (fase 2a).
+
+
+class ProveedorPago(StrEnum):
+    MANUAL = "manual"
+    WOMPI = "wompi"
+
+
+class EstadoEventoPasarela(StrEnum):
+    RECIBIDO = "recibido"
+    PROCESADO = "procesado"
+    IGNORADO = "ignorado"
+    ERROR = "error"
+
+
+class MedioAceptacion(StrEnum):
+    FORMULARIO_WEB = "formulario_web"
+    PRESENCIAL = "presencial"
+    WHATSAPP = "whatsapp"
+    LLAMADA = "llamada"
+
+
+class OrigenSolicitudAfiliacion(StrEnum):
+    FORMULARIO = "formulario"
+    ASISTIDA = "asistida"
+
+
+class SexoMascota(StrEnum):
+    MACHO = "macho"
+    HEMBRA = "hembra"
+
+
+class GeoPrecision(StrEnum):
+    DIRECCION = "direccion"
+    CIUDAD = "ciudad"
+    MANUAL = "manual"
+
+
+class PropositoArchivo(StrEnum):
+    FOTO_MASCOTA = "foto_mascota"
+    ADJUNTO_CLINICO = "adjunto_clinico"
+    CONTRATO = "contrato"
+    FORMULA = "formula"
+    CARNET = "carnet"
+
+
+class PropositoToken(StrEnum):
+    RECUPERACION = "recuperacion"
+    ACTIVACION = "activacion"
+    CODIGO_INGRESO = "codigo_ingreso"
+
+
+class CanalComunicacion(StrEnum):
+    WHATSAPP = "whatsapp"
+    EMAIL = "email"
+
+
+class DireccionMensaje(StrEnum):
+    ENTRANTE = "entrante"
+    SALIENTE = "saliente"
+
+
+class CategoriaPlantilla(StrEnum):
+    UTILITY = "utility"
+    MARKETING = "marketing"
+    AUTHENTICATION = "authentication"
+
+
+class EstadoAprobacionPlantilla(StrEnum):
+    BORRADOR = "borrador"
+    ENVIADA = "enviada"
+    APROBADA = "aprobada"
+    RECHAZADA = "rechazada"
+    PAUSADA = "pausada"
+
+
+class EstadoCampana(StrEnum):
+    BORRADOR = "borrador"
+    PROGRAMADA = "programada"
+    EN_ENVIO = "en_envio"
+    FINALIZADA = "finalizada"
+    CANCELADA = "cancelada"
+
+
+class RecurrenciaCampana(StrEnum):
+    NINGUNA = "ninguna"
+    DIARIA = "diaria"
+    SEMANAL = "semanal"
+    MENSUAL = "mensual"
+
+
+class EstadoEjecucionCampana(StrEnum):
+    EN_ENVIO = "en_envio"
+    TERMINADA = "terminada"
+    CANCELADA = "cancelada"
+
+
+class EstadoDestinatario(StrEnum):
+    PENDIENTE = "pendiente"
+    ENCOLADO = "encolado"
+    EXCLUIDO = "excluido"
+
+
+class PeriodicidadReporte(StrEnum):
+    DIARIA = "diaria"
+    SEMANAL = "semanal"
+    MENSUAL = "mensual"
+
+
+class TipoEncuesta(StrEnum):
+    SATISFACCION = "satisfaccion"
+    SEGUIMIENTO = "seguimiento"
+
+
+class CanalRespuestaEncuesta(StrEnum):
+    ENLACE = "enlace"
+    WHATSAPP = "whatsapp"
+
+
+class EstadoEncuesta(StrEnum):
+    PENDIENTE = "pendiente"
+    ENVIADA = "enviada"
+    RESPONDIDA = "respondida"
+    VENCIDA = "vencida"
+    OMITIDA = "omitida"
+
+
+class TipoHistoria(StrEnum):
+    PRESENCIAL = "presencial"
+    DOMICILIARIA = "domiciliaria"
+    VIRTUAL = "virtual"
+
+
+class EstadoHistoria(StrEnum):
+    BORRADOR = "borrador"
+    FIRMADA = "firmada"
+    CORREGIDA = "corregida"
+
+
+class EstadoRespuestaVirtual(StrEnum):
+    BORRADOR = "borrador"
+    APROBADA = "aprobada"
+    RETIRADA = "retirada"
+
+
+class CanalVirtual(StrEnum):
+    PORTAL = "portal"
+    WHATSAPP = "whatsapp"
+    PANEL = "panel"
+
+
+class EstadoSolicitudVirtual(StrEnum):
+    EN_COLA = "en_cola"
+    EN_ATENCION = "en_atencion"
+    RESPONDIDA = "respondida"
+    CERRADA = "cerrada"
+
+
+class Prioridad(StrEnum):
+    ALTA = "alta"
+    MEDIA = "media"
+    BAJA = "baja"
+
+
+class EtapaInteresado(StrEnum):
+    NUEVO = "nuevo"
+    CONTACTADO = "contactado"
+    COTIZADO = "cotizado"
+    EN_AFILIACION = "en_afiliacion"
+    AFILIADO = "afiliado"
+    PERDIDO = "perdido"
+
+
+class EstadoConversacion(StrEnum):
+    AUTOMATICA = "automatica"
+    CON_ASESOR = "con_asesor"
+
+
+class EstadoPrompt(StrEnum):
+    BORRADOR = "borrador"
+    ACTIVO = "activo"
+    RETIRADO = "retirado"
+
+
+class EstadoConsultaIa(StrEnum):
+    OK = "ok"
+    RECHAZO = "rechazo"
+    ERROR = "error"
+    PRESUPUESTO_AGOTADO = "presupuesto_agotado"
+    DESACTIVADA = "desactivada"
+
+
+class PeriodoCupo(StrEnum):
+    MENSUAL = "mensual"
+    ANUAL = "anual"
+
+
+class TipoCambioPlan(StrEnum):
+    CAMBIO_PLAN = "cambio_plan"
+    MASCOTA_ALTA = "mascota_alta"
+    MASCOTA_BAJA = "mascota_baja"
+
+
+class ModoCambioPlan(StrEnum):
+    DIARIO = "diario"
+    SIN_CARGO = "sin_cargo"
+    PROXIMO_CICLO = "proximo_ciclo"
+    PROXIMA_CUOTA = "proxima_cuota"
+
+
+class TipoPreventivo(StrEnum):
+    VACUNA = "vacuna"
+    DESPARASITACION_INTERNA = "desparasitacion_interna"
+    DESPARASITACION_EXTERNA = "desparasitacion_externa"
+
+
+class EstadoEventoPreventivo(StrEnum):
+    PROGRAMADO = "programado"
+    APLICADO = "aplicado"
+    CANCELADO = "cancelado"
+
+
+class MedioAutorizacion(StrEnum):
+    WHATSAPP = "whatsapp"
+    TELEFONO = "telefono"
+    LLAMADA = "llamada"
+    PRESENCIAL = "presencial"
+    PORTAL = "portal"
+    FORMULARIO = "formulario"
+    CORREO = "correo"
+
+
+class EstadoRemision(StrEnum):
+    EMITIDA = "emitida"
+    UTILIZADA = "utilizada"
+    ANULADA = "anulada"
+
+
+class EstadoRuta(StrEnum):
+    PLANIFICADA = "planificada"
+    EN_CURSO = "en_curso"
+    FINALIZADA = "finalizada"
+    CANCELADA = "cancelada"
+
+
+class EstadoParada(StrEnum):
+    PENDIENTE = "pendiente"
+    EN_CAMINO = "en_camino"
+    EN_SITIO = "en_sitio"
+    COMPLETADA = "completada"
+    OMITIDA = "omitida"
+
+
+class EstadoPlanificacion(StrEnum):
+    PENDIENTE = "pendiente"
+    LISTA = "lista"
+    FALLIDA = "fallida"
+
+
+class AreaTarea(StrEnum):
+    COMERCIAL = "comercial"
+    OPERACIONES = "operaciones"
+    MEDICO = "medico"
+    CARTERA = "cartera"
+    SERVICIO_CLIENTE = "servicio_cliente"
+
+
+class EstadoTarea(StrEnum):
+    ABIERTA = "abierta"
+    EN_PROGRESO = "en_progreso"
+    CERRADA = "cerrada"
+
+
+class EventoRegla(StrEnum):
+    CARTERA_ESTADO = "cartera.estado"
+    CARTERA_ALERTA = "cartera.alerta"
+    CARTERA_RENOVACION = "cartera.renovacion"
+    PLAN_CAMBIO = "plan.cambio"
+    PLAN_MASCOTA = "plan.mascota"
+    PLAN_RECOMENDACION = "plan.recomendacion"
+    SERVICIO_TRANSICION = "servicio.transicion"
+    SERVICIO_ELEGIBILIDAD = "servicio.elegibilidad"
+
+
+class CodigoPrompt(StrEnum):
+    COMERCIAL_GUION = "comercial_guion"
+    VETERINARIO_BORRADOR = "veterinario_borrador"

@@ -2,13 +2,14 @@ import hmac
 import secrets
 from datetime import timedelta
 from typing import Literal
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import structlog
 from sqlalchemy import or_, select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import nuevo_id
 from app.core.enums import Rol
 from app.core.errores import Conflicto, ErrorDominio, NoEncontrado, ReglaNegocio
 from app.core.security import (
@@ -278,7 +279,7 @@ def solicitar_codigo(db: Session, telefono: str) -> None:
     )
     codigo = f"{secrets.randbelow(10**6):06d}"
     registro = TokenUsoUnico(
-        id=uuid4(),
+        id=nuevo_id(),
         usuario_id=usuario.id,
         proposito=PROPOSITO_CODIGO,
         expira_en=ahora() + timedelta(minutes=settings.TOKEN_CODIGO_MINUTOS),

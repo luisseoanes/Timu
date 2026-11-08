@@ -8,12 +8,13 @@ queda trazado por destinatario (F1-WHA-01), respeta la ventana de 24 horas y las
 import re
 from datetime import UTC, datetime, timedelta
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import structlog
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, and_, func, select
 from sqlalchemy.orm import Session
 
+from app.core.database import nuevo_id
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.eventos import EventoDominio
 from app.core.outbox import publicar
@@ -97,6 +98,9 @@ def cambiar_estado_plantilla(
         )
         for otra in otras:
             otra.activa = False
+        # Primero se retira la anterior: el indice unico parcial no admite dos activas ni
+        # un instante.
+        db.flush()
         plantilla.activa = True
     elif activa is False or estado != "aprobada":
         plantilla.activa = False
@@ -107,16 +111,18 @@ def cambiar_estado_plantilla(
 # --- Bajas y ventana (F1-WHA-04) --------------------------------------------------------------
 
 
+def _baja_activa(destino: str) -> ColumnElement[bool]:
+    return and_(BajaComunicaciones.destino == destino, BajaComunicaciones.reactivada_en.is_(None))
+
+
 def esta_de_baja(db: Session, destino: str) -> bool:
-    return bool(
-        db.scalar(select(BajaComunicaciones.id).where(BajaComunicaciones.destino == destino))
-    )
+    return bool(db.scalar(select(BajaComunicaciones.id).where(_baja_activa(destino))))
 
 
 def registrar_baja(
     db: Session, destino: str, *, canal: str = "whatsapp", motivo: str | None = None
 ) -> BajaComunicaciones:
-    existente = db.scalar(select(BajaComunicaciones).where(BajaComunicaciones.destino == destino))
+    existente = db.scalar(select(BajaComunicaciones).where(_baja_activa(destino)))
     if existente:
         return existente
     baja = BajaComunicaciones(destino=destino, canal=canal, motivo=motivo)
@@ -126,10 +132,11 @@ def registrar_baja(
 
 
 def quitar_baja(db: Session, destino: str) -> None:
-    baja = db.scalar(select(BajaComunicaciones).where(BajaComunicaciones.destino == destino))
+    baja = db.scalar(select(BajaComunicaciones).where(_baja_activa(destino)))
     if baja is None:
         raise NoEncontrado("El destino no esta dado de baja")
-    db.delete(baja)
+    baja.reactivada_en = ahora()
+    db.flush()
 
 
 def ventana_abierta(db: Session, telefono: str) -> bool:
@@ -145,7 +152,7 @@ def ventana_abierta(db: Session, telefono: str) -> bool:
 
 
 def _encolar(db: Session, mensaje: Mensaje) -> Mensaje:
-    mensaje.id = mensaje.id or uuid4()  # el default de la columna solo se aplica en el flush
+    mensaje.id = mensaje.id or nuevo_id()  # el default de la columna solo se aplica en el flush
     db.add(mensaje)
     if mensaje.estado == EstadoMensaje.ENCOLADO:
         # El envio sale cuando la transaccion se confirma (outbox), nunca antes.

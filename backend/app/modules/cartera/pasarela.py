@@ -7,13 +7,14 @@ from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import structlog
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import nuevo_id
 from app.core.enums import EstadoAfiliacion
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.eventos import EventoDominio
@@ -79,7 +80,7 @@ def registrar_evento(
         return existente, False
     transaccion = (evento.get("data") or {}).get("transaction") or {}
     registro = EventoPasarela(
-        id=uuid4(),
+        id=nuevo_id(),
         proveedor="wompi",
         id_evento=clave,
         tipo=str(evento.get("event", "desconocido")),
@@ -191,6 +192,8 @@ def registrar_medio(
     )
     for medio in anteriores:
         medio.activo = False
+    # Primero se retira la anterior: el indice unico parcial no admite dos activas ni un instante.
+    db.flush()
     medio = MedioPagoRecurrente(
         familia_id=familia.id,
         proveedor="wompi",
@@ -280,7 +283,7 @@ def preparar_intento(db: Session, cobro: Cobro) -> dict[str, Any]:
     assert contrato is not None
     valor = dinero(cuota.valor) - dinero(cuota.valor_pagado)
     pago = Pago(
-        id=uuid4(),
+        id=nuevo_id(),
         familia_id=contrato.familia_id,
         contrato_id=contrato.id,
         cuota_id=cuota.id,

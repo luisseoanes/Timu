@@ -6,7 +6,8 @@ from sqlalchemy import Boolean, Date, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.auditoria import Auditable
-from app.core.database import Base, JSONTipo, TimestampMixin, UUIDMixin
+from app.core.database import Base, EnumDb, JSONTipo, TimestampMixin, UUIDMixin
+from app.core.enums import EventoRegla
 
 
 class Regla(Base, UUIDMixin, TimestampMixin, Auditable):
@@ -14,17 +15,25 @@ class Regla(Base, UUIDMixin, TimestampMixin, Auditable):
     dueno del evento ejecuta `accion`. Se evalua en orden de prioridad (menor primero)."""
 
     __tablename__ = "reglas"
+    __checks__ = {
+        "vigencia": (
+            "vigente_hasta IS NULL OR vigente_desde IS NULL" " OR vigente_hasta >= vigente_desde"
+        ),
+        "prioridad_no_negativa": "prioridad >= 0",
+    }
 
     codigo: Mapped[str] = mapped_column(String(60), unique=True)
     nombre: Mapped[str] = mapped_column(String(160))
     descripcion: Mapped[str | None] = mapped_column(Text)
-    evento: Mapped[str] = mapped_column(String(60), index=True)
+    evento: Mapped[str] = mapped_column(EnumDb(EventoRegla), index=True)
     condicion: Mapped[dict[str, Any]] = mapped_column(JSONTipo, default=dict)
     accion: Mapped[dict[str, Any]] = mapped_column(JSONTipo, default=dict)
     prioridad: Mapped[int] = mapped_column(Integer, default=100)
     # Si aplica, las reglas de menor prioridad del mismo evento ya no se evaluan.
     detener: Mapped[bool] = mapped_column(Boolean, default=False)
-    plan_id: Mapped[UUID | None] = mapped_column(ForeignKey("planes.id", ondelete="CASCADE"))
+    plan_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("planes.id", ondelete="CASCADE"), index=True
+    )
     vigente_desde: Mapped[date | None] = mapped_column(Date)
     vigente_hasta: Mapped[date | None] = mapped_column(Date)
     activa: Mapped[bool] = mapped_column(Boolean, default=True, index=True)

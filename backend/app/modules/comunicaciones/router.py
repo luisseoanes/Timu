@@ -122,7 +122,11 @@ async def enviar_texto(db: DbSession, data: EnvioTexto) -> Mensaje:
 @router.get("/bajas", response_model=list[BajaRead], dependencies=[EQUIPO])
 async def listar_bajas(db: DbSession) -> list[BajaComunicaciones]:
     return list(
-        await db.scalars(select(BajaComunicaciones).order_by(BajaComunicaciones.created_at.desc()))
+        await db.scalars(
+            select(BajaComunicaciones)
+            .where(BajaComunicaciones.reactivada_en.is_(None))
+            .order_by(BajaComunicaciones.created_at.desc())
+        )
     )
 
 

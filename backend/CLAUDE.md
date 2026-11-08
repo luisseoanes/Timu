@@ -44,7 +44,8 @@ Reglas que atraviesan todo el backend:
   `tests/test_permisos.py` recorre todas las rutas y falla si alguna no declara ninguna
   de las dos, o si aparece una pública que no está en su lista.
 - **Enums de dominio en `app/core/enums.py`**, no en cada módulo. Son `StrEnum` y viajan
-  como cadenas en la API.
+  como cadenas en la API. Cuando tipan una columna, la columna es `EnumDb(Clase)`: un enum
+  nativo de PostgreSQL llamado como la clase en snake_case (ver «Persistencia»).
 - **Los estados de servicio pasan por `app/modules/servicios/state_machine.py`.** Rutas,
   portal y comunicaciones llaman a `aplicar()`; ningún módulo reimplementa el grafo de
   transiciones ni asigna `servicio.estado` a mano: `aplicar` valida la transición *y*
@@ -103,8 +104,10 @@ programa. El `beat_schedule` está en `celery_app.py` en zona `America/Bogota`; 
 llevan nombre explícito (`cartera.revisar_mora`) porque el schedule las referencia por
 cadena.
 
-Configuración: `Settings` de `pydantic-settings` con `.env`. `DATABASE_URL` es un campo
-computado a partir de las variables `POSTGRES_*`; `DATABASE_URL_OVERRIDE` la sustituye.
+Configuración: `Settings` de `pydantic-settings` con `.env`. `DATABASE_URL` (rol de la
+aplicación) y `DATABASE_URL_PROPIETARIO` (dueño del esquema) se calculan a partir de
+`POSTGRES_*` y `APP_DB_PASSWORD`; `DATABASE_URL_OVERRIDE` y
+`DATABASE_URL_PROPIETARIO_OVERRIDE` las sustituyen.
 
 Tests: `httpx.AsyncClient` sobre ASGI contra PostgreSQL y `dependency_overrides[get_db]`
 (ver `tests/conftest.py`). `pytest.ini` fija `asyncio_mode = auto`, así que las pruebas
@@ -114,6 +117,132 @@ prueba con sus manejadores reales y registra lo que se habría encolado en Celer
 (`await tareas.de("comunicaciones.enviar_mensaje")`); el fixture `almacenamiento`
 sustituye S3 por memoria. `login(client, email)` devuelve la cabecera `Cookie` de esa
 sesión, para las pruebas que alternan usuarios.
+
+## Persistencia: la base garantiza, Python explica
+
+Toda regla que PostgreSQL puede hacer cumplir se hace cumplir en PostgreSQL. Python valida
+antes para devolver un mensaje claro, pero la regla definitiva está en la base: si Python se
+equivoca, o alguien escribe por SQL, la base rechaza la operación. Solo se quedan
+exclusivamente en Python las reglas que dependen de un servicio externo o de la hora actual.
+El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/plan-persistencia.md).
+
+- **Dos roles de base de datos.** `timu` (`POSTGRES_USER`) es el dueño del esquema: solo lo
+  usan Alembic y `inicializar`. `timu_app` lo crea la migración `0013`, sin superusuario ni
+  `BYPASSRLS` ni permisos de DDL, y con él se conectan la API, los workers, los scripts **y
+  las pruebas**. Con un rol privilegiado la base no aplica sus políticas, así que la API
+  (`lifespan`), el worker (`worker_process_init`) y la suite (`conftest.py`) se niegan a
+  arrancar si el rol conectado es superusuario o tiene `BYPASSRLS`. Una tabla nueva le llega
+  a `timu_app` sola, por los permisos por defecto de la `0013`.
+- **Cada transacción lleva el contexto de quién la hace.** `ContextoDb` (`rol`,
+  `usuario_id`, `familia_id`, `clinica_id`, `request_id`) vive en `session.info` y un listener
+  `after_begin` lo fija con `set_config(..., true)` al empezar cada transacción: es local a
+  ella, así que no se filtra a la siguiente petición que reutilice la conexión. `get_db`
+  empieza en `"publico"`, `get_current_user` lo cambia al usuario y `get_alcance` añade la
+  familia. `sesion_worker` y los scripts usan `SISTEMA`. Para cambiarlo a mitad de una
+  transacción: `await db.run_sync(fijar_contexto, contexto)`. Sin contexto los ajustes
+  quedan vacíos y lo que dependa de ellos se niega: se falla cerrado.
+- **Todo conjunto cerrado es un enum de PostgreSQL.** Una columna que guarda un valor de
+  una lista que fija el código (estado, tipo, canal, rol, prioridad…) se declara
+  `mapped_column(EnumDb(MiStrEnum))`, nunca `String(n)`. Añadir, quitar o renombrar un valor
+  exige su migración (`ALTER TYPE … ADD VALUE`, o recrear el tipo para quitar uno), escrita
+  a mano porque el autogenerate no detecta cambios en los valores de un enum.
+  `test_cada_enum_del_modelo_coincide_con_el_de_la_base` falla si el `StrEnum` y la base no
+  tienen los mismos valores, y `test_ningun_conjunto_cerrado_queda_como_texto_libre` si una
+  columna con nombre de conjunto (`estado`, `tipo`, `canal`…) sigue siendo texto, salvo las
+  abiertas de `_ABIERTAS` con su motivo. Dos trampas: un enum ordena por su declaración, así
+  que `aplicar_orden` y cualquier `ORDER BY` que deba ser alfabético usan `cast(col, String)`;
+  y `case({...}, value=col)` compara con `varchar`, así que también lleva el `cast`. El valor
+  por defecto va en Python (`default=`), no en un `server_default` que el modelo no declare.
+- **Toda referencia a un catálogo es una clave foránea.** Una columna que guarda la
+  ciudad, la especie, un plan, una plantilla o una regla (`ciudad`, `especie`, `*_codigo`)
+  lleva `ForeignKey` a su catálogo, con `onupdate="CASCADE"` si apunta a un código o un
+  nombre, para que una corrección en el catálogo se propague en vez de bloquearse. Las
+  ciudades se guardan por nombre canónico (`ciudades.nombre` es único). Python sigue
+  validando antes para dar el mensaje (`catalogos.ciudad_valida`).
+  `test_toda_referencia_a_un_catalogo_tiene_llave_foranea` falla si falta una, salvo las de
+  `_REFERENCIAS_SIN_LLAVE` con su motivo.
+- **Las invariantes de cada fila son `CHECK` y las de «solo uno» son índices únicos.** Se
+  declaran en el modelo, junto a sus columnas: `__checks__ = {"nombre": "expresión SQL"}`
+  (rangos, formatos, importes no negativos, campos que exige un estado: «firmada ⇒ firma y
+  diagnóstico», «pagada ⇒ cubre su valor») y `__unicos__ = {"nombre": (["columnas"],
+  "condición" | None)}` («un contrato vigente por familia»). `_restricciones_de_la_tabla`
+  las convierte en `ck_<tabla>_<nombre>` y `uq_<tabla>_<nombre>`. El autogenerate no detecta
+  un `CHECK` nuevo en una tabla existente ni la condición de un índice parcial: su migración
+  se escribe a mano, con la expresión copiada dentro, y antes se comprueba contra los datos
+  (`SELECT count(*) … WHERE NOT (expresión)`). Comprobar y luego insertar no es una regla:
+  deja una ventana a dos peticiones simultáneas. Un índice único parcial no es diferible,
+  así que el código que retira la versión activa y activa otra hace `flush()` entre los
+  dos pasos. `test_cada_check_y_cada_unico_del_modelo_estan_en_la_base` compara modelo y
+  base en los dos sentidos. Teléfonos: E.164 con `+` en todas las tablas
+  (`normalizar_telefono`); `telefono_whatsapp` quita el `+` solo al enviar a Meta.
+- **Los cambios de estado los valida la base.** `app/core/transiciones.py` tiene el grafo de
+  cada entidad con estado (servicios y pendientes los importa de su módulo); la tabla
+  `transiciones_estado` guarda las mismas aristas y el trigger `validar_transicion`
+  (`BEFORE UPDATE OF estado`) rechaza cualquier cambio que no esté en ella, con
+  `check_violation`. La tabla solo la escribe el dueño del esquema: añadir una transición
+  exige editar el módulo y escribir la migración que inserta la arista, y
+  `test_los_grafos_de_la_base_son_los_del_codigo` falla si no coinciden o falta un trigger.
+  Una entidad nueva con estado lleva su grafo, su trigger y su migración. Quedan fuera, con
+  el motivo en el módulo, los estados que cambian por información externa o por decisión
+  libre del equipo (mensajes, pagos, cuotas, afiliación, embudo, plantillas de Meta).
+- **La auditoría la escribe la base.** Un modelo que herede `Auditable` lleva el trigger
+  `tr_<tabla>_auditoria`, que con `auditar()` registra cada alta, edición, cambio de estado
+  o borrado, también los hechos por SQL, con el usuario y la petición del contexto de la
+  transacción. Python no escribe la bitácora: `auditoria` solo admite `SELECT` para
+  `timu_app`, y un trigger rechaza cualquier `UPDATE` o `DELETE` que no venga del dueño. Lo
+  que es constancia de algo no cambia una vez escrito (`INMUTABLES` en
+  `app/core/auditoria.py`, trigger `inmutable()`), y una historia clínica firmada solo pasa
+  a `corregida`. Un modelo `Auditable` o una tabla de `INMUTABLES` sin su trigger hace
+  fallar `test_cada_tabla_auditable_e_inmutable_tiene_su_trigger`; añadir uno exige su
+  migración con el `CREATE TRIGGER`.
+- **Nada de negocio se borra.** `timu_app` solo tiene `DELETE` en las tablas de estado técnico
+  de `BORRABLES` (`app/core/database.py`); los permisos por defecto ya no lo conceden a una
+  tabla nueva. Una baja, una anulación o un reemplazo es un estado o una marca (`activo`,
+  `reactivada_en`, `dada_de_baja_en`), y las colecciones de negocio no usan `delete-orphan`.
+  El único borrado es la función `anonimizar_familia()` (habeas data, Ley 1581), que solo
+  admite el contexto de un administrador y se niega con un contrato vigente: sustituye los
+  datos personales y su rastro en la bitácora, conserva lo clínico y lo contable, y devuelve
+  las claves de los ficheros que `familias.purgar_archivos` borra del almacenamiento después
+  de confirmar. Un dato personal nuevo en una tabla ligada a la familia exige añadirlo a esa
+  función (con su migración) y a `test_anonimizar_no_deja_datos_personales`.
+  `test_la_aplicacion_solo_borra_estado_tecnico` falla si una tabla de negocio recupera
+  `DELETE`.
+- **Lo que ve y escribe cada perfil lo decide la base (RLS).** Toda tabla tiene RLS y cuatro
+  políticas para `timu_app` (`p_<tabla>_<operación>`), generadas de la matriz de
+  `app/core/permisos_db.py`: `PERMISOS` (perfil → tabla → `S`, `I`, `U`, `D` y `L`, que es
+  bloquear con `FOR UPDATE` sin poder editar), `CONDICIONES` (las filas de `familia` y
+  `aliada`, y las sesiones propias del equipo) y `CATALOGOS`. Sin contexto, la base no
+  devuelve nada. `sistema` lo tiene todo; los webhooks pasan a `sistema` tras validar la
+  firma. Toda escritura lleva lectura, porque `INSERT … RETURNING` exige pasar la política de
+  `SELECT`. Una ruta nueva, o una que pase a tocar otra tabla, exige actualizar la matriz y
+  escribir la migración que regenera sus políticas; si no, la prueba de esa ruta falla
+  porque la base niega el acceso. Para derivar lo que toca una ruta:
+  `TIMU_REGISTRO_ACCESOS=<fichero> pytest` anota cada perfil, ruta, operación y tabla, con
+  una sesión propia por petición para que ninguna lectura se sirva de memoria. Ojo con los
+  efectos: cambiar el estado de un servicio ejecuta reglas configurables que crean tareas y
+  mensajes, y quien cambia ese estado tiene esos permisos aunque hoy ninguna regla los use.
+  `test_toda_tabla_tiene_rls_y_las_politicas_de_la_matriz` compara cada política con lo que
+  genera hoy la matriz, a través de su comentario. `restringir()` sigue en Python como
+  segunda capa y para responder 404, y lo que filtra columnas (la vista por perfil de la
+  historia clínica) también sigue en Python: RLS filtra filas.
+- **Lo que crece con el negocio se consulta por índice.** Toda clave foránea lleva
+  `index=True` (`test_toda_llave_foranea_tiene_indice`): cruzar por una llave foránea sin
+  índice, y las políticas de RLS que la consultan, recorre la tabla entera.
+- **Límites y pool.** `timu_app` tiene `statement_timeout` de 30 s, `lock_timeout` de 10 s e
+  `idle_in_transaction_session_timeout` de 60 s (migración `0024`). En compose, API, worker y
+  beat llegan a la base por PgBouncer en modo transacción (`APP_DB_HOST`); el contexto de RLS
+  es local a la transacción, así que no se cruza entre clientes, y asyncpg necesita
+  `MAX_PREPARED_STATEMENTS`. Las migraciones e `inicializar` van directo. `db` precarga
+  `pg_stat_statements` y registra en el log las consultas de más de 500 ms.
+- **Toda clave primaria es UUIDv7** (RFC 9562), con tres capas: `UUIDMixin` lo genera en
+  Python (`nuevo_id()`, de `uuid-utils`, porque Python 3.12 no trae `uuid7`), la columna
+  tiene `DEFAULT uuidv7()` para quien inserte por SQL, y `ck_<tabla>_id_uuidv7` rechaza
+  cualquier otra versión. El `CHECK` lo añade un evento de mapper a nivel de tabla: a nivel
+  de columna, el autogenerate de Alembic lo descartaría. Todo modelo hereda `UUIDMixin`, y
+  `test_toda_tabla_tiene_id_uuidv7_generado_y_exigido_por_la_base` falla si una tabla no
+  cumple. `nuevo_id()` solo se llama cuando el ID hace falta antes del `flush`. Lo que deba
+  ser imposible de adivinar (referencias de pago, claves de almacenamiento, tokens) sigue
+  usando `uuid4` o `secrets`: un v7 revela la fecha de creación.
 
 ## Migraciones
 
@@ -134,8 +263,9 @@ Dónde se aplica `alembic upgrade head`:
 | Pruebas | automático: `tests/conftest.py` levanta el esquema con las migraciones |
 | Producción | como paso del despliegue, **antes** de arrancar la API, con el servicio anterior aún sirviendo |
 
-Sin Docker se corre desde `backend/` con el `.env` apuntando a la base; para lanzarlo
-contra otra distinta, `DATABASE_URL_OVERRIDE` la sustituye sin tocar el `.env`.
+Alembic se conecta siempre como dueño del esquema (`DATABASE_URL_PROPIETARIO`). Sin Docker
+se corre desde `backend/` con el `.env` apuntando a la base; para lanzarlo contra otra
+distinta, `DATABASE_URL_PROPIETARIO_OVERRIDE` la sustituye sin tocar el `.env`.
 
 Una migración que borra o renombra columnas necesita dos despliegues si no se quiere
 cortar el servicio: primero el código que tolera las dos formas, después la migración
@@ -148,6 +278,12 @@ UUID nativo y `FOR UPDATE SKIP LOCKED`, y ninguna de las tres existe en SQLite; 
 suite verde sobre SQLite no diría nada sobre producción. `docker compose up -d db-test`
 levanta una base efímera en tmpfs en el puerto 5433, y `tests/conftest.py` aborta con
 instrucciones si no la encuentra.
+
+Las pruebas se conectan como `timu_app`, igual que la aplicación: el esquema lo monta el
+dueño (`TEST_DATABASE_URL`) y todo lo demás corre con el rol sin privilegios, para que una
+restricción o una política de la base que falle se vea en la suite. El fixture `db` actúa
+como `SISTEMA`; cada petición de `client` empieza como `"publico"`, pasa al usuario que se
+autentique y al terminar vuelve a `SISTEMA`.
 
 Cada prueba corre dentro de una transacción que se revierte al terminar, así que no se
 ven entre sí y no hay que limpiar tablas. Los marcadores `unit` e `integration` los pone

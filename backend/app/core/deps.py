@@ -17,6 +17,7 @@ ningun endpoint queda abierto por omision.
 """
 
 from collections.abc import Callable, Coroutine
+from dataclasses import replace
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -24,9 +25,8 @@ from fastapi import Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.auditoria import usuario_actual_ctx
 from app.core.config import settings
-from app.core.database import get_db
+from app.core.database import ContextoDb, contexto_de, fijar_contexto, get_db
 from app.core.enums import Rol
 from app.core.scope import Alcance
 from app.core.security import decode_access_token
@@ -111,7 +111,15 @@ async def get_current_user(request: Request, db: DbSession) -> Usuario:
     if usuario is None or not usuario.activo:
         raise _ERROR_CREDENCIALES
     request.state.sid = payload["sid"]
-    usuario_actual_ctx.set(usuario.id)
+    await db.run_sync(
+        fijar_contexto,
+        ContextoDb(
+            rol=usuario.rol,
+            usuario_id=usuario.id,
+            clinica_id=usuario.clinica_aliada_id,
+            request_id=getattr(request.state, "request_id", None),
+        ),
+    )
     return usuario
 
 
@@ -165,6 +173,9 @@ async def get_alcance(usuario: CurrentUser, db: DbSession) -> Alcance:
                 Familia.usuario_portal_id == usuario.id, Familia.dada_de_baja_en.is_(None)
             )
         )
+        contexto = await db.run_sync(contexto_de)
+        if contexto is not None and familia_id is not None:
+            await db.run_sync(fijar_contexto, replace(contexto, familia_id=familia_id))
     return Alcance(usuario_id=usuario.id, rol=usuario.rol, familia_id=familia_id)
 
 

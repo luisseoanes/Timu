@@ -6,6 +6,8 @@ sqlalchemy[asyncio]==2.0.36
 asyncpg==0.30.0
 psycopg[binary]==3.3.5
 alembic==1.14.0
+# UUIDv7 desde Python (la 3.12 no trae uuid.uuid7): IDs que hacen falta antes del flush.
+uuid-utils==1.1.0
 PyJWT[crypto]==2.13.0
 bcrypt==4.2.1
 python-multipart==0.0.20

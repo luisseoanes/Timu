@@ -247,6 +247,8 @@ async def publicar_arbol(db: DbSession, data: ArbolIn) -> dict[str, Any]:
         select(ArbolConversacion).where(ArbolConversacion.activo.is_(True))
     ):
         anterior.activo = False
+    # Primero se retira la anterior: el indice unico parcial no admite dos activas ni un instante.
+    await db.flush()
     nuevo = ArbolConversacion(version=ultima + 1, nodos=data.nodos, activo=True, nota=data.nota)
     db.add(nuevo)
     await db.flush()

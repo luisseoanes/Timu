@@ -17,7 +17,8 @@ from typing import Annotated, Any, Generic, TypeVar
 
 from fastapi import Depends, Query
 from pydantic import BaseModel
-from sqlalchemy import Select, func, select
+from sqlalchemy import Enum as SAEnum
+from sqlalchemy import Select, String, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
@@ -79,7 +80,11 @@ def aplicar_orden(
         if nombre not in campos:
             permitidos = ", ".join(sorted(campos))
             raise OrdenInvalido(f"No se puede ordenar por '{nombre}'. Permitidos: {permitidos}")
-        col = campos[nombre]
+        col: Any = campos[nombre]
+        if isinstance(col.type, SAEnum):
+            # Un enum de PostgreSQL ordena por su declaracion; el listado se ordena por el
+            # texto, como antes de que la columna fuera enum.
+            col = cast(col, String)
         clausulas.append(col.desc() if campo.startswith("-") else col.asc())
     return stmt.order_by(*clausulas, desempate.asc())
 

@@ -6,7 +6,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from sqlalchemy import select
+from sqlalchemy import String, cast, select
 
 from app.core.deps import INTERNOS, DbSession, requiere
 from app.core.enums import Rol
@@ -95,7 +95,7 @@ async def eventos() -> dict[str, str]:
 
 @router.get("", response_model=list[ReglaRead], dependencies=[EQUIPO])
 async def listar(db: DbSession, evento: str | None = None) -> list[Regla]:
-    stmt = select(Regla).order_by(Regla.evento, Regla.prioridad, Regla.codigo)
+    stmt = select(Regla).order_by(cast(Regla.evento, String), Regla.prioridad, Regla.codigo)
     if evento:
         stmt = stmt.where(Regla.evento == evento)
     return list(await db.scalars(stmt))

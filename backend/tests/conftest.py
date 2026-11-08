@@ -23,8 +23,9 @@ from typing import Any  # noqa: E402
 
 import pytest  # noqa: E402
 import pytest_asyncio  # noqa: E402
+from fastapi import Request  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402
-from sqlalchemy import create_engine, select, text  # noqa: E402
+from sqlalchemy import create_engine, make_url, select, text  # noqa: E402
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine  # noqa: E402
 
 import app.workers.tasks.cartera  # noqa: E402, F401  registra los manejadores del outbox
@@ -35,8 +36,18 @@ import app.workers.tasks.ia  # noqa: E402, F401
 import app.workers.tasks.rutas  # noqa: E402, F401
 from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
-from app.core.config import settings  # noqa: E402
-from app.core.database import Base, get_db  # noqa: E402
+from app.core.config import ROL_APLICACION, settings  # noqa: E402
+from app.core.database import (  # noqa: E402
+    CLAVE_CONTEXTO,
+    SISTEMA,
+    SQL_ROL_CONECTADO,
+    Base,
+    ContextoDb,
+    fijar_contexto,
+    get_db,
+    habilitar_rol_aplicacion,
+    motivo_rol_privilegiado,
+)
 from app.core.enums import Rol  # noqa: E402
 from app.core.outbox import EventoSaliente, procesar_pendientes  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
@@ -48,11 +59,67 @@ from app.modules.catalogos.service import cargar as cargar_catalogos  # noqa: E4
 from app.modules.reglas.service import sembrar as sembrar_reglas  # noqa: E402
 from app.workers.celery_app import celery_app  # noqa: E402
 
+# Dueno del esquema: solo aplica las migraciones y da LOGIN al rol de la aplicacion.
 URL_ASYNC = os.getenv(
     "TEST_DATABASE_URL", "postgresql+asyncpg://timu:timu@localhost:5433/timu_test"
 )
 URL_SYNC = URL_ASYNC.replace("postgresql+asyncpg://", "postgresql+psycopg://")
+# Las pruebas corren con el mismo rol que la aplicacion. Con el dueno del esquema, que es
+# superusuario, la base no aplicaria sus politicas y la suite quedaria en verde aunque
+# estuvieran rotas.
+URL_APP_ASYNC = (
+    make_url(URL_ASYNC)
+    .set(username=ROL_APLICACION, password=settings.APP_DB_PASSWORD)
+    .render_as_string(hide_password=False)
+)
+URL_APP_SYNC = URL_APP_ASYNC.replace("postgresql+asyncpg://", "postgresql+psycopg://")
 PASSWORD = "secreto123"
+
+
+# --- Registro de accesos por perfil (para derivar la matriz de RLS) ------------------------
+# Con TIMU_REGISTRO_ACCESOS=<ruta>, cada (perfil, operacion, tabla) distinto que ejecuta la
+# suite se anota en esa ruta, una linea JSON por combinacion. Es la evidencia de que lee y
+# escribe cada perfil; docs/plan-persistencia.md (fase 4) explica como se usa.
+
+_RUTA_ACCESOS = os.getenv("TIMU_REGISTRO_ACCESOS")
+if _RUTA_ACCESOS:
+    import json as _json
+    import re as _re
+
+    from sqlalchemy import event as _event
+    from sqlalchemy.engine import Engine as _Engine
+
+    from app.core.database import CLAVE_ROL_CONEXION as _CLAVE_ROL
+
+    _tablas = set(Base.metadata.tables)
+    _vistos: set[tuple[str, str, str, str]] = set()
+
+    def _accesos(sql: str) -> set[tuple[str, str]]:
+        texto = " ".join(sql.split()).lower()
+        escritas: set[tuple[str, str]] = set()
+        for op, patron in (
+            ("insert", r"\binsert into ([a-z_]+)"),
+            ("update", r"\bupdate ([a-z_]+) set\b"),
+            ("delete", r"\bdelete from ([a-z_]+)"),
+        ):
+            escritas |= {(op, t) for t in _re.findall(patron, texto)}
+        leidas = {("select", t) for t in _re.findall(r"\b(?:from|join) ([a-z_]+)", texto)}
+        borradas = {t for op, t in escritas if op == "delete"}
+        leidas = {(op, t) for op, t in leidas if t not in borradas or "where" in texto}
+        return {(op, t) for op, t in escritas | leidas if t in _tablas}
+
+    @_event.listens_for(_Engine, "before_cursor_execute")
+    def _registrar_acceso(conn, cursor, statement, parameters, context, executemany) -> None:
+        rol = conn.info.get(_CLAVE_ROL)
+        if rol is None:
+            return
+        ruta = conn.info.get("ruta", "-")
+        nuevos = {(str(rol), ruta, op, t) for op, t in _accesos(statement)} - _vistos
+        if nuevos:
+            _vistos.update(nuevos)
+            with open(_RUTA_ACCESOS, "a") as fichero:
+                for fila in sorted(nuevos):
+                    fichero.write(_json.dumps(fila) + "\n")
 
 
 # --- Guardas de la suite ----------------------------------------------------------------------
@@ -126,10 +193,19 @@ def esquema() -> Iterator[None]:
         conn.commit()
 
     command.upgrade(config_alembic(), "head")
+    with engine.begin() as conn:
+        habilitar_rol_aplicacion(conn, settings.APP_DB_PASSWORD)
+    app_engine = create_engine(URL_APP_SYNC)
+    with app_engine.connect() as conn:
+        motivo = motivo_rol_privilegiado(conn.execute(SQL_ROL_CONECTADO).one())
+    app_engine.dispose()
+    if motivo:
+        pytest.exit(f"Las pruebas no corren con un rol privilegiado: {motivo}", returncode=1)
     yield
-    Base.metadata.drop_all(engine)
+    # Todo el esquema y no tabla a tabla: las politicas de RLS de una tabla dependen de otras.
     with engine.connect() as conn:
-        conn.execute(text("DROP TABLE IF EXISTS alembic_version"))
+        conn.execute(text("DROP SCHEMA public CASCADE"))
+        conn.execute(text("CREATE SCHEMA public"))
         conn.commit()
     engine.dispose()
 
@@ -151,11 +227,16 @@ async def db() -> AsyncGenerator[AsyncSession, None]:
     prueba libere un savepoint en vez de escribir de verdad. Los catalogos y las reglas
     iniciales se cargan dentro de esa transaccion, como en un ambiente recien creado.
     """
-    engine = create_async_engine(URL_ASYNC, poolclass=None)
+    engine = create_async_engine(URL_APP_ASYNC, poolclass=None)
     conn = await engine.connect()
     trans = await conn.begin()
+    # Las fabricas y las aserciones directas actuan como el sistema; cada peticion del
+    # fixture `client` cambia al contexto de su usuario y al terminar vuelve a este.
     session = AsyncSession(
-        bind=conn, expire_on_commit=False, join_transaction_mode="create_savepoint"
+        bind=conn,
+        expire_on_commit=False,
+        join_transaction_mode="create_savepoint",
+        info={CLAVE_CONTEXTO: SISTEMA},
     )
     await session.run_sync(cargar_catalogos)
     await session.run_sync(sembrar_reglas)
@@ -249,14 +330,48 @@ def sin_envios_reales(monkeypatch) -> None:
 
 @pytest_asyncio.fixture
 async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    async def _get_db():
-        # Igual que get_db real: confirma al final, revierte si hubo error.
+    async def _get_db(request: Request):
+        # Igual que get_db real: arranca como peticion sin sesion (la autenticacion cambia el
+        # contexto), confirma al final y revierte si hubo error.
+        await db.run_sync(
+            fijar_contexto,
+            ContextoDb(rol="publico", request_id=getattr(request.state, "request_id", None)),
+        )
+        if _RUTA_ACCESOS:
+            # Modo registro: la peticion usa su propia sesion sobre la misma conexion y
+            # transaccion, con el identity map vacio. Asi toda lectura llega a la base y queda
+            # anotada; con la sesion compartida, un objeto ya cargado por la prueba se servia
+            # de memoria y su lectura no aparecia en la matriz.
+            ruta = request.scope.get("route")
+            conexion = await db.connection()
+            conexion.sync_connection.info["ruta"] = (  # type: ignore[union-attr]
+                f"{request.method} {getattr(ruta, 'path', request.url.path)}"
+            )
+            propia = AsyncSession(
+                bind=conexion,
+                expire_on_commit=False,
+                join_transaction_mode="create_savepoint",
+                info={CLAVE_CONTEXTO: db.sync_session.info[CLAVE_CONTEXTO]},
+            )
+            try:
+                yield propia
+                await propia.commit()
+            except Exception:
+                await propia.rollback()
+                raise
+            finally:
+                await propia.close()
+                conexion.sync_connection.info.pop("ruta", None)  # type: ignore[union-attr]
+                await db.run_sync(fijar_contexto, SISTEMA)
+            return
         try:
             yield db
             await db.commit()
         except Exception:
             await db.rollback()
             raise
+        finally:
+            await db.run_sync(fijar_contexto, SISTEMA)
 
     app.dependency_overrides[get_db] = _get_db
     app.state.contador_peticiones.reiniciar()

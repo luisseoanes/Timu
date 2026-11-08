@@ -7,7 +7,8 @@ from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, Uni
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.auditoria import Auditable
-from app.core.database import Base, JSONTipo, TimestampMixin, UUIDMixin
+from app.core.database import Base, EnumDb, JSONTipo, TimestampMixin, UUIDMixin
+from app.core.enums import CodigoPrompt, EstadoConsultaIa, EstadoPrompt
 
 
 class PromptIA(Base, UUIDMixin, TimestampMixin, Auditable):
@@ -15,17 +16,24 @@ class PromptIA(Base, UUIDMixin, TimestampMixin, Auditable):
     pasar su evaluacion (F4-IAA-04)."""
 
     __tablename__ = "prompts_ia"
+    __checks__ = {
+        "version_minimo": "version >= 1",
+        "activo_evaluado": "estado <> 'activo' OR evaluado_en IS NOT NULL",
+    }
+    __unicos__ = {
+        "codigo_activo": (["codigo"], "estado = 'activo'"),
+    }
     __table_args__ = (UniqueConstraint("codigo", "version"),)
 
-    codigo: Mapped[str] = mapped_column(String(40), index=True)
+    codigo: Mapped[str] = mapped_column(EnumDb(CodigoPrompt), index=True)
     version: Mapped[int] = mapped_column(Integer)
     sistema: Mapped[str] = mapped_column(Text)
     # borrador | activo | retirado
-    estado: Mapped[str] = mapped_column(String(12), default="borrador", index=True)
+    estado: Mapped[str] = mapped_column(EnumDb(EstadoPrompt), default="borrador", index=True)
     nota: Mapped[str | None] = mapped_column(Text)
     evaluado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     evaluacion: Mapped[dict[str, Any]] = mapped_column(JSONTipo, default=dict)
-    activado_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"))
+    activado_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
 
 
 class ConsultaIA(Base, UUIDMixin, TimestampMixin):
@@ -33,12 +41,19 @@ class ConsultaIA(Base, UUIDMixin, TimestampMixin):
     y como termino. Es la base del limite de gasto."""
 
     __tablename__ = "consultas_ia"
+    __checks__ = {
+        "metricas_no_negativas": (
+            "tokens_entrada >= 0 AND tokens_salida >= 0 AND tokens_cache_lectura >= 0"
+            " AND tokens_cache_escritura >= 0 AND costo_usd >= 0 AND (latencia_ms IS NULL"
+            " OR latencia_ms >= 0)"
+        ),
+    }
 
-    prompt_codigo: Mapped[str] = mapped_column(String(40), index=True)
+    prompt_codigo: Mapped[str] = mapped_column(EnumDb(CodigoPrompt), index=True)
     prompt_version: Mapped[int | None] = mapped_column(Integer)
     modelo: Mapped[str | None] = mapped_column(String(60))
     # ok | rechazo | error | presupuesto_agotado | desactivada
-    estado: Mapped[str] = mapped_column(String(24), index=True)
+    estado: Mapped[str] = mapped_column(EnumDb(EstadoConsultaIa), index=True)
     contexto: Mapped[str | None] = mapped_column(String(120), index=True)  # "solicitud:<id>"
     tokens_entrada: Mapped[int] = mapped_column(Integer, default=0)
     tokens_salida: Mapped[int] = mapped_column(Integer, default=0)
@@ -58,7 +73,7 @@ class CasoPruebaIA(Base, UUIDMixin, TimestampMixin, Auditable):
 
     __tablename__ = "casos_prueba_ia"
 
-    prompt_codigo: Mapped[str] = mapped_column(String(40), index=True)
+    prompt_codigo: Mapped[str] = mapped_column(EnumDb(CodigoPrompt), index=True)
     nombre: Mapped[str] = mapped_column(String(160))
     entrada: Mapped[str] = mapped_column(Text)
     # {"campo": "alcance", "igual": "fuera"} | {"contiene": [...]} | {"no_contiene": [...]}

@@ -25,7 +25,7 @@ async def _familia_con_portal(db: AsyncSession, nombre: str, documento: str, ema
     familia = Familia(
         titular_nombre=nombre,
         documento=documento,
-        telefono="573000000000",
+        telefono="+573000000000",
         ciudad="Bogota",
         usuario_portal_id=usuario.id,
     )

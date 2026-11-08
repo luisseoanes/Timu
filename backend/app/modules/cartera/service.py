@@ -6,13 +6,14 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from functools import partial
 from typing import Any, TypeVar
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import structlog
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import nuevo_id
 from app.core.enums import EstadoAfiliacion
 from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
@@ -83,7 +84,7 @@ def crear_contrato(
     adicionales, valor_adicional, _ = planes.calcular_cupo(db, familia, plan, len(activas))
 
     contrato = Contrato(
-        id=uuid4(),
+        id=nuevo_id(),
         numero=_numero(db, inicio),
         familia_id=familia.id,
         plan_id=plan.id,
@@ -415,7 +416,7 @@ def registrar_pago_manual(
         if cuota is None or contrato is None or contrato.familia_id != familia_id:
             raise ReglaNegocio("La cuota no pertenece a la familia")
     pago = Pago(
-        id=uuid4(),
+        id=nuevo_id(),
         familia_id=familia_id,
         cuota_id=cuota_id,
         referencia_externa=referencia,

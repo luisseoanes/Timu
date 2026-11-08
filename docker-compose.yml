@@ -17,9 +17,25 @@ x-backend-env: &backend-env
 x-backend-environment: &backend-environment
   STORAGE_PUBLIC_ENDPOINT_URL: ${STORAGE_PUBLIC_ENDPOINT_URL:-http://localhost:${TIMU_S3_PORT:-9000}}
 
+# api, worker y beat llegan a la base por PgBouncer (modo transaccion). `inicializar` va
+# directo: es quien le da LOGIN al rol de la aplicacion, antes de que el pool pueda entrar.
+x-por-pgbouncer: &por-pgbouncer
+  <<: *backend-environment
+  APP_DB_HOST: pgbouncer
+  APP_DB_PORT: "5432"
+
 services:
   db:
     image: postgres:18-alpine
+    # pg_stat_statements: que consultas pesan y cuanto. Consultas de mas de 500 ms al log.
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=all
+      - -c
+      - log_min_duration_statement=500
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-timu}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-timu}
@@ -84,6 +100,32 @@ services:
       interval: 5s
       retries: 10
 
+  # Pool de conexiones de la aplicacion. Modo transaccion: el contexto de RLS se fija con
+  # set_config(..., true), local a la transaccion, asi que no se cruza entre clientes.
+  # max_prepared_statements: asyncpg usa sentencias preparadas con nombre.
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.26.1-p0
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${POSTGRES_DB:-timu}
+      DB_USER: timu_app
+      DB_PASSWORD: ${APP_DB_PASSWORD:-timu_app}
+      AUTH_TYPE: scram-sha-256
+      POOL_MODE: transaction
+      MAX_PREPARED_STATEMENTS: "200"
+      DEFAULT_POOL_SIZE: "20"
+      MAX_CLIENT_CONN: "500"
+    ports:
+      - "${TIMU_PGBOUNCER_PORT:-6432}:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-p", "5432"]
+      interval: 5s
+      retries: 10
+    depends_on:
+      db:
+        condition: service_healthy
+
   # Migraciones, catalogos, admin y bucket. Termina y sale; api, worker y beat esperan
   # a que acabe bien, asi que nunca arrancan contra un esquema a medias.
   inicializar:
@@ -102,7 +144,7 @@ services:
   api:
     build: ./backend
     env_file: *backend-env
-    environment: *backend-environment
+    environment: *por-pgbouncer
     volumes:
       - ./backend:/app
     ports:
@@ -112,6 +154,8 @@ services:
       interval: 5s
       retries: 20
     depends_on:
+      pgbouncer:
+        condition: service_healthy
       inicializar:
         condition: service_completed_successfully
       redis:
@@ -123,11 +167,13 @@ services:
       args:
         REQUIREMENTS: requirements-worker.txt
     env_file: *backend-env
-    environment: *backend-environment
+    environment: *por-pgbouncer
     command: celery -A app.workers.celery_app.celery_app worker -l info
     volumes:
       - ./backend:/app
     depends_on:
+      pgbouncer:
+        condition: service_healthy
       inicializar:
         condition: service_completed_successfully
       redis:
@@ -139,11 +185,13 @@ services:
       args:
         REQUIREMENTS: requirements-worker.txt
     env_file: *backend-env
-    environment: *backend-environment
+    environment: *por-pgbouncer
     command: celery -A app.workers.celery_app.celery_app beat -l info
     volumes:
       - ./backend:/app
     depends_on:
+      pgbouncer:
+        condition: service_healthy
       inicializar:
         condition: service_completed_successfully
       redis:

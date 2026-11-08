@@ -1,0 +1,140 @@
+# Plan: integridad, aislamiento y escala en la capa de persistencia
+
+Decidido el 2026-11-04. Este documento es el plan de trabajo y el registro de su avance;
+las reglas permanentes que salen de él viven en `backend/CLAUDE.md` y en los guardas de la
+suite, no aquí.
+
+## Principio
+
+**La base garantiza; Python explica.** Toda regla que la base puede hacer cumplir se hace
+cumplir en la base: tipos, claves foráneas, `CHECK`, unicidad, transiciones de estado,
+inmutabilidad, auditoría y aislamiento por filas. Python sigue validando antes para dar un
+mensaje claro, pero si Python se equivoca o alguien escribe por SQL, la base lo rechaza.
+Solo se quedan exclusivamente en Python las reglas que dependen de un servicio externo o
+de la hora actual.
+
+## Decisiones
+
+| Tema | Decisión |
+| --- | --- |
+| Entornos | Solo local y CI; los datos se regeneran con `inicializar` y `datos_demo`. Aun así, toda migración de datos se escribe y se prueba como si hubiera datos reales. |
+| Motor | PostgreSQL 18: `uuidv7()` y `uuid_extract_version()` nativos. Imagen, `db-test`, CI y cliente de respaldos en la misma versión. |
+| Roles | `timu` dueño del esquema (migraciones, `inicializar`); `timu_app` sin superusuario ni `BYPASSRLS`, para API, worker, beat **y pruebas**. |
+| Contexto | Cada transacción fija con `set_config(..., true)` `app.usuario_id`, `app.rol`, `app.familia_id`, `app.clinica_id` y `app.request_id`. Sin contexto, la política no devuelve filas. Los workers fijan `app.rol = 'sistema'`. |
+| Conjuntos cerrados | Enum nativo de PostgreSQL para lo que fija el código (estados, roles, canales, prioridades). Un guarda compara cada `StrEnum` de Python con su enum de la base. |
+| Conjuntos del negocio | Tabla catálogo con clave foránea (ciudades, especies, tipos de servicio, planes). Nada de texto libre que «debe estar en el catálogo». |
+| Transiciones | Tabla `transiciones_estado` y trigger genérico que rechaza los cambios de estado no declarados. Un guarda compara la tabla con las máquinas de estado de Python. |
+| Auditoría | Por trigger, con la fila antes y después, el usuario y el `request_id` del contexto. La tabla `auditoria` solo admite `INSERT`. |
+| Borrado | Ningún `DELETE` físico sobre entidades de negocio desde `timu_app`; las bajas y anulaciones son estados. El único borrado es `anonimizar_familia()` (habeas data, Ley 1581), que también limpia la auditoría. |
+| RLS | En todas las tablas: aislamiento de familia y de clínica aliada, y políticas de lectura y escritura por perfil interno. La matriz se deriva de lo observado (cada sentencia de la suite completa, `datos_demo` y el e2e del stack, con su `app.rol`) y se revisa contra las rutas de cada perfil. Sin `FORCE ROW LEVEL SECURITY`: RLS ya se aplica a `timu_app` (no es dueño ni tiene `BYPASSRLS`); forzarlo la aplicaría también al dueño, que en un despliegue sin superusuario rompería las migraciones y las funciones `SECURITY DEFINER`. Los webhooks validados por firma corren como `sistema`. |
+| IDs | UUIDv7 en todas las claves primarias: `server_default uuidv7()`, generador en Python para los IDs que se necesitan antes del `flush` y `CHECK (uuid_extract_version(id) = 7)`. |
+| Volumen | Índice en toda clave foránea, `pg_stat_statements`, `statement_timeout`, PgBouncer en modo transacción, guarda de `EXPLAIN` sobre las consultas clave y pruebas de carga con el volumen proyectado a 12 meses (`F4-QAA-02`). |
+
+## Fases
+
+Cada fase llega con sus pruebas y su guarda, deja las cuatro suites en verde y, si toca
+infraestructura, pasa la verificación del stack con un solo comando de `CLAUDE.md`.
+
+| Fase | Contenido | Guarda que la mantiene | Estado |
+| --- | --- | --- | --- |
+| 0. Base | PostgreSQL 18 (compose, `db-test`, CI, respaldos); roles `timu` / `timu_app`; contexto por transacción en API, worker y pruebas; las pruebas se conectan como `timu_app`. | La suite falla si se conecta con un rol que salta RLS. | Hecha (2026-11-04) |
+| 1. UUIDv7 | Función por defecto, generador en Python, `CHECK` de versión, migración que reescribe IDs v4 existentes (claves foráneas, JSON, `auditoria.entidad_id`) con prueba de migración sobre datos. | Toda clave primaria UUID tiene `uuidv7()` y el `CHECK` de versión 7. | Hecha (2026-11-04) |
+| 2. Integridad | Enums, claves foráneas a catálogos, `CHECK` (rangos, importes, fechas, identificadores), únicos parciales, `NOT NULL`, la `CHECK` perdida de `usuarios`, transiciones e inmutabilidad (historia firmada, carnet emitido) por trigger, auditoría por trigger. | Sin `varchar` de estado; `CHECK` del modelo presentes en la base (el autogenerate no las compara); toda tabla de negocio auditada. | Hecha (2026-11-04) |
+| 3. Sin borrado físico | `REVOKE DELETE` a `timu_app`, conversión de los borrados actuales en estados, `anonimizar_familia()`. | `timu_app` no tiene `DELETE` sobre tablas de negocio. | Hecha (2026-11-05) |
+| 4. RLS | Inventario de qué lee y escribe cada perfil; políticas por tabla; `FORCE ROW LEVEL SECURITY`; `restringir()` se queda como segunda capa y para responder 404. | Toda tabla tiene RLS y las políticas de la matriz; pruebas por perfil contra la base. | Hecha (2026-11-05) |
+| 5. Volumen | Índices de las 54 claves foráneas, `pg_stat_statements`, `statement_timeout`, PgBouncer, guarda de `EXPLAIN`, generador de datos sintéticos y pruebas de carga en el CI. | Toda clave foránea con índice; ninguna consulta clave recorre la tabla entera. | Pendiente |
+| 6. Cierre | Reglas en `backend/CLAUDE.md` y en la tabla de guardas de `CLAUDE.md`, verificación completa del stack y revisión de que nada se rompió. `restaurar.sh` usa `pg_restore --no-privileges`: una base restaurada queda sin los permisos de `timu_app` (ni los de RLS); hay que restaurarlos o reaplicarlos y probarlo. | — | Pendiente |
+
+## Hallazgos de la auditoría (2026-11-04)
+
+- 0 `CHECK`, 0 triggers, 0 funciones, 0 enums y 0 tablas con RLS en la base.
+- La `CHECK` `con_identificador` de `usuarios` está en el modelo pero ninguna migración la creó; `test_migraciones.py` no la detecta porque el autogenerate no compara `CHECK`.
+- Unas 60 columnas de estado o tipo son `varchar` libres; las referencias a ciudades, especies y tipos de servicio son texto sin clave foránea.
+- 235 reglas de negocio se validan solo en Python.
+- La auditoría se escribe desde Python y la tabla se puede editar y borrar.
+- La app y las pruebas se conectan como `timu`, superusuario con `BYPASSRLS`.
+- 54 claves foráneas sin índice.
+- Los IDs son UUIDv4 generados en Python; en 6 sitios se asignan a mano antes del `flush`.
+
+## Registro
+
+- **Fase 0 (2026-11-04).** PostgreSQL 18.6 en compose, `db-test`, CI y respaldos (volumen nuevo `pgdata18`: el de la 16 no arranca con la 18). Migración `0013` con el rol `timu_app`; `inicializar` y `conftest.py` le dan LOGIN. API, worker, scripts y pruebas se conectan como `timu_app`, y la API y el worker abortan si el rol es privilegiado (comprobado arrancando la API con `timu`). Contexto por transacción (`ContextoDb`, listener `after_begin`). Verificado: `pytest` 673 en verde (90,79 %), `npm run verificar` 357, `test:e2e` 2, stack con un solo comando con `--build` en proyecto aparte (`inicializar` Exited 0, `/health` ok) y `test:e2e:stack` 8 contra él.
+- **Fase 1 (2026-11-04).** `UUIDMixin` con `nuevo_id()` (`uuid-utils==1.1.0`), `DEFAULT uuidv7()` y `ck_<tabla>_id_uuidv7`, añadido a nivel de tabla por un evento de mapper (a nivel de columna Alembic lo descarta). Migración `0014`: reescribe los IDs existentes con el instante de su `created_at`, cascada temporal de las 114 claves foráneas (vuelven a su definición exacta), reemplazo de IDs en texto y JSON solo si son IDs reescritos, y caducidad de los códigos de un solo uso pendientes. `test_0014_...` la prueba sobre una base aparte con datos v4 y falla si se quita la reescritura de texto o la restauración de claves foráneas (comprobado mutando la migración). Guarda `test_toda_tabla_tiene_id_uuidv7_...`. Verificado: `pytest` 677 en verde; stack limpio con `--build` y `test:e2e:stack` 8; la base de desarrollo con 317 filas v4 migrada por `inicializar`: mismas filas por tabla, 0 IDs no v7, 0 referencias en texto o JSON huérfanas, orden de IDs igual al cronológico y `test:e2e:stack` 8 sobre esos datos. El panel no cambió en esta fase.
+
+- **Fase 2a (2026-11-04).** 54 enums de PostgreSQL sobre 66 columnas (migración `0015`, generada del inventario de abajo con los valores escritos en ella). `EnumDb(StrEnum)` en `app/core/database.py`; los nuevos `StrEnum` en `app/core/enums.py` y las clases de constantes (`EstadoCuota`, `EstadoMensaje`, `EstadoPendiente`, `EstadoSolicitud`) convertidas en `StrEnum` con `nonmember` para sus auxiliares. La `0015` elimina siete `DEFAULT` de servidor que habían quedado del relleno de columnas y que el modelo no tiene; el de `historias_clinicas.estado` era `'firmada'`. Los listados y las reglas siguen ordenando alfabéticamente (`cast` a texto) y la bandeja de tareas compara la prioridad como texto. Guardas: enums del modelo iguales a los de la base, ningún conjunto cerrado como texto libre, `EventoRegla` igual a `motor.EVENTOS` y orden de listados. Prueba de ida y vuelta de las migraciones `0013`→`head`. Verificado: `pytest` 683 en verde (90,98 %), tipos del panel sin cambios (`generar_tipos_frontend.py` no produce diferencias), la base de desarrollo migrada por `inicializar` con `datos_demo` y `test:e2e:stack` 8 sin errores de enum en la API, y stack limpio con `--build` y `test:e2e:stack` 8. Un error mío en el inventario (`servicio.elegibilidad`, que el motor sí registra) lo destapó la suite y lo cubre ahora el guarda de eventos.
+
+- **Fase 2b (2026-11-04).** Migración `0016` (generada con el autogenerate sobre una base temporal y ajustada a mano: índice único primero, enum con `CREATE TYPE` y `USING`). `ciudades.nombre` único y nueve columnas de ciudad con clave foránea `ON UPDATE CASCADE`; claves foráneas para `mascotas.especie`, `historias_clinicas.plantilla_codigo`, `solicitudes_virtuales.respuesta_codigo`, `interesados.plan_sugerido` y `regla_codigo` en `cambios_plan` y `avisos_cartera`, todas con índice; enum `codigo_prompt` en las tres columnas de prompts de IA. Fuera a propósito: `interesados.ciudad` (un interesado puede venir de una ciudad sin cobertura) y `servicio_pasos.paso_codigo` (lo define el JSON del tipo de servicio). Guarda `test_toda_referencia_a_un_catalogo_tiene_llave_foranea`, rechazo de ciudad ajena y propagación del cambio de nombre. Verificado: `alembic check` sin diferencias e ida y vuelta de la `0016`; `pytest` 686 en verde; base de desarrollo migrada con `datos_demo` y `test:e2e:stack` 8 sin errores de integridad en la API; stack limpio con `--build` y `test:e2e:stack` 8.
+
+- **Fases 2c y 2d (2026-11-04).** Migración `0017`: 109 `CHECK` en 47 tablas (rangos, formatos, importes no negativos, campos que exige cada estado y el `ck_usuarios_con_identificador` que nunca había llegado a la base). Migración `0018`: 8 índices únicos, 6 de ellos parciales (contrato vigente por familia, versión activa de prompt y de plantilla, árbol publicado, medio de pago activo, servicio por ruta) y 2 completos (encuesta por servicio y tipo, acceso de portal por familia). Se declaran en el modelo con `__checks__` y `__unicos__` y los aplica `_restricciones_de_la_tabla`. Cada expresión se validó contra los datos de desarrollo antes de escribirla; la validación corrigió dos supuestos míos (formato de teléfono y esquemas de una dosis), y la suite un tercero (las conversaciones de WhatsApp también guardan E.164 con `+`: hay un solo formato de teléfono). El código que retira y activa versiones hace `flush()` entre los dos pasos; reactivar una plantilla antigua chocaba con el índice sin él (prueba que falla sin el arreglo, comprobado). Las pruebas que creaban filas incoherentes a mano (ruta finalizada sin fechas, prompt activo sin evaluar, encuesta respondida sin enviar, parada completada sin salida, teléfonos sin `+`) se corrigieron: el flujo real no las produce. Guardas: modelo y base con los mismos `CHECK` y los mismos índices únicos, en los dos sentidos. Verificado: `pytest` 695 en verde (91,02 %); base de desarrollo migrada con `datos_demo` sin violaciones registradas en API ni worker y `test:e2e:stack` 8; stack limpio con `--build` y `test:e2e:stack` 8.
+
+- **Deriva de valores por defecto y fase 2e (2026-11-04).** Migración `0019`: elimina 19 `DEFAULT` de servidor que el modelo no declaraba (restos del relleno de columnas; `contratos.valor_plan = 0` creaba un contrato con el plan gratis), y la prueba de deriva y `alembic/env.py` comparan ya los valores por defecto del servidor. Migración `0020`: tabla `transiciones_estado` (solo la escribe el dueño del esquema), función `validar_transicion()` (`SECURITY DEFINER`, `search_path` fijo) y un trigger `BEFORE UPDATE OF estado` en 17 tablas, con 67 aristas tomadas de `app/core/transiciones.py` (servicios y pendientes importan sus grafos del módulo). Fuera, con el motivo escrito: mensajes, pagos, cuotas, afiliación, embudo y plantillas de Meta. Guardas: aristas y triggers iguales en base y código, rechazo de una transición fuera del grafo por SQL y la aplicación sin permiso para ampliar los grafos. La suite destapó un atajo de prueba que saltaba de `pendiente` a `respondida`. Verificado: `pytest` 698 en verde; base de desarrollo migrada con `datos_demo` sin transiciones rechazadas ni violaciones en API y worker, `test:e2e:stack` 8; stack limpio con `--build` y `test:e2e:stack` 8.
+- **Fases 2f y 2g (2026-11-04).** Migración `0021`. Auditoría: `auditar()` (`SECURITY DEFINER`) en un trigger `AFTER` de las 36 tablas `Auditable`, con el usuario y el `request_id` del contexto y el mismo formato de `cambios` que escribía Python (importes como texto); el listener de SQLAlchemy desaparece y `auditoria` solo admite `SELECT` para `timu_app`. Inmutabilidad: `inmutable()` en `auditoria` (también `DELETE`), carnets emitidos, fórmulas, adjuntos clínicos, aplicaciones de pago y cambios de plan (salvo `aplicado`); `historia_firmada_inmutable()` deja una historia firmada pasar solo a `corregida`. Las dos dejan pasar al dueño del esquema, para la anonimización. `get_current_user` toma el `request_id` de la petición. Guardas: triggers de auditoría e inmutabilidad presentes, un `UPDATE` por SQL deja rastro (la auditoría en Python no lo dejaba), la aplicación no puede escribir la bitácora y una historia firmada no se edita ni por SQL. Verificado: `pytest` 705 en verde (90,98 %); base de desarrollo migrada con `datos_demo` sin errores en API ni worker y `test:e2e:stack` 8; una tarea creada por la API en el stack real queda auditada con `admin@timu.co` y el `X-Request-ID` enviado; stack limpio con `--build` y `test:e2e:stack` 8.
+
+- **Fase 3 (2026-11-05).** Migración `0022`. `timu_app` pierde `DELETE` en todas las tablas salvo las técnicas de `BORRABLES` (sesiones, tokens, caché de distancias, consumo de mapas, outbox), y los permisos por defecto dejan de concederlo. Los dos borrados que había pasan a estados: reactivar los envíos cierra la baja (`reactivada_en`, unicidad del destino entre bajas activas) y reemplazar los beneficios de un plan desactiva los anteriores (`activo`, unicidad por tipo entre vigentes; la relación `plan.beneficios` carga solo los vigentes). Fuera `delete-orphan` en las colecciones de negocio. Función `anonimizar_familia()` (`SECURITY DEFINER`, solo con contexto de administrador, se niega con un contrato vigente): sustituye los datos personales de la familia, su usuario de portal, interesados, mensajes, formularios, medios de pago, encuestas y destinatarios, borra sus sesiones de conversación, limpia su rastro en la bitácora (incluido el que deja ella misma) y devuelve las claves de fotos y PDF, que el worker borra del almacenamiento tras confirmar (`familias.purgar_archivos`, por el outbox). Endpoint `POST /api/v1/familias/{id}/anonimizar` (solo administración); el panel aún no tiene botón. La verificación del stack limpio destapó un fallo que introduje: `PUT /planes/{id}/beneficios` respondía 500 (colección caducada serializada fuera de la sesión); corregido con su prueba por la API, que falla sin el arreglo. Verificado: `pytest` 713 en verde (91,05 %); base de desarrollo migrada con `datos_demo` y `test:e2e:stack` 8; anonimización de punta a punta en el stack real (sin rastro de los datos en `familias` ni en la bitácora y el objeto de SeaweedFS borrado por el worker en la siguiente pasada del outbox); stack limpio con `--build`, `datos_demo` completo y `test:e2e:stack` 8.
+
+- **Fase 4 (2026-11-05).** Migración `0023`: RLS en las 65 tablas del modelo y 260 políticas (una por tabla y operación) para `timu_app`, generadas de `app/core/permisos_db.py`, con funciones de contexto (`app_rol()`, `app_usuario()`, `app_familia()`, `app_clinica()`) y cada política comentada con su expresión de origen. La matriz se derivó de la evidencia: cada sentencia de la suite completa con su perfil y su ruta (`TIMU_REGISTRO_ACCESOS`), repartida entre los perfiles que admite cada ruta, más 37 rutas que ninguna prueba recorre, revisadas a mano. El primer registro tenía dos puntos ciegos que destapó la suite: las lecturas servidas desde el *identity map* (resuelto con una sesión propia por petición en modo registro) y `SELECT … FOR UPDATE`, que exige la política de `UPDATE` (resuelto con el permiso `L`, que bloquea sin poder editar). Quien cambia el estado de un servicio tiene los permisos de los efectos de las reglas configurables (tareas, mensajes), aunque hoy no los use. `familia` solo ve sus filas y las historias firmadas; `aliada`, lo de sus remisiones; el equipo, solo sus sesiones; solo `medico` escribe la historia clínica (`F2-CLI-05`, ahora también en la base). Los webhooks pasan a `sistema` tras validar la firma. Pendiente, señalado: `publico` lee las tablas de autenticación y de los formularios públicos sin condición de fila, porque esas rutas buscan al usuario antes de saber quién pregunta; acotarlas con identificadores del contexto es una mejora posible. Verificado: `pytest` 720 en verde (91,07 %); análisis de huecos sin ningún acceso fuera de la matriz; base de desarrollo migrada con `datos_demo` y `test:e2e:stack` 8 sin rechazos en API, worker ni beat; stack limpio con `--build`, `datos_demo` completo (5 familias, 4 servicios, 141 registros de auditoría) y `test:e2e:stack` 8.
+
+## Inventario de la fase 2a: conjuntos cerrados
+
+Sacado de los `StrEnum`, las constantes de cada módulo, los `Literal` de los schemas, los valores por defecto de los modelos y cada asignación en los servicios, contrastado con los datos de demo. Cada enum de PostgreSQL tiene su `StrEnum` en `app/core/enums.py` con el mismo nombre en snake_case.
+
+| Enum | Valores | Columnas |
+| --- | --- | --- |
+| `rol` | admin, comercial, operaciones, medico, familia, aliada | `usuarios.rol` |
+| `estado_afiliacion` | prospecto, activa, en_mora, congelada, cancelada | `familias.estado`, `contratos.estado` |
+| `estado_servicio` | solicitado, agendado, en_ruta, en_atencion, completado, pendiente_autorizacion, reprogramado, cancelado | `servicios.estado` |
+| `tipo_servicio` | domiciliario, preventivo, clinico, virtual, aliada | `servicios.tipo`, `tipos_servicio.modalidad`, `franjas_agenda.modalidad`, `bloqueos_agenda.modalidad` |
+| `estado_pago` | pendiente, aprobado, rechazado, reversado, anulado | `pagos.estado`, `intentos_cobro.estado` |
+| `proveedor_pago` | manual, wompi | `pagos.proveedor`, `eventos_pasarela.proveedor`, `medios_pago_recurrente.proveedor` |
+| `estado_evento_pasarela` | recibido, procesado, ignorado, error | `eventos_pasarela.estado` |
+| `estado_cuota` | pendiente, parcial, pagada, anulada | `cuotas.estado` |
+| `medio_aceptacion` | formulario_web, presencial, whatsapp, llamada | `contratos.medio_aceptacion` |
+| `estado_solicitud` | pendiente_pago, completada, cancelada, error | `solicitudes_afiliacion.estado` |
+| `origen_solicitud_afiliacion` | formulario, asistida | `solicitudes_afiliacion.origen` |
+| `tipo_documento` | CC, CE, TI, PA, PPT, NIT | `familias.tipo_documento` |
+| `sexo_mascota` | macho, hembra | `mascotas.sexo` |
+| `geo_precision` | direccion, ciudad, manual | `familias.geo_precision` |
+| `accion` | crear, editar, cambio_estado, eliminar | `auditoria.accion` |
+| `proposito_archivo` | foto_mascota, adjunto_clinico, contrato, formula, carnet | `archivos.proposito` |
+| `proposito_token` | recuperacion, activacion, codigo_ingreso | `tokens_uso_unico.proposito` |
+| `canal_comunicacion` | whatsapp, email | `mensajes.canal`, `bajas_comunicaciones.canal`, `campanas.canal` |
+| `direccion_mensaje` | entrante, saliente | `mensajes.direccion` |
+| `estado_mensaje` | encolado, enviado, entregado, leido, fallido, recibido, omitido | `mensajes.estado` |
+| `categoria_plantilla` | utility, marketing, authentication | `plantillas_whatsapp.categoria` |
+| `estado_aprobacion_plantilla` | borrador, enviada, aprobada, rechazada, pausada | `plantillas_whatsapp.estado_aprobacion` |
+| `estado_campana` | borrador, programada, en_envio, finalizada, cancelada | `campanas.estado` |
+| `recurrencia_campana` | ninguna, diaria, semanal, mensual | `campanas.recurrencia` |
+| `estado_ejecucion_campana` | en_envio, terminada, cancelada | `ejecuciones_campana.estado` |
+| `estado_destinatario` | pendiente, encolado, excluido | `destinatarios_campana.estado` |
+| `periodicidad_reporte` | diaria, semanal, mensual | `reportes_programados.periodicidad` |
+| `tipo_encuesta` | satisfaccion, seguimiento | `encuestas.tipo` |
+| `canal_respuesta_encuesta` | enlace, whatsapp | `encuestas.canal_respuesta` |
+| `estado_encuesta` | pendiente, enviada, respondida, vencida, omitida | `encuestas.estado` |
+| `tipo_historia` | presencial, domiciliaria, virtual | `historias_clinicas.tipo` |
+| `estado_historia` | borrador, firmada, corregida | `historias_clinicas.estado` |
+| `estado_respuesta_virtual` | borrador, aprobada, retirada | `respuestas_virtuales.estado` |
+| `canal_virtual` | portal, whatsapp, panel | `solicitudes_virtuales.canal` |
+| `estado_solicitud_virtual` | en_cola, en_atencion, respondida, cerrada | `solicitudes_virtuales.estado` |
+| `prioridad` | alta, media, baja | `solicitudes_virtuales.prioridad`, `tareas.prioridad` |
+| `etapa_interesado` | nuevo, contactado, cotizado, en_afiliacion, afiliado, perdido | `interesados.etapa` |
+| `estado_conversacion` | automatica, con_asesor | `conversaciones_comerciales.estado` |
+| `estado_prompt` | borrador, activo, retirado | `prompts_ia.estado` |
+| `estado_consulta_ia` | ok, rechazo, error, presupuesto_agotado, desactivada | `consultas_ia.estado` |
+| `periodo_cupo` | mensual, anual | `beneficios_plan.periodo_cupo` |
+| `tipo_cambio_plan` | cambio_plan, mascota_alta, mascota_baja | `cambios_plan.tipo` |
+| `modo_cambio_plan` | diario, sin_cargo, proximo_ciclo, proxima_cuota | `cambios_plan.modo` |
+| `tipo_preventivo` | vacuna, desparasitacion_interna, desparasitacion_externa | `esquemas_preventivos.tipo`, `eventos_preventivos.tipo` |
+| `estado_evento_preventivo` | programado, aplicado, cancelado | `eventos_preventivos.estado` |
+| `medio_autorizacion` | whatsapp, telefono, llamada, presencial, portal, formulario, correo | `eventos_preventivos.medio_autorizacion`, `pendientes.medio_autorizacion` |
+| `estado_pendiente` | pendiente_autorizacion, autorizado, en_gestion, resuelto, rechazado | `pendientes.estado` |
+| `estado_remision` | emitida, utilizada, anulada | `remisiones_aliadas.estado` |
+| `estado_ruta` | planificada, en_curso, finalizada, cancelada | `rutas.estado` |
+| `estado_parada` | pendiente, en_camino, en_sitio, completada, omitida | `paradas_ruta.estado` |
+| `estado_planificacion` | pendiente, lista, fallida | `planificaciones_ruta.estado` |
+| `area_tarea` | comercial, operaciones, medico, cartera, servicio_cliente | `tareas.area` |
+| `estado_tarea` | abierta, en_progreso, cerrada | `tareas.estado` |
+| `evento_regla` | cartera.estado, cartera.alerta, cartera.renovacion, plan.cambio, plan.mascota, plan.recomendacion, servicio.transicion, servicio.elegibilidad | `reglas.evento` |
+
+No son conjuntos cerrados y no llevan enum: `familias.origen` e `interesados.origen` (los fija quien captura, recortados a 24), `tareas.origen` (código de regla o `manual`), `eventos_pasarela.tipo` y `pagos.medio` (los define la pasarela), `medios_pago_recurrente.marca`, `auditoria.entidad`, `distancias_cache.origen` (coordenadas). `cuotas.tipo` guarda un contador (`ajuste`, `ajuste2`…): lleva un `CHECK` de patrón en 2c. `plantillas_whatsapp.idioma` lleva un `CHECK` de formato en 2c.
+
+Hallazgos que el inventario destapó: `EstadoPago` no lo usaba nadie y le faltaba `anulado`, que sí escribe `afiliaciones/service.py`; `medio_autorizacion` mezcla `telefono` (preventivos) y `llamada` (pendientes) para lo mismo; `cuotas.tipo` mezcla un tipo con un contador; `ORDER BY` sobre una columna enum ordena por la declaración del enum, no alfabéticamente.

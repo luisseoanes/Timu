@@ -481,7 +481,7 @@ def avanzar_pendiente(
 ) -> Pendiente:
     if pendiente.estado == EstadoPendiente.PENDIENTE_AUTORIZACION:
         raise ReglaNegocio("El pendiente no puede avanzar sin autorizacion registrada")
-    if destino not in _SIGUIENTE_PENDIENTE.get(pendiente.estado, ()):
+    if destino not in _SIGUIENTE_PENDIENTE.get(EstadoPendiente(pendiente.estado), ()):
         raise ReglaNegocio(f"No se puede pasar de {pendiente.estado} a {destino}")
     pendiente.estado = destino
     if destino == EstadoPendiente.RESUELTO:

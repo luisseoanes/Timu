@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.core import salud
 from app.core.config import settings
+from app.core.database import engine, rol_con_privilegios
 from app.core.deps import DbSession, publico
 from app.core.errores import RESPUESTAS_ERROR, registrar_manejadores
 from app.core.middleware import (
@@ -31,6 +32,11 @@ async def lifespan(app: FastAPI):
     structlog.get_logger(__name__).info(
         "arranque", app=settings.APP_NAME, entorno=settings.ENVIRONMENT
     )
+    # Con un rol privilegiado la base no aplica sus politicas: la API no arranca asi.
+    async with engine.connect() as conexion:
+        motivo = await rol_con_privilegios(conexion)
+    if motivo:
+        raise RuntimeError(f"La API no se conecta con un rol privilegiado: {motivo}")
     yield
 
 

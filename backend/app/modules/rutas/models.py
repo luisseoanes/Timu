@@ -6,20 +6,33 @@ from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, Text, Unique
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.auditoria import Auditable
-from app.core.database import Base, JSONTipo, TimestampMixin, UUIDMixin
+from app.core.database import Base, EnumDb, JSONTipo, TimestampMixin, UUIDMixin
+from app.core.enums import EstadoParada, EstadoPlanificacion, EstadoRuta
 
 
 class Ruta(Base, UUIDMixin, TimestampMixin, Auditable):
     """6.7 Ruta domiciliaria del dia de un tecnico, con secuencia optimizada."""
 
     __tablename__ = "rutas"
+    __checks__ = {
+        "metricas_no_negativas": (
+            "(distancia_km IS NULL OR distancia_km >= 0) AND (duracion_min IS NULL"
+            " OR duracion_min >= 0)"
+        ),
+        "horario": "fin_real IS NULL OR inicio_real IS NULL OR fin_real >= inicio_real",
+        "iniciada_con_fecha": "estado NOT IN ('en_curso', 'finalizada') OR inicio_real IS NOT NULL",
+    }
 
     fecha: Mapped[date] = mapped_column(Date, index=True)
-    ciudad: Mapped[str] = mapped_column(String(80), index=True)
+    ciudad: Mapped[str] = mapped_column(
+        String(80), ForeignKey("ciudades.nombre", onupdate="CASCADE"), index=True
+    )
     responsable_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
-    planificacion_id: Mapped[UUID | None] = mapped_column(ForeignKey("planificaciones_ruta.id"))
+    planificacion_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("planificaciones_ruta.id"), index=True
+    )
     # planificada | en_curso | finalizada | cancelada
-    estado: Mapped[str] = mapped_column(String(24), default="planificada", index=True)
+    estado: Mapped[str] = mapped_column(EnumDb(EstadoRuta), default="planificada", index=True)
     distancia_km: Mapped[float | None] = mapped_column()
     duracion_min: Mapped[int | None] = mapped_column(Integer)
     inicio_real: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -27,7 +40,7 @@ class Ruta(Base, UUIDMixin, TimestampMixin, Auditable):
 
     paradas: Mapped[list["ParadaRuta"]] = relationship(
         back_populates="ruta",
-        cascade="all, delete-orphan",
+        cascade="save-update, merge",
         lazy="selectin",
         order_by="ParadaRuta.orden",
     )
@@ -37,6 +50,17 @@ class ParadaRuta(Base, UUIDMixin, TimestampMixin, Auditable):
     """Una visita de la ruta. F2-RUT-04 registra llegada, salida y evidencia."""
 
     __tablename__ = "paradas_ruta"
+    __checks__ = {
+        "orden_minimo": "orden >= 1",
+        "horario": "salida_en IS NULL OR llegada_en IS NULL OR salida_en >= llegada_en",
+        "latitud_rango": "latitud IS NULL OR latitud BETWEEN -90 AND 90",
+        "longitud_rango": "longitud IS NULL OR longitud BETWEEN -180 AND 180",
+        "omitida_con_motivo": "estado <> 'omitida' OR motivo_omision IS NOT NULL",
+        "completada_con_salida": "estado <> 'completada' OR salida_en IS NOT NULL",
+    }
+    __unicos__ = {
+        "servicio": (["ruta_id", "servicio_id"], "estado <> 'omitida'"),
+    }
 
     ruta_id: Mapped[UUID] = mapped_column(ForeignKey("rutas.id", ondelete="CASCADE"), index=True)
     servicio_id: Mapped[UUID] = mapped_column(ForeignKey("servicios.id"), index=True)
@@ -44,11 +68,11 @@ class ParadaRuta(Base, UUIDMixin, TimestampMixin, Auditable):
     latitud: Mapped[float | None] = mapped_column()
     longitud: Mapped[float | None] = mapped_column()
     # pendiente | en_camino | en_sitio | completada | omitida
-    estado: Mapped[str] = mapped_column(String(16), default="pendiente", index=True)
+    estado: Mapped[str] = mapped_column(EnumDb(EstadoParada), default="pendiente", index=True)
     llegada_estimada: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     llegada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     salida_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    evidencia_archivo_id: Mapped[UUID | None] = mapped_column(ForeignKey("archivos.id"))
+    evidencia_archivo_id: Mapped[UUID | None] = mapped_column(ForeignKey("archivos.id"), index=True)
     nota: Mapped[str | None] = mapped_column(Text)
     motivo_omision: Mapped[str | None] = mapped_column(String(255))
     # F2-RUT-06 Avisos a la familia (una sola vez cada uno).
@@ -65,13 +89,17 @@ class PlanificacionRuta(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "planificaciones_ruta"
 
     fecha: Mapped[date] = mapped_column(Date, index=True)
-    ciudad: Mapped[str] = mapped_column(String(80))
+    ciudad: Mapped[str] = mapped_column(
+        String(80), ForeignKey("ciudades.nombre", onupdate="CASCADE"), index=True
+    )
     responsables: Mapped[list[str]] = mapped_column(JSONTipo, default=list)
     # pendiente | lista | fallida
-    estado: Mapped[str] = mapped_column(String(16), default="pendiente", index=True)
+    estado: Mapped[str] = mapped_column(
+        EnumDb(EstadoPlanificacion), default="pendiente", index=True
+    )
     resultado: Mapped[dict[str, Any]] = mapped_column(JSONTipo, default=dict)
     error: Mapped[str | None] = mapped_column(Text)
-    solicitada_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"))
+    solicitada_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
 
 
 class DistanciaCache(Base, UUIDMixin, TimestampMixin):
@@ -79,6 +107,9 @@ class DistanciaCache(Base, UUIDMixin, TimestampMixin):
     Matrix se factura por consulta: un par ya conocido no se vuelve a pedir."""
 
     __tablename__ = "distancias_cache"
+    __checks__ = {
+        "valores_no_negativos": "metros >= 0 AND segundos >= 0",
+    }
     __table_args__ = (UniqueConstraint("origen", "destino"),)
 
     origen: Mapped[str] = mapped_column(String(32))
@@ -91,6 +122,9 @@ class ConsumoMapas(Base, UUIDMixin, TimestampMixin):
     """F2-RUT-02 Elementos consultados por dia, contra MAPS_TOPE_DIARIO."""
 
     __tablename__ = "consumo_mapas"
+    __checks__ = {
+        "elementos_no_negativos": "elementos >= 0",
+    }
 
     fecha: Mapped[date] = mapped_column(Date, unique=True)
     elementos: Mapped[int] = mapped_column(Integer, default=0)

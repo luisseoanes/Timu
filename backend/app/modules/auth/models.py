@@ -5,8 +5,8 @@ from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, 
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.auditoria import Auditable
-from app.core.database import Base, TimestampMixin, UUIDMixin
-from app.core.enums import Rol
+from app.core.database import Base, EnumDb, TimestampMixin, UUIDMixin
+from app.core.enums import PropositoToken, Rol
 
 
 class Usuario(Base, UUIDMixin, TimestampMixin, Auditable):
@@ -16,6 +16,12 @@ class Usuario(Base, UUIDMixin, TimestampMixin, Auditable):
     """
 
     __tablename__ = "usuarios"
+    __checks__ = {
+        "aliada_con_clinica": "(rol = 'aliada') = (clinica_aliada_id IS NOT NULL)",
+        "email_formato": "email IS NULL OR email ~ '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$'",
+        "telefono_formato": "telefono IS NULL OR telefono ~ '^\\+[1-9][0-9]{7,14}$'",
+        "nombre_no_vacio": "btrim(nombre) <> ''",
+    }
     __table_args__ = (
         CheckConstraint("email IS NOT NULL OR telefono IS NOT NULL", name="con_identificador"),
     )
@@ -24,10 +30,12 @@ class Usuario(Base, UUIDMixin, TimestampMixin, Auditable):
     telefono: Mapped[str | None] = mapped_column(String(32), unique=True, index=True)
     nombre: Mapped[str] = mapped_column(String(160))
     hashed_password: Mapped[str] = mapped_column(String(255))
-    rol: Mapped[Rol] = mapped_column(String(32), default=Rol.OPERACIONES)
+    rol: Mapped[Rol] = mapped_column(EnumDb(Rol), default=Rol.OPERACIONES)
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     # F2-ALI-03 Solo para el rol aliada: la clinica cuyas remisiones puede ver.
-    clinica_aliada_id: Mapped[UUID | None] = mapped_column(ForeignKey("clinicas_aliadas.id"))
+    clinica_aliada_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("clinicas_aliadas.id"), index=True
+    )
 
 
 class Sesion(Base, UUIDMixin, TimestampMixin):
@@ -51,11 +59,16 @@ class TokenUsoUnico(Base, UUIDMixin, TimestampMixin):
     """F1-AUT-03 / F1-AUT-04 Enlaces de recuperacion y de activacion del portal."""
 
     __tablename__ = "tokens_uso_unico"
+    __checks__ = {
+        "intentos_no_negativos": "intentos >= 0",
+    }
 
     usuario_id: Mapped[UUID] = mapped_column(
         ForeignKey("usuarios.id", ondelete="CASCADE"), index=True
     )
-    proposito: Mapped[str] = mapped_column(String(24))  # recuperacion | activacion | codigo_ingreso
+    proposito: Mapped[str] = mapped_column(
+        EnumDb(PropositoToken)
+    )  # recuperacion | activacion | codigo_ingreso
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     expira_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     usado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

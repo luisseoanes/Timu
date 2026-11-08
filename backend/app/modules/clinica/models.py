@@ -6,7 +6,15 @@ from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Tex
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.auditoria import Auditable
-from app.core.database import Base, JSONTipo, TimestampMixin, UUIDMixin
+from app.core.database import Base, EnumDb, JSONTipo, TimestampMixin, UUIDMixin
+from app.core.enums import (
+    CanalVirtual,
+    EstadoHistoria,
+    EstadoRespuestaVirtual,
+    EstadoSolicitudVirtual,
+    Prioridad,
+    TipoHistoria,
+)
 
 
 class HistoriaClinica(Base, UUIDMixin, TimestampMixin, Auditable):
@@ -17,16 +25,25 @@ class HistoriaClinica(Base, UUIDMixin, TimestampMixin, Auditable):
     """
 
     __tablename__ = "historias_clinicas"
+    __checks__ = {
+        "version_minimo": "version >= 1",
+        "firmada_completa": (
+            "estado = 'borrador' OR (firmada_en IS NOT NULL"
+            " AND firmada_por_id IS NOT NULL AND diagnostico IS NOT NULL)"
+        ),
+    }
     __columna_familia__ = "familia_id"
 
     mascota_id: Mapped[UUID] = mapped_column(ForeignKey("mascotas.id"), index=True)
     # Denormalizado para que el alcance del portal filtre sin unir con mascotas.
     familia_id: Mapped[UUID] = mapped_column(ForeignKey("familias.id"), index=True)
-    servicio_id: Mapped[UUID | None] = mapped_column(ForeignKey("servicios.id"))
-    profesional_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"))
+    servicio_id: Mapped[UUID | None] = mapped_column(ForeignKey("servicios.id"), index=True)
+    profesional_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
     # presencial | domiciliaria | virtual
-    tipo: Mapped[str] = mapped_column(String(16), default="presencial")
-    plantilla_codigo: Mapped[str | None] = mapped_column(String(40))
+    tipo: Mapped[str] = mapped_column(EnumDb(TipoHistoria), default="presencial")
+    plantilla_codigo: Mapped[str | None] = mapped_column(
+        String(40), ForeignKey("plantillas_consulta.codigo", onupdate="CASCADE"), index=True
+    )
     fecha: Mapped[date] = mapped_column(Date, index=True)
     motivo: Mapped[str] = mapped_column(Text)
     anamnesis: Mapped[str | None] = mapped_column(Text)
@@ -36,11 +53,13 @@ class HistoriaClinica(Base, UUIDMixin, TimestampMixin, Auditable):
     # Uso interno del equipo medico: nunca sale al portal de la familia.
     notas_internas: Mapped[str | None] = mapped_column(Text)
     # borrador | firmada | corregida
-    estado: Mapped[str] = mapped_column(String(16), default="borrador", index=True)
+    estado: Mapped[str] = mapped_column(EnumDb(EstadoHistoria), default="borrador", index=True)
     version: Mapped[int] = mapped_column(Integer, default=1)
-    reemplaza_id: Mapped[UUID | None] = mapped_column(ForeignKey("historias_clinicas.id"))
+    reemplaza_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("historias_clinicas.id"), index=True
+    )
     firmada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    firmada_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"))
+    firmada_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
 
 
 class AdjuntoClinico(Base, UUIDMixin, TimestampMixin, Auditable):
@@ -52,11 +71,11 @@ class AdjuntoClinico(Base, UUIDMixin, TimestampMixin, Auditable):
     historia_id: Mapped[UUID] = mapped_column(
         ForeignKey("historias_clinicas.id", ondelete="CASCADE"), index=True
     )
-    archivo_id: Mapped[UUID] = mapped_column(ForeignKey("archivos.id"))
+    archivo_id: Mapped[UUID] = mapped_column(ForeignKey("archivos.id"), index=True)
     nombre_archivo: Mapped[str] = mapped_column(String(255))
     content_type: Mapped[str | None] = mapped_column(String(120))
     descripcion: Mapped[str | None] = mapped_column(String(255))
-    subido_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"))
+    subido_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
 
 
 class PlantillaConsulta(Base, UUIDMixin, TimestampMixin, Auditable):
@@ -84,8 +103,8 @@ class Formula(Base, UUIDMixin, TimestampMixin, Auditable):
     # [{"medicamento", "presentacion", "dosis", "frecuencia", "duracion", "indicaciones"}]
     items: Mapped[list[dict[str, Any]]] = mapped_column(JSONTipo, default=list)
     indicaciones: Mapped[str | None] = mapped_column(Text)
-    archivo_id: Mapped[UUID | None] = mapped_column(ForeignKey("archivos.id"))
-    emitida_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"))
+    archivo_id: Mapped[UUID | None] = mapped_column(ForeignKey("archivos.id"), index=True)
+    emitida_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
 
 
 class RespuestaVirtual(Base, UUIDMixin, TimestampMixin, Auditable):
@@ -93,6 +112,11 @@ class RespuestaVirtual(Base, UUIDMixin, TimestampMixin, Auditable):
     profesional elige y completa, no redacta libre lo que sale al usuario."""
 
     __tablename__ = "respuestas_virtuales"
+    __checks__ = {
+        "aprobada_completa": (
+            "estado <> 'aprobada' OR (aprobada_en IS NOT NULL" " AND aprobada_por_id IS NOT NULL)"
+        ),
+    }
 
     codigo: Mapped[str] = mapped_column(String(40), unique=True)
     titulo: Mapped[str] = mapped_column(String(160))
@@ -100,8 +124,10 @@ class RespuestaVirtual(Base, UUIDMixin, TimestampMixin, Auditable):
     cuerpo: Mapped[str] = mapped_column(Text)
     variables: Mapped[list[str]] = mapped_column(JSONTipo, default=list)
     # borrador | aprobada | retirada
-    estado: Mapped[str] = mapped_column(String(16), default="borrador", index=True)
-    aprobada_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"))
+    estado: Mapped[str] = mapped_column(
+        EnumDb(EstadoRespuestaVirtual), default="borrador", index=True
+    )
+    aprobada_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
     aprobada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
@@ -110,21 +136,34 @@ class SolicitudVirtual(Base, UUIDMixin, TimestampMixin, Auditable):
     medico; la respuesta queda registrada en la historia de la mascota."""
 
     __tablename__ = "solicitudes_virtuales"
+    __checks__ = {
+        "respondida_con_fecha": (
+            "estado NOT IN ('respondida', 'cerrada') OR respondida_en IS NOT NULL"
+        ),
+    }
     __columna_familia__ = "familia_id"
 
     familia_id: Mapped[UUID] = mapped_column(ForeignKey("familias.id"), index=True)
     mascota_id: Mapped[UUID] = mapped_column(ForeignKey("mascotas.id"), index=True)
-    canal: Mapped[str] = mapped_column(String(16), default="portal")  # portal | whatsapp | panel
+    canal: Mapped[str] = mapped_column(
+        EnumDb(CanalVirtual), default="portal"
+    )  # portal | whatsapp | panel
     motivo: Mapped[str] = mapped_column(Text)
     # en_cola | en_atencion | respondida | cerrada
-    estado: Mapped[str] = mapped_column(String(16), default="en_cola", index=True)
-    prioridad: Mapped[str] = mapped_column(String(8), default="media")
+    estado: Mapped[str] = mapped_column(
+        EnumDb(EstadoSolicitudVirtual), default="en_cola", index=True
+    )
+    prioridad: Mapped[str] = mapped_column(EnumDb(Prioridad), default="media")
     asignada_a_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
     tomada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    respuesta_codigo: Mapped[str | None] = mapped_column(String(40))
+    respuesta_codigo: Mapped[str | None] = mapped_column(
+        String(40), ForeignKey("respuestas_virtuales.codigo", onupdate="CASCADE"), index=True
+    )
     respuesta: Mapped[str | None] = mapped_column(Text)
     respondida_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    historia_id: Mapped[UUID | None] = mapped_column(ForeignKey("historias_clinicas.id"))
+    historia_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("historias_clinicas.id"), index=True
+    )
     # F4-IAA-03 Borrador de la IA para el profesional: nunca se envia a la familia.
     borrador_ia: Mapped[dict[str, Any] | None] = mapped_column(JSONTipo)
     borrador_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

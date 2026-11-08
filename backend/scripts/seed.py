@@ -7,7 +7,7 @@ import asyncio
 
 from sqlalchemy import select
 
-from app.core.database import SessionLocal
+from app.core.database import CLAVE_CONTEXTO, SISTEMA, SessionLocal
 from app.core.enums import Rol
 from app.core.security import hash_password
 from app.models import Plan, Usuario
@@ -17,7 +17,7 @@ ADMIN_PASSWORD = "cambiar123"
 
 
 async def main() -> None:
-    async with SessionLocal() as db:
+    async with SessionLocal(info={CLAVE_CONTEXTO: SISTEMA}) as db:
         existente = await db.scalar(select(Usuario).where(Usuario.email == ADMIN_EMAIL))
         if existente is None:
             db.add(

@@ -48,10 +48,16 @@ def crear(db: Session, datos: dict[str, Any]) -> Plan:
 
 
 def reemplazar_beneficios(db: Session, plan: Plan, beneficios: list[dict[str, Any]]) -> Plan:
-    plan.beneficios.clear()
+    """Los beneficios vigentes pasan a inactivos y se crean los nuevos: nada se borra."""
+    for anterior in plan.beneficios:
+        anterior.activo = False
+    # Antes de crear los nuevos: el indice unico parcial solo admite uno vigente por tipo.
     db.flush()
-    plan.beneficios.extend(Beneficio(**b) for b in beneficios)
+    db.add_all(Beneficio(plan_id=plan.id, **b) for b in beneficios)
     db.flush()
+    # Recarga aqui, dentro de la sesion sincrona: el router serializa la respuesta fuera de
+    # ella y una coleccion caducada no se puede cargar ahi.
+    db.refresh(plan, ["beneficios"])
     return plan
 
 

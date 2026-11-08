@@ -6,7 +6,8 @@ from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, Numeric, St
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.auditoria import Auditable
-from app.core.database import Base, TimestampMixin, UUIDMixin
+from app.core.database import Base, EnumDb, TimestampMixin, UUIDMixin
+from app.core.enums import EstadoRemision
 
 
 class ClinicaAliada(Base, UUIDMixin, TimestampMixin, Auditable):
@@ -16,7 +17,9 @@ class ClinicaAliada(Base, UUIDMixin, TimestampMixin, Auditable):
 
     nombre: Mapped[str] = mapped_column(String(160))
     nit: Mapped[str | None] = mapped_column(String(20), unique=True)
-    ciudad: Mapped[str] = mapped_column(String(80), index=True)
+    ciudad: Mapped[str] = mapped_column(
+        String(80), ForeignKey("ciudades.nombre", onupdate="CASCADE"), index=True
+    )
     direccion: Mapped[str | None] = mapped_column(String(255))
     telefono: Mapped[str | None] = mapped_column(String(32))
     email: Mapped[str | None] = mapped_column(String(255))
@@ -29,6 +32,12 @@ class ConvenioAliada(Base, UUIDMixin, TimestampMixin, Auditable):
     tarifa y vigencia. La remision solo se emite contra un convenio vigente."""
 
     __tablename__ = "convenios_aliadas"
+    __checks__ = {
+        "cobertura_rango": "cobertura_pct BETWEEN 0 AND 100",
+        "tarifa_no_negativa": "tarifa IS NULL OR tarifa >= 0",
+        "tope_no_negativo": "tope_cubierto IS NULL OR tope_cubierto >= 0",
+        "vigencia": "vigente_hasta IS NULL OR vigente_hasta >= vigente_desde",
+    }
 
     clinica_id: Mapped[UUID] = mapped_column(ForeignKey("clinicas_aliadas.id"), index=True)
     plan_id: Mapped[UUID | None] = mapped_column(ForeignKey("planes.id"), index=True)
@@ -46,13 +55,24 @@ class RemisionAliada(Base, UUIDMixin, TimestampMixin, Auditable):
     disponible. La aliada la valida con el codigo y reporta la atencion sobre ella."""
 
     __tablename__ = "remisiones_aliadas"
+    __checks__ = {
+        "cobertura_rango": "cobertura_pct BETWEEN 0 AND 100",
+        "valores_no_negativos": (
+            "(valor_cubierto IS NULL OR valor_cubierto >= 0) AND (tope_cubierto IS NULL"
+            " OR tope_cubierto >= 0) AND (valor_atencion IS NULL OR valor_atencion >= 0)"
+        ),
+        "utilizada_reportada": (
+            "estado <> 'utilizada' OR (fecha_atencion IS NOT NULL" " AND reportada_en IS NOT NULL)"
+        ),
+        "anulada_con_motivo": "estado <> 'anulada' OR motivo_anulacion IS NOT NULL",
+    }
     __columna_familia__ = "familia_id"
 
     codigo: Mapped[str] = mapped_column(String(12), unique=True)
     clinica_id: Mapped[UUID] = mapped_column(ForeignKey("clinicas_aliadas.id"), index=True)
-    convenio_id: Mapped[UUID] = mapped_column(ForeignKey("convenios_aliadas.id"))
+    convenio_id: Mapped[UUID] = mapped_column(ForeignKey("convenios_aliadas.id"), index=True)
     familia_id: Mapped[UUID] = mapped_column(ForeignKey("familias.id"), index=True)
-    mascota_id: Mapped[UUID] = mapped_column(ForeignKey("mascotas.id"))
+    mascota_id: Mapped[UUID] = mapped_column(ForeignKey("mascotas.id"), index=True)
     servicio_id: Mapped[UUID] = mapped_column(ForeignKey("servicios.id"), index=True)
     motivo: Mapped[str] = mapped_column(Text)
     beneficio_aplicado: Mapped[str | None] = mapped_column(String(160))
@@ -60,13 +80,13 @@ class RemisionAliada(Base, UUIDMixin, TimestampMixin, Auditable):
     tope_cubierto: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     vence_en: Mapped[date] = mapped_column(Date)
     # emitida | utilizada | anulada
-    estado: Mapped[str] = mapped_column(String(24), default="emitida", index=True)
-    emitida_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"))
+    estado: Mapped[str] = mapped_column(EnumDb(EstadoRemision), default="emitida", index=True)
+    emitida_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
     # F2-ALI-03 Lo que reporta la aliada.
     fecha_atencion: Mapped[date | None] = mapped_column(Date, index=True)
     valor_atencion: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     valor_cubierto: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     resumen_atencion: Mapped[str | None] = mapped_column(Text)
-    reportada_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"))
+    reportada_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
     reportada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     motivo_anulacion: Mapped[str | None] = mapped_column(String(255))

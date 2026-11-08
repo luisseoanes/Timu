@@ -101,6 +101,17 @@ async def dar_de_baja(db: DbSession, familia_id: UUID, data: Baja) -> Familia:
 
 
 @router.post(
+    "/{familia_id}/anonimizar",
+    response_model=FamiliaRead,
+    dependencies=[Depends(requiere(Rol.ADMIN))],
+)
+async def anonimizar(db: DbSession, familia_id: UUID) -> Familia:
+    """Habeas data (Ley 1581): sustituye los datos personales de la familia. No se deshace."""
+    familia = await db.run_sync(service.obtener, familia_id)
+    return await db.run_sync(service.anonimizar, familia)
+
+
+@router.post(
     "/{familia_id}/acceso-portal", response_model=FamiliaRead, dependencies=[GESTION_ESTADO]
 )
 async def habilitar_portal(db: DbSession, familia_id: UUID) -> Familia:

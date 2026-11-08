@@ -61,6 +61,7 @@ PRODUCCION_VALIDA = {
     "DEBUG": False,
     "SECRET_KEY": "x" * 40,
     "POSTGRES_PASSWORD": "clave-real",
+    "APP_DB_PASSWORD": "otra-clave-real",
     "REDIS_URL": "redis://redis:6379/0",
     "BACKEND_CORS_ORIGINS": ["https://panel.timu.co"],
     "WHATSAPP_PHONE_NUMBER_ID": "1",
@@ -97,6 +98,7 @@ def test_produccion_sin_variable_obligatoria_no_arranca():
         {"DEBUG": True},
         {"BACKEND_CORS_ORIGINS": ["*"]},
         {"POSTGRES_PASSWORD": "timu"},
+        {"APP_DB_PASSWORD": "timu_app"},
         {"COOKIE_SECURE": False},
         {"STORAGE_ACCESS_KEY": "timu-local"},
         {"STORAGE_SECRET_KEY": "timu-local-secreto"},
@@ -106,6 +108,15 @@ def test_produccion_sin_variable_obligatoria_no_arranca():
 def test_produccion_con_valores_inseguros_no_arranca(cambio):
     with pytest.raises(ConfiguracionInvalida):
         Settings(_env_file=None, **{**PRODUCCION_VALIDA, **cambio})
+
+
+def test_la_aplicacion_puede_pasar_por_un_pool_y_las_migraciones_no():
+    """APP_DB_HOST vacio (como en .env.example) es "directo a POSTGRES_*", no un host vacio."""
+    directo = Settings(_env_file=None, APP_DB_HOST="", APP_DB_PORT="")
+    assert "@localhost:5432/" in directo.DATABASE_URL
+    pool = Settings(_env_file=None, APP_DB_HOST="pgbouncer", APP_DB_PORT="6432")
+    assert "timu_app" in pool.DATABASE_URL and "@pgbouncer:6432/" in pool.DATABASE_URL
+    assert "@localhost:5432/" in pool.DATABASE_URL_PROPIETARIO
 
 
 def test_local_no_exige_secretos():

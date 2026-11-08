@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import nuevo_id
 from app.core.enums import EstadoServicio, TipoServicio
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, con_zona
@@ -221,7 +222,7 @@ def iniciar_pago(db: Session, familia: Familia, cuota_id: UUID | None) -> tuple[
     if valor <= 0:
         raise ReglaNegocio("No hay saldo pendiente por pagar")
     pago = Pago(
-        id=uuid4(),
+        id=nuevo_id(),
         familia_id=familia.id,
         contrato_id=contrato.id,
         cuota_id=cuota_id,

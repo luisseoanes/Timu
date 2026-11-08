@@ -14,7 +14,7 @@ from sqlalchemy import func, select
 
 from app.core.config import settings
 from app.core.enums import Rol
-from app.core.tiempo import hoy
+from app.core.tiempo import ahora, hoy
 from app.integrations import claude
 from app.modules.clinica import service as clinica
 from app.modules.comercial.models import ConversacionComercial
@@ -61,6 +61,7 @@ async def _activo(db, codigo: str) -> PromptIA:
     """Version activa sin pasar por la API: evaluacion marcada como aprobada."""
     prompt = await db.run_sync(service.crear_version, codigo, "Prompt de prueba " * 10, None)
     prompt.evaluacion = {"total": 1, "aprobados": 1}
+    prompt.evaluado_en = ahora()
     await db.run_sync(service.activar, prompt, None)
     return prompt
 

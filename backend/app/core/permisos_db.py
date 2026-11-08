@@ -1,0 +1,450 @@
+"""Permisos por perfil en la base: la matriz de RLS (fase 4 de docs/plan-persistencia.md).
+
+Cada perfil (`app.rol` del contexto de la transaccion) solo ve y escribe las tablas y
+operaciones que tiene aqui; la migracion 0023 genera de esta matriz una politica por tabla y
+operacion. `sistema` (workers, scripts, webhooks validados por firma) tiene todas.
+
+Origen: lo que hace cada ruta de la API, observado sentencia a sentencia con la suite
+completa (TIMU_REGISTRO_ACCESOS en tests/conftest.py), repartido entre los perfiles que la
+ruta admite (`require_roles`), mas las rutas que ninguna prueba recorre, revisadas a mano.
+Toda escritura incluye la lectura: PostgreSQL exige que la fila nueva pase la politica de
+lectura en un INSERT ... RETURNING o un UPDATE ... WHERE.
+
+Una ruta nueva, o una ruta que pasa a tocar otra tabla, exige actualizar esta matriz y
+escribir la migracion que cambia la politica. Si no, la propia prueba de esa ruta falla con
+la base negando el acceso: es el aviso.
+
+`familia` y `aliada` ademas solo ven sus filas (CONDICIONES). Los catalogos (CATALOGOS) los
+leen sin condicion. `publico` lee las tablas de autenticacion y de los formularios publicos
+sin condicion de fila: esas rutas buscan al usuario o a la familia antes de saber quien
+pregunta; acotarlas con identificadores del contexto es una mejora pendiente.
+"""
+
+# perfil -> tabla -> operaciones (S select, I insert, U update, D delete, L bloquear).
+# L: SELECT ... FOR UPDATE sin poder modificar. PostgreSQL exige la politica de UPDATE para
+# bloquear una fila; con L el perfil pasa su USING pero no su WITH CHECK (agendar bloquea la
+# franja para no sobrevender un cupo, y quien agenda no edita franjas).
+#
+# Efectos de cambiar el estado de un servicio: la misma peticion ejecuta las reglas de
+# `servicio.transicion`, que la administracion configura en la base y que pueden crear
+# tareas y notificar a la familia (familias, reglas, tareas, mensajes, plantillas_whatsapp,
+# bajas_comunicaciones, eventos_salientes). Todo perfil que cambia ese estado los tiene,
+# aunque hoy ninguna regla de su flujo los use: una regla nueva no puede romper el flujo.
+PERMISOS: dict[str, dict[str, str]] = {
+    "admin": {
+        "adjuntos_clinicos": "S",
+        "aplicaciones_pago": "SI",
+        "arboles_conversacion": "SIU",
+        "archivos": "SI",
+        "auditoria": "S",
+        "bajas_comunicaciones": "SIU",
+        "beneficios_plan": "SIU",
+        "bloqueos_agenda": "SI",
+        "cambios_plan": "SI",
+        "campanas": "SIU",
+        "carnets_emitidos": "SI",
+        "casos_prueba_ia": "SI",
+        "ciudades": "SIU",
+        "clinicas_aliadas": "SIU",
+        "configuraciones_encuesta": "SIU",
+        "consultas_ia": "S",
+        "contratos": "SIU",
+        "convenios_aliadas": "SI",
+        "conversaciones_comerciales": "SU",
+        "conversaciones_whatsapp": "S",
+        "cuotas": "SIU",
+        "destinatarios_campana": "SU",
+        "distancias_cache": "S",
+        "ejecuciones_campana": "SU",
+        "encuestas": "S",
+        "especies": "SIU",
+        "esquemas_preventivos": "SIU",
+        "eventos_pasarela": "SIU",
+        "eventos_preventivos": "SIU",
+        "eventos_salientes": "SI",
+        "familias": "SIU",
+        "franjas_agenda": "SIU",
+        "historias_clinicas": "S",
+        "intentos_cobro": "S",
+        "interesados": "SIU",
+        "mascotas": "SIU",
+        "medios_pago_recurrente": "SIU",
+        "mensajes": "SI",
+        "pagos": "SIU",
+        "paradas_ruta": "SIU",
+        "pendientes": "SIU",
+        "planes": "SIU",
+        "planificaciones_ruta": "SI",
+        "plantillas_consulta": "SI",
+        "plantillas_whatsapp": "SIU",
+        "prompts_ia": "SIU",
+        "reglas": "SIU",
+        "remisiones_aliadas": "SIU",
+        "reportes_programados": "SIU",
+        "respuestas_virtuales": "SIU",
+        "rutas": "SU",
+        "segmentos": "SI",
+        "servicio_pasos": "SI",
+        "servicios": "SIU",
+        "sesiones": "SU",
+        "solicitudes_afiliacion": "SIU",
+        "solicitudes_virtuales": "SIU",
+        "tareas": "SIU",
+        "tipos_servicio": "SIU",
+        "tokens_uso_unico": "SIU",
+        "usuarios": "SIU",
+    },
+    "aliada": {
+        "bajas_comunicaciones": "S",
+        "eventos_salientes": "SI",
+        "familias": "S",
+        "mascotas": "S",
+        "mensajes": "SI",
+        "plantillas_whatsapp": "S",
+        "reglas": "S",
+        "remisiones_aliadas": "SU",
+        "servicio_pasos": "S",
+        "servicios": "SU",
+        "sesiones": "SU",
+        "tareas": "SI",
+        "tipos_servicio": "S",
+        "usuarios": "S",
+    },
+    "comercial": {
+        "adjuntos_clinicos": "S",
+        "aplicaciones_pago": "SI",
+        "arboles_conversacion": "S",
+        "archivos": "SI",
+        "auditoria": "S",
+        "bajas_comunicaciones": "SI",
+        "beneficios_plan": "S",
+        "bloqueos_agenda": "S",
+        "cambios_plan": "SI",
+        "campanas": "SIU",
+        "carnets_emitidos": "SI",
+        "ciudades": "S",
+        "clinicas_aliadas": "S",
+        "contratos": "SIU",
+        "convenios_aliadas": "S",
+        "conversaciones_comerciales": "SU",
+        "conversaciones_whatsapp": "S",
+        "cuotas": "SIU",
+        "destinatarios_campana": "SU",
+        "ejecuciones_campana": "SU",
+        "encuestas": "S",
+        "especies": "S",
+        "esquemas_preventivos": "S",
+        "eventos_preventivos": "SIU",
+        "eventos_salientes": "SI",
+        "familias": "SIU",
+        "franjas_agenda": "SL",
+        "historias_clinicas": "S",
+        "interesados": "SIU",
+        "mascotas": "SIU",
+        "medios_pago_recurrente": "SIU",
+        "mensajes": "SI",
+        "pagos": "SIU",
+        "paradas_ruta": "S",
+        "pendientes": "SIU",
+        "planes": "S",
+        "planificaciones_ruta": "S",
+        "plantillas_consulta": "S",
+        "plantillas_whatsapp": "SIU",
+        "reglas": "S",
+        "remisiones_aliadas": "SIU",
+        "rutas": "S",
+        "segmentos": "SI",
+        "servicio_pasos": "SI",
+        "servicios": "SIU",
+        "sesiones": "SU",
+        "solicitudes_afiliacion": "SIU",
+        "solicitudes_virtuales": "SI",
+        "tareas": "SIU",
+        "tipos_servicio": "S",
+        "tokens_uso_unico": "SIU",
+        "usuarios": "SI",
+    },
+    "familia": {
+        "adjuntos_clinicos": "S",
+        "aplicaciones_pago": "S",
+        "archivos": "SI",
+        "bajas_comunicaciones": "S",
+        "beneficios_plan": "S",
+        "bloqueos_agenda": "S",
+        "carnets_emitidos": "SI",
+        "ciudades": "S",
+        "contratos": "S",
+        "cuotas": "S",
+        "especies": "S",
+        "esquemas_preventivos": "S",
+        "eventos_preventivos": "S",
+        "eventos_salientes": "SI",
+        "familias": "SU",
+        "franjas_agenda": "SL",
+        "historias_clinicas": "S",
+        "mascotas": "S",
+        "mensajes": "SI",
+        "pagos": "SI",
+        "planes": "S",
+        "plantillas_whatsapp": "S",
+        "reglas": "S",
+        "servicios": "SIU",
+        "sesiones": "SU",
+        "solicitudes_virtuales": "SI",
+        "tareas": "SI",
+        "tipos_servicio": "S",
+        "usuarios": "S",
+    },
+    "medico": {
+        "adjuntos_clinicos": "SI",
+        "archivos": "SI",
+        "auditoria": "S",
+        "bajas_comunicaciones": "SI",
+        "beneficios_plan": "S",
+        "bloqueos_agenda": "S",
+        "cambios_plan": "SI",
+        "campanas": "S",
+        "carnets_emitidos": "SI",
+        "ciudades": "S",
+        "clinicas_aliadas": "S",
+        "contratos": "SU",
+        "convenios_aliadas": "S",
+        "conversaciones_whatsapp": "S",
+        "cuotas": "S",
+        "destinatarios_campana": "S",
+        "distancias_cache": "S",
+        "ejecuciones_campana": "S",
+        "encuestas": "S",
+        "especies": "S",
+        "esquemas_preventivos": "S",
+        "eventos_preventivos": "SIU",
+        "eventos_salientes": "SI",
+        "familias": "SIU",
+        "formulas": "SI",
+        "franjas_agenda": "SL",
+        "historias_clinicas": "SIU",
+        "mascotas": "SIU",
+        "mensajes": "SI",
+        "pagos": "S",
+        "paradas_ruta": "SU",
+        "pendientes": "SIU",
+        "planes": "S",
+        "planificaciones_ruta": "S",
+        "plantillas_consulta": "SI",
+        "plantillas_whatsapp": "S",
+        "reglas": "S",
+        "remisiones_aliadas": "SIU",
+        "respuestas_virtuales": "SI",
+        "rutas": "SU",
+        "segmentos": "S",
+        "servicio_pasos": "SI",
+        "servicios": "SIU",
+        "sesiones": "SU",
+        "solicitudes_afiliacion": "S",
+        "solicitudes_virtuales": "SIU",
+        "tareas": "SIU",
+        "tipos_servicio": "S",
+        "usuarios": "S",
+    },
+    "operaciones": {
+        "adjuntos_clinicos": "S",
+        "archivos": "SI",
+        "auditoria": "S",
+        "bajas_comunicaciones": "SI",
+        "beneficios_plan": "S",
+        "bloqueos_agenda": "SI",
+        "cambios_plan": "SI",
+        "campanas": "S",
+        "carnets_emitidos": "SI",
+        "ciudades": "S",
+        "clinicas_aliadas": "S",
+        "contratos": "SU",
+        "convenios_aliadas": "S",
+        "conversaciones_whatsapp": "S",
+        "cuotas": "S",
+        "destinatarios_campana": "S",
+        "distancias_cache": "S",
+        "ejecuciones_campana": "S",
+        "encuestas": "S",
+        "especies": "S",
+        "esquemas_preventivos": "S",
+        "eventos_preventivos": "SIU",
+        "eventos_salientes": "SI",
+        "familias": "SIU",
+        "franjas_agenda": "SIU",
+        "historias_clinicas": "S",
+        "mascotas": "SIU",
+        "mensajes": "SI",
+        "pagos": "S",
+        "paradas_ruta": "SIU",
+        "pendientes": "SIU",
+        "planes": "S",
+        "planificaciones_ruta": "SI",
+        "plantillas_consulta": "S",
+        "plantillas_whatsapp": "S",
+        "reglas": "S",
+        "remisiones_aliadas": "SIU",
+        "rutas": "SU",
+        "segmentos": "S",
+        "servicio_pasos": "SI",
+        "servicios": "SIU",
+        "sesiones": "SU",
+        "solicitudes_afiliacion": "S",
+        "solicitudes_virtuales": "SI",
+        "tareas": "SIU",
+        "tipos_servicio": "S",
+        "usuarios": "S",
+    },
+    "publico": {
+        "beneficios_plan": "S",
+        "carnets_emitidos": "S",
+        "ciudades": "S",
+        "configuraciones_encuesta": "S",
+        "contratos": "S",
+        "encuestas": "SU",
+        "especies": "S",
+        "eventos_salientes": "SI",
+        "familias": "SIU",
+        "interesados": "SIU",
+        "mascotas": "SI",
+        "mensajes": "SI",
+        "pagos": "SIU",
+        "planes": "S",
+        "plantillas_whatsapp": "S",
+        "servicios": "S",
+        "sesiones": "SIU",
+        "solicitudes_afiliacion": "SIU",
+        "tareas": "SI",
+        "tipos_servicio": "S",
+        "tokens_uso_unico": "SIU",
+        "usuarios": "SU",
+    },
+}
+
+_F = "app_familia()"
+_MASCOTAS = f"(SELECT id FROM mascotas WHERE familia_id = {_F})"
+_HISTORIAS = f"(SELECT id FROM historias_clinicas WHERE familia_id = {_F} AND estado <> 'borrador')"
+_REMISIONES = "(SELECT servicio_id FROM remisiones_aliadas WHERE clinica_id = app_clinica())"
+# Familias con una remision de la clinica aliada: lo minimo para validarla y reportarla.
+_FAMILIAS_REMITIDAS = "(SELECT familia_id FROM remisiones_aliadas WHERE clinica_id = app_clinica())"
+
+
+def _contactos(familias: str) -> str:
+    """Destinos (telefono o email) de esas familias, para consultar si pidieron la baja."""
+    return (
+        f"(SELECT telefono FROM familias WHERE id IN {familias}"
+        f" UNION SELECT email FROM familias WHERE id IN {familias})"
+    )
+
+
+# perfil -> tabla -> condicion de fila. Una tabla de `familia` o `aliada` que no este aqui ni
+# en CATALOGOS no se puede generar: la migracion se niega, nada queda abierto por omision.
+CONDICIONES: dict[str, dict[str, str]] = {
+    "familia": {
+        "familias": f"id = {_F} OR usuario_portal_id = app_usuario()",
+        "mascotas": f"familia_id = {_F}",
+        "contratos": f"familia_id = {_F}",
+        "pagos": f"familia_id = {_F}",
+        "servicios": f"familia_id = {_F}",
+        "tareas": f"familia_id = {_F}",
+        "solicitudes_virtuales": f"familia_id = {_F}",
+        # La familia solo ve lo firmado; los borradores son del equipo medico.
+        "historias_clinicas": f"familia_id = {_F} AND estado <> 'borrador'",
+        "adjuntos_clinicos": f"historia_id IN {_HISTORIAS}",
+        "eventos_preventivos": f"mascota_id IN {_MASCOTAS}",
+        "carnets_emitidos": f"mascota_id IN {_MASCOTAS}",
+        "cuotas": f"contrato_id IN (SELECT id FROM contratos WHERE familia_id = {_F})",
+        "aplicaciones_pago": f"pago_id IN (SELECT id FROM pagos WHERE familia_id = {_F})",
+        "archivos": (
+            "subido_por_id = app_usuario()"
+            f" OR id IN (SELECT foto_archivo_id FROM mascotas WHERE familia_id = {_F})"
+            f" OR id IN (SELECT documento_archivo_id FROM contratos WHERE familia_id = {_F})"
+            " OR id IN (SELECT archivo_id FROM adjuntos_clinicos"
+            f" WHERE historia_id IN {_HISTORIAS})"
+            f" OR id IN (SELECT archivo_id FROM carnets_emitidos WHERE mascota_id IN {_MASCOTAS})"
+        ),
+        "mensajes": f"familia_id = {_F}",
+        "bajas_comunicaciones": f"destino IN {_contactos(f'({_F})')}",
+        "sesiones": "usuario_id = app_usuario()",
+        "usuarios": "id = app_usuario()",
+    },
+    # El equipo solo ve y cierra sus propias sesiones; la administracion, las de todos.
+    "comercial": {"sesiones": "usuario_id = app_usuario()"},
+    "operaciones": {"sesiones": "usuario_id = app_usuario()"},
+    "medico": {"sesiones": "usuario_id = app_usuario()"},
+    "aliada": {
+        "remisiones_aliadas": "clinica_id = app_clinica()",
+        "servicios": f"id IN {_REMISIONES}",
+        "servicio_pasos": f"servicio_id IN {_REMISIONES}",
+        "familias": f"id IN {_FAMILIAS_REMITIDAS}",
+        "mascotas": f"familia_id IN {_FAMILIAS_REMITIDAS}",
+        "tareas": f"familia_id IN {_FAMILIAS_REMITIDAS}",
+        "mensajes": f"familia_id IN {_FAMILIAS_REMITIDAS}",
+        "bajas_comunicaciones": f"destino IN {_contactos(_FAMILIAS_REMITIDAS)}",
+        "sesiones": "usuario_id = app_usuario()",
+        "usuarios": "id = app_usuario()",
+    },
+}
+
+# Lo que cualquier perfil que lo use lee sin condicion de fila: configuracion, no datos de
+# nadie. `eventos_salientes` es el outbox: un INSERT ... RETURNING tiene que poder leerse.
+CATALOGOS = frozenset(
+    {
+        "beneficios_plan",
+        "bloqueos_agenda",
+        "ciudades",
+        "especies",
+        "esquemas_preventivos",
+        "eventos_salientes",
+        "franjas_agenda",
+        "planes",
+        "plantillas_whatsapp",
+        "reglas",
+        "tipos_servicio",
+    }
+)
+
+
+# Perfiles cuyas filas se acotan siempre: toda tabla suya lleva condicion o es un catalogo.
+_ACOTADOS = ("familia", "aliada")
+_COMANDOS = {"S": "SELECT", "I": "INSERT", "U": "UPDATE", "D": "DELETE"}
+
+
+def _expresion(tabla: str, letras: str) -> str:
+    """Quien tiene alguna de `letras` sobre `tabla`: `sistema` siempre; el resto, segun la
+    matriz."""
+    libres = ["sistema"]
+    acotados: list[str] = []
+    for rol in sorted(PERMISOS):
+        if not set(letras) & set(PERMISOS[rol].get(tabla, "")):
+            continue
+        condicion = CONDICIONES.get(rol, {}).get(tabla)
+        if condicion is not None:
+            acotados.append(f"(app_rol() = '{rol}' AND ({condicion}))")
+        elif rol in _ACOTADOS and tabla not in CATALOGOS:
+            raise ValueError(f"{rol} usa {tabla} sin condicion de fila ni ser catalogo")
+        else:
+            libres.append(rol)
+    lista = ", ".join(f"'{r}'" for r in libres)
+    return " OR ".join([f"app_rol() IN ({lista})", *acotados])
+
+
+def politicas(tablas: list[str]) -> list[tuple[str, str, str, str, str | None, str | None]]:
+    """(nombre, tabla, comando, roles, USING, WITH CHECK) de cada politica, para todas las
+    tablas: la migracion las crea y `test_persistencia` las compara con la base."""
+    salida = []
+    for tabla in sorted(tablas):
+        for letra, comando in _COMANDOS.items():
+            # El USING de UPDATE tambien admite a quien solo bloquea (L); el WITH CHECK no.
+            usar = None if letra == "I" else _expresion(tabla, "UL" if letra == "U" else letra)
+            comprobar = _expresion(tabla, letra) if letra in ("I", "U") else None
+            salida.append(
+                (f"p_{tabla}_{comando.lower()}", tabla, comando, "timu_app", usar, comprobar)
+            )
+    return salida
+
+
+def descripcion(usar: str | None, comprobar: str | None) -> str:
+    """Texto del comentario de una politica: lo que la migracion escribio y el guarda compara
+    (PostgreSQL guarda las expresiones normalizadas, no como se escribieron)."""
+    return f"USING ({usar}) WITH CHECK ({comprobar})"

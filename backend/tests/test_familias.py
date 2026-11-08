@@ -2,15 +2,23 @@
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
+from sqlalchemy.exc import DBAPIError
 
+from app.core.enums import Rol
+from app.core.tiempo import hoy
 from app.core.validaciones import normalizar_documento, normalizar_telefono
 from app.integrations import geocodificacion
+from app.modules.archivos.models import Archivo
+from app.modules.auth.models import Usuario
 from app.modules.catalogos.models import Ciudad
 from app.modules.catalogos.service import cargar
+from app.modules.comercial.models import Interesado
+from app.modules.comunicaciones.models import Mensaje
 from app.modules.familias import service
 from app.modules.familias.models import Familia
-from tests.conftest import autenticar
+from tests import fabricas
+from tests.conftest import autenticar, crear_usuario, login
 
 PAYLOAD = {
     "titular_nombre": "Ana Ruiz",
@@ -479,3 +487,91 @@ async def test_patch_no_cambia_el_estado_de_afiliacion(client: AsyncClient, db, 
     )
     assert resp.status_code == 200
     assert resp.json()["estado"] == "prospecto"
+
+
+# --- Habeas data: anonimizacion ---------------------------------------------------------------
+
+
+async def _familia_con_rastro(db) -> tuple[Familia, Usuario]:
+    """Familia con todo lo que la identifica: usuario de portal, foto de su mascota,
+    interesado, mensaje y su rastro en la bitacora."""
+    familia = await db.run_sync(fabricas.familia, email="ana@ejemplo.co")
+    portal = Usuario(
+        email="ana@ejemplo.co", nombre="Ana Ruiz", rol=Rol.FAMILIA, hashed_password="x"
+    )
+    db.add(portal)
+    await db.flush()
+    familia.usuario_portal_id = portal.id
+    foto = Archivo(
+        clave="foto_mascota/2026/11/abc.jpg",
+        proposito="foto_mascota",
+        nombre_original="luna.jpg",
+        content_type="image/jpeg",
+        tamano_bytes=10,
+        sha256="0" * 64,
+    )
+    db.add(foto)
+    await db.flush()
+    familia.mascotas[0].foto_archivo_id = foto.id
+    db.add(
+        Interesado(
+            nombre="Ana Ruiz", telefono=familia.telefono, origen="panel", familia_id=familia.id
+        )
+    )
+    db.add(
+        Mensaje(
+            familia_id=familia.id, canal="whatsapp", destino=familia.telefono, contenido="Hola Ana"
+        )
+    )
+    await db.commit()
+    return familia, portal
+
+
+async def test_anonimizar_no_deja_datos_personales(client: AsyncClient, db, headers, tareas):
+    familia, portal = await _familia_con_rastro(db)
+    resp = await client.post(f"/api/v1/familias/{familia.id}/anonimizar", headers=headers)
+    assert resp.status_code == 200, resp.text
+    datos = resp.json()
+    assert datos["titular_nombre"] == "Anonimizado" and datos["email"] is None
+    assert datos["estado"] == "cancelada" and datos["documento"].startswith("ANON")
+
+    # Nada de lo que la identificaba queda en la base, tampoco en la bitacora.
+    for tabla in ("familias", "usuarios", "mascotas", "interesados", "mensajes", "auditoria"):
+        filas = await db.scalar(
+            text(f"SELECT count(*) FROM {tabla} t WHERE to_jsonb(t)::text ~ :pii"),
+            {"pii": "Ana Ruiz|ana@ejemplo\\.co|Hola Ana|3001112233|Mascota0"},
+        )
+        assert filas == 0, tabla
+    await db.refresh(portal)
+    assert portal.activo is False
+    # Las fotos se borran del almacenamiento despues de confirmar, no dentro de la transaccion.
+    assert await tareas.de("familias.purgar_archivos") == [(["foto_mascota/2026/11/abc.jpg"],)]
+    purgada = await db.scalar(text("SELECT purgado_en FROM archivos WHERE clave LIKE 'foto%'"))
+    assert purgada is not None
+
+
+async def test_anonimizar_dos_veces_o_con_contrato_vigente(client: AsyncClient, db, headers):
+    familia, _ = await fabricas.afiliada(db, hoy())
+    await db.commit()
+    resp = await client.post(f"/api/v1/familias/{familia.id}/anonimizar", headers=headers)
+    assert resp.status_code == 422 and "contrato vigente" in resp.text
+
+    otra = await db.run_sync(fabricas.familia)
+    await db.commit()
+    assert (
+        await client.post(f"/api/v1/familias/{otra.id}/anonimizar", headers=headers)
+    ).status_code == 200
+    assert (
+        await client.post(f"/api/v1/familias/{otra.id}/anonimizar", headers=headers)
+    ).status_code == 409
+
+
+async def test_solo_un_administrador_anonimiza(client: AsyncClient, db):
+    familia_id = (await db.run_sync(fabricas.familia)).id
+    await crear_usuario(db, "comercial@timu.co", Rol.COMERCIAL)
+    cabecera = await login(client, "comercial@timu.co")
+    resp = await client.post(f"/api/v1/familias/{familia_id}/anonimizar", headers=cabecera)
+    assert resp.status_code == 403
+    # Y la base tampoco lo admite fuera de un contexto de administrador.
+    with pytest.raises(DBAPIError, match="Solo un administrador anonimiza"):
+        await db.execute(text("SELECT anonimizar_familia(:i)"), {"i": familia_id})

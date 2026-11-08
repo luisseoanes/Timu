@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import Select, and_, or_, select
+from sqlalchemy import Select, and_, or_, select, text
 from sqlalchemy.orm import Session
 
 from app.core.auditoria import Accion, RegistroAuditoria
@@ -27,6 +27,7 @@ from app.modules.familias.schemas import (
 )
 
 EVENTO_UBICACION = "familia.ubicacion_cambiada"
+EVENTO_ANONIMIZADA = "familia.anonimizada"
 
 ORDEN = {
     "created_at": Familia.created_at,
@@ -387,3 +388,30 @@ def _desde_formulario(db: Session, data: FormularioFamilia) -> ResultadoFormular
         campos_completados=completados,
         mascotas_agregadas=agregadas,
     )
+
+
+# --- Habeas data (Ley 1581) -------------------------------------------------------------------
+
+
+def anonimizar(db: Session, familia: Familia) -> Familia:
+    """Sustituye los datos personales de la familia y de lo que la identifica (usuario de
+    portal, interesados, mensajes, formularios, medios de pago, encuestas y su rastro en la
+    bitacora). Lo hace la funcion anonimizar_familia() de la base, que solo admite el
+    contexto de un administrador. Lo clinico y lo contable se conserva, ligado a una familia
+    que ya no identifica a nadie. Las fotos y los PDF con datos personales se borran del
+    almacenamiento despues de confirmar (outbox): si la transaccion se revierte, siguen ahi."""
+    from app.modules.cartera.models import Contrato
+    from app.modules.planes.service import VIGENTES
+
+    if familia.anonimizada_en is not None:
+        raise Conflicto("La familia ya esta anonimizada")
+    vigente = db.scalar(
+        select(Contrato.id).where(Contrato.familia_id == familia.id, Contrato.estado.in_(VIGENTES))
+    )
+    if vigente is not None:
+        raise ReglaNegocio("Cancele el contrato vigente antes de anonimizar la familia")
+    claves = list(db.scalars(text("SELECT anonimizar_familia(:id)"), {"id": familia.id}))
+    if claves:
+        publicar(db, EventoDominio(EVENTO_ANONIMIZADA, {"claves": claves}))
+    db.refresh(familia)
+    return familia

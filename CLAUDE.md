@@ -27,7 +27,7 @@ aceptación que ya está escrito allí.
 ## Comandos
 
 ```bash
-# Todo el stack (api, worker, beat, db, redis, almacenamiento S3, web) en un solo comando.
+# Todo el stack (api, worker, beat, db, pgbouncer, redis, almacenamiento S3, web) en un solo comando.
 # El servicio `inicializar` migra, carga catálogos, crea admin@timu.co / cambiar123 y el
 # bucket antes de que arranquen api, worker y beat. No hace falta copiar ningún .env:
 # backend/.env.example es la base y backend/.env (si existe) la sobrescribe.
@@ -115,6 +115,8 @@ parte de las propias suites; ninguno se desactiva:
 | --- | --- |
 | `backend/tests/conftest.py` (`pytest_sessionfinish`) | Cualquier prueba saltada o `xfail` en el backend. |
 | `backend/tests/conftest.py` (`pytest_collection_modifyitems`) | Una prueba `unit` que usa la base, o una con las dos marcas. |
+| `backend/tests/conftest.py` (`esquema`) y `backend/tests/test_persistencia.py` | Que la suite se conecte con un rol que salta las protecciones de la base (superusuario o `BYPASSRLS`): las pruebas usan `timu_app`, como la aplicación. |
+| `backend/tests/test_persistencia.py` y `backend/tests/test_migraciones.py` | Que el modelo y la base dejen de decir lo mismo: una clave primaria sin UUIDv7, un enum o un `CHECK` sin migración, un conjunto cerrado como texto libre, una referencia a catálogo sin clave foránea, un grafo de estados o un trigger de auditoría o inmutabilidad que falte, una tabla de negocio con `DELETE`, una tabla sin RLS o una política distinta de la matriz de `permisos_db.py`, un valor por defecto de servidor que el modelo no declara, o una migración que no se revierte. |
 | `backend/tests/test_suite.py` | Una prueba del backend fuera de `tests/test_*.py`. |
 | `frontend/src/test/suite.test.ts` | Una prueba del panel fuera de los patrones de Vitest (`src/**/*.{test,spec}.ts(x)`) o de Playwright (`e2e/`, `e2e-stack/`), o desactivada con `.only`, `.skip`, `.todo` o `.fixme`. |
 | `frontend/src/test/setup.ts` | Una petición del panel que ninguna prueba simuló con MSW: la prueba falla en lugar de seguir en verde con un error de red que nadie miró. Los catálogos comunes van en `frontend/src/test/handlers.ts`. |

@@ -5,7 +5,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.core.tiempo import hoy
 from app.modules.cartera import service as cartera
@@ -35,6 +35,30 @@ async def test_crear_plan_con_beneficios(client: AsyncClient, headers):
     assert resp.status_code == 201, resp.text
     beneficios = {b["tipo_servicio_codigo"]: b["cupo"] for b in resp.json()["beneficios"]}
     assert beneficios == {"consulta_domiciliaria": 4, "vacunacion": None}
+
+
+async def test_reemplazar_beneficios_por_la_api(client: AsyncClient, db, headers):
+    """Responde con los beneficios nuevos y conserva los anteriores como inactivos. La
+    respuesta se serializa fuera de la sesion sincrona: la coleccion tiene que llegar
+    cargada, no caducada."""
+    plan = await db.run_sync(
+        fabricas.plan, "reemplazo", beneficios=[{"tipo_servicio_codigo": "vacunacion", "cupo": 1}]
+    )
+    await db.commit()
+    resp = await client.put(
+        f"/api/v1/planes/{plan.id}/beneficios",
+        json=[{"tipo_servicio_codigo": "vacunacion", "cupo": 3}],
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    assert [(b["tipo_servicio_codigo"], b["cupo"]) for b in resp.json()["beneficios"]] == [
+        ("vacunacion", 3)
+    ]
+    inactivos = await db.scalar(
+        text("SELECT count(*) FROM beneficios_plan WHERE plan_id = :p AND NOT activo"),
+        {"p": plan.id},
+    )
+    assert inactivos == 1
 
 
 async def test_beneficio_con_tipo_inexistente(client: AsyncClient, headers):

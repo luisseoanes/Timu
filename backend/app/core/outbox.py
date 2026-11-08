@@ -29,6 +29,9 @@ class EventoSaliente(Base, UUIDMixin, TimestampMixin):
     """Evento pendiente de despachar. Se inserta en la transaccion que lo origina."""
 
     __tablename__ = "eventos_salientes"
+    __checks__ = {
+        "intentos_no_negativos": "intentos >= 0",
+    }
 
     nombre: Mapped[str] = mapped_column(String(80), index=True)
     datos: Mapped[dict[str, Any]] = mapped_column(JSONTipo, default=dict)

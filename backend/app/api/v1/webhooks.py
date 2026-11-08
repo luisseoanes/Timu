@@ -10,6 +10,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from app.core.config import settings
+from app.core.database import SISTEMA, fijar_contexto
 from app.core.deps import DbSession, publico
 from app.core.eventos import EventoDominio
 from app.core.outbox import publicar
@@ -40,6 +41,8 @@ async def recibir_whatsapp(db: DbSession, request: Request) -> dict[str, str]:
     raw = await request.body()
     if not verificar_firma(raw, request.headers.get("x-hub-signature-256", "")):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Firma invalida")
+    # Firma de Meta validada: lo que sigue lo hace el sistema, no un visitante anonimo.
+    await db.run_sync(fijar_contexto, SISTEMA)
     publicar(db, EventoDominio("whatsapp.webhook_recibido", {"payload": json.loads(raw)}))
     return {"status": "encolado"}
 
@@ -54,5 +57,7 @@ async def recibir_pago(db: DbSession, request: Request) -> dict[str, str]:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Cuerpo invalido") from e
     if not verificar_evento_wompi(evento):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Firma invalida")
+    # Firma de la pasarela validada: el registro lo hace el sistema.
+    await db.run_sync(fijar_contexto, SISTEMA)
     _, nuevo = await db.run_sync(pasarela.registrar_evento, evento)
     return {"status": "encolado" if nuevo else "duplicado"}

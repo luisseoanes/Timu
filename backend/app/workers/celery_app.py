@@ -9,6 +9,7 @@ from celery.signals import worker_process_init
 # primer flush que las toque revienta.
 import app.models  # noqa: F401
 from app.core.config import settings
+from app.core.database import SQL_ROL_CONECTADO, motivo_rol_privilegiado, sync_engine
 from app.core.observabilidad import configurar_logging, configurar_sentry
 
 celery_app = Celery(
@@ -36,6 +37,11 @@ def _al_iniciar_worker(**_: object) -> None:
     que los de la API, y sus registros salen con el mismo formato."""
     configurar_logging(json=settings.LOG_JSON, debug=settings.DEBUG)
     configurar_sentry(settings.SENTRY_DSN, settings.ENVIRONMENT, celery=True)
+    # Igual que la API: con un rol privilegiado la base no aplica sus politicas.
+    with sync_engine.connect() as conexion:
+        motivo = motivo_rol_privilegiado(conexion.execute(SQL_ROL_CONECTADO).one())
+    if motivo:
+        raise RuntimeError(f"El worker no se conecta con un rol privilegiado: {motivo}")
 
 
 celery_app.conf.update(

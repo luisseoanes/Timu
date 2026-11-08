@@ -5,20 +5,25 @@ from sqlalchemy import Date, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.auditoria import Auditable
-from app.core.database import Base, TimestampMixin, UUIDMixin
+from app.core.database import Base, EnumDb, TimestampMixin, UUIDMixin
+from app.core.enums import AreaTarea, EstadoTarea, Prioridad
 
 
 class Tarea(Base, UUIDMixin, TimestampMixin, Auditable):
     """F1-SER-06 Tarea interna. `clave` evita que un proceso diario cree la misma dos veces."""
 
     __tablename__ = "tareas"
+    __checks__ = {
+        "cierre_coherente": "(estado = 'cerrada') = (cerrada_en IS NOT NULL)",
+        "titulo_no_vacio": "btrim(titulo) <> ''",
+    }
     __columna_familia__ = "familia_id"
 
     titulo: Mapped[str] = mapped_column(String(200))
     descripcion: Mapped[str | None] = mapped_column(Text)
-    area: Mapped[str] = mapped_column(String(24), index=True)
-    prioridad: Mapped[str] = mapped_column(String(8), default="media", index=True)
-    estado: Mapped[str] = mapped_column(String(16), default="abierta", index=True)
+    area: Mapped[str] = mapped_column(EnumDb(AreaTarea), index=True)
+    prioridad: Mapped[str] = mapped_column(EnumDb(Prioridad), default="media", index=True)
+    estado: Mapped[str] = mapped_column(EnumDb(EstadoTarea), default="abierta", index=True)
     vence_el: Mapped[date | None] = mapped_column(Date, index=True)
     asignada_a_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
     familia_id: Mapped[UUID | None] = mapped_column(ForeignKey("familias.id"), index=True)

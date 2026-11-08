@@ -214,6 +214,8 @@ async def _respondida(db, telefono: str, puntaje: int) -> Encuesta:
     servicio = await _atendido(db, telefono=telefono)
     await db.run_sync(servicios.cambiar_estado, servicio, EstadoServicio.COMPLETADO)
     (encuesta,) = await db.run_sync(service.programar, servicio.id)
+    encuesta.estado, encuesta.enviada_en = "enviada", ahora()
+    await db.flush()
     encuesta.estado, encuesta.puntaje, encuesta.respondida_en = "respondida", puntaje, ahora()
     await db.flush()
     return encuesta

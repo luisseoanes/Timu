@@ -74,7 +74,13 @@ async def operacion(db):
             estado="respondida",
         )
     )
-    ruta = Ruta(fecha=HOY - timedelta(days=1), ciudad="Cali", estado="finalizada")
+    ruta = Ruta(
+        fecha=HOY - timedelta(days=1),
+        ciudad="Cali",
+        estado="finalizada",
+        inicio_real=ahora() - timedelta(days=1, hours=2),
+        fin_real=ahora() - timedelta(days=1),
+    )
     db.add(ruta)
     await db.flush()
     estimada = ahora() - timedelta(days=1)
@@ -86,6 +92,7 @@ async def operacion(db):
             estado="completada",
             llegada_estimada=estimada,
             llegada_en=estimada + timedelta(minutes=10),
+            salida_en=estimada + timedelta(minutes=40),
         )
     )
     await db.flush()

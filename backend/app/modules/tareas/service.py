@@ -4,14 +4,16 @@ from datetime import timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Select, case, select
+from sqlalchemy import Select, String, case, cast, select
 from sqlalchemy.orm import Session
 
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
 from app.modules.tareas.models import Tarea
 
-ORDEN_PRIORIDAD = case({"alta": 0, "media": 1, "baja": 2}, value=Tarea.prioridad, else_=3)
+ORDEN_PRIORIDAD = case(
+    {"alta": 0, "media": 1, "baja": 2}, value=cast(Tarea.prioridad, String), else_=3
+)
 
 
 def crear(

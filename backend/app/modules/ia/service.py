@@ -95,6 +95,8 @@ def activar(db: Session, prompt: PromptIA, usuario_id: UUID | None) -> PromptIA:
         select(PromptIA).where(PromptIA.codigo == prompt.codigo, PromptIA.estado == "activo")
     ):
         anterior.estado = "retirado"
+    # Primero se retira la anterior: el indice unico parcial no admite dos activas ni un instante.
+    db.flush()
     prompt.estado = "activo"
     prompt.activado_por_id = usuario_id
     db.flush()

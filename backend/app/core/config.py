@@ -1,23 +1,29 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import PostgresDsn, computed_field, model_validator
+from pydantic import PostgresDsn, computed_field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 Ambiente = Literal["local", "test", "staging", "production"]
 
+# Rol de PostgreSQL de la aplicacion. Lo crea una migracion (0013) y le concede los
+# permisos sobre los datos; `inicializar` le da LOGIN con APP_DB_PASSWORD.
+ROL_APLICACION = "timu_app"
+
 # Valores de desarrollo que nunca pueden llegar a un ambiente desplegado.
 _SECRET_KEY_LOCAL = "cambiar-en-produccion"
 _POSTGRES_PASSWORD_LOCAL = "timu"
+_APP_DB_PASSWORD_LOCAL = "timu_app"
 _STORAGE_ACCESS_KEY_LOCAL = "timu-local"
 _STORAGE_SECRET_KEY_LOCAL = "timu-local-secreto"
 
 # F0-05 Variables sin las que el servicio no arranca, por ambiente desplegado.
 OBLIGATORIAS: dict[str, tuple[str, ...]] = {
-    "staging": ("SECRET_KEY", "POSTGRES_PASSWORD", "REDIS_URL"),
+    "staging": ("SECRET_KEY", "POSTGRES_PASSWORD", "APP_DB_PASSWORD", "REDIS_URL"),
     "production": (
         "SECRET_KEY",
         "POSTGRES_PASSWORD",
+        "APP_DB_PASSWORD",
         "REDIS_URL",
         "WHATSAPP_PHONE_NUMBER_ID",
         "WHATSAPP_ACCESS_TOKEN",
@@ -61,10 +67,20 @@ class Settings(BaseSettings):
 
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
+    # Dueno del esquema: solo lo usan las migraciones y la gestion del rol de la aplicacion.
     POSTGRES_USER: str = "timu"
     POSTGRES_PASSWORD: str = _POSTGRES_PASSWORD_LOCAL
     POSTGRES_DB: str = "timu"
+    # Rol con el que se conectan API, workers, scripts y pruebas: sin superusuario ni
+    # BYPASSRLS, asi que la base le aplica sus restricciones y politicas. El nombre es fijo
+    # (ROL_APLICACION) porque las migraciones le conceden los permisos.
+    APP_DB_PASSWORD: str = _APP_DB_PASSWORD_LOCAL
+    # La aplicacion puede llegar a la base por un pooler (PgBouncer en compose); vacias, va
+    # directo a POSTGRES_HOST:POSTGRES_PORT. Las migraciones van siempre directo.
+    APP_DB_HOST: str | None = None
+    APP_DB_PORT: int | None = None
     DATABASE_URL_OVERRIDE: str | None = None
+    DATABASE_URL_PROPIETARIO_OVERRIDE: str | None = None
 
     REDIS_URL: str = "redis://localhost:6379/0"
 
@@ -152,6 +168,12 @@ class Settings(BaseSettings):
     SENTRY_DSN: str = ""
     LOG_JSON: bool = False
 
+    @field_validator("APP_DB_HOST", "APP_DB_PORT", mode="before")
+    @classmethod
+    def _vacio_es_no_definido(cls, valor: object) -> object:
+        """`APP_DB_HOST=` en el .env significa "usa POSTGRES_*", no una cadena vacia."""
+        return None if valor == "" else valor
+
     @property
     def es_desplegado(self) -> bool:
         return self.ENVIRONMENT in ("staging", "production")
@@ -170,6 +192,8 @@ class Settings(BaseSettings):
             errores.append("SECRET_KEY debe ser propia del ambiente y tener 32 caracteres o mas")
         if self.POSTGRES_PASSWORD == _POSTGRES_PASSWORD_LOCAL:
             errores.append("POSTGRES_PASSWORD no puede ser el valor de desarrollo")
+        if self.APP_DB_PASSWORD == _APP_DB_PASSWORD_LOCAL:
+            errores.append("APP_DB_PASSWORD no puede ser el valor de desarrollo")
         if self.DEBUG:
             errores.append("DEBUG debe estar apagado")
         if not self.COOKIE_SECURE:
@@ -204,15 +228,37 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def DATABASE_URL(self) -> str:
+        """Conexion de la aplicacion, con el rol sin privilegios."""
         if self.DATABASE_URL_OVERRIDE:
             return self.DATABASE_URL_OVERRIDE
+        return self._url(
+            ROL_APLICACION,
+            self.APP_DB_PASSWORD,
+            host=self.APP_DB_HOST or self.POSTGRES_HOST,
+            puerto=self.APP_DB_PORT or self.POSTGRES_PORT,
+        )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def DATABASE_URL_PROPIETARIO(self) -> str:
+        """Conexion del dueno del esquema: migraciones y gestion de roles, nada mas."""
+        if self.DATABASE_URL_PROPIETARIO_OVERRIDE:
+            return self.DATABASE_URL_PROPIETARIO_OVERRIDE
+        return self._url(
+            self.POSTGRES_USER,
+            self.POSTGRES_PASSWORD,
+            host=self.POSTGRES_HOST,
+            puerto=self.POSTGRES_PORT,
+        )
+
+    def _url(self, usuario: str, clave: str, *, host: str, puerto: int) -> str:
         return str(
             PostgresDsn.build(
                 scheme="postgresql+asyncpg",
-                username=self.POSTGRES_USER,
-                password=self.POSTGRES_PASSWORD,
-                host=self.POSTGRES_HOST,
-                port=self.POSTGRES_PORT,
+                username=usuario,
+                password=clave,
+                host=host,
+                port=puerto,
                 path=self.POSTGRES_DB,
             )
         )

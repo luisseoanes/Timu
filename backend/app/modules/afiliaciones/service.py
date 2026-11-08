@@ -17,6 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import nuevo_id
 from app.core.errores import ErrorDominio, NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
 from app.integrations.payments import construir_link_pago
@@ -74,7 +75,7 @@ def iniciar(
     valor = _valor_inicial(db, familia, plan)
     referencia = f"{PREFIJO}{uuid4().hex[:20].upper()}"
     pago = Pago(
-        id=uuid4(),
+        id=nuevo_id(),
         familia_id=familia.id,
         referencia_externa=referencia,
         proveedor="wompi",
