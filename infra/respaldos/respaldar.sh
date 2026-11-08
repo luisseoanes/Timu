@@ -14,8 +14,10 @@ ARCHIVO="$DIR/timu-${PGDATABASE}-${MARCA}.dump"
 mkdir -p "$DIR"
 echo "[$(date -u +%FT%TZ)] Respaldo de ${PGDATABASE} en ${PGHOST}"
 
-# Formato custom: comprimido y restaurable por tabla con pg_restore.
-pg_dump --format=custom --compress=9 --no-owner --no-privileges --file="$ARCHIVO.parcial"
+# Formato custom: comprimido y restaurable por tabla con pg_restore. Con privilegios: los
+# GRANT de timu_app (sin DELETE en las tablas de negocio, bitacora de solo lectura) son parte
+# de la integridad, y sin ellos la aplicacion no puede leer la base restaurada.
+pg_dump --format=custom --compress=9 --no-owner --file="$ARCHIVO.parcial"
 mv "$ARCHIVO.parcial" "$ARCHIVO"
 sha256sum "$ARCHIVO" > "$ARCHIVO.sha256"
 echo "Respaldo local: $ARCHIVO ($(du -h "$ARCHIVO" | cut -f1))"

@@ -250,6 +250,13 @@ jobs:
           CARGA_DURACION: 1m
         run: docker compose --profile carga run --rm carga
 
+      # F0-07 Respaldo y restauracion en una base nueva, comparada con la de origen: filas por
+      # tabla y lo que las protege (permisos de timu_app, RLS, politicas, triggers).
+      - name: Respaldo y restauracion verificada
+        run: |
+          docker compose --profile respaldos run --rm -e ORIGEN_DB=timu respaldos sh -c \
+            'respaldar.sh && restaurar.sh "$(ls -t /respaldos/timu-timu-*.dump | head -1)" timu_restaurada'
+
       - name: Estado y registros
         if: failure()
         run: |

@@ -7,6 +7,7 @@ no se aplicarian a la aplicacion o no sabrian a quien aplicarlas.
 
 import contextlib
 import json
+import pathlib
 import re
 from datetime import date
 from enum import StrEnum
@@ -948,6 +949,42 @@ async def test_la_aplicacion_tiene_limites_de_tiempo(db: AsyncSession):
         "lock_timeout": "10s",
         "idle_in_transaction_session_timeout": "1min",
     }
+
+
+async def test_restaurar_crea_el_rol_como_las_migraciones(db: AsyncSession):
+    """El rol es del cluster y pg_dump no lo lleva: restaurar.sh lo crea en un servidor nuevo.
+    Sus atributos y limites tienen que ser los que dejan las migraciones en la base."""
+    guion = (
+        pathlib.Path(__file__).resolve().parents[2] / "infra" / "respaldos" / "restaurar.sh"
+    ).read_text()
+    creacion = re.search(rf"CREATE ROLE {ROL_APLICACION} ([A-Z ]+);", guion)
+    assert creacion is not None, "restaurar.sh ya no crea el rol de la aplicacion"
+    atributos = set(creacion.group(1).split())
+    rol = (
+        await db.execute(
+            text(
+                "SELECT rolcanlogin, rolsuper, rolbypassrls, rolcreatedb, rolcreaterole"
+                " FROM pg_roles WHERE rolname = :rol"
+            ),
+            {"rol": ROL_APLICACION},
+        )
+    ).one()
+    # LOGIN lo da `inicializar` con la clave del entorno; el volcado no la conoce.
+    assert atributos == {"NOLOGIN"} | {
+        ("" if activo else "NO") + nombre
+        for activo, nombre in zip(
+            rol[1:], ("SUPERUSER", "BYPASSRLS", "CREATEDB", "CREATEROLE"), strict=True
+        )
+    }
+    ajustes = dict(re.findall(rf"ALTER ROLE {ROL_APLICACION} SET (\w+) = '([^']+)';", guion))
+    en_la_base = await db.scalar(
+        text(
+            "SELECT setconfig FROM pg_db_role_setting s JOIN pg_roles r ON r.oid = s.setrole"
+            " WHERE r.rolname = :rol AND s.setdatabase = 0"
+        ),
+        {"rol": ROL_APLICACION},
+    )
+    assert ajustes == dict(a.split("=", 1) for a in en_la_base)
 
 
 # Tablas acotadas por naturaleza: configuracion y catalogos, que no crecen con el negocio.

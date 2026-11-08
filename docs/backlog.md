@@ -18,12 +18,12 @@ Revisado el 2026-11-04 contra el código de `main`. Cada unidad lleva uno de tre
 
 | Fase | Unidades | Hecho | Parcial | Pendiente |
 | --- | ---: | ---: | ---: | ---: |
-| Base técnica transversal | 12 | 10 | 2 | 0 |
+| Base técnica transversal | 12 | 11 | 1 | 0 |
 | Fase 1 — Núcleo operativo | 36 | 36 | 0 | 0 |
 | Fase 2 — Operación y clínica | 21 | 21 | 0 | 0 |
 | Fase 3 — Portal, pagos y autogestión | 20 | 20 | 0 | 0 |
 | Fase 4 — Inteligencia y cierre | 12 | 7 | 3 | 2 |
-| **Total** | **101** | **94** | **5** | **2** |
+| **Total** | **101** | **95** | **4** | **2** |
 
 ## Base técnica transversal
 
@@ -39,7 +39,7 @@ Atraviesa las cuatro fases; se construye al inicio y se mantiene.
 | `F0-04` | Bitácora de auditoría | Cada alta, edición o cambio de estado en familias, cartera, servicios e historia clínica guarda quién, cuándo y qué valor tenía antes. | Seguridad | Hecho |
 | `F0-05` | Configuración y secretos por ambiente | Ningún secreto vive en el repositorio y el servicio se niega a arrancar si falta una variable obligatoria. | Seguridad | Hecho |
 | `F0-06` | Endurecimiento de la capa HTTP | Límite de peticiones por IP y por usuario, orígenes permitidos por ambiente, encabezados de seguridad y tope de tamaño de carga. | Seguridad | Hecho |
-| `F0-07` | Respaldo y restauración | Respaldo diario automático y una restauración completa probada sobre una base nueva, con evidencia. | Sección C | Parcial: respaldo diario y `restaurar.sh` construidos; falta la evidencia de una restauración completa ejecutada. |
+| `F0-07` | Respaldo y restauración | Respaldo diario automático y una restauración completa probada sobre una base nueva, con evidencia. | Sección C | Hecho: `restaurar.sh` compara con el origen las filas y lo que las protege (permisos de `timu_app`, RLS, políticas, triggers) y crea el rol en un servidor nuevo. Restauración verificada en el mismo clúster y en uno nuevo, con el informe como evidencia; el job del stack la repite en cada empuje. |
 | `F0-08` | Monitoreo y alertas | El chequeo de salud verifica base de datos, Redis y trabajadores; los errores no controlados llegan a la herramienta de monitoreo. | — | Hecho |
 | `F0-09` | Catálogos maestros | Ciudades, tipos de servicio, especies y esquemas preventivos se cargan con un comando repetible sin duplicar datos. | — | Hecho |
 | `F0-10` | Listados, filtros y orden reutilizables | Todos los módulos comparten el mismo contrato de listado y paginación. | 6.16 | Hecho |
