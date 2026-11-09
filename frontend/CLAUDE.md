@@ -37,7 +37,8 @@ aliada (`/aliada`); `ProtectedRoute` lleva a cada perfil al suyo.
 - **Los estilos son CSS propio con cascada de orden fijo**: `tokens → base → componentes →
   vistas`, impuesto por `src/styles/index.css`. Alterar ese orden rompe las vistas.
 - **Ningún color, radio o sombra literal en un componente**: todo sale de `tokens.css`. Un
-  `#` en el diff de un componente es un rechazo en revisión.
+  `#` en el diff de un componente no debe llegar a `main`: ningún lint lo detecta, así que lo
+  comprueba quien empuja (`docs/frontend/conventions.md`, «Qué revisar antes de empujar»).
 - Toda lectura va por React Query con clave que incluya los filtros (`['familias', filtros]`)
   y toda pantalla cubre carga, error y vacío.
 - **Toda pantalla nueva llega con sus pruebas.** Vitest + Testing Library para
