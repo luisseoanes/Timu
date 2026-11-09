@@ -297,9 +297,11 @@ compensar eso.
 1. Cada empuje a `main` ejecuta `.github/workflows/ci.yml` completo: formato, análisis
    estático, tipos, pruebas unitarias, de integración y de extremo a extremo, más el job
    **Stack con un solo comando**. Ese job levanta `docker compose up --build` sin ningún
-   `.env`, como un clon recién hecho, y comprueba tres cosas: que `inicializar` termina
-   sin errores, que `/health` responde con db, redis y workers en `ok`, y que el
-   administrador puede entrar a través del panel.
+   `.env`, como un clon recién hecho, y comprueba que `inicializar` termina sin errores,
+   que `/health` responde con db, redis y workers en `ok` y que el administrador puede
+   entrar a través del panel. Después siembra `datos_demo` y recorre panel, portal y
+   clínica aliada contra ese stack (`test:e2e:stack`), corre la prueba de carga reducida
+   y respalda y restaura la base, comparando la restaurada con la de origen.
 2. Solo si todo pasa se ejecuta el job **Publicar**. Así no puede salir una versión que
    no haya superado la batería completa ni una con la que el stack no levante.
 3. `semantic-release` lee los commits desde el último tag `vX.Y.Z` y aplica **el mayor
