@@ -5,9 +5,6 @@ esquinas amplias, barra lateral clara con el módulo activo resaltado y una colu
 de widgets en el panel de inicio. El ingreso usa una tarjeta partida en dos: un lado
 sólido con la marca y una ilustración, y el otro con el formulario.
 
-Página viva del sistema, con la paleta y los componentes renderizados:
-https://claude.ai/code/artifact/4a15c715-c825-40f7-b796-89f4bfd79e70
-
 Antes de escribir una pantalla nueva, lee estos cuatro documentos en orden:
 
 | Documento | Qué resuelve |
