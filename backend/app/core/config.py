@@ -159,6 +159,10 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_FROM: str = "TIMU <no-responder@timu.co>"
 
+    # Clave del administrador que crea `scripts.seed`. Vacia en local (usa la de desarrollo);
+    # en un ambiente desplegado es obligatoria para correr el seed.
+    ADMIN_PASSWORD_INICIAL: str = ""
+
     # --- Apoyo de IA (F4-IAA) ------------------------------------------------------------------
     # Sin clave la capa queda apagada: todo sigue funcionando con el flujo sin IA.
     ANTHROPIC_API_KEY: str = ""

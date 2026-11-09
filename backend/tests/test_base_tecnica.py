@@ -127,6 +127,20 @@ def test_local_no_exige_secretos():
     assert not Settings(_env_file=None, ENVIRONMENT="local").es_desplegado
 
 
+def test_el_seed_no_crea_el_admin_con_la_clave_de_desarrollo_fuera_de_local():
+    from scripts import seed
+
+    assert seed.clave_inicial(Settings(_env_file=None)) == seed.ADMIN_PASSWORD
+    with pytest.raises(SystemExit, match="ADMIN_PASSWORD_INICIAL"):
+        seed.clave_inicial(Settings(_env_file=None, **PRODUCCION_VALIDA))
+    with pytest.raises(SystemExit):
+        seed.clave_inicial(
+            Settings(_env_file=None, **PRODUCCION_VALIDA, ADMIN_PASSWORD_INICIAL="corta")
+        )
+    propia = Settings(_env_file=None, **PRODUCCION_VALIDA, ADMIN_PASSWORD_INICIAL="x" * 16)
+    assert seed.clave_inicial(propia) == "x" * 16
+
+
 # --- F0-06 Endurecimiento HTTP ----------------------------------------------------------------
 
 
