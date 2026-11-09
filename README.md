@@ -49,6 +49,7 @@ Servicios (puertos por defecto):
 - API + Swagger: http://localhost:8000/docs
 - Health check: http://localhost:8000/health (base, Redis y workers)
 - Almacenamiento S3 (SeaweedFS): http://localhost:9000
+- PgBouncer, el pool por el que la aplicación llega a la base: localhost:6432
 
 Datos de demostración (solo local) y migraciones nuevas con el stack ya arriba:
 
@@ -98,8 +99,12 @@ npm run test:e2e         # Playwright con la API interceptada
 npm run test:e2e:stack   # recorridos contra el stack real (docker compose up + datos_demo antes)
 ```
 
+La prueba de carga (k6, con el volumen proyectado a 12 meses) se corre en un proyecto aparte
+porque mete datos sintéticos: ver «Prueba de carga» en [`CLAUDE.md`](CLAUDE.md).
+
 El CI (`.github/workflows/ci.yml`) corre todo en cada empuje a `main`, incluido un job que
-levanta el stack con un solo comando y recorre panel, portal y clínica aliada contra él.
+levanta el stack con un solo comando, recorre panel, portal y clínica aliada contra él, corre
+la prueba de carga reducida y respalda y restaura la base comparándola con la de origen.
 El release depende de todos los jobs. Las suites fallan si una prueba se salta, queda fuera
 de los patrones de los runners o hace una petición que nadie simuló, y si la cobertura baja
 del umbral.
@@ -109,14 +114,15 @@ del umbral.
 ```
 backend/
   app/
-    core/          configuración, base de datos, seguridad, alcance, outbox, límites, salud
+    core/          configuración, base de datos y permisos de la base (RLS), transiciones,
+                   auditoría, seguridad, alcance, outbox, límites, salud
     modules/<dominio>/   models.py · schemas.py · service.py · router.py
     api/v1/        router agregador y webhooks (WhatsApp, pagos)
     integrations/  WhatsApp, Wompi, correo, Maps, OR-Tools, S3, Claude
     workers/       celery_app.py (beat_schedule) + tasks/ por dominio
     models.py      registro único de modelos para Alembic
   alembic/         migraciones
-  scripts/         inicializar, catálogos, seed, datos_demo, generar_tipos_frontend
+  scripts/         inicializar, catálogos, seed, datos_demo, datos_volumen, generar_tipos_frontend
   tests/           pytest contra PostgreSQL (db-test)
 frontend/
   src/
@@ -132,6 +138,7 @@ frontend/
   e2e/             Playwright con la API interceptada
   e2e-stack/       Playwright contra el stack real
 infra/respaldos/   respaldo diario de PostgreSQL y restauración verificada
+infra/carga/       escenario de k6 de la prueba de carga
 ```
 
 ## Documentación
@@ -139,8 +146,10 @@ infra/respaldos/   respaldo diario de PostgreSQL y restauración verificada
 | Documento | Contenido |
 |---|---|
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Cómo se escriben los commits, cómo se trabaja sobre `main` y cómo salen las versiones |
-| [docs/propuesta-timu-puntos-15-19.md](docs/propuesta-timu-puntos-15-19.md) | Contrato funcional: los requisitos que citan los comentarios del código (6.10, 6.16…) |
-| [docs/backlog.md](docs/backlog.md) | Backlog del backend: 101 unidades con criterio de aceptación, por fase |
+| [docs/documento-requerimientos-funcionales.md](docs/documento-requerimientos-funcionales.md) | Lo que TIMU pidió, transcrito literal: los requisitos que citan el código y el backlog (6.10, Sección 8…) |
+| [docs/propuesta-timu-puntos-15-19.md](docs/propuesta-timu-puntos-15-19.md) | Contrato funcional: la propuesta que responde a ese documento (secciones A a E) |
+| [docs/backlog.md](docs/backlog.md) | Backlog del backend: 101 unidades con criterio de aceptación y estado, por fase |
+| [docs/plan-persistencia.md](docs/plan-persistencia.md) | Por qué la base garantiza integridad y permisos: decisiones y registro de cada fase |
 | [docs/indicadores.md](docs/indicadores.md) | Definición de cada indicador del dashboard y de los exportables |
 | [docs/frontend/](docs/frontend/) | Sistema visual del panel: tokens, componentes, plantillas y convenciones |
 | [infra/respaldos/README.md](infra/respaldos/README.md) | Respaldo y restauración de la base |
