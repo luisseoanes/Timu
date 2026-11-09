@@ -5,11 +5,12 @@ estado: normativo
 alcance: >
   Versión podada para consulta durante el desarrollo. Conserva la descripción de la
   solución (A), la tabla de cumplimiento de los requisitos 6.1 a 6.23 y los módulos de
-  escalabilidad (B), el stack tecnológico (C) y el reparto de alcance por fases (D).
-  Los comentarios del código citan estas secciones por su letra.
+  escalabilidad (B), el stack tecnológico (C), el reparto de alcance por fases (D) y la
+  capacitación (E), porque su manual por perfil es un entregable del backlog
+  (F4-DOC-01). Los comentarios del código y el backlog citan estas secciones por su letra.
 retirado: >
-  Capacitación, soporte, garantía, costos de terceros, modelo económico, criterios de
-  evaluación y los cierres comerciales: nada de eso condiciona una decisión de código.
+  Soporte, garantía, costos de terceros, modelo económico, criterios de evaluación y los
+  cierres comerciales: nada de eso condiciona una decisión de código.
 procedencia:
   fichero_original: Propuesta_TIMU_Puntos_15-19.docx
   sha256_original: ce6e40a3474ab8fd0765872b14f73f0acbd68bd534e919d3cf1f4b464f3f84da
@@ -95,3 +96,9 @@ La construcción avanza por fases, cada una con entregables funcionales verifica
 | Fase 4 — Inteligencia y cierre | Dashboard gerencial, automatizaciones transversales adicionales, apoyo de IA en atención comercial/virtual, migración final de datos, pruebas integradas y estabilización. |
 
 Al cierre de cada fase se realiza una entrega funcional en ambiente de pruebas, validación conjunta con TIMU, y ajustes antes de pasar a producción.
+
+## E. Capacitación
+
+- 4 sesiones de capacitación (una al cierre de cada fase), de 2 horas cada una, por videollamada o presencial según disponibilidad.
+- Material entregado: manual de usuario por perfil (administrador, comercial, operaciones, personal médico) y guías en video de los flujos principales.
+- Acompañamiento inicial de 2 semanas posteriores a la puesta en producción de cada fase, para resolver dudas de uso en caliente.

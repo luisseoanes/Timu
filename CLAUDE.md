@@ -18,7 +18,7 @@ El código y el backlog citan los dos documentos así:
   documento de requerimientos. La propuesta repite los números `6.x` en su tabla B y
   reutiliza los números 15 a 19 porque responde a esos puntos, pero lo que se pide está en
   el documento de requerimientos.
-- Sección por letra (`sección A`, `Sección C`): los apartados A a H de la sección 15 de la
+- Sección por letra (`sección A`, `Sección C`): los apartados A a E de la sección 15 de la
   propuesta.
 
 Al implementar un módulo pendiente, busca su ID en el backlog y respeta el criterio de
