@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import nuevo_id
 from app.core.errores import NoEncontrado, ReglaNegocio
-from app.core.eventos import EventoDominio
+from app.core.eventos import EventoDominio, declarar_evento
 from app.core.outbox import publicar
 from app.core.tiempo import ahora, con_zona
 from app.core.validaciones import normalizar_telefono, telefono_whatsapp
@@ -34,7 +34,9 @@ from app.modules.comunicaciones.models import (
 logger = structlog.get_logger(__name__)
 
 TAREA_ENVIO = "comunicaciones.enviar_mensaje"
-EVENTO_ENCOLADO = "mensaje.encolado"
+EVENTO_ENCOLADO = declarar_evento("mensaje.encolado")
+# Lo publica el webhook al validar la firma; el payload se procesa en el worker.
+EVENTO_WEBHOOK = declarar_evento("whatsapp.webhook_recibido")
 MAX_INTENTOS = 5
 VENTANA = timedelta(hours=24)
 # Respuestas que se interpretan como pedido de baja de los envios masivos.

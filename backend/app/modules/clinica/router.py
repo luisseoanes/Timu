@@ -397,7 +397,7 @@ async def pedir_borrador(db: DbSession, medico: Medico, solicitud_id: UUID) -> d
         from app.core.errores import ReglaNegocio
 
         raise ReglaNegocio("Tome la solicitud antes de pedir un borrador")
-    publicar(db, EventoDominio("ia.borrador_solicitado", {"solicitud_id": str(solicitud.id)}))
+    publicar(db, EventoDominio(service.EVENTO_BORRADOR, {"solicitud_id": str(solicitud.id)}))
     return {"detail": "Borrador solicitado"}
 
 

@@ -43,7 +43,7 @@ def _al_encolar(evento: EventoDominio) -> None:
     celery_app.send_task(service.TAREA_ENVIO, args=[evento.datos["mensaje_id"]])
 
 
-@al_ocurrir("whatsapp.webhook_recibido")
+@al_ocurrir(service.EVENTO_WEBHOOK)
 def _al_recibir_webhook(evento: EventoDominio) -> None:
     celery_app.send_task(TAREA_WEBHOOK, args=[evento.datos["payload"]])
 

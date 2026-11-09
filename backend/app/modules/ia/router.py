@@ -102,7 +102,7 @@ async def nueva_version(db: DbSession, data: PromptIn) -> PromptIA:
 async def evaluar(db: DbSession, prompt_id: UUID) -> dict[str, str]:
     """F4-IAA-04 Corre los casos de prueba en el worker (cada caso es una consulta real)."""
     prompt = await db.run_sync(service.obtener_prompt, prompt_id)
-    publicar(db, EventoDominio("ia.evaluacion_solicitada", {"prompt_id": str(prompt.id)}))
+    publicar(db, EventoDominio(service.EVENTO_EVALUACION, {"prompt_id": str(prompt.id)}))
     return {"detail": "Evaluacion en curso; consulte el prompt para ver el resultado"}
 
 

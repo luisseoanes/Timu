@@ -7,7 +7,7 @@ from app.core.auditoria import Accion, RegistroAuditoria
 from app.core.database import acotar_publico
 from app.core.enums import EstadoAfiliacion
 from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
-from app.core.eventos import EventoDominio
+from app.core.eventos import EventoDominio, declarar_evento
 from app.core.outbox import publicar
 from app.core.scope import Alcance, permite, restringir
 from app.core.tiempo import ahora, hoy
@@ -27,8 +27,8 @@ from app.modules.familias.schemas import (
     ResultadoFormulario,
 )
 
-EVENTO_UBICACION = "familia.ubicacion_cambiada"
-EVENTO_ANONIMIZADA = "familia.anonimizada"
+EVENTO_UBICACION = declarar_evento("familia.ubicacion_cambiada")
+EVENTO_ANONIMIZADA = declarar_evento("familia.anonimizada")
 
 ORDEN = {
     "created_at": Familia.created_at,

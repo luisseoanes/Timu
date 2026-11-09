@@ -17,6 +17,7 @@ from app.core.outbox import publicar
 from app.integrations.payments import verificar_evento_wompi
 from app.integrations.whatsapp import verificar_firma
 from app.modules.cartera import pasarela
+from app.modules.comunicaciones import service as comunicaciones
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/webhooks", tags=["webhooks"], dependencies=[Depends(publico)])
@@ -43,7 +44,7 @@ async def recibir_whatsapp(db: DbSession, request: Request) -> dict[str, str]:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Firma invalida")
     # Firma de Meta validada: lo que sigue lo hace el sistema, no un visitante anonimo.
     await db.run_sync(fijar_contexto, SISTEMA)
-    publicar(db, EventoDominio("whatsapp.webhook_recibido", {"payload": json.loads(raw)}))
+    publicar(db, EventoDominio(comunicaciones.EVENTO_WEBHOOK, {"payload": json.loads(raw)}))
     return {"status": "encolado"}
 
 

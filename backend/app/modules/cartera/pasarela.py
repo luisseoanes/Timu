@@ -17,7 +17,7 @@ from app.core.config import settings
 from app.core.database import nuevo_id
 from app.core.enums import EstadoAfiliacion
 from app.core.errores import NoEncontrado, ReglaNegocio
-from app.core.eventos import EventoDominio
+from app.core.eventos import EventoDominio, declarar_evento
 from app.core.outbox import publicar
 from app.core.tiempo import ahora, hoy
 from app.integrations.payments import ClienteWompi, ErrorPasarela
@@ -36,7 +36,7 @@ from app.modules.familias.models import Familia
 logger = structlog.get_logger(__name__)
 
 TAREA_PROCESAR_EVENTO = "cartera.procesar_evento_pasarela"
-EVENTO_RECIBIDO = "pasarela.evento_recibido"
+EVENTO_RECIBIDO = declarar_evento("pasarela.evento_recibido")
 
 _ESTADOS_WOMPI = {
     "APPROVED": "aprobado",

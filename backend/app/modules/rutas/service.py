@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.enums import EstadoServicio, TipoServicio
 from app.core.errores import NoEncontrado, ReglaNegocio
-from app.core.eventos import EventoDominio
+from app.core.eventos import EventoDominio, declarar_evento
 from app.core.outbox import publicar
 from app.core.tiempo import ZONA_NEGOCIO, ahora, con_zona
 from app.integrations.routing import Coordenada, Visita, insertar_mas_barato, optimizar
@@ -23,7 +23,7 @@ from app.modules.servicios.models import Servicio
 
 logger = structlog.get_logger(__name__)
 
-EVENTO_PLANIFICACION = "rutas.planificacion_solicitada"
+EVENTO_PLANIFICACION = declarar_evento("rutas.planificacion_solicitada")
 # Modalidades que se atienden en casa de la familia.
 MODALIDADES_EN_CASA = (TipoServicio.DOMICILIARIO, TipoServicio.PREVENTIVO)
 

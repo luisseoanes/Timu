@@ -6,6 +6,7 @@ import structlog
 
 from app.core.database import sesion_worker
 from app.core.eventos import EventoDominio, al_ocurrir
+from app.modules.clinica import service as clinica
 from app.modules.ia import service
 from app.workers.celery_app import celery_app
 
@@ -15,12 +16,12 @@ TAREA_BORRADOR = "ia.borrador_veterinario"
 TAREA_EVALUAR = "ia.evaluar_prompt"
 
 
-@al_ocurrir("ia.borrador_solicitado")
+@al_ocurrir(clinica.EVENTO_BORRADOR)
 def _al_pedir_borrador(evento: EventoDominio) -> None:
     celery_app.send_task(TAREA_BORRADOR, args=[evento.datos["solicitud_id"]])
 
 
-@al_ocurrir("ia.evaluacion_solicitada")
+@al_ocurrir(service.EVENTO_EVALUACION)
 def _al_pedir_evaluacion(evento: EventoDominio) -> None:
     celery_app.send_task(TAREA_EVALUAR, args=[evento.datos["prompt_id"]])
 

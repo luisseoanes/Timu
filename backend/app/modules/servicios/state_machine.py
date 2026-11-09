@@ -8,7 +8,7 @@ from typing import Any
 from uuid import UUID
 
 from app.core.enums import EstadoServicio as E
-from app.core.eventos import EventoDominio
+from app.core.eventos import EventoDominio, declarar_evento
 from app.core.outbox import publicar
 
 TRANSICIONES: dict[E, set[E]] = {
@@ -21,6 +21,11 @@ TRANSICIONES: dict[E, set[E]] = {
     E.COMPLETADO: set(),
     E.CANCELADO: set(),
 }
+
+
+# Un evento por estado de llegada (`servicio.completado`...): los efectos de 6.10 y cualquier
+# integracion que quiera enterarse se suscriben al que les interesa.
+EVENTOS: dict[E, str] = {estado: declarar_evento(f"servicio.{estado.value}") for estado in E}
 
 
 class TransicionInvalida(ValueError):
@@ -47,7 +52,7 @@ def aplicar(db: Any, servicio: Any, destino: E, *, actor_id: UUID | None = None)
     anterior = E(servicio.estado)
     servicio.estado = transicionar(anterior, destino)
     evento = EventoDominio(
-        nombre=f"servicio.{destino.value}",
+        nombre=EVENTOS[destino],
         datos={
             "servicio_id": str(servicio.id),
             "estado_anterior": anterior.value,

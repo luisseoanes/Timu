@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.enums import Rol
 from app.core.errores import NoEncontrado, Prohibido, ReglaNegocio
+from app.core.eventos import declarar_evento
 from app.core.tiempo import ahora, hoy
 from app.modules.archivos.models import Archivo
 from app.modules.clinica.models import (
@@ -23,6 +24,9 @@ from app.modules.clinica.models import (
 from app.modules.familias.models import Familia, Mascota
 
 logger = structlog.get_logger(__name__)
+
+# F4-IAA-03 El medico pide a la IA un borrador de respuesta para la solicitud virtual.
+EVENTO_BORRADOR = declarar_evento("ia.borrador_solicitado")
 
 CAMPOS_CLINICOS = ("motivo", "anamnesis", "examen_fisico", "diagnostico", "tratamiento")
 

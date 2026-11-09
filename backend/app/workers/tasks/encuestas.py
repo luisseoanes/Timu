@@ -3,14 +3,16 @@
 from uuid import UUID
 
 from app.core.database import sesion_worker
+from app.core.enums import EstadoServicio
 from app.core.eventos import EventoDominio, al_ocurrir
 from app.modules.encuestas import service
+from app.modules.servicios import state_machine
 from app.workers.celery_app import celery_app
 
 TAREA_ENCUESTA = "encuestas.enviar_encuesta"
 
 
-@al_ocurrir("servicio.completado")
+@al_ocurrir(state_machine.EVENTOS[EstadoServicio.COMPLETADO])
 def _al_completar_servicio(evento: EventoDominio) -> None:
     """6.20 La encuesta sale sola al completar el servicio."""
     celery_app.send_task(TAREA_ENCUESTA, args=[evento.datos["servicio_id"]])

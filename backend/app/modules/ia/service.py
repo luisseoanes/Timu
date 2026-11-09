@@ -20,12 +20,16 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.errores import NoEncontrado, ReglaNegocio
+from app.core.eventos import declarar_evento
 from app.core.tiempo import ZONA_NEGOCIO, ahora, hoy
 from app.integrations import claude
 from app.modules.ia import guiones
 from app.modules.ia.models import CasoPruebaIA, ConsultaIA, PromptIA
 
 logger = structlog.get_logger(__name__)
+
+# F4-IAA-04 Correr los casos de prueba de un prompt: cada caso es una consulta real.
+EVENTO_EVALUACION = declarar_evento("ia.evaluacion_solicitada")
 
 # Respuesta estructurada de cada prompt (JSON Schema). Un codigo sin esquema responde texto.
 ESQUEMAS: dict[str, dict[str, Any]] = {

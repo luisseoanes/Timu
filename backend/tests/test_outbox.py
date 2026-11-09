@@ -4,9 +4,28 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import eventos
 from app.core.enums import EstadoServicio
-from app.core.eventos import EventoDominio, al_ocurrir, manejadores
+from app.core.eventos import EventoDominio, EventoNoDeclarado, al_ocurrir, manejadores
 from app.core.outbox import EventoSaliente, procesar_pendientes, publicar
+
+# Eventos de mentira de este fichero: se declaran solo mientras corre cada prueba.
+_DE_PRUEBA = {
+    "prueba.a",
+    "prueba.b",
+    "prueba.bien",
+    "prueba.concurrente",
+    "prueba.falla",
+    "prueba.intermitente",
+    "prueba.lote",
+    "prueba.ocurrida",
+    "prueba.sin_manejador",
+}
+
+
+@pytest.fixture(autouse=True)
+def _eventos_de_prueba(monkeypatch):
+    monkeypatch.setattr(eventos, "_DECLARADOS", eventos._DECLARADOS | _DE_PRUEBA)
 
 
 async def test_publicar_deja_el_evento_en_la_misma_transaccion(db: AsyncSession):
@@ -86,6 +105,30 @@ def test_registro_de_manejadores():
 
     assert _manejador in manejadores("prueba.ocurrida")
     assert manejadores("prueba.inexistente") == []
+
+
+@pytest.mark.unit
+def test_suscribirse_a_un_evento_sin_declarar_falla_al_importar():
+    """Un nombre mal escrito en el manejador lo dejaba sin llamar para siempre."""
+    with pytest.raises(EventoNoDeclarado, match="servicio.completdo"):
+        al_ocurrir("servicio.completdo")
+
+
+@pytest.mark.unit
+def test_publicar_un_evento_sin_declarar_falla_en_el_acto():
+    """Y mal escrito al publicar, el evento se daba por procesado sin que nadie lo atendiera."""
+    with pytest.raises(EventoNoDeclarado):
+        EventoDominio("servicio.completdo")
+
+
+@pytest.mark.unit
+def test_cada_dominio_declara_los_eventos_que_publica():
+    import app.main  # noqa: F401  carga todos los dominios, como la API
+    import app.workers.celery_app  # noqa: F401  y todas las tareas, como el worker
+
+    declarados = eventos.eventos_declarados() - _DE_PRUEBA
+    assert {"servicio.completado", "mensaje.encolado", "pasarela.evento_recibido"} <= declarados
+    assert set(eventos._MANEJADORES) - _DE_PRUEBA <= declarados
 
 
 # --- Drenado (outbox.drenar) ------------------------------------------------------------------
