@@ -52,6 +52,10 @@ Reglas que atraviesan todo el backend:
   publica el evento que dispara los efectos de 6.10.
 - **Los listados devuelven `Page[T]`** de `app/schemas/common.py` (`items`, `total`,
   `limit`, `offset`), con filtros combinables como en `familias.service.listar`.
+- **Los schemas de lectura no revalidan formatos** (`EmailStr`, `DocumentoCO`, `TelefonoCO`):
+  al leer son `str`. Un dato guardado por SQL, o que una versión nueva del validador rechace,
+  no puede tumbar la respuesta ni un listado entero. Se valida al escribir (`*Create`,
+  `*Update`); `FamiliaRead` y `UsuarioRead` son la referencia.
 - **Toda consulta pasa por `restringir()` de `app/core/scope.py`.** `require_roles`
   dice *quién puede llamar*; el alcance dice *qué filas ve*, y el portal de familias
   necesita las dos. Los servicios reciben un `Alcance` como primer argumento tras la
@@ -134,7 +138,7 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
   arrancar si el rol conectado es superusuario o tiene `BYPASSRLS`. Una tabla nueva le llega
   a `timu_app` sola, por los permisos por defecto de la `0013`.
 - **Cada transacción lleva el contexto de quién la hace.** `ContextoDb` (`rol`,
-  `usuario_id`, `familia_id`, `clinica_id`, `request_id`) vive en `session.info` y un listener
+  `usuario_id`, `familia_id`, `clinica_id`, `request_id` y, para `publico`, `llaves`) vive en `session.info` y un listener
   `after_begin` lo fija con `set_config(..., true)` al empezar cada transacción: es local a
   ella, así que no se filtra a la siguiente petición que reutilice la conexión. `get_db`
   empieza en `"publico"`, `get_current_user` lo cambia al usuario y `get_alcance` añade la
@@ -210,19 +214,26 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
 - **Lo que ve y escribe cada perfil lo decide la base (RLS).** Toda tabla tiene RLS y cuatro
   políticas para `timu_app` (`p_<tabla>_<operación>`), generadas de la matriz de
   `app/core/permisos_db.py`: `PERMISOS` (perfil → tabla → `S`, `I`, `U`, `D` y `L`, que es
-  bloquear con `FOR UPDATE` sin poder editar), `CONDICIONES` (las filas de `familia` y
-  `aliada`, y las sesiones propias del equipo) y `CATALOGOS`. Sin contexto, la base no
+  bloquear con `FOR UPDATE` sin poder editar), `CONDICIONES` (las filas de `familia`,
+  `aliada` y `publico`, y las sesiones propias del equipo) y `CATALOGOS`. Sin contexto, la base no
   devuelve nada. `sistema` lo tiene todo; los webhooks pasan a `sistema` tras validar la
   firma. Toda escritura lleva lectura, porque `INSERT … RETURNING` exige pasar la política de
   `SELECT`. Una ruta nueva, o una que pase a tocar otra tabla, exige actualizar la matriz y
   escribir la migración que regenera sus políticas; si no, la prueba de esa ruta falla
-  porque la base niega el acceso. Para derivar lo que toca una ruta:
+  porque la base niega el acceso. Esa migración no importa la matriz, la congela: se genera
+  comparando `politicas(TABLAS)` con las expresiones de la última migración de RLS, y lleva
+  la anterior y la nueva de cada política cambiada para que el `downgrade` restaure la
+  anterior (patrón de la `0026`). Para derivar lo que toca una ruta:
   `TIMU_REGISTRO_ACCESOS=<fichero> pytest` anota cada perfil, ruta, operación y tabla, con
-  una sesión propia por petición para que ninguna lectura se sirva de memoria. Ojo con los
+  una sesión propia por petición para que ninguna lectura se sirva de memoria. En ese modo
+  `test_pedir_asesor_con_contexto_y_el_bot_se_calla` falla siempre (lo que escribe el webhook
+  queda en otra sesión) y pasa en la suite normal: no es un fallo. Ojo con los
   efectos: cambiar el estado de un servicio ejecuta reglas configurables que crean tareas y
   mensajes, y quien cambia ese estado tiene esos permisos aunque hoy ninguna regla los use.
   `test_toda_tabla_tiene_rls_y_las_politicas_de_la_matriz` compara cada política con lo que
-  genera hoy la matriz, a través de su comentario.
+  genera hoy la matriz, a través de su comentario. `restringir()` sigue en Python como
+  segunda capa y para responder 404, y lo que filtra columnas (la vista por perfil de la
+  historia clínica) también sigue en Python: RLS filtra filas.
 - **`publico` solo ve las filas de quien declara la petición.** Es el perfil de toda petición
   sin sesión y del comienzo de cada petición autenticada, hasta que `get_current_user`
   reconoce al usuario. Sin llaves no ve nada. El código fija las llaves con
@@ -236,12 +247,13 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
   matriz (`CONDICIONES` admite una expresión por operación). Ojo: una lectura que la base
   filtra no da error, devuelve menos filas, y el código que trata ese dato como opcional sigue
   adelante con un resultado peor (así se detectó la encuesta que nombraba al profesional como
-  «sin asignar»). Lo que necesite ver lo de todos, como el reparto por carga de los
-  comerciales, va en una función `SECURITY DEFINER` que solo devuelve el resultado
-  (`comercial_con_menos_carga()`). Límite: el contexto se fija con `set_config`, así que esto
-  protege de errores de la aplicación, no de quien ejecute SQL arbitrario con su conexión. `restringir()` sigue en Python como
-  segunda capa y para responder 404, y lo que filtra columnas (la vista por perfil de la
-  historia clínica) también sigue en Python: RLS filtra filas.
+  «sin asignar»). Para buscarlos: contar cada `SELECT` de `publico` también como `sistema` en
+  la misma transacción (`SAVEPOINT`, `set_config('app.rol', 'sistema', true)`, `ROLLBACK TO`)
+  y anotar las sentencias en que `publico` ve menos filas. Lo que necesite ver lo de todos,
+  como el reparto por carga de los comerciales, va en una función `SECURITY DEFINER` que solo
+  devuelve el resultado (`comercial_con_menos_carga()`). Límite: el contexto se fija con
+  `set_config`, así que esto protege de errores de la aplicación, no de quien ejecute SQL
+  arbitrario con su conexión.
 - **Lo que crece con el negocio se consulta por índice.** Toda clave foránea lleva
   `index=True` (`test_toda_llave_foranea_tiene_indice`).
   `test_los_caminos_calientes_no_recorren_tablas_enteras` recorre los listados del panel y
@@ -258,7 +270,10 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
   beat llegan a la base por PgBouncer en modo transacción (`APP_DB_HOST`); el contexto de RLS
   es local a la transacción, así que no se cruza entre clientes, y asyncpg necesita
   `MAX_PREPARED_STATEMENTS`. Las migraciones e `inicializar` van directo. `db` precarga
-  `pg_stat_statements` y registra en el log las consultas de más de 500 ms.
+  `pg_stat_statements` y registra en el log las consultas de más de 500 ms. Los límites se
+  comprueban con una conexión de `timu_app` o en `pg_db_role_setting`: tras
+  `SET ROLE timu_app`, `SHOW statement_timeout` da 0, porque los ajustes del rol solo se
+  cargan al iniciar sesión.
 - **Toda clave primaria es UUIDv7** (RFC 9562), con tres capas: `UUIDMixin` lo genera en
   Python (`nuevo_id()`, de `uuid-utils`, porque Python 3.12 no trae `uuid7`), la columna
   tiene `DEFAULT uuidv7()` para quien inserte por SQL, y `ck_<tabla>_id_uuidv7` rechaza
