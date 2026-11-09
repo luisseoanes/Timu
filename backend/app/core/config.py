@@ -98,7 +98,9 @@ class Settings(BaseSettings):
     # Secreto de la app de Meta: firma X-Hub-Signature-256 de los webhooks.
     WHATSAPP_APP_SECRET: str = ""
 
-    PAYMENTS_PROVIDER: str = "wompi"
+    # Solo hay una pasarela implementada (app/integrations/payments.py). Otro valor no arranca
+    # en lugar de quedarse cobrando por Wompi creyendo que es otra.
+    PAYMENTS_PROVIDER: Literal["wompi"] = "wompi"
     WOMPI_PUBLIC_KEY: str = ""
     WOMPI_PRIVATE_KEY: str = ""
     WOMPI_EVENTS_SECRET: str = ""

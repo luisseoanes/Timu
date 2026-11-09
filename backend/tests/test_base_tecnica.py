@@ -3,6 +3,7 @@
 import pytest
 from fastapi import APIRouter
 from httpx import AsyncClient
+from pydantic import ValidationError
 
 from app.core.config import ConfiguracionInvalida, Settings
 from app.main import app
@@ -121,6 +122,11 @@ def test_la_aplicacion_puede_pasar_por_un_pool_y_las_migraciones_no():
     pool = Settings(_env_file=None, APP_DB_HOST="pgbouncer", APP_DB_PORT="6432")
     assert "timu_app" in pool.DATABASE_URL and "@pgbouncer:6432/" in pool.DATABASE_URL
     assert "@localhost:5432/" in pool.DATABASE_URL_PROPIETARIO
+
+
+def test_una_pasarela_sin_implementar_no_arranca():
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, PAYMENTS_PROVIDER="payu")
 
 
 def test_local_no_exige_secretos():

@@ -1,4 +1,8 @@
-"""Pasarela de pagos Wompi (PayU/Refacil se agregan con la misma interfaz).
+"""Pasarela de pagos Wompi, la unica implementada (`PAYMENTS_PROVIDER`).
+
+Agregar otra (PayU, Refacil) es extraer de `ClienteWompi` y de `cartera.pasarela` la
+interfaz que compartan las dos, con la segunda delante: disenarla con una sola
+implementacion la ajustaria a Wompi.
 
 - Eventos: `signature.checksum` = SHA256(valores de `signature.properties` + timestamp +
   secreto de eventos). https://docs.wompi.co/docs/colombia/eventos/
