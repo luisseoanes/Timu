@@ -69,7 +69,8 @@ Reglas que atraviesan todo el backend:
   en `app/workers/tasks/<dominio>.py`, junto a la tarea que encolan, y se limitan a
   `celery_app.send_task(...)`: el trabajo pesado va en la tarea, no en el drenado. El
   nombre se declara en el dominio que lo publica (`EVENTO_X = declarar_evento("x.ocurrido")`)
-  y se usa la constante; `EventoDominio` y `al_ocurrir` rechazan uno sin declarar.
+  y se usa la constante; `EventoDominio` y `al_ocurrir` rechazan uno sin declarar. Un evento
+  que agota `MAX_INTENTOS` se registra como `outbox.abandonado` (error, llega a Sentry).
 - **`comunicaciones` no depende de ningún dominio**: casi todos encolan en él. Quién es la
   familia de un número y quién contesta un mensaje entrante (encuesta, conversación
   comercial) se lo conecta `app/workers/tasks/comunicaciones.py` con

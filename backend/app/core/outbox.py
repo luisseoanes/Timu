@@ -84,6 +84,13 @@ def procesar_pendientes(db: Session, lote: int = LOTE) -> dict[str, int]:
             fila.intentos += 1
             fila.ultimo_error = str(exc)[:2000]
             fallidos += 1
-            logger.warning("outbox.fallo", evento=fila.nombre, error=str(exc))
+            if fila.intentos >= MAX_INTENTOS:
+                # No se vuelve a intentar: el efecto no ocurre si nadie lo mira. Como error
+                # llega a Sentry; la fila queda con su `ultimo_error` para reprocesarla.
+                logger.error(
+                    "outbox.abandonado", evento=fila.nombre, evento_id=str(fila.id), error=str(exc)
+                )
+            else:
+                logger.warning("outbox.fallo", evento=fila.nombre, error=str(exc))
     db.flush()
     return {"despachados": despachados, "fallidos": fallidos}

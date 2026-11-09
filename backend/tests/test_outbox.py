@@ -215,6 +215,39 @@ async def test_se_reintenta_hasta_max_intentos_y_luego_se_abandona(db: AsyncSess
     assert fila.procesado_en is None
 
 
+async def test_un_evento_que_agota_los_intentos_avisa_como_error(
+    db: AsyncSession, registrar, monkeypatch
+):
+    """Abandonado, el efecto no ocurre nunca: tiene que llegar a Sentry, no quedar en un
+    warning mas entre los reintentos."""
+    from app.core import outbox
+
+    errores: list[tuple[str, dict]] = []
+
+    class Registro:
+        def warning(self, *_, **__):
+            pass
+
+        def error(self, mensaje, **datos):
+            errores.append((mensaje, datos))
+
+    monkeypatch.setattr(outbox, "logger", Registro())
+    registrar("prueba.falla", lambda _: (_ for _ in ()).throw(RuntimeError("caido")))
+    fila = await _evento(db, "prueba.falla")
+
+    for _ in range(outbox.MAX_INTENTOS - 1):
+        await db.run_sync(procesar_pendientes)
+    assert errores == []
+    await db.run_sync(procesar_pendientes)
+
+    assert errores == [
+        (
+            "outbox.abandonado",
+            {"evento": "prueba.falla", "evento_id": str(fila.id), "error": "caido"},
+        )
+    ]
+
+
 async def test_un_reintento_que_sale_bien_cierra_el_evento(db: AsyncSession, registrar):
     respuestas = [RuntimeError("temporal"), None]
 
