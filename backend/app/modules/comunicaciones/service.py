@@ -6,6 +6,7 @@ queda trazado por destinatario (F1-WHA-01), respeta la ventana de 24 horas y las
 """
 
 import re
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
@@ -302,10 +303,30 @@ def _ts(valor: str | None) -> datetime:
     return datetime.fromtimestamp(int(valor), UTC) if valor else ahora()
 
 
-def _familia_por_telefono(db: Session, telefono: str) -> UUID | None:
-    from app.modules.familias.models import Familia
+# --- Entrantes: a quien pertenece el numero y quien contesta lo deciden otros dominios --------
+# Casi todos los dominios encolan aqui, asi que comunicaciones no puede depender de ninguno.
+# Quien compone el proceso le conecta como identificar a la familia de un numero y la cadena
+# de respondedores (`conectar_entrantes`, en app/workers/tasks/comunicaciones.py): cada uno
+# recibe (sesion, telefono, texto, familia_id) y dice si atendio el mensaje.
+IdentificarFamilia = Callable[[Session, str], UUID | None]
+Respondedor = Callable[[Session, str, str, UUID | None], bool]
 
-    return db.scalar(select(Familia.id).where(Familia.telefono == telefono).limit(1))
+_identificar_familia: IdentificarFamilia | None = None
+_respondedores: tuple[Respondedor, ...] = ()
+
+
+def conectar_entrantes(identificar: IdentificarFamilia, *respondedores: Respondedor) -> None:
+    """Fija como se atienden los mensajes entrantes. Los respondedores se prueban en orden y
+    el primero que devuelve True se queda con el mensaje."""
+    global _identificar_familia, _respondedores
+    _identificar_familia, _respondedores = identificar, respondedores
+
+
+def _familia_por_telefono(db: Session, telefono: str) -> UUID | None:
+    if _identificar_familia is None:
+        # Sin conectar, los entrantes se guardarian sin familia y nadie los contestaria.
+        raise RuntimeError("comunicaciones sin conectar: falta conectar_entrantes()")
+    return _identificar_familia(db, telefono)
 
 
 def _aplicar_estado(db: Session, st: dict[str, Any]) -> None:
@@ -372,21 +393,13 @@ def _registrar_entrante(db: Session, msg: dict[str, Any]) -> None:
     if texto and texto.strip().upper() in PALABRAS_BAJA:
         registrar_baja(db, telefono, motivo="Solicitada por WhatsApp")
     elif texto:
-        # F3-ENC-02 Un "1" a "5" en respuesta a una encuesta reciente es su calificacion.
-        from app.modules.encuestas import service as encuestas
-
-        # Encuesta y conversacion van aisladas: si fallan, el mensaje entrante y los
-        # estados de entrega del mismo webhook se registran igual.
-        calificacion = None
+        # Cada respondedor va aislado: si falla, el mensaje entrante y los estados de entrega
+        # del mismo webhook se registran igual.
         try:
-            with db.begin_nested():
-                calificacion = encuestas.respuesta_whatsapp(db, telefono, texto)
-            if calificacion is None:
-                # F3-COM-02 Todo lo demas lo atiende la conversacion comercial (o el asesor).
-                from app.modules.comercial import conversacion as comercial
-
+            for responder in _respondedores:
                 with db.begin_nested():
-                    comercial.procesar_entrante(db, telefono, texto, familia_id)
+                    if responder(db, telefono, texto, familia_id):
+                        break
         except Exception:  # noqa: BLE001
             logger.exception("Respuesta automatica fallida para %s", telefono)
 

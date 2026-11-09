@@ -214,6 +214,11 @@ def familia_de_usuario(db: Session, usuario_id: UUID) -> Familia:
 # --- Mascotas (F1-FAM-02) ---------------------------------------------------------------------
 
 
+def familia_por_telefono(db: Session, telefono: str) -> UUID | None:
+    """Familia de un numero en E.164, para atribuirle lo que escribe por WhatsApp."""
+    return db.scalar(select(Familia.id).where(Familia.telefono == telefono).limit(1))
+
+
 def obtener_mascota(db: Session, mascota_id: UUID) -> Mascota:
     mascota = db.get(Mascota, mascota_id)
     if mascota is None:

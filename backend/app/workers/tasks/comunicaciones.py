@@ -1,5 +1,5 @@
 """6.18 / 6.19 Envio y procesamiento de mensajes. La logica vive en el servicio del modulo;
-aqui solo se ejecuta y se reprograma."""
+aqui se ejecuta, se reprograma y se le conecta a quien atiende los mensajes entrantes."""
 
 from datetime import timedelta
 from typing import Any
@@ -9,7 +9,10 @@ import structlog
 
 from app.core.database import sesion_worker
 from app.core.eventos import EventoDominio, al_ocurrir
+from app.modules.comercial import conversacion as comercial
 from app.modules.comunicaciones import service
+from app.modules.encuestas import service as encuestas
+from app.modules.familias import service as familias
 from app.workers.celery_app import celery_app
 
 logger = structlog.get_logger(__name__)
@@ -17,6 +20,22 @@ logger = structlog.get_logger(__name__)
 # Espera creciente entre intentos: 30 s, 2 min, 8 min, 32 min.
 _ESPERAS = (30, 120, 480, 1920)
 TAREA_WEBHOOK = "comunicaciones.procesar_evento_whatsapp"
+
+
+def _calificacion_de_encuesta(db: Any, telefono: str, texto: str, _: UUID | None) -> bool:
+    """F3-ENC-02 Un "1" a "5" en respuesta a una encuesta reciente es su calificacion."""
+    return encuestas.respuesta_whatsapp(db, telefono, texto) is not None
+
+
+def _conversacion_comercial(db: Any, telefono: str, texto: str, familia: UUID | None) -> bool:
+    """F3-COM-02 Todo lo demas lo atiende la conversacion comercial (o el asesor)."""
+    comercial.procesar_entrante(db, telefono, texto, familia)
+    return True
+
+
+service.conectar_entrantes(
+    familias.familia_por_telefono, _calificacion_de_encuesta, _conversacion_comercial
+)
 
 
 @al_ocurrir(service.EVENTO_ENCOLADO)

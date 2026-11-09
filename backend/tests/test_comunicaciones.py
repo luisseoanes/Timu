@@ -358,3 +358,21 @@ async def test_numero_extranjero_no_tumba_el_webhook(db):
     assert (await db.run_sync(service.procesar_evento_whatsapp, evento))["entrantes"] == 2
     destinos = set(await db.scalars(select(Mensaje.destino).where(Mensaje.direccion == "entrante")))
     assert destinos == {"+14155550100", "+573001112233"}
+
+
+def test_el_worker_conecta_encuesta_antes_que_la_conversacion_comercial():
+    from app.modules.familias import service as familias
+    from app.workers.tasks import comunicaciones as tareas
+
+    assert service._identificar_familia is familias.familia_por_telefono
+    assert service._respondedores == (
+        tareas._calificacion_de_encuesta,
+        tareas._conversacion_comercial,
+    )
+
+
+async def test_sin_conectar_un_entrante_falla_en_vez_de_quedar_sin_respuesta(db, monkeypatch):
+    monkeypatch.setattr(service, "_identificar_familia", None)
+    evento = _evento(messages=[{"from": "573001112233", "id": "wamid.x", "text": {"body": "hola"}}])
+    with pytest.raises(RuntimeError, match="sin conectar"):
+        await db.run_sync(service.procesar_evento_whatsapp, evento)

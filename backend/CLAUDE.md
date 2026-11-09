@@ -68,6 +68,10 @@ Reglas que atraviesan todo el backend:
   despacha después. Los manejadores se registran con `@al_ocurrir("nombre.evento")`
   en `app/workers/tasks/<dominio>.py`, junto a la tarea que encolan, y se limitan a
   `celery_app.send_task(...)`: el trabajo pesado va en la tarea, no en el drenado.
+- **`comunicaciones` no depende de ningún dominio**: casi todos encolan en él. Quién es la
+  familia de un número y quién contesta un mensaje entrante (encuesta, conversación
+  comercial) se lo conecta `app/workers/tasks/comunicaciones.py` con
+  `conectar_entrantes`; sin conectar, un entrante falla en lugar de quedar sin respuesta.
 - **Una tarea que llama a un tercero con efectos (cobrar, enviar) no lo hace dentro de
   la transacción del lote.** Se registra el intento y se confirma, se llama al tercero
   fuera de cualquier transacción y se anota el resultado en otra
