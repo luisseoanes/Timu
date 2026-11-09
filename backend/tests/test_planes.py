@@ -8,11 +8,12 @@ from httpx import AsyncClient
 from sqlalchemy import select, text
 
 from app.core.tiempo import hoy
+from app.modules.cartera import contratos
 from app.modules.cartera import service as cartera
+from app.modules.cartera.contratos import _ciclo_actual
 from app.modules.cartera.models import Cuota
 from app.modules.cartera.periodos import dias_del_periodo, dinero
 from app.modules.planes import service
-from app.modules.planes.service import _ciclo_actual
 from app.modules.reglas.models import Regla
 from tests import fabricas
 
@@ -114,7 +115,7 @@ async def test_subir_de_plan_cobra_prorrateo(db):
     superior = await db.run_sync(fabricas.plan, "superior", 75_000)
     _, contrato = await fabricas.afiliada(db, hoy() - timedelta(days=10), basico)
 
-    cambio = await db.run_sync(service.cambiar_plan, contrato, superior, None)
+    cambio = await db.run_sync(contratos.cambiar_plan, contrato, superior, None)
 
     inicio, fin = _ciclo_actual(contrato, hoy())
     esperado = dinero(Decimal(30_000) * (fin - hoy()).days / dias_del_periodo(inicio))
@@ -129,7 +130,7 @@ async def test_bajar_de_plan_deja_saldo_a_favor(db):
     superior = await db.run_sync(fabricas.plan, "superior", 75_000)
     basico = await db.run_sync(fabricas.plan, "basico", 45_000)
     _, contrato = await fabricas.afiliada(db, hoy() - timedelta(days=3), superior)
-    cambio = await db.run_sync(service.cambiar_plan, contrato, basico, None)
+    cambio = await db.run_sync(contratos.cambiar_plan, contrato, basico, None)
     assert cambio.ajuste < 0
     assert dinero(contrato.saldo_a_favor) == -dinero(cambio.ajuste)
 
@@ -145,7 +146,7 @@ async def test_no_cambia_de_plan_en_mora(db):
     from app.core.errores import ReglaNegocio
 
     with pytest.raises(ReglaNegocio, match="al dia"):
-        await db.run_sync(service.cambiar_plan, contrato, superior, None)
+        await db.run_sync(contratos.cambiar_plan, contrato, superior, None)
 
 
 async def test_cambio_al_proximo_ciclo_por_regla(db):
@@ -156,7 +157,7 @@ async def test_cambio_al_proximo_ciclo_por_regla(db):
     superior = await db.run_sync(fabricas.plan, "superior", 75_000)
     _, contrato = await fabricas.afiliada(db, hoy() - timedelta(days=10), basico)
 
-    cambio = await db.run_sync(service.cambiar_plan, contrato, superior, None)
+    cambio = await db.run_sync(contratos.cambiar_plan, contrato, superior, None)
     assert cambio.aplicado is False
     assert contrato.plan_id == basico.id
 

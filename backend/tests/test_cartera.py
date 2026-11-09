@@ -540,14 +540,14 @@ async def test_baja_de_familia_cancela_contrato_y_tarjeta(db):
 async def test_un_contrato_con_error_no_frena_la_generacion(db, monkeypatch):
     _, roto = await fabricas.afiliada(db, date(2026, 1, 10))
     _, sano = await fabricas.afiliada(db, date(2026, 1, 10), telefono="+573002223344")
-    real = service.planes.aplicar_cambios_programados
+    real = service.contratos.aplicar_cambios_programados
 
     def falla_para_uno(sesion, contrato, hasta):
         if contrato.id == roto.id:
             raise RuntimeError("dato corrupto")
         return real(sesion, contrato, hasta)
 
-    monkeypatch.setattr(service.planes, "aplicar_cambios_programados", falla_para_uno)
+    monkeypatch.setattr(service.contratos, "aplicar_cambios_programados", falla_para_uno)
     assert await db.run_sync(service.generar_cuotas, date(2026, 2, 8)) == 1
     assert len(await _cuotas(db, sano)) == 2
 

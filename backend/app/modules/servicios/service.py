@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.enums import EstadoAfiliacion, EstadoServicio
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ZONA_NEGOCIO, ahora, con_zona, hoy
+from app.modules.cartera import contratos
 from app.modules.catalogos.models import TipoServicioCatalogo
 from app.modules.familias.models import Familia, Mascota
 from app.modules.planes import service as planes
@@ -74,7 +75,7 @@ def elegibilidad(
     motivos: list[str] = []
     if familia.dada_de_baja_en is not None:
         return Elegibilidad(False, ["La familia esta dada de baja"])
-    contrato = planes.contrato_vigente(db, familia.id)
+    contrato = contratos.contrato_vigente(db, familia.id)
     if contrato is None:
         return Elegibilidad(False, ["La familia no tiene un plan vigente"])
     if contrato.fecha_renovacion < hoy():

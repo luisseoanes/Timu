@@ -245,9 +245,9 @@ def cancelar(db: Session, evento: EventoPreventivo, motivo: str) -> EventoPreven
 
 
 def _vigente(db: Session, familia_id: UUID) -> bool:
-    from app.modules.planes import service as planes
+    from app.modules.cartera import contratos
 
-    return planes.contrato_vigente(db, familia_id) is not None
+    return contratos.contrato_vigente(db, familia_id) is not None
 
 
 def agenda_diaria(db: Session, dia: date | None = None) -> dict[str, int]:

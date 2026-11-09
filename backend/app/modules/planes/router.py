@@ -1,7 +1,8 @@
-"""6.3 Planes grupales: administracion, cambios de plan y recomendacion."""
+"""6.3 Planes grupales: administracion y recomendacion. El cambio de plan de un contrato
+esta en cartera/router.py (vive en el contrato), con la misma ruta bajo /planes."""
 
 from decimal import Decimal
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -68,27 +69,6 @@ class PlanRead(BaseModel):
     especies: list[str]
     activo: bool
     beneficios: list[BeneficioRead]
-
-
-class CambioPlanIn(BaseModel):
-    plan_id: UUID
-
-
-class CambioPlanRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
-    contrato_id: UUID
-    tipo: str
-    plan_anterior_id: UUID | None
-    plan_nuevo_id: UUID | None
-    valor_anterior: Decimal
-    valor_nuevo: Decimal
-    ajuste: Decimal
-    modo: str | None
-    regla_codigo: str | None
-    fecha_efectiva: Any
-    aplicado: bool
 
 
 class Recomendacion(BaseModel):
@@ -164,15 +144,3 @@ async def reemplazar_beneficios(
     return await db.run_sync(
         service.reemplazar_beneficios, plan, [b.model_dump() for b in beneficios]
     )
-
-
-@router.post("/contratos/{contrato_id}/cambio", response_model=CambioPlanRead)
-async def cambiar_plan(
-    db: DbSession, usuario: Gestion, contrato_id: UUID, data: CambioPlanIn
-) -> Any:
-    """F1-PLA-02 Cambio de plan con el cobro que defina la regla `plan.cambio`."""
-    from app.modules.cartera import service as cartera
-
-    contrato = await db.run_sync(cartera.obtener_contrato, contrato_id)
-    plan = await db.run_sync(service.obtener, data.plan_id)
-    return await db.run_sync(service.cambiar_plan, contrato, plan, usuario.id)

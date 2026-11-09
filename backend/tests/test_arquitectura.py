@@ -35,15 +35,14 @@ PERMITIDAS: dict[str, set[str]] = {
 # El adaptador HTTP de cada dominio necesita la sesion y los guards de la capa de entrada.
 DEPS_HTTP = ("app", "api", "deps")
 
-# Dependencias entre dominios que hoy forman ciclos. Es deuda congelada: ninguna arista
-# nueva puede cerrar un ciclo, y la que deje de existir se borra de aqui (la prueba falla
-# hasta que se borre, para que la lista solo encoja). Para romper una: un efecto sobre
-# otro dominio va por evento del outbox; algo que el dominio de abajo necesita del de
-# arriba se le inyecta, como los respondedores de `comunicaciones`.
-CICLOS_CONOCIDOS: dict[tuple[str, str], str] = {
-    ("cartera", "planes"): "lee el Plan del contrato y su valor",
-    ("planes", "cartera"): "prorrateo y cuotas al cambiar de plan",
-}
+# Dependencias entre dominios que forman ciclos y se aceptan como deuda. Vacia desde el
+# 2026-11-10 (docs/deuda-ciclos-dominios.md): ninguna arista nueva puede cerrar un ciclo. Si
+# alguna vez hiciera falta congelar una, va aqui con su motivo, y la prueba de abajo obliga a
+# borrarla cuando deje de existir. Para romper un ciclo: un efecto sobre otro dominio va por
+# evento del outbox; lo que un dominio de abajo necesita del de arriba se le inyecta (como
+# los respondedores de `comunicaciones`), y un caso de uso que cruza dominios lo orquesta el
+# de arriba (como `afiliaciones.ciclo`).
+CICLOS_CONOCIDOS: dict[tuple[str, str], str] = {}
 
 
 def _capa(partes: tuple[str, ...]) -> tuple[str, str | None]:

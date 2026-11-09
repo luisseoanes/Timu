@@ -327,9 +327,9 @@ def solicitar_virtual(
     mascota = _mascota(db, mascota_id)
     if not mascota.activa:
         raise ReglaNegocio("La mascota esta dada de baja")
-    from app.modules.planes import service as planes
+    from app.modules.cartera import contratos
 
-    if planes.contrato_vigente(db, mascota.familia_id) is None:
+    if contratos.contrato_vigente(db, mascota.familia_id) is None:
         raise ReglaNegocio("La orientacion virtual requiere un plan vigente")
     solicitud = SolicitudVirtual(
         familia_id=mascota.familia_id,

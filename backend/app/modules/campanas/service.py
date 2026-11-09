@@ -92,7 +92,7 @@ def guardar(
 
 
 def _variables(db: Session, campana: Campana, familia: Familia) -> list[str]:
-    from app.modules.planes import service as planes
+    from app.modules.cartera import contratos
     from app.modules.planes.models import Plan
 
     valores = []
@@ -107,7 +107,7 @@ def _variables(db: Session, campana: Campana, familia: Familia) -> list[str]:
             mascota = next((m for m in familia.mascotas if m.activa), None)
             valores.append(mascota.nombre if mascota else "tu mascota")
         elif fuente == "plan":
-            contrato = planes.contrato_vigente(db, familia.id)
+            contrato = contratos.contrato_vigente(db, familia.id)
             plan = db.get(Plan, contrato.plan_id) if contrato else None
             valores.append(plan.nombre if plan else "TIMU")
     return valores

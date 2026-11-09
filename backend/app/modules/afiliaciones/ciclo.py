@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errores import Conflicto, ReglaNegocio
 from app.core.tiempo import hoy
+from app.modules.cartera import contratos
 from app.modules.cartera import service as cartera
 from app.modules.comercial import service as comercial
 from app.modules.familias import service as familias
@@ -25,7 +26,7 @@ def dar_de_baja(db: Session, familia: Familia, motivo: str) -> Familia:
     vigente: cuotas, avisos de mora y cobro a la tarjeta de una familia que ya se fue."""
     if familia.dada_de_baja_en is not None:
         raise ReglaNegocio("La familia ya esta dada de baja")
-    contrato = planes.contrato_vigente(db, familia.id)
+    contrato = contratos.contrato_vigente(db, familia.id)
     if contrato is not None:
         cartera.cancelar(db, contrato, f"Baja de la familia: {motivo}")
     return familias.dar_de_baja(db, familia, motivo)
@@ -44,20 +45,20 @@ def agregar_mascota(db: Session, familia: Familia, data: MascotaCreate) -> Masco
 
 
 def _validar_contra_plan(db: Session, familia: Familia, mascota: Mascota) -> bool:
-    contrato = planes.contrato_vigente(db, familia.id)
+    contrato = contratos.contrato_vigente(db, familia.id)
     if contrato is None:
         return False
     plan = planes.obtener(db, contrato.plan_id)
     if plan.especies and mascota.especie not in plan.especies:
         raise ReglaNegocio(f"El plan {plan.nombre} no cubre la especie {mascota.especie}")
-    planes.ajustar_por_mascotas(db, familia, "mascota_alta")
+    contratos.ajustar_por_mascotas(db, familia, "mascota_alta")
     return True
 
 
 def dar_de_baja_mascota(db: Session, mascota: Mascota, motivo: str) -> Mascota:
     """Baja de mascota: el contrato vigente se recalcula sin ella desde la siguiente cuota."""
     familias.dar_de_baja_mascota(db, mascota, motivo)
-    planes.ajustar_por_mascotas(db, familias.obtener(db, mascota.familia_id), "mascota_baja")
+    contratos.ajustar_por_mascotas(db, familias.obtener(db, mascota.familia_id), "mascota_baja")
     return mascota
 
 
@@ -66,7 +67,7 @@ def anonimizar(db: Session, familia: Familia) -> Familia:
     mismo error que para una familia ya anonimizada: aqui se distinguen para el mensaje."""
     if familia.anonimizada_en is not None:
         raise Conflicto("La familia ya esta anonimizada")
-    if planes.contrato_vigente(db, familia.id) is not None:
+    if contratos.contrato_vigente(db, familia.id) is not None:
         raise ReglaNegocio("Cancele el contrato vigente antes de anonimizar la familia")
     return familias.anonimizar(db, familia)
 

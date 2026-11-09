@@ -104,9 +104,9 @@ async def plan(db: DbSession, familia: FamiliaActual) -> dict[str, Any]:
 @router.get("/contrato")
 async def contrato(db: DbSession, familia: FamiliaActual) -> dict[str, str]:
     """F1-AFI-02 PDF del contrato vigente de la familia."""
-    from app.modules.planes import service as planes
+    from app.modules.cartera import contratos
 
-    vigente = await db.run_sync(planes.contrato_vigente, familia.id)
+    vigente = await db.run_sync(contratos.contrato_vigente, familia.id)
     if vigente is None:
         from app.core.errores import NoEncontrado
 

@@ -1,16 +1,18 @@
 """6.2 / 6.4 Cartera: contratos, cuotas, pagos, cobro recurrente y eventos de la pasarela."""
 
+from decimal import Decimal
 from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 
 from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import Rol
 from app.core.errores import NoEncontrado
 from app.modules.auth.models import Usuario
-from app.modules.cartera import pasarela, service
+from app.modules.cartera import contratos, pasarela, service
 from app.modules.cartera.models import EventoPasarela, MedioPagoRecurrente
 from app.modules.cartera.schemas import (
     Cancelacion,
@@ -29,6 +31,9 @@ from app.modules.planes import service as planes
 from app.schemas.common import Page, ParamsListado, paginar
 
 router = APIRouter(prefix="/cartera", tags=["cartera"])
+# El cambio de plan opera sobre el contrato (contratos.py); conserva su ruta y su etiqueta
+# bajo /planes, donde lo busca el panel.
+planes_router = APIRouter(prefix="/planes", tags=["planes"])
 
 EQUIPO = Depends(requiere(*INTERNOS))
 CARTERA = Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))
@@ -205,3 +210,37 @@ async def reprocesar(db: DbSession, evento_id: UUID) -> Any:
 async def recuperar(db: DbSession, transaccion_id: str) -> Any:
     """F1-CAR-09 Evento perdido: consulta la transaccion en la pasarela y la concilia."""
     return await db.run_sync(pasarela.recuperar_transaccion, transaccion_id)
+
+
+# --- F1-PLA-02 Cambio de plan (contratos.py) --------------------------------------------------
+
+
+class CambioPlanIn(BaseModel):
+    plan_id: UUID
+
+
+class CambioPlanRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    contrato_id: UUID
+    tipo: str
+    plan_anterior_id: UUID | None
+    plan_nuevo_id: UUID | None
+    valor_anterior: Decimal
+    valor_nuevo: Decimal
+    ajuste: Decimal
+    modo: str | None
+    regla_codigo: str | None
+    fecha_efectiva: Any
+    aplicado: bool
+
+
+@planes_router.post("/contratos/{contrato_id}/cambio", response_model=CambioPlanRead)
+async def cambiar_plan(
+    db: DbSession, usuario: Cartera, contrato_id: UUID, data: CambioPlanIn
+) -> Any:
+    """F1-PLA-02 Cambio de plan con el cobro que defina la regla `plan.cambio`."""
+    contrato = await db.run_sync(service.obtener_contrato, contrato_id)
+    plan = await db.run_sync(planes.obtener, data.plan_id)
+    return await db.run_sync(contratos.cambiar_plan, contrato, plan, usuario.id)

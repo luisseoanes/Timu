@@ -24,7 +24,7 @@ from app.integrations.payments import construir_link_pago
 from app.modules.afiliaciones import documento
 from app.modules.afiliaciones.models import EstadoSolicitud, SolicitudAfiliacion
 from app.modules.archivos import service as archivos
-from app.modules.cartera import pasarela
+from app.modules.cartera import contratos, pasarela
 from app.modules.cartera import service as cartera
 from app.modules.cartera.models import Contrato, Pago
 from app.modules.cartera.periodos import centavos, dinero
@@ -43,7 +43,7 @@ def _valor_inicial(db: Session, familia: Familia, plan: Plan) -> Decimal:
     if not activas:
         raise ReglaNegocio("Debe registrar al menos una mascota para afiliarse")
     planes.validar_para_familia(plan, familia.ciudad, [m.especie for m in activas])
-    adicionales, valor_adicional, _ = planes.calcular_cupo(db, familia, plan, len(activas))
+    adicionales, valor_adicional, _ = contratos.calcular_cupo(db, familia, plan, len(activas))
     return dinero(plan.valor_mensual) + adicionales * valor_adicional
 
 
@@ -56,7 +56,7 @@ def iniciar(
     aceptacion: dict[str, Any],
 ) -> tuple[SolicitudAfiliacion, str]:
     """Crea la solicitud con su pago pendiente y devuelve el enlace de pago."""
-    if planes.contrato_vigente(db, familia.id):
+    if contratos.contrato_vigente(db, familia.id):
         raise ReglaNegocio(
             "No es posible completar la afiliacion en linea; un asesor te contactara"
         )

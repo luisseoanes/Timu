@@ -81,7 +81,7 @@ def emitir(
     """Valida plan vigente, cartera al dia y beneficio disponible (las mismas reglas de
     elegibilidad que el agendamiento) y que la aliada tenga convenio vigente para el plan.
     La remision consume el cupo del beneficio como cualquier servicio."""
-    from app.modules.planes import service as planes
+    from app.modules.cartera import contratos
     from app.modules.servicios import service as servicios
 
     clinica = obtener_clinica(db, clinica_id)
@@ -96,7 +96,7 @@ def emitir(
     elegibilidad = servicios.elegibilidad(db, familia, mascota, tipo)
     if not elegibilidad.elegible:
         raise ReglaNegocio("No se puede remitir: " + "; ".join(elegibilidad.motivos))
-    contrato = planes.contrato_vigente(db, familia.id)
+    contrato = contratos.contrato_vigente(db, familia.id)
     assert contrato is not None  # la elegibilidad ya lo exige
 
     vigentes = convenios_vigentes(db, clinica.id, contrato.plan_id, hoy())

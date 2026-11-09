@@ -43,11 +43,11 @@ def _servicio_propio(db: Session, familia: Familia, servicio_id: UUID) -> Servic
 
 
 def plan(db: Session, familia: Familia) -> dict[str, Any]:
-    from app.modules.planes import service as planes
+    from app.modules.cartera import contratos
     from app.modules.planes.models import Plan
     from app.modules.servicios import service as servicios
 
-    contrato = planes.contrato_vigente(db, familia.id)
+    contrato = contratos.contrato_vigente(db, familia.id)
     if contrato is None:
         raise NoEncontrado("La familia no tiene un plan vigente")
     p = db.get(Plan, contrato.plan_id)
@@ -207,10 +207,10 @@ def iniciar_pago(db: Session, familia: Familia, cuota_id: UUID | None) -> tuple[
     """Pago de una cuota o de todo lo pendiente. Lo confirma el webhook de la pasarela,
     que aplica el pago y actualiza el estado de la familia al instante."""
     from app.integrations.payments import construir_link_pago
+    from app.modules.cartera import contratos
     from app.modules.cartera import service as cartera
-    from app.modules.planes import service as planes
 
-    contrato = planes.contrato_vigente(db, familia.id)
+    contrato = contratos.contrato_vigente(db, familia.id)
     if contrato is None:
         raise ReglaNegocio("La familia no tiene un contrato vigente")
     abiertas = cartera.cuotas_abiertas(db, contrato.id)

@@ -71,6 +71,15 @@ Reglas que atraviesan todo el backend:
   nombre se declara en el dominio que lo publica (`EVENTO_X = declarar_evento("x.ocurrido")`)
   y se usa la constante; `EventoDominio` y `al_ocurrir` rechazan uno sin declarar. Un evento
   que agota `MAX_INTENTOS` se registra como `outbox.abandonado` (error, llega a Sentry).
+- **Ningún dominio orquesta lo que no es suyo.** `familias` es la ficha (titular, mascotas,
+  ubicación) y no importa ningún dominio de negocio. La baja de la familia, el alta y la baja
+  de mascotas, la anonimización y el formulario público cruzan la ficha con el contrato: los
+  orquesta `afiliaciones/ciclo.py`, síncronos y en la misma transacción, y sus rutas viven en
+  `afiliaciones/router.py` con la misma URL bajo `/familias`, `/mascotas` y `/formularios`.
+  La vida del contrato (vigente, cupo de mascotas, valor, cambio de plan) es de
+  `cartera/contratos.py`; `planes` es solo el catálogo. Un caso de uso nuevo que cruce
+  dominios se orquesta en el de arriba; si el router del de abajo lo llamara, la guarda de
+  ciclos fallaría.
 - **`comunicaciones` no depende de ningún dominio**: casi todos encolan en él. Quién es la
   familia de un número y quién contesta un mensaje entrante (encuesta, conversación
   comercial) se lo conecta `app/workers/tasks/comunicaciones.py` con

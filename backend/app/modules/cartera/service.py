@@ -17,6 +17,7 @@ from app.core.database import nuevo_id
 from app.core.enums import EstadoAfiliacion
 from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
+from app.modules.cartera import contratos
 from app.modules.cartera.models import (
     AplicacionPago,
     AvisoCartera,
@@ -68,7 +69,7 @@ def crear_contrato(
     El dia de corte es el dia de inicio (hasta el 28, para que exista en todo mes) y la
     renovacion es un ano despues del inicio.
     """
-    if planes.contrato_vigente(db, familia.id):
+    if contratos.contrato_vigente(db, familia.id):
         raise Conflicto("La familia ya tiene un contrato vigente")
     if familia.dada_de_baja_en is not None:
         raise ReglaNegocio("La familia esta dada de baja")
@@ -81,7 +82,7 @@ def crear_contrato(
     if not activas:
         raise ReglaNegocio("La familia necesita al menos una mascota activa para afiliarse")
     planes.validar_para_familia(plan, familia.ciudad, [m.especie for m in activas])
-    adicionales, valor_adicional, _ = planes.calcular_cupo(db, familia, plan, len(activas))
+    adicionales, valor_adicional, _ = contratos.calcular_cupo(db, familia, plan, len(activas))
 
     contrato = Contrato(
         id=nuevo_id(),
@@ -97,7 +98,7 @@ def crear_contrato(
         estado=EstadoAfiliacion.ACTIVA,
         saldo_a_favor=dinero(0),
     )
-    contrato.valor_mensual = planes.valor_mensual(contrato)
+    contrato.valor_mensual = contratos.valor_mensual(contrato)
     db.add(contrato)
     db.flush()
     cuota = _emitir(db, contrato, periodo(inicio)) if primera_cuota else None
@@ -153,8 +154,8 @@ def generar_cuotas(db: Session, dia: date | None = None) -> int:
     dia = dia or hoy()
     limite = dia + timedelta(days=settings.CUOTA_EMISION_DIAS_ANTES)
     emitidas = 0
-    contratos = db.scalars(select(Contrato).where(Contrato.estado.in_(GENERAN_CUOTAS)))
-    for contrato in list(contratos):
+    por_emitir = db.scalars(select(Contrato).where(Contrato.estado.in_(GENERAN_CUOTAS)))
+    for contrato in list(por_emitir):
         emitidas += _aislado(db, contrato, partial(_emitir_pendientes, db, contrato, limite)) or 0
     db.flush()
     return emitidas
@@ -169,7 +170,7 @@ def _emitir_pendientes(db: Session, contrato: Contrato, limite: date) -> int:
     per = siguiente_periodo(ultimo) if ultimo else periodo(contrato.fecha_inicio)
     emitidas = 0
     while vencimiento(per, contrato.dia_corte) <= limite:
-        planes.aplicar_cambios_programados(db, contrato, vencimiento(per, contrato.dia_corte))
+        contratos.aplicar_cambios_programados(db, contrato, vencimiento(per, contrato.dia_corte))
         if _emitir(db, contrato, per):
             emitidas += 1
         per = siguiente_periodo(per)
@@ -339,8 +340,8 @@ def revisar_cartera(db: Session, dia: date | None = None) -> ResumenRevision:
     """Proceso diario: estados (F1-CAR-03 / 05) y avisos (F1-CAR-04)."""
     dia = dia or hoy()
     resumen = ResumenRevision()
-    contratos = db.scalars(select(Contrato).where(Contrato.estado != EstadoAfiliacion.CANCELADA))
-    for contrato in list(contratos):
+    revisables = db.scalars(select(Contrato).where(Contrato.estado != EstadoAfiliacion.CANCELADA))
+    for contrato in list(revisables):
         resumen.revisados += 1
         resultado = _aislado(db, contrato, partial(_revisar_contrato, db, contrato, dia))
         if resultado is None:
@@ -369,7 +370,7 @@ def aplicar_pago(db: Session, pago: Pago) -> list[AplicacionPago]:
         return []
     contrato = db.get(Contrato, pago.contrato_id) if pago.contrato_id else None
     if contrato is None:
-        contrato = planes.contrato_vigente(db, pago.familia_id)
+        contrato = contratos.contrato_vigente(db, pago.familia_id)
     if contrato is None:
         raise ReglaNegocio("La familia no tiene un contrato vigente al cual aplicar el pago")
     pago.contrato_id = contrato.id
@@ -442,13 +443,13 @@ VENTANA_RENOVACION_DIAS = 90
 def detectar_renovaciones(db: Session, dia: date | None = None) -> int:
     dia = dia or hoy()
     creadas = 0
-    contratos = db.scalars(
+    por_renovar = db.scalars(
         select(Contrato).where(
-            Contrato.estado.in_(planes.VIGENTES),
+            Contrato.estado.in_(contratos.VIGENTES),
             Contrato.fecha_renovacion <= dia + timedelta(days=VENTANA_RENOVACION_DIAS),
         )
     )
-    for contrato in list(contratos):
+    for contrato in list(por_renovar):
         creadas += _aislado(db, contrato, partial(_tareas_renovacion, db, contrato, dia)) or 0
     return creadas
 
@@ -608,7 +609,7 @@ def obtener_contrato(db: Session, contrato_id: UUID) -> Contrato:
 
 
 def estado_cuenta(db: Session, familia_id: UUID, max_cuotas: int = 24) -> dict[str, Any]:
-    contrato = planes.contrato_vigente(db, familia_id)
+    contrato = contratos.contrato_vigente(db, familia_id)
     if contrato is None:
         contrato = db.scalar(
             select(Contrato)
