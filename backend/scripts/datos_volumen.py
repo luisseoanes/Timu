@@ -194,7 +194,8 @@ def main() -> None:
     parametros = {"n": n, "usuarios": USUARIOS_CARGA, "clave": hash_password(CLAVE_CARGA)}
     motor = create_engine(settings.DATABASE_URL_PROPIETARIO.replace("+asyncpg", "+psycopg"))
     with motor.begin() as conexion:
-        if conexion.scalar(text(f"SELECT count(*) FROM familias WHERE documento LIKE '{_MARCA}%'")):
+        existe = text("SELECT count(*) FROM familias WHERE documento LIKE :marca")
+        if conexion.scalar(existe, {"marca": f"{_MARCA}%"}):
             print("El volumen ya existe; no se genera de nuevo")
             return
         conexion.execute(text("SELECT setseed(0.42)"))

@@ -3,7 +3,24 @@ line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "C4"]
+# S: reglas de seguridad de bandit (subprocess, eval, pickle, peticiones sin timeout, SQL
+# armado con cadenas, secretos en el codigo). Un hallazgo se corrige; si es un falso
+# positivo, `# noqa: S<n>` en la linea con el motivo.
+select = ["E", "F", "I", "UP", "B", "C4", "S"]
+ignore = [
+    # `assert` solo estrecha tipos de lo que la base ya garantiza (una fila apuntada por una
+    # llave foranea). Lo que valida una entrada lanza un ErrorDominio: un assert desaparece
+    # con `python -O`.
+    "S101",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Las pruebas usan claves de mentira, levantan procesos y arman SQL sobre el propio esquema.
+"tests/**" = ["S105", "S106", "S603", "S608"]
+# DDL armado con los nombres de tablas y columnas del propio fichero, nunca con datos.
+"alembic/versions/**" = ["S608"]
+# Politicas de RLS generadas de la matriz de este modulo: sin entrada externa.
+"app/core/permisos_db.py" = ["S608"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

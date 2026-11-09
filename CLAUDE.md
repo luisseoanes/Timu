@@ -180,9 +180,10 @@ escrita en el cuerpo del commit. La cobertura del backend se mide con
 `concurrency = greenlet` porque los servicios corren dentro de `db.run_sync`. Sin eso,
 coverage deja de contar las líneas posteriores a la primera consulta y el informe miente.
 
-`.github/workflows/ci.yml` ejecuta formato, análisis estático, tipos, todas las pruebas, la
-auditoría de vulnerabilidades y el job del stack; el release depende de todos ellos, así
-que no sale una versión sin la batería completa.
+`.github/workflows/ci.yml` ejecuta formato, análisis estático (con las reglas de seguridad
+`S` de Ruff), tipos, todas las pruebas, la auditoría de vulnerabilidades y el job del
+stack; el release depende de todos ellos, así que no sale una versión sin la batería
+completa.
 
 ## Commits y publicación de versiones
 

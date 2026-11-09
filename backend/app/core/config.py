@@ -12,12 +12,12 @@ ROL_APLICACION = "timu_app"
 
 # Valores de desarrollo que nunca pueden llegar a un ambiente desplegado. La clave de
 # desarrollo tiene 32 caracteres o mas: PyJWT avisa con una HMAC mas corta.
-_SECRET_KEY_LOCAL = "cambiar-en-produccion-solo-para-desarrollo-local"
-_POSTGRES_PASSWORD_LOCAL = "timu"
-_APP_DB_PASSWORD_LOCAL = "timu_app"
+_SECRET_KEY_LOCAL = "cambiar-en-produccion-solo-para-desarrollo-local"  # noqa: S105
+_POSTGRES_PASSWORD_LOCAL = "timu"  # noqa: S105
+_APP_DB_PASSWORD_LOCAL = "timu_app"  # noqa: S105
 _STORAGE_ACCESS_KEY_LOCAL = "timu-local"
-_STORAGE_SECRET_KEY_LOCAL = "timu-local-secreto"
-_WHATSAPP_VERIFY_TOKEN_LOCAL = "timu-verify"
+_STORAGE_SECRET_KEY_LOCAL = "timu-local-secreto"  # noqa: S105
+_WHATSAPP_VERIFY_TOKEN_LOCAL = "timu-verify"  # noqa: S105
 
 # F0-05 Variables sin las que el servicio no arranca, por ambiente desplegado.
 OBLIGATORIAS: dict[str, tuple[str, ...]] = {
