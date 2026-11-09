@@ -10,6 +10,14 @@ Un directorio por dominio en `app/modules/<dominio>/`, con hasta cuatro piezas:
 `models.py` (SQLAlchemy) · `schemas.py` (Pydantic) · `service.py` (lógica y consultas) ·
 `router.py` (HTTP). `app/modules/familias/` es la referencia completa del patrón.
 
+Las capas y la regla de no cerrar ciclos entre dominios están en
+[`docs/estandares-calidad.md`](../docs/estandares-calidad.md) y las vigila
+`tests/test_arquitectura.py`, que también exige los imports de `app` en la cabecera del
+fichero: ninguno dentro de una función (los de terceros opcionales o pesados, como `ortools`,
+sí). Lo que es HTTP y conoce dominios vive en `app/api/` (`deps.py`,
+`salud.py`), no en `app/core/`; los registros que agregan dominios (`app/models.py`,
+`app/transiciones.py`), en `app/`.
+
 Reglas que atraviesan todo el backend:
 
 - **`app/models.py` es el registro único de modelos.** `autogenerate` sólo ve lo

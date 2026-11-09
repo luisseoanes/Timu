@@ -124,6 +124,24 @@ cargan al trabajar allí:
 
 Un cambio que cruza los dos lados (un schema nuevo, una regla de sesión) lee los dos.
 
+## Estándares de calidad (Secciones 3 y 4)
+
+El documento de requerimientos exige una solución modular que crezca sin reemplazar su
+base, y escalabilidad, seguridad, integridad, trazabilidad, interoperabilidad, capacidad de
+integración y sostenibilidad. [`docs/estandares-calidad.md`](docs/estandares-calidad.md)
+traduce cada uno a reglas, dice qué guarda las hace cumplir y lista la deuda que queda.
+**Un cambio que toque una de sus tablas cumple la regla o cierra la deuda; no relaja la
+guarda.** Las tres que más se tropiezan:
+
+- **Capas**: `core` y `schemas` no importan ningún dominio, `integrations` solo la base, y
+  un dominio no importa `api` ni `workers` (salvo su `router.py`, que usa `app.api.deps`).
+  Ninguna dependencia nueva entre dominios puede cerrar un ciclo: se invierte con un evento
+  del outbox o inyectando la función, como `comunicaciones.conectar_entrantes`.
+- **Eventos**: todo nombre que se publica o se escucha se declara con `declarar_evento` en el
+  dominio que lo emite.
+- **Dependencias**: ninguna vulnerabilidad publicada en lo que se despliega; si no hay versión
+  corregida, `--ignore-vuln` en el job con motivo y fecha.
+
 ## Invariante: el CI ejecuta todas las pruebas, y todas pasan
 
 Ninguna prueba existe sin que el CI la ejecute en cada empuje a `main`, y ningún cambio
