@@ -17,6 +17,8 @@ from app.core.database import nuevo_id
 from app.core.enums import EstadoAfiliacion
 from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
+from app.modules.archivos import service as archivos
+from app.modules.archivos.models import Archivo
 from app.modules.cartera import contratos
 from app.modules.cartera.models import (
     AplicacionPago,
@@ -35,10 +37,13 @@ from app.modules.cartera.periodos import (
     sumar_meses,
     vencimiento,
 )
+from app.modules.comunicaciones import service as comunicaciones
+from app.modules.familias import service as familias
 from app.modules.familias.models import Familia, Mascota
 from app.modules.planes import service as planes
 from app.modules.planes.models import Plan
 from app.modules.reglas import service as reglas
+from app.modules.tareas import service as tareas
 
 logger = structlog.get_logger(__name__)
 
@@ -209,7 +214,6 @@ def _dias_mora(cuotas: list[Cuota], dia: date) -> int:
 
 def _sincronizar_familia(db: Session, contrato: Contrato) -> None:
     """6.23 El estado de la familia refleja el de su contrato vigente."""
-    from app.modules.familias import service as familias
 
     familia = db.get(Familia, contrato.familia_id)
     assert familia is not None
@@ -264,8 +268,6 @@ def _notificar_transicion(db: Session, contrato: Contrato, transicion: str) -> N
 
 
 def _notificar(db: Session, contrato: Contrato, plantilla: str, extra: list[str]) -> UUID | None:
-    from app.modules.comunicaciones import service as comunicaciones
-
     familia = db.get(Familia, contrato.familia_id)
     assert familia is not None
     try:
@@ -455,8 +457,6 @@ def detectar_renovaciones(db: Session, dia: date | None = None) -> int:
 
 
 def _tareas_renovacion(db: Session, contrato: Contrato, dia: date) -> int:
-    from app.modules.tareas import service as tareas
-
     contexto = {
         "dias_para_renovacion": (contrato.fecha_renovacion - dia).days,
         "estado": contrato.estado,
@@ -502,7 +502,6 @@ def cancelar(db: Session, contrato: Contrato, motivo: str) -> Contrato:
     ):
         medio.activo = False
     db.flush()
-    from app.modules.familias import service as familias
 
     familia = db.get(Familia, contrato.familia_id)
     assert familia is not None
@@ -511,9 +510,6 @@ def cancelar(db: Session, contrato: Contrato, motivo: str) -> Contrato:
 
 
 def url_documento(db: Session, contrato: Contrato) -> dict[str, str]:
-    from app.modules.archivos import service as archivos
-    from app.modules.archivos.models import Archivo
-
     archivo = (
         db.get(Archivo, contrato.documento_archivo_id) if contrato.documento_archivo_id else None
     )

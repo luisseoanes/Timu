@@ -15,6 +15,7 @@ from app.core.tiempo import ahora
 from app.integrations import geocodificacion
 from app.modules.archivos import service as archivos
 from app.modules.archivos.models import Archivo
+from app.modules.auth.service import crear_usuario_portal
 from app.modules.catalogos import service as catalogos
 from app.modules.catalogos.models import Ciudad
 from app.modules.familias.models import Familia, Mascota
@@ -183,7 +184,6 @@ def historial(db: Session, familia_id: UUID, solo_estado: bool) -> list[Registro
 
 def habilitar_portal(db: Session, familia: Familia) -> Familia:
     """F1-AUT-04 Acceso propio de la familia al portal; recibe el enlace de activacion."""
-    from app.modules.auth.service import crear_usuario_portal
 
     if familia.usuario_portal_id is None:
         usuario = crear_usuario_portal(

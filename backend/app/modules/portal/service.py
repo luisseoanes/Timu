@@ -15,9 +15,19 @@ from app.core.database import nuevo_id
 from app.core.enums import EstadoServicio, TipoServicio
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, con_zona
-from app.modules.cartera.models import Cuota, Pago
+from app.integrations.payments import construir_link_pago
+from app.modules.cartera import contratos
+from app.modules.cartera import service as cartera
+from app.modules.cartera.models import AplicacionPago, Cuota, Pago
 from app.modules.cartera.periodos import centavos, dinero
+from app.modules.clinica import service as clinica
+from app.modules.clinica.models import AdjuntoClinico, HistoriaClinica
+from app.modules.familias import service as familias
 from app.modules.familias.models import Familia, Mascota
+from app.modules.familias.schemas import FamiliaUpdate
+from app.modules.planes.models import Plan
+from app.modules.portal import documento
+from app.modules.servicios import service as servicios
 from app.modules.servicios.models import Servicio
 
 PREFIJO_PAGO = "POR-"
@@ -43,10 +53,6 @@ def _servicio_propio(db: Session, familia: Familia, servicio_id: UUID) -> Servic
 
 
 def plan(db: Session, familia: Familia) -> dict[str, Any]:
-    from app.modules.cartera import contratos
-    from app.modules.planes.models import Plan
-    from app.modules.servicios import service as servicios
-
     contrato = contratos.contrato_vigente(db, familia.id)
     if contrato is None:
         raise NoEncontrado("La familia no tiene un plan vigente")
@@ -80,7 +86,6 @@ def plan(db: Session, familia: Familia) -> dict[str, Any]:
 
 def historia(db: Session, familia: Familia, mascota_id: UUID) -> list[dict[str, Any]]:
     """Solo lo firmado y sin las notas de uso interno del equipo medico."""
-    from app.modules.clinica import service as clinica
 
     mascota = mascota_propia(db, familia, mascota_id)
     return [
@@ -90,9 +95,6 @@ def historia(db: Session, familia: Familia, mascota_id: UUID) -> list[dict[str, 
 
 
 def url_adjunto(db: Session, familia: Familia, adjunto_id: UUID) -> dict[str, str]:
-    from app.modules.clinica import service as clinica
-    from app.modules.clinica.models import AdjuntoClinico, HistoriaClinica
-
     adjunto = db.get(AdjuntoClinico, adjunto_id)
     entrada = db.get(HistoriaClinica, adjunto.historia_id) if adjunto else None
     if entrada is None or entrada.familia_id != familia.id or entrada.estado != "firmada":
@@ -101,9 +103,6 @@ def url_adjunto(db: Session, familia: Familia, adjunto_id: UUID) -> dict[str, st
 
 
 def adjuntos(db: Session, familia: Familia, historia_id: UUID) -> list[Any]:
-    from app.modules.clinica import service as clinica
-    from app.modules.clinica.models import HistoriaClinica
-
     entrada = db.get(HistoriaClinica, historia_id)
     if entrada is None or entrada.familia_id != familia.id or entrada.estado != "firmada":
         raise NoEncontrado("Entrada no encontrada")
@@ -114,8 +113,6 @@ def adjuntos(db: Session, familia: Familia, historia_id: UUID) -> list[Any]:
 
 
 def _tipo_autogestionable(db: Session, codigo: str) -> Any:
-    from app.modules.servicios import service as servicios
-
     tipo = servicios.tipo_servicio(db, codigo)
     if tipo.modalidad not in MODALIDADES_AUTOGESTION:
         raise ReglaNegocio("Ese tipo de servicio se solicita a traves del equipo de TIMU")
@@ -123,8 +120,6 @@ def _tipo_autogestionable(db: Session, codigo: str) -> Any:
 
 
 def disponibilidad(db: Session, familia: Familia, fecha: date, tipo_codigo: str) -> list[Any]:
-    from app.modules.servicios import service as servicios
-
     tipo = _tipo_autogestionable(db, tipo_codigo)
     return servicios.disponibilidad(db, fecha, familia.ciudad, tipo)
 
@@ -139,7 +134,6 @@ def agendar(
     observaciones: str | None,
 ) -> Servicio:
     """Mismas reglas que el panel: elegibilidad (plan, cartera, cupo) y cupo real."""
-    from app.modules.servicios import service as servicios
 
     mascota = mascota_propia(db, familia, mascota_id)
     tipo = _tipo_autogestionable(db, tipo_codigo)
@@ -165,8 +159,6 @@ def _con_antelacion(servicio: Servicio) -> None:
 def reprogramar(
     db: Session, familia: Familia, servicio_id: UUID, inicio: datetime, motivo: str
 ) -> Servicio:
-    from app.modules.servicios import service as servicios
-
     servicio = _servicio_propio(db, familia, servicio_id)
     if servicio.estado != EstadoServicio.AGENDADO or servicio.ruta_id is not None:
         raise ReglaNegocio("Ese servicio ya no se puede reprogramar desde el portal")
@@ -175,8 +167,6 @@ def reprogramar(
 
 
 def cancelar(db: Session, familia: Familia, servicio_id: UUID, motivo: str) -> Servicio:
-    from app.modules.servicios import service as servicios
-
     servicio = _servicio_propio(db, familia, servicio_id)
     if servicio.estado not in (EstadoServicio.AGENDADO, EstadoServicio.PENDIENTE_AUTORIZACION):
         raise ReglaNegocio("Ese servicio ya no se puede cancelar desde el portal")
@@ -206,9 +196,6 @@ def servicios_de(db: Session, familia: Familia, incluir_pasados: bool) -> list[S
 def iniciar_pago(db: Session, familia: Familia, cuota_id: UUID | None) -> tuple[Pago, str]:
     """Pago de una cuota o de todo lo pendiente. Lo confirma el webhook de la pasarela,
     que aplica el pago y actualiza el estado de la familia al instante."""
-    from app.integrations.payments import construir_link_pago
-    from app.modules.cartera import contratos
-    from app.modules.cartera import service as cartera
 
     contrato = contratos.contrato_vigente(db, familia.id)
     if contrato is None:
@@ -254,9 +241,6 @@ def pagos(db: Session, familia: Familia) -> list[Pago]:
 
 
 def comprobante(db: Session, familia: Familia, pago_id: UUID) -> bytes:
-    from app.modules.cartera.models import AplicacionPago
-    from app.modules.portal import documento
-
     pago = db.get(Pago, pago_id)
     if pago is None or pago.familia_id != familia.id:
         raise NoEncontrado("Pago no encontrado")
@@ -285,8 +269,6 @@ def comprobante(db: Session, familia: Familia, pago_id: UUID) -> bytes:
 def actualizar_datos(db: Session, familia: Familia, cambios: dict[str, Any]) -> Familia:
     """Contacto y direccion, con las mismas validaciones del panel; la auditoria guarda
     quien cambio que (el usuario de portal)."""
-    from app.modules.familias import service as familias
-    from app.modules.familias.schemas import FamiliaUpdate
 
     if not cambios:
         raise ReglaNegocio("No hay cambios")

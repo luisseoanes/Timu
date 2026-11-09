@@ -23,8 +23,11 @@ from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.eventos import declarar_evento
 from app.core.tiempo import ZONA_NEGOCIO, ahora, hoy
 from app.integrations import claude
+from app.modules.clinica.models import SolicitudVirtual
+from app.modules.familias.models import Mascota
 from app.modules.ia import guiones
 from app.modules.ia.models import CasoPruebaIA, ConsultaIA, PromptIA
+from app.modules.planes.models import Plan
 
 logger = structlog.get_logger(__name__)
 
@@ -260,7 +263,6 @@ def evaluar(db: Session, prompt: PromptIA) -> dict[str, Any]:
 def responder_comercial(db: Session, pregunta: str, telefono: str) -> str | None:
     """Respuesta dentro del guion aprobado, o None si la pregunta sale de el (y entonces la
     conversacion pasa a un asesor)."""
-    from app.modules.planes.models import Plan
 
     planes = [
         f"{p.nombre}: {p.valor_mensual} COP/mes, hasta {p.cupos_mascotas} mascotas"
@@ -280,8 +282,6 @@ def responder_comercial(db: Session, pregunta: str, telefono: str) -> str | None
 def borrador_veterinario(db: Session, solicitud_id: UUID) -> dict[str, Any]:
     """Borrador para que el profesional lo revise. Nunca se envia solo: queda guardado en la
     solicitud y la respuesta a la familia sigue saliendo de una plantilla aprobada."""
-    from app.modules.clinica.models import SolicitudVirtual
-    from app.modules.familias.models import Mascota
 
     solicitud = db.get(SolicitudVirtual, solicitud_id)
     if solicitud is None:

@@ -32,6 +32,7 @@ from app.modules.cartera.models import (
 )
 from app.modules.cartera.periodos import centavos, dinero
 from app.modules.familias.models import Familia
+from app.modules.tareas import service as tareas
 
 logger = structlog.get_logger(__name__)
 
@@ -226,7 +227,6 @@ def planear_cobros(db: Session, dia: date) -> tuple[list[Cobro], int]:
     Cada cuota tiene tantos intentos como dias en COBRO_RECURRENTE_REINTENTOS_DIAS
     (contados desde el vencimiento); agotados, se crea una tarea de cartera.
     """
-    from app.modules.tareas import service as tareas
 
     calendario = settings.COBRO_RECURRENTE_REINTENTOS_DIAS
     cobros: list[Cobro] = []
@@ -385,7 +385,6 @@ def conciliar_pendientes(
     Se consulta la transaccion a la pasarela; si ni siquiera se conoce su id (el proceso
     murio entre el cobro y el registro), se deja una tarea para revisarlo a mano.
     """
-    from app.modules.tareas import service as tareas
 
     cliente = cliente or ClienteWompi()
     resumen = {"conciliados": 0, "sin_transaccion": 0, "errores": 0}

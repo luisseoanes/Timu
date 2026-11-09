@@ -14,9 +14,14 @@ from app.core.config import settings
 from app.core.database import acotar_publico
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
+from app.modules.archivos import service as archivos
+from app.modules.cartera import contratos
 from app.modules.catalogos.models import Especie, EsquemaPreventivo
+from app.modules.comunicaciones import service as comunicaciones
 from app.modules.familias.models import Familia, Mascota
+from app.modules.preventivos import documento
 from app.modules.preventivos.models import CarnetEmitido, EventoPreventivo
+from app.modules.servicios import service as servicios
 
 logger = structlog.get_logger(__name__)
 
@@ -245,15 +250,12 @@ def cancelar(db: Session, evento: EventoPreventivo, motivo: str) -> EventoPreven
 
 
 def _vigente(db: Session, familia_id: UUID) -> bool:
-    from app.modules.cartera import contratos
-
     return contratos.contrato_vigente(db, familia_id) is not None
 
 
 def agenda_diaria(db: Session, dia: date | None = None) -> dict[str, int]:
     """Avisa a la familia de los preventivos que se acercan (una sola vez por evento) para
     que los agende. Solo mascotas activas de familias con plan vigente."""
-    from app.modules.comunicaciones import service as comunicaciones
 
     dia = dia or hoy()
     limite = dia + timedelta(days=settings.PREVENTIVO_ANTICIPACION_DIAS)
@@ -304,7 +306,6 @@ def agendar(
     db: Session, evento: EventoPreventivo, inicio: datetime, observaciones: str | None = None
 ) -> EventoPreventivo:
     """Convierte el evento en un servicio agendado contra la disponibilidad real."""
-    from app.modules.servicios import service as servicios
 
     if evento.estado != "programado":
         raise ReglaNegocio("Solo se agenda un preventivo programado")
@@ -393,8 +394,6 @@ def _codigo_unico(db: Session) -> str:
 
 def emitir_carnet(db: Session, mascota_id: UUID, usuario_id: UUID | None) -> CarnetEmitido:
     """F2-PRE-06 Genera el PDF con un codigo de verificacion y guarda lo que decia."""
-    from app.modules.archivos import service as archivos
-    from app.modules.preventivos import documento
 
     datos = carnet(db, mascota_id)
     codigo = _codigo_unico(db)

@@ -19,8 +19,12 @@ from app.modules.campanas.models import (
     EjecucionCampana,
     Segmento,
 )
+from app.modules.cartera import contratos
+from app.modules.cartera.periodos import sumar_meses
+from app.modules.comunicaciones import service as comunicaciones
 from app.modules.comunicaciones.models import BajaComunicaciones, EstadoMensaje, Mensaje
 from app.modules.familias.models import Familia
+from app.modules.planes.models import Plan
 
 logger = structlog.get_logger(__name__)
 
@@ -48,7 +52,6 @@ def _filtros(db: Session, campana: Campana) -> segmentos.FiltrosSegmento:
 
 def _validar(db: Session, campana: Campana) -> None:
     """Plantilla aprobada y activa, y una fuente valida por cada variable."""
-    from app.modules.comunicaciones import service as comunicaciones
 
     if campana.canal != "whatsapp":
         raise ReglaNegocio("Por ahora las campanas salen solo por WhatsApp")
@@ -92,9 +95,6 @@ def guardar(
 
 
 def _variables(db: Session, campana: Campana, familia: Familia) -> list[str]:
-    from app.modules.cartera import contratos
-    from app.modules.planes.models import Plan
-
     valores = []
     for fuente in campana.variables:
         if fuente.startswith("texto:"):
@@ -123,7 +123,6 @@ def _bajas(db: Session) -> set[str]:
 def previsualizar(db: Session, campana: Campana, muestra: int = 3) -> dict[str, Any]:
     """Audiencia antes de enviar: cuantas familias alcanza, cuantas se excluyen por haber
     pedido no recibir mas, y como se vera el mensaje para algunas de ellas."""
-    from app.modules.comunicaciones import service as comunicaciones
 
     _validar(db, campana)
     filtros = _filtros(db, campana)
@@ -172,8 +171,6 @@ def _siguiente(momento: datetime, recurrencia: str) -> datetime | None:
     if recurrencia in RECURRENCIAS:
         return momento + RECURRENCIAS[recurrencia]
     if recurrencia == "mensual":
-        from app.modules.cartera.periodos import sumar_meses
-
         local = con_zona(momento)
         dia = sumar_meses(local.date(), 1)
         return local.replace(year=dia.year, month=dia.month, day=dia.day)
@@ -231,7 +228,6 @@ def lanzar_programadas(db: Session, momento: datetime | None = None) -> int:
 def despachar(db: Session, limite: int | None = None) -> dict[str, int]:
     """Encola hasta `limite` mensajes por pasada (el beat la corre cada minuto): asi el
     envio respeta el ritmo del proveedor sin importar el tamano de la audiencia."""
-    from app.modules.comunicaciones import service as comunicaciones
 
     cupo = limite if limite is not None else settings.CAMPANA_MENSAJES_POR_MINUTO
     resumen = {"encolados": 0, "excluidos": 0, "terminadas": 0}

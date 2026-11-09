@@ -18,6 +18,7 @@ from app.core.errores import Prohibido
 from app.modules.aliadas import service
 from app.modules.aliadas.models import ClinicaAliada, ConvenioAliada, RemisionAliada
 from app.modules.auth.models import Usuario
+from app.modules.catalogos import service as catalogos
 
 router = APIRouter(prefix="/aliadas", tags=["aliadas"])
 
@@ -131,8 +132,6 @@ async def listar(
     "", response_model=ClinicaRead, status_code=status.HTTP_201_CREATED, dependencies=[ADMIN]
 )
 async def crear(db: DbSession, data: ClinicaIn) -> ClinicaAliada:
-    from app.modules.catalogos import service as catalogos
-
     datos = data.model_dump()
     datos["ciudad"] = await db.run_sync(catalogos.ciudad_valida, data.ciudad)
     clinica = ClinicaAliada(**datos)

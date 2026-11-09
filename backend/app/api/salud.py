@@ -8,6 +8,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.workers.celery_app import celery_app
 
 logger = structlog.get_logger(__name__)
 
@@ -42,8 +43,6 @@ async def revisar_redis() -> Estado:
 
 
 async def revisar_trabajadores() -> Estado:
-    from app.workers.celery_app import celery_app
-
     try:
         respuestas = await asyncio.wait_for(
             asyncio.to_thread(celery_app.control.ping, timeout=1.0), TIMEOUT_SEGUNDOS + 1

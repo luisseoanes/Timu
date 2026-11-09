@@ -12,7 +12,11 @@ from app.core.enums import Rol
 from app.core.errores import NoEncontrado, Prohibido, ReglaNegocio
 from app.core.eventos import declarar_evento
 from app.core.tiempo import ahora, hoy
+from app.modules.archivos import service as archivos
 from app.modules.archivos.models import Archivo
+from app.modules.auth.models import Usuario
+from app.modules.cartera import contratos
+from app.modules.clinica import documento
 from app.modules.clinica.models import (
     AdjuntoClinico,
     Formula,
@@ -21,6 +25,7 @@ from app.modules.clinica.models import (
     RespuestaVirtual,
     SolicitudVirtual,
 )
+from app.modules.comunicaciones import service as comunicaciones
 from app.modules.familias.models import Familia, Mascota
 
 logger = structlog.get_logger(__name__)
@@ -215,7 +220,6 @@ def adjuntar(
     usuario_id: UUID,
 ) -> AdjuntoClinico:
     """Un examen puede llegar despues de firmar: adjuntar no altera lo firmado."""
-    from app.modules.archivos import service as archivos
 
     if entrada.estado == "corregida":
         raise ReglaNegocio("Adjunte a la version vigente de la entrada")
@@ -248,7 +252,6 @@ def adjuntos(db: Session, historia_id: UUID) -> list[AdjuntoClinico]:
 def url_adjunto(db: Session, adjunto_id: UUID, vista: Vista) -> dict[str, str]:
     """F2-CLI-05 Solo quien ve la historia clinica completa (o la familia, sobre lo suyo,
     resuelto por el alcance antes de llegar aqui) abre un adjunto."""
-    from app.modules.archivos import service as archivos
 
     if vista == "resumen":
         raise Prohibido("Su perfil no puede abrir adjuntos clinicos")
@@ -270,10 +273,6 @@ def emitir_formula(
     indicaciones: str | None,
     usuario_id: UUID,
 ) -> Formula:
-    from app.modules.archivos import service as archivos
-    from app.modules.auth.models import Usuario
-    from app.modules.clinica import documento
-
     if entrada.estado == "corregida":
         raise ReglaNegocio("Emita la formula desde la version vigente de la entrada")
     if not items:
@@ -327,7 +326,6 @@ def solicitar_virtual(
     mascota = _mascota(db, mascota_id)
     if not mascota.activa:
         raise ReglaNegocio("La mascota esta dada de baja")
-    from app.modules.cartera import contratos
 
     if contratos.contrato_vigente(db, mascota.familia_id) is None:
         raise ReglaNegocio("La orientacion virtual requiere un plan vigente")
@@ -384,7 +382,6 @@ def responder(
     """Arma la respuesta desde una plantilla aprobada, la registra como entrada firmada de
     la historia y la envia a la familia (texto libre si hay ventana de WhatsApp abierta,
     plantilla si no)."""
-    from app.modules.comunicaciones import service as comunicaciones
 
     if solicitud.estado != "en_atencion" or solicitud.asignada_a_id != medico_id:
         raise ReglaNegocio("Solo quien tomo la solicitud puede responderla")

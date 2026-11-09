@@ -15,10 +15,14 @@ from app.core.eventos import EventoDominio, declarar_evento
 from app.core.outbox import publicar
 from app.core.tiempo import ZONA_NEGOCIO, ahora, con_zona
 from app.integrations.routing import Coordenada, Visita, insertar_mas_barato, optimizar
+from app.modules.archivos import service as archivos
+from app.modules.auth.models import Usuario
 from app.modules.catalogos.models import Ciudad, TipoServicioCatalogo
+from app.modules.comunicaciones import service as comunicaciones
 from app.modules.familias.models import Familia, Mascota
 from app.modules.rutas import distancias
 from app.modules.rutas.models import ParadaRuta, PlanificacionRuta, Ruta
+from app.modules.servicios import service as servicios
 from app.modules.servicios.models import Servicio
 
 logger = structlog.get_logger(__name__)
@@ -52,7 +56,6 @@ def solicitar(
     db: Session, fecha: date, ciudad: str, responsables: list[UUID], usuario_id: UUID | None
 ) -> PlanificacionRuta:
     """Registra la solicitud; el worker la resuelve (la optimizacion es CPU-bound)."""
-    from app.modules.auth.models import Usuario
 
     if not responsables:
         raise ReglaNegocio("Indique al menos un responsable para las rutas")
@@ -130,10 +133,10 @@ def planificar(db: Session, planificacion_id: UUID) -> PlanificacionRuta:
     if planificacion.estado != "pendiente":
         return planificacion
 
-    servicios = por_rutear(db, planificacion.fecha, planificacion.ciudad)
+    pendientes = por_rutear(db, planificacion.fecha, planificacion.ciudad)
     sin_asignar: list[dict[str, str]] = []
     ubicables: list[tuple[Servicio, Familia]] = []
-    for servicio in servicios:
+    for servicio in pendientes:
         familia = db.get(Familia, servicio.familia_id)
         assert familia is not None
         if familia.latitud is None or familia.longitud is None:
@@ -273,7 +276,6 @@ def _en_curso(parada: ParadaRuta) -> None:
 
 def en_camino(db: Session, parada: ParadaRuta, usuario_id: UUID) -> ParadaRuta:
     """El tecnico sale hacia la familia: el servicio pasa a en ruta y se le avisa."""
-    from app.modules.servicios import service as servicios
 
     _en_curso(parada)
     if parada.estado != "pendiente":
@@ -296,8 +298,6 @@ def en_camino(db: Session, parada: ParadaRuta, usuario_id: UUID) -> ParadaRuta:
 
 
 def llegada(db: Session, parada: ParadaRuta, usuario_id: UUID) -> ParadaRuta:
-    from app.modules.servicios import service as servicios
-
     _en_curso(parada)
     if parada.estado not in ("pendiente", "en_camino"):
         raise ReglaNegocio("La llegada ya se registro")
@@ -321,8 +321,6 @@ def salida(
 ) -> ParadaRuta:
     """Cierra la visita: el servicio se completa (si tiene sus pasos obligatorios) y la
     evidencia queda guardada. Con la ultima parada, la ruta termina."""
-    from app.modules.archivos import service as archivos
-    from app.modules.servicios import service as servicios
 
     _en_curso(parada)
     if parada.estado != "en_sitio":
@@ -410,7 +408,6 @@ def omitir(
 ) -> ParadaRuta:
     """Saca la parada de la ruta; las demas se renumeran y se reestima su llegada. El
     servicio se cancela o vuelve a quedar por rutear."""
-    from app.modules.servicios import service as servicios
 
     if parada.estado in ("completada", "omitida"):
         raise ReglaNegocio("La parada ya esta cerrada")
@@ -489,7 +486,6 @@ def agregar(db: Session, ruta: Ruta, servicio_id: UUID) -> ParadaRuta:
 def _aviso(db: Session, parada: ParadaRuta, plantilla: str, marca: str) -> None:
     """Una sola vez por parada y tipo de aviso. Sin plantilla aprobada se registra y la
     operacion sigue: un aviso que no sale no frena la ruta."""
-    from app.modules.comunicaciones import service as comunicaciones
 
     if getattr(parada, marca) is not None:
         return

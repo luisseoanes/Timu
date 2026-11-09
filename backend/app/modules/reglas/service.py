@@ -8,6 +8,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.core.tiempo import hoy
+from app.modules.reglas.datos import REGLAS
 from app.modules.reglas.models import Regla
 from app.modules.reglas.motor import cumple, vigente
 
@@ -59,7 +60,6 @@ def primera(
 def sembrar(db: Session) -> int:
     """Crea las reglas iniciales que falten. Nunca modifica las existentes: despues de la
     primera carga, las reglas son de TIMU."""
-    from app.modules.reglas.datos import REGLAS
 
     existentes = set(db.scalars(select(Regla.codigo)))
     nuevas = [Regla(**r) for r in REGLAS if r["codigo"] not in existentes]

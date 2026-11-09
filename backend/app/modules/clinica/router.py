@@ -14,6 +14,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import Rol
+from app.core.errores import Conflicto, ReglaNegocio
+from app.core.eventos import EventoDominio
+from app.core.outbox import publicar
 from app.modules.archivos import service as archivos
 from app.modules.archivos.models import Archivo
 from app.modules.auth.models import Usuario
@@ -315,8 +318,6 @@ async def plantillas(db: DbSession, tipo_servicio: str | None = None) -> list[Pl
 async def crear_plantilla(db: DbSession, data: PlantillaIn) -> PlantillaConsulta:
     from sqlalchemy import select
 
-    from app.core.errores import Conflicto
-
     if await db.scalar(select(PlantillaConsulta.id).where(PlantillaConsulta.codigo == data.codigo)):
         raise Conflicto(f"Ya existe la plantilla {data.codigo}")
     plantilla = PlantillaConsulta(**data.model_dump())
@@ -389,13 +390,9 @@ async def tomar(db: DbSession, medico: Medico, solicitud_id: UUID) -> SolicitudV
 async def pedir_borrador(db: DbSession, medico: Medico, solicitud_id: UUID) -> dict[str, str]:
     """F4-IAA-03 Pide a la IA un borrador para revisar. Llega a la solicitud en segundos;
     nunca se envia a la familia: la respuesta sigue saliendo de una plantilla aprobada."""
-    from app.core.eventos import EventoDominio
-    from app.core.outbox import publicar
 
     solicitud = await db.run_sync(service.obtener_solicitud, solicitud_id)
     if solicitud.asignada_a_id != medico.id:
-        from app.core.errores import ReglaNegocio
-
         raise ReglaNegocio("Tome la solicitud antes de pedir un borrador")
     publicar(db, EventoDominio(service.EVENTO_BORRADOR, {"solicitud_id": str(solicitud.id)}))
     return {"detail": "Borrador solicitado"}

@@ -14,6 +14,7 @@ from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ZONA_NEGOCIO, ahora, con_zona, hoy
 from app.modules.cartera import contratos
 from app.modules.catalogos.models import TipoServicioCatalogo
+from app.modules.comunicaciones import service as comunicaciones
 from app.modules.familias.models import Familia, Mascota
 from app.modules.planes import service as planes
 from app.modules.planes.models import Beneficio
@@ -27,6 +28,7 @@ from app.modules.servicios.models import (
     ServicioPaso,
 )
 from app.modules.servicios.state_machine import TransicionInvalida, aplicar, transicionar
+from app.modules.tareas import service as tareas
 
 logger = structlog.get_logger(__name__)
 
@@ -333,9 +335,6 @@ def cambiar_estado(
 def _disparadores(
     db: Session, servicio: Servicio, anterior: EstadoServicio, destino: EstadoServicio
 ) -> None:
-    from app.modules.comunicaciones import service as comunicaciones
-    from app.modules.tareas import service as tareas
-
     familia = db.get(Familia, servicio.familia_id)
     assert familia is not None
     contexto = {

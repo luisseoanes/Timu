@@ -157,3 +157,29 @@ def test_ninguna_dependencia_nueva_entre_dominios_cierra_un_ciclo():
 def test_los_ciclos_conocidos_que_ya_no_existen_salen_de_la_lista():
     resueltas = sorted(CICLOS_CONOCIDOS.keys() - _aristas_en_ciclo())
     assert resueltas == [], "ya no forman ciclo: borralas de CICLOS_CONOCIDOS"
+
+
+def test_los_imports_de_la_aplicacion_van_en_la_cabecera():
+    """Un import de `app` dentro de una funcion solo servia para esquivar un ciclo, y ya no
+    queda ninguno: diferido, un nombre mal escrito no falla hasta que se ejecuta esa rama, a
+    veces en produccion. Arriba falla al arrancar o al recoger las pruebas. Los de terceros
+    pueden ir dentro de la funcion cuando no siempre estan instalados o pesan (`ortools` solo
+    existe en la imagen del worker, `openpyxl` solo hace falta al exportar)."""
+    diferidos = []
+    for fichero in APP.rglob("*.py"):
+        for funcion in ast.walk(ast.parse(fichero.read_text(encoding="utf-8"))):
+            if not isinstance(funcion, ast.FunctionDef | ast.AsyncFunctionDef):
+                continue
+            for nodo in ast.walk(funcion):
+                if isinstance(nodo, ast.ImportFrom):
+                    modulos = [nodo.module or ""]
+                elif isinstance(nodo, ast.Import):
+                    modulos = [a.name for a in nodo.names]
+                else:
+                    continue
+                diferidos += [
+                    f"{fichero.relative_to(APP.parent)}:{nodo.lineno} {m}"
+                    for m in modulos
+                    if m == "app" or m.startswith("app.")
+                ]
+    assert diferidos == [], "sube estos imports al principio del fichero"

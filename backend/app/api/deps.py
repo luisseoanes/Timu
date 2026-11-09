@@ -28,9 +28,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import ContextoDb, acotar_publico, contexto_de, fijar_contexto, get_db
 from app.core.enums import Rol
+from app.core.errores import NoEncontrado
 from app.core.scope import Alcance
 from app.core.security import decode_access_token
 from app.modules.auth.models import Sesion, Usuario
+from app.modules.familias.models import Familia
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
 
@@ -172,8 +174,6 @@ async def get_alcance(usuario: CurrentUser, db: DbSession) -> Alcance:
     """
     familia_id: UUID | None = None
     if usuario.rol == Rol.FAMILIA:
-        from app.modules.familias.models import Familia
-
         familia_id = await db.scalar(
             select(Familia.id).where(
                 Familia.usuario_portal_id == usuario.id, Familia.dada_de_baja_en.is_(None)
@@ -195,8 +195,6 @@ async def _familia_actual(
 ) -> Any:
     """F1-AUT-04 Familia del usuario de portal. Todo endpoint del portal parte de aqui, asi
     que una familia nunca puede pedir datos de otra."""
-    from app.core.errores import NoEncontrado
-    from app.modules.familias.models import Familia
 
     familia = await db.get(Familia, alcance.familia_id) if alcance.familia_id else None
     if familia is None:

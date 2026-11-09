@@ -10,9 +10,11 @@ from sqlalchemy import func, or_, select
 
 from app.api.deps import DbSession, requiere
 from app.core.enums import Rol
+from app.core.errores import NoEncontrado
 from app.modules.auth.models import Usuario
 from app.modules.comercial import conversacion, service
 from app.modules.comercial.models import ArbolConversacion, ConversacionComercial, Interesado
+from app.modules.comunicaciones import service as comunicaciones
 from app.schemas.common import Page, ParamsListado, paginar
 
 router = APIRouter(prefix="/comercial", tags=["comercial"])
@@ -201,12 +203,9 @@ async def responder_como_asesor(
     db: DbSession, usuario: Comercial, conversacion_id: UUID, data: MensajeAsesorIn
 ) -> dict[str, str]:
     """El asesor contesta por el mismo canal (dentro de la ventana de 24 horas)."""
-    from app.modules.comunicaciones import service as comunicaciones
 
     conv = await db.get(ConversacionComercial, conversacion_id)
     if conv is None:
-        from app.core.errores import NoEncontrado
-
         raise NoEncontrado("Conversacion no encontrada")
     conv.asesor_id = conv.asesor_id or usuario.id
     mensaje = await db.run_sync(
@@ -224,8 +223,6 @@ async def liberar(db: DbSession, conversacion_id: UUID) -> ConversacionRead:
     """El asesor termina: vuelve el asistente para la proxima vez que la persona escriba."""
     conv = await db.get(ConversacionComercial, conversacion_id)
     if conv is None:
-        from app.core.errores import NoEncontrado
-
         raise NoEncontrado("Conversacion no encontrada")
     # Se serializa dentro de la sesion: tras el flush, updated_at queda por recargar.
     return await db.run_sync(

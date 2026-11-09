@@ -22,8 +22,16 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.errores import NoEncontrado, ReglaNegocio
+from app.modules.cartera.periodos import formato_cop
+from app.modules.catalogos import service as catalogos
+from app.modules.catalogos.models import Ciudad
 from app.modules.comercial import service as embudo
 from app.modules.comercial.models import ArbolConversacion, ConversacionComercial, Interesado
+from app.modules.comunicaciones import service as comunicaciones
+from app.modules.comunicaciones.models import Mensaje
+from app.modules.ia import service as ia
+from app.modules.planes import service as planes
+from app.modules.tareas import service as tareas
 
 logger = structlog.get_logger(__name__)
 
@@ -122,7 +130,6 @@ def leer_mascotas(texto: str) -> list[str]:
 
 def _capturar(db: Session, tipo: str, texto: str) -> tuple[Any, str | None]:
     """(valor, error). Un error de cobertura no es un "no te entendi": va a un asesor."""
-    from app.modules.catalogos import service as catalogos
 
     if tipo == "ciudad":
         try:
@@ -152,7 +159,6 @@ class _Turno:
 
 def procesar_entrante(db: Session, telefono: str, texto: str, familia_id: Any = None) -> list[str]:
     """Responde un mensaje entrante. Devuelve lo que se respondio (para trazas y pruebas)."""
-    from app.modules.comunicaciones import service as comunicaciones
 
     conversacion = db.scalar(
         select(ConversacionComercial).where(ConversacionComercial.telefono == telefono)
@@ -237,7 +243,6 @@ def _pregunta_abierta(
     """F4-IAA-02 Una pregunta que no es una opcion del menu: la IA responde dentro del
     guion aprobado o, si sale de el, pasa a un asesor. Sin IA disponible, no hace nada y la
     conversacion sigue su camino (cuenta como no entendida)."""
-    from app.modules.ia import service as ia
 
     if len(texto.strip()) < 8:
         return False  # "ok", "si", "???": no es una pregunta
@@ -300,9 +305,6 @@ def _interesado(db: Session, conversacion: ConversacionComercial) -> Interesado 
 
 def _accion(db: Session, conversacion: ConversacionComercial, accion: str, turno: _Turno) -> bool:
     """Ejecuta la accion. Devuelve False si la conversacion no debe seguir sola."""
-    from app.modules.cartera.periodos import formato_cop
-    from app.modules.catalogos.models import Ciudad
-    from app.modules.planes import service as planes
 
     interesado = _interesado(db, conversacion)
     if accion == "cobertura":
@@ -347,8 +349,6 @@ def _accion(db: Session, conversacion: ConversacionComercial, accion: str, turno
 def _asesor(db: Session, conversacion: ConversacionComercial, motivo: str, turno: _Turno) -> None:
     """F3-COM-04 Pasa la conversacion a una persona con todo el contexto: lo capturado,
     el motivo y los ultimos mensajes, en una tarea del responsable comercial."""
-    from app.modules.comunicaciones.models import Mensaje
-    from app.modules.tareas import service as tareas
 
     if conversacion.estado == "con_asesor":
         return

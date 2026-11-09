@@ -14,9 +14,13 @@ from app.core.database import acotar_publico
 from app.core.enums import EstadoServicio
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ZONA_NEGOCIO, ahora, con_zona
+from app.modules.auth.models import Usuario
+from app.modules.catalogos.models import TipoServicioCatalogo
+from app.modules.comunicaciones import service as comunicaciones
 from app.modules.encuestas.models import ConfiguracionEncuesta, Encuesta
 from app.modules.familias.models import Familia, Mascota
 from app.modules.servicios.models import Servicio
+from app.modules.tareas import service as tareas
 
 logger = structlog.get_logger(__name__)
 
@@ -84,7 +88,6 @@ def programar(db: Session, servicio_id: UUID) -> list[Encuesta]:
 def enviar_pendientes(db: Session, momento: datetime | None = None) -> dict[str, int]:
     """Envia las encuestas cuya hora llego. Cada envio en su savepoint: una plantilla
     faltante no frena las demas."""
-    from app.modules.comunicaciones import service as comunicaciones
 
     momento = momento or ahora()
     resumen = {"enviadas": 0, "fallidas": 0}
@@ -147,7 +150,6 @@ def por_token(db: Session, token: str) -> Encuesta:
 
 def contexto(db: Session, token: str) -> dict[str, Any]:
     """Lo que ve quien abre el enlace: que se le pregunta y sobre que atencion. Nada mas."""
-    from app.modules.catalogos.models import TipoServicioCatalogo
 
     encuesta = por_token(db, token)
     servicio = db.get(Servicio, encuesta.servicio_id)
@@ -195,8 +197,6 @@ def responder(
 
 def _alertar(db: Session, encuesta: Encuesta, servicio: Servicio) -> None:
     """F3-ENC-04 Tarea inmediata de servicio al cliente con el contexto de la atencion."""
-    from app.modules.auth.models import Usuario
-    from app.modules.tareas import service as tareas
 
     responsable = db.get(Usuario, encuesta.responsable_id) if encuesta.responsable_id else None
     fecha = (
@@ -251,7 +251,6 @@ def respuesta_whatsapp(db: Session, telefono: str, texto: str) -> Encuesta | Non
 
 def resumen(db: Session, desde: date, hasta: date) -> dict[str, Any]:
     """Satisfaccion del periodo: promedio, tasa de respuesta, por responsable y por tipo."""
-    from app.modules.auth.models import Usuario
 
     inicio = datetime.combine(desde, datetime.min.time(), ZONA_NEGOCIO)
     fin = datetime.combine(hasta + timedelta(days=1), datetime.min.time(), ZONA_NEGOCIO)

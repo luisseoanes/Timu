@@ -14,9 +14,11 @@ from app.core.enums import EstadoServicio, TipoServicio
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ZONA_NEGOCIO, ahora, con_zona, hoy
 from app.modules.aliadas.models import ClinicaAliada, ConvenioAliada, RemisionAliada
+from app.modules.cartera import contratos
 from app.modules.cartera.periodos import dinero
 from app.modules.familias.models import Familia, Mascota
 from app.modules.planes.models import Plan
+from app.modules.servicios import service as servicios
 from app.modules.servicios.models import Servicio
 
 TIPO_SERVICIO_ALIADA = "atencion_aliada"
@@ -81,8 +83,6 @@ def emitir(
     """Valida plan vigente, cartera al dia y beneficio disponible (las mismas reglas de
     elegibilidad que el agendamiento) y que la aliada tenga convenio vigente para el plan.
     La remision consume el cupo del beneficio como cualquier servicio."""
-    from app.modules.cartera import contratos
-    from app.modules.servicios import service as servicios
 
     clinica = obtener_clinica(db, clinica_id)
     if not clinica.activa:
@@ -154,7 +154,6 @@ def obtener_remision(db: Session, remision_id: UUID) -> RemisionAliada:
 
 def anular(db: Session, remision: RemisionAliada, motivo: str, usuario_id: UUID) -> RemisionAliada:
     """Libera el cupo: el servicio se cancela."""
-    from app.modules.servicios import service as servicios
 
     if remision.estado != "emitida":
         raise ReglaNegocio("Solo se anula una remision emitida y no utilizada")
@@ -219,7 +218,6 @@ def reportar_atencion(
 ) -> RemisionAliada:
     """La aliada reporta la atencion: se calcula lo cubierto (porcentaje y tope del
     convenio) y el servicio se completa."""
-    from app.modules.servicios import service as servicios
 
     remision = _de_la_clinica(db, codigo, clinica_id)
     if remision.estado != "emitida":

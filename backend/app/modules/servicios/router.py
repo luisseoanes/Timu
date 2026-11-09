@@ -11,6 +11,7 @@ from sqlalchemy import select
 from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import EstadoServicio, Rol
 from app.core.errores import NoEncontrado, ReglaNegocio
+from app.core.tiempo import ZONA_NEGOCIO
 from app.modules.auth.models import Usuario
 from app.modules.catalogos import service as catalogos
 from app.modules.familias import service as familias
@@ -240,8 +241,6 @@ async def listar(
     desde: date | None = None,
     hasta: date | None = None,
 ) -> Page[ServicioRead]:
-    from app.core.tiempo import ZONA_NEGOCIO
-
     stmt = select(Servicio)
     if familia_id:
         stmt = stmt.where(Servicio.familia_id == familia_id)

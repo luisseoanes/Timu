@@ -10,12 +10,18 @@ from fastapi import APIRouter, Response, status
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.api.deps import DbSession, FamiliaActual
+from app.core.errores import NoEncontrado
 from app.core.validaciones import TelefonoCO
+from app.modules.archivos import service as archivos
+from app.modules.archivos.models import Archivo
+from app.modules.cartera import contratos
 from app.modules.cartera import service as cartera
 from app.modules.cartera.schemas import EstadoCuenta
+from app.modules.clinica import service as clinica
 from app.modules.familias.models import Familia
 from app.modules.familias.schemas import FamiliaRead
 from app.modules.portal import service
+from app.modules.preventivos import service as preventivos
 from app.modules.servicios.models import Servicio
 
 router = APIRouter(prefix="/portal", tags=["portal"])
@@ -104,12 +110,9 @@ async def plan(db: DbSession, familia: FamiliaActual) -> dict[str, Any]:
 @router.get("/contrato")
 async def contrato(db: DbSession, familia: FamiliaActual) -> dict[str, str]:
     """F1-AFI-02 PDF del contrato vigente de la familia."""
-    from app.modules.cartera import contratos
 
     vigente = await db.run_sync(contratos.contrato_vigente, familia.id)
     if vigente is None:
-        from app.core.errores import NoEncontrado
-
         raise NoEncontrado("La familia no tiene contrato vigente")
     return await db.run_sync(cartera.url_documento, vigente)
 
@@ -144,18 +147,12 @@ async def url_adjunto(db: DbSession, familia: FamiliaActual, adjunto_id: UUID) -
 
 @router.get("/mascotas/{mascota_id}/carnet")
 async def carnet(db: DbSession, familia: FamiliaActual, mascota_id: UUID) -> dict[str, Any]:
-    from app.modules.preventivos import service as preventivos
-
     mascota = await db.run_sync(service.mascota_propia, familia, mascota_id)
     return await db.run_sync(preventivos.carnet, mascota.id)
 
 
 @router.post("/mascotas/{mascota_id}/carnet/pdf", status_code=status.HTTP_201_CREATED)
 async def carnet_pdf(db: DbSession, familia: FamiliaActual, mascota_id: UUID) -> dict[str, str]:
-    from app.modules.archivos import service as archivos
-    from app.modules.archivos.models import Archivo
-    from app.modules.preventivos import service as preventivos
-
     mascota = await db.run_sync(service.mascota_propia, familia, mascota_id)
     registro = await db.run_sync(preventivos.emitir_carnet, mascota.id, familia.usuario_portal_id)
     archivo = await db.get(Archivo, registro.archivo_id)
@@ -218,7 +215,6 @@ async def orientacion_virtual(
     db: DbSession, familia: FamiliaActual, data: SolicitudVirtualIn
 ) -> dict[str, Any]:
     """F2-CLI-04 La consulta entra a la cola del equipo medico."""
-    from app.modules.clinica import service as clinica
 
     mascota = await db.run_sync(service.mascota_propia, familia, data.mascota_id)
     solicitud = await db.run_sync(

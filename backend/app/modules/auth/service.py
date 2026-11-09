@@ -24,6 +24,7 @@ from app.core.validaciones import normalizar_telefono
 from app.modules.auth import sesiones
 from app.modules.auth.models import TokenUsoUnico, Usuario
 from app.modules.auth.schemas import UsuarioCreate, UsuarioUpdate
+from app.modules.comunicaciones import service as comunicaciones
 
 logger = structlog.get_logger(__name__)
 
@@ -153,8 +154,6 @@ def emitir_enlace(db: Session, usuario: Usuario, proposito: Proposito) -> str:
 
 
 def _enviar_enlace(db: Session, usuario: Usuario, proposito: Proposito, token: str) -> None:
-    from app.modules.comunicaciones import service as comunicaciones
-
     ruta = "restablecer" if proposito == "recuperacion" else "activar"
     enlace = f"{settings.FRONTEND_URL}/{ruta}?token={token}"
     if usuario.email:
@@ -275,7 +274,6 @@ def _usuario_portal_por_telefono(db: Session, telefono: str) -> Usuario | None:
 def solicitar_codigo(db: Session, telefono: str) -> None:
     """Envia un codigo de 6 digitos. Siempre responde igual: no revela si el numero
     tiene cuenta. Un codigo nuevo invalida el anterior."""
-    from app.modules.comunicaciones import service as comunicaciones
 
     usuario = _usuario_portal_por_telefono(db, telefono)
     if usuario is None or usuario.telefono is None:

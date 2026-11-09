@@ -28,10 +28,14 @@ from app.modules.cartera import contratos, pasarela
 from app.modules.cartera import service as cartera
 from app.modules.cartera.models import Contrato, Pago
 from app.modules.cartera.periodos import centavos, dinero
+from app.modules.comercial import service as comercial
+from app.modules.comunicaciones import service as comunicaciones
 from app.modules.familias import service as familias
 from app.modules.familias.models import Familia, Mascota
 from app.modules.planes import service as planes
 from app.modules.planes.models import Plan
+from app.modules.preventivos import service as preventivos
+from app.modules.tareas import service as tareas
 
 logger = structlog.get_logger(__name__)
 
@@ -145,8 +149,6 @@ def completar(db: Session, pago: Pago) -> None:
     if solicitud.estado == EstadoSolicitud.CANCELADA:
         # Pagaron el enlace de un intento que despues se reemplazo (otro plan, otro valor):
         # afiliar con las condiciones viejas seria un error, y el dinero ya entro.
-        from app.modules.tareas import service as tareas
-
         tareas.crear(
             db,
             titulo="Pago recibido de una solicitud de afiliacion reemplazada",
@@ -168,8 +170,6 @@ def completar(db: Session, pago: Pago) -> None:
             _completar(db, solicitud, pago)
     except ErrorDominio as e:
         # El pago quedo aprobado: alguien debe resolver a mano (p. ej. el plan ya no aplica).
-        from app.modules.tareas import service as tareas
-
         solicitud.estado = EstadoSolicitud.ERROR
         solicitud.error = e.mensaje
         tareas.crear(
@@ -213,7 +213,6 @@ def _completar(db: Session, solicitud: SolicitudAfiliacion, pago: Pago) -> None:
 
 def _al_embudo(db: Session, familia: Familia, etapa: str, origen: str, plan: str) -> None:
     """F3-COM-01 La afiliacion tambien mueve el embudo comercial."""
-    from app.modules.comercial import service as comercial
 
     interesado = comercial.registrar(
         db,
@@ -279,8 +278,6 @@ def _documento(db: Session, contrato: Contrato, familia: Familia, plan: Plan) ->
 
 
 def _calendario_preventivo(db: Session, familia: Familia, desde: date) -> None:
-    from app.modules.preventivos import service as preventivos
-
     for mascota in db.scalars(
         select(Mascota).where(Mascota.familia_id == familia.id, Mascota.activa.is_(True))
     ):
@@ -288,8 +285,6 @@ def _calendario_preventivo(db: Session, familia: Familia, desde: date) -> None:
 
 
 def _bienvenida(db: Session, familia: Familia, plan: Plan) -> None:
-    from app.modules.comunicaciones import service as comunicaciones
-
     try:
         comunicaciones.encolar_plantilla(
             db,

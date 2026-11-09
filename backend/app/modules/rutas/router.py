@@ -10,6 +10,7 @@ from sqlalchemy import select
 
 from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import Rol
+from app.core.errores import NoEncontrado
 from app.modules.archivos import service as archivos
 from app.modules.auth.models import Usuario
 from app.modules.rutas import service
@@ -71,8 +72,6 @@ async def planificar(
 async def planificacion(db: DbSession, planificacion_id: UUID) -> PlanificacionRuta:
     p = await db.get(PlanificacionRuta, planificacion_id)
     if p is None:
-        from app.core.errores import NoEncontrado
-
         raise NoEncontrado("Planificacion no encontrada")
     return p
 

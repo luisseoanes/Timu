@@ -14,6 +14,7 @@ from app.core.enums import Rol
 from app.core.errores import NoEncontrado
 from app.modules.auth.models import Usuario
 from app.modules.catalogos import service as catalogos
+from app.modules.catalogos.models import TipoServicioCatalogo
 from app.modules.planes import service
 from app.modules.planes.models import Plan
 
@@ -78,8 +79,6 @@ class Recomendacion(BaseModel):
 
 
 async def _validar_beneficios(db: DbSession, beneficios: list[BeneficioIn]) -> None:
-    from app.modules.catalogos.models import TipoServicioCatalogo
-
     codigos = {b.tipo_servicio_codigo for b in beneficios}
     existentes = set(
         await db.scalars(
