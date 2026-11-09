@@ -78,9 +78,6 @@ peticiones: con una sesión compartida se mediría el límite de 120 peticiones 
 por usuario, no la aplicación. El CI corre una versión reducida (10 % del volumen, 4
 usuarios, 1 minuto) en el job del stack.
 
-En el backend `python3 -m venv` no funciona en la máquina de Pedro: usa
-`uv venv --python 3.12` (ver la memoria del proyecto).
-
 ## Entorno de desarrollo: un solo comando
 
 **Desde un clon limpio, `docker compose up --build` deja el stack completo funcionando,
