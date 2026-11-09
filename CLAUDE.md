@@ -35,6 +35,8 @@ aceptación que ya está escrito allí.
 docker compose up --build
 docker compose exec api python -m scripts.datos_demo   # familias, servicios, rutas… de prueba (solo local)
 docker compose run --rm inicializar   # tras traer una migración nueva, sin reiniciar el stack
+docker compose up -d --build -V       # tras traer dependencias nuevas: el código va montado, las librerías
+                                      # van en la imagen, y -V renueva el node_modules anónimo de `web`
 
 # Backend sin Docker
 cd backend && pip install -r requirements-dev.txt
