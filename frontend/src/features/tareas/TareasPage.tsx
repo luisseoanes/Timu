@@ -6,18 +6,18 @@ import { Distintivo } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { Paginacion } from '@/components/Paginacion'
-import { useAuth } from '@/features/auth/AuthContext'
-import { SelectorFamilia } from '@/features/familias/SelectorFamilia'
+import { useAuth, useEquipo } from '@/features/auth'
+import { SelectorFamilia } from '@/features/familias'
 import { mensajeError } from '@/lib/errores'
 import { fecha, hoyISO } from '@/lib/formato'
 import type { FamiliaRead, TareaRead } from '@/types'
+
 
 import {
   AREAS,
   useAsignarTarea,
   useCerrarTarea,
   useCrearTarea,
-  useEquipo,
   useIniciarTarea,
   useTareas,
   type Area,

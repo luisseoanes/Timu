@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
 import { Icono } from '@/components/Icono'
-import { MarcaTimu } from '@/features/auth/AccesoLayout'
+import { MarcaTimu } from '@/components/MarcaTimu'
 import { mensajeError } from '@/lib/errores'
 import { fecha } from '@/lib/formato'
 

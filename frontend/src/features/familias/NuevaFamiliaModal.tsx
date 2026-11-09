@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 
 import { Modal } from '@/components/Modal'
-import { useCiudades, useEspecies } from '@/features/catalogos/api'
+import { useCiudades, useEspecies } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
 import type { TipoDocumento } from '@/types'
 

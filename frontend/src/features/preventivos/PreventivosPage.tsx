@@ -7,14 +7,14 @@ import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { Paginacion } from '@/components/Paginacion'
 import { Pestanas } from '@/components/Pestanas'
-import { useAuth } from '@/features/auth/AuthContext'
-import { useFamilia } from '@/features/familias/api'
-import { SelectorFamilia } from '@/features/familias/SelectorFamilia'
-import { useDisponibilidad } from '@/features/servicios/api'
+import { useAuth } from '@/features/auth'
+import { SelectorFamilia, useFamilia, useMascotas } from '@/features/familias'
+import { useDisponibilidad } from '@/features/servicios'
 import { mensajeError } from '@/lib/errores'
 import { fecha, hora, hoyISO } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
 import type { EventoRead, FamiliaRead } from '@/types'
+
 
 import {
   useAgendarPreventivo,
@@ -24,7 +24,6 @@ import {
   useCarnet,
   useEmitirCarnet,
   useGenerarCalendario,
-  useMascotas,
   usePreventivos,
   type FilaCarnet,
   type FiltrosPreventivos,

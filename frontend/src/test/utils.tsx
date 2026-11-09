@@ -3,7 +3,7 @@ import { render } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 
-import { AuthProvider } from '@/features/auth/AuthContext'
+import { AuthProvider } from '@/features/auth'
 
 /** Cliente nuevo por prueba y sin reintentos: una prueba no debe esperar backoff. */
 export function crearQueryClient() {

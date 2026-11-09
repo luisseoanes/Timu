@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
 import { Icono } from '@/components/Icono'
-import { MarcaTimu } from '@/features/auth/AccesoLayout'
+import { MarcaTimu } from '@/components/MarcaTimu'
 import { fecha, fechaHora } from '@/lib/formato'
 
 import { useCarnetVerificado } from './api'

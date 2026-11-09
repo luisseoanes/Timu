@@ -9,7 +9,9 @@ import { mensajeError } from '@/lib/errores'
 import { inicioDeRol } from '@/lib/permisos'
 import type { Usuario } from '@/types'
 
-import { AccesoLayout, MarcaTimu } from './AccesoLayout'
+import { MarcaTimu } from '@/components/MarcaTimu'
+
+import { AccesoLayout } from './AccesoLayout'
 import { useAuth } from './AuthContext'
 
 /**

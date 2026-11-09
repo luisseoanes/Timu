@@ -5,7 +5,7 @@ import { Consulta } from '@/components/Consulta'
 import { Distintivo } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Paginacion } from '@/components/Paginacion'
-import { useAuth } from '@/features/auth/AuthContext'
+import { useAuth } from '@/features/auth'
 import { puede } from '@/lib/permisos'
 import type { EstadoAfiliacion } from '@/types'
 

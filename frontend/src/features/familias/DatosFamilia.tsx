@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import { useCiudades } from '@/features/catalogos/api'
+import { useCiudades } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
 import type { FamiliaRead } from '@/types'
 

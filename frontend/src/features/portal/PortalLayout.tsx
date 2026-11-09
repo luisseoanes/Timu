@@ -1,8 +1,8 @@
 import { NavLink, Outlet } from 'react-router-dom'
 
 import { Icono, type NombreIcono } from '@/components/Icono'
-import { MarcaTimu } from '@/features/auth/AccesoLayout'
-import { useAuth } from '@/features/auth/AuthContext'
+import { MarcaTimu } from '@/components/MarcaTimu'
+import { useAuth } from '@/features/auth'
 
 const NAV: { to: string; label: string; icono: NombreIcono; end?: boolean }[] = [
   { to: '/portal', label: 'Inicio', icono: 'portal', end: true },

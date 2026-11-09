@@ -1,7 +1,7 @@
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { CarnetEmitidoRead, EventoRead, MascotaRead, Page } from '@/types'
+import type { CarnetEmitidoRead, EventoRead, Page } from '@/types'
 
 export interface FiltrosPreventivos {
   mascota_id?: string
@@ -41,21 +41,6 @@ export function usePreventivos(filtros: FiltrosPreventivos) {
     queryKey: ['preventivos', filtros],
     queryFn: async () => (await api.get<Page<EventoRead>>('/preventivos', { params: filtros })).data,
   })
-}
-
-/** Nombre y familia de las mascotas de un listado: una consulta por mascota distinta, cacheada. */
-export function useMascotas(ids: string[]) {
-  const unicos = [...new Set(ids)]
-  const consultas = useQueries({
-    queries: unicos.map((id) => ({
-      queryKey: ['mascotas', id],
-      staleTime: 5 * 60 * 1000,
-      queryFn: async () => (await api.get<MascotaRead>(`/mascotas/${id}`)).data,
-    })),
-  })
-  const porId = new Map<string, MascotaRead>()
-  consultas.forEach((c) => c.data && porId.set(c.data.id, c.data))
-  return porId
 }
 
 export function useCarnet(mascotaId: string | null) {

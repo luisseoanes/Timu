@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
-import { useAuth } from '@/features/auth/AuthContext'
+import { useAuth } from '@/features/auth'
 import { inicioDeRol } from '@/lib/permisos'
 import type { Rol } from '@/types'
 

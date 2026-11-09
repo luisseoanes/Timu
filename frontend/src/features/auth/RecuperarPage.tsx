@@ -6,7 +6,9 @@ import { api } from '@/api/client'
 import { Icono } from '@/components/Icono'
 import { mensajeError } from '@/lib/errores'
 
-import { AccesoLayout, MarcaTimu } from './AccesoLayout'
+import { MarcaTimu } from '@/components/MarcaTimu'
+
+import { AccesoLayout } from './AccesoLayout'
 
 /** Pide el enlace de recuperación (F1-AUT-03). Responde igual exista o no la cuenta. */
 export function RecuperarPage() {

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import type { CupoRead, EstadoCuenta, FamiliaRead, InicioPago, PagoPortalRead, ServicioPortalRead } from '@/types'
 
-import type { Carnet } from '@/features/preventivos/api'
+import type { Carnet } from '@/features/preventivos'
 
 export interface PlanPortal {
   plan: string

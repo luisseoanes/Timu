@@ -1,25 +1,13 @@
 import type { ReactNode } from 'react'
 
 import { Icono, type NombreIcono } from '@/components/Icono'
+import { MarcaTimu } from '@/components/MarcaTimu'
 
 const PILARES: { icono: NombreIcono; titulo: string; texto: string }[] = [
   { icono: 'clinica', titulo: 'Historia clínica', texto: 'Cada consulta, fórmula y adjunto, firmado y en un solo lugar.' },
   { icono: 'rutas', titulo: 'Visitas a domicilio', texto: 'Rutas del día optimizadas para el equipo médico.' },
   { icono: 'preventivos', titulo: 'Preventivos al día', texto: 'Vacunas y desparasitaciones con carnet digital verificable.' },
 ]
-
-/** Marca de TIMU: huella dentro de un sello con la cruz clínica. */
-export function MarcaTimu({ claro = false }: { claro?: boolean }) {
-  return (
-    <span className={`marca${claro ? ' marca-clara' : ''}`}>
-      <span className="marca-sello" aria-hidden="true">
-        <Icono nombre="huella" size={22} />
-      </span>
-      <span className="marca-nombre">TIMU</span>
-      <span className="marca-sub">Veterinaria a domicilio</span>
-    </span>
-  )
-}
 
 /**
  * Pantallas de acceso (ingreso, recuperación, activación): panel de marca a la

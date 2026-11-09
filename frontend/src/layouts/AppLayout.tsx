@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { Icono, type NombreIcono } from '@/components/Icono'
-import { MarcaTimu } from '@/features/auth/AccesoLayout'
-import { useAuth } from '@/features/auth/AuthContext'
+import { MarcaTimu } from '@/components/MarcaTimu'
+import { useAuth } from '@/features/auth'
 import { NOMBRE_ROL, puede, type Accion } from '@/lib/permisos'
 
 interface ItemNav {

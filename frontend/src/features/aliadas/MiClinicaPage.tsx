@@ -1,8 +1,8 @@
 import { useState } from 'react'
 
 import { Icono } from '@/components/Icono'
-import { MarcaTimu } from '@/features/auth/AccesoLayout'
-import { useAuth } from '@/features/auth/AuthContext'
+import { MarcaTimu } from '@/components/MarcaTimu'
+import { useAuth } from '@/features/auth'
 import { mensajeError } from '@/lib/errores'
 import { fecha, hoyISO, moneda } from '@/lib/formato'
 

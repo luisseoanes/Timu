@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Modal } from '@/components/Modal'
-import { useEspecies } from '@/features/catalogos/api'
+import { useEspecies } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
 import { fecha } from '@/lib/formato'
 import type { FamiliaRead, MascotaRead } from '@/types'

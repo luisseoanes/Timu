@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { api } from '@/api/client'
 import { Modal } from '@/components/Modal'
-import { usePlanes } from '@/features/catalogos/api'
+import { usePlanes } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
 import { moneda } from '@/lib/formato'
 import type { FamiliaRead } from '@/types'

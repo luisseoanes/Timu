@@ -1,5 +1,5 @@
 import { Consulta } from '@/components/Consulta'
-import { useTiposServicio } from '@/features/catalogos/api'
+import { useTiposServicio } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
 
 import { useActivarCatalogo, useCiudadesTodas, useEsquemas } from './api'

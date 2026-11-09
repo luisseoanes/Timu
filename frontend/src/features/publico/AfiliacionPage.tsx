@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { Icono } from '@/components/Icono'
-import { MarcaTimu } from '@/features/auth/AccesoLayout'
+import { MarcaTimu } from '@/components/MarcaTimu'
 import { mensajeError } from '@/lib/errores'
 import { moneda } from '@/lib/formato'
 
