@@ -86,6 +86,13 @@ git commit --fixup <sha>                  # corrige un commit local aún sin emp
 git rebase -i --autosquash origin/main    # funde los fixup antes de empujar
 ```
 
+Con mucho trabajo sin commit, los commits se construyen en un worktree aparte, para no
+tocar la copia de trabajo: `git worktree add -b <rama> ../timu-<rama> HEAD`, y en él cada
+commit con la batería de [§1](#1-antes-de-hacer-commit) pasada sobre su propio estado. Si
+el último queda idéntico a la copia de trabajo, `git update-ref refs/heads/main <rama>
+<sha-anterior>` y `git reset` dejan `main` en él sin tocar los ficheros. La columna 72 se
+mide en caracteres: `awk length` cuenta bytes, y una tilde vale dos.
+
 ## 3. Formato del mensaje
 
 Seguimos [Conventional Commits 1.0.0](https://www.conventionalcommits.org/es/v1.0.0/):
