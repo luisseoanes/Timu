@@ -103,6 +103,10 @@ def test_produccion_sin_variable_obligatoria_no_arranca():
         {"STORAGE_ACCESS_KEY": "timu-local"},
         {"STORAGE_SECRET_KEY": "timu-local-secreto"},
         {"STORAGE_PUBLIC_ENDPOINT_URL": "http://localhost:9000"},
+        # Obligatoria, pero el valor de desarrollo la cumplia: cualquiera que lea el repo
+        # podia suscribir el webhook de WhatsApp.
+        {"WHATSAPP_VERIFY_TOKEN": "timu-verify"},
+        {"SECRET_KEY": "cambiar-en-produccion-solo-para-desarrollo-local"},
     ],
 )
 def test_produccion_con_valores_inseguros_no_arranca(cambio):

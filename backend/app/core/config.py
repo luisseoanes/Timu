@@ -10,12 +10,14 @@ Ambiente = Literal["local", "test", "staging", "production"]
 # permisos sobre los datos; `inicializar` le da LOGIN con APP_DB_PASSWORD.
 ROL_APLICACION = "timu_app"
 
-# Valores de desarrollo que nunca pueden llegar a un ambiente desplegado.
-_SECRET_KEY_LOCAL = "cambiar-en-produccion"
+# Valores de desarrollo que nunca pueden llegar a un ambiente desplegado. La clave de
+# desarrollo tiene 32 caracteres o mas: PyJWT avisa con una HMAC mas corta.
+_SECRET_KEY_LOCAL = "cambiar-en-produccion-solo-para-desarrollo-local"
 _POSTGRES_PASSWORD_LOCAL = "timu"
 _APP_DB_PASSWORD_LOCAL = "timu_app"
 _STORAGE_ACCESS_KEY_LOCAL = "timu-local"
 _STORAGE_SECRET_KEY_LOCAL = "timu-local-secreto"
+_WHATSAPP_VERIFY_TOKEN_LOCAL = "timu-verify"
 
 # F0-05 Variables sin las que el servicio no arranca, por ambiente desplegado.
 OBLIGATORIAS: dict[str, tuple[str, ...]] = {
@@ -91,7 +93,7 @@ class Settings(BaseSettings):
 
     WHATSAPP_PHONE_NUMBER_ID: str = ""
     WHATSAPP_ACCESS_TOKEN: str = ""
-    WHATSAPP_VERIFY_TOKEN: str = "timu-verify"
+    WHATSAPP_VERIFY_TOKEN: str = _WHATSAPP_VERIFY_TOKEN_LOCAL
     WHATSAPP_API_VERSION: str = "v21.0"
     # Secreto de la app de Meta: firma X-Hub-Signature-256 de los webhooks.
     WHATSAPP_APP_SECRET: str = ""
@@ -205,6 +207,8 @@ class Settings(BaseSettings):
             errores.append(
                 "STORAGE_ACCESS_KEY y STORAGE_SECRET_KEY no pueden ser las de desarrollo"
             )
+        if self.WHATSAPP_VERIFY_TOKEN == _WHATSAPP_VERIFY_TOKEN_LOCAL:
+            errores.append("WHATSAPP_VERIFY_TOKEN no puede ser el valor de desarrollo")
         if self.STORAGE_PUBLIC_ENDPOINT_URL and "localhost" in self.STORAGE_PUBLIC_ENDPOINT_URL:
             errores.append("STORAGE_PUBLIC_ENDPOINT_URL no admite localhost")
         if any("localhost" in o or o == "*" for o in self.BACKEND_CORS_ORIGINS):
