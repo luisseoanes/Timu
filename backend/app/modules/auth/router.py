@@ -12,8 +12,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 
-from app.core.config import settings
-from app.core.deps import (
+from app.api.deps import (
     INTERNOS,
     Admin,
     DbSession,
@@ -22,6 +21,7 @@ from app.core.deps import (
     publico,
     require_roles,
 )
+from app.core.config import settings
 from app.core.enums import Rol
 from app.modules.auth import service, sesiones
 from app.modules.auth.models import Usuario

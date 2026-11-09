@@ -1,6 +1,6 @@
 import pytest
 
-from app.core import salud
+from app.api import salud
 
 
 async def _ok() -> str:

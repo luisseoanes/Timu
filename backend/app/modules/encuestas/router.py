@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
-from app.core.deps import INTERNOS, DbSession, publico, requiere
+from app.api.deps import INTERNOS, DbSession, publico, requiere
 from app.core.enums import Rol
 from app.modules.encuestas import service
 from app.modules.encuestas.models import ConfiguracionEncuesta, Encuesta

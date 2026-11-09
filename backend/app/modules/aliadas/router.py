@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, Response, status
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy import select
 
-from app.core.deps import INTERNOS, DbSession, requiere
+from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import Rol
 from app.core.errores import Prohibido
 from app.modules.aliadas import service

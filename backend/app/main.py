@@ -4,11 +4,11 @@ import structlog
 from fastapi import Depends, FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api import salud
+from app.api.deps import DbSession, publico
 from app.api.v1.router import api_router
-from app.core import salud
 from app.core.config import settings
 from app.core.database import engine, rol_con_privilegios
-from app.core.deps import DbSession, publico
 from app.core.errores import RESPUESTAS_ERROR, registrar_manejadores
 from app.core.middleware import (
     LimiteCargaMiddleware,

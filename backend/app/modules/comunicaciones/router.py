@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 
-from app.core.deps import INTERNOS, DbSession, requiere
+from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import Rol
 from app.modules.comunicaciones import service
 from app.modules.comunicaciones.models import BajaComunicaciones, Mensaje, PlantillaWhatsApp

@@ -7,7 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.core.deps import INTERNOS, DbSession, Interno, requiere
+from app.api.deps import INTERNOS, DbSession, Interno, requiere
 from app.modules.tareas import service
 from app.modules.tareas.models import Tarea
 from app.schemas.common import Page, ParamsListado, paginar

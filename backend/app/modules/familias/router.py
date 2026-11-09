@@ -5,7 +5,7 @@ import structlog
 from fastapi import APIRouter, Depends, File, UploadFile, status
 from pydantic import BaseModel
 
-from app.core.deps import INTERNOS, TODOS, AlcanceActual, DbSession, Interno, publico, requiere
+from app.api.deps import INTERNOS, TODOS, AlcanceActual, DbSession, Interno, publico, requiere
 from app.core.enums import EstadoAfiliacion, Rol
 from app.core.errores import ReglaNegocio
 from app.modules.archivos import service as archivos

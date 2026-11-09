@@ -22,6 +22,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from starlette.requests import Request
 
+from app.api.deps import get_alcance, get_current_user
 from app.core.config import ROL_APLICACION
 from app.core.database import (
     BORRABLES,
@@ -37,7 +38,6 @@ from app.core.database import (
     nombre_enum_db,
     nuevo_id,
 )
-from app.core.deps import get_alcance, get_current_user
 from app.core.enums import Rol
 from app.core.permisos_db import CATALOGOS, CONDICIONES
 from app.core.security import hash_password
@@ -564,7 +564,7 @@ async def test_reactivar_una_version_antigua_de_plantilla(db: AsyncSession):
 def test_los_grafos_de_la_base_son_los_del_codigo():
     """Guarda: una arista nueva en app/core/transiciones.py sin su migracion (o al reves), o
     un grafo sin su trigger, hace fallar la suite. La tabla solo la lee el dueno del esquema."""
-    from app.core.transiciones import TRANSICIONES, aristas
+    from app.transiciones import TRANSICIONES, aristas
 
     engine = create_engine(URL_SYNC)
     with engine.connect() as conn:

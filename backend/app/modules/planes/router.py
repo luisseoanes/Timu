@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
-from app.core.deps import INTERNOS, DbSession, requiere
+from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import Rol
 from app.core.errores import NoEncontrado
 from app.modules.auth.models import Usuario

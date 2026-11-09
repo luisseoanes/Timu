@@ -9,9 +9,9 @@ import json
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
+from app.api.deps import DbSession, publico
 from app.core.config import settings
 from app.core.database import SISTEMA, fijar_contexto
-from app.core.deps import DbSession, publico
 from app.core.eventos import EventoDominio
 from app.core.outbox import publicar
 from app.integrations.payments import verificar_evento_wompi

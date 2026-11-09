@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import select
 
-from app.core.deps import TODOS, DbSession, requiere
+from app.api.deps import TODOS, DbSession, requiere
 from app.core.enums import Rol
 from app.core.errores import Conflicto, NoEncontrado
 from app.modules.catalogos import service

@@ -9,7 +9,7 @@ from fastapi.dependencies.models import Dependant
 from fastapi.routing import APIRoute, iter_route_contexts
 from httpx import AsyncClient
 
-from app.core.deps import publico
+from app.api.deps import publico
 from app.core.enums import Rol
 from app.main import app
 from tests.conftest import crear_usuario, login

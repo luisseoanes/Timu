@@ -307,7 +307,7 @@ def _restricciones_de_la_tabla(_: Any, clase: type) -> None:
 
 async def get_db(request: Request) -> AsyncGenerator[AsyncSession, None]:
     """Sesion de la peticion. Empieza con contexto "publico"; la autenticacion lo sustituye
-    por el del usuario (`app.core.deps`)."""
+    por el del usuario (`app.api.deps`)."""
     async with SessionLocal() as session:
         session.sync_session.info[CLAVE_CONTEXTO] = ContextoDb(
             rol=PUBLICO, request_id=getattr(request.state, "request_id", None)

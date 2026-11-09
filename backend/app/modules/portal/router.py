@@ -9,7 +9,7 @@ from uuid import UUID
 from fastapi import APIRouter, Response, status
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.core.deps import DbSession, FamiliaActual
+from app.api.deps import DbSession, FamiliaActual
 from app.core.validaciones import TelefonoCO
 from app.modules.cartera import service as cartera
 from app.modules.cartera.schemas import EstadoCuenta

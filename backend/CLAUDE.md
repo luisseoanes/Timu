@@ -37,7 +37,7 @@ Reglas que atraviesan todo el backend:
 - **La transacción la cierra `get_db`**, no los servicios. Las funciones de `service.py`
   hacen `flush()` para obtener IDs; el commit ocurre al terminar la petición, y el rollback
   ante cualquier excepción. No metas `commit()` en un servicio.
-- **Autorización con `requiere`** (alias de `require_roles`, en `app/core/deps.py`):
+- **Autorización con `requiere`** (alias de `require_roles`, en `app/api/deps.py`):
   `dependencies=[Depends(requiere(Rol.ADMIN))]`, o `requiere(*INTERNOS)` para todo el
   equipo. **Ningún endpoint queda abierto por
   omisión** (F1-AUT-02): uno abierto a propósito declara `Depends(publico)`, y
@@ -179,7 +179,7 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
   dos pasos. `test_cada_check_y_cada_unico_del_modelo_estan_en_la_base` compara modelo y
   base en los dos sentidos. Teléfonos: E.164 con `+` en todas las tablas
   (`normalizar_telefono`); `telefono_whatsapp` quita el `+` solo al enviar a Meta.
-- **Los cambios de estado los valida la base.** `app/core/transiciones.py` tiene el grafo de
+- **Los cambios de estado los valida la base.** `app/transiciones.py` tiene el grafo de
   cada entidad con estado (servicios y pendientes los importa de su módulo); la tabla
   `transiciones_estado` guarda las mismas aristas y el trigger `validar_transicion`
   (`BEFORE UPDATE OF estado`) rechaza cualquier cambio que no esté en ella, con

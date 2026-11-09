@@ -12,7 +12,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.core.deps import INTERNOS, DbSession, requiere
+from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import Rol
 from app.modules.archivos import service as archivos
 from app.modules.archivos.models import Archivo
