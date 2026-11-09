@@ -76,7 +76,7 @@ class Conflicto(ErrorDominio):
 class ReglaNegocio(ErrorDominio):
     """Peticion bien formada que una regla de negocio rechaza (p. ej. cartera en mora)."""
 
-    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     codigo = "regla_negocio"
 
 

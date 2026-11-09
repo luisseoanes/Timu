@@ -1,4 +1,7 @@
-fastapi==0.115.6
+fastapi==0.162.0
+# Fijado: fastapi solo pide starlette>=0.46 y la 0.41 que traia antes tenia CVE publicadas
+# (pip-audit). Sin fijarla, cada build instalaria la ultima que haya ese dia.
+starlette==1.10.0
 uvicorn[standard]==0.34.0
 pydantic[email]==2.10.4
 pydantic-settings==2.7.0
@@ -8,9 +11,9 @@ psycopg[binary]==3.3.5
 alembic==1.14.0
 # UUIDv7 desde Python (la 3.12 no trae uuid.uuid7): IDs que hacen falta antes del flush.
 uuid-utils==1.1.0
-PyJWT[crypto]==2.13.0
+PyJWT[crypto]==2.15.1
 bcrypt==4.2.1
-python-multipart==0.0.20
+python-multipart==0.0.32
 celery==5.4.0
 # Fijado: celery 5.4 admite cualquier kombu<6 y la 5.7 importa `packaging` sin declararlo,
 # con lo que worker y beat no arrancan. 5.4.2 es la que salio con celery 5.4.
@@ -20,6 +23,6 @@ httpx==0.28.1
 boto3==1.43.89
 structlog==26.1.0
 sentry-sdk==2.68.1
-fpdf2==2.8.2
+fpdf2==2.8.9
 openpyxl==3.1.5
 anthropic==2.3.0

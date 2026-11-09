@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 from fastapi.dependencies.models import Dependant
-from fastapi.routing import APIRoute
+from fastapi.routing import APIRoute, iter_route_contexts
 from httpx import AsyncClient
 
 from app.core.deps import publico
@@ -22,14 +22,23 @@ def _llamables(dep: Dependant) -> Iterator[Callable[..., Any]]:
         yield from _llamables(sub)
 
 
+def rutas() -> dict[str, Any]:
+    """clave -> ruta efectiva, con el prefijo y las dependencias de los routers que la
+    incluyen. Desde FastAPI 0.137 `app.routes` no las lista: cada `include_router` queda
+    como un unico elemento que se resuelve al atender, y recorrerlo dejaba fuera de esta
+    guarda casi todos los endpoints sin que fallara nada."""
+    return {
+        f"{','.join(sorted(ruta.methods))} {ruta.path}": ruta
+        for ruta in iter_route_contexts(app.routes)
+        if isinstance(ruta.original_route, APIRoute) and not ruta.path.startswith("/__")
+    }
+
+
 def matriz() -> dict[str, frozenset[Rol] | str]:
     """ruta -> perfiles permitidos, o 'publico'. Una ruta puede combinar varios guards
     (p. ej. el del router y el del endpoint): aplica la interseccion."""
     resultado: dict[str, frozenset[Rol] | str] = {}
-    for ruta in app.routes:
-        if not isinstance(ruta, APIRoute) or ruta.path.startswith("/__"):
-            continue
-        clave = f"{','.join(sorted(ruta.methods))} {ruta.path}"
+    for clave, ruta in rutas().items():
         llamables = list(_llamables(ruta.dependant))
         if publico in llamables:
             resultado[clave] = "publico"
@@ -40,15 +49,22 @@ def matriz() -> dict[str, frozenset[Rol] | str]:
     return resultado
 
 
+def test_la_guarda_recorre_todas_las_rutas_de_la_api():
+    """Si FastAPI vuelve a cambiar como guarda las rutas, esta guarda no puede quedarse
+    mirando un subconjunto: todo lo que publica el OpenAPI tiene que estar en `rutas()`."""
+    publicadas = {
+        f"{metodo.upper()} {ruta}"
+        for ruta, operaciones in app.openapi()["paths"].items()
+        for metodo in operaciones
+        if not ruta.startswith("/__")  # las que montan las propias pruebas
+    }
+    recorridas = {f"{metodo} {ruta.path}" for ruta in rutas().values() for metodo in ruta.methods}
+    assert publicadas - recorridas == set()
+
+
 def test_toda_ruta_declara_permisos():
     declaradas = matriz()
-    sin_declarar = [
-        f"{','.join(sorted(r.methods))} {r.path}"
-        for r in app.routes
-        if isinstance(r, APIRoute)
-        and not r.path.startswith("/__")
-        and f"{','.join(sorted(r.methods))} {r.path}" not in declaradas
-    ]
+    sin_declarar = [clave for clave in rutas() if clave not in declaradas]
     assert not sin_declarar, f"Rutas sin permisos declarados: {sin_declarar}"
 
 
