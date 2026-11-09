@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Depends, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
@@ -12,14 +13,30 @@ from sqlalchemy import select
 from app.api.deps import INTERNOS, DbSession, publico, requiere
 from app.core.enums import Rol
 from app.core.errores import ReglaNegocio
-from app.modules.afiliaciones import service
+from app.modules.afiliaciones import ciclo, service
 from app.modules.afiliaciones.models import SolicitudAfiliacion
 from app.modules.auth.models import Usuario
 from app.modules.familias import service as familias
-from app.modules.familias.schemas import FormularioFamilia
+from app.modules.familias.models import Familia, Mascota
+from app.modules.familias.schemas import (
+    Baja,
+    FamiliaRead,
+    FormularioFamilia,
+    MascotaCreate,
+    MascotaRead,
+)
 from app.modules.planes import service as planes
+from app.schemas.common import Mensaje
+
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/afiliaciones", tags=["afiliaciones"])
+# Rutas de la ficha que cruzan con el contrato (ciclo.py): misma ruta y etiqueta que el resto
+# de las de familias, para que el panel y el OpenAPI no distingan donde viven.
+familias_router = APIRouter(prefix="/familias", tags=["familias"])
+mascotas_router = APIRouter(prefix="/mascotas", tags=["familias"])
+formularios_router = APIRouter(prefix="/formularios", tags=["formularios"])
+GESTION_ESTADO = Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))
 
 Comercial = Annotated[Usuario, Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))]
 EQUIPO = Depends(requiere(*INTERNOS))
@@ -86,7 +103,7 @@ async def afiliacion_en_linea(
         exclude={"plan_codigo", "acepta_condiciones", "acepta_tratamiento_datos", "origen"}
     )
     resultado = await db.run_sync(
-        familias.desde_formulario, FormularioFamilia(**formulario, origen="afiliacion")
+        ciclo.recibir_formulario, FormularioFamilia(**formulario, origen="afiliacion")
     )
     familia = await db.run_sync(familias.obtener, resultado.familia_id)
     await db.refresh(familia, ["mascotas"])
@@ -160,3 +177,63 @@ async def pago_manual(
         comprobante=data.comprobante,
         usuario_id=usuario.id,
     )
+
+
+# --- Ciclo de vida de la familia afiliada (ciclo.py) ------------------------------------------
+
+
+@familias_router.post(
+    "/{familia_id}/baja", response_model=FamiliaRead, dependencies=[GESTION_ESTADO]
+)
+async def dar_de_baja(db: DbSession, familia_id: UUID, data: Baja) -> Familia:
+    """F1-FAM-01 Baja logica: se conserva toda la informacion y su historial."""
+    familia = await db.run_sync(familias.obtener, familia_id)
+    return await db.run_sync(ciclo.dar_de_baja, familia, data.motivo)
+
+
+@familias_router.post(
+    "/{familia_id}/anonimizar",
+    response_model=FamiliaRead,
+    dependencies=[Depends(requiere(Rol.ADMIN))],
+)
+async def anonimizar(db: DbSession, familia_id: UUID) -> Familia:
+    """Habeas data (Ley 1581): sustituye los datos personales de la familia. No se deshace."""
+    familia = await db.run_sync(familias.obtener, familia_id)
+    return await db.run_sync(ciclo.anonimizar, familia)
+
+
+@familias_router.post(
+    "/{familia_id}/mascotas",
+    response_model=MascotaRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[EQUIPO],
+)
+async def agregar_mascota(db: DbSession, familia_id: UUID, data: MascotaCreate) -> Mascota:
+    familia = await db.run_sync(familias.obtener, familia_id)
+    return await db.run_sync(ciclo.agregar_mascota, familia, data)
+
+
+@mascotas_router.post("/{mascota_id}/baja", response_model=MascotaRead, dependencies=[EQUIPO])
+async def dar_de_baja_mascota(db: DbSession, mascota_id: UUID, data: Baja) -> MascotaRead:
+    mascota = await db.run_sync(familias.obtener_mascota, mascota_id)
+    return await db.run_sync(
+        familias.mascota_read, await db.run_sync(ciclo.dar_de_baja_mascota, mascota, data.motivo)
+    )
+
+
+@formularios_router.post(
+    "/familia",
+    response_model=Mensaje,
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(publico)],
+)
+async def formulario_familia(db: DbSession, data: FormularioFamilia) -> Mensaje:
+    """Autollenado del perfil desde un formulario publico, sin redigitacion.
+
+    La respuesta es la misma si la familia es nueva o ya existia: un formulario publico no
+    puede servir para averiguar quien esta afiliado.
+    """
+    if not data.sitio_web:
+        resultado = await db.run_sync(ciclo.recibir_formulario, data)
+        logger.info("Formulario de familia procesado: %s", resultado.model_dump(mode="json"))
+    return Mensaje(detail="Recibimos tus datos; te contactaremos pronto")

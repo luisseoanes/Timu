@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from uuid import UUID
 
 from sqlalchemy import Select, and_, or_, select, text
@@ -10,7 +11,7 @@ from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
 from app.core.eventos import EventoDominio, declarar_evento
 from app.core.outbox import publicar
 from app.core.scope import Alcance, permite, restringir
-from app.core.tiempo import ahora, hoy
+from app.core.tiempo import ahora
 from app.integrations import geocodificacion
 from app.modules.archivos import service as archivos
 from app.modules.archivos.models import Archivo
@@ -155,17 +156,12 @@ def cambiar_estado(
 
 
 def dar_de_baja(db: Session, familia: Familia, motivo: str) -> Familia:
-    """F1-FAM-01 Baja logica: la familia deja de aparecer, pero su historia se conserva."""
+    """F1-FAM-01 Baja logica: la familia deja de aparecer, pero su historia se conserva.
+
+    Solo marca la ficha. La baja completa, que antes cancela el contrato vigente, es
+    `afiliaciones.ciclo.dar_de_baja`."""
     if familia.dada_de_baja_en is not None:
         raise ReglaNegocio("La familia ya esta dada de baja")
-    from app.modules.cartera import service as cartera
-    from app.modules.planes import service as planes
-
-    # Sin esto el contrato seguiria vigente: cuotas, avisos de mora y cobro a la tarjeta
-    # de una familia que ya se fue.
-    contrato = planes.contrato_vigente(db, familia.id)
-    if contrato is not None:
-        cartera.cancelar(db, contrato, f"Baja de la familia: {motivo}")
     familia.estado = EstadoAfiliacion.CANCELADA
     familia.dada_de_baja_en = ahora()
     familia.motivo_baja = motivo
@@ -226,34 +222,23 @@ def obtener_mascota(db: Session, mascota_id: UUID) -> Mascota:
     return mascota
 
 
-def agregar_mascota(db: Session, familia: Familia, data: MascotaCreate) -> Mascota:
+# El alta va en dos pasos para que quien la orquesta (afiliaciones.ciclo.agregar_mascota)
+# valide la mascota contra el contrato antes de guardarla: un rechazo no deja nada escrito.
+AgregarMascota = Callable[[Session, Familia, MascotaCreate], Mascota]
+
+
+def nueva_mascota(db: Session, familia: Familia, data: MascotaCreate) -> Mascota:
+    """Valida la mascota y la devuelve sin incorporarla a la familia ni guardarla."""
     if familia.dada_de_baja_en is not None:
         raise ReglaNegocio("No se pueden agregar mascotas a una familia dada de baja")
     (mascota,) = _mascotas_validas(db, [data])
-    afiliada = _validar_contra_plan(db, familia, mascota)
-    familia.mascotas.append(mascota)
-    db.flush()
-    if afiliada:
-        from app.modules.preventivos import service as preventivos
-
-        # F1-AFI-03 La mascota que entra a un plan vigente recibe su calendario preventivo.
-        preventivos.calendario_inicial(db, mascota, hoy())
     return mascota
 
 
-def _validar_contra_plan(db: Session, familia: Familia, mascota: Mascota) -> bool:
-    """F1-PLA-03 Con contrato vigente, la mascota nueva debe caber en el plan (o pagar el
-    adicional que defina la regla) y ser de una especie que el plan cubre."""
-    from app.modules.planes import service as planes
-
-    contrato = planes.contrato_vigente(db, familia.id)
-    if contrato is None:
-        return False
-    plan = planes.obtener(db, contrato.plan_id)
-    if plan.especies and mascota.especie not in plan.especies:
-        raise ReglaNegocio(f"El plan {plan.nombre} no cubre la especie {mascota.especie}")
-    planes.ajustar_por_mascotas(db, familia, "mascota_alta")
-    return True
+def incorporar_mascota(db: Session, familia: Familia, mascota: Mascota) -> Mascota:
+    familia.mascotas.append(mascota)
+    db.flush()
+    return mascota
 
 
 def actualizar_mascota(db: Session, mascota: Mascota, data: MascotaUpdate) -> Mascota:
@@ -270,10 +255,6 @@ def dar_de_baja_mascota(db: Session, mascota: Mascota, motivo: str) -> Mascota:
     mascota.dada_de_baja_en = ahora()
     mascota.motivo_baja = motivo
     db.flush()
-    from app.modules.planes import service as planes
-
-    familia = obtener(db, mascota.familia_id)
-    planes.ajustar_por_mascotas(db, familia, "mascota_baja")
     return mascota
 
 
@@ -324,29 +305,15 @@ def geocodificar(db: Session, familia_id: UUID) -> str | None:
 _CAMPOS_COMPLETABLES = ("email", "direccion", "titular_nombre")
 
 
-def desde_formulario(db: Session, data: FormularioFamilia) -> ResultadoFormulario:
-    """Crea o completa el perfil y deja al interesado en el embudo comercial (F3-COM-01)."""
-    from app.modules.comercial import service as comercial
-
-    resultado = _desde_formulario(db, data)
-    comercial.registrar(
-        db,
-        origen=data.origen[:24],
-        telefono=data.telefono,
-        email=str(data.email) if data.email else None,
-        nombre=data.titular_nombre,
-        ciudad=data.ciudad,
-        familia_id=resultado.familia_id,
-        datos={"mascotas": [m.especie for m in data.mascotas]},
-    )
-    return resultado
-
-
-def _desde_formulario(db: Session, data: FormularioFamilia) -> ResultadoFormulario:
+def desde_formulario(
+    db: Session, data: FormularioFamilia, *, agregar_mascota: AgregarMascota
+) -> ResultadoFormulario:
     """Crea la familia o completa la existente con el mismo documento.
 
     Como el formulario es publico, sobre una familia existente solo se llenan campos vacios
-    y se agregan mascotas nuevas: nunca se sobrescribe lo que el equipo ya valido.
+    y se agregan mascotas nuevas: nunca se sobrescribe lo que el equipo ya valido. Las
+    mascotas nuevas de una familia existente entran con `agregar_mascota`, que inyecta quien
+    orquesta el formulario (afiliaciones.ciclo): valida el plan y programa los preventivos.
     """
     acotar_publico(db, tipo_documento=data.tipo_documento, documento=data.documento)
     familia = db.scalar(
@@ -408,17 +375,12 @@ def anonimizar(db: Session, familia: Familia) -> Familia:
     bitacora). Lo hace la funcion anonimizar_familia() de la base, que solo admite el
     contexto de un administrador. Lo clinico y lo contable se conserva, ligado a una familia
     que ya no identifica a nadie. Las fotos y los PDF con datos personales se borran del
-    almacenamiento despues de confirmar (outbox): si la transaccion se revierte, siguen ahi."""
-    from app.modules.cartera.models import Contrato
-    from app.modules.planes.service import VIGENTES
+    almacenamiento despues de confirmar (outbox): si la transaccion se revierte, siguen ahi.
 
+    Con un contrato vigente la base se niega; el mensaje claro lo da antes quien orquesta
+    (`afiliaciones.ciclo.anonimizar`)."""
     if familia.anonimizada_en is not None:
         raise Conflicto("La familia ya esta anonimizada")
-    vigente = db.scalar(
-        select(Contrato.id).where(Contrato.familia_id == familia.id, Contrato.estado.in_(VIGENTES))
-    )
-    if vigente is not None:
-        raise ReglaNegocio("Cancele el contrato vigente antes de anonimizar la familia")
     claves = list(db.scalars(text("SELECT anonimizar_familia(:id)"), {"id": familia.id}))
     if claves:
         publicar(db, EventoDominio(EVENTO_ANONIMIZADA, {"claves": claves}))

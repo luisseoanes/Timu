@@ -9,11 +9,11 @@ from sqlalchemy import func, select
 
 from app.core.enums import Rol
 from app.core.tiempo import ahora, hoy
+from app.modules.afiliaciones import ciclo
 from app.modules.campanas import segmentos, service
 from app.modules.campanas.models import Campana, DestinatarioCampana, EjecucionCampana
 from app.modules.cartera import service as cartera
 from app.modules.comunicaciones.models import BajaComunicaciones, Mensaje, PlantillaWhatsApp
-from app.modules.familias import service as familias
 from tests import fabricas
 from tests.conftest import crear_usuario, login
 
@@ -43,7 +43,7 @@ async def base(db):
     await db.run_sync(cartera.generar_cuotas, hoy())
     await db.run_sync(cartera.revisar_cartera, hoy())
     retirada, _ = await fabricas.afiliada(db, hoy(), telefono="+573001000004")
-    await db.run_sync(familias.dar_de_baja, retirada, "se mudo")
+    await db.run_sync(ciclo.dar_de_baja, retirada, "se mudo")
     cali.titular_nombre, morosa.titular_nombre = "Ana Cali", "Mora Cali"
     await db.flush()
     return {"cali": cali, "bogota": bogota, "morosa": morosa}

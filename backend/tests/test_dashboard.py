@@ -12,11 +12,11 @@ from httpx import AsyncClient
 from app.core.enums import EstadoServicio, Rol, TipoServicio
 from app.core.tiempo import ahora, hoy
 from app.integrations import correo
+from app.modules.afiliaciones import ciclo
 from app.modules.cartera import service as cartera
 from app.modules.dashboard import reportes, service
 from app.modules.dashboard.models import ReporteProgramado
 from app.modules.encuestas.models import Encuesta
-from app.modules.familias import service as familias
 from app.modules.rutas.models import ParadaRuta, Ruta
 from app.modules.servicios.models import Servicio
 from tests import fabricas
@@ -50,7 +50,7 @@ async def operacion(db):
             usuario_id=None,
         )
     )
-    await db.run_sync(familias.dar_de_baja, bogota, "se mudo")
+    await db.run_sync(ciclo.dar_de_baja, bogota, "se mudo")
     # Una consulta completada, encuestada con 4, dentro de una ruta cumplida.
     servicio = Servicio(
         familia_id=cali1.id,

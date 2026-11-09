@@ -525,12 +525,12 @@ async def test_conciliar_pendientes_consulta_la_pasarela(db, monkeypatch):
 
 async def test_baja_de_familia_cancela_contrato_y_tarjeta(db):
     """Revision F1: dar de baja dejaba el contrato vigente y se seguia facturando."""
+    from app.modules.afiliaciones import ciclo
     from app.modules.cartera.models import MedioPagoRecurrente
-    from app.modules.familias import service as familias
 
     familia, contrato = await fabricas.afiliada(db, date(2026, 1, 10))
     await _con_tarjeta(db, familia)
-    await db.run_sync(familias.dar_de_baja, familia, "se fue del pais")
+    await db.run_sync(ciclo.dar_de_baja, familia, "se fue del pais")
     assert contrato.estado == "cancelada"
     assert await db.run_sync(service.generar_cuotas, date(2026, 4, 8)) == 0
     medio = await db.scalar(select(MedioPagoRecurrente))

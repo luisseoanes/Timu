@@ -1,6 +1,9 @@
 from fastapi import APIRouter
 
 from app.api.v1 import webhooks
+from app.modules.afiliaciones.router import familias_router as ciclo_familias_router
+from app.modules.afiliaciones.router import formularios_router
+from app.modules.afiliaciones.router import mascotas_router as ciclo_mascotas_router
 from app.modules.afiliaciones.router import router as afiliaciones_router
 from app.modules.aliadas.router import router as aliadas_router
 from app.modules.auth.router import router as auth_router
@@ -13,7 +16,7 @@ from app.modules.comercial.router import router as comercial_router
 from app.modules.comunicaciones.router import router as comunicaciones_router
 from app.modules.dashboard.router import router as dashboard_router
 from app.modules.encuestas.router import router as encuestas_router
-from app.modules.familias.router import formularios_router, mascotas_router
+from app.modules.familias.router import mascotas_router
 from app.modules.familias.router import router as familias_router
 from app.modules.ia.router import router as ia_router
 from app.modules.planes.router import router as planes_router
@@ -34,6 +37,8 @@ for r in (
     catalogos_router,
     familias_router,
     mascotas_router,
+    ciclo_familias_router,
+    ciclo_mascotas_router,
     formularios_router,
     reglas_router,
     planes_router,

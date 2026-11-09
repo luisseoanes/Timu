@@ -41,27 +41,8 @@ DEPS_HTTP = ("app", "api", "deps")
 # otro dominio va por evento del outbox; algo que el dominio de abajo necesita del de
 # arriba se le inyecta, como los respondedores de `comunicaciones`.
 CICLOS_CONOCIDOS: dict[tuple[str, str], str] = {
-    ("cartera", "familias"): "lee Familia y Mascota; da de alta y congela la familia",
     ("cartera", "planes"): "lee el Plan del contrato y su valor",
-    ("clinica", "familias"): "lee Familia y Mascota del paciente",
-    ("clinica", "planes"): "consume beneficios del plan al atender",
-    ("comercial", "cartera"): "formato_cop para el bot",
-    ("comercial", "ia"): "respuestas del bot con apoyo de IA",
-    ("comercial", "planes"): "el bot cotiza planes",
-    ("familias", "cartera"): "contrato vigente al consultar y dar de baja",
-    ("familias", "comercial"): "asigna comercial a la familia nueva",
-    ("familias", "planes"): "planes vigentes al afiliar",
-    ("familias", "preventivos"): "programa el plan preventivo de la mascota nueva",
-    ("ia", "clinica"): "contexto de la solicitud virtual",
-    ("ia", "familias"): "contexto de la mascota",
-    ("ia", "planes"): "contexto del plan",
     ("planes", "cartera"): "prorrateo y cuotas al cambiar de plan",
-    ("planes", "familias"): "lee Familia y Mascota del beneficio",
-    ("preventivos", "familias"): "lee Familia y Mascota",
-    ("preventivos", "planes"): "preventivos que cubre el plan",
-    ("preventivos", "servicios"): "agenda el servicio del preventivo",
-    ("servicios", "familias"): "lee Familia y Mascota del servicio",
-    ("servicios", "planes"): "consume el beneficio del plan",
 }
 
 
