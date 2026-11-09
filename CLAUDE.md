@@ -138,6 +138,7 @@ parte de las propias suites; ninguno se desactiva:
 | `backend/tests/test_persistencia.py` y `backend/tests/test_migraciones.py` | Que el modelo y la base dejen de decir lo mismo: una clave primaria sin UUIDv7, un enum o un `CHECK` sin migración, un conjunto cerrado como texto libre, una referencia a catálogo sin clave foránea, un grafo de estados o un trigger de auditoría o inmutabilidad que falte, una tabla de negocio con `DELETE`, una tabla sin RLS o una política distinta de la matriz de `permisos_db.py`, un valor por defecto de servidor que el modelo no declara, una migración que no se revierte, una consulta de un listado o de una tarea del beat que recorre entera una tabla que crece, una llave de `publico` que ninguna política usa, o un `restaurar.sh` que cree el rol distinto de las migraciones. |
 | `backend/tests/test_suite.py` | Una prueba del backend fuera de `tests/test_*.py`. |
 | `backend/tests/test_permisos.py` (`test_la_guarda_recorre_todas_las_rutas_de_la_api`) | Que la guarda de permisos deje de ver rutas que publica el OpenAPI (pasó al subir a FastAPI 0.162: `app.routes` ya no las lista). |
+| Job **Vulnerabilidades conocidas** de `ci.yml` | Una dependencia de la API, el worker o el panel con una vulnerabilidad publicada. |
 | `frontend/src/test/suite.test.ts` | Una prueba del panel fuera de los patrones de Vitest (`src/**/*.{test,spec}.ts(x)`) o de Playwright (`e2e/`, `e2e-stack/`), o desactivada con `.only`, `.skip`, `.todo` o `.fixme`. |
 | `frontend/src/test/setup.ts` | Una petición del panel que ninguna prueba simuló con MSW: la prueba falla en lugar de seguir en verde con un error de red que nadie miró. Los catálogos comunes van en `frontend/src/test/handlers.ts`. |
 | `forbidOnly` en `frontend/playwright.config.ts` y `frontend/playwright.stack.config.ts` | Un `.only` en e2e cuando corre en CI. |
@@ -179,9 +180,9 @@ escrita en el cuerpo del commit. La cobertura del backend se mide con
 `concurrency = greenlet` porque los servicios corren dentro de `db.run_sync`. Sin eso,
 coverage deja de contar las líneas posteriores a la primera consulta y el informe miente.
 
-`.github/workflows/ci.yml` ejecuta formato, análisis estático, tipos, todas las pruebas y el
-job del stack; el release depende de todos ellos, así que no sale una versión sin la
-batería completa.
+`.github/workflows/ci.yml` ejecuta formato, análisis estático, tipos, todas las pruebas, la
+auditoría de vulnerabilidades y el job del stack; el release depende de todos ellos, así
+que no sale una versión sin la batería completa.
 
 ## Commits y publicación de versiones
 

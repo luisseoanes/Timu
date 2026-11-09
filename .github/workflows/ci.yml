@@ -124,6 +124,48 @@ jobs:
           path: frontend/coverage/lcov.info
           retention-days: 7
 
+  # Lo que se despliega (API, worker, panel en produccion): ninguna vulnerabilidad publicada.
+  # Las herramientas de desarrollo y de publicacion tambien corren aqui, con los permisos del
+  # CI (el release escribe en el repositorio): bloquean las altas y criticas, y las moderadas
+  # quedan en el registro del paso, porque `npm audit` las lista todas y solo sale con error
+  # desde el nivel pedido. pip-audit no da la gravedad: en Python bloquea cualquiera.
+  # Un aviso nuevo pone esto en rojo sin que cambie el codigo: se actualiza la dependencia,
+  # o, si no hay version corregida, se anade `--ignore-vuln <ID>` al paso de pip-audit con el
+  # motivo y la fecha en un comentario (npm no tiene equivalente: se espera al arreglo o se
+  # fija la transitiva con `overrides` en package.json).
+  dependencias:
+    name: Vulnerabilidades conocidas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: API y worker
+        working-directory: backend
+        run: pipx run pip-audit==2.10.1 -r requirements-worker.txt --progress-spinner off
+
+      - name: Panel en produccion
+        working-directory: frontend
+        run: npm audit --omit=dev
+
+      - name: Herramientas de Python
+        working-directory: backend
+        run: pipx run pip-audit==2.10.1 -r requirements-dev.txt --progress-spinner off
+
+      - name: Herramientas del panel (bloquean altas y criticas)
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+      - name: Herramientas de publicacion (bloquean altas y criticas)
+        run: npm audit --audit-level=high
+
   e2e:
     name: Extremo a extremo
     runs-on: ubuntu-latest
@@ -265,7 +307,7 @@ jobs:
 
   release:
     name: Publicar
-    needs: [backend, frontend, e2e, stack]
+    needs: [backend, frontend, dependencias, e2e, stack]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
