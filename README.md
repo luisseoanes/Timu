@@ -67,7 +67,10 @@ general.
 ## Desarrollo sin Docker
 
 ```bash
-# Backend: necesita PostgreSQL y Redis (por ejemplo, `docker compose up -d db redis`)
+# Backend: base, Redis y almacenamiento del compose. `inicializar` aplica las migraciones y da
+# login a `timu_app`, el rol con el que se conecta la API: sin ese paso no puede entrar.
+docker compose up -d db redis almacenamiento
+docker compose run --rm inicializar
 cd backend
 uv venv --python 3.12 && source .venv/bin/activate
 uv pip install -r requirements-dev.txt
@@ -77,6 +80,10 @@ uvicorn app.main:app --reload
 cd frontend
 npm install && npm run dev
 ```
+
+Desde el host, `backend/.env` necesita `POSTGRES_HOST=localhost` (y `POSTGRES_PORT` si
+cambiaste `TIMU_DB_PORT`) y `REDIS_URL=redis://localhost:6379/0`. Sin un worker de Celery,
+`/health` responde «degradado» con `workers` en `falla`.
 
 ## Pruebas y calidad
 
