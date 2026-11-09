@@ -168,7 +168,8 @@ Es una lista accesible con `aria-label`; cada barra repite su valor en `title`.
 
 ## Selector de familia — `SelectorFamilia`
 
-`features/familias/SelectorFamilia.tsx`. Buscar y elegir una familia dentro de un
+`features/familias/SelectorFamilia.tsx`, exportado desde `@/features/familias`: es un widget
+del dominio (consulta familias), así que no sube a `src/components/`. Buscar y elegir una familia dentro de un
 formulario (servicios, tareas, remisiones, orientación virtual). Con la familia elegida
 muestra su resumen y un botón *Cambiar*.
 

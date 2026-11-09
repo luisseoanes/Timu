@@ -6,14 +6,41 @@ Cada dominio de la plataforma es una carpeta en `src/features/` con lo suyo dent
 
 ```
 features/familias/
+  index.ts                 Superficie pública: lo único que otros dominios importan
   api.ts                   Consultas y mutaciones con React Query
   FamiliasPage.tsx         Pantalla
   FamiliasPage.test.tsx    Sus pruebas, al lado de lo que prueban
-  <Componente>.tsx         Piezas que sólo usa este dominio
+  <Componente>.tsx         Piezas del dominio
 ```
 
-Una pieza sube a `src/components/` únicamente cuando la usan dos dominios. Nada de una
-carpeta `common/` que termine siendo un cajón de sastre.
+### Qué puede importar cada cosa
+
+- **Dentro de un dominio**, con ruta relativa (`./api`).
+- **De otro dominio**, solo lo que exporta su `index.ts`: `import { useFamilia } from
+  '@/features/familias'`. Para usar algo que no está, se añade al `index.ts` de su dominio;
+  nunca `@/features/familias/api` (ESLint lo rechaza) ni `../familias/api`.
+- **Los datos de otro dominio se consumen con sus hooks**, no se copian: `useFamilia` desde
+  clínica o servicios comparte la caché de React Query porque es la misma clave. Un widget de
+  dominio que otros reutilizan (`SelectorFamilia`) también se queda en su dominio y se
+  exporta.
+- **A `src/components/` sube lo que es solo presentación** y no sabe de ningún dominio
+  (`Modal`, `Icono`, `MarcaTimu`). Nada de una carpeta `common/` que termine siendo un cajón
+  de sastre.
+- Cada pieza vive en el dominio de lo que consulta: `useMascotas` (`/mascotas`) en
+  `familias`, `useEquipo` (`/auth/equipo`) en `auth`.
+
+Capas, de abajo arriba; cada una solo usa las anteriores:
+
+| Capa | Qué | No puede importar |
+| --- | --- | --- |
+| Base | `src/api`, `src/components`, `src/lib`, `src/types`, `src/styles` | ningún dominio |
+| Dominios base | `auth` (sesión, equipo) y `catalogos` | otro dominio |
+| Dominios | el resto de `src/features/` | `admin`, `portal`, `publico`; ni cerrar un ciclo |
+| Espacios de entrada | `admin`, `portal`, `publico` | — (solo los monta `App.tsx`) |
+| Composición | `App.tsx`, `main.tsx`, `layouts/`, `routes/`, `test/` | — |
+
+`src/test/arquitectura.test.ts` hace fallar la suite si algo de esto se incumple, también
+por rutas relativas que ESLint no ve.
 
 ## Nombres
 

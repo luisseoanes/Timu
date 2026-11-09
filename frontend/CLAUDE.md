@@ -7,10 +7,15 @@ Las rutas de este fichero son relativas a `frontend/`.
 ## Arquitectura
 
 React 18 + Vite, alias `@/` → `src/`. Un directorio por dominio en `src/features/<dominio>/`
-con su `api.ts` (React Query) y sus pantallas; una pieza sube a `src/components/` sólo
-cuando la usan dos dominios. Hay tres espacios con su propio layout: el panel del equipo
-(`AppLayout`, menú según el perfil), el portal de familias (`/portal`) y el de la clínica
-aliada (`/aliada`); `ProtectedRoute` lleva a cada perfil al suyo.
+con su `api.ts` (React Query), sus pantallas y un `index.ts` con su superficie pública:
+**entre dominios solo se importa `@/features/<dominio>`**, dentro de uno, con ruta relativa.
+A `src/components/` sube lo que es solo presentación y no conoce ningún dominio. Las capas
+(base, `auth` y `catalogos`, dominios, espacios de entrada) y la prohibición de ciclos están
+en `docs/frontend/conventions.md` y las vigilan ESLint y `src/test/arquitectura.test.ts`.
+
+Hay tres espacios con su propio layout: el panel del equipo (`AppLayout`, menú según el
+perfil), el portal de familias (`/portal`) y el de la clínica aliada (`/aliada`);
+`ProtectedRoute` lleva a cada perfil al suyo.
 
 - **`src/api/client.ts` es el único que habla con la API.** Ningún componente arma una
   URL ni usa `fetch`; ESLint lo impide.

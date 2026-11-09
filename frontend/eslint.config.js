@@ -27,6 +27,19 @@ export default tseslint.config(
       ],
       // El cliente de axios es el único que puede hablar con la API (docs/frontend/conventions.md).
       'no-restricted-globals': ['error', { name: 'fetch', message: 'Usa el cliente de @/api/client.' }],
+      // Entre dominios solo se usa la superficie pública (src/test/arquitectura.test.ts).
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/features/*/*'],
+              message:
+                'Importa de @/features/<dominio> (su index.ts); dentro del propio dominio, con ruta relativa.',
+            },
+          ],
+        },
+      ],
       'no-restricted-properties': [
         'error',
         {
