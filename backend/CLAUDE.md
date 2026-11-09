@@ -226,7 +226,11 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
   de confirmar. Un dato personal nuevo en una tabla ligada a la familia exige añadirlo a esa
   función (con su migración) y a `test_anonimizar_no_deja_datos_personales`.
   `test_la_aplicacion_solo_borra_estado_tecnico` falla si una tabla de negocio recupera
-  `DELETE`.
+  `DELETE`. Una familia dada de baja no tiene contrato vigente, por los dos lados (migración `0027`):
+  `tr_familias_baja_sin_contrato_vigente` rechaza marcar la baja con uno vigente, así que la
+  baja completa cancela antes el contrato (`afiliaciones.ciclo.dar_de_baja`), y
+  `tr_contratos_vigente_de_familia_activa` rechaza crear o reactivar uno para una familia que
+  ya se fue.
 - **Lo que ve y escribe cada perfil lo decide la base (RLS).** Toda tabla tiene RLS y cuatro
   políticas para `timu_app` (`p_<tabla>_<operación>`), generadas de la matriz de
   `app/core/permisos_db.py`: `PERMISOS` (perfil → tabla → `S`, `I`, `U`, `D` y `L`, que es

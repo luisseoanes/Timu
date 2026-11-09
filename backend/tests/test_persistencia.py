@@ -605,6 +605,39 @@ async def test_la_base_rechaza_una_transicion_fuera_del_grafo(db: AsyncSession):
         )
 
 
+async def test_una_familia_dada_de_baja_no_tiene_contrato_vigente(db: AsyncSession):
+    """La baja completa la orquesta afiliaciones.ciclo: cancela el contrato y marca la ficha.
+    Marcarla sin cancelarlo antes lo rechaza la base, con el servicio de familias o por SQL,
+    y tampoco deja reactivar despues el contrato de una familia que ya se fue."""
+    from app.modules.cartera import service as cartera
+    from app.modules.familias import service as familias
+
+    familia, contrato = await fabricas.afiliada(db, date(2026, 1, 1))
+    familia_id = familia.id  # el savepoint revertido expira el objeto
+    with pytest.raises(IntegrityError, match="tiene un contrato vigente"):
+        async with db.begin_nested():
+            await db.run_sync(familias.dar_de_baja, familia, "sin cancelar el contrato")
+    with pytest.raises(IntegrityError, match="tiene un contrato vigente"):
+        async with db.begin_nested():
+            await db.execute(
+                text("UPDATE familias SET dada_de_baja_en = now() WHERE id = :i"),
+                {"i": familia_id},
+            )
+
+    await db.refresh(familia)
+    contrato_id = contrato.id
+    await db.run_sync(cartera.cancelar, contrato, "Baja de la familia")
+    await db.run_sync(familias.dar_de_baja, familia, "con el contrato cancelado")
+    assert familia.dada_de_baja_en is not None
+
+    # Y por el otro lado: una familia dada de baja no recupera un contrato vigente.
+    with pytest.raises(IntegrityError, match="esta dada de baja"):
+        async with db.begin_nested():
+            await db.execute(
+                text("UPDATE contratos SET estado = 'activa' WHERE id = :i"), {"i": contrato_id}
+            )
+
+
 async def test_la_aplicacion_no_puede_ampliar_los_grafos(db: AsyncSession):
     with pytest.raises(Exception, match="permission denied|permiso denegado"):
         await db.execute(

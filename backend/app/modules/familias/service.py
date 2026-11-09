@@ -159,7 +159,8 @@ def dar_de_baja(db: Session, familia: Familia, motivo: str) -> Familia:
     """F1-FAM-01 Baja logica: la familia deja de aparecer, pero su historia se conserva.
 
     Solo marca la ficha. La baja completa, que antes cancela el contrato vigente, es
-    `afiliaciones.ciclo.dar_de_baja`."""
+    `afiliaciones.ciclo.dar_de_baja`; la base rechaza marcar la baja con un contrato vigente
+    (trigger `familia_sin_contrato_vigente`)."""
     if familia.dada_de_baja_en is not None:
         raise ReglaNegocio("La familia ya esta dada de baja")
     familia.estado = EstadoAfiliacion.CANCELADA
