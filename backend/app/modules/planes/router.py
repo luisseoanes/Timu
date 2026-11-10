@@ -17,6 +17,12 @@ from app.modules.catalogos import service as catalogos
 from app.modules.catalogos.models import TipoServicioCatalogo
 from app.modules.planes import service
 from app.modules.planes.models import CiudadPlan, Plan, TarifaPlan
+from app.modules.planes.schemas import (
+    CotizacionRead,
+    TarifaPeriodicidadRead,
+    TarifaRead,
+    cotizacion_read,
+)
 
 router = APIRouter(prefix="/planes", tags=["planes"])
 
@@ -74,20 +80,6 @@ class PlanUpdate(BaseModel):
     activo: bool | None = None
 
 
-class TarifaRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    peludos: int
-    valor: Decimal
-
-
-class TarifaPeriodicidadRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    periodicidad: Periodicidad
-    valor: Decimal
-
-
 class PlanRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -116,27 +108,6 @@ class PeludoIn(BaseModel):
 class CotizacionIn(BaseModel):
     ciudad: str
     peludos: list[PeludoIn] = Field(min_length=1)
-
-
-class PeludoCotizadoRead(BaseModel):
-    especie: str
-    plan_id: UUID
-    plan_nombre: str
-    valor_mensual: Decimal
-
-
-class CotizacionRead(BaseModel):
-    """Lo que pagaria la afiliacion con cada periodicidad. `valor_periodo` es lo que cobra
-    cada cuota; `ahorro`, lo que se ahorra frente a pagar el mensual por los mismos meses."""
-
-    periodicidad: Periodicidad
-    meses: int
-    tarifa_de: int = Field(description="Peludos cuya tarifa se aplica (de 1 a 4)")
-    peludos: list[PeludoCotizadoRead]
-    valor_mensual: Decimal
-    valor_periodo: Decimal
-    descuento: bool
-    ahorro: Decimal
 
 
 class Recomendacion(BaseModel):
@@ -186,30 +157,10 @@ async def cotizacion(db: DbSession, data: CotizacionIn) -> list[CotizacionRead]:
     """6.2 / 6.3 Precio de una afiliacion con cada periodicidad: cada peludo con su plan."""
     ciudad = await db.run_sync(catalogos.ciudad_valida, data.ciudad)
     peludos = [(p.especie, p.plan_id) for p in data.peludos]
-    opciones = []
-    for periodicidad in Periodicidad:
-        c = await db.run_sync(service.cotizar, ciudad, peludos, periodicidad)
-        opciones.append(
-            CotizacionRead(
-                periodicidad=Periodicidad(c.periodicidad),
-                meses=c.meses,
-                tarifa_de=c.tarifa_de,
-                peludos=[
-                    PeludoCotizadoRead(
-                        especie=p.especie,
-                        plan_id=p.plan.id,
-                        plan_nombre=p.plan.nombre,
-                        valor_mensual=p.valor_mensual,
-                    )
-                    for p in c.peludos
-                ],
-                valor_mensual=c.valor_mensual,
-                valor_periodo=c.valor_periodo,
-                descuento=c.descuento,
-                ahorro=c.ahorro,
-            )
-        )
-    return opciones
+    return [
+        cotizacion_read(await db.run_sync(service.cotizar, ciudad, peludos, periodicidad))
+        for periodicidad in Periodicidad
+    ]
 
 
 @router.get("/recomendacion", response_model=Recomendacion, dependencies=[EQUIPO])
