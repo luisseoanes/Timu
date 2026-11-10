@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
 import structlog
@@ -13,6 +13,9 @@ from app.modules.familias import service
 from app.modules.familias.models import Familia
 from app.modules.familias.schemas import (
     CambioHistorial,
+    ContactoIn,
+    ContactoRead,
+    ContactoUpdate,
     FamiliaCreate,
     FamiliaRead,
     FamiliaUpdate,
@@ -111,6 +114,42 @@ async def historial(
         )
         for r in await db.run_sync(service.historial, familia_id, solo_estado)
     ]
+
+
+# --- Contactos adicionales (6.1): solo consulta, sin acceso ni mensajes ----------------------
+
+
+@router.post(
+    "/{familia_id}/contactos",
+    response_model=ContactoRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[EQUIPO],
+)
+async def agregar_contacto(db: DbSession, familia_id: UUID, data: ContactoIn) -> Any:
+    familia = await db.run_sync(service.obtener, familia_id)
+    return await db.run_sync(service.agregar_contacto, familia, data)
+
+
+@router.patch(
+    "/{familia_id}/contactos/{contacto_id}", response_model=ContactoRead, dependencies=[EQUIPO]
+)
+async def actualizar_contacto(
+    db: DbSession, familia_id: UUID, contacto_id: UUID, data: ContactoUpdate
+) -> Any:
+    familia = await db.run_sync(service.obtener, familia_id)
+    contacto = await db.run_sync(service.obtener_contacto, familia, contacto_id)
+    return await db.run_sync(service.actualizar_contacto, familia, contacto, data)
+
+
+@router.post(
+    "/{familia_id}/contactos/{contacto_id}/baja",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[EQUIPO],
+)
+async def dar_de_baja_contacto(db: DbSession, familia_id: UUID, contacto_id: UUID) -> None:
+    familia = await db.run_sync(service.obtener, familia_id)
+    contacto = await db.run_sync(service.obtener_contacto, familia, contacto_id)
+    await db.run_sync(service.dar_de_baja_contacto, familia, contacto)
 
 
 # --- Mascotas (F1-FAM-02) ---------------------------------------------------------------------

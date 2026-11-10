@@ -1,7 +1,17 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    and_,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.auditoria import Auditable
@@ -68,6 +78,15 @@ class Familia(Base, UUIDMixin, TimestampMixin, Auditable):
         lazy="selectin",
         order_by="Mascota.created_at",
     )
+    # Solo los vigentes: los dados de baja se conservan, pero no son contactos de la familia.
+    contactos: Mapped[list["ContactoFamilia"]] = relationship(
+        primaryjoin=lambda: and_(
+            ContactoFamilia.familia_id == Familia.id, ContactoFamilia.activo.is_(True)
+        ),
+        viewonly=True,
+        lazy="selectin",
+        order_by=lambda: ContactoFamilia.posicion,
+    )
 
 
 class Mascota(Base, UUIDMixin, TimestampMixin, Auditable):
@@ -99,3 +118,33 @@ class Mascota(Base, UUIDMixin, TimestampMixin, Auditable):
     motivo_baja: Mapped[str | None] = mapped_column(String(255))
 
     familia: Mapped[Familia] = relationship(back_populates="mascotas")
+
+
+class ContactoFamilia(Base, UUIDMixin, TimestampMixin, Auditable):
+    """6.1 Contactos adicionales de la familia: solo para consulta del equipo. No tienen acceso
+    a la plataforma ni reciben sus mensajes.
+
+    Como mucho tres vigentes: cada uno ocupa una posicion del 1 al 3, unica entre los
+    vigentes, asi que la base rechaza el cuarto aunque lleguen dos altas a la vez. Darlo de
+    baja lo marca y libera su posicion; nada se borra.
+    """
+
+    __tablename__ = "contactos_familia"
+    __checks__ = {
+        "posicion_rango": "posicion BETWEEN 1 AND 3",
+        "nombre_no_vacio": "btrim(nombre) <> ''",
+        "telefono_formato": "telefono ~ '^\\+[1-9][0-9]{7,14}$'",
+        "email_formato": "email IS NULL OR email ~ '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$'",
+        "baja_coherente": "activo = (dado_de_baja_en IS NULL)",
+    }
+    __unicos__ = {"posicion_vigente": (["familia_id", "posicion"], "activo")}
+    __columna_familia__ = "familia_id"
+
+    familia_id: Mapped[UUID] = mapped_column(ForeignKey("familias.id"), index=True)
+    posicion: Mapped[int] = mapped_column(Integer)
+    nombre: Mapped[str] = mapped_column(String(160))
+    telefono: Mapped[str] = mapped_column(String(32))
+    relacion: Mapped[str | None] = mapped_column(String(60))
+    email: Mapped[str | None] = mapped_column(String(255))
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    dado_de_baja_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

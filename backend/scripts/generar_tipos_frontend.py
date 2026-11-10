@@ -26,6 +26,7 @@ ESQUEMAS = [
     "EstadoServicio",
     "TipoDocumento",
     "MascotaRead",
+    "ContactoRead",
     "FamiliaRead",
     "CambioHistorial",
     "UsuarioRead",

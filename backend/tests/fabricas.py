@@ -5,6 +5,7 @@ from itertools import count
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import set_committed_value
 
 from app.modules.cartera import service as cartera
 from app.modules.cartera.models import Contrato
@@ -81,6 +82,8 @@ def familia(
         barrio="El Poblado",
     )
     f.mascotas = [Mascota(nombre=f"Mascota{i}", especie="canino") for i in range(mascotas)]
+    # Recien creada no tiene contactos; asi la relacion queda cargada, como al leerla de la base.
+    set_committed_value(f, "contactos", [])
     db.add(f)
     db.flush()
     return f

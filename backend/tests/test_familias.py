@@ -16,7 +16,7 @@ from app.modules.catalogos.service import cargar
 from app.modules.comercial.models import Interesado
 from app.modules.comunicaciones.models import Mensaje
 from app.modules.familias import service
-from app.modules.familias.models import Familia
+from app.modules.familias.models import ContactoFamilia, Familia
 from tests import fabricas
 from tests.conftest import autenticar, crear_usuario, login
 
@@ -529,6 +529,16 @@ async def _familia_con_rastro(db) -> tuple[Familia, Usuario]:
             familia_id=familia.id, canal="whatsapp", destino=familia.telefono, contenido="Hola Ana"
         )
     )
+    db.add(
+        ContactoFamilia(
+            familia_id=familia.id,
+            posicion=1,
+            nombre="Rocio Contacto",
+            telefono="+573009998877",
+            relacion="hermana",
+            email="rocio@ejemplo.co",
+        )
+    )
     await db.commit()
     return familia, portal
 
@@ -542,10 +552,21 @@ async def test_anonimizar_no_deja_datos_personales(client: AsyncClient, db, head
     assert datos["estado"] == "cancelada" and datos["documento"].startswith("ANON")
 
     # Nada de lo que la identificaba queda en la base, tampoco en la bitacora.
-    for tabla in ("familias", "usuarios", "mascotas", "interesados", "mensajes", "auditoria"):
+    for tabla in (
+        "familias",
+        "usuarios",
+        "mascotas",
+        "interesados",
+        "mensajes",
+        "contactos_familia",
+        "auditoria",
+    ):
         filas = await db.scalar(
             text(f"SELECT count(*) FROM {tabla} t WHERE to_jsonb(t)::text ~ :pii"),
-            {"pii": "Ana Ruiz|ana@ejemplo\\.co|Hola Ana|3001112233|Mascota0|Rosales|Torre 9"},
+            {
+                "pii": "Ana Ruiz|ana@ejemplo\\.co|Hola Ana|3001112233|Mascota0|Rosales|Torre 9"
+                "|Rocio|3009998877|rocio@ejemplo|hermana"
+            },
         )
         assert filas == 0, tabla
     await db.refresh(portal)
@@ -581,3 +602,78 @@ async def test_solo_un_administrador_anonimiza(client: AsyncClient, db):
     # Y la base tampoco lo admite fuera de un contexto de administrador.
     with pytest.raises(DBAPIError, match="Solo un administrador anonimiza"):
         await db.execute(text("SELECT anonimizar_familia(:i)"), {"i": familia_id})
+
+
+# --- Contactos adicionales (6.1) -----------------------------------------------------------------
+
+
+def _contacto(n: int, **cambios) -> dict:
+    return {"nombre": f"Contacto {n}", "telefono": f"30011122{n:02d}", **cambios}
+
+
+async def test_contactos_adicionales_como_mucho_tres_y_la_baja_libera_su_lugar(
+    client: AsyncClient, db, headers
+):
+    familia = await db.run_sync(fabricas.familia)
+    await db.commit()
+    url = f"/api/v1/familias/{familia.id}/contactos"
+    creados = []
+    for n in range(1, 4):
+        resp = await client.post(url, json=_contacto(n, relacion="hijo"), headers=headers)
+        assert resp.status_code == 201, resp.text
+        creados.append(resp.json())
+    assert [c["posicion"] for c in creados] == [1, 2, 3]
+    assert creados[0]["telefono"] == "+573001112201"
+
+    cuarto = await client.post(url, json=_contacto(4), headers=headers)
+    assert cuarto.status_code == 422 and "maximo 3" in cuarto.text
+
+    baja = await client.post(f"{url}/{creados[1]['id']}/baja", headers=headers)
+    assert baja.status_code == 204
+    otro = await client.post(url, json=_contacto(5, email="otro@ejemplo.co"), headers=headers)
+    assert otro.status_code == 201 and otro.json()["posicion"] == 2
+
+    ficha = (await client.get(f"/api/v1/familias/{familia.id}", headers=headers)).json()
+    assert [c["nombre"] for c in ficha["contactos"]] == ["Contacto 1", "Contacto 5", "Contacto 3"]
+    # El dado de baja se conserva marcado, no se borra.
+    assert await db.scalar(select(func.count()).select_from(ContactoFamilia)) == 4
+
+
+async def test_editar_un_contacto_valida_el_telefono(client: AsyncClient, db, headers):
+    familia = await db.run_sync(fabricas.familia)
+    await db.commit()
+    url = f"/api/v1/familias/{familia.id}/contactos"
+    creado = (await client.post(url, json=_contacto(1), headers=headers)).json()
+    malo = await client.patch(f"{url}/{creado['id']}", json={"telefono": "123"}, headers=headers)
+    assert malo.status_code == 422
+    bueno = await client.patch(
+        f"{url}/{creado['id']}", json={"relacion": "vecina"}, headers=headers
+    )
+    assert bueno.status_code == 200 and bueno.json()["relacion"] == "vecina"
+
+
+async def test_la_base_rechaza_un_cuarto_contacto_vigente(db):
+    """Comprobar en Python y despues insertar deja una ventana a dos altas simultaneas: el
+    limite lo pone la base, con la posicion unica entre los vigentes."""
+    familia = await db.run_sync(fabricas.familia)
+    for n in (1, 2, 3):
+        db.add(
+            ContactoFamilia(familia_id=familia.id, posicion=n, nombre="C", telefono="+573001112233")
+        )
+    await db.flush()
+    with pytest.raises(DBAPIError):
+        async with db.begin_nested():
+            db.add(
+                ContactoFamilia(
+                    familia_id=familia.id, posicion=4, nombre="C", telefono="+573001112233"
+                )
+            )
+            await db.flush()
+    with pytest.raises(DBAPIError):
+        async with db.begin_nested():
+            db.add(
+                ContactoFamilia(
+                    familia_id=familia.id, posicion=2, nombre="C", telefono="+573001112233"
+                )
+            )
+            await db.flush()

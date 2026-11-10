@@ -3,6 +3,7 @@ from uuid import UUID
 
 from sqlalchemy import Select, and_, or_, select, text
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import set_committed_value
 
 from app.core.auditoria import Accion, RegistroAuditoria
 from app.core.database import acotar_publico
@@ -18,8 +19,10 @@ from app.modules.archivos.models import Archivo
 from app.modules.auth.service import crear_usuario_portal
 from app.modules.catalogos import service as catalogos
 from app.modules.catalogos.models import Ciudad
-from app.modules.familias.models import Familia, Mascota
+from app.modules.familias.models import ContactoFamilia, Familia, Mascota
 from app.modules.familias.schemas import (
+    ContactoIn,
+    ContactoUpdate,
     FamiliaCreate,
     FamiliaUpdate,
     FormularioFamilia,
@@ -110,6 +113,8 @@ def crear(db: Session, data: FamiliaCreate, *, origen: str = "panel") -> Familia
     datos["ciudad"] = catalogos.ciudad_valida(db, data.ciudad)
     familia = Familia(**datos, origen=origen)
     familia.mascotas = _mascotas_validas(db, data.mascotas)
+    # Recien creada no tiene contactos: se marca cargada para no consultarla al serializar.
+    set_committed_value(familia, "contactos", [])
     if data.latitud is not None and data.longitud is not None:
         familia.geo_precision = "manual"
     db.add(familia)
@@ -210,6 +215,60 @@ def familia_de_usuario(db: Session, usuario_id: UUID) -> Familia:
 
 
 # --- Mascotas (F1-FAM-02) ---------------------------------------------------------------------
+
+
+# --- Contactos adicionales (6.1) ----------------------------------------------------------------
+
+MAX_CONTACTOS = 3
+
+
+def obtener_contacto(db: Session, familia: Familia, contacto_id: UUID) -> ContactoFamilia:
+    contacto = db.get(ContactoFamilia, contacto_id)
+    if contacto is None or contacto.familia_id != familia.id or not contacto.activo:
+        raise NoEncontrado("Contacto no encontrado")
+    return contacto
+
+
+def agregar_contacto(db: Session, familia: Familia, data: ContactoIn) -> ContactoFamilia:
+    """Ocupa la primera posicion libre. El limite lo garantiza la base (posicion 1 a 3, unica
+    entre los vigentes); aqui se comprueba antes para dar el mensaje."""
+    if familia.dada_de_baja_en is not None:
+        raise ReglaNegocio("La familia esta dada de baja")
+    ocupadas = set(
+        db.scalars(
+            select(ContactoFamilia.posicion).where(
+                ContactoFamilia.familia_id == familia.id, ContactoFamilia.activo.is_(True)
+            )
+        )
+    )
+    libres = sorted(set(range(1, MAX_CONTACTOS + 1)) - ocupadas)
+    if not libres:
+        raise ReglaNegocio(f"Una familia tiene como maximo {MAX_CONTACTOS} contactos adicionales")
+    contacto = ContactoFamilia(
+        familia_id=familia.id, posicion=libres[0], **data.model_dump(mode="json")
+    )
+    db.add(contacto)
+    db.flush()
+    db.refresh(familia, ["contactos"])
+    return contacto
+
+
+def actualizar_contacto(
+    db: Session, familia: Familia, contacto: ContactoFamilia, data: ContactoUpdate
+) -> ContactoFamilia:
+    for campo, valor in data.model_dump(exclude_unset=True, mode="json").items():
+        setattr(contacto, campo, valor)
+    db.flush()
+    db.refresh(familia, ["contactos"])
+    return contacto
+
+
+def dar_de_baja_contacto(db: Session, familia: Familia, contacto: ContactoFamilia) -> None:
+    """Se conserva marcado; su posicion queda libre para otro."""
+    contacto.activo = False
+    contacto.dado_de_baja_en = ahora()
+    db.flush()
+    db.refresh(familia, ["contactos"])
 
 
 def familia_por_telefono(db: Session, telefono: str) -> UUID | None:

@@ -25,6 +25,15 @@ export interface MascotaRead {
   foto_url?: string | null
 }
 
+export interface ContactoRead {
+  id: string
+  posicion: number
+  nombre: string
+  telefono: string
+  relacion?: string | null
+  email?: string | null
+}
+
 export interface FamiliaRead {
   titular_nombre: string
   tipo_documento?: TipoDocumento
@@ -46,6 +55,7 @@ export interface FamiliaRead {
   motivo_baja: string | null
   usuario_portal_id: string | null
   mascotas?: MascotaRead[]
+  contactos?: ContactoRead[]
 }
 
 export interface CambioHistorial {

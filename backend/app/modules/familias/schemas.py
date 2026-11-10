@@ -51,6 +51,33 @@ class MascotaRead(MascotaBase):
     foto_url: str | None = None
 
 
+class ContactoIn(BaseModel):
+    """Contacto adicional: solo consulta, sin acceso ni mensajes de la plataforma."""
+
+    nombre: str = Field(min_length=2, max_length=160)
+    telefono: TelefonoCO
+    relacion: str | None = Field(default=None, max_length=60, description="Opcional: pareja, hijo…")
+    email: EmailStr | None = None
+
+
+class ContactoUpdate(BaseModel):
+    nombre: str | None = Field(default=None, min_length=2, max_length=160)
+    telefono: TelefonoCO | None = None
+    relacion: str | None = Field(default=None, max_length=60)
+    email: EmailStr | None = None
+
+
+class ContactoRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    posicion: int
+    nombre: str
+    telefono: str
+    relacion: str | None = None
+    email: str | None = None
+
+
 class FamiliaBase(BaseModel):
     titular_nombre: str = Field(min_length=2, max_length=160)
     tipo_documento: TipoDocumento = TipoDocumento.CC
@@ -110,6 +137,7 @@ class FamiliaRead(FamiliaBase):
     motivo_baja: str | None
     usuario_portal_id: UUID | None
     mascotas: list[MascotaRead] = []
+    contactos: list[ContactoRead] = []
 
 
 class CambioHistorial(BaseModel):
