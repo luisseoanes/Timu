@@ -21,6 +21,7 @@ from tests import fabricas
 from tests.conftest import autenticar, crear_usuario, login
 
 PAYLOAD = {
+    "barrio": "Centro",
     "titular_nombre": "Ana Ruiz",
     "documento": "1020304050",
     "telefono": "573001112233",
@@ -351,6 +352,7 @@ async def test_cambiar_direccion_limpia_coordenadas(client: AsyncClient, headers
 
 
 FORMULARIO = {
+    "barrio": "Centro",
     "titular_nombre": "Luisa Gomez",
     "documento": "52.111.222",
     "telefono": "3157778899",
@@ -375,6 +377,7 @@ async def test_formulario_completa_sin_sobrescribir(client: AsyncClient, db, hea
         "/api/v1/formularios/familia",
         json={
             **FORMULARIO,
+            "barrio": "Centro",
             "titular_nombre": "Otro Nombre",
             "email": "luisa@correo.com",
             "mascotas": [
@@ -502,6 +505,9 @@ async def _familia_con_rastro(db) -> tuple[Familia, Usuario]:
     db.add(portal)
     await db.flush()
     familia.usuario_portal_id = portal.id
+    # Barrio y complemento cambian despues del alta para que tambien queden en la bitacora.
+    familia.barrio = "Rosales Alto"
+    familia.complemento = "Torre 9 apto 1204"
     foto = Archivo(
         clave="foto_mascota/2026/11/abc.jpg",
         proposito="foto_mascota",
@@ -539,7 +545,7 @@ async def test_anonimizar_no_deja_datos_personales(client: AsyncClient, db, head
     for tabla in ("familias", "usuarios", "mascotas", "interesados", "mensajes", "auditoria"):
         filas = await db.scalar(
             text(f"SELECT count(*) FROM {tabla} t WHERE to_jsonb(t)::text ~ :pii"),
-            {"pii": "Ana Ruiz|ana@ejemplo\\.co|Hola Ana|3001112233|Mascota0"},
+            {"pii": "Ana Ruiz|ana@ejemplo\\.co|Hola Ana|3001112233|Mascota0|Rosales|Torre 9"},
         )
         assert filas == 0, tabla
     await db.refresh(portal)

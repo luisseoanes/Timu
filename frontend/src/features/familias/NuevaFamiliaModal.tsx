@@ -47,7 +47,9 @@ export function NuevaFamiliaModal({ abierto, onCambio }: { abierto: boolean; onC
       telefono: texto(d, 'telefono') ?? '',
       email: texto(d, 'email'),
       ciudad: texto(d, 'ciudad') ?? '',
+      barrio: texto(d, 'barrio') ?? '',
       direccion: texto(d, 'direccion'),
+      complemento: texto(d, 'complemento'),
       mascotas: [
         {
           nombre: texto(d, 'mascota_nombre') ?? '',
@@ -115,8 +117,16 @@ export function NuevaFamiliaModal({ abierto, onCambio }: { abierto: boolean; onC
           </select>
         </label>
         <label className="campo">
+          <span>Barrio</span>
+          <input className="input" name="barrio" required minLength={2} maxLength={120} />
+        </label>
+        <label className="campo">
           <span>Dirección (opcional)</span>
           <input className="input" name="direccion" autoComplete="street-address" />
+        </label>
+        <label className="campo">
+          <span>Complemento (opcional)</span>
+          <input className="input" name="complemento" maxLength={255} placeholder="Torre, apartamento, indicaciones" />
         </label>
 
         <fieldset className="ancho formulario">

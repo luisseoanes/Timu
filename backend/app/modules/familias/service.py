@@ -125,7 +125,8 @@ def actualizar(db: Session, familia: Familia, data: FamiliaUpdate) -> Familia:
         cambios["ciudad"] = catalogos.ciudad_valida(db, cambios["ciudad"])
     manual = cambios.get("latitud") is not None and cambios.get("longitud") is not None
     ubicacion_cambio = any(
-        k in cambios and cambios[k] != getattr(familia, k) for k in ("direccion", "ciudad")
+        k in cambios and cambios[k] != getattr(familia, k)
+        for k in ("direccion", "barrio", "ciudad")
     )
     for campo, valor in cambios.items():
         setattr(familia, campo, valor)
@@ -287,7 +288,10 @@ def geocodificar(db: Session, familia_id: UUID) -> str | None:
     familia = db.get(Familia, familia_id)
     if familia is None or not familia.direccion or familia.geo_precision == "manual":
         return None
-    coordenadas = geocodificacion.geocodificar(familia.direccion, familia.ciudad)
+    # El barrio desambigua direcciones que se repiten en la ciudad (calles con el mismo numero).
+    coordenadas = geocodificacion.geocodificar(
+        f"{familia.direccion}, {familia.barrio}", familia.ciudad
+    )
     if coordenadas:
         familia.latitud, familia.longitud = coordenadas
         familia.geo_precision = "direccion"
@@ -303,7 +307,7 @@ def geocodificar(db: Session, familia_id: UUID) -> str | None:
 
 # --- Autollenado desde formularios (F1-FAM-03) ------------------------------------------------
 
-_CAMPOS_COMPLETABLES = ("email", "direccion", "titular_nombre")
+_CAMPOS_COMPLETABLES = ("email", "direccion", "complemento", "titular_nombre")
 
 
 def desde_formulario(
@@ -330,7 +334,9 @@ def desde_formulario(
             email=data.email,
             telefono=data.telefono,
             ciudad=data.ciudad,
+            barrio=data.barrio,
             direccion=data.direccion,
+            complemento=data.complemento,
             mascotas=data.mascotas,
         )
         familia = crear(db, nueva, origen=data.origen)

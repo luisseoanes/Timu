@@ -17,6 +17,7 @@ async def _registros(db, entidad_id: str) -> list[RegistroAuditoria]:
 
 def _familia(documento: str, **extra) -> dict:
     return {
+        "barrio": "Centro",
         "titular_nombre": "Ana",
         "documento": documento,
         "telefono": "3001112233",

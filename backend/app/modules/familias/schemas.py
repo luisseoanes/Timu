@@ -58,8 +58,12 @@ class FamiliaBase(BaseModel):
     email: EmailStr | None = None
     telefono: TelefonoCO
     ciudad: str = Field(max_length=80, description="Nombre de una ciudad activa del catalogo")
+    barrio: str = Field(min_length=2, max_length=120)
     direccion: str | None = Field(default=None, max_length=255)
-    notas: str | None = None
+    complemento: str | None = Field(
+        default=None, max_length=255, description="Torre, apartamento o indicaciones"
+    )
+    notas: str | None = Field(default=None, description="Nota interna del equipo")
 
 
 class FamiliaCreate(FamiliaBase):
@@ -73,7 +77,9 @@ class FamiliaUpdate(BaseModel):
     email: EmailStr | None = None
     telefono: TelefonoCO | None = None
     ciudad: str | None = Field(default=None, max_length=80)
+    barrio: str | None = Field(default=None, min_length=2, max_length=120)
     direccion: str | None = Field(default=None, max_length=255)
+    complemento: str | None = Field(default=None, max_length=255)
     latitud: float | None = Field(default=None, ge=-5, le=14)
     longitud: float | None = Field(default=None, ge=-82, le=-66)
     # Sin `estado`: el estado de afiliacion solo cambia por POST /estado (comercial o
@@ -93,6 +99,7 @@ class FamiliaRead(FamiliaBase):
     documento: str  # type: ignore[assignment]
     telefono: str  # type: ignore[assignment]
     email: str | None = None  # type: ignore[assignment]
+    barrio: str  # type: ignore[assignment]
     id: UUID
     estado: EstadoAfiliacion
     latitud: float | None
@@ -121,7 +128,9 @@ class FormularioFamilia(BaseModel):
     email: EmailStr | None = None
     telefono: TelefonoCO
     ciudad: str = Field(max_length=80)
+    barrio: str = Field(min_length=2, max_length=120)
     direccion: str | None = Field(default=None, max_length=255)
+    complemento: str | None = Field(default=None, max_length=255)
     mascotas: list[MascotaCreate] = Field(default_factory=list, max_length=10)
     origen: str = Field(default="formulario", max_length=32)
     # Campo trampa: los humanos no lo ven ni lo llenan; los bots si.

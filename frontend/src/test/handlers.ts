@@ -18,6 +18,7 @@ export const FAMILIA: FamiliaRead = {
   email: null,
   telefono: '573001112233',
   ciudad: 'Bogota',
+  barrio: 'Chapinero',
   direccion: null,
   latitud: null,
   longitud: null,

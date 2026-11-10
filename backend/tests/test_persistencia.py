@@ -162,6 +162,7 @@ async def test_una_familia_lleva_su_familia_a_la_base(client: AsyncClient, db: A
         documento="111",
         telefono="+573000000000",
         ciudad="Bogota",
+        barrio="Centro",
         usuario_portal_id=usuario.id,
     )
     db.add(familia)
@@ -408,13 +409,25 @@ async def test_toda_referencia_a_un_catalogo_tiene_llave_foranea(db: AsyncSessio
 async def test_la_base_rechaza_una_ciudad_fuera_del_catalogo(db: AsyncSession):
     with pytest.raises(IntegrityError, match="fk_familias_ciudad_ciudades"):
         db.add(
-            Familia(titular_nombre="T", documento="9", telefono="+573000000000", ciudad="Narnia")
+            Familia(
+                titular_nombre="T",
+                documento="9",
+                telefono="+573000000000",
+                ciudad="Narnia",
+                barrio="Centro",
+            )
         )
         await db.flush()
 
 
 async def test_corregir_el_nombre_de_una_ciudad_se_propaga(db: AsyncSession):
-    familia = Familia(titular_nombre="T", documento="9", telefono="+573000000000", ciudad="Bogota")
+    familia = Familia(
+        titular_nombre="T",
+        documento="9",
+        telefono="+573000000000",
+        ciudad="Bogota",
+        barrio="Centro",
+    )
     db.add(familia)
     await db.flush()
     await db.execute(text("UPDATE ciudades SET nombre = 'Bogotá D.C.' WHERE nombre = 'Bogota'"))
@@ -524,7 +537,8 @@ async def test_la_base_no_admite_una_cuota_pagada_sin_cubrir(db: AsyncSession):
         ),
         (
             "INSERT INTO familias (titular_nombre, tipo_documento, documento, telefono, ciudad,"
-            " estado, origen) VALUES ('T', 'CC', '1', '3001234567', 'Bogota', 'activa', 'panel')",
+            " barrio, estado, origen)"
+            " VALUES ('T', 'CC', '1', '3001234567', 'Bogota', 'Centro', 'activa', 'panel')",
             "ck_familias_telefono_formato",
         ),
         (

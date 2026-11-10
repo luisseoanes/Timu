@@ -39,7 +39,9 @@ async def test_request_id_entrante_invalido_se_reemplaza(client: AsyncClient):
 
 
 async def test_error_de_validacion_detalla_campos(client: AsyncClient, headers):
-    resp = await client.post("/api/v1/familias", json={"titular_nombre": "A"}, headers=headers)
+    resp = await client.post(
+        "/api/v1/familias", json={"barrio": "Centro", "titular_nombre": "A"}, headers=headers
+    )
     assert resp.status_code == 422
     cuerpo = resp.json()
     assert cuerpo["codigo"] == "validacion"
@@ -208,6 +210,7 @@ async def _crear_familias(client: AsyncClient, headers, nombres: list[str]) -> N
         resp = await client.post(
             "/api/v1/familias",
             json={
+                "barrio": "Centro",
                 "titular_nombre": nombre,
                 "documento": f"10{i}00",
                 "telefono": "3001112233",

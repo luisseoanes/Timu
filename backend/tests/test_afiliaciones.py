@@ -20,6 +20,7 @@ from tests import fabricas
 from tests.test_cartera import _evento
 
 FORMULARIO = {
+    "barrio": "Centro",
     "titular_nombre": "Luisa Gomez",
     "documento": "52111222",
     "telefono": "3157778899",

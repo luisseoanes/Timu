@@ -219,6 +219,26 @@ describe('FamiliaDetallePage', () => {
     expect(await screen.findByText('Cambios guardados.')).toBeInTheDocument()
   })
 
+  it('muestra el barrio y corrige barrio y complemento por separado de las notas', async () => {
+    let enviado: unknown = null
+    server.use(
+      http.patch(`${API}/familias/:id`, async ({ request }) => {
+        enviado = await request.json()
+        return HttpResponse.json({ ...FAMILIA, barrio: 'Rosales', complemento: 'Torre 2 apto 301' })
+      }),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    expect(await screen.findByText('Chapinero')).toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: 'Editar' }))
+    const barrio = screen.getByLabelText('Barrio')
+    await user.clear(barrio)
+    await user.type(barrio, 'Rosales')
+    await user.type(screen.getByLabelText('Complemento'), 'Torre 2 apto 301')
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(enviado).toEqual({ barrio: 'Rosales', complemento: 'Torre 2 apto 301' }))
+  })
+
   it('muestra el error del servidor al editar', async () => {
     server.use(
       http.patch(`${API}/familias/:id`, () =>

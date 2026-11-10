@@ -33,7 +33,9 @@ export interface SolicitudAfiliacionPublica {
   email?: string
   telefono: string
   ciudad: string
+  barrio: string
   direccion?: string
+  complemento?: string
   mascotas: { nombre: string; especie: string; sexo?: 'macho' | 'hembra' }[]
   plan_codigo: string
   acepta_condiciones: boolean

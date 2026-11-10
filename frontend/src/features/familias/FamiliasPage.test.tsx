@@ -88,6 +88,7 @@ describe('FamiliasPage', () => {
     await user.type(within(modal).getByLabelText('Celular'), '3001112233')
     await waitFor(() => expect(within(modal).getByRole('option', { name: 'Bogota' })).toBeInTheDocument())
     await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogota')
+    await user.type(within(modal).getByLabelText('Barrio'), 'Chapinero')
     await user.type(within(modal).getByLabelText('Nombre de la mascota'), 'Luna')
     await user.selectOptions(within(modal).getByLabelText('Especie'), 'perro')
     await user.click(within(modal).getByRole('button', { name: 'Guardar familia' }))
@@ -99,6 +100,7 @@ describe('FamiliasPage', () => {
         documento: '1020304050',
         telefono: '3001112233',
         ciudad: 'Bogota',
+        barrio: 'Chapinero',
         mascotas: [{ nombre: 'Luna', especie: 'perro' }],
       }),
     )
@@ -119,6 +121,7 @@ describe('FamiliasPage', () => {
     await user.type(within(modal).getByLabelText('Celular'), '3001112233')
     await waitFor(() => expect(within(modal).getByRole('option', { name: 'Bogota' })).toBeInTheDocument())
     await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogota')
+    await user.type(within(modal).getByLabelText('Barrio'), 'Chapinero')
     await user.type(within(modal).getByLabelText('Nombre de la mascota'), 'Luna')
     await user.selectOptions(within(modal).getByLabelText('Especie'), 'perro')
     await user.click(within(modal).getByRole('button', { name: 'Guardar familia' }))

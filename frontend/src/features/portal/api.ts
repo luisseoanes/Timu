@@ -105,7 +105,14 @@ function useMutacion<T, R>(fn: (datos: T) => Promise<R>) {
 
 export function useActualizarMisDatos() {
   return useMutacion(
-    async (datos: { email?: string; telefono?: string; direccion?: string; ciudad?: string }) =>
+    async (datos: {
+      email?: string
+      telefono?: string
+      barrio?: string
+      direccion?: string
+      complemento?: string
+      ciudad?: string
+    }) =>
       (await api.patch<FamiliaRead>('/portal/mi-familia', datos)).data,
   )
 }

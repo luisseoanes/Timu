@@ -78,6 +78,7 @@ def familia(
         telefono=telefono,
         email=email,
         ciudad=ciudad,
+        barrio="El Poblado",
     )
     f.mascotas = [Mascota(nombre=f"Mascota{i}", especie="canino") for i in range(mascotas)]
     db.add(f)

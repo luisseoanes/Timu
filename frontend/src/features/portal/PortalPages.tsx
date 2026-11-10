@@ -719,7 +719,7 @@ export function PortalDatos() {
               e.preventDefault()
               const d = new FormData(e.currentTarget)
               const cambios: Record<string, string> = {}
-              for (const campo of ['email', 'telefono', 'direccion'] as const) {
+              for (const campo of ['email', 'telefono', 'barrio', 'direccion', 'complemento'] as const) {
                 const v = String(d.get(campo) ?? '').trim()
                 if (v !== (f[campo] ?? '')) cambios[campo] = v
               }
@@ -740,9 +740,23 @@ export function PortalDatos() {
               <span>Correo</span>
               <input className="input" name="email" type="email" defaultValue={f.email ?? ''} />
             </label>
-            <label className="campo ancho">
+            <label className="campo">
+              <span>Barrio</span>
+              <input className="input" name="barrio" defaultValue={f.barrio} required minLength={2} maxLength={120} />
+            </label>
+            <label className="campo">
               <span>Dirección de las visitas</span>
               <input className="input" name="direccion" defaultValue={f.direccion ?? ''} />
+            </label>
+            <label className="campo ancho">
+              <span>Complemento</span>
+              <input
+                className="input"
+                name="complemento"
+                defaultValue={f.complemento ?? ''}
+                maxLength={255}
+                placeholder="Torre, apartamento, indicaciones"
+              />
             </label>
             {actualizar.isError && (
               <p className="error ancho" role="alert">

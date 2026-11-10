@@ -180,7 +180,13 @@ async def test_traza_por_familia(client: AsyncClient, db, headers):
     await _plantilla_aprobada(client, headers)
     familia = await client.post(
         "/api/v1/familias",
-        json={"titular_nombre": "Ana", "documento": "123456", "telefono": TEL, "ciudad": "Cali"},
+        json={
+            "barrio": "Centro",
+            "titular_nombre": "Ana",
+            "documento": "123456",
+            "telefono": TEL,
+            "ciudad": "Cali",
+        },
         headers=headers,
     )
     await _enviar(client, headers, familia_id=familia.json()["id"])
@@ -241,7 +247,13 @@ async def test_fallo_reportado_por_meta(client: AsyncClient, db, headers):
 async def test_entrante_se_asocia_a_la_familia_una_sola_vez(client: AsyncClient, db, headers):
     familia = await client.post(
         "/api/v1/familias",
-        json={"titular_nombre": "Ana", "documento": "123456", "telefono": TEL, "ciudad": "Cali"},
+        json={
+            "barrio": "Centro",
+            "titular_nombre": "Ana",
+            "documento": "123456",
+            "telefono": TEL,
+            "ciudad": "Cali",
+        },
         headers=headers,
     )
     evento = _evento(

@@ -29,7 +29,9 @@ export function AfiliacionPage() {
       telefono: texto('telefono') ?? '',
       email: texto('email'),
       ciudad: texto('ciudad') ?? '',
+      barrio: texto('barrio') ?? '',
       direccion: texto('direccion'),
+      complemento: texto('complemento'),
       mascotas: [
         {
           nombre: texto('mascota_nombre') ?? '',
@@ -90,8 +92,16 @@ export function AfiliacionPage() {
             <input className="input" name="ciudad" required autoComplete="address-level2" />
           </label>
           <label className="campo">
+            <span>Barrio</span>
+            <input className="input" name="barrio" required minLength={2} maxLength={120} />
+          </label>
+          <label className="campo">
             <span>Dirección</span>
             <input className="input" name="direccion" autoComplete="street-address" />
+          </label>
+          <label className="campo">
+            <span>Complemento (opcional)</span>
+            <input className="input" name="complemento" maxLength={255} placeholder="Torre, apartamento, indicaciones" />
           </label>
           <fieldset className="ancho formulario">
             <legend className="ancho">Tu mascota</legend>

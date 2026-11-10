@@ -38,11 +38,12 @@ _PASOS: list[tuple[str, str]] = [
         "familias",
         """
         INSERT INTO familias (titular_nombre, tipo_documento, documento, telefono, email,
-            ciudad, estado, origen, dada_de_baja_en)
+            ciudad, barrio, estado, origen, dada_de_baja_en)
         SELECT 'Familia ' || g, 'CC', 'VOL' || lpad(g::text, 9, '0'),
             '+57300' || lpad(g::text, 7, '0'), 'familia' || g || '@volumen.example.com',
             (SELECT array_agg(nombre ORDER BY nombre) FROM ciudades WHERE activa)
                 [1 + g % (SELECT count(*) FROM ciudades WHERE activa)],
+            'Barrio ' || (1 + g % 40),
             CASE WHEN g % 33 = 0 THEN 'cancelada'::estado_afiliacion
                  WHEN g % 14 = 0 THEN 'en_mora' ELSE 'activa' END,
             'panel',

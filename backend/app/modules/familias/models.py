@@ -18,6 +18,7 @@ class Familia(Base, UUIDMixin, TimestampMixin, Auditable):
         "telefono_formato": "telefono ~ '^\\+[1-9][0-9]{7,14}$'",
         "email_formato": "email IS NULL OR email ~ '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$'",
         "titular_no_vacio": "btrim(titular_nombre) <> ''",
+        "barrio_no_vacio": "btrim(barrio) <> ''",
         "documento_formato": "documento ~ '^[0-9A-Z]+$'",
         "latitud_rango": "latitud IS NULL OR latitud BETWEEN -90 AND 90",
         "longitud_rango": "longitud IS NULL OR longitud BETWEEN -180 AND 180",
@@ -39,7 +40,11 @@ class Familia(Base, UUIDMixin, TimestampMixin, Auditable):
     ciudad: Mapped[str] = mapped_column(
         String(80), ForeignKey("ciudades.nombre", onupdate="CASCADE"), index=True
     )
+    # 6.1 Zona/sector: el barrio, texto libre y obligatorio. El complemento (torre,
+    # apartamento, indicaciones) es opcional y no se mezcla con las notas internas.
+    barrio: Mapped[str] = mapped_column(String(120))
     direccion: Mapped[str | None] = mapped_column(String(255))
+    complemento: Mapped[str | None] = mapped_column(String(255))
     latitud: Mapped[float | None] = mapped_column()
     longitud: Mapped[float | None] = mapped_column()
     # direccion | ciudad (aproximada) | manual

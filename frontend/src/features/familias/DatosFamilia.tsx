@@ -6,7 +6,16 @@ import type { FamiliaRead } from '@/types'
 
 import { useActualizarFamilia, type CambiosFamilia } from './api'
 
-const CAMPOS: (keyof CambiosFamilia)[] = ['titular_nombre', 'telefono', 'email', 'ciudad', 'direccion', 'notas']
+const CAMPOS: (keyof CambiosFamilia)[] = [
+  'titular_nombre',
+  'telefono',
+  'email',
+  'ciudad',
+  'barrio',
+  'direccion',
+  'complemento',
+  'notas',
+]
 
 /** Datos del titular, en lectura; «Editar» los vuelve formulario. */
 export function DatosFamilia({ familia }: { familia: FamiliaRead }) {
@@ -41,9 +50,11 @@ export function DatosFamilia({ familia }: { familia: FamiliaRead }) {
           <div><dt>Celular</dt><dd className="numero">{familia.telefono}</dd></div>
           <div><dt>Correo</dt><dd>{familia.email ?? '—'}</dd></div>
           <div><dt>Ciudad</dt><dd>{familia.ciudad}</dd></div>
+          <div><dt>Barrio</dt><dd>{familia.barrio}</dd></div>
           <div><dt>Dirección</dt><dd>{familia.direccion ?? '—'}</dd></div>
+          <div><dt>Complemento</dt><dd>{familia.complemento ?? '—'}</dd></div>
           <div><dt>Origen</dt><dd>{familia.origen}</dd></div>
-          {familia.notas && <div><dt>Notas</dt><dd>{familia.notas}</dd></div>}
+          {familia.notas && <div><dt>Notas internas</dt><dd>{familia.notas}</dd></div>}
         </dl>
         {actualizar.isSuccess && <p className="exito" role="status">Cambios guardados.</p>}
       </section>
@@ -81,11 +92,25 @@ export function DatosFamilia({ familia }: { familia: FamiliaRead }) {
           </select>
         </label>
         <label className="campo">
+          <span>Barrio</span>
+          <input className="input" name="barrio" defaultValue={familia.barrio} required minLength={2} maxLength={120} />
+        </label>
+        <label className="campo">
           <span>Dirección</span>
           <input className="input" name="direccion" defaultValue={familia.direccion ?? ''} />
         </label>
+        <label className="campo">
+          <span>Complemento</span>
+          <input
+            className="input"
+            name="complemento"
+            defaultValue={familia.complemento ?? ''}
+            maxLength={255}
+            placeholder="Torre, apartamento, indicaciones"
+          />
+        </label>
         <label className="campo ancho">
-          <span>Notas</span>
+          <span>Notas internas</span>
           <textarea className="input" name="notas" rows={3} defaultValue={familia.notas ?? ''} />
         </label>
         {actualizar.isError && (

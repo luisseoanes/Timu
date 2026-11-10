@@ -32,7 +32,9 @@ export interface FamiliaRead {
   email?: string | null
   telefono: string
   ciudad: string
+  barrio: string
   direccion?: string | null
+  complemento?: string | null
   notas?: string | null
   id: string
   estado: EstadoAfiliacion

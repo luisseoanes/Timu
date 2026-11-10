@@ -33,6 +33,8 @@ class DatosFamiliaIn(BaseModel):
     email: EmailStr | None = None
     telefono: TelefonoCO | None = None
     direccion: str | None = Field(default=None, max_length=255)
+    barrio: str | None = Field(default=None, min_length=2, max_length=120)
+    complemento: str | None = Field(default=None, max_length=255)
     ciudad: str | None = Field(default=None, max_length=80)
 
 

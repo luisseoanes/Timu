@@ -35,13 +35,18 @@ export interface NuevaFamilia {
   telefono: string
   email?: string
   ciudad: string
+  barrio: string
   direccion?: string
+  complemento?: string
   notas?: string
   mascotas: NuevaMascota[]
 }
 
 export type CambiosFamilia = Partial<
-  Pick<NuevaFamilia, 'titular_nombre' | 'telefono' | 'email' | 'ciudad' | 'direccion' | 'notas'>
+  Pick<
+    NuevaFamilia,
+    'titular_nombre' | 'telefono' | 'email' | 'ciudad' | 'barrio' | 'direccion' | 'complemento' | 'notas'
+  >
 >
 
 export function useFamilias(filtros: FiltrosFamilias = {}) {

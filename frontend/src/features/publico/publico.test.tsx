@@ -122,6 +122,7 @@ describe('Afiliación en línea', () => {
     await user.type(screen.getByLabelText('Número de documento'), '1020304050')
     await user.type(screen.getByLabelText('Celular (WhatsApp)'), '3001112233')
     await user.type(screen.getByLabelText('Ciudad'), 'Bogota')
+    await user.type(screen.getByLabelText('Barrio'), 'Chapinero')
     await user.type(screen.getByLabelText('Nombre'), 'Luna')
     await user.click(screen.getByLabelText(/acepto las condiciones/i))
     await user.click(screen.getByLabelText(/autorizo el tratamiento/i))
@@ -129,6 +130,7 @@ describe('Afiliación en línea', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Ya tienes una afiliacion vigente')
     expect(enviado).toMatchObject({
       titular_nombre: 'Ana Ruiz',
+      barrio: 'Chapinero',
       plan_codigo: 'familiar',
       acepta_condiciones: true,
       acepta_tratamiento_datos: true,

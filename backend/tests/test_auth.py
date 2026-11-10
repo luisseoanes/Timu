@@ -189,6 +189,7 @@ async def test_nuevo_enlace_invalida_el_anterior(client: AsyncClient, db, admin)
 # --- F1-AUT-04 --------------------------------------------------------------------------------
 
 FAMILIA = {
+    "barrio": "Centro",
     "titular_nombre": "Ana Ruiz",
     "documento": "1020304050",
     "email": "ana@correo.com",
