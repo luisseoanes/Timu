@@ -148,7 +148,7 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Cómo se escriben los commits, cómo se trabaja sobre `main` y cómo salen las versiones |
 | [docs/documento-requerimientos-funcionales.md](docs/documento-requerimientos-funcionales.md) | Lo que TIMU pidió, transcrito literal: los requisitos que citan el código y el backlog (6.10, Sección 8…) |
 | [docs/propuesta-timu-puntos-15-19.md](docs/propuesta-timu-puntos-15-19.md) | Contrato funcional: la propuesta que responde a ese documento (secciones A a E) |
-| [docs/backlog.md](docs/backlog.md) | Backlog del backend: 101 unidades con criterio de aceptación y estado, por fase |
+| [docs/backlog.md](docs/backlog.md) | Backlog del backend: 105 unidades con criterio de aceptación y estado, por fase |
 | [docs/plan-persistencia.md](docs/plan-persistencia.md) | Por qué la base garantiza integridad y permisos: decisiones y registro de cada fase |
 | [docs/indicadores.md](docs/indicadores.md) | Definición de cada indicador del dashboard y de los exportables |
 | [docs/frontend/](docs/frontend/) | Sistema visual del panel: tokens, componentes, plantillas y convenciones |

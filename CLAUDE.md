@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 TIMU, plataforma de gestión veterinaria por afiliación. El contrato funcional
 vive en `docs/propuesta-timu-puntos-15-19.md` y el desglose ejecutable en
-`docs/backlog.md` (101 unidades con ID `fase-módulo-consecutivo`, p. ej. `F1-CAR-08`).
+`docs/backlog.md` (105 unidades con ID `fase-módulo-consecutivo`, p. ej. `F1-CAR-08`).
 Lo que TIMU pidió está en
 [`docs/documento-requerimientos-funcionales.md`](docs/documento-requerimientos-funcionales.md),
 transcripción literal del documento de requerimientos al que responde la propuesta; no se

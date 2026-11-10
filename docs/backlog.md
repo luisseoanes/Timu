@@ -2,13 +2,13 @@
 
 Desglose del trabajo de servidor comprometido en la propuesta técnica (`docs/propuesta-timu-puntos-15-19.md`): los 23 requisitos funcionales del documento base ([`docs/documento-requerimientos-funcionales.md`](documento-requerimientos-funcionales.md)) más los cinco módulos de escalabilidad incorporados desde la Fase 1.
 
-**101 unidades de trabajo.** Los IDs siguen el patrón `fase-módulo-consecutivo`.
+**105 unidades de trabajo.** Los IDs siguen el patrón `fase-módulo-consecutivo`.
 
 Versión navegable con filtros: [https://claude.ai/code/artifact/15e07e31-e456-40c7-a743-e503b84a2681](https://claude.ai/code/artifact/15e07e31-e456-40c7-a743-e503b84a2681)
 
 ## Estado
 
-Revisado el 2026-11-04 contra el código de `main`. Cada unidad lleva uno de tres estados:
+Revisado el 2026-11-04 contra el código de `main`; `F1-FAM-06` a `F1-FAM-09` se añadieron el 2026-11-09 al revisar el requisito 6.1. Cada unidad lleva uno de tres estados:
 
 - **Hecho**: implementado y cubierto por pruebas automáticas que corren en el CI. Las integraciones externas (Wompi, Meta, Google Maps, Claude, correo) se prueban contra dobles: ninguna se ha validado desde el repositorio contra el proveedor real, y `F1-CAR-08` sigue dependiendo de la habilitación comercial de la pasarela.
 - **Parcial**: hay implementación, pero el criterio de aceptación no se cumple entero. La celda dice qué falta.
@@ -19,11 +19,11 @@ Revisado el 2026-11-04 contra el código de `main`. Cada unidad lleva uno de tre
 | Fase | Unidades | Hecho | Parcial | Pendiente |
 | --- | ---: | ---: | ---: | ---: |
 | Base técnica transversal | 12 | 11 | 1 | 0 |
-| Fase 1 — Núcleo operativo | 36 | 36 | 0 | 0 |
+| Fase 1 — Núcleo operativo | 40 | 40 | 0 | 0 |
 | Fase 2 — Operación y clínica | 21 | 21 | 0 | 0 |
 | Fase 3 — Portal, pagos y autogestión | 20 | 20 | 0 | 0 |
 | Fase 4 — Inteligencia y cierre | 12 | 7 | 3 | 2 |
-| **Total** | **101** | **95** | **4** | **2** |
+| **Total** | **105** | **99** | **4** | **2** |
 
 ## Base técnica transversal
 
@@ -68,7 +68,10 @@ Familias, cartera, planes, servicios, afiliación y WhatsApp base.
 | `F1-FAM-03` | Autollenado desde formularios | Un formulario público crea o actualiza el perfil sin que nadie vuelva a digitar los datos. | 6.1 · 6.12 | Hecho |
 | `F1-FAM-04` | Validaciones de datos colombianos | Documento sin duplicados, teléfono en formato internacional y ciudad tomada del catálogo. | 6.1 | Hecho |
 | `F1-FAM-05` | Ubicación de la dirección en el mapa | Al guardar una dirección se obtienen sus coordenadas, que luego alimentan la planeación de rutas. | 6.7 | Hecho |
-
+| `F1-FAM-06` | Dirección completa | Barrio obligatorio y complemento (torre, apartamento) aparte de la dirección; los dos se usan para ubicarla y se borran al anonimizar. | 6.1 | Hecho |
+| `F1-FAM-07` | Contactos adicionales | Hasta tres por familia, solo para consulta del equipo: sin acceso a la plataforma ni mensajes. La base rechaza el cuarto. | 6.1 | Hecho |
+| `F1-FAM-08` | Servicios y comunicaciones en la ficha | Utilizados y pendientes (con los pendientes de una atención, 6.6) en un rango libre, por mascota y con el cupo consumido del plan; historial de mensajes enviados y recibidos. | 6.1 · 6.5 · 6.6 | Hecho |
+| `F1-FAM-09` | Documentos de la familia y de la mascota | El equipo sube PDF o imágenes de hasta 10 MB con categoría y descripción y decide cuáles ve la familia; una vista reúne también contratos, carnets y adjuntos clínicos. La familia sube y quita las fotos de sus mascotas. | 6.1 | Hecho |
 ### Planes
 
 | ID | Trabajo | Criterio de aceptación | Req. | Estado |
