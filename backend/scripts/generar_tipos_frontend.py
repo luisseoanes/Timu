@@ -39,6 +39,7 @@ ESQUEMAS = [
     "TipoServicioRead",
     "EsquemaPreventivoRead",
     "Periodicidad",
+    "EstadoPago",
     "TarifaRead",
     "TarifaPeriodicidadRead",
     "PlanRead",
@@ -92,6 +93,12 @@ ESQUEMAS = [
     "Recomendacion",
     "CambioPlanRead",
     "PeludoSolicitudRead",
+    "BeneficioPublico",
+    "PlanPublico",
+    "InicioRegistro",
+    "PeludoRegistroRead",
+    "RegistroRead",
+    "ResultadoRegistro",
 ]
 # Nombres de schema repetidos entre modulos: se exponen con un nombre propio.
 ALIAS = {

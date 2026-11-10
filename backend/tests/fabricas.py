@@ -33,6 +33,7 @@ PLANTILLAS = {
     "bienvenida": 2,
     "activar_cuenta": 2,
     "recuperar_clave": 2,
+    "completar_afiliacion": 2,
 }
 
 

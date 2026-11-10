@@ -145,6 +145,8 @@ export interface EsquemaPreventivoRead {
 
 export type Periodicidad = 'mensual' | 'trimestral' | 'semestral' | 'anual'
 
+export type EstadoPago = 'pendiente' | 'aprobado' | 'rechazado' | 'reversado' | 'anulado'
+
 export interface TarifaRead {
   peludos: number
   valor: string
@@ -730,6 +732,55 @@ export interface PeludoSolicitudRead {
   especie: string
   plan_id: string
   valor_mensual: string
+}
+
+export interface BeneficioPublico {
+  tipo_servicio_codigo: string
+  cupo: number | null
+  periodo_cupo: string
+}
+
+export interface PlanPublico {
+  id: string
+  codigo: string
+  nombre: string
+  descripcion: string | null
+  especies: string[]
+  tarifas: TarifaRead[]
+  tarifas_periodicidad: TarifaPeriodicidadRead[]
+  beneficios: BeneficioPublico[]
+}
+
+export interface InicioRegistro {
+  referencia: string
+  valor: string
+  enlace_pago: string
+  token: string
+}
+
+export interface PeludoRegistroRead {
+  posicion: number
+  nombre: string
+  especie: string
+  plan_id: string
+  valor_mensual: string
+}
+
+export interface RegistroRead {
+  estado: string
+  ciudad: string
+  periodicidad: Periodicidad
+  valor_inicial: string
+  contacto_nombre: string | null
+  contacto_telefono: string | null
+  contacto_email: string | null
+  peludos: PeludoRegistroRead[]
+  estado_pago?: EstadoPago | null
+}
+
+export interface ResultadoRegistro {
+  estado: 'completada' | 'revision'
+  mensaje: string
 }
 
 export interface SolicitudVirtualRead {

@@ -492,9 +492,22 @@ CONDICIONES: dict[str, dict[str, str | dict[str, str]]] = {
         ),
         "contratos": f"familia_id IN {_FAMILIA_PUBLICA}",
         "afiliaciones_mascota": f"familia_id IN {_FAMILIA_PUBLICA}",
-        "pagos": f"familia_id IN {_FAMILIA_PUBLICA}",
-        "solicitudes_afiliacion": f"familia_id IN {_FAMILIA_PUBLICA}",
-        "peludos_solicitud": f"familia_id IN {_FAMILIA_PUBLICA}",
+        # Registro en linea (6.1): el pago y la solicitud existen antes que la familia. Las
+        # llaves las fija quien los crea (`registro`, `referencia_pago`) o quien abre el
+        # formulario con su token (`token_registro`, guardado como SHA-256).
+        "pagos": (
+            f"familia_id IN {_FAMILIA_PUBLICA}"
+            " OR referencia_externa = app_llave('referencia_pago')"
+        ),
+        "solicitudes_afiliacion": (
+            f"familia_id IN {_FAMILIA_PUBLICA}"
+            " OR id = app_llave('registro')::uuid"
+            " OR token_hash = app_llave('token_registro')"
+            " OR token_enlace_hash = app_llave('token_registro')"
+        ),
+        "peludos_solicitud": (
+            f"familia_id IN {_FAMILIA_PUBLICA} OR solicitud_id = app_llave('registro')::uuid"
+        ),
         "interesados": (
             "telefono = app_llave('contacto_telefono') OR email = app_llave('contacto_email')"
             f" OR familia_id IN {_FAMILIA_PUBLICA}"

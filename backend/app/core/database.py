@@ -117,11 +117,14 @@ LLAVES_PUBLICAS = frozenset(
         "familia",
         "ingreso_email",
         "ingreso_telefono",
+        "referencia_pago",
+        "registro",
         "renovacion",
         "revocar",
         "sesion",
         "tipo_documento",
         "token",
+        "token_registro",
         "usuario",
     }
 )

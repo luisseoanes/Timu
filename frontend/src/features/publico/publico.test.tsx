@@ -4,7 +4,6 @@ import { http, HttpResponse } from 'msw'
 import { Route, Routes } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
-import { AfiliacionPage } from './AfiliacionPage'
 import { EncuestaPage } from './EncuestaPage'
 import { VerificarCarnetPage } from './VerificarCarnetPage'
 import { sinSesion } from '@/test/handlers'
@@ -103,38 +102,5 @@ describe('Verificación de carnet', () => {
     )
     abrir()
     expect(await screen.findByRole('alert')).toHaveTextContent('No encontramos un carnet')
-  })
-})
-
-describe('Afiliación en línea', () => {
-  it('envía la solicitud con la aceptación expresa y el plan del enlace', async () => {
-    let enviado: Record<string, unknown> | null = null
-    server.use(
-      sinSesion,
-      http.post(`${API}/afiliaciones`, async ({ request }) => {
-        enviado = (await request.json()) as Record<string, unknown>
-        return HttpResponse.json({ detail: 'Ya tienes una afiliacion vigente' }, { status: 409 })
-      }),
-    )
-    const user = userEvent.setup()
-    renderizar(<AfiliacionPage />, { ruta: '/afiliacion?plan=familiar' })
-    await user.type(screen.getByLabelText('Nombre completo del titular'), 'Ana Ruiz')
-    await user.type(screen.getByLabelText('Número de documento'), '1020304050')
-    await user.type(screen.getByLabelText('Celular (WhatsApp)'), '3001112233')
-    await user.type(screen.getByLabelText('Ciudad'), 'Bogota')
-    await user.type(screen.getByLabelText('Barrio'), 'Chapinero')
-    await user.type(screen.getByLabelText('Nombre'), 'Luna')
-    await user.click(screen.getByLabelText(/acepto las condiciones/i))
-    await user.click(screen.getByLabelText(/autorizo el tratamiento/i))
-    await user.click(screen.getByRole('button', { name: /continuar al pago/i }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('Ya tienes una afiliacion vigente')
-    expect(enviado).toMatchObject({
-      titular_nombre: 'Ana Ruiz',
-      barrio: 'Chapinero',
-      plan_codigo: 'familiar',
-      acepta_condiciones: true,
-      acepta_tratamiento_datos: true,
-      mascotas: [{ nombre: 'Luna', especie: 'canino' }],
-    })
   })
 })

@@ -187,12 +187,17 @@ def historial(db: Session, familia_id: UUID, solo_estado: bool) -> list[Registro
     return list(db.scalars(stmt.order_by(RegistroAuditoria.created_at)))
 
 
-def habilitar_portal(db: Session, familia: Familia) -> Familia:
-    """F1-AUT-04 Acceso propio de la familia al portal; recibe el enlace de activacion."""
+def habilitar_portal(db: Session, familia: Familia, clave: str | None = None) -> Familia:
+    """F1-AUT-04 Acceso propio de la familia al portal; recibe el enlace de activacion, o
+    queda con `clave` si la eligio en el registro en linea."""
 
     if familia.usuario_portal_id is None:
         usuario = crear_usuario_portal(
-            db, nombre=familia.titular_nombre, email=familia.email, telefono=familia.telefono
+            db,
+            nombre=familia.titular_nombre,
+            email=familia.email,
+            telefono=familia.telefono,
+            clave=clave,
         )
         vinculada = db.scalar(select(Familia.id).where(Familia.usuario_portal_id == usuario.id))
         if vinculada:

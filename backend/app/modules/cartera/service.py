@@ -405,7 +405,7 @@ def aplicar_pago(db: Session, pago: Pago) -> list[AplicacionPago]:
     if pago.aplicado:
         return []
     contrato = db.get(Contrato, pago.contrato_id) if pago.contrato_id else None
-    if contrato is None:
+    if contrato is None and pago.familia_id is not None:
         contrato = contratos.contrato_vigente(db, pago.familia_id)
     if contrato is None:
         raise ReglaNegocio("La familia no tiene un contrato vigente al cual aplicar el pago")

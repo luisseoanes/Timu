@@ -21,7 +21,7 @@ from app.core.enums import Periodicidad
 from app.core.errores import ErrorDominio, NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
 from app.integrations.payments import construir_link_pago
-from app.modules.afiliaciones import documento
+from app.modules.afiliaciones import documento, enlaces
 from app.modules.afiliaciones.models import EstadoSolicitud, PeludoSolicitud, SolicitudAfiliacion
 from app.modules.archivos import service as archivos
 from app.modules.cartera import contratos, pasarela
@@ -83,6 +83,7 @@ def iniciar(
     )
     solicitud = SolicitudAfiliacion(
         familia_id=familia.id,
+        ciudad=familia.ciudad,
         periodicidad=periodicidad,
         valor_inicial=valor,
         referencia_pago=referencia,
@@ -177,9 +178,25 @@ def completar(db: Session, pago: Pago) -> None:
         )
         logger.warning("Pago %s de una solicitud cancelada", pago.referencia_externa)
         return
+    if solicitud.familia_id is None:
+        # Registro en linea: el pago llega antes que la familia. Falta el formulario: se le
+        # envia el enlace para completarlo.
+        if solicitud.estado == EstadoSolicitud.PENDIENTE_PAGO:
+            solicitud.estado = EstadoSolicitud.PAGADA
+            solicitud.pagada_en = ahora()
+            enlaces.enviar(db, solicitud)
+        db.flush()
+        return
+    completar_o_dejar_tarea(db, solicitud, pago)
+
+
+def completar_o_dejar_tarea(db: Session, solicitud: SolicitudAfiliacion, pago: Pago) -> bool:
+    """Crea la afiliacion. Si no se puede (el plan ya no aplica, el valor cambio), la
+    solicitud queda en error y el equipo recibe una tarea: el pago ya entro."""
     try:
         with db.begin_nested():
             _completar(db, solicitud, pago)
+        return True
     except ErrorDominio as e:
         # El pago quedo aprobado: alguien debe resolver a mano (p. ej. el plan ya no aplica).
         solicitud.estado = EstadoSolicitud.ERROR
@@ -196,10 +213,13 @@ def completar(db: Session, pago: Pago) -> None:
             clave=f"afiliacion_error:{solicitud.id}",
         )
         logger.error("Afiliacion %s no completada: %s", solicitud.id, e.mensaje)
-    db.flush()
+        db.flush()
+        return False
 
 
 def _completar(db: Session, solicitud: SolicitudAfiliacion, pago: Pago) -> None:
+    if solicitud.familia_id is None:
+        raise ReglaNegocio("Falta el formulario con los datos de la familia")
     familia = familias.obtener(db, solicitud.familia_id)
     sin_ficha = [p.nombre for p in solicitud.peludos if p.mascota_id is None]
     if sin_ficha:
@@ -240,20 +260,45 @@ def _completar(db: Session, solicitud: SolicitudAfiliacion, pago: Pago) -> None:
     solicitud.error = None
 
 
-def _al_embudo(db: Session, familia: Familia, etapa: str, origen: str, plan: str) -> None:
-    """F3-COM-01 La afiliacion tambien mueve el embudo comercial."""
-
+def al_embudo(
+    db: Session,
+    *,
+    etapa: str,
+    origen: str,
+    plan: str,
+    telefono: str | None,
+    email: str | None,
+    nombre: str,
+    ciudad: str,
+    familia_id: UUID | None = None,
+) -> None:
+    """F3-COM-01 La afiliacion tambien mueve el embudo comercial. El registro en linea entra
+    antes de que exista la familia, con el contacto que dejo al pagar."""
     interesado = comercial.registrar(
         db,
         origen="afiliacion" if origen in ("formulario", "landing") else origen[:24],
+        telefono=telefono,
+        email=email,
+        nombre=nombre,
+        ciudad=ciudad,
+        familia_id=familia_id,
+        etapa=etapa,
+    )
+    interesado.plan_sugerido = interesado.plan_sugerido or plan
+
+
+def _al_embudo(db: Session, familia: Familia, etapa: str, origen: str, plan: str) -> None:
+    al_embudo(
+        db,
+        etapa=etapa,
+        origen=origen,
+        plan=plan,
         telefono=familia.telefono,
         email=familia.email,
         nombre=familia.titular_nombre,
         ciudad=familia.ciudad,
         familia_id=familia.id,
-        etapa=etapa,
     )
-    interesado.plan_sugerido = interesado.plan_sugerido or plan
 
 
 def _documento(db: Session, contrato: Contrato, familia: Familia, contratados: list[Plan]) -> None:

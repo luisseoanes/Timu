@@ -12,7 +12,13 @@ import { DashboardPage } from '@/features/dashboard'
 import { FamiliaDetallePage, FamiliasPage } from '@/features/familias'
 import { PortalCitas, PortalDatos, PortalInicio, PortalLayout, PortalMascota, PortalMascotas, PortalPagos } from '@/features/portal'
 import { PreventivosPage } from '@/features/preventivos'
-import { AfiliacionPage, AfiliacionResultadoPage, EncuestaPage, VerificarCarnetPage } from '@/features/publico'
+import {
+  CompletarRegistroPage,
+  EncuestaPage,
+  RegistroPage,
+  RegistroResultadoPage,
+  VerificarCarnetPage,
+} from '@/features/publico'
 import { RutasPage } from '@/features/rutas'
 import { ServicioDetallePage, ServiciosPage } from '@/features/servicios'
 import { TareasPage } from '@/features/tareas'
@@ -40,8 +46,9 @@ export default function App() {
             <Route path="/activar" element={<RestablecerPage modo="activar" />} />
             <Route path="/encuesta/:token" element={<EncuestaPage />} />
             <Route path="/verificar/:codigo" element={<VerificarCarnetPage />} />
-            <Route path="/afiliacion" element={<AfiliacionPage />} />
-            <Route path="/afiliacion/resultado" element={<AfiliacionResultadoPage />} />
+            <Route path="/afiliacion" element={<RegistroPage />} />
+            <Route path="/afiliacion/resultado" element={<RegistroResultadoPage />} />
+            <Route path="/afiliacion/completar" element={<CompletarRegistroPage />} />
 
             <Route element={<ProtectedRoute roles={EQUIPO} />}>
               <Route element={<AppLayout />}>

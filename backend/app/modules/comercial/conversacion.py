@@ -339,9 +339,9 @@ def _accion(db: Session, conversacion: ConversacionComercial, accion: str, turno
         )
         return True
     if accion == "enlace_afiliacion":
-        plan = conversacion.datos.get("plan", "")
+        # El registro en linea pide el plan de cada peludo: el enlace no lleva uno.
         turno.decir(
-            f"Afiliate en linea aqui: {settings.FRONTEND_URL}/afiliacion?plan={plan}. "
+            f"Afiliate en linea aqui: {settings.FRONTEND_URL}/afiliacion. "
             "Si prefieres, escribe *asesor* y te acompanamos."
         )
         return True

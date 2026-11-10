@@ -79,7 +79,14 @@ PUBLICAS_ESPERADAS = {
     "POST /api/v1/auth/codigo",  # F3-POR-07 ingreso del portal por WhatsApp
     "POST /api/v1/auth/codigo/verificacion",
     "POST /api/v1/formularios/familia",
-    "POST /api/v1/afiliaciones",  # formulario publico de afiliacion
+    # 6.1 Registro en linea: catalogo y cotizacion publicos; el formulario posterior al
+    # pago se autoriza con el token del registro.
+    "GET /api/v1/afiliaciones/registro/ciudades",
+    "GET /api/v1/afiliaciones/registro/planes",
+    "POST /api/v1/afiliaciones/registro/cotizacion",
+    "POST /api/v1/afiliaciones/registro",
+    "POST /api/v1/afiliaciones/registro/consulta",
+    "POST /api/v1/afiliaciones/registro/completar",
     "GET /api/v1/webhooks/whatsapp",
     "POST /api/v1/webhooks/whatsapp",  # autorizada por firma de Meta
     "POST /api/v1/webhooks/pagos",  # autorizada por firma de la pasarela

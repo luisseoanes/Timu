@@ -75,7 +75,9 @@ TRANSICIONES: dict[tuple[str, str], Grafo] = {
     ("ejecuciones_campana", "estado"): {"en_envio": {"terminada", "cancelada"}},
     ("destinatarios_campana", "estado"): {"pendiente": {"encolado", "excluido"}},
     ("solicitudes_afiliacion", "estado"): {
-        "pendiente_pago": {"completada", "cancelada", "error"},
+        "pendiente_pago": {"pagada", "completada", "cancelada", "error"},
+        # Registro en linea: el formulario la completa, o queda para el equipo.
+        "pagada": {"completada", "error"},
         # Un pago que se aprueba despues de marcar el error completa la afiliacion.
         "error": {"completada"},
     },

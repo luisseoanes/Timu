@@ -1,14 +1,12 @@
 """F3-COM-01..04 Embudo comercial, conversacion automatizada, recomendacion de plan y
 paso a asesor."""
 
-from datetime import timedelta
-
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 
+from app.core.config import settings
 from app.core.enums import Rol
-from app.core.tiempo import hoy
 from app.modules.comercial import conversacion
 from app.modules.comercial.models import ConversacionComercial, Interesado
 from app.modules.comunicaciones import service as comunicaciones
@@ -126,7 +124,7 @@ async def test_de_hola_a_la_recomendacion_y_la_afiliacion(db, comerciales, plane
     assert interesado.ciudad == "Cali"
 
     enlace = await chat.escribir("1")
-    assert "/afiliacion?plan=familiar" in enlace
+    assert f"{settings.FRONTEND_URL}/afiliacion." in enlace
 
 
 async def test_respuestas_no_entendidas_pasan_a_un_asesor(db, comerciales, planes):
@@ -199,31 +197,6 @@ async def test_reparto_por_carga(db, comerciales, planes):
     responsables = list(await db.scalars(select(Interesado.responsable_id)))
     assert responsables.count(comerciales[0].id) == 2
     assert responsables.count(comerciales[1].id) == 2
-
-
-async def test_formulario_y_afiliacion_mueven_el_embudo(
-    client: AsyncClient, db, comerciales, headers
-):
-    from tests.test_afiliaciones import FORMULARIO, _pagar
-
-    await db.run_sync(fabricas.plan, "individual", 45_000, 1)
-    await db.run_sync(fabricas.plantillas_aprobadas)
-    await db.commit()
-    datos = (await client.post("/api/v1/afiliaciones", json=FORMULARIO)).json()
-    interesado = await db.scalar(select(Interesado))
-    assert interesado.etapa == "en_afiliacion"
-    await _pagar(db, datos["solicitud_id"])
-    await db.refresh(interesado)
-    assert interesado.etapa == "afiliado" and interesado.familia_id is not None
-
-    embudo = (
-        await client.get(
-            "/api/v1/comercial/embudo",
-            params={"desde": str(hoy() - timedelta(days=1)), "hasta": str(hoy())},
-            headers=headers,
-        )
-    ).json()
-    assert embudo["por_etapa"]["afiliado"] == 1 and embudo["conversion"] == 1.0
 
 
 async def test_perder_y_reactivar(client: AsyncClient, db, comerciales, headers):

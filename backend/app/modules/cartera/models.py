@@ -162,10 +162,12 @@ class Pago(Base, UUIDMixin, TimestampMixin, Auditable):
     __tablename__ = "pagos"
     __checks__ = {
         "valor_positivo": "valor > 0",
+        # Solo el pago de un registro en linea llega antes que la familia (6.1).
+        "familia_salvo_registro": "familia_id IS NOT NULL OR referencia_externa LIKE 'AFI-%'",
     }
     __columna_familia__ = "familia_id"
 
-    familia_id: Mapped[UUID] = mapped_column(ForeignKey("familias.id"), index=True)
+    familia_id: Mapped[UUID | None] = mapped_column(ForeignKey("familias.id"), index=True)
     contrato_id: Mapped[UUID | None] = mapped_column(ForeignKey("contratos.id"), index=True)
     cuota_id: Mapped[UUID | None] = mapped_column(ForeignKey("cuotas.id"), index=True)
     referencia_externa: Mapped[str] = mapped_column(String(120), unique=True)

@@ -26,25 +26,6 @@ export interface CarnetVerificado {
   }[]
 }
 
-export interface SolicitudAfiliacionPublica {
-  titular_nombre: string
-  tipo_documento: string
-  documento: string
-  email?: string
-  telefono: string
-  ciudad: string
-  barrio: string
-  direccion?: string
-  complemento?: string
-  mascotas: { nombre: string; especie: string; sexo?: 'macho' | 'hembra' }[]
-  plan_codigo: string
-  acepta_condiciones: boolean
-  acepta_tratamiento_datos: boolean
-  origen: string
-  /** Campo trampa: queda vacío para las personas. */
-  sitio_web?: string
-}
-
 export function useContextoEncuesta(token: string) {
   return useQuery({
     queryKey: ['encuesta-publica', token],
@@ -65,13 +46,5 @@ export function useCarnetVerificado(codigo: string) {
     queryKey: ['carnet-verificado', codigo],
     queryFn: async () => (await api.get<CarnetVerificado>(`/verificacion/carnets/${codigo}`)).data,
     retry: false,
-  })
-}
-
-export function useAfiliarse() {
-  return useMutation({
-    mutationFn: async (solicitud: SolicitudAfiliacionPublica) =>
-      (await api.post<{ solicitud_id: string; valor: string; enlace_pago: string }>('/afiliaciones', solicitud))
-        .data,
   })
 }

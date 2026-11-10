@@ -14,22 +14,49 @@ from app.core.enums import OrigenSolicitudAfiliacion, Periodicidad
 
 class EstadoSolicitud(StrEnum):
     PENDIENTE_PAGO = "pendiente_pago"
+    # Registro en linea: el pago llego y falta el formulario con los datos de la familia.
+    PAGADA = "pagada"
     COMPLETADA = "completada"
     CANCELADA = "cancelada"
     ERROR = "error"
 
 
 class SolicitudAfiliacion(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F1-AFI-01 Ciclo formulario -> pago -> contrato -> perfil. La solicitud guarda lo que
-    la familia acepto y el pago que la completa."""
+    """F1-AFI-01 Ciclo cotizacion -> pago -> contrato -> perfil. La solicitud guarda lo que
+    la familia acepto y el pago que la completa.
+
+    En el registro en linea (6.1) se paga antes de que exista la familia: la solicitud lleva
+    la ciudad, el contacto del titular y los peludos con su plan, y la familia se crea con el
+    formulario posterior al pago. Ese formulario se abre con un token: el del navegador que
+    pago (`token_hash`) o el del enlace que se le envia (`token_enlace_hash`); se guardan
+    solo como SHA-256."""
 
     __tablename__ = "solicitudes_afiliacion"
     __checks__ = {
         "valor_no_negativo": "valor_inicial >= 0",
+        "familia_o_contacto": (
+            "familia_id IS NOT NULL"
+            " OR (contacto_nombre IS NOT NULL AND contacto_telefono IS NOT NULL)"
+        ),
+        # Como texto: el valor nuevo del enum no se puede usar en la transaccion que lo crea.
+        "pagada_con_fecha": "estado::text <> 'pagada' OR pagada_en IS NOT NULL",
+        "contacto_telefono_formato": (
+            "contacto_telefono IS NULL OR contacto_telefono ~ '^\\+[1-9][0-9]{7,14}$'"
+        ),
     }
     __columna_familia__ = "familia_id"
 
-    familia_id: Mapped[UUID] = mapped_column(ForeignKey("familias.id"), index=True)
+    familia_id: Mapped[UUID | None] = mapped_column(ForeignKey("familias.id"), index=True)
+    ciudad: Mapped[str] = mapped_column(
+        String(80), ForeignKey("ciudades.nombre", onupdate="CASCADE"), index=True
+    )
+    contacto_nombre: Mapped[str | None] = mapped_column(String(160))
+    contacto_telefono: Mapped[str | None] = mapped_column(String(32))
+    contacto_email: Mapped[str | None] = mapped_column(String(255))
+    token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    token_enlace_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    pagada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    recordada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     periodicidad: Mapped[str] = mapped_column(EnumDb(Periodicidad), default=Periodicidad.MENSUAL)
     # Lo que cobra la primera cuota, cotizado al iniciar: el pago debe coincidir.
     valor_inicial: Mapped[Decimal] = mapped_column(Numeric(12, 2))
@@ -65,7 +92,8 @@ class PeludoSolicitud(Base, UUIDMixin, TimestampMixin, Auditable):
     __columna_familia__ = "familia_id"
 
     solicitud_id: Mapped[UUID] = mapped_column(ForeignKey("solicitudes_afiliacion.id"), index=True)
-    familia_id: Mapped[UUID] = mapped_column(ForeignKey("familias.id"), index=True)
+    # Vacia hasta que el registro en linea crea la familia.
+    familia_id: Mapped[UUID | None] = mapped_column(ForeignKey("familias.id"), index=True)
     posicion: Mapped[int] = mapped_column(Integer)
     mascota_id: Mapped[UUID | None] = mapped_column(ForeignKey("mascotas.id"), index=True)
     nombre: Mapped[str] = mapped_column(String(120))

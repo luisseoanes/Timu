@@ -17,6 +17,7 @@ celery_app = Celery(
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
     include=[
+        "app.workers.tasks.afiliaciones",
         "app.workers.tasks.cartera",
         "app.workers.tasks.preventivos",
         "app.workers.tasks.comunicaciones",
@@ -53,6 +54,11 @@ celery_app.conf.update(
         "outbox-drenar": {
             "task": "outbox.drenar",
             "schedule": 60.0,
+        },
+        # 6.1 Registro en linea pagado sin formulario: recordatorio a las 24 h, tarea a las 48.
+        "recordar-registros": {
+            "task": "afiliaciones.recordar_registros",
+            "schedule": crontab(minute=20),
         },
         # F1-WHA-01 mensajes cuya tarea se perdio (worker caido a mitad del envio)
         "comunicaciones-reencolar": {

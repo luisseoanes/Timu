@@ -616,7 +616,14 @@ async def _familia_con_rastro(db) -> tuple[Familia, Usuario]:
     # Una solicitud de afiliacion guarda el nombre de cada peludo, como la ficha.
     plan = await db.run_sync(fabricas.plan, "anonimo")
     solicitud = SolicitudAfiliacion(
-        familia_id=familia.id, valor_inicial=45_000, referencia_pago="AFI-ANON", origen="asistida"
+        familia_id=familia.id,
+        ciudad=familia.ciudad,
+        contacto_nombre="Ana Ruiz",
+        contacto_telefono="+573001112233",
+        contacto_email="ana@ejemplo.co",
+        valor_inicial=45_000,
+        referencia_pago="AFI-ANON",
+        origen="formulario",
     )
     db.add(solicitud)
     await db.flush()
@@ -678,6 +685,7 @@ async def test_anonimizar_no_deja_datos_personales(client: AsyncClient, db, head
         "contactos_familia",
         "documentos_familia",
         "peludos_solicitud",
+        "solicitudes_afiliacion",
         "auditoria",
     ):
         filas = await db.scalar(

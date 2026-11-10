@@ -214,11 +214,18 @@ def restablecer(db: Session, token: str, password: str) -> Usuario:
 
 
 def crear_usuario_portal(
-    db: Session, *, nombre: str, email: str | None, telefono: str | None
+    db: Session,
+    *,
+    nombre: str,
+    email: str | None,
+    telefono: str | None,
+    clave: str | None = None,
 ) -> Usuario:
     """Crea (o reutiliza) el acceso de portal de una familia y le envia el enlace de activacion.
 
-    La clave inicial es inutilizable: la familia la define desde el enlace.
+    Sin `clave`, la inicial es inutilizable: la familia la define desde el enlace. Con `clave`
+    (el registro en linea, que la pide en su formulario) la cuenta nueva queda con ella y no
+    hay enlace. Una cuenta que ya existia conserva siempre su contrasena.
     """
     email = email.lower() if email else None
     condiciones = []
@@ -240,11 +247,12 @@ def crear_usuario_portal(
         telefono=telefono,
         nombre=nombre,
         rol=Rol.FAMILIA,
-        hashed_password=password_inutilizable(),
+        hashed_password=hash_password(clave) if clave else password_inutilizable(),
     )
     db.add(usuario)
     db.flush()
-    emitir_enlace(db, usuario, "activacion")
+    if clave is None:
+        emitir_enlace(db, usuario, "activacion")
     return usuario
 
 
