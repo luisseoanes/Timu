@@ -8,7 +8,7 @@ Versión navegable con filtros: [https://claude.ai/code/artifact/15e07e31-e456-4
 
 ## Estado
 
-Revisado el 2026-11-04 contra el código de `main`; `F1-FAM-06` a `F1-FAM-09` se añadieron el 2026-11-09 al revisar el requisito 6.1. Cada unidad lleva uno de tres estados:
+Revisado el 2026-11-04 contra el código de `main`; `F1-FAM-06` a `F1-FAM-09` se añadieron el 2026-11-09 al revisar el requisito 6.1, y `F1-PLA-01` a `F1-PLA-03` y `F1-CAR-02` se reescribieron el 2026-11-10 con el modelo de precios de TIMU. Cada unidad lleva uno de tres estados:
 
 - **Hecho**: implementado y cubierto por pruebas automáticas que corren en el CI. Las integraciones externas (Wompi, Meta, Google Maps, Claude, correo) se prueban contra dobles: ninguna se ha validado desde el repositorio contra el proveedor real, y `F1-CAR-08` sigue dependiendo de la habilitación comercial de la pasarela.
 - **Parcial**: hay implementación, pero el criterio de aceptación no se cumple entero. La celda dice qué falta.
@@ -76,9 +76,9 @@ Familias, cartera, planes, servicios, afiliación y WhatsApp base.
 
 | ID | Trabajo | Criterio de aceptación | Req. | Estado |
 | --- | --- | --- | --- | --- |
-| `F1-PLA-01` | Planes y beneficios | Administración de planes con su valor, cupos y beneficios asociados por tipo de servicio. | 6.3 | Hecho |
-| `F1-PLA-02` | Cambios de plan grupal | Subir o bajar de plan recalcula el valor con prorrateo y deja registro del cambio, gobernado por reglas configurables. | 6.3 | Hecho |
-| `F1-PLA-03` | Cupos de mascotas del plan | Agregar o retirar una mascota respeta el cupo contratado y ajusta el valor cuando la regla lo indica. | 6.3 | Hecho |
+| `F1-PLA-01` | Planes, tarifas y beneficios | Administración de planes con sus ciudades, su tarifa por peludo según el número de peludos (de 1 a 4; desde 4, la de 4), el precio de cada periodo largo para un solo peludo y sus beneficios por tipo de servicio. Un único cálculo cotiza cualquier combinación. | 6.2 · 6.3 | Hecho |
+| `F1-PLA-02` | Cambio de plan de un peludo | Un peludo sube o baja de plan; el valor se recalcula con prorrateo y queda registro del cambio, gobernado por reglas configurables. | 6.3 | Hecho |
+| `F1-PLA-03` | Un plan por peludo | Cada peludo del contrato tiene su plan; agregar o retirar uno pasa a todos a la tarifa del nuevo número de peludos desde la siguiente cuota, y los beneficios y el cupo salen del plan de cada peludo. | 6.3 | Hecho |
 | `F1-PLA-04` | Recomendación de plan por ciudad | Dada la ciudad y la composición de la familia, el sistema devuelve el plan sugerido y por qué. | 6.11 | Hecho |
 
 ### Cartera
@@ -86,7 +86,7 @@ Familias, cartera, planes, servicios, afiliación y WhatsApp base.
 | ID | Trabajo | Criterio de aceptación | Req. | Estado |
 | --- | --- | --- | --- | --- |
 | `F1-CAR-01` | Contrato de afiliación | La afiliación genera contrato con fecha de inicio, día de corte y fecha de renovación calculada. | 6.2 · 6.4 | Hecho |
-| `F1-CAR-02` | Generación mensual de cuotas | Un proceso diario emite las cuotas del período sin duplicarlas si se vuelve a ejecutar. | 6.2 | Hecho |
+| `F1-CAR-02` | Generación de cuotas por periodicidad | Un proceso diario emite las cuotas del período (mensual, trimestral, semestral o anual) sin duplicarlas si se vuelve a ejecutar. | 6.2 | Hecho |
 | `F1-CAR-03` | Estados de cartera | Al día, en mora, congelada y reactivada se derivan de reglas de días parametrizables, no de código. | 6.2 · 6.23 | Hecho |
 | `F1-CAR-04` | Alertas escalonadas de mora | El proceso diario notifica en los cortes definidos y deja traza de cada aviso enviado. | 6.2 | Hecho |
 | `F1-CAR-05` | Congelamiento y reactivación automáticos | Superado el plazo, la afiliación se congela y bloquea el agendamiento; al pagar se reactiva sola. | 6.2 · 6.23 | Hecho |
