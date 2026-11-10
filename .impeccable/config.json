@@ -1,0 +1,15 @@
+{
+  "telemetry": false,
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-11-10T19:40:19.719Z",
+        "reason": "user confirmed: Inter es la fuente de la interfaz por el manual de marca (docs/manual-de-marca.md, seccion 12), decidido el 2026-11-10"
+      }
+    ]
+  }
+}
