@@ -17,6 +17,8 @@ import os
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("DEBUG", "false")
 
+import importlib  # noqa: E402
+import pkgutil  # noqa: E402
 from collections.abc import AsyncGenerator, Iterator  # noqa: E402
 from contextlib import contextmanager  # noqa: E402
 from pathlib import Path  # noqa: E402
@@ -256,17 +258,15 @@ async def db() -> AsyncGenerator[AsyncSession, None]:
         await engine.dispose()
 
 
-MODULOS_CON_SESION_WORKER = (
-    _tareas.campanas,
-    _tareas.cartera,
-    _tareas.comunicaciones,
-    _tareas.dashboard,
-    _tareas.encuestas,
-    _tareas.familias,
-    _tareas.ia,
-    _tareas.outbox,
-    _tareas.preventivos,
-    _tareas.rutas,
+# Todos los modulos de tareas que abren `sesion_worker`: se descubren solos, porque uno que
+# faltara en una lista a mano conectaria su tarea a la base real en vez de a la de la prueba.
+MODULOS_CON_SESION_WORKER = tuple(
+    modulo
+    for modulo in (
+        importlib.import_module(f"{_tareas.__name__}.{modulo_info.name}")
+        for modulo_info in pkgutil.iter_modules(_tareas.__path__)
+    )
+    if hasattr(modulo, "sesion_worker")
 )
 
 
