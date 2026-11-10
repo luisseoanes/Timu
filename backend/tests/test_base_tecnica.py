@@ -1,5 +1,7 @@
 """Pruebas de la base tecnica transversal (F0-02, F0-05, F0-06, F0-10)."""
 
+from pathlib import Path
+
 import pytest
 from fastapi import APIRouter
 from httpx import AsyncClient
@@ -130,6 +132,24 @@ def test_cookie_domain_vacio_es_la_cookie_del_host():
     """COOKIE_DOMAIN vacio (como en .env.example) no manda un `Domain=` vacio en la cookie."""
     assert Settings(_env_file=None, COOKIE_DOMAIN="").COOKIE_DOMAIN is None
     assert Settings(_env_file=None, COOKIE_DOMAIN="timu.com.co").COOKIE_DOMAIN == "timu.com.co"
+
+
+def test_cada_ajuste_de_la_configuracion_esta_en_el_env_de_ejemplo():
+    """Todo lo que la aplicacion lee de su entorno se ve en .env.example, con su valor de
+    desarrollo: es la base del compose y la lista de lo que se puede ajustar. Fuera, las
+    `*_OVERRIDE`, que solo sustituyen una URL calculada en casos puntuales."""
+    ejemplo = Path(__file__).resolve().parents[1] / ".env.example"
+    claves = {
+        linea.split("=", 1)[0].strip()
+        for linea in ejemplo.read_text().splitlines()
+        if "=" in linea and not linea.lstrip().startswith("#")
+    }
+    faltan = sorted(
+        c for c in Settings.model_fields if not c.endswith("_OVERRIDE") and c not in claves
+    )
+    assert faltan == [], f"Anade a backend/.env.example: {faltan}"
+    # Y se lee sin errores.
+    assert Settings(_env_file=ejemplo).MAPS_TOPE_DIARIO == 2000
 
 
 def test_una_pasarela_sin_implementar_no_arranca():
