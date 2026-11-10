@@ -107,6 +107,19 @@ export const handlers = [
     HttpResponse.json({ detail: 'La familia no tiene contrato' }, { status: 404 }),
   ),
   http.get(`${API}/servicios`, () => HttpResponse.json(vacia)),
+  http.get(`${API}/servicios/resumen`, ({ request }) => {
+    const params = new URL(request.url).searchParams
+    return HttpResponse.json({
+      desde: params.get('desde'),
+      hasta: params.get('hasta'),
+      utilizados: [],
+      pendientes: [],
+      cancelados: [],
+      pendientes_atencion: [],
+      cupos: [],
+    })
+  }),
+  http.get(`${API}/comunicaciones/mensajes`, () => HttpResponse.json(vacia)),
   http.get(`${API}/tareas`, () => HttpResponse.json(vacia)),
   http.get(`${API}/preventivos`, () => HttpResponse.json(vacia)),
   http.get(`${API}/cartera/contratos`, () => HttpResponse.json(vacia)),

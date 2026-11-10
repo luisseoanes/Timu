@@ -27,8 +27,14 @@ export interface NuevaMascota {
   especie: string
   raza?: string
   sexo?: 'macho' | 'hembra'
-  fecha_nacimiento?: string
+  /** Obligatoria en el panel: si no se sabe la exacta, una aproximada. */
+  fecha_nacimiento: string
+  peso_kg: number
+  esterilizada?: boolean
 }
+
+/** Lo que se corrige de una mascota. La especie no cambia: define su plan preventivo. */
+export type CambiosMascota = Partial<Omit<NuevaMascota, 'especie' | 'raza'>> & { raza?: string | null }
 
 export interface NuevaFamilia {
   titular_nombre: string
@@ -140,6 +146,27 @@ export function useAgregarMascota(familiaId: string) {
   return useMutation({
     mutationFn: async (mascota: NuevaMascota) =>
       (await api.post<MascotaRead>(`/familias/${familiaId}/mascotas`, mascota)).data,
+    onSuccess: invalidar,
+  })
+}
+
+export function useActualizarMascota() {
+  const invalidar = useInvalidarFamilias()
+  return useMutation({
+    mutationFn: async ({ id, ...cambios }: CambiosMascota & { id: string }) =>
+      (await api.patch<MascotaRead>(`/mascotas/${id}`, cambios)).data,
+    onSuccess: invalidar,
+  })
+}
+
+export function useSubirFotoMascota() {
+  const invalidar = useInvalidarFamilias()
+  return useMutation({
+    mutationFn: async ({ id, foto }: { id: string; foto: File }) => {
+      const forma = new FormData()
+      forma.append('foto', foto)
+      return (await api.put<MascotaRead>(`/mascotas/${id}/foto`, forma)).data
+    },
     onSuccess: invalidar,
   })
 }

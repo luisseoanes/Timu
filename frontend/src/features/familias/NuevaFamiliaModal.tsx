@@ -6,6 +6,8 @@ import { mensajeError } from '@/lib/errores'
 import type { TipoDocumento } from '@/types'
 
 import { useCrearFamilia, type NuevaFamilia } from './api'
+import { CamposMascota } from './CamposMascota'
+import { leerCamposMascota } from './mascota'
 
 const TIPOS_DOCUMENTO: { valor: TipoDocumento; label: string }[] = [
   { valor: 'CC', label: 'Cédula de ciudadanía' },
@@ -55,6 +57,7 @@ export function NuevaFamiliaModal({ abierto, onCambio }: { abierto: boolean; onC
           nombre: texto(d, 'mascota_nombre') ?? '',
           especie: texto(d, 'mascota_especie') ?? '',
           sexo: texto(d, 'mascota_sexo') as 'macho' | 'hembra' | undefined,
+          ...leerCamposMascota(d, 'mascota_'),
         },
       ],
     }
@@ -156,6 +159,7 @@ export function NuevaFamiliaModal({ abierto, onCambio }: { abierto: boolean; onC
               <option value="macho">Macho</option>
             </select>
           </label>
+          <CamposMascota prefijo="mascota_" />
         </fieldset>
 
         {(ciudades.isError || especies.isError) && (

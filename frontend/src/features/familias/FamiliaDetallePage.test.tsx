@@ -8,7 +8,7 @@ import { FamiliaDetallePage } from './FamiliaDetallePage'
 import { FAMILIA, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
-import type { EstadoCuenta } from '@/types'
+import type { EstadoCuenta, MascotaRead } from '@/types'
 
 const API = '*/api/v1'
 
@@ -463,8 +463,20 @@ describe('FamiliaDetallePage', () => {
     let modal = await screen.findByRole('dialog')
     await user.type(within(modal).getByLabelText('Nombre'), 'Michi')
     await user.selectOptions(within(modal).getByLabelText('Especie'), 'gato')
+    expect(within(modal).getByLabelText('Fecha de nacimiento')).toHaveAccessibleDescription(/aproximada/)
+    await user.type(within(modal).getByLabelText('Fecha de nacimiento'), '2024-06-01')
+    await user.type(within(modal).getByLabelText('Peso (kg)'), '3.4')
+    await user.selectOptions(within(modal).getByLabelText('Esterilizada (opcional)'), 'Sí')
     await user.click(within(modal).getByRole('button', { name: 'Agregar' }))
-    await waitFor(() => expect(nueva).toEqual({ nombre: 'Michi', especie: 'gato' }))
+    await waitFor(() =>
+      expect(nueva).toEqual({
+        nombre: 'Michi',
+        especie: 'gato',
+        fecha_nacimiento: '2024-06-01',
+        peso_kg: 3.4,
+        esterilizada: true,
+      }),
+    )
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
 
     const tabla = screen.getByRole('table')
@@ -611,5 +623,109 @@ describe('FamiliaDetallePage', () => {
     abrirFicha()
     await user.click(await screen.findByRole('tab', { name: 'Comunicaciones' }))
     expect(await screen.findByText('Esta familia todavía no tiene comunicaciones.')).toBeInTheDocument()
+  })
+
+  it('dice cuándo no pudo cargar los servicios o las comunicaciones', async () => {
+    server.use(
+      http.get(`${API}/servicios/resumen`, () => HttpResponse.json({ detail: 'Fallo' }, { status: 500 })),
+      http.get(`${API}/comunicaciones/mensajes`, () => HttpResponse.json({ detail: 'Fallo' }, { status: 500 })),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Servicios' }))
+    expect(await screen.findByText(/No fue posible cargar los servicios/)).toBeInTheDocument()
+    await user.click(screen.getByRole('tab', { name: 'Comunicaciones' }))
+    expect(await screen.findByText(/No fue posible cargar las comunicaciones/)).toBeInTheDocument()
+  })
+
+  const LUNA: MascotaRead = { ...FAMILIA.mascotas![0]!, peso_kg: 12.5, esterilizada: true, foto_url: null }
+
+  async function abrirFichaDeLuna(familia = { ...FAMILIA, mascotas: [LUNA] }) {
+    server.use(http.get(`${API}/familias/:id`, () => HttpResponse.json(familia)))
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Mascotas' }))
+    await user.click(await screen.findByRole('button', { name: 'Ficha' }))
+    return { user, modal: await screen.findByRole('dialog') }
+  }
+
+  it('abre la ficha de la mascota con su plan, sus servicios del mes y sus enlaces', async () => {
+    let consultado: URLSearchParams | null = null
+    server.use(
+      http.get(`${API}/cartera/familias/:id/estado-cuenta`, () => HttpResponse.json(CUENTA)),
+      http.get(`${API}/servicios/resumen`, ({ request }) => {
+        consultado = new URL(request.url).searchParams
+        return HttpResponse.json(resumen({ pendientes: [SERVICIO] }))
+      }),
+    )
+    const { modal } = await abrirFichaDeLuna()
+    expect(within(modal).getByRole('heading', { name: 'Luna' })).toBeInTheDocument()
+    expect(await within(modal).findByText(`Plan ${CUENTA.plan.nombre}, el de la familia.`)).toBeInTheDocument()
+    expect(await within(modal).findByText(/Este mes: 1 pendientes y 0 utilizados/)).toBeInTheDocument()
+    expect((consultado as URLSearchParams | null)?.get('mascota_id')).toBe(LUNA.id)
+    expect(within(modal).getByRole('link', { name: 'Historia clínica' })).toHaveAttribute('href', `/clinica/mascotas/${LUNA.id}`)
+    expect(within(modal).getByRole('link', { name: 'Carnet preventivo' })).toHaveAttribute('href', `/preventivos?mascota=${LUNA.id}`)
+    expect(within(modal).getByLabelText('Peso (kg)')).toHaveValue(12.5)
+    expect(within(modal).getByLabelText('Esterilizada (opcional)')).toHaveValue('si')
+    expect(within(modal).getByText('Sin foto')).toBeInTheDocument()
+  })
+
+  it('dice si la familia no tiene plan y corrige los datos de la mascota', async () => {
+    let enviado: unknown = null
+    server.use(
+      http.patch(`${API}/mascotas/:id`, async ({ request }) => {
+        enviado = await request.json()
+        return HttpResponse.json(LUNA)
+      }),
+    )
+    const { user, modal } = await abrirFichaDeLuna()
+    expect(await within(modal).findByText('La familia no tiene un plan vigente.')).toBeInTheDocument()
+    const peso = within(modal).getByLabelText('Peso (kg)')
+    await user.clear(peso)
+    await user.type(peso, '13.1')
+    await user.clear(within(modal).getByLabelText('Raza (opcional)'))
+    await user.click(within(modal).getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() =>
+      expect(enviado).toEqual({
+        nombre: 'Luna',
+        raza: null,
+        sexo: 'hembra',
+        fecha_nacimiento: '2021-03-10',
+        peso_kg: 13.1,
+        esterilizada: true,
+      }),
+    )
+    expect(await within(modal).findByText('Cambios guardados.')).toBeInTheDocument()
+  })
+
+  it('sube la foto de la mascota y rechaza una de más de 5 MB sin enviarla', async () => {
+    const subidas: string[] = []
+    server.use(
+      http.put(`${API}/mascotas/:id/foto`, async ({ request }) => {
+        subidas.push(await request.text())
+        return HttpResponse.json({ ...LUNA, foto_url: 'https://s3.local/luna.jpg' })
+      }),
+    )
+    const { user, modal } = await abrirFichaDeLuna()
+    const grande = new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'grande.jpg', { type: 'image/jpeg' })
+    await user.upload(within(modal).getByLabelText('Subir foto'), grande)
+    expect(await within(modal).findByText(/pesa más de 5 MB/)).toBeInTheDocument()
+    expect(subidas).toHaveLength(0)
+
+    await user.upload(within(modal).getByLabelText('Subir foto'), new File(['jpg'], 'luna.jpg', { type: 'image/jpeg' }))
+    await waitFor(() => expect(subidas).toHaveLength(1))
+    expect(subidas[0]).toContain('name="foto"')
+    expect(within(modal).queryByText(/pesa más de 5 MB/)).not.toBeInTheDocument()
+  })
+
+  it('muestra la foto y no deja editar una mascota de baja', async () => {
+    const { modal } = await abrirFichaDeLuna({
+      ...FAMILIA,
+      mascotas: [{ ...LUNA, activa: false, motivo_baja: 'Falleció', foto_url: 'https://s3.local/luna.jpg' }],
+    })
+    expect(within(modal).getByRole('img', { name: 'Foto de Luna' })).toHaveAttribute('src', 'https://s3.local/luna.jpg')
+    expect(within(modal).queryByRole('button', { name: 'Guardar cambios' })).not.toBeInTheDocument()
+    expect(within(modal).queryByLabelText(/foto/i, { selector: 'input' })).not.toBeInTheDocument()
+    expect(within(modal).getByLabelText('Nombre')).toBeDisabled()
   })
 })

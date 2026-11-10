@@ -38,6 +38,8 @@
 /* --- Campos ---------------------------------------------------- */
 .campo { display: grid; gap: 6px; }
 .campo > span, .campo > label { font-size: var(--t-menor); font-weight: 700; color: var(--tinta); }
+/* Ayuda bajo un campo; se enlaza con aria-describedby para que la lea un lector de pantalla. */
+.campo > .campo-ayuda { font-size: var(--t-etiqueta); font-weight: 400; color: var(--apagado); }
 .input {
   font: inherit;
   padding: 10px var(--e4);

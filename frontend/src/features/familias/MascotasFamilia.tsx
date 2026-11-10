@@ -8,10 +8,15 @@ import { fecha } from '@/lib/formato'
 import type { FamiliaRead, MascotaRead } from '@/types'
 
 import { useAgregarMascota, useBajaMascota, type NuevaMascota } from './api'
+import { CamposMascota } from './CamposMascota'
+import { FichaMascotaModal } from './FichaMascota'
+import { leerCamposMascota } from './mascota'
 
 export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
   const [agregando, setAgregando] = useState(false)
   const [deBaja, setDeBaja] = useState<MascotaRead | null>(null)
+  // Solo el id: los datos se leen de la familia, que se recarga al guardar.
+  const [abiertaId, setAbiertaId] = useState<string | null>(null)
   const especies = useEspecies()
   const mascotas = familia.mascotas ?? []
   const nombreEspecie = (codigo: string) => especies.data?.find((e) => e.codigo === codigo)?.nombre ?? codigo
@@ -38,6 +43,7 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
                 <th>Raza</th>
                 <th>Sexo</th>
                 <th>Nacimiento</th>
+                <th>Peso</th>
                 <th>Estado</th>
                 <th><span className="sr-only">Acciones</span></th>
               </tr>
@@ -50,6 +56,7 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
                   <td>{m.raza ?? '—'}</td>
                   <td>{m.sexo ?? '—'}</td>
                   <td className="numero">{fecha(m.fecha_nacimiento)}</td>
+                  <td className="numero">{m.peso_kg ? `${m.peso_kg} kg` : '—'}</td>
                   <td>
                     {m.activa ? (
                       <span className="distintivo distintivo-ok">Activa</span>
@@ -60,6 +67,9 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
                     )}
                   </td>
                   <td>
+                    <button className="btn btn-plano" type="button" onClick={() => setAbiertaId(m.id)}>
+                      Ficha
+                    </button>
                     <Link to={`/clinica/mascotas/${m.id}`} className="btn btn-plano">
                       Historia
                     </Link>
@@ -77,6 +87,12 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
       )}
       <AgregarMascotaModal familiaId={familia.id} abierto={agregando} onCerrar={() => setAgregando(false)} />
       <BajaMascotaModal mascota={deBaja} onCerrar={() => setDeBaja(null)} />
+      <FichaMascotaModal
+        familia={familia}
+        mascota={mascotas.find((m) => m.id === abiertaId) ?? null}
+        nombreEspecie={nombreEspecie}
+        onCerrar={() => setAbiertaId(null)}
+      />
     </section>
   )
 }
@@ -94,7 +110,7 @@ function AgregarMascotaModal({ familiaId, abierto, onCerrar }: { familiaId: stri
       especie: String(d.get('especie') ?? ''),
       raza: opcional('raza'),
       sexo: opcional('sexo') as NuevaMascota['sexo'],
-      fecha_nacimiento: opcional('fecha_nacimiento'),
+      ...leerCamposMascota(d),
     }
     agregar.mutate(mascota, { onSuccess: onCerrar })
   }
@@ -144,10 +160,7 @@ function AgregarMascotaModal({ familiaId, abierto, onCerrar }: { familiaId: stri
             <option value="macho">Macho</option>
           </select>
         </label>
-        <label className="campo">
-          <span>Fecha de nacimiento (opcional)</span>
-          <input className="input" name="fecha_nacimiento" type="date" />
-        </label>
+        <CamposMascota />
         {agregar.isError && (
           <p className="error ancho" role="alert">
             {mensajeError(agregar.error, 'No fue posible agregar la mascota.')}

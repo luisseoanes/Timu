@@ -340,3 +340,14 @@
   }
   .portal-nav a.active { background: var(--verde-50); }
 }
+
+/* ================= Ficha de la mascota ================= */
+.mascota-cabeza { display: flex; align-items: center; gap: var(--e4); flex-wrap: wrap; }
+.foto-mascota {
+  width: 96px; height: 96px; flex: none;
+  border-radius: var(--r-tarjeta);
+  object-fit: cover;
+  background: var(--verde-50); color: var(--apagado);
+  display: grid; place-items: center;
+  font-size: var(--t-etiqueta);
+}

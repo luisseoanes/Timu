@@ -91,6 +91,8 @@ describe('FamiliasPage', () => {
     await user.type(within(modal).getByLabelText('Barrio'), 'Chapinero')
     await user.type(within(modal).getByLabelText('Nombre de la mascota'), 'Luna')
     await user.selectOptions(within(modal).getByLabelText('Especie'), 'perro')
+    await user.type(within(modal).getByLabelText('Fecha de nacimiento'), '2021-03-01')
+    await user.type(within(modal).getByLabelText('Peso (kg)'), '12.5')
     await user.click(within(modal).getByRole('button', { name: 'Guardar familia' }))
 
     await waitFor(() =>
@@ -101,7 +103,7 @@ describe('FamiliasPage', () => {
         telefono: '3001112233',
         ciudad: 'Bogota',
         barrio: 'Chapinero',
-        mascotas: [{ nombre: 'Luna', especie: 'perro' }],
+        mascotas: [{ nombre: 'Luna', especie: 'perro', fecha_nacimiento: '2021-03-01', peso_kg: 12.5 }],
       }),
     )
   })
@@ -124,6 +126,8 @@ describe('FamiliasPage', () => {
     await user.type(within(modal).getByLabelText('Barrio'), 'Chapinero')
     await user.type(within(modal).getByLabelText('Nombre de la mascota'), 'Luna')
     await user.selectOptions(within(modal).getByLabelText('Especie'), 'perro')
+    await user.type(within(modal).getByLabelText('Fecha de nacimiento'), '2021-03-01')
+    await user.type(within(modal).getByLabelText('Peso (kg)'), '12.5')
     await user.click(within(modal).getByRole('button', { name: 'Guardar familia' }))
     expect(await within(modal).findByRole('alert')).toHaveTextContent('Ya existe una familia con ese documento')
   })
