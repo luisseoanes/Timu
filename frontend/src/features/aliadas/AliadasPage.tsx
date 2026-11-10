@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
-import { Distintivo } from '@/components/Distintivo'
+import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { Pestanas } from '@/components/Pestanas'
@@ -297,7 +297,7 @@ function Clinicas() {
                     {c.telefono ? ` · ${c.telefono}` : ''}
                   </span>
                 </span>
-                {!c.activa && <span className="distintivo distintivo-neutro">Inactiva</span>}
+                {!c.activa && <Insignia tono="neutro">Inactiva</Insignia>}
               </button>
             ))
           }

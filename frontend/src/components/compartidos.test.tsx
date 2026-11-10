@@ -9,7 +9,7 @@ import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 
 import { Consulta } from './Consulta'
-import { Distintivo } from './Distintivo'
+import { Distintivo, Insignia } from './Distintivo'
 import { Paginacion } from './Paginacion'
 import { Pestanas } from './Pestanas'
 
@@ -45,6 +45,34 @@ describe('Consulta', () => {
     expect(await screen.findByText('Todavía no hay elementos.')).toBeInTheDocument()
   })
 
+  it('ante un fallo pasajero ofrece reintentar y vuelve a pedir', async () => {
+    let pedidos = 0
+    server.use(
+      http.get('*/api/v1/prueba', () => {
+        pedidos += 1
+        return pedidos === 1 ? HttpResponse.json({}, { status: 503 }) : HttpResponse.json(['uno'])
+      }),
+    )
+    renderizar(<Lista />)
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByText('uno')).toBeInTheDocument()
+    expect(pedidos).toBe(2)
+  })
+
+  it('ante un error firme no ofrece reintentar', async () => {
+    server.use(http.get('*/api/v1/prueba', () => HttpResponse.json({ detail: 'Sin permiso' }, { status: 403 })))
+    renderizar(<Lista />)
+    expect(await screen.findByRole('alert')).toHaveTextContent('Sin permiso')
+    expect(screen.queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument()
+  })
+
+  it('anuncia la carga a los lectores de pantalla', () => {
+    server.use(http.get('*/api/v1/prueba', () => new Promise(() => {})))
+    renderizar(<Lista />)
+    expect(screen.getByRole('status')).toHaveTextContent('Cargando elementos…')
+  })
+
   it('muestra el error con la causa que da el servidor', async () => {
     server.use(
       http.get('*/api/v1/prueba', () =>
@@ -61,6 +89,27 @@ describe('Distintivo', () => {
   it('lleva texto además del tono', () => {
     renderizar(<Distintivo dominio="afiliacion" valor="en_mora" />)
     expect(screen.getByText('En mora')).toHaveClass('distintivo-alerta')
+  })
+
+  it('cada tono tiene su propio icono, para que el estado no dependa solo del color', () => {
+    const tonos = ['ok', 'alerta', 'info', 'peligro', 'neutro'] as const
+    renderizar(
+      <>
+        {tonos.map((tono) => (
+          <Insignia key={tono} tono={tono}>
+            {tono}
+          </Insignia>
+        ))}
+      </>,
+    )
+    const trazos = tonos.map((tono) => {
+      const insignia = screen.getByText(tono)
+      const icono = insignia.querySelector('svg')
+      // El icono acompaña, no se anuncia: el significado lo lleva el texto.
+      expect(icono).toHaveAttribute('aria-hidden', 'true')
+      return icono?.innerHTML
+    })
+    expect(new Set(trazos).size).toBe(tonos.length)
   })
 })
 

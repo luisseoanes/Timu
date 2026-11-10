@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
-import { Distintivo } from '@/components/Distintivo'
+import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono, type NombreIcono } from '@/components/Icono'
 import { useAuth } from '@/features/auth'
 import { useCiudades, useNombreTipoServicio } from '@/features/catalogos'
@@ -292,9 +292,9 @@ function Alerta({ to, icono, titulo, cantidad }: { to: string; icono: NombreIcon
       <div className="fila-cuerpo">
         <strong>{titulo}</strong>
       </div>
-      <span className={`distintivo distintivo-${cantidad > 0 ? 'alerta' : 'ok'}`}>
+      <Insignia tono={cantidad > 0 ? 'alerta' : 'ok'}>
         {cantidad > 0 ? cantidad : 'Al día'}
-      </span>
+      </Insignia>
     </Link>
   )
 }

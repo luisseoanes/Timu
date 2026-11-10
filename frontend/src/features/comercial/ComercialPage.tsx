@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
-import { Distintivo } from '@/components/Distintivo'
+import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { Paginacion } from '@/components/Paginacion'
@@ -350,9 +350,9 @@ function Conversaciones() {
             <div key={c.id} className="pila" style={{ gap: 'var(--e2)', paddingBlock: 'var(--e3)', borderBottom: '1px solid var(--borde)' }}>
               <div className="acciones">
                 <strong className="numero">{c.telefono}</strong>
-                <span className={`distintivo distintivo-${c.estado === 'con_asesor' ? 'alerta' : 'info'}`}>
+                <Insignia tono={c.estado === 'con_asesor' ? 'alerta' : 'info'}>
                   {c.estado === 'con_asesor' ? 'Espera asesor' : c.estado === 'automatica' ? 'Bot' : c.estado}
-                </span>
+                </Insignia>
                 <span className="apagado">
                   Paso «{c.nodo}» · {fechaHora(c.updated_at)}
                 </span>

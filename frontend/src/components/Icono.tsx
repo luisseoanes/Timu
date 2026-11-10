@@ -8,7 +8,7 @@ export type NombreIcono =
   | 'salir' | 'usuario' | 'llave' | 'calendario' | 'pago' | 'mas' | 'cerrar'
   | 'tareas' | 'comercial' | 'aliadas' | 'encuestas' | 'ajustes' | 'descargar' | 'volver'
   | 'ojo' | 'ojo-cerrado' | 'escudo' | 'huella' | 'telefono' | 'correo' | 'pulso' | 'check'
-  | 'ia' | 'mensaje' | 'subir' | 'editar' | 'portal' | 'candado'
+  | 'ia' | 'mensaje' | 'subir' | 'editar' | 'portal' | 'candado' | 'alerta' | 'info' | 'menos'
 
 const TRAZOS: Record<NombreIcono, string> = {
   panel: 'M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z',
@@ -50,6 +50,9 @@ const TRAZOS: Record<NombreIcono, string> = {
   editar: 'M4 20h4L19 9l-4-4L4 16v4Zm10-14 4 4',
   candado: 'M6 11h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1Zm2 0V7a4 4 0 0 1 8 0v4m-4 4v2',
   portal: 'M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z',
+  alerta: 'M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z',
+  info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-5v-5M12 8h.01',
+  menos: 'M5 12h14',
 }
 
 export function Icono({ nombre, size = 20 }: { nombre: NombreIcono; size?: number }) {

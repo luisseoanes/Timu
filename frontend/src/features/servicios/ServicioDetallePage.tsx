@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
-import { Distintivo } from '@/components/Distintivo'
+import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { useAuth } from '@/features/auth'
@@ -220,8 +220,8 @@ function Paso({
     <div className="pila" style={{ gap: 'var(--e2)' }}>
       <div className="acciones">
         <strong>{paso.nombre}</strong>
-        {!paso.obligatorio && <span className="distintivo distintivo-neutro">Opcional</span>}
-        {datos && <span className="distintivo distintivo-ok">Registrado</span>}
+        {!paso.obligatorio && <Insignia tono="neutro">Opcional</Insignia>}
+        {datos && <Insignia tono="ok">Registrado</Insignia>}
         {editable && !abierto && (
           <button className="btn btn-plano" type="button" onClick={() => setAbierto(true)}>
             {datos ? 'Editar' : 'Registrar'}

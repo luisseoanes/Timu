@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
-import { Distintivo } from '@/components/Distintivo'
+import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { Paginacion } from '@/components/Paginacion'
@@ -138,9 +138,9 @@ function ListadoServicios({ nuevoInicial }: { nuevoInicial: boolean }) {
                       <td>
                         {s.requiere_autorizacion ? (
                           s.autorizado ? (
-                            <span className="distintivo distintivo-ok">Autorizado</span>
+                            <Insignia tono="ok">Autorizado</Insignia>
                           ) : (
-                            <span className="distintivo distintivo-alerta">Por autorizar</span>
+                            <Insignia tono="alerta">Por autorizar</Insignia>
                           )
                         ) : (
                           <span className="apagado">No requiere</span>

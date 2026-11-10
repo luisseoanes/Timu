@@ -1,58 +1,69 @@
 /* Componentes reutilizables. Un componente = una clase raíz + modificadores. */
 
-/* --- Botones --------------------------------------------------- */
+/* --- Botones ---------------------------------------------------
+   Uno principal por vista (manual de marca, regla 2). Secundario y suave para el resto; el
+   destructivo solo para lo que no se deshace. */
 .btn {
   font-family: var(--fuente);
   font-size: var(--t-cuerpo);
-  font-weight: 700;
-  padding: 10px var(--e5);
-  border-radius: var(--r-pastilla);
+  font-weight: 600;
+  min-height: 40px;
+  padding: 0 var(--e5);
+  border-radius: var(--r-campo);
   border: 1px solid transparent;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--e2);
-  transition: background-color var(--duracion) var(--curva), color var(--duracion) var(--curva);
+  white-space: nowrap;
+  transition: background-color var(--duracion) var(--curva), color var(--duracion) var(--curva), border-color var(--duracion) var(--curva);
 }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { cursor: not-allowed; }
+.btn-bloque { width: 100%; }
+
 .btn-primario { background: var(--accion-fondo); color: var(--accion-texto); }
 .btn-primario:hover:not(:disabled) { background: var(--accion-fondo-hover); }
+.btn-secundario { background: var(--superficie); color: var(--texto-titulo); border-color: var(--borde-control); }
+.btn-secundario:hover:not(:disabled) { border-color: var(--borde-control-hover); background: var(--superficie-hundida); }
 .btn-suave { background: var(--accion-suave-fondo); color: var(--accion-suave-texto); }
 .btn-suave:hover:not(:disabled) { background: var(--accion-suave-fondo-hover); }
 .btn-plano { background: transparent; color: var(--texto-suave); }
-.btn-plano:hover:not(:disabled) { color: var(--texto-titulo); }
-.btn:disabled { opacity: .55; cursor: default; }
-.btn-bloque { width: 100%; }
-
-.btn-icono {
-  width: 38px; height: 38px;
-  display: grid; place-items: center;
-  border-radius: var(--r-pastilla);
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  color: var(--texto-suave);
-  cursor: pointer;
+.btn-plano:hover:not(:disabled) { color: var(--texto-titulo); background: var(--superficie-hundida); }
+.btn-peligro { background: var(--peligro-accion-fondo); color: var(--peligro-accion-texto); }
+.btn-peligro:hover:not(:disabled) { background: var(--peligro-accion-fondo-hover); }
+/* Deshabilitado: el mismo gris para todos, para que no parezca otra variante. */
+.btn-primario:disabled, .btn-secundario:disabled, .btn-suave:disabled, .btn-peligro:disabled {
+  background: var(--estado-neutro-fondo); color: var(--texto-suave); border-color: transparent;
 }
-.btn-icono:hover { color: var(--texto-titulo); border-color: var(--borde-control-hover); }
+.btn-plano:disabled { color: var(--texto-deshabilitado); }
 
 /* --- Campos ---------------------------------------------------- */
 .campo { display: grid; gap: 6px; }
-.campo > span, .campo > label { font-size: var(--t-menor); font-weight: 700; color: var(--texto-titulo); }
+.campo > span, .campo > label { font-size: var(--t-menor); font-weight: 600; color: var(--texto-titulo); }
 /* Ayuda bajo un campo; se enlaza con aria-describedby para que la lea un lector de pantalla. */
 .campo > .campo-ayuda { font-size: var(--t-etiqueta); font-weight: 400; color: var(--texto-suave); }
 .input {
   font: inherit;
-  padding: 10px var(--e4);
+  min-height: 40px;
+  padding: 8px var(--e3);
   border: 1px solid var(--borde-control);
   border-radius: var(--r-campo);
   background: var(--superficie);
   color: var(--texto);
   width: 100%;
+  transition: border-color var(--duracion) var(--curva);
 }
 .input::placeholder { color: var(--texto-suave); }
+.input:hover:not(:disabled):not(:focus) { border-color: var(--borde-control-hover); }
 .input:focus { border-color: var(--foco); outline: none; box-shadow: 0 0 0 1px var(--foco); }
+.input[aria-invalid="true"] { border-color: var(--texto-error); }
+.input[aria-invalid="true"]:focus { box-shadow: 0 0 0 1px var(--texto-error); }
+.input:disabled { background: var(--superficie-hundida); color: var(--texto-suave); cursor: not-allowed; }
+textarea.input { min-height: 0; padding-block: var(--e2); }
 
-/* Variante subrayada: sólo en el login, siguiendo la referencia */
+/* Variante subrayada: sólo en el ingreso */
 .input-linea {
   border: 0;
   border-bottom: 1.5px solid var(--borde-control);
@@ -90,7 +101,10 @@
 
 /* --- Distintivos de estado ------------------------------------- */
 .distintivo {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.4;
   font-size: var(--t-etiqueta);
   font-weight: 700;
   padding: 3px 10px;
@@ -212,6 +226,19 @@
   border-radius: var(--r-panel);
   box-shadow: var(--sombra-3);
   padding: var(--e5);
+}
+
+/* En pantallas estrechas la ventana es una hoja que sube desde abajo: a todo el ancho y al
+   alcance del pulgar. */
+@media (max-width: 600px) {
+  .modal {
+    top: auto; bottom: 0; left: 0;
+    transform: none;
+    width: 100%;
+    max-height: 92vh;
+    border-radius: var(--r-panel) var(--r-panel) 0 0;
+    padding-bottom: calc(var(--e5) + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .modal-cabecera {
@@ -445,3 +472,20 @@ a.acceso { text-decoration: none; }
   display: grid; place-items: center;
   font-size: var(--t-etiqueta);
 }
+
+/* --- Pantallas táctiles y estrechas --------------------------------
+   Zonas de 44 px (WCAG 2.5.8 pide 24; 44 es lo cómodo con el pulgar) y letra de 16 px en los
+   campos: por debajo, iOS amplía la página al enfocar. */
+@media (max-width: 900px), (pointer: coarse) {
+  .btn, .input, .boton-icono { min-height: 44px; }
+  .boton-icono { min-width: 44px; }
+  .input { font-size: 1rem; }
+}
+
+/* --- Carga y error de una consulta (Consulta.tsx) ---------------- */
+.esqueleto { display: grid; gap: var(--e3); padding-block: var(--e2); }
+.esqueleto-linea { height: 12px; border-radius: 4px; background: var(--pista); animation: esqueleto 1.2s var(--curva) infinite alternate; }
+.esqueleto-linea:nth-child(3) { width: 80%; }
+.esqueleto-linea:nth-child(4) { width: 55%; }
+@keyframes esqueleto { from { opacity: 1; } to { opacity: .45; } }
+.consulta-error { flex-wrap: wrap; align-items: center; justify-content: space-between; }

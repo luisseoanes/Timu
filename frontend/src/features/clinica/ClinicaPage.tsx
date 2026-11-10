@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
-import { Distintivo } from '@/components/Distintivo'
+import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { Pestanas } from '@/components/Pestanas'
@@ -120,7 +120,7 @@ function AtencionVirtual() {
                       </td>
                       <td>
                         <Distintivo dominio="virtual" valor={s.estado} />
-                        {s.borrador_ia && <span className="distintivo distintivo-info">Borrador IA</span>}
+                        {s.borrador_ia && <Insignia tono="info">Borrador IA</Insignia>}
                       </td>
                       <td>
                         {esMedico && !s.asignada_a_id && (
@@ -405,9 +405,9 @@ function Respuestas() {
                 <strong>{r.titulo}</strong>
                 <span>{r.cuerpo}</span>
               </div>
-              <span className={`distintivo distintivo-${r.estado === 'aprobada' ? 'ok' : 'alerta'}`}>
+              <Insignia tono={r.estado === 'aprobada' ? 'ok' : 'alerta'}>
                 {r.estado === 'aprobada' ? 'Aprobada' : 'Por aprobar'}
-              </span>
+              </Insignia>
               {r.estado !== 'aprobada' && puede(usuario, 'administrar') && (
                 <button className="btn btn-plano" type="button" onClick={() => aprobar.mutate(r.codigo)}>
                   Aprobar

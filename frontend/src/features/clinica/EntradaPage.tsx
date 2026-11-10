@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
-import { Distintivo } from '@/components/Distintivo'
+import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { useAuth } from '@/features/auth'
@@ -63,7 +63,7 @@ function DetalleEntrada({ entrada: e }: { entrada: EntradaHistoria }) {
         </Link>
         <h1>Consulta del {fecha(e.fecha)}</h1>
         <Distintivo dominio="historia" valor={e.estado} />
-        {e.version && e.version > 1 && <span className="distintivo distintivo-neutro">Versión {e.version}</span>}
+        {e.version && e.version > 1 && <Insignia tono="neutro">Versión {e.version}</Insignia>}
         {esMedico && (
           <div className="acciones" style={{ marginLeft: 'auto' }}>
             {borrador && !editando && (

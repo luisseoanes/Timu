@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
-import { Distintivo } from '@/components/Distintivo'
+import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Pestanas } from '@/components/Pestanas'
 import { useAuth } from '@/features/auth'
@@ -35,7 +35,7 @@ export function FamiliaDetallePage() {
             </Link>
             <h1>{f.titular_nombre}</h1>
             <Distintivo dominio="afiliacion" valor={f.estado} />
-            {f.usuario_portal_id && <span className="distintivo distintivo-info">Con portal</span>}
+            {f.usuario_portal_id && <Insignia tono="info">Con portal</Insignia>}
             {puede(usuario, 'gestionarAfiliacion') && <AccionesFamilia familia={f} />}
           </div>
           {f.dada_de_baja_en && (

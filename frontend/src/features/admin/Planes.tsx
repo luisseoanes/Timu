@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 
 import { Consulta } from '@/components/Consulta'
+import { Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { useCiudades, useEspecies, useTiposServicio } from '@/features/catalogos'
@@ -46,7 +47,7 @@ export function Planes() {
                 <div className="acciones">
                   <span className="marcador-plan" data-color={p.color} aria-hidden="true" />
                   <h4>{p.nombre}</h4>
-                  {!p.activo && <span className="distintivo distintivo-neutro">Inactivo</span>}
+                  {!p.activo && <Insignia tono="neutro">Inactivo</Insignia>}
                 </div>
                 <strong className="indicador-valor numero">{moneda(tarifa(p, 1))}</strong>
                 <span className="apagado">por peludo al mes · {p.ciudades.join(', ') || 'sin ciudades'}</span>

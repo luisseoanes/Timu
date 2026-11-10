@@ -1,7 +1,7 @@
 import type { UseQueryResult } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
-import { mensajeError } from '@/lib/errores'
+import { esErrorPasajero, mensajeError } from '@/lib/errores'
 
 /**
  * Las tres pantallas obligatorias de toda consulta (docs/frontend/conventions.md):
@@ -25,12 +25,31 @@ export function Consulta<T>({
   estaVacio?: (datos: T) => boolean
   children: (datos: T) => ReactNode
 }) {
-  if (consulta.isPending) return <p className="apagado">{cargando}</p>
-  if (consulta.isError) {
+  if (consulta.isPending) {
+    // Esqueleto en vez de un texto suelto; el texto queda para el lector de pantalla.
     return (
-      <p className="error" role="alert">
-        {error} {mensajeError(consulta.error, 'Intenta de nuevo en un momento.')}
-      </p>
+      <div className="esqueleto" role="status">
+        <span className="sr-only">{cargando}</span>
+        <span className="esqueleto-linea" aria-hidden="true" />
+        <span className="esqueleto-linea" aria-hidden="true" />
+        <span className="esqueleto-linea" aria-hidden="true" />
+      </div>
+    )
+  }
+  if (consulta.isError) {
+    // «Reintentar» solo cuando el fallo es pasajero: ante un permiso o un dato inválido,
+    // repetir la petición da el mismo error y el botón engañaría.
+    return (
+      <div className="aviso-error consulta-error" role="alert">
+        <p>
+          {error} {mensajeError(consulta.error, 'Intenta de nuevo en un momento.')}
+        </p>
+        {esErrorPasajero(consulta.error) && (
+          <button className="btn btn-secundario" type="button" onClick={() => void consulta.refetch()}>
+            Reintentar
+          </button>
+        )}
+      </div>
     )
   }
   if (vacio && estaVacio?.(consulta.data)) return <p className="apagado">{vacio}</p>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
-import { Distintivo } from '@/components/Distintivo'
+import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { Paginacion } from '@/components/Paginacion'
@@ -600,7 +600,7 @@ function Encuestas() {
             <>
               {d.items.map((e) => (
                 <div key={e.id} className="fila">
-                  <span className={`distintivo distintivo-${(e.puntaje ?? 0) <= 3 ? 'alerta' : 'ok'}`}>{e.puntaje} / 5</span>
+                  <Insignia tono={(e.puntaje ?? 0) <= 3 ? 'alerta' : 'ok'}>{e.puntaje} / 5</Insignia>
                   <div className="fila-cuerpo">
                     <strong>{e.comentario ?? 'Sin comentario'}</strong>
                     <span>
@@ -608,7 +608,7 @@ function Encuestas() {
                       <Link to={`/servicios/${e.servicio_id}`}>Ver servicio</Link>
                     </span>
                   </div>
-                  {e.tarea_id && <span className="distintivo distintivo-info">Con tarea de seguimiento</span>}
+                  {e.tarea_id && <Insignia tono="info">Con tarea de seguimiento</Insignia>}
                 </div>
               ))}
               <Paginacion total={d.total} limit={d.limit} offset={d.offset} onCambio={setOffset} />
@@ -739,7 +739,7 @@ function Mensajes() {
                           {m.destino ?? '—'}
                         </td>
                         <td>
-                          {m.plantilla ? <span className="distintivo distintivo-neutro">{m.plantilla}</span> : null} {m.contenido}
+                          {m.plantilla ? <Insignia tono="neutro">{m.plantilla}</Insignia> : null} {m.contenido}
                           {m.error && <div className="error">{m.error}</div>}
                         </td>
                         <td>

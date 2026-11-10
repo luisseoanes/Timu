@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { Route, Routes } from 'react-router-dom'
@@ -90,7 +90,8 @@ describe('Verificación de carnet', () => {
       ),
     )
     abrir()
-    expect(await screen.findByRole('status')).toHaveTextContent('Carnet auténtico')
+    // Mientras carga, el esqueleto también es un `status`: se espera al resultado.
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Carnet auténtico'))
     expect(screen.getByText('Rabia · Única')).toBeInTheDocument()
     expect(screen.getByText('L-77')).toBeInTheDocument()
   })

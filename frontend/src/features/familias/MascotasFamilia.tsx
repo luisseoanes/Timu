@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
+import { Insignia } from '@/components/Distintivo'
 import { Modal } from '@/components/Modal'
 import { useEspecies } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
@@ -60,11 +61,11 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
                   <td className="numero">{m.peso_kg ? `${m.peso_kg} kg` : '—'}</td>
                   <td>
                     {m.activa ? (
-                      <span className="distintivo distintivo-ok">Activa</span>
+                      <Insignia tono="ok">Activa</Insignia>
                     ) : (
-                      <span className="distintivo distintivo-neutro" title={m.motivo_baja ?? undefined}>
+                      <Insignia tono="neutro" title={m.motivo_baja ?? undefined}>
                         De baja
-                      </span>
+                      </Insignia>
                     )}
                   </td>
                   <td>

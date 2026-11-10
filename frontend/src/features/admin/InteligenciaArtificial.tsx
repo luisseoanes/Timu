@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import { Consulta } from '@/components/Consulta'
+import { Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { mensajeError } from '@/lib/errores'
@@ -136,7 +137,7 @@ export function InteligenciaArtificial() {
                         {q.prompt_version && <span className="apagado"> v{q.prompt_version}</span>}
                       </td>
                       <td>
-                        <span className={`distintivo distintivo-${q.estado === 'ok' ? 'ok' : q.estado === 'error' ? 'peligro' : 'neutro'}`}>{q.estado}</span>
+                        <Insignia tono={q.estado === 'ok' ? 'ok' : q.estado === 'error' ? 'peligro' : 'neutro'}>{q.estado}</Insignia>
                         {q.error && <div className="apagado">{q.error}</div>}
                       </td>
                       <td className="numero">
@@ -169,7 +170,7 @@ function FilaPrompt({ prompt: p }: { prompt: PromptRead }) {
         <strong>
           {USOS[p.codigo] ?? p.codigo} · v{p.version}
         </strong>
-        <span className={`distintivo distintivo-${p.estado === 'activo' ? 'ok' : p.estado === 'borrador' ? 'alerta' : 'neutro'}`}>{p.estado}</span>
+        <Insignia tono={p.estado === 'activo' ? 'ok' : p.estado === 'borrador' ? 'alerta' : 'neutro'}>{p.estado}</Insignia>
         {p.nota && <span className="apagado">{p.nota}</span>}
         {p.estado === 'borrador' && (
           <div className="acciones" style={{ marginLeft: 'auto' }}>

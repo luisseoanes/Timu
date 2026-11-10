@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
-import { Distintivo } from '@/components/Distintivo'
+import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { Paginacion } from '@/components/Paginacion'
@@ -11,6 +11,7 @@ import { useAuth } from '@/features/auth'
 import { SelectorFamilia, useFamilia, useMascotas } from '@/features/familias'
 import { useDisponibilidad } from '@/features/servicios'
 import { mensajeError } from '@/lib/errores'
+import type { Tono } from '@/lib/estados'
 import { fecha, hora, hoyISO } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
 import type { EventoRead, FamiliaRead } from '@/types'
@@ -143,9 +144,9 @@ function Calendario({ porAutorizar }: { porAutorizar: boolean }) {
                           {!e.requiere_autorizacion ? (
                             <span className="apagado">No requiere</span>
                           ) : e.autorizado ? (
-                            <span className="distintivo distintivo-ok">Autorizado</span>
+                            <Insignia tono="ok">Autorizado</Insignia>
                           ) : (
-                            <span className="distintivo distintivo-alerta">Por autorizar</span>
+                            <Insignia tono="alerta">Por autorizar</Insignia>
                           )}
                         </td>
                         <td>
@@ -462,11 +463,11 @@ function CarnetMascota({ mascotaInicial }: { mascotaInicial: string | null }) {
   )
 }
 
-function ListaCarnet({ titulo, filas, vacio, tono }: { titulo: string; filas: FilaCarnet[]; vacio: string; tono: string }) {
+function ListaCarnet({ titulo, filas, vacio, tono }: { titulo: string; filas: FilaCarnet[]; vacio: string; tono: Tono }) {
   return (
     <div>
       <h4 className="subtitulo">
-        {titulo} <span className={`distintivo distintivo-${tono}`}>{filas.length}</span>
+        {titulo} <Insignia tono={tono}>{filas.length}</Insignia>
       </h4>
       {filas.length === 0 ? (
         <p className="apagado">{vacio}</p>

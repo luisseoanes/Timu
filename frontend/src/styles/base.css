@@ -34,6 +34,13 @@ a:hover { color: var(--texto-enlace-hover); }
   border-radius: 6px;
 }
 
+/* Superficies del navegador: también llevan la paleta (manual de marca, roles de selección). */
+::selection { background: var(--seleccion-texto); color: var(--texto-titulo); }
+input, textarea { caret-color: var(--texto-titulo); }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--indicador-seleccion); width: 18px; height: 18px; }
+html { scrollbar-color: var(--borde-control) transparent; }
+a { text-underline-offset: 2px; }
+
 /* Utilidades de texto */
 .apagado   { color: var(--texto-suave); }
 .etiqueta  {

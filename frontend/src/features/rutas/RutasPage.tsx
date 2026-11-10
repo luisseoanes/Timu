@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { AnilloProgreso } from '@/components/AnilloProgreso'
 import { Consulta } from '@/components/Consulta'
-import { Distintivo } from '@/components/Distintivo'
+import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { useAuth, useEquipo } from '@/features/auth'
@@ -109,7 +109,7 @@ export function RutasPage() {
         <section className="tarjeta">
           <div className="tarjeta-cabeza">
             <h3>Por rutear</h3>
-            <span className="distintivo distintivo-alerta">{porRutear.data?.length ?? 0}</span>
+            <Insignia tono="alerta">{porRutear.data?.length ?? 0}</Insignia>
           </div>
           <Consulta
             consulta={porRutear}

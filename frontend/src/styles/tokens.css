@@ -115,6 +115,7 @@
 
   /* Selección y foco */
   --indicador-seleccion: var(--verde-600);
+  --seleccion-texto:     var(--verde-200);  /* fondo del texto seleccionado con el ratón */
   --foco:                var(--azul-500);
   --foco-sobre-marca:    var(--verde-500);
 
@@ -196,6 +197,7 @@
   --texto-titulo / --superficie 4.5
   --texto-titulo / --superficie-lienzo 4.5
   --texto-titulo / --superficie-seleccion 4.5
+  --texto-titulo / --seleccion-texto 4.5
   --texto / --superficie 4.5
   --texto / --superficie-lienzo 4.5
   --texto-suave / --superficie 4.5
