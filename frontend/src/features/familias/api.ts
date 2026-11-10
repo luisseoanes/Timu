@@ -7,6 +7,7 @@ import type {
   EstadoAfiliacion,
   EstadoCuenta,
   FamiliaRead,
+  MensajeRead,
   MascotaRead,
   Page,
   ResumenServiciosRead,
@@ -221,6 +222,19 @@ export function useResumenServicios(familiaId: string, filtros: FiltrosResumen) 
       (
         await api.get<ResumenServiciosRead>('/servicios/resumen', {
           params: { familia_id: familiaId, ...filtros },
+        })
+      ).data,
+  })
+}
+
+/** 6.1 Historial de comunicaciones de la familia, de lo más reciente a lo más antiguo. */
+export function useMensajesFamilia(familiaId: string, offset: number) {
+  return useQuery({
+    queryKey: ['comunicaciones', 'mensajes', familiaId, offset],
+    queryFn: async () =>
+      (
+        await api.get<Page<MensajeRead>>('/comunicaciones/mensajes', {
+          params: { familia_id: familiaId, orden: '-created_at', limit: 20, offset },
         })
       ).data,
   })

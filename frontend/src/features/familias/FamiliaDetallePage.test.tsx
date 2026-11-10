@@ -533,4 +533,83 @@ describe('FamiliaDetallePage', () => {
     await user.click(within(modal).getByRole('button', { name: 'Quitar contacto' }))
     await waitFor(() => expect(quitado).toBe('k1'))
   })
+
+  const MENSAJE = {
+    id: 'm1',
+    familia_id: FAMILIA.id,
+    canal: 'whatsapp',
+    direccion: 'saliente',
+    destino: '+573001112233',
+    plantilla: 'cuota_vencida',
+    contenido: null,
+    estado: 'leido',
+    intentos: 1,
+    error: null,
+    masivo: false,
+    enviado_en: '2026-11-02T15:00:00Z',
+    entregado_en: null,
+    leido_en: null,
+    created_at: '2026-11-02T14:59:00Z',
+  }
+
+  it('muestra el historial de comunicaciones de la familia, enviado y recibido', async () => {
+    let consultado: URLSearchParams | null = null
+    server.use(
+      http.get(`${API}/comunicaciones/mensajes`, ({ request }) => {
+        consultado = new URL(request.url).searchParams
+        return HttpResponse.json({
+          items: [
+            MENSAJE,
+            { ...MENSAJE, id: 'm2', direccion: 'entrante', plantilla: null, contenido: '¿A qué hora llegan?', estado: 'recibido' },
+            { ...MENSAJE, id: 'm3', canal: 'email', estado: 'fallido', error: 'Buzón inexistente', masivo: true },
+          ],
+          total: 3,
+          limit: 20,
+          offset: 0,
+        })
+      }),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Comunicaciones' }))
+    const tabla = await screen.findByRole('table', { name: 'Comunicaciones' })
+    expect(within(tabla).getAllByText('Plantilla «cuota_vencida»')).toHaveLength(2)
+    expect(within(tabla).getByText('¿A qué hora llegan?')).toBeInTheDocument()
+    expect(within(tabla).getByText('Recibido', { selector: 'td' })).toBeInTheDocument()
+    expect(within(tabla).getByText('Correo')).toBeInTheDocument()
+    expect(within(tabla).getByText('Buzón inexistente')).toBeInTheDocument()
+    expect(within(tabla).getByText('Fallido')).toBeInTheDocument()
+    const params = consultado as URLSearchParams | null
+    expect(params?.get('familia_id')).toBe(FAMILIA.id)
+    expect(params?.get('orden')).toBe('-created_at')
+  })
+
+  it('pagina el historial de comunicaciones', async () => {
+    const offsets: string[] = []
+    server.use(
+      http.get(`${API}/comunicaciones/mensajes`, ({ request }) => {
+        const offset = new URL(request.url).searchParams.get('offset') ?? '0'
+        offsets.push(offset)
+        return HttpResponse.json({ items: [MENSAJE], total: 25, limit: 20, offset: Number(offset) })
+      }),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Comunicaciones' }))
+    await screen.findByRole('table', { name: 'Comunicaciones' })
+    await user.click(screen.getByRole('button', { name: /siguiente/i }))
+    await waitFor(() => expect(offsets).toContain('20'))
+  })
+
+  it('avisa que la familia no tiene comunicaciones', async () => {
+    server.use(
+      http.get(`${API}/comunicaciones/mensajes`, () =>
+        HttpResponse.json({ items: [], total: 0, limit: 20, offset: 0 }),
+      ),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Comunicaciones' }))
+    expect(await screen.findByText('Esta familia todavía no tiene comunicaciones.')).toBeInTheDocument()
+  })
 })

@@ -12,6 +12,7 @@ import type { CambioHistorial } from '@/types'
 import { useFamilia, useHistorial } from './api'
 import { AccionesFamilia } from './AccionesFamilia'
 import { CarteraFamilia } from './CarteraFamilia'
+import { ComunicacionesFamilia } from './ComunicacionesFamilia'
 import { ContactosFamilia } from './ContactosFamilia'
 import { DatosFamilia } from './DatosFamilia'
 import { ServiciosFamilia } from './ServiciosFamilia'
@@ -57,6 +58,11 @@ export function FamiliaDetallePage() {
               { valor: 'mascotas', titulo: 'Mascotas', contenido: <MascotasFamilia familia={f} /> },
               { valor: 'cartera', titulo: 'Cartera', contenido: <CarteraFamilia familia={f} /> },
               { valor: 'servicios', titulo: 'Servicios', contenido: <ServiciosFamilia familia={f} /> },
+              {
+                valor: 'comunicaciones',
+                titulo: 'Comunicaciones',
+                contenido: <ComunicacionesFamilia familiaId={f.id} />,
+              },
               { valor: 'historial', titulo: 'Historial', contenido: <HistorialFamilia familiaId={f.id} /> },
             ]}
           />
