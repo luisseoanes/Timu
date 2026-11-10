@@ -133,7 +133,7 @@ Un único scope, en minúscula, que diga **qué parte del sistema** cambia:
 
 | Scope | Cuándo |
 | --- | --- |
-| Nombre del dominio: `afiliaciones`, `aliadas`, `archivos`, `auth`, `campanas`, `cartera`, `catalogos`, `clinica`, `comercial`, `comunicaciones`, `dashboard`, `encuestas`, `familias`, `ia`, `planes`, `portal`, `preventivos`, `reglas`, `rutas`, `servicios`, `tareas`, `admin`, `publico` | El cambio pertenece a ese dominio, en el backend (`app/modules/<dominio>`), en el panel (`src/features/<dominio>`) o en ambos. Es el caso normal. |
+| Nombre del dominio: `afiliaciones`, `aliadas`, `archivos`, `auth`, `campanas`, `cartera`, `catalogos`, `clinica`, `comercial`, `comunicaciones`, `dashboard`, `documentos`, `encuestas`, `familias`, `ia`, `planes`, `portal`, `preventivos`, `reglas`, `rutas`, `servicios`, `tareas`, `admin`, `publico` | El cambio pertenece a ese dominio, en el backend (`app/modules/<dominio>`), en el panel (`src/features/<dominio>`) o en ambos. Es el caso normal. |
 | `backend` / `frontend` | Afecta a toda una capa y no a un dominio: núcleo, middleware, sistema visual, cliente de la API. |
 | `infra` | `docker-compose.yml`, Dockerfiles, `infra/`. |
 | `deps` | Actualización de dependencias, normalmente con `build`. |
