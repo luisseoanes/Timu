@@ -7,6 +7,7 @@ import type {
   EstadoCuenta,
   FamiliaRead,
   InicioPago,
+  MascotaRead,
   PagoPortalRead,
   ServicioPortalRead,
 } from '@/types'
@@ -105,6 +106,26 @@ export function useMisDocumentos() {
     queryKey: ['portal', 'documentos'],
     queryFn: async () => (await api.get<DocumentoRead[]>('/portal/documentos')).data,
   })
+}
+
+/** 6.1 Lo único de sus mascotas que la familia cambia: la foto. */
+export function useFotoMascotaPortal(mascotaId: string) {
+  const qc = useQueryClient()
+  const recargar = () => qc.invalidateQueries({ queryKey: ['portal', 'familia'] })
+  const url = `/portal/mascotas/${mascotaId}/foto`
+  const subir = useMutation({
+    mutationFn: async (foto: File) => {
+      const forma = new FormData()
+      forma.append('foto', foto)
+      return (await api.put<MascotaRead>(url, forma)).data
+    },
+    onSuccess: recargar,
+  })
+  const quitar = useMutation({
+    mutationFn: async () => (await api.delete<MascotaRead>(url)).data,
+    onSuccess: recargar,
+  })
+  return { subir, quitar }
 }
 
 export function useMisPagos() {

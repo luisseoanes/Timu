@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
 import { Distintivo } from '@/components/Distintivo'
+import { FotoEditable } from '@/components/FotoEditable'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { Pestanas } from '@/components/Pestanas'
@@ -11,7 +12,7 @@ import { useNombreTipoServicio, useTiposServicio } from '@/features/catalogos'
 import { descargar } from '@/lib/descargas'
 import { mensajeError } from '@/lib/errores'
 import { fecha, fechaHora, hora, hoyISO, moneda } from '@/lib/formato'
-import type { ServicioPortalRead } from '@/types'
+import type { MascotaRead, ServicioPortalRead } from '@/types'
 
 import {
   urlContrato,
@@ -21,6 +22,7 @@ import {
   useCarnetPdfPortal,
   useCarnetPortal,
   useDisponibilidadPortal,
+  useFotoMascotaPortal,
   useHistoriaPortal,
   useMiCuenta,
   useMiFamilia,
@@ -237,6 +239,7 @@ export function PortalMascota() {
         </Link>
         <h1>{mascota?.nombre ?? '…'}</h1>
       </div>
+      {mascota && <FotoPortal mascota={mascota} />}
       <Pestanas
         etiqueta={`Secciones de ${mascota?.nombre ?? 'la mascota'}`}
         pestanas={[
@@ -245,6 +248,28 @@ export function PortalMascota() {
         ]}
       />
     </div>
+  )
+}
+
+function FotoPortal({ mascota }: { mascota: MascotaRead }) {
+  const { subir, quitar } = useFotoMascotaPortal(mascota.id)
+  const fallo = subir.error ?? quitar.error
+  return (
+    <FotoEditable
+      url={mascota.foto_url}
+      alt={`Foto de ${mascota.nombre}`}
+      editable={mascota.activa}
+      ocupada={subir.isPending || quitar.isPending}
+      error={fallo ? mensajeError(fallo, 'No pudimos guardar la foto.') : null}
+      onSubir={(foto) => {
+        quitar.reset()
+        subir.mutate(foto)
+      }}
+      onQuitar={() => {
+        subir.reset()
+        quitar.mutate()
+      }}
+    />
   )
 }
 

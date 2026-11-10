@@ -147,6 +147,45 @@ describe('mascotas', () => {
       HttpResponse.json({ mascota: { id: LUNA.id, nombre: 'Luna' }, aplicados: [], vencidos: [], proximos: [], ...cambios }),
     )
 
+  it('la familia sube y quita la foto de su mascota', async () => {
+    const pedidos: string[] = []
+    let conFoto = false
+    server.use(
+      carnet(),
+      http.get(`${API}/portal/mi-familia`, () =>
+        HttpResponse.json({ ...FAMILIA_CON_BAJA, mascotas: [{ ...LUNA, foto_url: conFoto ? 'https://s3/luna.png' : null }] }),
+      ),
+      http.put(`${API}/portal/mascotas/:id/foto`, async ({ request, params }) => {
+        pedidos.push(`PUT ${String(params.id)} ${(await request.text()).includes('name="foto"')}`)
+        conFoto = true
+        return HttpResponse.json({ ...LUNA, foto_url: 'https://s3/luna.png' })
+      }),
+      http.delete(`${API}/portal/mascotas/:id/foto`, ({ params }) => {
+        pedidos.push(`DELETE ${String(params.id)}`)
+        conFoto = false
+        return HttpResponse.json({ ...LUNA, foto_url: null })
+      }),
+    )
+    const user = abrirMascota()
+    await user.upload(await screen.findByLabelText('Subir foto'), new File(['png'], 'luna.png', { type: 'image/png' }))
+    expect(await screen.findByRole('img', { name: 'Foto de Luna' })).toHaveAttribute('src', 'https://s3/luna.png')
+    await user.click(screen.getByRole('button', { name: 'Quitar foto' }))
+    expect(await screen.findByText('Sin foto')).toBeInTheDocument()
+    expect(pedidos).toEqual([`PUT ${LUNA.id} true`, `DELETE ${LUNA.id}`])
+  })
+
+  it('explica por qué no pudo guardar la foto', async () => {
+    server.use(
+      carnet(),
+      http.put(`${API}/portal/mascotas/:id/foto`, () =>
+        HttpResponse.json({ detail: 'Tipo de archivo no permitido' }, { status: 422 }),
+      ),
+    )
+    const user = abrirMascota()
+    await user.upload(await screen.findByLabelText('Subir foto'), new File(['x'], 'x.png', { type: 'image/png' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Tipo de archivo no permitido')
+  })
+
   it('solo lista las mascotas activas, con su raza o su especie', async () => {
     renderizar(<PortalMascotas />)
     expect(await screen.findByRole('link', { name: /luna/i })).toHaveTextContent('Criolla')
