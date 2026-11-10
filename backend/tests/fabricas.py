@@ -13,7 +13,13 @@ from app.modules.cartera.models import Contrato
 from app.modules.catalogos.models import Ciudad
 from app.modules.comunicaciones.models import PlantillaWhatsApp
 from app.modules.familias.models import Familia, Mascota
-from app.modules.planes.models import Beneficio, CiudadPlan, Plan, TarifaPlan
+from app.modules.planes.models import (
+    Beneficio,
+    CiudadPlan,
+    Plan,
+    TarifaPeriodicidad,
+    TarifaPlan,
+)
 
 _documentos = count(70_000_000)
 
@@ -52,25 +58,26 @@ def plan(
     cupos: int = 1,
     ciudad: str | None = None,
     beneficios: list[dict] | None = None,
+    tarifas: list[int] | None = None,
+    largos: dict[str, int] | None = None,
 ) -> Plan:
-    """Plan con el mismo valor para 1 a 4 peludos, como deja la migracion 0032 a los planes
-    anteriores. Sin `ciudad`, se vende en todas las del catalogo."""
-    p = Plan(
-        codigo=codigo,
-        nombre=f"Plan {codigo}",
-        valor_mensual=valor,
-        cupos_mascotas=cupos,
-        ciudad=ciudad,
-        especies=[],
-    )
+    """Plan con el mismo valor para 1 a 4 peludos (`cupos` ya no limita: se conserva por
+    las llamadas existentes). Sin `ciudad`, se vende en todas las del catalogo."""
+    p = Plan(codigo=codigo, nombre=f"Plan {codigo}", especies=[])
     p.beneficios = [Beneficio(**b) for b in beneficios or []]
     db.add(p)
     db.flush()
-    db.add_all(TarifaPlan(plan_id=p.id, peludos=n, valor=valor) for n in range(1, 5))
+    por_peludos = tarifas or [valor] * 4
+    db.add_all(
+        TarifaPlan(plan_id=p.id, peludos=n, valor=v) for n, v in enumerate(por_peludos, start=1)
+    )
+    db.add_all(
+        TarifaPeriodicidad(plan_id=p.id, periodicidad=k, valor=v) for k, v in (largos or {}).items()
+    )
     ciudades = [ciudad] if ciudad else list(db.scalars(select(Ciudad.nombre)))
     db.add_all(CiudadPlan(plan_id=p.id, ciudad=c) for c in ciudades)
     db.flush()
-    db.refresh(p, ["tarifas", "ciudades"])
+    db.refresh(p, ["tarifas", "tarifas_periodicidad", "ciudades"])
     return p
 
 
@@ -99,9 +106,19 @@ def familia(
 
 
 async def afiliada(
-    db: AsyncSession, inicio: date, p: Plan | None = None, **kwargs
+    db: AsyncSession,
+    inicio: date,
+    p: Plan | None = None,
+    periodicidad: str = "mensual",
+    **kwargs,
 ) -> tuple[Familia, Contrato]:
+    """Familia con contrato vigente: todos sus peludos en el plan `p`."""
     f = await db.run_sync(familia, **kwargs)
     p = p or await db.run_sync(plan, codigo=f"plan_{f.documento}")
-    contrato, _ = await db.run_sync(cartera.crear_contrato, f, p, fecha_inicio=inicio)
+    planes = {m.id: p.id for m in f.mascotas}
+    contrato, _ = await db.run_sync(
+        lambda s: cartera.crear_contrato(
+            s, f, planes, periodicidad=periodicidad, fecha_inicio=inicio
+        )
+    )
     return f, contrato

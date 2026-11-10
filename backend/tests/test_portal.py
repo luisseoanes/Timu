@@ -370,21 +370,21 @@ async def test_familia_no_entra_a_lo_interno(client, portal):
 
 
 async def test_el_plan_muestra_cada_beneficio_con_lo_que_queda(client, db, portal):
-    from app.modules.cartera.models import Contrato
+    from app.modules.cartera import contratos
     from app.modules.planes.models import Beneficio
 
-    contrato = await db.get(Contrato, portal["contrato_id"])
+    plan = await db.run_sync(contratos.plan_de_mascota, portal["mascota_id"])
     db.add_all(
         [
             Beneficio(
-                plan_id=contrato.plan_id,
+                plan_id=plan.id,
                 tipo_servicio_codigo="consulta_domiciliaria",
                 cupo=6,
                 periodo_cupo="anual",
                 cobertura_pct=100,
             ),
             Beneficio(
-                plan_id=contrato.plan_id,
+                plan_id=plan.id,
                 tipo_servicio_codigo="orientacion_virtual",
                 cupo=None,
                 cobertura_pct=100,
@@ -392,9 +392,13 @@ async def test_el_plan_muestra_cada_beneficio_con_lo_que_queda(client, db, porta
         ]
     )
     await db.commit()
-    beneficios = (await client.get("/api/v1/portal/plan", headers=portal["headers"])).json()[
-        "beneficios"
+    await db.refresh(plan, ["beneficios"])  # la prueba lo cargo antes de anadirlos
+    # Cada peludo con su plan y sus beneficios: la familia tiene uno.
+    (peludo,) = (await client.get("/api/v1/portal/plan", headers=portal["headers"])).json()[
+        "mascotas"
     ]
+    assert peludo["mascota_id"] == str(portal["mascota_id"])
+    beneficios = peludo["beneficios"]
     por_tipo = {b["tipo_servicio"]: b for b in beneficios}
     assert (
         por_tipo["consulta_domiciliaria"]["usados"],

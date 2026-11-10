@@ -19,12 +19,11 @@ from app.core.enums import ModoCambioPlan, Periodicidad, PeriodoCupo, TipoCambio
 
 
 class Plan(Base, UUIDMixin, TimestampMixin, Auditable):
-    """6.3 Plan grupal. `ciudad` vacia = disponible en todas las ciudades."""
+    """6.3 Plan de afiliacion. Cada peludo tiene el suyo; su precio sale de `tarifas` (por
+    numero de peludos) y `tarifas_periodicidad`, y se vende en las `ciudades` del plan."""
 
     __tablename__ = "planes"
     __checks__ = {
-        "valor_no_negativo": "valor_mensual >= 0",
-        "cupos_minimo": "cupos_mascotas >= 1",
         "codigo_no_vacio": "btrim(codigo) <> ''",
         "nombre_no_vacio": "btrim(nombre) <> ''",
     }
@@ -32,11 +31,6 @@ class Plan(Base, UUIDMixin, TimestampMixin, Auditable):
     codigo: Mapped[str] = mapped_column(String(40), unique=True)
     nombre: Mapped[str] = mapped_column(String(120), unique=True)
     descripcion: Mapped[str | None] = mapped_column(Text)
-    ciudad: Mapped[str | None] = mapped_column(
-        String(80), ForeignKey("ciudades.nombre", onupdate="CASCADE"), index=True
-    )
-    valor_mensual: Mapped[Decimal] = mapped_column(Numeric(12, 2))
-    cupos_mascotas: Mapped[int] = mapped_column(Integer, default=1)
     especies: Mapped[list[str]] = mapped_column(JSONTipo, default=list)  # vacio = todas
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -139,7 +133,8 @@ class Beneficio(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class CambioPlan(Base, UUIDMixin, TimestampMixin):
-    """F1-PLA-02 / F1-PLA-03 Registro de cada cambio de plan o de cupo y su efecto en el valor."""
+    """F1-PLA-02 / 6.3 Registro de cada cambio de plan de un peludo, alta o retiro de un
+    peludo y su efecto en lo que cobra cada cuota (`valor_anterior`, `valor_nuevo`)."""
 
     __tablename__ = "cambios_plan"
     __checks__ = {
@@ -147,6 +142,7 @@ class CambioPlan(Base, UUIDMixin, TimestampMixin):
     }
 
     contrato_id: Mapped[UUID] = mapped_column(ForeignKey("contratos.id"), index=True)
+    mascota_id: Mapped[UUID | None] = mapped_column(ForeignKey("mascotas.id"), index=True)
     tipo: Mapped[str] = mapped_column(
         EnumDb(TipoCambioPlan)
     )  # cambio_plan | mascota_alta | mascota_baja

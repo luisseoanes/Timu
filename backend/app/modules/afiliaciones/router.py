@@ -10,8 +10,8 @@ from fastapi import APIRouter, Depends, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
-from app.api.deps import INTERNOS, DbSession, publico, requiere
-from app.core.enums import Rol
+from app.api.deps import INTERNOS, DbSession, Interno, publico, requiere
+from app.core.enums import Periodicidad, Rol
 from app.core.errores import ReglaNegocio
 from app.modules.afiliaciones import ciclo, service
 from app.modules.afiliaciones.models import SolicitudAfiliacion
@@ -43,16 +43,40 @@ EQUIPO = Depends(requiere(*INTERNOS))
 
 
 class FormularioAfiliacion(FormularioFamilia):
-    plan_codigo: str
+    plan_codigo: str = Field(description="El plan de todas sus mascotas")
     acepta_condiciones: bool = Field(description="Debe ser true: aceptacion expresa")
     acepta_tratamiento_datos: bool
 
 
-class AfiliacionAsistida(BaseModel):
-    familia_id: UUID
+class PlanDeMascota(BaseModel):
+    mascota_id: UUID
     plan_id: UUID
+
+
+class AfiliacionAsistida(BaseModel):
+    """Todos los peludos activos de la familia, cada uno con su plan, y la forma de pago."""
+
+    familia_id: UUID
+    peludos: list[PlanDeMascota] = Field(min_length=1)
+    periodicidad: Periodicidad = Periodicidad.MENSUAL
     medio_aceptacion: Literal["presencial", "whatsapp", "llamada"]
     detalle_aceptacion: str | None = Field(default=None, description="Quien, como, soporte")
+
+
+class AltaMascota(MascotaAlta):
+    plan_id: UUID | None = Field(
+        default=None, description="Obligatorio si la familia tiene una afiliacion vigente"
+    )
+
+
+class PeludoSolicitudRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    mascota_id: UUID | None
+    nombre: str
+    especie: str
+    plan_id: UUID
+    valor_mensual: Decimal
 
 
 class PagoManualAfiliacion(BaseModel):
@@ -71,7 +95,8 @@ class SolicitudRead(BaseModel):
 
     id: UUID
     familia_id: UUID
-    plan_id: UUID
+    periodicidad: Periodicidad
+    peludos: list[PeludoSolicitudRead]
     valor_inicial: Decimal
     referencia_pago: str
     estado: str
@@ -110,7 +135,7 @@ async def afiliacion_en_linea(
     solicitud, enlace = await db.run_sync(
         service.iniciar,
         familia=familia,
-        plan=plan,
+        planes_por_mascota={m.id: plan.id for m in familia.mascotas if m.activa},
         origen="formulario",
         aceptacion={
             "medio": "formulario_web",
@@ -130,11 +155,11 @@ async def afiliacion_asistida(
 ) -> InicioAfiliacion:
     """Comercial afilia a una familia ya registrada; la aceptacion queda con su medio."""
     familia = await db.run_sync(familias.obtener, data.familia_id)
-    plan = await db.run_sync(planes.obtener, data.plan_id)
     solicitud, enlace = await db.run_sync(
         service.iniciar,
         familia=familia,
-        plan=plan,
+        planes_por_mascota={p.mascota_id: p.plan_id for p in data.peludos},
+        periodicidad=data.periodicidad,
         origen="asistida",
         aceptacion={
             "medio": data.medio_aceptacion,
@@ -206,19 +231,23 @@ async def anonimizar(db: DbSession, familia_id: UUID) -> Familia:
     "/{familia_id}/mascotas",
     response_model=MascotaRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[EQUIPO],
 )
-async def agregar_mascota(db: DbSession, familia_id: UUID, data: MascotaAlta) -> Mascota:
+async def agregar_mascota(
+    db: DbSession, usuario: Interno, familia_id: UUID, data: AltaMascota
+) -> Mascota:
+    """Con afiliacion vigente, la mascota entra con su plan y el contrato se recalcula."""
     familia = await db.run_sync(familias.obtener, familia_id)
-    return await db.run_sync(ciclo.agregar_mascota, familia, data)
+    mascota = MascotaAlta(**data.model_dump(exclude={"plan_id"}))
+    return await db.run_sync(ciclo.alta_desde_panel, familia, mascota, data.plan_id, usuario.id)
 
 
-@mascotas_router.post("/{mascota_id}/baja", response_model=MascotaRead, dependencies=[EQUIPO])
-async def dar_de_baja_mascota(db: DbSession, mascota_id: UUID, data: Baja) -> MascotaRead:
+@mascotas_router.post("/{mascota_id}/baja", response_model=MascotaRead)
+async def dar_de_baja_mascota(
+    db: DbSession, usuario: Interno, mascota_id: UUID, data: Baja
+) -> MascotaRead:
     mascota = await db.run_sync(familias.obtener_mascota, mascota_id)
-    return await db.run_sync(
-        familias.mascota_read, await db.run_sync(ciclo.dar_de_baja_mascota, mascota, data.motivo)
-    )
+    mascota = await db.run_sync(ciclo.dar_de_baja_mascota, mascota, data.motivo, usuario.id)
+    return await db.run_sync(familias.mascota_read, mascota)
 
 
 @formularios_router.post(

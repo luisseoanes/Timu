@@ -636,7 +636,7 @@ async def test_el_resumen_separa_utilizados_y_pendientes_en_el_rango(
 async def test_el_resumen_por_defecto_es_el_mes_en_curso_con_lo_abierto_de_una_atencion(
     client: AsyncClient, db, headers
 ):
-    familia_id, _, max_id = await _familia_con_servicios(db)
+    familia_id, luna_id, max_id = await _familia_con_servicios(db)
     datos = (
         await client.get(f"/api/v1/servicios/resumen?familia_id={familia_id}", headers=headers)
     ).json()
@@ -644,9 +644,23 @@ async def test_el_resumen_por_defecto_es_el_mes_en_curso_con_lo_abierto_de_una_a
     assert len(datos["utilizados"]) == 1 and len(datos["pendientes"]) == 3
     # El pendiente de la atencion sigue abierto; el resuelto no aparece.
     assert [p["descripcion"] for p in datos["pendientes_atencion"]] == ["Ecografia abdominal"]
-    # El cupo del mes: lo programado este mes, sin lo cancelado ni lo que no tiene fecha.
-    assert datos["cupos"] == [
-        {"tipo_codigo": "consulta_domiciliaria", "cupo": 5, "usados": 3, "periodo": "mensual"}
+    # El cupo del mes de cada peludo (cada uno tiene el suyo): lo programado este mes, sin
+    # lo cancelado ni lo que no tiene fecha. Luna lleva 2 y Max 1.
+    assert sorted(datos["cupos"], key=lambda c: -c["usados"]) == [
+        {
+            "tipo_codigo": "consulta_domiciliaria",
+            "cupo": 5,
+            "usados": 2,
+            "periodo": "mensual",
+            "mascota_id": str(luna_id),
+        },
+        {
+            "tipo_codigo": "consulta_domiciliaria",
+            "cupo": 5,
+            "usados": 1,
+            "periodo": "mensual",
+            "mascota_id": str(max_id),
+        },
     ]
 
 
@@ -668,3 +682,46 @@ async def test_el_listado_de_servicios_filtra_por_mascota(client: AsyncClient, d
     ).json()
     assert datos["total"] == 3
     assert {s["mascota_id"] for s in datos["items"]} == {str(luna_id)}
+
+
+# --- 6.3 Beneficios y cupo del plan de cada peludo --------------------------------------------
+
+
+async def test_la_elegibilidad_y_el_cupo_son_los_del_plan_de_cada_peludo(db):
+    from app.modules.cartera import contratos
+    from app.modules.servicios import service
+
+    consulta = {
+        "tipo_servicio_codigo": "consulta_domiciliaria",
+        "cupo": 1,
+        "periodo_cupo": "mensual",
+    }
+    con_consulta = await db.run_sync(fabricas.plan, "con_consulta", beneficios=[consulta])
+    otra = {"tipo_servicio_codigo": "vacunacion", "cupo": None, "periodo_cupo": "anual"}
+    sin_consulta = await db.run_sync(fabricas.plan, "sin_consulta", beneficios=[otra])
+    familia, contrato = await fabricas.afiliada(db, hoy(), con_consulta, mascotas=2)
+    luna, max_ = familia.mascotas
+    await db.run_sync(contratos.cambiar_plan, contrato, max_.id, sin_consulta, None)
+    tipo = await db.run_sync(service.tipo_servicio, "consulta_domiciliaria")
+
+    sin_mascota = await db.run_sync(service.elegibilidad, familia, None, tipo)
+    assert not sin_mascota.elegible and "Indica la mascota" in sin_mascota.motivos[0]
+    de_max = await db.run_sync(service.elegibilidad, familia, max_, tipo)
+    assert de_max.motivos == ["El plan Plan sin_consulta no incluye Consulta domiciliaria"]
+    assert (await db.run_sync(service.elegibilidad, familia, luna, tipo)).elegible
+
+    # Luna gasta su cupo del mes; el de los demas peludos no se toca.
+    db.add(
+        Servicio(
+            familia_id=familia.id,
+            mascota_id=luna.id,
+            tipo_codigo="consulta_domiciliaria",
+            tipo="domiciliario",
+            estado="agendado",
+            ciudad=familia.ciudad,
+            programado_para=datetime.combine(hoy(), time(10), ZONA_NEGOCIO),
+        )
+    )
+    await db.flush()
+    agotado = await db.run_sync(service.elegibilidad, familia, luna, tipo)
+    assert any("Se agoto el cupo" in m for m in agotado.motivos)

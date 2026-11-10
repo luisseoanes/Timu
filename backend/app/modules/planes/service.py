@@ -51,9 +51,7 @@ def crear(db: Session, datos: dict[str, Any]) -> Plan:
     tarifas = datos.pop("tarifas")
     periodicidad = datos.pop("tarifas_periodicidad", {})
     ciudades = datos.pop("ciudades")
-    # Columnas del modelo anterior, que el contrato aun usa: el valor de un peludo y sin
-    # mascotas adicionales (hasta el maximo de peludos por familia).
-    plan = Plan(**datos, valor_mensual=tarifas[0], cupos_mascotas=MAX_PELUDOS, ciudad=None)
+    plan = Plan(**datos)
     plan.beneficios = [Beneficio(**b) for b in beneficios]
     db.add(plan)
     db.flush()
@@ -100,7 +98,6 @@ def reemplazar_tarifas(
             db.add(TarifaPeriodicidad(plan_id=plan.id, periodicidad=nombre, valor=precio))
         else:
             actual.valor, actual.activa = precio, True
-    plan.valor_mensual = tarifas[0]
     db.flush()
     con_detalle(db, plan)
     return plan
@@ -120,6 +117,13 @@ def fijar_ciudades(db: Session, plan: Plan, ciudades: list[str]) -> Plan:
     db.flush()
     con_detalle(db, plan)
     return plan
+
+
+def tarifa(plan: Plan, peludos: int = 1) -> Decimal | None:
+    """Lo que paga al mes cada peludo del plan con `peludos` en la afiliacion (desde 4, la
+    de 4). Con 1 es el precio de lista del plan."""
+    de = min(peludos, PELUDOS_CON_DESCUENTO)
+    return next((Decimal(t.valor) for t in plan.tarifas if t.peludos == de), None)
 
 
 def disponible_en(plan: Plan, ciudad: str) -> bool:
@@ -153,12 +157,22 @@ class Cotizacion:
 
 
 def cotizar(
-    db: Session, ciudad: str, peludos: list[tuple[str, UUID]], periodicidad: str
+    db: Session,
+    ciudad: str,
+    peludos: list[tuple[str, UUID]],
+    periodicidad: str,
+    *,
+    validar: set[int] | None = None,
 ) -> Cotizacion:
     """6.2 / 6.3 Unico calculo del precio de una afiliacion: `peludos` es (especie, plan) de
     cada uno. Cada peludo paga la tarifa de su plan para el numero total de peludos, esten o
     no en el mismo plan (con 4 o mas, la de 4). El descuento por periodo largo solo existe
-    con un peludo y no se acumula con el de cantidad: con dos o mas, el mensual por meses."""
+    con un peludo y no se acumula con el de cantidad: con dos o mas, el mensual por meses.
+
+    `validar` son las posiciones de los peludos cuyo plan debe venderse en la ciudad y
+    cubrir su especie (todas si no se dice). Al recalcular un contrato solo se valida el
+    peludo que entra o cambia de plan: que un plan deje de venderse en una ciudad no puede
+    impedir retirar a otro peludo."""
     if not peludos:
         raise ReglaNegocio("La afiliacion necesita al menos un peludo")
     if len(peludos) > MAX_PELUDOS:
@@ -166,9 +180,10 @@ def cotizar(
     meses = MESES_PERIODICIDAD[periodicidad]
     tarifa_de = min(len(peludos), PELUDOS_CON_DESCUENTO)
     cotizados: list[PeludoCotizado] = []
-    for especie, plan_id in peludos:
+    for posicion, (especie, plan_id) in enumerate(peludos):
         plan = obtener(db, plan_id)
-        validar_para_familia(plan, ciudad, [especie])
+        if validar is None or posicion in validar:
+            validar_para_familia(plan, ciudad, [especie])
         tarifa = next((t for t in plan.tarifas if t.peludos == tarifa_de), None)
         if tarifa is None:
             raise ReglaNegocio(f"El plan {plan.nombre} no tiene tarifa para {tarifa_de} peludos")
@@ -235,12 +250,9 @@ def recomendar(db: Session, ciudad: str, especies: list[str]) -> tuple[Plan, str
             continue
         return plan, resultado.accion["motivo"], resultado.regla
     # Sin regla aplicable: el plan activo mas economico que cubra a la familia.
-    candidatos = db.scalars(
-        select(Plan)
-        .where(Plan.activo.is_(True), Plan.cupos_mascotas >= max(1, len(especies)))
-        .order_by(Plan.valor_mensual)
-    )
-    for plan in candidatos:
+    activos = db.scalars(select(Plan).where(Plan.activo.is_(True)))
+    con_tarifa = [p for p in activos if tarifa(p, len(especies)) is not None]
+    for plan in sorted(con_tarifa, key=lambda p: (tarifa(p, len(especies)), p.codigo)):
         try:
             validar_para_familia(plan, ciudad, especies)
         except ReglaNegocio:

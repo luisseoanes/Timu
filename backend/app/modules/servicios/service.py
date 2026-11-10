@@ -73,7 +73,11 @@ def elegibilidad(
 ) -> Elegibilidad:
     """Plan vigente, afiliacion activa, cartera al dia, mascota valida, beneficio con cupo y
     reglas adicionales `servicio.elegibilidad`. Devuelve todos los motivos, no solo el primero,
-    para que quien agenda sepa que resolver."""
+    para que quien agenda sepa que resolver.
+
+    El beneficio y su cupo son los del plan del peludo que recibe el servicio (6.3): cada
+    uno tiene el suyo. Sin mascota, se toma el unico peludo del contrato; con varios hay que
+    decir cual."""
     motivos: list[str] = []
     if familia.dada_de_baja_en is not None:
         return Elegibilidad(False, ["La familia esta dada de baja"])
@@ -89,15 +93,28 @@ def elegibilidad(
     if mascota is not None:
         if mascota.familia_id != familia.id:
             motivos.append("La mascota no pertenece a la familia")
-        elif not mascota.activa:
+            return Elegibilidad(False, motivos)
+        if not mascota.activa:
             motivos.append(f"{mascota.nombre} esta dada de baja")
+    vigentes = contratos.lineas(db, contrato)
+    if mascota is None and len(vigentes) == 1:
+        linea = vigentes[0]
+    elif mascota is None:
+        motivos.append("Indica la mascota: cada peludo tiene su plan y su cupo")
+        return Elegibilidad(False, motivos)
+    else:
+        afiliada = next((v for v in vigentes if v.mascota_id == mascota.id), None)
+        if afiliada is None:
+            motivos.append(f"{mascota.nombre} no esta afiliada en el contrato")
+            return Elegibilidad(False, motivos)
+        linea = afiliada
 
-    plan = planes.obtener(db, contrato.plan_id)
+    plan = planes.obtener(db, linea.plan_id)
     beneficio = next((b for b in plan.beneficios if b.tipo_servicio_codigo == tipo.codigo), None)
     if plan.beneficios and beneficio is None:
         motivos.append(f"El plan {plan.nombre} no incluye {tipo.nombre}")
     elif beneficio is not None and beneficio.cupo is not None:
-        usados = _usos(db, familia.id, beneficio)
+        usados = _usos(db, linea.mascota_id, beneficio)
         if usados >= beneficio.cupo:
             periodo = "mes" if beneficio.periodo_cupo == "mensual" else "ano"
             motivos.append(f"Se agoto el cupo de {tipo.nombre} ({beneficio.cupo} por {periodo})")
@@ -113,7 +130,9 @@ def elegibilidad(
     return Elegibilidad(not motivos, motivos)
 
 
-def _usos(db: Session, familia_id: UUID, beneficio: Beneficio) -> int:
+def _usos(db: Session, mascota_id: UUID, beneficio: Beneficio) -> int:
+    """Servicios del peludo con ese beneficio en el periodo del cupo (mes o ano) en curso,
+    sin los cancelados."""
     dia = hoy()
     mensual = beneficio.periodo_cupo == "mensual"
     desde = dia.replace(day=1) if mensual else dia.replace(month=1, day=1)
@@ -123,7 +142,7 @@ def _usos(db: Session, familia_id: UUID, beneficio: Beneficio) -> int:
             select(func.count())
             .select_from(Servicio)
             .where(
-                Servicio.familia_id == familia_id,
+                Servicio.mascota_id == mascota_id,
                 Servicio.tipo_codigo == beneficio.tipo_servicio_codigo,
                 Servicio.estado != EstadoServicio.CANCELADO,
                 Servicio.programado_para >= _utc(inicio),
@@ -159,6 +178,7 @@ class CupoBeneficio:
     cupo: int | None  # None: sin limite
     usados: int
     periodo: str  # mensual | anual: el del beneficio, en curso
+    mascota_id: UUID | None = None  # cada peludo tiene su plan y su cupo
 
 
 @dataclass
@@ -211,12 +231,19 @@ def resumen(
     cupos: list[CupoBeneficio] = []
     contrato = contratos.contrato_vigente(db, familia.id)
     if contrato is not None:
-        for b in planes.obtener(db, contrato.plan_id).beneficios:
-            cupos.append(
-                CupoBeneficio(
-                    b.tipo_servicio_codigo, b.cupo, _usos(db, familia.id, b), b.periodo_cupo
+        for linea in contratos.lineas(db, contrato):
+            if mascota_id is not None and linea.mascota_id != mascota_id:
+                continue
+            for b in planes.obtener(db, linea.plan_id).beneficios:
+                cupos.append(
+                    CupoBeneficio(
+                        b.tipo_servicio_codigo,
+                        b.cupo,
+                        _usos(db, linea.mascota_id, b),
+                        b.periodo_cupo,
+                        linea.mascota_id,
+                    )
                 )
-            )
     return ResumenServicios(
         desde=desde,
         hasta=hasta,

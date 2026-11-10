@@ -129,12 +129,6 @@ class AccionRechazar(BaseModel):
     motivo: str
 
 
-class AccionAjusteMascota(BaseModel):
-    tipo: Literal["ajuste_mascota"]
-    valor_por_mascota_adicional: float = Field(ge=0)
-    maximo_adicionales: int = Field(default=0, ge=0)
-
-
 class AccionRecomendar(BaseModel):
     tipo: Literal["recomendar"]
     plan_codigo: str
@@ -162,10 +156,6 @@ EVENTOS: dict[str, tuple[str, TypeAdapter[Any]]] = {
         "Cobro al cambiar de plan (F1-PLA-02)",
         _union(AccionProrrateo, AccionRechazar),
     ),
-    "plan.mascota": (
-        "Ajustes al agregar mascotas sobre el cupo (F1-PLA-03)",
-        _union(AccionAjusteMascota, AccionRechazar),
-    ),
     "plan.recomendacion": (
         "Plan sugerido por ciudad y familia (F1-PLA-04)",
         _union(AccionRecomendar),
@@ -178,6 +168,13 @@ EVENTOS: dict[str, tuple[str, TypeAdapter[Any]]] = {
         "Restricciones adicionales para agendar (F1-SER-05)",
         _union(AccionRechazar),
     ),
+}
+
+
+# Eventos que el motor ya no evalua pero siguen en la base (EventoRegla) por las reglas y los
+# cambios de plan que los citan. Una regla de un evento retirado no se puede crear ni editar.
+EVENTOS_RETIRADOS: dict[str, str] = {
+    "plan.mascota": "Lo sustituyen las tarifas por numero de peludos (migracion 0033)",
 }
 
 

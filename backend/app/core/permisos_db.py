@@ -44,6 +44,7 @@ equivocado), no de quien logre ejecutar SQL arbitrario con la conexion de la apl
 PERMISOS: dict[str, dict[str, str]] = {
     "admin": {
         "adjuntos_clinicos": "S",
+        "afiliaciones_mascota": "SIU",
         "aplicaciones_pago": "SI",
         "arboles_conversacion": "SIU",
         "archivos": "SI",
@@ -86,6 +87,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "mensajes": "SI",
         "pagos": "SIU",
         "paradas_ruta": "SIU",
+        "peludos_solicitud": "SIU",
         "pendientes": "SIU",
         "planes": "SIU",
         "planificaciones_ruta": "SI",
@@ -128,6 +130,7 @@ PERMISOS: dict[str, dict[str, str]] = {
     },
     "comercial": {
         "adjuntos_clinicos": "S",
+        "afiliaciones_mascota": "SIU",
         "aplicaciones_pago": "SI",
         "arboles_conversacion": "S",
         "archivos": "SI",
@@ -164,6 +167,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "mensajes": "SI",
         "pagos": "SIU",
         "paradas_ruta": "S",
+        "peludos_solicitud": "SIU",
         "pendientes": "SIU",
         "planes": "S",
         "planificaciones_ruta": "S",
@@ -187,6 +191,7 @@ PERMISOS: dict[str, dict[str, str]] = {
     },
     "familia": {
         "adjuntos_clinicos": "S",
+        "afiliaciones_mascota": "S",
         "aplicaciones_pago": "S",
         "archivos": "SI",
         "bajas_comunicaciones": "S",
@@ -224,6 +229,7 @@ PERMISOS: dict[str, dict[str, str]] = {
     },
     "medico": {
         "adjuntos_clinicos": "SI",
+        "afiliaciones_mascota": "SIU",
         "archivos": "SI",
         "auditoria": "S",
         "bajas_comunicaciones": "SI",
@@ -257,6 +263,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "mensajes": "SI",
         "pagos": "S",
         "paradas_ruta": "SU",
+        "peludos_solicitud": "S",
         "pendientes": "SIU",
         "planes": "S",
         "planificaciones_ruta": "S",
@@ -280,6 +287,7 @@ PERMISOS: dict[str, dict[str, str]] = {
     },
     "operaciones": {
         "adjuntos_clinicos": "S",
+        "afiliaciones_mascota": "SIU",
         "archivos": "SI",
         "auditoria": "S",
         "bajas_comunicaciones": "SI",
@@ -312,6 +320,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "mensajes": "SI",
         "pagos": "S",
         "paradas_ruta": "SIU",
+        "peludos_solicitud": "S",
         "pendientes": "SIU",
         "planes": "S",
         "planificaciones_ruta": "SI",
@@ -333,6 +342,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "usuarios": "S",
     },
     "publico": {
+        "afiliaciones_mascota": "S",
         "beneficios_plan": "S",
         "carnets_emitidos": "S",
         "ciudades": "S",
@@ -347,6 +357,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "mascotas": "SI",
         "mensajes": "SI",
         "pagos": "SIU",
+        "peludos_solicitud": "SIU",
         "planes": "S",
         "plantillas_whatsapp": "S",
         "servicios": "S",
@@ -404,6 +415,7 @@ CONDICIONES: dict[str, dict[str, str | dict[str, str]]] = {
         # Solo lo que el equipo marco visible y sigue vigente.
         "documentos_familia": f"familia_id = {_F} AND visible_familia AND activo",
         "contratos": f"familia_id = {_F}",
+        "afiliaciones_mascota": f"familia_id = {_F}",
         "pagos": f"familia_id = {_F}",
         "servicios": f"familia_id = {_F}",
         "tareas": f"familia_id = {_F}",
@@ -479,8 +491,10 @@ CONDICIONES: dict[str, dict[str, str | dict[str, str]]] = {
             f" OR id IN (SELECT mascota_id FROM servicios WHERE id IN {_ATENCION_ENCUESTADA})"
         ),
         "contratos": f"familia_id IN {_FAMILIA_PUBLICA}",
+        "afiliaciones_mascota": f"familia_id IN {_FAMILIA_PUBLICA}",
         "pagos": f"familia_id IN {_FAMILIA_PUBLICA}",
         "solicitudes_afiliacion": f"familia_id IN {_FAMILIA_PUBLICA}",
+        "peludos_solicitud": f"familia_id IN {_FAMILIA_PUBLICA}",
         "interesados": (
             "telefono = app_llave('contacto_telefono') OR email = app_llave('contacto_email')"
             f" OR familia_id IN {_FAMILIA_PUBLICA}"

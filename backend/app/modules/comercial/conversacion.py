@@ -332,8 +332,10 @@ def _accion(db: Session, conversacion: ConversacionComercial, accion: str, turno
             interesado.plan_sugerido = plan.codigo
             interesado.datos = {**(interesado.datos or {}), "mascotas": especies}
             embudo.avanzar(interesado, "cotizado")
+        precio = planes.tarifa(plan, max(1, len(especies)))
+        cada = " por peludo" if len(especies) > 1 else ""
         turno.decir(
-            f"Te recomendamos el {plan.nombre}: {formato_cop(plan.valor_mensual)} al mes. {motivo}."
+            f"Te recomendamos el {plan.nombre}: {formato_cop(precio)} al mes{cada}. {motivo}."
         )
         return True
     if accion == "enlace_afiliacion":

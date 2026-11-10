@@ -25,7 +25,7 @@ from app.modules.clinica.models import AdjuntoClinico, HistoriaClinica
 from app.modules.familias import service as familias
 from app.modules.familias.models import Familia, Mascota
 from app.modules.familias.schemas import FamiliaUpdate
-from app.modules.planes.models import Plan
+from app.modules.planes import service as planes
 from app.modules.portal import documento
 from app.modules.servicios import service as servicios
 from app.modules.servicios.models import Servicio
@@ -53,31 +53,46 @@ def _servicio_propio(db: Session, familia: Familia, servicio_id: UUID) -> Servic
 
 
 def plan(db: Session, familia: Familia) -> dict[str, Any]:
+    """La afiliacion vigente: cada peludo con su plan, lo que paga y sus beneficios con el
+    cupo que le queda (cada uno tiene el suyo)."""
     contrato = contratos.contrato_vigente(db, familia.id)
     if contrato is None:
         raise NoEncontrado("La familia no tiene un plan vigente")
-    p = db.get(Plan, contrato.plan_id)
-    assert p is not None
-    beneficios = []
-    for b in p.beneficios:
-        usados = servicios._usos(db, familia.id, b)
-        beneficios.append(
+    peludos = []
+    for linea in contratos.lineas(db, contrato):
+        p = planes.obtener(db, linea.plan_id)
+        mascota = db.get(Mascota, linea.mascota_id)
+        assert mascota is not None
+        beneficios = []
+        for b in p.beneficios:
+            usados = servicios._usos(db, linea.mascota_id, b)
+            beneficios.append(
+                {
+                    "tipo_servicio": b.tipo_servicio_codigo,
+                    "cupo": b.cupo,
+                    "periodo": b.periodo_cupo,
+                    "usados": usados,
+                    "disponibles": None if b.cupo is None else max(b.cupo - usados, 0),
+                    "cobertura_pct": b.cobertura_pct,
+                }
+            )
+        peludos.append(
             {
-                "tipo_servicio": b.tipo_servicio_codigo,
-                "cupo": b.cupo,
-                "periodo": b.periodo_cupo,
-                "usados": usados,
-                "disponibles": None if b.cupo is None else max(b.cupo - usados, 0),
-                "cobertura_pct": b.cobertura_pct,
+                "mascota_id": linea.mascota_id,
+                "mascota": mascota.nombre,
+                "plan": p.nombre,
+                "valor_mensual": dinero(linea.valor_mensual),
+                "beneficios": beneficios,
             }
         )
     return {
-        "plan": p.nombre,
+        "mascotas": peludos,
         "estado": contrato.estado,
+        "periodicidad": contrato.periodicidad,
+        "valor_periodo": dinero(contrato.valor_periodo),
         "valor_mensual": dinero(contrato.valor_mensual),
         "fecha_inicio": contrato.fecha_inicio,
         "fecha_renovacion": contrato.fecha_renovacion,
-        "beneficios": beneficios,
     }
 
 

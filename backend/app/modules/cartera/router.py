@@ -51,9 +51,14 @@ async def crear_contrato(db: DbSession, data: ContratoCreate) -> Any:
     """F1-CAR-01 Contrato directo (afiliacion asistida). La afiliacion completa, con pago y
     contrato en PDF, esta en /afiliaciones."""
     familia = await db.run_sync(familias.obtener, data.familia_id)
-    plan = await db.run_sync(planes.obtener, data.plan_id)
     contrato, _ = await db.run_sync(
-        service.crear_contrato, familia, plan, fecha_inicio=data.fecha_inicio
+        lambda s: service.crear_contrato(
+            s,
+            familia,
+            {p.mascota_id: p.plan_id for p in data.peludos},
+            periodicidad=data.periodicidad,
+            fecha_inicio=data.fecha_inicio,
+        )
     )
     return contrato
 
@@ -216,6 +221,7 @@ async def recuperar(db: DbSession, transaccion_id: str) -> Any:
 
 
 class CambioPlanIn(BaseModel):
+    mascota_id: UUID
     plan_id: UUID
 
 
@@ -224,6 +230,7 @@ class CambioPlanRead(BaseModel):
 
     id: UUID
     contrato_id: UUID
+    mascota_id: UUID | None
     tipo: str
     plan_anterior_id: UUID | None
     plan_nuevo_id: UUID | None
@@ -240,7 +247,7 @@ class CambioPlanRead(BaseModel):
 async def cambiar_plan(
     db: DbSession, usuario: Cartera, contrato_id: UUID, data: CambioPlanIn
 ) -> Any:
-    """F1-PLA-02 Cambio de plan con el cobro que defina la regla `plan.cambio`."""
+    """F1-PLA-02 Un peludo cambia de plan, con el cobro que defina la regla `plan.cambio`."""
     contrato = await db.run_sync(service.obtener_contrato, contrato_id)
     plan = await db.run_sync(planes.obtener, data.plan_id)
-    return await db.run_sync(contratos.cambiar_plan, contrato, plan, usuario.id)
+    return await db.run_sync(contratos.cambiar_plan, contrato, data.mascota_id, plan, usuario.id)

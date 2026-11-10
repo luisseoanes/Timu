@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.core.enums import Periodicidad
+
 
 class ContratoRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -12,15 +14,13 @@ class ContratoRead(BaseModel):
     id: UUID
     numero: str
     familia_id: UUID
-    plan_id: UUID
     fecha_inicio: date
     fecha_renovacion: date
     fecha_fin: date | None
     dia_corte: int
-    valor_plan: Decimal
-    mascotas_adicionales: int
-    valor_adicional_mascota: Decimal
-    valor_mensual: Decimal
+    periodicidad: Periodicidad
+    valor_mensual: Decimal = Field(description="Lo que pagan al mes todos sus peludos")
+    valor_periodo: Decimal = Field(description="Lo que cobra cada cuota")
     saldo_a_favor: Decimal
     estado: str
     aceptado_en: datetime | None
@@ -35,9 +35,11 @@ class ContratoListado(BaseModel):
     familia_id: UUID
     titular: str
     ciudad: str
-    plan: str
+    plan: str = Field(description="Los planes de sus peludos, separados por comas")
     estado: str
+    periodicidad: Periodicidad
     valor_mensual: Decimal
+    valor_periodo: Decimal
     saldo_vencido: Decimal
     dias_mora: int
     fecha_renovacion: date
@@ -49,6 +51,7 @@ class CuotaRead(BaseModel):
     id: UUID
     periodo: str
     tipo: str
+    meses: int = Field(description="Meses que cubre desde el periodo")
     fecha_vencimiento: date
     valor: Decimal
     valor_pagado: Decimal
@@ -72,12 +75,15 @@ class PagoRead(BaseModel):
     aplicado: bool
 
 
-class PlanResumen(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class PeludoContratoRead(BaseModel):
+    """Un peludo del contrato con su plan y lo que paga al mes."""
 
-    id: UUID
-    codigo: str
+    mascota_id: UUID
     nombre: str
+    especie: str
+    plan_id: UUID
+    plan_nombre: str
+    valor_mensual: Decimal
 
 
 class ProximoCobro(BaseModel):
@@ -87,7 +93,7 @@ class ProximoCobro(BaseModel):
 
 class EstadoCuenta(BaseModel):
     contrato: ContratoRead
-    plan: PlanResumen
+    mascotas: list[PeludoContratoRead]
     estado: str
     saldo_pendiente: Decimal
     saldo_vencido: Decimal
@@ -98,9 +104,17 @@ class EstadoCuenta(BaseModel):
     pagos: list[PagoRead]
 
 
-class ContratoCreate(BaseModel):
-    familia_id: UUID
+class PlanDeMascota(BaseModel):
+    mascota_id: UUID
     plan_id: UUID
+
+
+class ContratoCreate(BaseModel):
+    """Todos los peludos activos de la familia, cada uno con su plan."""
+
+    familia_id: UUID
+    peludos: list[PlanDeMascota] = Field(min_length=1)
+    periodicidad: Periodicidad = Periodicidad.MENSUAL
     fecha_inicio: date | None = None
 
 

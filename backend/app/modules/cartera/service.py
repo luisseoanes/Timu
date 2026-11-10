@@ -14,13 +14,14 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import nuevo_id
-from app.core.enums import EstadoAfiliacion
+from app.core.enums import MESES_PERIODICIDAD, EstadoAfiliacion, Periodicidad
 from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
 from app.modules.archivos import service as archivos
 from app.modules.archivos.models import Archivo
 from app.modules.cartera import contratos
 from app.modules.cartera.models import (
+    AfiliacionMascota,
     AplicacionPago,
     AvisoCartera,
     Contrato,
@@ -33,14 +34,12 @@ from app.modules.cartera.periodos import (
     dinero,
     formato_cop,
     periodo,
-    siguiente_periodo,
     sumar_meses,
     vencimiento,
 )
 from app.modules.comunicaciones import service as comunicaciones
 from app.modules.familias import service as familias
 from app.modules.familias.models import Familia, Mascota
-from app.modules.planes import service as planes
 from app.modules.planes.models import Plan
 from app.modules.reglas import service as reglas
 from app.modules.tareas import service as tareas
@@ -64,12 +63,14 @@ def _numero(db: Session, dia: date) -> str:
 def crear_contrato(
     db: Session,
     familia: Familia,
-    plan: Plan,
+    planes_por_mascota: dict[UUID, UUID],
     *,
+    periodicidad: str = Periodicidad.MENSUAL,
     fecha_inicio: date | None = None,
     primera_cuota: bool = True,
 ) -> tuple[Contrato, Cuota | None]:
-    """Crea el contrato vigente de la familia, con corte, renovacion y primera cuota.
+    """Crea el contrato vigente de la familia: cada peludo activo con su plan, la
+    periodicidad de pago, corte, renovacion y primera cuota.
 
     El dia de corte es el dia de inicio (hasta el 28, para que exista en todo mes) y la
     renovacion es un ano despues del inicio.
@@ -79,33 +80,25 @@ def crear_contrato(
     if familia.dada_de_baja_en is not None:
         raise ReglaNegocio("La familia esta dada de baja")
     inicio = fecha_inicio or hoy()
-    activas = list(
-        db.scalars(
-            select(Mascota).where(Mascota.familia_id == familia.id, Mascota.activa.is_(True))
-        )
-    )
-    if not activas:
-        raise ReglaNegocio("La familia necesita al menos una mascota activa para afiliarse")
-    planes.validar_para_familia(plan, familia.ciudad, [m.especie for m in activas])
-    adicionales, valor_adicional, _ = contratos.calcular_cupo(db, familia, plan, len(activas))
+    afiliacion = contratos.cotizar_afiliacion(db, familia, planes_por_mascota, periodicidad)
 
     contrato = Contrato(
         id=nuevo_id(),
         numero=_numero(db, inicio),
         familia_id=familia.id,
-        plan_id=plan.id,
         fecha_inicio=inicio,
         fecha_renovacion=sumar_meses(inicio, 12),
         dia_corte=min(inicio.day, 28),
-        valor_plan=dinero(plan.valor_mensual),
-        mascotas_adicionales=adicionales,
-        valor_adicional_mascota=valor_adicional if adicionales else dinero(0),
+        periodicidad=periodicidad,
+        # Con los valores cotizados desde el alta: la bitacora registra el contrato real.
+        valor_mensual=dinero(afiliacion.cotizacion.valor_mensual),
+        valor_periodo=dinero(afiliacion.cotizacion.valor_periodo),
         estado=EstadoAfiliacion.ACTIVA,
         saldo_a_favor=dinero(0),
     )
-    contrato.valor_mensual = contratos.valor_mensual(contrato)
     db.add(contrato)
     db.flush()
+    contratos.afiliar(db, contrato, afiliacion)
     cuota = _emitir(db, contrato, periodo(inicio)) if primera_cuota else None
     _sincronizar_familia(db, contrato)
     return contrato, cuota
@@ -114,21 +107,23 @@ def crear_contrato(
 def _emitir(db: Session, contrato: Contrato, per: str) -> Cuota | None:
     existe = db.scalar(
         select(Cuota.id).where(
-            Cuota.contrato_id == contrato.id, Cuota.periodo == per, Cuota.tipo == "mensual"
+            Cuota.contrato_id == contrato.id, Cuota.periodo == per, Cuota.tipo == "cuota"
         )
     )
     if existe:
         return None
-    valor = dinero(contrato.valor_mensual)
+    valor = dinero(contrato.valor_periodo)
+    meses = MESES_PERIODICIDAD[contrato.periodicidad]
     cuota = Cuota(
         contrato_id=contrato.id,
         periodo=per,
-        tipo="mensual",
+        tipo="cuota",
+        meses=meses,
         fecha_vencimiento=vencimiento(per, contrato.dia_corte),
         valor=valor,
         valor_pagado=dinero(0),
         estado=EstadoCuota.PENDIENTE,
-        descripcion=f"Cuota {per}",
+        descripcion=_descripcion(per, meses),
     )
     db.add(cuota)
     db.flush()
@@ -139,6 +134,13 @@ def _emitir(db: Session, contrato: Contrato, per: str) -> Cuota | None:
         contrato.saldo_a_favor = saldo - usado
         _abonar(cuota, usado)
     return cuota
+
+
+def _descripcion(per: str, meses: int) -> str:
+    if meses == 1:
+        return f"Cuota {per}"
+    hasta = periodo(sumar_meses(date.fromisoformat(f"{per}-01"), meses - 1))
+    return f"Cuota {per} a {hasta} ({meses} meses)"
 
 
 def _abonar(cuota: Cuota, valor: Decimal) -> None:
@@ -167,19 +169,27 @@ def generar_cuotas(db: Session, dia: date | None = None) -> int:
 
 
 def _emitir_pendientes(db: Session, contrato: Contrato, limite: date) -> int:
-    ultimo = db.scalar(
-        select(func.max(Cuota.periodo)).where(
-            Cuota.contrato_id == contrato.id, Cuota.tipo == "mensual"
-        )
+    ultima = db.scalar(
+        select(Cuota)
+        .where(Cuota.contrato_id == contrato.id, Cuota.tipo == "cuota")
+        .order_by(Cuota.periodo.desc())
+        .limit(1)
     )
-    per = siguiente_periodo(ultimo) if ultimo else periodo(contrato.fecha_inicio)
+    per = _siguiente(ultima) if ultima else periodo(contrato.fecha_inicio)
     emitidas = 0
     while vencimiento(per, contrato.dia_corte) <= limite:
         contratos.aplicar_cambios_programados(db, contrato, vencimiento(per, contrato.dia_corte))
-        if _emitir(db, contrato, per):
+        cuota = _emitir(db, contrato, per)
+        if cuota:
             emitidas += 1
-        per = siguiente_periodo(per)
+        meses = MESES_PERIODICIDAD[contrato.periodicidad]
+        per = periodo(sumar_meses(date.fromisoformat(f"{per}-01"), meses))
     return emitidas
+
+
+def _siguiente(cuota: Cuota) -> str:
+    """Periodo de la cuota que sigue a `cuota`: los meses que cubre despues."""
+    return periodo(sumar_meses(date.fromisoformat(f"{cuota.periodo}-01"), cuota.meses))
 
 
 def _aislado(db: Session, contrato: Contrato, fn: Callable[[], T]) -> T | None:
@@ -195,6 +205,28 @@ def _aislado(db: Session, contrato: Contrato, fn: Callable[[], T]) -> T | None:
 
 
 # --- F1-CAR-03 / 05 Estados de cartera --------------------------------------------------------
+
+
+def peludos(db: Session, contrato: Contrato) -> list[dict[str, Any]]:
+    """Los peludos vigentes del contrato con su plan y lo que paga cada uno al mes."""
+    filas = db.execute(
+        select(AfiliacionMascota, Mascota.nombre, Mascota.especie, Plan.nombre)
+        .join(Mascota, Mascota.id == AfiliacionMascota.mascota_id)
+        .join(Plan, Plan.id == AfiliacionMascota.plan_id)
+        .where(AfiliacionMascota.contrato_id == contrato.id, AfiliacionMascota.activa.is_(True))
+        .order_by(AfiliacionMascota.created_at, AfiliacionMascota.id)
+    ).tuples()
+    return [
+        {
+            "mascota_id": linea.mascota_id,
+            "nombre": nombre,
+            "especie": especie,
+            "plan_id": linea.plan_id,
+            "plan_nombre": plan,
+            "valor_mensual": dinero(linea.valor_mensual),
+        }
+        for linea, nombre, especie, plan in filas
+    ]
 
 
 def cuotas_abiertas(db: Session, contrato_id: UUID) -> list[Cuota]:
@@ -239,7 +271,9 @@ def reevaluar_estado(db: Session, contrato: Contrato, dia: date | None = None) -
         "saldo_pendiente": float(sum(dinero(c.valor) - dinero(c.valor_pagado) for c in abiertas)),
         "estado_actual": contrato.estado,
     }
-    resultado = reglas.primera(db, "cartera.estado", contexto, plan_id=contrato.plan_id)
+    resultado = reglas.primera(
+        db, "cartera.estado", contexto, planes=contratos.planes_del_contrato(db, contrato)
+    )
     if resultado is None:
         return "sin_cambio"
     nuevo = EstadoAfiliacion(resultado.accion["estado"])
@@ -462,7 +496,9 @@ def _tareas_renovacion(db: Session, contrato: Contrato, dia: date) -> int:
         "estado": contrato.estado,
     }
     creadas = 0
-    for r in reglas.evaluar(db, "cartera.renovacion", contexto, plan_id=contrato.plan_id):
+    for r in reglas.evaluar(
+        db, "cartera.renovacion", contexto, planes=contratos.planes_del_contrato(db, contrato)
+    ):
         tarea = tareas.desde_accion(
             db,
             r.accion,
@@ -549,12 +585,10 @@ def listar_contratos(
             Contrato,
             Familia.titular_nombre,
             Familia.ciudad,
-            Plan.nombre,
             vencidas.c.saldo,
             vencidas.c.desde,
         )
         .join(Familia, Familia.id == Contrato.familia_id)
-        .join(Plan, Plan.id == Contrato.plan_id)
         .outerjoin(vencidas, vencidas.c.contrato_id == Contrato.id)
     )
     if estado:
@@ -576,6 +610,17 @@ def listar_contratos(
         .limit(limit)
         .offset(offset)
     ).all()
+    # Los planes de cada contrato de la pagina: uno por peludo, sin repetir.
+    nombres: dict[UUID, set[str]] = {}
+    for contrato_id, nombre in db.execute(
+        select(AfiliacionMascota.contrato_id, Plan.nombre)
+        .join(Plan, Plan.id == AfiliacionMascota.plan_id)
+        .where(
+            AfiliacionMascota.contrato_id.in_([fila[0].id for fila in filas]),
+            AfiliacionMascota.activa.is_(True),
+        )
+    ).tuples():
+        nombres.setdefault(contrato_id, set()).add(nombre)
     return [
         {
             "id": c.id,
@@ -583,14 +628,16 @@ def listar_contratos(
             "familia_id": c.familia_id,
             "titular": titular,
             "ciudad": ciudad_familia,
-            "plan": plan,
+            "plan": ", ".join(sorted(nombres.get(c.id, set()))),
             "estado": c.estado,
+            "periodicidad": c.periodicidad,
             "valor_mensual": dinero(c.valor_mensual),
+            "valor_periodo": dinero(c.valor_periodo),
             "saldo_vencido": dinero(saldo),
             "dias_mora": (dia - desde).days if desde else 0,
             "fecha_renovacion": c.fecha_renovacion,
         }
-        for c, titular, ciudad_familia, plan, saldo, desde in filas
+        for c, titular, ciudad_familia, saldo, desde in filas
     ], int(total)
 
 
@@ -614,7 +661,6 @@ def estado_cuenta(db: Session, familia_id: UUID, max_cuotas: int = 24) -> dict[s
         )
     if contrato is None:
         raise NoEncontrado("La familia no tiene contratos")
-    plan = db.get(Plan, contrato.plan_id)
     cuotas = list(
         db.scalars(
             select(Cuota)
@@ -642,17 +688,18 @@ def estado_cuenta(db: Session, familia_id: UUID, max_cuotas: int = 24) -> dict[s
     if proxima:
         proximo_cobro = {"fecha": proxima.fecha_vencimiento, "valor": dinero(proxima.valor)}
     else:
-        ultimo = max((c.periodo for c in cuotas if c.tipo == "mensual"), default=None)
-        per = siguiente_periodo(ultimo) if ultimo else periodo(dia)
+        regulares = [c for c in cuotas if c.tipo == "cuota"]
+        ultima = max(regulares, key=lambda c: c.periodo, default=None)
+        per = _siguiente(ultima) if ultima else periodo(dia)
         proximo_cobro = {
             "fecha": vencimiento(per, contrato.dia_corte),
             "valor": max(
-                dinero(contrato.valor_mensual) - dinero(contrato.saldo_a_favor), dinero(0)
+                dinero(contrato.valor_periodo) - dinero(contrato.saldo_a_favor), dinero(0)
             ),
         }
     return {
         "contrato": contrato,
-        "plan": plan,
+        "mascotas": peludos(db, contrato),
         "estado": contrato.estado,
         "saldo_pendiente": saldo,
         "saldo_vencido": vencido,

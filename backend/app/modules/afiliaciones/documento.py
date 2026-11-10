@@ -12,17 +12,19 @@ from fpdf import FPDF
 
 from app.modules.cartera.periodos import formato_cop
 
-TERMINOS_VERSION = "2026-09-provisional"
+TERMINOS_VERSION = "2026-11-provisional"
 
 CONDICIONES = [
     "El plan cubre los servicios y beneficios descritos para cada tipo de atencion, con los "
     "cupos indicados, durante la vigencia del contrato.",
-    "La cuota mensual se paga a mas tardar en la fecha de corte. Pasado el plazo de gracia, "
+    "La cuota se paga, segun la periodicidad elegida, a mas tardar en la fecha de corte. "
+    "Pasado el plazo de gracia, "
     "la afiliacion entra en mora y, si la mora continua, se congela: no se agendan servicios "
     "hasta ponerse al dia. Al pagar, la afiliacion se reactiva automaticamente.",
     "El contrato tiene vigencia de un ano y se renueva previa gestion con la familia.",
-    "Agregar mascotas por encima del cupo del plan puede generar un valor adicional segun las "
-    "condiciones vigentes del plan.",
+    "Cada peludo paga la tarifa de su plan segun el numero de peludos afiliados. Si se agregan "
+    "o se retiran peludos, el valor se recalcula desde la siguiente cuota. El precio por pago "
+    "trimestral, semestral o anual aplica solo con un peludo.",
     "Los datos personales se tratan conforme a la politica de tratamiento de datos de TIMU "
     "(Ley 1581 de 2012).",
 ]
@@ -44,10 +46,12 @@ def generar_contrato(
     numero: str,
     fecha: date,
     familia: dict[str, Any],
-    plan: dict[str, Any],
     mascotas: list[dict[str, Any]],
+    planes: list[dict[str, Any]],
     contrato: dict[str, Any],
 ) -> bytes:
+    """`mascotas`: nombre, especie, raza, plan y valor_mensual de cada peludo. `planes`:
+    nombre y beneficios de cada plan contratado."""
     pdf = FPDF(format="Letter")
     pdf.set_auto_page_break(auto=True, margin=18)
     pdf.add_page()
@@ -83,29 +87,36 @@ def generar_contrato(
         ],
     )
     seccion(
-        "Plan",
+        "Afiliacion",
         [
-            ("Plan", plan["nombre"]),
-            ("Valor del plan", formato_cop(contrato["valor_plan"])),
-            ("Mascotas adicionales", contrato["mascotas_adicionales"]),
-            ("Valor mensual total", formato_cop(contrato["valor_mensual"])),
+            ("Forma de pago", str(contrato["periodicidad"]).capitalize()),
+            ("Valor de cada cuota", formato_cop(contrato["valor_periodo"])),
+            ("Valor mensual de los peludos", formato_cop(contrato["valor_mensual"])),
             ("Dia de corte", contrato["dia_corte"]),
             ("Inicio", f"{contrato['fecha_inicio']:%d/%m/%Y}"),
             ("Renovacion", f"{contrato['fecha_renovacion']:%d/%m/%Y}"),
         ],
     )
     seccion(
-        "Mascotas afiliadas",
-        [(m["nombre"], f"{m['especie']} {m.get('raza') or ''}".strip()) for m in mascotas],
+        "Peludos afiliados",
+        [
+            (
+                m["nombre"],
+                f"{m['especie']} {m.get('raza') or ''}".strip()
+                + f" - {m['plan']} - {formato_cop(m['valor_mensual'])} al mes",
+            )
+            for m in mascotas
+        ],
     )
-    if plan.get("beneficios"):
-        seccion(
-            "Beneficios",
-            [
-                (b["tipo_servicio_codigo"], f"{_cupo(b)}, cobertura {b['cobertura_pct']}%")
-                for b in plan["beneficios"]
-            ],
-        )
+    for plan in planes:
+        if plan.get("beneficios"):
+            seccion(
+                f"Beneficios del plan {plan['nombre']}",
+                [
+                    (b["tipo_servicio_codigo"], f"{_cupo(b)}, cobertura {b['cobertura_pct']}%")
+                    for b in plan["beneficios"]
+                ],
+            )
     pdf.set_font("Helvetica", "B", 11)
     pdf.cell(0, 8, "Condiciones generales", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("Helvetica", "", 9)

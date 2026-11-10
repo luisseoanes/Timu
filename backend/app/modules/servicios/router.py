@@ -73,6 +73,7 @@ class CupoBeneficioRead(BaseModel):
     cupo: int | None = Field(description="Vacio: sin limite")
     usados: int
     periodo: str = Field(description="mensual o anual, en curso")
+    mascota_id: UUID | None = Field(description="El peludo: cada uno tiene su plan y su cupo")
 
 
 class ResumenServiciosRead(BaseModel):

@@ -7,6 +7,8 @@ del outbox: validar el plan tiene que poder rechazar el alta en la misma peticio
 cancela el contrato en la misma transaccion que la marca (ver docs/deuda-ciclos-dominios.md).
 """
 
+from uuid import UUID
+
 from sqlalchemy.orm import Session
 
 from app.core.errores import Conflicto, ReglaNegocio
@@ -17,7 +19,6 @@ from app.modules.comercial import service as comercial
 from app.modules.familias import service as familias
 from app.modules.familias.models import Familia, Mascota
 from app.modules.familias.schemas import FormularioFamilia, MascotaCreate, ResultadoFormulario
-from app.modules.planes import service as planes
 from app.modules.preventivos import service as preventivos
 
 
@@ -32,33 +33,54 @@ def dar_de_baja(db: Session, familia: Familia, motivo: str) -> Familia:
     return familias.dar_de_baja(db, familia, motivo)
 
 
-def agregar_mascota(db: Session, familia: Familia, data: MascotaCreate) -> Mascota:
-    """F1-FAM-02 Alta de mascota. Con contrato vigente, antes de guardarla debe caber en el
-    plan (o pagar el adicional que defina la regla) y ser de una especie que cubre
-    (F1-PLA-03); una vez dentro recibe su calendario preventivo (F1-AFI-03)."""
+def agregar_mascota(
+    db: Session,
+    familia: Familia,
+    data: MascotaCreate,
+    plan_id: UUID | None = None,
+    usuario_id: UUID | None = None,
+) -> Mascota:
+    """F1-FAM-02 Alta de mascota. Con contrato vigente y `plan_id`, entra al contrato con su
+    plan: antes de guardarla se valida que el plan se venda en la ciudad y cubra su especie,
+    y despues todos pasan a la tarifa del nuevo numero de peludos desde la siguiente cuota
+    (6.3). Recibe su calendario preventivo (F1-AFI-03).
+
+    Sin `plan_id` (un formulario publico que completa la ficha) queda en la ficha sin
+    afiliar: sin beneficios hasta que el equipo la afilie."""
+    contrato = contratos.contrato_vigente(db, familia.id)
+    afiliar = contrato is not None and plan_id is not None
+    if afiliar:
+        assert contrato is not None and plan_id is not None
+        contratos.validar_alta(db, contrato, data.especie, plan_id)
     mascota = familias.nueva_mascota(db, familia, data)
-    afiliada = _validar_contra_plan(db, familia, mascota)
     familias.incorporar_mascota(db, familia, mascota)
-    if afiliada:
+    if afiliar:
+        assert contrato is not None and plan_id is not None
+        contratos.agregar_mascota(db, contrato, mascota, plan_id, usuario_id)
         preventivos.calendario_inicial(db, mascota, hoy())
     return mascota
 
 
-def _validar_contra_plan(db: Session, familia: Familia, mascota: Mascota) -> bool:
-    contrato = contratos.contrato_vigente(db, familia.id)
-    if contrato is None:
-        return False
-    plan = planes.obtener(db, contrato.plan_id)
-    if plan.especies and mascota.especie not in plan.especies:
-        raise ReglaNegocio(f"El plan {plan.nombre} no cubre la especie {mascota.especie}")
-    contratos.ajustar_por_mascotas(db, familia, "mascota_alta")
-    return True
+def alta_desde_panel(
+    db: Session, familia: Familia, data: MascotaCreate, plan_id: UUID | None, usuario_id: UUID
+) -> Mascota:
+    """Desde el panel, con contrato vigente hay que elegir el plan de la mascota nueva: si no,
+    quedaria fuera de la afiliacion sin que nadie lo decida."""
+    if plan_id is None and contratos.contrato_vigente(db, familia.id) is not None:
+        raise ReglaNegocio("Elige el plan de la mascota: la familia tiene una afiliacion vigente")
+    return agregar_mascota(db, familia, data, plan_id, usuario_id)
 
 
-def dar_de_baja_mascota(db: Session, mascota: Mascota, motivo: str) -> Mascota:
-    """Baja de mascota: el contrato vigente se recalcula sin ella desde la siguiente cuota."""
+def dar_de_baja_mascota(
+    db: Session, mascota: Mascota, motivo: str, usuario_id: UUID | None = None
+) -> Mascota:
+    """Baja de mascota: sale del contrato vigente y los demas peludos pasan a la tarifa del
+    nuevo numero desde la siguiente cuota. Si es el unico peludo, hay que cancelar el
+    contrato."""
+    contrato = contratos.contrato_vigente(db, mascota.familia_id)
+    if contrato is not None:
+        contratos.retirar_mascota(db, contrato, mascota.id, usuario_id)
     familias.dar_de_baja_mascota(db, mascota, motivo)
-    contratos.ajustar_por_mascotas(db, familias.obtener(db, mascota.familia_id), "mascota_baja")
     return mascota
 
 

@@ -16,7 +16,7 @@ from app.modules.auth.models import Usuario
 from app.modules.catalogos import service as catalogos
 from app.modules.catalogos.models import TipoServicioCatalogo
 from app.modules.planes import service
-from app.modules.planes.models import CiudadPlan, Plan
+from app.modules.planes.models import CiudadPlan, Plan, TarifaPlan
 
 router = APIRouter(prefix="/planes", tags=["planes"])
 
@@ -98,8 +98,6 @@ class PlanRead(BaseModel):
     ciudades: list[str]
     tarifas: list[TarifaRead]
     tarifas_periodicidad: list[TarifaPeriodicidadRead]
-    valor_mensual: Decimal = Field(description="Obsoleto: la tarifa de un peludo")
-    cupos_mascotas: int = Field(description="Obsoleto: lo sustituyen las tarifas por peludos")
     especies: list[str]
     activo: bool
     beneficios: list[BeneficioRead]
@@ -162,8 +160,14 @@ async def _validar_beneficios(db: DbSession, beneficios: list[BeneficioIn]) -> N
 async def listar(
     db: DbSession, incluir_inactivos: bool = False, ciudad: str | None = None
 ) -> list[Plan]:
-    """Con `ciudad`, solo los que se venden alli."""
-    stmt = select(Plan).order_by(Plan.valor_mensual)
+    """Del mas economico al mas caro (tarifa de un peludo). Con `ciudad`, solo los que se
+    venden alli."""
+    precio = (
+        select(TarifaPlan.valor)
+        .where(TarifaPlan.plan_id == Plan.id, TarifaPlan.peludos == 1)
+        .scalar_subquery()
+    )
+    stmt = select(Plan).order_by(precio.nulls_last(), Plan.codigo)
     if not incluir_inactivos:
         stmt = stmt.where(Plan.activo.is_(True))
     if ciudad:

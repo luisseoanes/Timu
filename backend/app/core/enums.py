@@ -360,6 +360,8 @@ class EventoRegla(StrEnum):
     CARTERA_ALERTA = "cartera.alerta"
     CARTERA_RENOVACION = "cartera.renovacion"
     PLAN_CAMBIO = "plan.cambio"
+    # Retirado: el cupo y las mascotas adicionales los sustituyen las tarifas por numero de
+    # peludos (migracion 0033). Sigue en la base por las reglas y cambios de plan que lo citan.
     PLAN_MASCOTA = "plan.mascota"
     PLAN_RECOMENDACION = "plan.recomendacion"
     SERVICIO_TRANSICION = "servicio.transicion"

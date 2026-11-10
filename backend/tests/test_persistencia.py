@@ -348,11 +348,15 @@ async def test_la_base_rechaza_un_valor_fuera_del_enum(db: AsyncSession):
 @pytest.mark.unit
 def test_los_eventos_de_regla_son_los_del_motor():
     """El enum de la base y el registro del motor describen el mismo conjunto: un evento
-    nuevo en el motor sin su valor en EventoRegla (y su migracion) no podria guardarse."""
+    nuevo en el motor sin su valor en EventoRegla (y su migracion) no podria guardarse. Los
+    retirados siguen en el enum por las filas que los citan, cada uno con su motivo, y no
+    pueden seguir activos en el motor."""
     from app.core.enums import EventoRegla
-    from app.modules.reglas.motor import EVENTOS
+    from app.modules.reglas.motor import EVENTOS, EVENTOS_RETIRADOS
 
-    assert {e.value for e in EventoRegla} == set(EVENTOS)
+    assert {e.value for e in EventoRegla} == set(EVENTOS) | set(EVENTOS_RETIRADOS)
+    assert not set(EVENTOS) & set(EVENTOS_RETIRADOS)
+    assert all(EVENTOS_RETIRADOS.values())
 
 
 async def test_los_listados_ordenan_un_enum_por_su_texto(db: AsyncSession):

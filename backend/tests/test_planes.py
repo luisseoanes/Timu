@@ -13,10 +13,13 @@ from app.core.errores import ReglaNegocio
 from app.core.tiempo import hoy
 from app.modules.cartera import contratos
 from app.modules.cartera import service as cartera
-from app.modules.cartera.contratos import _ciclo_actual
+from app.modules.cartera.contratos import ciclo_actual
 from app.modules.cartera.models import Cuota
-from app.modules.cartera.periodos import dias_del_periodo, dinero
+from app.modules.cartera.periodos import dias_del_periodo, dinero, sumar_meses
+from app.modules.familias import service as familias_service
+from app.modules.familias.models import Mascota
 from app.modules.planes import service
+from app.modules.planes.models import CambioPlan
 from app.modules.reglas.models import Regla
 from scripts import seed
 from tests import fabricas
@@ -320,21 +323,23 @@ async def test_recomendacion_salta_plan_de_otra_ciudad(db):
     assert regla == "por_defecto"
 
 
-# --- F1-PLA-02 --------------------------------------------------------------------------------
+# --- F1-PLA-02 Cambio de plan de un peludo ---------------------------------------------------
 
 
 async def test_subir_de_plan_cobra_prorrateo(db):
     basico = await db.run_sync(fabricas.plan, "basico", 45_000)
     superior = await db.run_sync(fabricas.plan, "superior", 75_000)
-    _, contrato = await fabricas.afiliada(db, hoy() - timedelta(days=10), basico)
+    familia, contrato = await fabricas.afiliada(db, hoy() - timedelta(days=10), basico)
+    mascota = familia.mascotas[0].id
 
-    cambio = await db.run_sync(contratos.cambiar_plan, contrato, superior, None)
+    cambio = await db.run_sync(contratos.cambiar_plan, contrato, mascota, superior, None)
 
-    inicio, fin = _ciclo_actual(contrato, hoy())
+    inicio, fin = ciclo_actual(contrato, hoy())
     esperado = dinero(Decimal(30_000) * (fin - hoy()).days / dias_del_periodo(inicio))
     assert dinero(cambio.ajuste) == esperado
-    assert cambio.regla_codigo == "cambio_plan_prorrateo"
-    assert dinero(contrato.valor_mensual) == Decimal("75000.00")
+    assert (cambio.regla_codigo, cambio.mascota_id) == ("cambio_plan_prorrateo", mascota)
+    assert dinero(contrato.valor_periodo) == Decimal("75000.00")
+    assert (await db.run_sync(contratos.plan_de_mascota, mascota)).id == superior.id
     ajuste = await db.scalar(select(Cuota).where(Cuota.tipo == "ajuste"))
     assert dinero(ajuste.valor) == esperado
 
@@ -342,8 +347,10 @@ async def test_subir_de_plan_cobra_prorrateo(db):
 async def test_bajar_de_plan_deja_saldo_a_favor(db):
     superior = await db.run_sync(fabricas.plan, "superior", 75_000)
     basico = await db.run_sync(fabricas.plan, "basico", 45_000)
-    _, contrato = await fabricas.afiliada(db, hoy() - timedelta(days=3), superior)
-    cambio = await db.run_sync(contratos.cambiar_plan, contrato, basico, None)
+    familia, contrato = await fabricas.afiliada(db, hoy() - timedelta(days=3), superior)
+    cambio = await db.run_sync(
+        contratos.cambiar_plan, contrato, familia.mascotas[0].id, basico, None
+    )
     assert cambio.ajuste < 0
     assert dinero(contrato.saldo_a_favor) == -dinero(cambio.ajuste)
 
@@ -352,12 +359,10 @@ async def test_no_cambia_de_plan_en_mora(db):
     basico = await db.run_sync(fabricas.plan, "basico", 45_000)
     superior = await db.run_sync(fabricas.plan, "superior", 75_000)
     # La primera cuota vencio hace 10 dias y no se pago.
-    _, contrato = await fabricas.afiliada(db, hoy() - timedelta(days=10), basico)
+    familia, contrato = await fabricas.afiliada(db, hoy() - timedelta(days=10), basico)
     await db.run_sync(cartera.reevaluar_estado, contrato)
-    import pytest
-
     with pytest.raises(ReglaNegocio, match="al dia"):
-        await db.run_sync(contratos.cambiar_plan, contrato, superior, None)
+        await db.run_sync(contratos.cambiar_plan, contrato, familia.mascotas[0].id, superior, None)
 
 
 async def test_cambio_al_proximo_ciclo_por_regla(db):
@@ -366,85 +371,148 @@ async def test_cambio_al_proximo_ciclo_por_regla(db):
     regla.accion = {"tipo": "prorrateo", "modo": "proximo_ciclo"}
     basico = await db.run_sync(fabricas.plan, "basico", 45_000)
     superior = await db.run_sync(fabricas.plan, "superior", 75_000)
-    _, contrato = await fabricas.afiliada(db, hoy() - timedelta(days=10), basico)
+    familia, contrato = await fabricas.afiliada(db, hoy() - timedelta(days=10), basico)
+    mascota = familia.mascotas[0].id
 
-    cambio = await db.run_sync(contratos.cambiar_plan, contrato, superior, None)
+    cambio = await db.run_sync(contratos.cambiar_plan, contrato, mascota, superior, None)
     assert cambio.aplicado is False
-    assert contrato.plan_id == basico.id
+    assert (await db.run_sync(contratos.plan_de_mascota, mascota)).id == basico.id
 
     await db.run_sync(cartera.generar_cuotas, cambio.fecha_efectiva)
     assert cambio.aplicado is True
-    assert contrato.plan_id == superior.id
+    assert (await db.run_sync(contratos.plan_de_mascota, mascota)).id == superior.id
     siguiente = await db.scalar(
         select(Cuota).where(Cuota.fecha_vencimiento == cambio.fecha_efectiva)
     )
     assert dinero(siguiente.valor) == Decimal("75000.00")
 
 
-# --- F1-PLA-03 --------------------------------------------------------------------------------
+async def test_el_cambio_de_plan_de_un_peludo_no_cambia_el_de_los_demas(db):
+    colita = await db.run_sync(fabricas.plan, "colita", tarifas=[35_500, 30_500, 26_000, 24_000])
+    fiel = await db.run_sync(fabricas.plan, "fiel", tarifas=[69_000, 61_000, 57_500, 57_000])
+    familia, contrato = await fabricas.afiliada(db, hoy(), colita, mascotas=2)
+    luna, max_ = familia.mascotas
+    await db.run_sync(contratos.cambiar_plan, contrato, max_.id, fiel, None)
+    assert (await db.run_sync(contratos.plan_de_mascota, luna.id)).id == colita.id
+    # Siguen siendo 2 peludos: cada uno con la tarifa de 2 de su plan.
+    assert dinero(contrato.valor_periodo) == Decimal("91500.00")
 
 
-async def test_mascota_sobre_el_cupo_se_rechaza(client: AsyncClient, db, headers):
-    familia, _ = await fabricas.afiliada(db, hoy())
+# --- 6.3 Alta y retiro de un peludo ------------------------------------------------------------
+
+PELUDO = {"especie": "canino", "fecha_nacimiento": "2021-03-01", "peso_kg": 12.5}
+
+
+@pytest.fixture
+async def colita(db):
+    """Un plan con las tarifas de Colita Feliz y una familia con un peludo en el."""
+    plan = await db.run_sync(
+        fabricas.plan,
+        "colita",
+        tarifas=[35_500, 30_500, 26_000, 24_000],
+        largos={"trimestral": 103_800},
+    )
+    familia, contrato = await fabricas.afiliada(db, hoy(), plan)
     await db.commit()
+    return plan, familia, contrato
+
+
+async def test_con_afiliacion_vigente_el_panel_pide_el_plan_de_la_mascota_nueva(
+    client: AsyncClient, colita, headers
+):
+    _, familia, _ = colita
     resp = await client.post(
         f"/api/v1/familias/{familia.id}/mascotas",
-        json={
-            "nombre": "Otra",
-            "especie": "canino",
-            "fecha_nacimiento": "2021-03-01",
-            "peso_kg": 12.5,
-        },
+        json={"nombre": "Otra", **PELUDO},
         headers=headers,
     )
-    assert resp.status_code == 422
-    assert "cupo" in resp.json()["detail"]
+    assert resp.status_code == 422 and "Elige el plan" in resp.text
 
 
-async def test_mascota_adicional_con_regla_de_ajuste(client: AsyncClient, db, headers):
-    p = await db.run_sync(fabricas.plan, "individual", 45_000, 1)
-    db.add(
-        Regla(
-            codigo="adicional_individual",
-            nombre="Adicional 15.000",
-            evento="plan.mascota",
-            condicion={},
-            accion={
-                "tipo": "ajuste_mascota",
-                "valor_por_mascota_adicional": 15000,
-                "maximo_adicionales": 2,
-            },
-            prioridad=10,
-            detener=True,
-            plan_id=p.id,
-        )
-    )
-    familia, contrato = await fabricas.afiliada(db, hoy(), p)
-    await db.commit()
-
+async def test_un_peludo_mas_baja_la_tarifa_de_todos_desde_la_siguiente_cuota(
+    client: AsyncClient, db, colita, headers
+):
+    plan, familia, contrato = colita
+    primera = await db.scalar(select(Cuota).where(Cuota.contrato_id == contrato.id))
     alta = await client.post(
         f"/api/v1/familias/{familia.id}/mascotas",
-        json={
-            "nombre": "Luna",
-            "especie": "canino",
-            "fecha_nacimiento": "2021-03-01",
-            "peso_kg": 12.5,
-        },
+        json={"nombre": "Luna", "plan_id": str(plan.id), **PELUDO},
         headers=headers,
     )
-    assert alta.status_code == 201
+    assert alta.status_code == 201, alta.text
     await db.refresh(contrato)
-    assert (contrato.mascotas_adicionales, dinero(contrato.valor_mensual)) == (
-        1,
-        Decimal("60000.00"),
+    assert dinero(contrato.valor_periodo) == Decimal("61000.00")  # 2 x 30.500
+    lineas = await db.run_sync(contratos.lineas, contrato)
+    assert [dinero(linea.valor_mensual) for linea in lineas] == [Decimal("30500.00")] * 2
+    # La cuota ya emitida no cambia.
+    await db.refresh(primera)
+    assert dinero(primera.valor) == Decimal("35500.00")
+    cambio = await db.scalar(select(CambioPlan).where(CambioPlan.tipo == "mascota_alta"))
+    assert (dinero(cambio.valor_anterior), dinero(cambio.valor_nuevo)) == (
+        Decimal("35500.00"),
+        Decimal("61000.00"),
     )
 
+    # Al retirarlo, el que queda vuelve a la tarifa de 1.
     baja = await client.post(
         f"/api/v1/mascotas/{alta.json()['id']}/baja", json={"motivo": "Adopcion"}, headers=headers
     )
     assert baja.status_code == 200
     await db.refresh(contrato)
-    assert dinero(contrato.valor_mensual) == Decimal("45000.00")
+    assert dinero(contrato.valor_periodo) == Decimal("35500.00")
+
+
+async def test_el_unico_peludo_no_se_retira_sin_cancelar_el_contrato(
+    client: AsyncClient, colita, headers
+):
+    _, familia, _ = colita
+    resp = await client.post(
+        f"/api/v1/mascotas/{familia.mascotas[0].id}/baja",
+        json={"motivo": "Fallecio"},
+        headers=headers,
+    )
+    assert resp.status_code == 422 and "cancelar el contrato" in resp.text
+
+
+async def test_un_plan_que_deja_de_venderse_no_impide_retirar_a_otro_peludo(db):
+    viejo = await db.run_sync(fabricas.plan, "viejo", 40_000)
+    familia, contrato = await fabricas.afiliada(db, hoy(), viejo, mascotas=2)
+    await db.run_sync(lambda s: service.fijar_ciudades(s, viejo, ["Bogota"]))  # ya no en Cali
+    await db.run_sync(contratos.retirar_mascota, contrato, familia.mascotas[1].id, None)
+    assert dinero(contrato.valor_periodo) == Decimal("40000.00")
+
+
+async def test_trimestral_con_un_peludo_y_sin_descuento_al_sumar_otro(db, colita):
+    plan, familia, _ = colita
+    otra = await db.run_sync(fabricas.familia)
+    planes_otra = {otra.mascotas[0].id: plan.id}
+    contrato, cuota = await db.run_sync(
+        lambda s: cartera.crear_contrato(
+            s, otra, planes_otra, periodicidad="trimestral", fecha_inicio=hoy()
+        )
+    )
+    assert (dinero(contrato.valor_periodo), dinero(contrato.valor_mensual)) == (
+        Decimal("103800.00"),
+        Decimal("35500.00"),
+    )
+    assert (cuota.meses, dinero(cuota.valor)) == (3, Decimal("103800.00"))
+    # La siguiente cuota es tres meses despues.
+    await db.run_sync(cartera.generar_cuotas, sumar_meses(hoy(), 3))
+    periodos = list(
+        await db.scalars(
+            select(Cuota.periodo).where(Cuota.contrato_id == contrato.id).order_by(Cuota.periodo)
+        )
+    )
+    assert periodos == [f"{hoy():%Y-%m}", f"{sumar_meses(hoy(), 3):%Y-%m}"]
+
+    # Con un segundo peludo ya no hay descuento: el mensual de los dos por tres meses.
+    nueva = await db.run_sync(
+        lambda s: familias_service.incorporar_mascota(
+            s, otra, Mascota(nombre="Coco", especie="felino", familia_id=otra.id)
+        )
+    )
+    await db.run_sync(contratos.agregar_mascota, contrato, nueva, plan.id, None)
+    assert dinero(contrato.valor_periodo) == Decimal("183000.00")  # 2 x 30.500 x 3
 
 
 async def test_mascota_nueva_recibe_calendario_preventivo(client: AsyncClient, db, headers):
@@ -460,6 +528,7 @@ async def test_mascota_nueva_recibe_calendario_preventivo(client: AsyncClient, d
             "especie": "felino",
             "fecha_nacimiento": str(hoy() - timedelta(weeks=4)),
             "peso_kg": 0.6,
+            "plan_id": str(p.id),
         },
         headers=headers,
     )

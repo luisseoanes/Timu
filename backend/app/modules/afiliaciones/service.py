@@ -8,7 +8,6 @@
 """
 
 from datetime import date
-from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -18,16 +17,17 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import nuevo_id
+from app.core.enums import Periodicidad
 from app.core.errores import ErrorDominio, NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
 from app.integrations.payments import construir_link_pago
 from app.modules.afiliaciones import documento
-from app.modules.afiliaciones.models import EstadoSolicitud, SolicitudAfiliacion
+from app.modules.afiliaciones.models import EstadoSolicitud, PeludoSolicitud, SolicitudAfiliacion
 from app.modules.archivos import service as archivos
 from app.modules.cartera import contratos, pasarela
 from app.modules.cartera import service as cartera
 from app.modules.cartera.models import Contrato, Pago
-from app.modules.cartera.periodos import centavos, dinero
+from app.modules.cartera.periodos import centavos, dinero, formato_cop
 from app.modules.comercial import service as comercial
 from app.modules.comunicaciones import service as comunicaciones
 from app.modules.familias import service as familias
@@ -42,24 +42,18 @@ logger = structlog.get_logger(__name__)
 PREFIJO = "AFI-"
 
 
-def _valor_inicial(db: Session, familia: Familia, plan: Plan) -> Decimal:
-    activas = [m for m in familia.mascotas if m.activa]
-    if not activas:
-        raise ReglaNegocio("Debe registrar al menos una mascota para afiliarse")
-    planes.validar_para_familia(plan, familia.ciudad, [m.especie for m in activas])
-    adicionales, valor_adicional, _ = contratos.calcular_cupo(db, familia, plan, len(activas))
-    return dinero(plan.valor_mensual) + adicionales * valor_adicional
-
-
 def iniciar(
     db: Session,
     *,
     familia: Familia,
-    plan: Plan,
+    planes_por_mascota: dict[UUID, UUID],
+    periodicidad: str = Periodicidad.MENSUAL,
     origen: str,
     aceptacion: dict[str, Any],
 ) -> tuple[SolicitudAfiliacion, str]:
-    """Crea la solicitud con su pago pendiente y devuelve el enlace de pago."""
+    """Crea la solicitud con su pago pendiente y devuelve el enlace de pago. Cada peludo
+    queda con el plan elegido y lo que paga, tal como se cotizo: el pago es la primera
+    cuota."""
     if contratos.contrato_vigente(db, familia.id):
         raise ReglaNegocio(
             "No es posible completar la afiliacion en linea; un asesor te contactara"
@@ -76,7 +70,8 @@ def iniciar(
         pago_viejo = db.get(Pago, abierta.pago_id) if abierta.pago_id else None
         if pago_viejo and pago_viejo.estado == "pendiente":
             pago_viejo.estado = "anulado"
-    valor = _valor_inicial(db, familia, plan)
+    afiliacion = contratos.cotizar_afiliacion(db, familia, planes_por_mascota, periodicidad)
+    valor = dinero(afiliacion.cotizacion.valor_periodo)
     referencia = f"{PREFIJO}{uuid4().hex[:20].upper()}"
     pago = Pago(
         id=nuevo_id(),
@@ -88,7 +83,7 @@ def iniciar(
     )
     solicitud = SolicitudAfiliacion(
         familia_id=familia.id,
-        plan_id=plan.id,
+        periodicidad=periodicidad,
         valor_inicial=valor,
         referencia_pago=referencia,
         pago_id=pago.id,
@@ -103,7 +98,24 @@ def iniciar(
     db.flush()  # la solicitud referencia al pago
     db.add(solicitud)
     db.flush()
-    _al_embudo(db, familia, "en_afiliacion", origen, plan.codigo)
+    db.add_all(
+        PeludoSolicitud(
+            solicitud_id=solicitud.id,
+            familia_id=familia.id,
+            posicion=posicion,
+            mascota_id=mascota.id,
+            nombre=mascota.nombre,
+            especie=mascota.especie,
+            plan_id=cotizado.plan.id,
+            valor_mensual=dinero(cotizado.valor_mensual),
+        )
+        for posicion, (mascota, cotizado) in enumerate(
+            zip(afiliacion.mascotas, afiliacion.cotizacion.peludos, strict=True), start=1
+        )
+    )
+    db.flush()
+    db.refresh(solicitud, ["peludos"])
+    _al_embudo(db, familia, "en_afiliacion", origen, afiliacion.cotizacion.peludos[0].plan.codigo)
     enlace = construir_link_pago(
         referencia,
         centavos(valor),
@@ -189,8 +201,23 @@ def completar(db: Session, pago: Pago) -> None:
 
 def _completar(db: Session, solicitud: SolicitudAfiliacion, pago: Pago) -> None:
     familia = familias.obtener(db, solicitud.familia_id)
-    plan = planes.obtener(db, solicitud.plan_id)
-    contrato, cuota = cartera.crear_contrato(db, familia, plan, fecha_inicio=hoy())
+    sin_ficha = [p.nombre for p in solicitud.peludos if p.mascota_id is None]
+    if sin_ficha:
+        raise ReglaNegocio(f"Faltan los datos de: {', '.join(sin_ficha)}")
+    contrato, cuota = cartera.crear_contrato(
+        db,
+        familia,
+        {p.mascota_id: p.plan_id for p in solicitud.peludos if p.mascota_id},
+        periodicidad=solicitud.periodicidad,
+        fecha_inicio=hoy(),
+    )
+    # Se cobra lo que la familia acepto y pago: si una tarifa cambio entre la cotizacion y el
+    # pago, el contrato no se crea con otro precio sin que el equipo lo decida.
+    if dinero(contrato.valor_periodo) != dinero(solicitud.valor_inicial):
+        raise ReglaNegocio(
+            f"El valor cambio entre la cotizacion ({formato_cop(solicitud.valor_inicial)}) y "
+            f"el pago ({formato_cop(contrato.valor_periodo)}): revisar antes de afiliar"
+        )
     contrato.aceptado_en = ahora()
     contrato.medio_aceptacion = solicitud.aceptacion.get("medio")
     contrato.evidencia_aceptacion = solicitud.aceptacion
@@ -199,12 +226,14 @@ def _completar(db: Session, solicitud: SolicitudAfiliacion, pago: Pago) -> None:
     pago.cuota_id = cuota.id if cuota else None
     cartera.aplicar_pago(db, pago)
 
-    _documento(db, contrato, familia, plan)
+    elegidos = dict.fromkeys(p.plan_id for p in solicitud.peludos)
+    contratados = [planes.obtener(db, plan_id) for plan_id in elegidos]
+    _documento(db, contrato, familia, contratados)
     familias.habilitar_portal(db, familia)
     _calendario_preventivo(db, familia, hoy())
-    _bienvenida(db, familia, plan)
+    _bienvenida(db, familia, contratados)
 
-    _al_embudo(db, familia, "afiliado", solicitud.origen, plan.codigo)
+    _al_embudo(db, familia, "afiliado", solicitud.origen, contratados[0].codigo)
     solicitud.contrato_id = contrato.id
     solicitud.estado = EstadoSolicitud.COMPLETADA
     solicitud.completada_en = ahora()
@@ -227,8 +256,21 @@ def _al_embudo(db: Session, familia: Familia, etapa: str, origen: str, plan: str
     interesado.plan_sugerido = interesado.plan_sugerido or plan
 
 
-def _documento(db: Session, contrato: Contrato, familia: Familia, plan: Plan) -> None:
-    mascotas = [m for m in familia.mascotas if m.activa]
+def _documento(db: Session, contrato: Contrato, familia: Familia, contratados: list[Plan]) -> None:
+    nombres = {p.id: p.nombre for p in contratados}
+    peludos = []
+    for linea in contratos.lineas(db, contrato):
+        mascota = db.get(Mascota, linea.mascota_id)
+        assert mascota is not None
+        peludos.append(
+            {
+                "nombre": mascota.nombre,
+                "especie": mascota.especie,
+                "raza": mascota.raza,
+                "plan": nombres.get(linea.plan_id) or planes.obtener(db, linea.plan_id).nombre,
+                "valor_mensual": linea.valor_mensual,
+            }
+        )
     contenido = documento.generar_contrato(
         numero=contrato.numero,
         fecha=contrato.fecha_inicio,
@@ -241,22 +283,25 @@ def _documento(db: Session, contrato: Contrato, familia: Familia, plan: Plan) ->
             "direccion": familia.direccion,
             "ciudad": familia.ciudad,
         },
-        plan={
-            "nombre": plan.nombre,
-            "beneficios": [
-                {
-                    "tipo_servicio_codigo": b.tipo_servicio_codigo,
-                    "cupo": b.cupo,
-                    "periodo_cupo": b.periodo_cupo,
-                    "cobertura_pct": b.cobertura_pct,
-                }
-                for b in plan.beneficios
-            ],
-        },
-        mascotas=[{"nombre": m.nombre, "especie": m.especie, "raza": m.raza} for m in mascotas],
+        mascotas=peludos,
+        planes=[
+            {
+                "nombre": plan.nombre,
+                "beneficios": [
+                    {
+                        "tipo_servicio_codigo": b.tipo_servicio_codigo,
+                        "cupo": b.cupo,
+                        "periodo_cupo": b.periodo_cupo,
+                        "cobertura_pct": b.cobertura_pct,
+                    }
+                    for b in plan.beneficios
+                ],
+            }
+            for plan in contratados
+        ],
         contrato={
-            "valor_plan": contrato.valor_plan,
-            "mascotas_adicionales": contrato.mascotas_adicionales,
+            "periodicidad": contrato.periodicidad,
+            "valor_periodo": contrato.valor_periodo,
             "valor_mensual": contrato.valor_mensual,
             "dia_corte": contrato.dia_corte,
             "fecha_inicio": contrato.fecha_inicio,
@@ -284,13 +329,13 @@ def _calendario_preventivo(db: Session, familia: Familia, desde: date) -> None:
         preventivos.calendario_inicial(db, mascota, desde)
 
 
-def _bienvenida(db: Session, familia: Familia, plan: Plan) -> None:
+def _bienvenida(db: Session, familia: Familia, contratados: list[Plan]) -> None:
     try:
         comunicaciones.encolar_plantilla(
             db,
             telefono=familia.telefono,
             plantilla="bienvenida",
-            variables=[familia.titular_nombre, plan.nombre],
+            variables=[familia.titular_nombre, ", ".join(p.nombre for p in contratados)],
             familia_id=familia.id,
         )
     except ReglaNegocio as e:

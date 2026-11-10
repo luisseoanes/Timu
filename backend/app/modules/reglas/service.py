@@ -1,5 +1,6 @@
 """F0-12 Evaluacion de reglas desde la base de datos."""
 
+from collections.abc import Collection
 from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
@@ -26,16 +27,19 @@ def evaluar(
     contexto: dict[str, Any],
     *,
     plan_id: UUID | None = None,
+    planes: Collection[UUID] = (),
 ) -> list[Resultado]:
     """Acciones de las reglas activas y vigentes cuyo criterio se cumple, por prioridad.
 
-    Las reglas atadas a un plan solo aplican cuando se evalua para ese plan; las generales
-    (sin plan) aplican siempre.
+    Las reglas atadas a un plan solo aplican cuando se evalua para ese plan o, con `planes`,
+    para un contrato con algun peludo en el (cada peludo tiene su plan). Las generales (sin
+    plan) aplican siempre.
     """
+    aplicables = {*planes, *([plan_id] if plan_id else [])}
     stmt = select(Regla).where(Regla.evento == evento, Regla.activa.is_(True))
     stmt = stmt.where(
-        or_(Regla.plan_id.is_(None), Regla.plan_id == plan_id)
-        if plan_id
+        or_(Regla.plan_id.is_(None), Regla.plan_id.in_(aplicables))
+        if aplicables
         else Regla.plan_id.is_(None)
     )
     dia = hoy()
@@ -51,9 +55,14 @@ def evaluar(
 
 
 def primera(
-    db: Session, evento: str, contexto: dict[str, Any], *, plan_id: UUID | None = None
+    db: Session,
+    evento: str,
+    contexto: dict[str, Any],
+    *,
+    plan_id: UUID | None = None,
+    planes: Collection[UUID] = (),
 ) -> Resultado | None:
-    resultados = evaluar(db, evento, contexto, plan_id=plan_id)
+    resultados = evaluar(db, evento, contexto, plan_id=plan_id, planes=planes)
     return resultados[0] if resultados else None
 
 

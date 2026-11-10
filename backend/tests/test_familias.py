@@ -9,6 +9,7 @@ from app.core.enums import Rol
 from app.core.tiempo import hoy
 from app.core.validaciones import normalizar_documento, normalizar_telefono
 from app.integrations import geocodificacion
+from app.modules.afiliaciones.models import PeludoSolicitud, SolicitudAfiliacion
 from app.modules.archivos.models import Archivo
 from app.modules.auth.models import Usuario
 from app.modules.catalogos.models import Ciudad
@@ -612,6 +613,25 @@ async def _familia_con_rastro(db) -> tuple[Familia, Usuario]:
             email="rocio@ejemplo.co",
         )
     )
+    # Una solicitud de afiliacion guarda el nombre de cada peludo, como la ficha.
+    plan = await db.run_sync(fabricas.plan, "anonimo")
+    solicitud = SolicitudAfiliacion(
+        familia_id=familia.id, valor_inicial=45_000, referencia_pago="AFI-ANON", origen="asistida"
+    )
+    db.add(solicitud)
+    await db.flush()
+    db.add(
+        PeludoSolicitud(
+            solicitud_id=solicitud.id,
+            familia_id=familia.id,
+            posicion=1,
+            mascota_id=familia.mascotas[0].id,
+            nombre="Mascota0",
+            especie="canino",
+            plan_id=plan.id,
+            valor_mensual=45_000,
+        )
+    )
     # Documentos subidos: el de identificacion se purga; el examen externo es clinico y queda.
     for clave, categoria, descripcion in (
         ("documento_familia/2026/11/cedula.pdf", "identificacion", "Cedula de Ana Ruiz"),
@@ -657,6 +677,7 @@ async def test_anonimizar_no_deja_datos_personales(client: AsyncClient, db, head
         "mensajes",
         "contactos_familia",
         "documentos_familia",
+        "peludos_solicitud",
         "auditoria",
     ):
         filas = await db.scalar(

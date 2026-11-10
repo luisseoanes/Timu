@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core.enums import EstadoAfiliacion, EstadoServicio
 from app.core.tiempo import ZONA_NEGOCIO, hoy
-from app.modules.cartera.models import Contrato, Cuota, EstadoCuota
+from app.modules.cartera.models import AfiliacionMascota, Contrato, Cuota, EstadoCuota
 from app.modules.familias.models import Familia, Mascota
 from app.modules.planes.models import Plan
 from app.modules.servicios.models import Servicio
@@ -51,10 +51,13 @@ def consulta(filtros: FiltrosSegmento, dia: date | None = None) -> Select[Any]:
 
     contrato_vigente = and_(Contrato.familia_id == Familia.id, Contrato.estado.in_(VIGENTES))
     if filtros.planes:
+        # Cada peludo tiene su plan: entra la familia con alguno en esos planes.
         stmt = stmt.where(
             exists().where(
                 contrato_vigente,
-                Contrato.plan_id == Plan.id,
+                AfiliacionMascota.contrato_id == Contrato.id,
+                AfiliacionMascota.activa.is_(True),
+                AfiliacionMascota.plan_id == Plan.id,
                 Plan.codigo.in_(filtros.planes),
             )
         )

@@ -24,7 +24,7 @@ from app.modules.cartera.periodos import sumar_meses
 from app.modules.comunicaciones import service as comunicaciones
 from app.modules.comunicaciones.models import BajaComunicaciones, EstadoMensaje, Mensaje
 from app.modules.familias.models import Familia
-from app.modules.planes.models import Plan
+from app.modules.planes import service as planes
 
 logger = structlog.get_logger(__name__)
 
@@ -108,8 +108,12 @@ def _variables(db: Session, campana: Campana, familia: Familia) -> list[str]:
             valores.append(mascota.nombre if mascota else "tu mascota")
         elif fuente == "plan":
             contrato = contratos.contrato_vigente(db, familia.id)
-            plan = db.get(Plan, contrato.plan_id) if contrato else None
-            valores.append(plan.nombre if plan else "TIMU")
+            nombres = sorted(
+                {planes.obtener(db, p).nombre for p in contratos.planes_del_contrato(db, contrato)}
+                if contrato
+                else set()
+            )
+            valores.append(", ".join(nombres) or "TIMU")
     return valores
 
 

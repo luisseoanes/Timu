@@ -91,18 +91,6 @@ REGLAS: list[dict[str, Any]] = [
         "prioridad": 10,
         "detener": True,
     },
-    {
-        "codigo": "mascota_sobre_cupo",
-        "nombre": "Sin cupo adicional por defecto",
-        "evento": "plan.mascota",
-        "condicion": {},
-        "accion": {
-            "tipo": "rechazar",
-            "motivo": "El plan no tiene cupo para otra mascota; cambie a un plan con mas cupos",
-        },
-        "prioridad": 100,
-        "detener": True,
-    },
     # F1-PLA-04 Recomendacion.
     {
         "codigo": "recomendar_familiar",

@@ -583,7 +583,11 @@ async def test_contrato_por_api_se_crea_renueva_y_cancela(client: AsyncClient, d
     inicio = hoy() - timedelta(days=320)  # la renovacion cae dentro de la ventana de 90 dias
     creado = await client.post(
         "/api/v1/cartera/contratos",
-        json={"familia_id": str(familia.id), "plan_id": str(plan.id), "fecha_inicio": str(inicio)},
+        json={
+            "familia_id": str(familia.id),
+            "peludos": [{"mascota_id": str(familia.mascotas[0].id), "plan_id": str(plan.id)}],
+            "fecha_inicio": str(inicio),
+        },
         headers=headers,
     )
     assert creado.status_code == 201

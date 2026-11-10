@@ -260,13 +260,26 @@ def evaluar(db: Session, prompt: PromptIA) -> dict[str, Any]:
 # --- F4-IAA-02 / 03 Usos ----------------------------------------------------------------------
 
 
+def _plan_en_texto(plan: Plan) -> str:
+    """Precios del plan como los publica TIMU: por peludo al mes segun cuantos peludos tiene
+    la familia, y los periodos con descuento para un solo peludo."""
+    tarifas = ", ".join(
+        f"{t.peludos}{'+' if t.peludos == 4 else ''} peludos: {t.valor} COP c/u"
+        for t in plan.tarifas
+    )
+    largos = ", ".join(f"{t.periodicidad} {t.valor} COP" for t in plan.tarifas_periodicidad)
+    ciudades = ", ".join(c.ciudad for c in plan.ciudades)
+    texto = f"{plan.nombre} ({ciudades}): al mes por peludo, {tarifas}"
+    return texto + (f"; con un solo peludo, {largos}" if largos else "")
+
+
 def responder_comercial(db: Session, pregunta: str, telefono: str) -> str | None:
     """Respuesta dentro del guion aprobado, o None si la pregunta sale de el (y entonces la
     conversacion pasa a un asesor)."""
 
     planes = [
-        f"{p.nombre}: {p.valor_mensual} COP/mes, hasta {p.cupos_mascotas} mascotas"
-        for p in db.scalars(select(Plan).where(Plan.activo.is_(True)).order_by(Plan.valor_mensual))
+        _plan_en_texto(p)
+        for p in db.scalars(select(Plan).where(Plan.activo.is_(True)).order_by(Plan.nombre))
     ]
     entrada = (
         "Planes vigentes:\n"

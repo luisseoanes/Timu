@@ -247,11 +247,19 @@ def main() -> None:
             estado = c.http.get(f"/cartera/familias/{familia['id']}/estado-cuenta")
             if estado.status_code == 404:
                 inicio = (hoy - timedelta(days=75)).isoformat()
+                # Cada peludo con su plan; la familia de dos perros los tiene en planes
+                # distintos, para ver la tarifa de grupo con planes mezclados.
+                elegidos = [planes[datos["plan"]]["id"]] * len(familia["mascotas"])
+                if len(elegidos) == 2 and datos["plan"] == "mi_amigo_fiel":
+                    elegidos[1] = planes["colita_feliz"]["id"]
                 c.post(
                     "/cartera/contratos",
                     {
                         "familia_id": familia["id"],
-                        "plan_id": planes[datos["plan"]]["id"],
+                        "peludos": [
+                            {"mascota_id": m["id"], "plan_id": plan_id}
+                            for m, plan_id in zip(familia["mascotas"], elegidos, strict=True)
+                        ],
                         "fecha_inicio": inicio,
                     },
                 )

@@ -96,14 +96,15 @@ def emitir(
     elegibilidad = servicios.elegibilidad(db, familia, mascota, tipo)
     if not elegibilidad.elegible:
         raise ReglaNegocio("No se puede remitir: " + "; ".join(elegibilidad.motivos))
-    contrato = contratos.contrato_vigente(db, familia.id)
-    assert contrato is not None  # la elegibilidad ya lo exige
+    # La elegibilidad ya exige que la mascota este afiliada: su plan decide el convenio.
+    plan = contratos.plan_de_mascota(db, mascota.id)
+    assert plan is not None
 
-    vigentes = convenios_vigentes(db, clinica.id, contrato.plan_id, hoy())
+    vigentes = convenios_vigentes(db, clinica.id, plan.id, hoy())
     if convenio_id is not None:
         vigentes = [c for c in vigentes if c.id == convenio_id]
     if not vigentes:
-        raise ReglaNegocio(f"{clinica.nombre} no tiene convenio vigente para el plan de la familia")
+        raise ReglaNegocio(f"{clinica.nombre} no tiene convenio vigente para el plan {plan.nombre}")
     convenio = vigentes[0]
 
     servicio = Servicio(

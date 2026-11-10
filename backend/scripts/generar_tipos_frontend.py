@@ -49,7 +49,7 @@ ESQUEMAS = [
     "ContratoRead",
     "CuotaRead",
     "PagoRead",
-    "PlanResumen",
+    "PeludoContratoRead",
     "ProximoCobro",
     "EstadoCuenta",
     "EventoPasarelaRead",
@@ -91,6 +91,7 @@ ESQUEMAS = [
     "MedioPagoRead",
     "Recomendacion",
     "CambioPlanRead",
+    "PeludoSolicitudRead",
 ]
 # Nombres de schema repetidos entre modulos: se exponen con un nombre propio.
 ALIAS = {

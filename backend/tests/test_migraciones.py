@@ -5,6 +5,7 @@ las pruebas pasan porque el esquema se construye desde las migraciones... pero l
 migracion que falta no existe y produccion se queda sin esa columna.
 """
 
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -309,3 +310,137 @@ def test_0032_da_tarifas_y_ciudades_a_los_planes_existentes(base_en_0031):
             "paisa": ["Medellin"],
             "gratis": ["Bogota"],
         }
+
+
+# --- 0033: cada peludo con su plan en el contrato ---------------------------------------------
+
+
+@pytest.fixture
+def base_en_0032():
+    yield from _base_en("0032")
+
+
+def test_0033_reparte_cada_contrato_en_lineas_por_peludo_sin_cambiar_su_precio(base_en_0032):
+    """Contrato vigente: una linea por mascota activa con el plan que tenia y el valor
+    mensual repartido (el resto en la primera), asi que la suma no cambia. Contrato
+    cancelado: lineas inactivas que conservan su plan. Las solicitudes reciben sus peludos,
+    las cuotas pasan a `cuota` de 1 mes y las reglas `plan.mascota` se desactivan."""
+    cfg, engine = base_en_0032
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO ciudades (codigo, nombre, departamento, activa)"
+                " VALUES ('76001', 'Cali', 'Valle', true);"
+                "INSERT INTO especies (codigo, nombre, activa) VALUES ('canino', 'Perro', true);"
+                "INSERT INTO planes (codigo, nombre, valor_mensual, cupos_mascotas, especies,"
+                " activo) VALUES ('viejo', 'Viejo', 40000, 3, '[]', true);"
+            )
+        )
+        plan = conn.execute(text("SELECT id FROM planes")).scalar_one()
+        familias = []
+        for doc in ("1001", "1002"):
+            familias.append(
+                conn.execute(
+                    text(
+                        "INSERT INTO familias (titular_nombre, documento, telefono, ciudad,"
+                        " estado, tipo_documento, origen, barrio) VALUES ('Ana', :d,"
+                        " '+573001112233', 'Cali', 'activa', 'CC', 'panel', 'Centro') RETURNING id"
+                    ),
+                    {"d": doc},
+                ).scalar_one()
+            )
+        vigente, cancelada = familias
+        for familia, nombre, activa in (
+            (vigente, "Luna", True),
+            (vigente, "Max", True),
+            (vigente, "Toby", False),
+            (cancelada, "Kira", True),
+        ):
+            conn.execute(
+                text(
+                    "INSERT INTO mascotas (familia_id, nombre, especie, activa, dada_de_baja_en)"
+                    " VALUES (:f, :n, 'canino', :a, CASE WHEN :a THEN NULL ELSE now() END)"
+                ),
+                {"f": familia, "n": nombre, "a": activa},
+            )
+        contratos = {}
+        for familia, numero, estado, valor in (
+            (vigente, "C1", "activa", "100000.01"),
+            (cancelada, "C2", "cancelada", "40000"),
+        ):
+            contratos[numero] = conn.execute(
+                text(
+                    "INSERT INTO contratos (familia_id, numero, plan_id, fecha_inicio,"
+                    " fecha_renovacion, fecha_fin, dia_corte, estado, valor_plan,"
+                    " mascotas_adicionales, valor_adicional_mascota, valor_mensual,"
+                    " saldo_a_favor, evidencia_aceptacion) VALUES (:f, :n, :p, '2026-01-10',"
+                    " '2027-01-10', CASE WHEN CAST(:e AS text) = 'cancelada'"
+                    " THEN date '2026-06-01' END, 10,"
+                    " CAST(:e AS estado_afiliacion), :v, 0, 0, :v, 0, '{}') RETURNING id"
+                ),
+                {"f": familia, "n": numero, "p": plan, "e": estado, "v": valor},
+            ).scalar_one()
+        conn.execute(
+            text(
+                "INSERT INTO cuotas (contrato_id, periodo, tipo, fecha_vencimiento, valor,"
+                " valor_pagado, estado, dias_mora) VALUES"
+                " (:c, '2026-01', 'mensual', '2026-01-10', 100000.01, 0, 'pendiente', 0)"
+            ),
+            {"c": contratos["C1"]},
+        )
+        conn.execute(
+            text(
+                "INSERT INTO solicitudes_afiliacion (familia_id, plan_id, valor_inicial,"
+                " referencia_pago, estado, origen, aceptacion) VALUES"
+                " (:f, :p, 80000, 'AFI-1', 'pendiente_pago', 'asistida', '{}')"
+            ),
+            {"f": vigente, "p": plan},
+        )
+        conn.execute(
+            text(
+                "INSERT INTO reglas (codigo, nombre, evento, condicion, accion, prioridad,"
+                " detener, activa) VALUES ('cupo', 'Cupo', 'plan.mascota', '{}',"
+                ' \'{"tipo": "rechazar", "motivo": "x"}\', 1, true, true)'
+            )
+        )
+    command.upgrade(cfg, "0033")
+    with engine.connect() as conn:
+        lineas = conn.execute(
+            text(
+                "SELECT c.numero, m.nombre, a.plan_id = :p, a.valor_mensual, a.activa"
+                " FROM afiliaciones_mascota a JOIN contratos c ON c.id = a.contrato_id"
+                " JOIN mascotas m ON m.id = a.mascota_id ORDER BY c.numero, m.created_at"
+            ),
+            {"p": plan},
+        ).all()
+        # El centavo que sobra va a una de las dos (la primera por alta): lo que importa es
+        # que la suma sea exactamente el valor que tenia el contrato.
+        vigentes = [f for f in lineas if f[0] == "C1"]
+        assert sorted((f[1], f[2], f[4]) for f in vigentes) == [
+            ("Luna", True, True),
+            ("Max", True, True),
+        ]
+        assert sorted(f[3] for f in vigentes) == [Decimal("50000.00"), Decimal("50000.01")]
+        assert sum(f[3] for f in vigentes) == Decimal("100000.01")
+        assert [tuple(f) for f in lineas if f[0] == "C2"] == [
+            ("C2", "Kira", True, Decimal("40000.00"), False)
+        ]
+        contrato = conn.execute(
+            text(
+                "SELECT periodicidad::text, valor_mensual, valor_periodo FROM contratos"
+                " WHERE numero = 'C1'"
+            )
+        ).one()
+        assert tuple(contrato) == ("mensual", Decimal("100000.01"), Decimal("100000.01"))
+        assert tuple(conn.execute(text("SELECT tipo, meses FROM cuotas")).one()) == ("cuota", 1)
+        peludos = conn.execute(
+            text("SELECT posicion, nombre, valor_mensual FROM peludos_solicitud ORDER BY posicion")
+        ).all()
+        assert [tuple(p) for p in peludos] == [
+            (1, "Luna", Decimal("40000.00")),
+            (2, "Max", Decimal("40000.00")),
+        ]
+        assert (
+            conn.execute(text("SELECT activa FROM reglas WHERE codigo = 'cupo'")).scalar_one()
+            is False
+        )

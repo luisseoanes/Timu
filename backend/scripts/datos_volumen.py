@@ -65,29 +65,46 @@ _PASOS: list[tuple[str, str]] = [
     (
         "contratos",
         """
-        INSERT INTO contratos (familia_id, plan_id, numero, fecha_inicio, fecha_renovacion,
-            fecha_fin, valor_mensual, valor_plan, dia_corte, estado, mascotas_adicionales,
-            valor_adicional_mascota, saldo_a_favor, evidencia_aceptacion)
-        SELECT f.id, p.id, 'VOL-' || substr(f.documento, 4), inicio, inicio + interval '1 year',
-            CASE WHEN f.estado = 'cancelada' THEN current_date - 20 END,
-            p.valor_mensual, p.valor_mensual, 1 + extract(day FROM inicio)::int % 28,
-            f.estado, 0, 0, 0, '{}'
+        INSERT INTO contratos (familia_id, numero, fecha_inicio, fecha_renovacion, fecha_fin,
+            periodicidad, valor_mensual, valor_periodo, dia_corte, estado, saldo_a_favor,
+            evidencia_aceptacion)
+        SELECT f.id, 'VOL-' || substr(f.documento, 4), inicio, inicio + interval '1 year',
+            CASE WHEN f.estado = 'cancelada' THEN current_date - 20 END, 'mensual',
+            t.valor * n.peludos, t.valor * n.peludos, 1 + extract(day FROM inicio)::int % 28,
+            f.estado, 0, '{}'
         FROM familias f
         CROSS JOIN LATERAL (SELECT current_date - interval '1 year'
                                    + ((random() * 25)::int || ' days')::interval AS inicio) i
-        CROSS JOIN LATERAL (SELECT id, valor_mensual FROM planes WHERE codigo = 'individual') p
+        CROSS JOIN LATERAL (SELECT count(*) AS peludos FROM mascotas m
+                            WHERE m.familia_id = f.id AND m.activa) n
+        CROSS JOIN LATERAL (SELECT t.valor FROM tarifas_plan t JOIN planes p ON p.id = t.plan_id
+                            WHERE p.codigo = 'colita_feliz' AND t.peludos = least(n.peludos, 4)) t
         WHERE f.documento LIKE 'VOL%'
+        """,
+    ),
+    (
+        "afiliaciones_mascota",
+        """
+        INSERT INTO afiliaciones_mascota (familia_id, contrato_id, mascota_id, plan_id,
+            valor_mensual, activa, dada_de_baja_en)
+        SELECT c.familia_id, c.id, m.id, p.id,
+            c.valor_mensual / count(*) OVER (PARTITION BY c.id),
+            c.estado <> 'cancelada', CASE WHEN c.estado = 'cancelada' THEN now() END
+        FROM contratos c
+        JOIN mascotas m ON m.familia_id = c.familia_id AND m.activa
+        CROSS JOIN (SELECT id FROM planes WHERE codigo = 'colita_feliz') p
+        WHERE c.numero LIKE 'VOL-%'
         """,
     ),
     (
         "cuotas",
         """
         INSERT INTO cuotas (contrato_id, periodo, fecha_vencimiento, valor, valor_pagado,
-            estado, dias_mora, tipo)
-        SELECT c.id, to_char(venc, 'YYYY-MM'), venc, c.valor_mensual,
-            CASE WHEN pendiente THEN 0 ELSE c.valor_mensual END,
+            estado, dias_mora, tipo, meses)
+        SELECT c.id, to_char(venc, 'YYYY-MM'), venc, c.valor_periodo,
+            CASE WHEN pendiente THEN 0 ELSE c.valor_periodo END,
             CASE WHEN pendiente THEN 'pendiente'::estado_cuota ELSE 'pagada' END,
-            CASE WHEN pendiente THEN greatest(current_date - venc, 0) ELSE 0 END, 'mensual'
+            CASE WHEN pendiente THEN greatest(current_date - venc, 0) ELSE 0 END, 'cuota', 1
         FROM contratos c
         CROSS JOIN LATERAL generate_series(0, 11) AS m
         CROSS JOIN LATERAL (SELECT (c.fecha_inicio + (m || ' months')::interval)::date AS venc) v
