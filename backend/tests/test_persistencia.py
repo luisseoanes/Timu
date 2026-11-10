@@ -1208,6 +1208,7 @@ _LISTADOS = (
 _LISTADOS_DE_FAMILIA = (
     "/api/v1/servicios/resumen?familia_id={familia}",
     "/api/v1/servicios?familia_id={familia}&mascota_id={mascota}",
+    "/api/v1/comunicaciones/mensajes?familia_id={familia}",
 )
 
 
