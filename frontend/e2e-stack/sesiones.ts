@@ -12,6 +12,10 @@ export const USUARIOS = {
   // el límite general (120 por minuto) se cuenta por usuario. Con el mismo usuario, los
   // primeros recorridos caían en ese minuto y recibían 429.
   equipo: { email: 'comercial@timu.co', clave: 'demo12345' },
+  // Por la misma razón, Administración se recorre con un administrador que datos_demo crea
+  // solo para esto, no con admin@timu.co.
+  admin: { email: 'gerencia@timu.co', clave: 'demo12345' },
+  medico: { email: 'medico@timu.co', clave: 'demo12345' },
   familia: { email: 'ana@example.com', clave: 'demo12345' },
   aliada: { email: 'aliada@timu.co', clave: 'demo12345' },
 } as const

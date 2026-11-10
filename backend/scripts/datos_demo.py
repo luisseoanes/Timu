@@ -162,6 +162,9 @@ BENEFICIOS = [
 
 
 EQUIPO = [
+    # Administrador propio de los recorridos e2e: el limite de peticiones es por usuario, y
+    # admin@timu.co lo gasta creando estos datos justo antes (frontend/e2e-stack/sesiones.ts).
+    ("gerencia@timu.co", "Laura Gomez", "admin"),
     ("medico@timu.co", "Dra. Sara Martinez", "medico"),
     ("operaciones@timu.co", "Carlos Pena", "operaciones"),
     ("comercial@timu.co", "Valentina Rios", "comercial"),
