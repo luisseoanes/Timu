@@ -31,6 +31,7 @@ import {
   usePagarPortal,
   useReprogramarPortal,
 } from './api'
+import { DocumentosPortal } from './DocumentosPortal'
 
 // --- Inicio -----------------------------------------------------------------------------------
 
@@ -688,94 +689,97 @@ export function PortalDatos() {
   const [errorContrato, setErrorContrato] = useState<string | null>(null)
 
   return (
-    <section className="tarjeta">
-      <div className="tarjeta-cabeza">
-        <h3>Mis datos</h3>
-        <button
-          className="btn btn-suave"
-          type="button"
-          onClick={async () => {
-            setErrorContrato(null)
-            try {
-              window.open(await urlContrato(), '_blank', 'noopener')
-            } catch (e) {
-              setErrorContrato(mensajeError(e, 'No pudimos abrir el contrato.'))
-            }
-          }}
-        >
-          <Icono nombre="descargar" size={16} /> Mi contrato
-        </button>
-      </div>
-      {errorContrato && (
-        <p className="error" role="alert">
-          {errorContrato}
-        </p>
-      )}
-      <Consulta consulta={familia} cargando="Cargando…" error="No pudimos cargar tus datos.">
-        {(f) => (
-          <form
-            className="formulario"
-            onSubmit={(e) => {
-              e.preventDefault()
-              const d = new FormData(e.currentTarget)
-              const cambios: Record<string, string> = {}
-              for (const campo of ['email', 'telefono', 'barrio', 'direccion', 'complemento'] as const) {
-                const v = String(d.get(campo) ?? '').trim()
-                if (v !== (f[campo] ?? '')) cambios[campo] = v
+    <div className="pila">
+      <section className="tarjeta">
+        <div className="tarjeta-cabeza">
+          <h3>Mis datos</h3>
+          <button
+            className="btn btn-suave"
+            type="button"
+            onClick={async () => {
+              setErrorContrato(null)
+              try {
+                window.open(await urlContrato(), '_blank', 'noopener')
+              } catch (e) {
+                setErrorContrato(mensajeError(e, 'No pudimos abrir el contrato.'))
               }
-              actualizar.mutate(cambios)
             }}
           >
-            <div className="campo ancho">
-              <span>Titular</span>
-              <p>
-                {f.titular_nombre} · {f.tipo_documento} {f.documento}
-              </p>
-            </div>
-            <label className="campo">
-              <span>Celular (WhatsApp)</span>
-              <input className="input" name="telefono" defaultValue={f.telefono} inputMode="tel" required />
-            </label>
-            <label className="campo">
-              <span>Correo</span>
-              <input className="input" name="email" type="email" defaultValue={f.email ?? ''} />
-            </label>
-            <label className="campo">
-              <span>Barrio</span>
-              <input className="input" name="barrio" defaultValue={f.barrio} required minLength={2} maxLength={120} />
-            </label>
-            <label className="campo">
-              <span>Dirección de las visitas</span>
-              <input className="input" name="direccion" defaultValue={f.direccion ?? ''} />
-            </label>
-            <label className="campo ancho">
-              <span>Complemento</span>
-              <input
-                className="input"
-                name="complemento"
-                defaultValue={f.complemento ?? ''}
-                maxLength={255}
-                placeholder="Torre, apartamento, indicaciones"
-              />
-            </label>
-            {actualizar.isError && (
-              <p className="error ancho" role="alert">
-                {mensajeError(actualizar.error, 'No pudimos guardar tus datos.')}
-              </p>
-            )}
-            {actualizar.isSuccess && (
-              <p className="exito ancho" role="status">
-                Datos guardados.
-              </p>
-            )}
-            <div className="acciones ancho">
-              <button className="btn btn-primario" type="submit" disabled={actualizar.isPending}>
-                Guardar
-              </button>
-            </div>
-          </form>
+            <Icono nombre="descargar" size={16} /> Mi contrato
+          </button>
+        </div>
+        {errorContrato && (
+          <p className="error" role="alert">
+            {errorContrato}
+          </p>
         )}
-      </Consulta>
-    </section>
+        <Consulta consulta={familia} cargando="Cargando…" error="No pudimos cargar tus datos.">
+          {(f) => (
+            <form
+              className="formulario"
+              onSubmit={(e) => {
+                e.preventDefault()
+                const d = new FormData(e.currentTarget)
+                const cambios: Record<string, string> = {}
+                for (const campo of ['email', 'telefono', 'barrio', 'direccion', 'complemento'] as const) {
+                  const v = String(d.get(campo) ?? '').trim()
+                  if (v !== (f[campo] ?? '')) cambios[campo] = v
+                }
+                actualizar.mutate(cambios)
+              }}
+            >
+              <div className="campo ancho">
+                <span>Titular</span>
+                <p>
+                  {f.titular_nombre} · {f.tipo_documento} {f.documento}
+                </p>
+              </div>
+              <label className="campo">
+                <span>Celular (WhatsApp)</span>
+                <input className="input" name="telefono" defaultValue={f.telefono} inputMode="tel" required />
+              </label>
+              <label className="campo">
+                <span>Correo</span>
+                <input className="input" name="email" type="email" defaultValue={f.email ?? ''} />
+              </label>
+              <label className="campo">
+                <span>Barrio</span>
+                <input className="input" name="barrio" defaultValue={f.barrio} required minLength={2} maxLength={120} />
+              </label>
+              <label className="campo">
+                <span>Dirección de las visitas</span>
+                <input className="input" name="direccion" defaultValue={f.direccion ?? ''} />
+              </label>
+              <label className="campo ancho">
+                <span>Complemento</span>
+                <input
+                  className="input"
+                  name="complemento"
+                  defaultValue={f.complemento ?? ''}
+                  maxLength={255}
+                  placeholder="Torre, apartamento, indicaciones"
+                />
+              </label>
+              {actualizar.isError && (
+                <p className="error ancho" role="alert">
+                  {mensajeError(actualizar.error, 'No pudimos guardar tus datos.')}
+                </p>
+              )}
+              {actualizar.isSuccess && (
+                <p className="exito ancho" role="status">
+                  Datos guardados.
+                </p>
+              )}
+              <div className="acciones ancho">
+                <button className="btn btn-primario" type="submit" disabled={actualizar.isPending}>
+                  Guardar
+                </button>
+              </div>
+            </form>
+          )}
+        </Consulta>
+      </section>
+      <DocumentosPortal />
+    </div>
   )
 }

@@ -344,6 +344,56 @@ describe('pagos', () => {
 })
 
 describe('mis datos', () => {
+  it('lista sus documentos con el tipo y la mascota, o dice que no tiene', async () => {
+    server.use(
+      http.get(`${API}/portal/documentos`, () =>
+        HttpResponse.json([
+          {
+            archivo_id: 'a1',
+            documento_id: 'd1',
+            origen: 'subido',
+            categoria: 'examen_externo',
+            descripcion: 'Ecografía de Luna',
+            mascota_id: FAMILIA.mascotas?.[0]?.id,
+            nombre: 'eco.pdf',
+            content_type: 'application/pdf',
+            tamano_bytes: 1000,
+            visible_familia: true,
+            creado_en: '2026-11-02T15:00:00Z',
+            url: 'https://s3/eco.pdf',
+          },
+          {
+            archivo_id: 'a2',
+            origen: 'contrato',
+            descripcion: 'Contrato TM-0001',
+            nombre: 'contrato.pdf',
+            content_type: 'application/pdf',
+            tamano_bytes: 1000,
+            visible_familia: true,
+            creado_en: '2026-10-01T15:00:00Z',
+            url: 'https://s3/contrato.pdf',
+          },
+        ]),
+      ),
+    )
+    renderizar(<PortalDatos />)
+    const lista = await screen.findByRole('list', { name: 'Mis documentos' })
+    expect(within(lista).getByRole('link', { name: 'Ecografía de Luna' })).toHaveAttribute('href', 'https://s3/eco.pdf')
+    expect(within(lista).getByText(/Documento · Luna · 02\/11\/2026/)).toBeInTheDocument()
+    expect(within(lista).getByRole('link', { name: 'Contrato TM-0001' })).toBeInTheDocument()
+  })
+
+  it('dice que todavía no tiene documentos', async () => {
+    renderizar(<PortalDatos />)
+    expect(await screen.findByText('Todavía no tienes documentos.')).toBeInTheDocument()
+  })
+
+  it('explica si no pudo cargar sus documentos', async () => {
+    server.use(http.get(`${API}/portal/documentos`, () => HttpResponse.json({ detail: 'Fallo' }, { status: 500 })))
+    renderizar(<PortalDatos />)
+    expect(await screen.findByText(/No fue posible cargar tus documentos/)).toBeInTheDocument()
+  })
+
   it('abre el contrato en otra pestaña', async () => {
     const abrir = vi.spyOn(window, 'open').mockReturnValue(null)
     server.use(http.get(`${API}/portal/contrato`, () => HttpResponse.json({ url: 'https://s3/contrato.pdf' })))
