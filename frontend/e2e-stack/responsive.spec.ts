@@ -27,13 +27,9 @@ type Fallo = 'desborde' | 'contraste'
 // Medido el 2026-11-10. Con la paleta de la marca (R1-TOK-01) ya no queda ningún fallo de
 // contraste; quedan los desbordes del responsive anterior al rediseño.
 const PENDIENTES: ReadonlySet<string> = new Set([
-  'admin@375:desborde',
   'aliadas@375:desborde',
   'campanas@375:desborde',
-  'cartera@375:desborde',
-  'cartera@768:desborde',
   'comercial@375:desborde',
-  'familias@375:desborde',
   'preventivos@375:desborde',
   'tareas@375:desborde',
 ])

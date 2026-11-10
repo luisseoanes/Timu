@@ -145,30 +145,38 @@
   --serie-4: var(--marino-900);
 
   /* --- Tipografía ----------------------------------------------- */
-  --fuente-titulo: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --fuente-texto:  "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Inter servida desde el proyecto (@fontsource-variable/inter en main.tsx). Manual,
+     sección 12. Escala fija en rem: una interfaz de trabajo no escala el tipo con la ventana. */
+  --fuente: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --t-display: 30px;  /* saludo del dashboard */
-  --t-titulo:  20px;  /* título de página */
-  --t-seccion: 16px;  /* encabezado de tarjeta */
-  --t-cuerpo:  14px;
-  --t-menor:   13px;
-  --t-etiqueta:11px;  /* mayúsculas con letter-spacing */
+  --t-display:  2.125rem;  /* 34 px: nombre de la familia abierta, saludo, ingreso */
+  --t-cifra:    1.5rem;    /* 24 px: cifras destacadas de indicadores y métricas */
+  --t-titulo:   1.25rem;   /* 20 px: título de página */
+  --t-seccion:  1rem;      /* 16 px: encabezado de bloque */
+  --t-cuerpo:   0.875rem;  /* 14 px */
+  --t-menor:    0.8125rem; /* 13 px */
+  --t-etiqueta: 0.75rem;   /* 12 px: mayúsculas espaciadas; nada por debajo */
 
   /* --- Espaciado: escala de 4 ----------------------------------- */
   --e1: 4px;  --e2: 8px;  --e3: 12px; --e4: 16px;
   --e5: 20px; --e6: 24px; --e7: 32px; --e8: 40px;
 
-  /* --- Radios: mientras más grande el bloque, más redondo ------- */
+  /* --- Radios: esquinas contenidas, como la señalética del metro; la pastilla queda para
+     distintivos y estaciones ------------------------------------- */
   --r-pastilla: 999px;
-  --r-campo: 12px;
-  --r-tarjeta: 16px;
-  --r-panel: 24px;
+  --r-campo: 6px;
+  --r-tarjeta: 8px;
+  --r-panel: 12px;
 
-  /* --- Sombras: difusas, de baja opacidad y teñidas de marino --- */
-  --sombra-1: 0 1px 2px rgb(17 21 55 / 4%);
-  --sombra-2: 0 4px 16px rgb(17 21 55 / 6%);
-  --sombra-3: 0 12px 32px rgb(17 21 55 / 12%);
+  /* --- Sombras: las superficies son planas (contrato de dirección); solo lo que flota sobre
+     la pantalla (menús, ventanas) lleva sombra, difusa y teñida de marino --- */
+  --sombra-1: none;
+  --sombra-2: none;
+  --sombra-3: 0 12px 32px rgb(17 21 55 / 16%);
+
+  /* --- Movimiento: corto y solo para cambios de estado ----------- */
+  --duracion: 160ms;
+  --curva: cubic-bezier(0.2, 0, 0, 1);
 
   /* --- Estructura ------------------------------------------------ */
   --ancho-sidebar: 236px;

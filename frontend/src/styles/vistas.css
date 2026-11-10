@@ -45,7 +45,7 @@
   border-radius: var(--r-pastilla);
   background: var(--accion-suave-fondo); color: var(--accion-suave-texto);
   display: grid; place-items: center;
-  font-family: var(--fuente-titulo); font-weight: 600;
+  font-family: var(--fuente); font-weight: 600;
 }
 .usuario-datos strong { display: block; color: var(--texto-titulo); font-size: var(--t-menor); }
 .usuario-datos div span { display: block; font-size: var(--t-etiqueta); color: var(--texto-suave); text-transform: capitalize; }
@@ -61,6 +61,9 @@
 .topbar-titulo p { font-size: var(--t-menor); color: var(--texto-suave); }
 
 .contenido { display: grid; gap: var(--e4); align-content: start; padding-bottom: var(--e7); }
+/* Un hijo de la rejilla puede encoger: si no, una tabla ancha estira la página en vez de
+   desplazarse dentro de su .scroll-x. */
+.contenido > * { min-width: 0; }
 
 /* Dashboard: contenido principal + columna de widgets */
 .con-rail { display: grid; grid-template-columns: minmax(0, 1fr) var(--ancho-rail); gap: var(--e4); }
@@ -135,9 +138,9 @@
   color: var(--accion-texto);
   box-shadow: var(--sombra-2);
 }
-.marca-nombre { font-family: var(--fuente-titulo); font-weight: 700; font-size: 22px; letter-spacing: .14em; color: var(--texto-titulo); line-height: 1; }
+.marca-nombre { font-family: var(--fuente); font-weight: 700; font-size: var(--t-titulo); letter-spacing: .14em; color: var(--texto-titulo); line-height: 1; }
 .marca-sub { font-size: var(--t-etiqueta); letter-spacing: .12em; text-transform: uppercase; color: var(--texto-suave); }
-.sidebar .marca-sub { font-size: 10px; letter-spacing: .04em; white-space: nowrap; }
+.sidebar .marca-sub { font-size: var(--t-etiqueta); letter-spacing: 0; text-transform: none; white-space: nowrap; }
 .marca-clara .marca-sello { background: var(--superficie-sobre-marca); border: 1px solid var(--borde-sobre-marca); }
 .marca-clara .marca-nombre { color: var(--texto-sobre-marca); }
 .marca-clara .marca-sub { color: var(--texto-sobre-marca-suave); }
@@ -154,7 +157,7 @@
 }
 .ingreso-mensaje h2 {
   color: var(--texto-sobre-marca);
-  font-size: clamp(26px, 2.6vw, 38px);
+  font-size: var(--t-display);
   line-height: 1.2;
   font-weight: 600;
 }
@@ -235,7 +238,7 @@
   padding: 9px var(--e3);
   border: 0; border-radius: var(--r-pastilla);
   background: transparent; color: var(--texto-suave); cursor: pointer;
-  transition: background .15s, color .15s, box-shadow .15s;
+  transition: background var(--duracion) var(--curva), color var(--duracion) var(--curva);
 }
 .segmento-opcion[data-state="active"] { background: var(--superficie); color: var(--texto-titulo); box-shadow: var(--sombra-2); }
 
@@ -253,8 +256,8 @@
 }
 .campo-accion:hover { color: var(--texto-titulo); background: var(--superficie-hundida); }
 
-.btn-grande { min-height: 48px; font-size: 15px; }
-.codigo-input { letter-spacing: .5em; font-size: 20px; text-align: center; font-family: var(--fuente-titulo); }
+.btn-grande { min-height: 48px; font-size: var(--t-seccion); }
+.codigo-input { letter-spacing: .5em; font-size: var(--t-titulo); text-align: center; font-family: var(--fuente); }
 
 .aviso-error, .aviso-ok {
   display: flex; gap: var(--e2); align-items: flex-start;

@@ -19,27 +19,27 @@ llega a su mínimo o si un rol de texto o de control no tiene ningún par declar
 
 ## Tipografía
 
-> Se reemplaza en `R1-TOK-02`: el [manual de marca](../manual-de-marca.md#12-tipografía-en-la-plataforma)
-> fija Inter para toda la interfaz, servida desde el propio proyecto. Lo que sigue describe
-> lo que hay hoy en el código.
+Una sola familia, **Inter** (`--fuente`), servida desde el propio proyecto
+(`@fontsource-variable/inter`, importada en `main.tsx`): no hay petición a Google Fonts. Es la
+que fija el [manual de marca](../manual-de-marca.md#12-tipografía-en-la-plataforma);
+GeosansLight se reserva para títulos de 20 px o más cuando TIMU entregue el archivo.
 
-Dos familias, cargadas desde Google Fonts en `index.html`:
-
-- **Poppins** (`--fuente-titulo`) para títulos, cifras destacadas y la marca. Pesos 500–700.
-- **Nunito Sans** (`--fuente-texto`) para todo el cuerpo, controles y tablas. Pesos 400–700.
+La escala es fija en `rem`: una interfaz de trabajo no escala el tipo con la ventana.
 
 | Token | Tamaño | Dónde |
 | --- | --- | --- |
-| `--t-display` | 30 px | Saludo del panel, título del ingreso |
+| `--t-display` | 34 px | Nombre de la familia abierta, saludo del panel, título del ingreso |
+| `--t-cifra` | 24 px | Cifras destacadas de indicadores y métricas |
 | `--t-titulo` | 20 px | Título de la página en la cabecera |
-| `--t-seccion` | 16 px | Encabezado de tarjeta |
+| `--t-seccion` | 16 px | Encabezado de bloque |
 | `--t-cuerpo` | 14 px | Texto general, botones, celdas |
-| `--t-menor` | 13 px | Texto secundario, enlaces de tarjeta |
-| `--t-etiqueta` | 11 px | Mayúsculas con `letter-spacing: .09em`: encabezados de tabla, distintivos |
+| `--t-menor` | 13 px | Texto secundario, enlaces de bloque |
+| `--t-etiqueta` | 12 px | Mayúsculas con `letter-spacing`: encabezados de tabla, distintivos. Nada va por debajo |
 
 Reglas: interlineado 1.55 en cuerpo y 1.2 en títulos; el texto corrido no pasa de 70
 caracteres de ancho; los números que se comparan en columna llevan la clase `.numero`
-(`font-variant-numeric: tabular-nums`).
+(`font-variant-numeric: tabular-nums`). En pantallas táctiles los campos van a 16 px, para que
+iOS no amplíe la página al enfocar.
 
 ## Espaciado
 
@@ -49,24 +49,30 @@ Escala de 4, de `--e1` (4 px) a `--e8` (40 px). El espacio lo pone el contenedor
 
 ## Radios
 
-Mientras más grande el bloque, más redonda la esquina.
+Esquinas contenidas, como la señalética de la línea visual elegida («la línea de metro»). La
+pastilla queda para distintivos y estaciones.
 
 | Token | Valor | Dónde |
 | --- | --- | --- |
-| `--r-pastilla` | `999px` | Botones, distintivos, buscador, avatar |
-| `--r-campo` | `12px` | Campos, iconos cuadrados, elementos de navegación |
-| `--r-tarjeta` | `16px` | Tarjetas internas, métricas, avisos |
-| `--r-panel` | `24px` | Tarjetas de primer nivel, barra lateral, tarjeta de ingreso |
+| `--r-pastilla` | `999px` | Distintivos de estado, avatar, estaciones de la línea |
+| `--r-campo` | `6px` | Botones, campos, elementos de navegación |
+| `--r-tarjeta` | `8px` | Tarjetas internas, métricas, avisos |
+| `--r-panel` | `12px` | Bloques de primer nivel, barra lateral, ventanas |
 
 ## Sombras
 
-Difusas y de baja opacidad; nunca un borde y una sombra fuerte a la vez.
+Las superficies son planas: las separa el color, no la sombra. Solo lo que flota sobre la
+pantalla lleva sombra, difusa y teñida de marino.
 
 | Token | Uso |
 | --- | --- |
-| `--sombra-1` | Apoyo mínimo, casi imperceptible |
-| `--sombra-2` | Tarjetas y barra lateral, el valor por defecto |
-| `--sombra-3` | Elementos que flotan sobre el resto: tarjeta de ingreso, menús |
+| `--sombra-1`, `--sombra-2` | `none`: se conservan para no romper a quien los use, sin efecto |
+| `--sombra-3` | Lo que flota: menús desplegables, ventanas, la tarjeta de ingreso |
+
+## Movimiento
+
+`--duracion` (160 ms) y `--curva` (salida rápida) para todo cambio de estado. Nada se anima por
+decorar, y con `prefers-reduced-motion` no se anima nada.
 
 ## Iconografía
 
