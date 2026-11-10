@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>La línea de metro · Familias</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{--marino:#111537;--marino-700:#41445F;--marino-600:#5F6275;--marino-300:#A0A1AF;--marino-100:#E2E3E7;--verde:#98B833;--verde-600:#769116;--verde-800:#415800;--verde-50:#F3F6E7;--naranja:#D68A11;--naranja-800:#813E00;--naranja-50:#FAF1E2;--azul:#477095;--azul-700:#274F73;--azul-50:#E9EEF2;--rojo-800:#892319;--lienzo:#F5F6F1}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;font:14px/1.45 Inter,system-ui,sans-serif;color:var(--marino-700);background:#fff;display:grid;grid-template-rows:64px 1fr}
+.barra{background:var(--marino);display:flex;align-items:center;gap:28px;padding:0 28px;color:#C4C4CD}
+.barra b{color:#fff;font-size:22px;letter-spacing:.16em;margin-right:16px}
+.barra a{font-weight:500;padding:20px 0;border-bottom:4px solid transparent}.barra a.on{color:#fff;border-color:var(--verde)}
+.barra .buscar{margin-left:auto;width:300px;height:38px;background:#fff;color:var(--marino-600);display:flex;align-items:center;padding:0 12px}
+.cuerpo{display:grid;grid-template-columns:420px 1fr;min-height:0}
+.lista{border-right:1px solid var(--marino-100);overflow:hidden}
+.lista header{padding:20px 24px;display:flex;align-items:baseline;gap:10px}.lista h1{font-size:24px;color:var(--marino)}
+.fam{padding:14px 24px;border-top:1px solid var(--marino-100);display:grid;gap:8px}
+.fam.on{background:var(--verde-50)}
+.fam strong{color:var(--marino)}.fam small{color:var(--marino-600)}
+.mini{display:flex;align-items:center;height:12px}
+.mini i{width:10px;height:10px;border-radius:50%;border:2px solid var(--c);background:#fff}.mini i.h{background:var(--c)}
+.mini span{flex:1;height:4px;background:var(--c)}
+.mini i.v{border-color:var(--rojo-800);background:var(--rojo-800)}
+.det{padding:28px 40px;display:grid;grid-template-rows:auto auto 1fr;gap:24px;background:var(--lienzo)}
+.det h2{font-size:34px;color:var(--marino);font-weight:700}
+.det .sub{display:flex;gap:16px;align-items:center;margin-top:4px}
+.chip{display:inline-flex;align-items:center;gap:8px;font-weight:600;color:var(--marino)}.chip i{width:14px;height:14px;background:var(--verde)}
+.estado{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;background:var(--verde-50);color:var(--verde-800)}
+.linea{background:#fff;padding:28px 32px 22px}
+.linea h3,.cols h3{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--marino-600);margin-bottom:22px}
+.via{position:relative;display:grid;grid-template-columns:repeat(7,1fr)}
+.via::before{content:"";position:absolute;left:7%;right:7%;top:13px;height:8px;background:var(--verde)}
+.est{position:relative;text-align:center;display:grid;justify-items:center;gap:8px;font-size:13px}
+.est i{width:34px;height:34px;border-radius:50%;background:#fff;border:6px solid var(--verde)}
+.est.h i{background:var(--verde)}
+.est.p i{border-color:var(--marino);box-shadow:0 0 0 5px var(--verde-50)}
+.est b{color:var(--marino)}.est.p b{font-size:15px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.cols>div{background:#fff;padding:20px 24px}
+.fila{display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid var(--marino-100)}
+.fila b{color:var(--marino)}
+</style></head>
+<body>
+<header class="barra"><b>TIMU</b><a>Panel</a><a class="on">Familias</a><a>Cartera</a><a>Servicios</a><a>Preventivos</a><a>Clínica</a><a>Rutas</a><a>Más</a><div class="buscar">Buscar familia o mascota</div></header>
+<div class="cuerpo">
+  <section class="lista"><header><h1>Familias</h1><small>412</small></header>
+    <div class="fam on" style="--c:var(--verde)"><strong>Ana Ruiz</strong><small>Mi Amigo Fiel · Luna y Max</small><div class="mini"><i class="h"></i><span></span><i class="h"></i><span></span><i></i><span></span><i></i></div></div>
+    <div class="fam" style="--c:var(--naranja)"><strong>Jorge Pérez</strong><small>Colita Feliz · Rocky · cuota vencida</small><div class="mini"><i class="h"></i><span></span><i class="v"></i><span></span><i></i><span></span><i></i></div></div>
+    <div class="fam" style="--c:var(--azul)"><strong>Marta Gómez</strong><small>Amigos por Siempre · Nala, Coco y Thor</small><div class="mini"><i class="h"></i><span></span><i class="h"></i><span></span><i class="h"></i><span></span><i></i></div></div>
+    <div class="fam" style="--c:var(--marino-300)"><strong>Familia Restrepo</strong><small>Prospecto · Simba</small><div class="mini"><i></i><span></span><i></i></div></div>
+    <div class="fam" style="--c:var(--naranja)"><strong>Lucía Vélez</strong><small>Colita Feliz · Milo y Lola</small><div class="mini"><i class="h"></i><span></span><i class="h"></i><span></span><i></i><span></span><i></i></div></div>
+    <div class="fam" style="--c:var(--azul)"><strong>Andrés Zapata</strong><small>Amigos por Siempre · Bruno</small><div class="mini"><i class="h"></i><span></span><i></i><span></span><i></i><span></span><i></i></div></div>
+  </section>
+  <section class="det">
+    <div><h2>Ana Ruiz</h2><div class="sub"><span class="chip"><i></i>Mi Amigo Fiel</span><span class="estado">✓ Al día</span><span>Laureles · desde marzo de 2026</span></div></div>
+    <div class="linea"><h3>Línea de la familia · próximos 3 meses</h3>
+      <div class="via">
+        <div class="est h"><i></i><b>Consulta</b><span>28 oct</span></div>
+        <div class="est h"><i></i><b>Cuota nov</b><span>3 nov</span></div>
+        <div class="est p"><i></i><b>Vacuna triple felina</b><span>Luna · 18 nov</span></div>
+        <div class="est"><i></i><b>Desparasitación</b><span>Max · 2 dic</span></div>
+        <div class="est"><i></i><b>Cuota dic</b><span>5 dic</span></div>
+        <div class="est"><i></i><b>Cuota ene</b><span>5 ene</span></div>
+        <div class="est"><i></i><b>Control renal</b><span>Max · 15 ene</span></div>
+      </div></div>
+    <div class="cols">
+      <div><h3>Mascotas</h3><div class="fila"><span><b>Luna</b> · gata · 3 años</span><span>Alergia a la amoxicilina</span></div><div class="fila"><span><b>Max</b> · perro · 7 años</span><span>Control renal semestral</span></div></div>
+      <div><h3>Cartera</h3><div class="fila"><span>Cuota mensual</span><b>$69.000</b></div><div class="fila"><span>Última pagada</span><span>3 nov · Wompi</span></div><div class="fila"><span>Próxima</span><span>5 dic</span></div></div>
+    </div>
+  </section>
+</div>
+</body></html>
