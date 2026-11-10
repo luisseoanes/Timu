@@ -15,7 +15,7 @@
   gap: var(--e2);
   transition: background-color .15s ease, color .15s ease;
 }
-.btn-primario { background: var(--verde-500); color: #fff; }
+.btn-primario { background: var(--verde-500); color: var(--sobre-marca); }
 .btn-primario:hover:not(:disabled) { background: var(--verde-600); }
 .btn-suave { background: var(--verde-50); color: var(--verde-700); }
 .btn-suave:hover:not(:disabled) { background: var(--verde-100); }
@@ -137,7 +137,7 @@
   text-align: center;
 }
 .acceso:hover { border-color: var(--verde-200); color: var(--verde-700); }
-.acceso[aria-current="true"] { background: var(--verde-500); border-color: var(--verde-500); color: #fff; }
+.acceso[aria-current="true"] { background: var(--verde-500); border-color: var(--verde-500); color: var(--sobre-marca); }
 
 /* --- Tablas ---------------------------------------------------- */
 .tabla { width: 100%; border-collapse: collapse; }
@@ -197,7 +197,7 @@
 .velo {
   position: fixed;
   inset: 0;
-  background: rgb(0 0 0 / 45%);
+  background: var(--velo);
 }
 
 .modal {
