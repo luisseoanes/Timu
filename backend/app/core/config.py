@@ -176,10 +176,11 @@ class Settings(BaseSettings):
     SENTRY_DSN: str = ""
     LOG_JSON: bool = False
 
-    @field_validator("APP_DB_HOST", "APP_DB_PORT", mode="before")
+    @field_validator("APP_DB_HOST", "APP_DB_PORT", "COOKIE_DOMAIN", mode="before")
     @classmethod
     def _vacio_es_no_definido(cls, valor: object) -> object:
-        """`APP_DB_HOST=` en el .env significa "usa POSTGRES_*", no una cadena vacia."""
+        """`APP_DB_HOST=` en el .env significa "usa POSTGRES_*", y `COOKIE_DOMAIN=`, la cookie
+        del host de la API: no una cadena vacia, que mandaria un `Domain=` vacio."""
         return None if valor == "" else valor
 
     @property

@@ -126,6 +126,12 @@ def test_la_aplicacion_puede_pasar_por_un_pool_y_las_migraciones_no():
     assert "@localhost:5432/" in pool.DATABASE_URL_PROPIETARIO
 
 
+def test_cookie_domain_vacio_es_la_cookie_del_host():
+    """COOKIE_DOMAIN vacio (como en .env.example) no manda un `Domain=` vacio en la cookie."""
+    assert Settings(_env_file=None, COOKIE_DOMAIN="").COOKIE_DOMAIN is None
+    assert Settings(_env_file=None, COOKIE_DOMAIN="timu.com.co").COOKIE_DOMAIN == "timu.com.co"
+
+
 def test_una_pasarela_sin_implementar_no_arranca():
     with pytest.raises(ValidationError):
         Settings(_env_file=None, PAYMENTS_PROVIDER="payu")
