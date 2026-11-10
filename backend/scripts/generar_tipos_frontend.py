@@ -49,6 +49,8 @@ ESQUEMAS = [
     "TareaRead",
     "ServicioRead",
     "PendienteRead",
+    "CupoBeneficioRead",
+    "ResumenServiciosRead",
     "PasoRead",
     "CupoRead",
     "ElegibilidadRead",

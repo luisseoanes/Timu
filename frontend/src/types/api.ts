@@ -291,6 +291,23 @@ export interface PendienteRead {
   resolucion: string | null
 }
 
+export interface CupoBeneficioRead {
+  tipo_codigo: string
+  cupo: number | null
+  usados: number
+  periodo: string
+}
+
+export interface ResumenServiciosRead {
+  desde: string
+  hasta: string
+  utilizados: ServicioRead[]
+  pendientes: ServicioRead[]
+  cancelados: ServicioRead[]
+  pendientes_atencion: PendienteRead[]
+  cupos: CupoBeneficioRead[]
+}
+
 export interface PasoRead {
   paso_codigo: string
   datos: Record<string, unknown>

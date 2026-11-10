@@ -1,6 +1,6 @@
 """6.5 / 6.6 / 6.10 Programacion de servicios, pendientes y estados."""
 
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
@@ -11,7 +11,7 @@ from sqlalchemy import select
 from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import EstadoServicio, Rol
 from app.core.errores import NoEncontrado, ReglaNegocio
-from app.core.tiempo import ZONA_NEGOCIO
+from app.core.tiempo import ZONA_NEGOCIO, hoy
 from app.modules.auth.models import Usuario
 from app.modules.catalogos import service as catalogos
 from app.modules.familias import service as familias
@@ -64,6 +64,29 @@ class ServicioRead(BaseModel):
     pendiente_origen_id: UUID | None
     observaciones: str | None
     motivo_estado: str | None
+
+
+class CupoBeneficioRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    tipo_codigo: str
+    cupo: int | None = Field(description="Vacio: sin limite")
+    usados: int
+    periodo: str = Field(description="mensual o anual, en curso")
+
+
+class ResumenServiciosRead(BaseModel):
+    """6.1 Servicios de la familia en un rango: lo utilizado y lo pendiente, por separado."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    desde: date
+    hasta: date
+    utilizados: list[ServicioRead]
+    pendientes: list[ServicioRead]
+    cancelados: list[ServicioRead]
+    pendientes_atencion: list["PendienteRead"]
+    cupos: list[CupoBeneficioRead]
 
 
 class Transicion(BaseModel):
@@ -236,6 +259,7 @@ async def listar(
     db: DbSession,
     params: ParamsListado,
     familia_id: UUID | None = None,
+    mascota_id: UUID | None = None,
     estado: EstadoServicio | None = None,
     ciudad: str | None = None,
     desde: date | None = None,
@@ -244,6 +268,8 @@ async def listar(
     stmt = select(Servicio)
     if familia_id:
         stmt = stmt.where(Servicio.familia_id == familia_id)
+    if mascota_id:
+        stmt = stmt.where(Servicio.mascota_id == mascota_id)
     if estado:
         stmt = stmt.where(Servicio.estado == estado)
     if ciudad:
@@ -265,6 +291,25 @@ async def listar(
         orden_por_defecto="programado_para",
         desempate=Servicio.id,
     )
+
+
+@router.get("/resumen", response_model=ResumenServiciosRead, dependencies=[EQUIPO])
+async def resumen(
+    db: DbSession,
+    familia_id: UUID,
+    mascota_id: UUID | None = None,
+    desde: date | None = None,
+    hasta: date | None = None,
+    incluir_cancelados: bool = False,
+) -> Any:
+    """6.1 Utilizados y pendientes de la familia (o de una mascota) en un rango libre; sin
+    rango, el mes en curso. Incluye los pendientes abiertos de una atencion (6.6) y el cupo de
+    cada beneficio del plan."""
+    dia = hoy()
+    desde = desde or dia.replace(day=1)
+    hasta = hasta or (dia.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+    familia = await db.run_sync(familias.obtener, familia_id)
+    return await db.run_sync(service.resumen, familia, desde, hasta, mascota_id, incluir_cancelados)
 
 
 @router.post(

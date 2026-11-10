@@ -8,8 +8,8 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 
-from app.core.tiempo import hoy
-from app.modules.servicios.models import Franja
+from app.core.tiempo import ZONA_NEGOCIO, hoy
+from app.modules.servicios.models import Franja, Pendiente, Servicio
 from app.modules.tareas.models import Tarea
 from tests import fabricas
 
@@ -542,3 +542,129 @@ async def test_una_tarea_inexistente_da_404(client: AsyncClient, headers):
     assert (
         await client.post(f"/api/v1/tareas/{uuid4()}/iniciar", headers=headers)
     ).status_code == 404
+
+
+# --- 6.1 Resumen de servicios de la familia --------------------------------------------------
+
+
+MES = hoy().replace(day=1)
+FIN_MES = (MES + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+MES_PASADO = (MES - timedelta(days=1)).replace(day=1)
+
+
+def _rango(desde: date, hasta: date) -> str:
+    return f"desde={desde.isoformat()}&hasta={hasta.isoformat()}"
+
+
+async def _familia_con_servicios(db):
+    """Dos mascotas y servicios en el mes en curso y el anterior, en los estados que cuentan.
+    Las fechas son relativas a hoy: el cupo y el rango por defecto dependen del mes."""
+    plan = await db.run_sync(
+        fabricas.plan,
+        codigo="resumen",
+        cupos=2,
+        beneficios=[
+            {"tipo_servicio_codigo": "consulta_domiciliaria", "cupo": 5, "periodo_cupo": "mensual"}
+        ],
+    )
+    familia, _ = await fabricas.afiliada(db, hoy(), p=plan, mascotas=2)
+    luna, max_ = familia.mascotas
+
+    def servicio(estado: str, dia: date | None, mascota) -> Servicio:
+        s = Servicio(
+            familia_id=familia.id,
+            mascota_id=mascota.id,
+            tipo_codigo="consulta_domiciliaria",
+            tipo="domiciliario",
+            estado=estado,
+            ciudad=familia.ciudad,
+            programado_para=datetime.combine(dia, time(10), ZONA_NEGOCIO) if dia else None,
+            motivo_estado="La familia cancelo" if estado == "cancelado" else None,
+        )
+        db.add(s)
+        return s
+
+    hecho = servicio("completado", MES.replace(day=5), luna)
+    servicio("agendado", MES.replace(day=20), luna)
+    servicio("pendiente_autorizacion", MES.replace(day=25), max_)
+    servicio("cancelado", MES.replace(day=12), max_)
+    servicio("completado", MES_PASADO.replace(day=28), luna)  # fuera del mes en curso
+    servicio("solicitado", None, max_)  # sin fecha: cuenta la de la solicitud (hoy)
+    await db.flush()
+    db.add(Pendiente(servicio_origen_id=hecho.id, descripcion="Ecografia abdominal"))
+    db.add(Pendiente(servicio_origen_id=hecho.id, descripcion="Ya resuelto", estado="resuelto"))
+    await db.commit()
+    return familia.id, luna.id, max_.id
+
+
+async def test_el_resumen_separa_utilizados_y_pendientes_en_el_rango(
+    client: AsyncClient, db, headers
+):
+    familia_id, luna_id, _ = await _familia_con_servicios(db)
+    url = f"/api/v1/servicios/resumen?familia_id={familia_id}&{_rango(MES, FIN_MES)}"
+    datos = (await client.get(url, headers=headers)).json()
+    assert [s["estado"] for s in datos["utilizados"]] == ["completado"]
+    assert {s["estado"] for s in datos["pendientes"]} == {
+        "agendado",
+        "pendiente_autorizacion",
+        "solicitado",
+    }
+    assert datos["cancelados"] == []
+    assert (datos["desde"], datos["hasta"]) == (MES.isoformat(), FIN_MES.isoformat())
+
+    con_cancelados = (await client.get(url + "&incluir_cancelados=true", headers=headers)).json()
+    assert [s["estado"] for s in con_cancelados["cancelados"]] == ["cancelado"]
+
+    de_luna = (await client.get(url + f"&mascota_id={luna_id}", headers=headers)).json()
+    assert len(de_luna["utilizados"]) == 1
+    assert [s["estado"] for s in de_luna["pendientes"]] == ["agendado"]
+    assert de_luna["pendientes_atencion"][0]["descripcion"] == "Ecografia abdominal"
+
+    pasado = (
+        await client.get(
+            f"/api/v1/servicios/resumen?familia_id={familia_id}"
+            f"&{_rango(MES_PASADO, MES - timedelta(days=1))}",
+            headers=headers,
+        )
+    ).json()
+    assert [s["estado"] for s in pasado["utilizados"]] == ["completado"]
+    assert pasado["pendientes"] == []
+    # El pendiente se creo hoy: fuera del rango del mes pasado.
+    assert pasado["pendientes_atencion"] == []
+
+
+async def test_el_resumen_por_defecto_es_el_mes_en_curso_con_lo_abierto_de_una_atencion(
+    client: AsyncClient, db, headers
+):
+    familia_id, _, max_id = await _familia_con_servicios(db)
+    datos = (
+        await client.get(f"/api/v1/servicios/resumen?familia_id={familia_id}", headers=headers)
+    ).json()
+    assert (datos["desde"], datos["hasta"]) == (MES.isoformat(), FIN_MES.isoformat())
+    assert len(datos["utilizados"]) == 1 and len(datos["pendientes"]) == 3
+    # El pendiente de la atencion sigue abierto; el resuelto no aparece.
+    assert [p["descripcion"] for p in datos["pendientes_atencion"]] == ["Ecografia abdominal"]
+    # El cupo del mes: lo programado este mes, sin lo cancelado ni lo que no tiene fecha.
+    assert datos["cupos"] == [
+        {"tipo_codigo": "consulta_domiciliaria", "cupo": 5, "usados": 3, "periodo": "mensual"}
+    ]
+
+
+async def test_el_resumen_rechaza_un_rango_invertido(client: AsyncClient, db, headers):
+    familia_id, _, _ = await _familia_con_servicios(db)
+    resp = await client.get(
+        f"/api/v1/servicios/resumen?familia_id={familia_id}&{_rango(FIN_MES, MES)}",
+        headers=headers,
+    )
+    assert resp.status_code == 422 and "anterior" in resp.text
+
+
+async def test_el_listado_de_servicios_filtra_por_mascota(client: AsyncClient, db, headers):
+    familia_id, luna_id, _ = await _familia_con_servicios(db)
+    datos = (
+        await client.get(
+            f"/api/v1/servicios?familia_id={familia_id}&mascota_id={luna_id}", headers=headers
+        )
+    ).json()
+    assert datos["total"] == 3
+    assert {s["mascota_id"] for s in datos["items"]} == {str(luna_id)}

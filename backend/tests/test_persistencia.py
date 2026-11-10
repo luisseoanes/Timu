@@ -1204,6 +1204,11 @@ _LISTADOS = (
     "/api/v1/dashboard/indicadores?desde=2026-10-01&hasta=2026-10-31",
     "/api/v1/preventivos",
 )
+# Los que necesitan una familia que exista: se completan con la que crea la prueba.
+_LISTADOS_DE_FAMILIA = (
+    "/api/v1/servicios/resumen?familia_id={familia}",
+    "/api/v1/servicios?familia_id={familia}&mascota_id={mascota}",
+)
 
 
 def _tablas_recorridas(plan: dict[str, Any]) -> set[str]:
@@ -1231,9 +1236,14 @@ async def test_los_caminos_calientes_no_recorren_tablas_enteras(
         ):
             capturadas.add(statement)
 
+    familia = await db.run_sync(fabricas.familia)
+    await db.commit()
+    de_familia = [
+        u.format(familia=familia.id, mascota=familia.mascotas[0].id) for u in _LISTADOS_DE_FAMILIA
+    ]
     event.listen(Engine, "before_cursor_execute", capturar)
     try:
-        for url in _LISTADOS:
+        for url in [*_LISTADOS, *de_familia]:
             resp = await client.get(url, headers=headers)
             assert resp.status_code == 200, (url, resp.text)
         celery_app.loader.import_default_modules()

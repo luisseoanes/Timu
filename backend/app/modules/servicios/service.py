@@ -133,6 +133,105 @@ def _usos(db: Session, familia_id: UUID, beneficio: Beneficio) -> int:
     )
 
 
+# --- 6.1 Servicios de la familia en un rango: utilizados y pendientes -------------------------
+
+# Lo que todavia va a ocurrir o espera una decision. Completado es lo utilizado; cancelado,
+# ninguna de las dos.
+PENDIENTES = (
+    EstadoServicio.SOLICITADO,
+    EstadoServicio.PENDIENTE_AUTORIZACION,
+    EstadoServicio.AGENDADO,
+    EstadoServicio.EN_RUTA,
+    EstadoServicio.EN_ATENCION,
+    EstadoServicio.REPROGRAMADO,
+)
+# 6.6 Pendientes derivados de una atencion que siguen abiertos.
+PENDIENTES_ATENCION_ABIERTOS = (
+    EstadoPendiente.PENDIENTE_AUTORIZACION,
+    EstadoPendiente.AUTORIZADO,
+    EstadoPendiente.EN_GESTION,
+)
+
+
+@dataclass
+class CupoBeneficio:
+    tipo_codigo: str
+    cupo: int | None  # None: sin limite
+    usados: int
+    periodo: str  # mensual | anual: el del beneficio, en curso
+
+
+@dataclass
+class ResumenServicios:
+    desde: date
+    hasta: date
+    utilizados: list[Servicio]
+    pendientes: list[Servicio]
+    cancelados: list[Servicio]
+    pendientes_atencion: list[Pendiente]
+    cupos: list[CupoBeneficio]
+
+
+def resumen(
+    db: Session,
+    familia: Familia,
+    desde: date,
+    hasta: date,
+    mascota_id: UUID | None = None,
+    incluir_cancelados: bool = False,
+) -> ResumenServicios:
+    """Servicios de la familia (o de una de sus mascotas) cuya fecha cae en el rango, en hora
+    de Colombia: la programada o, si aun no la tiene, la de la solicitud. El cupo de cada
+    beneficio se cuenta en su propio periodo en curso, no en el rango."""
+    if hasta < desde:
+        raise ReglaNegocio("La fecha final del rango es anterior a la inicial")
+    inicio = _utc(datetime.combine(desde, time.min, ZONA_NEGOCIO))
+    fin = _utc(datetime.combine(hasta, time.max, ZONA_NEGOCIO))
+    fecha = func.coalesce(Servicio.programado_para, Servicio.created_at)
+    consulta = select(Servicio).where(
+        Servicio.familia_id == familia.id, fecha >= inicio, fecha <= fin
+    )
+    if mascota_id is not None:
+        consulta = consulta.where(Servicio.mascota_id == mascota_id)
+    servicios = list(db.scalars(consulta.order_by(fecha.desc(), Servicio.id)))
+
+    abiertos = (
+        select(Pendiente)
+        .join(Servicio, Servicio.id == Pendiente.servicio_origen_id)
+        .where(
+            Servicio.familia_id == familia.id,
+            Pendiente.estado.in_(PENDIENTES_ATENCION_ABIERTOS),
+            Pendiente.created_at >= inicio,
+            Pendiente.created_at <= fin,
+        )
+    )
+    if mascota_id is not None:
+        abiertos = abiertos.where(Servicio.mascota_id == mascota_id)
+
+    cupos: list[CupoBeneficio] = []
+    contrato = contratos.contrato_vigente(db, familia.id)
+    if contrato is not None:
+        for b in planes.obtener(db, contrato.plan_id).beneficios:
+            cupos.append(
+                CupoBeneficio(
+                    b.tipo_servicio_codigo, b.cupo, _usos(db, familia.id, b), b.periodo_cupo
+                )
+            )
+    return ResumenServicios(
+        desde=desde,
+        hasta=hasta,
+        utilizados=[s for s in servicios if s.estado == EstadoServicio.COMPLETADO],
+        pendientes=[s for s in servicios if s.estado in PENDIENTES],
+        cancelados=(
+            [s for s in servicios if s.estado == EstadoServicio.CANCELADO]
+            if incluir_cancelados
+            else []
+        ),
+        pendientes_atencion=list(db.scalars(abiertos.order_by(Pendiente.created_at, Pendiente.id))),
+        cupos=cupos,
+    )
+
+
 # --- F1-SER-01 Disponibilidad y agendamiento --------------------------------------------------
 
 
