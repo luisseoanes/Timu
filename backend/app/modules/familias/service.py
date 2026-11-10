@@ -329,6 +329,21 @@ def subir_foto(
     return mascota
 
 
+def quitar_foto(db: Session, mascota: Mascota) -> Mascota:
+    """La mascota queda sin foto; el fichero se conserva como constancia."""
+    mascota.foto_archivo_id = None
+    db.flush()
+    return mascota
+
+
+def mascota_de_la_familia(db: Session, familia: Familia, mascota_id: UUID) -> Mascota:
+    """Para el portal: una mascota ajena o dada de baja no existe para la familia."""
+    mascota = db.get(Mascota, mascota_id)
+    if mascota is None or mascota.familia_id != familia.id or not mascota.activa:
+        raise NoEncontrado("Mascota no encontrada")
+    return mascota
+
+
 def mascota_read(db: Session, mascota: Mascota) -> MascotaRead:
     # La foto puede haber cambiado en esta misma peticion: se recarga antes de firmarla.
     db.refresh(mascota, ["foto"])

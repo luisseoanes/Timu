@@ -199,7 +199,8 @@ PERMISOS: dict[str, dict[str, str]] = {
         "familias": "SU",
         "franjas_agenda": "SL",
         "historias_clinicas": "S",
-        "mascotas": "S",
+        # Solo cambia la foto: la ruta del portal no toca otra columna.
+        "mascotas": "SU",
         "mensajes": "SI",
         "pagos": "SI",
         "planes": "S",

@@ -170,6 +170,13 @@ async def actualizar_mascota(db: DbSession, mascota_id: UUID, data: MascotaUpdat
     )
 
 
+@mascotas_router.delete("/{mascota_id}/foto", response_model=MascotaRead, dependencies=[EQUIPO])
+async def quitar_foto(db: DbSession, mascota_id: UUID) -> MascotaRead:
+    mascota = await db.run_sync(service.obtener_mascota, mascota_id)
+    mascota = await db.run_sync(service.quitar_foto, mascota)
+    return await db.run_sync(service.mascota_read, mascota)
+
+
 @mascotas_router.put("/{mascota_id}/foto", response_model=MascotaRead)
 async def subir_foto(
     db: DbSession,

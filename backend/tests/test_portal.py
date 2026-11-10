@@ -6,10 +6,11 @@ from datetime import datetime, time, timedelta
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.core.auditoria import RegistroAuditoria
 from app.core.config import settings
+from app.core.database import ContextoDb, fijar_contexto
 from app.core.enums import Rol
 from app.core.security import hash_password
 from app.core.tiempo import ZONA_NEGOCIO, hoy
@@ -18,6 +19,7 @@ from app.modules.cartera import pasarela
 from app.modules.cartera.models import Pago
 from app.modules.clinica import service as clinica
 from app.modules.comunicaciones.models import Mensaje, PlantillaWhatsApp
+from app.modules.familias.models import Mascota
 from app.modules.servicios.models import Franja
 from tests import fabricas
 from tests.conftest import PASSWORD, crear_usuario, login
@@ -571,3 +573,72 @@ async def test_codigo_sin_plantilla_o_para_numeros_que_no_son_de_una_cuenta(clie
             "/api/v1/auth/codigo/verificacion", json={"telefono": telefono, "codigo": "123456"}
         )
         assert resp.status_code == 401, telefono
+
+
+# --- 6.1 Fotos de sus mascotas ----------------------------------------------------------------
+
+FOTO = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
+
+
+async def test_la_familia_sube_cambia_y_quita_la_foto_de_su_mascota(client, portal, almacenamiento):
+    h = portal["headers"]
+    url = f"/api/v1/portal/mascotas/{portal['mascota_id']}/foto"
+    for nombre in ("luna.png", "luna2.png"):
+        resp = await client.put(url, files={"foto": (nombre, FOTO, "image/png")}, headers=h)
+        assert resp.status_code == 200, resp.text
+        assert "firma=" in resp.json()["foto_url"]
+    ficha = (await client.get("/api/v1/portal/mi-familia", headers=h)).json()
+    assert "firma=" in ficha["mascotas"][0]["foto_url"]
+
+    quitada = await client.delete(url, headers=h)
+    assert quitada.status_code == 200 and quitada.json()["foto_url"] is None
+    # El tipo se valida igual que en el panel.
+    disfrazada = await client.put(url, files={"foto": ("x.png", b"<svg/>", "image/png")}, headers=h)
+    assert disfrazada.status_code == 422
+
+
+async def test_la_familia_no_toca_la_foto_de_una_mascota_ajena_ni_de_baja(
+    client, portal, db, almacenamiento
+):
+    h = portal["headers"]
+    ajena = f"/api/v1/portal/mascotas/{portal['mascota_ajena_id']}/foto"
+    resp = await client.put(ajena, files={"foto": ("x.png", FOTO, "image/png")}, headers=h)
+    assert resp.status_code == 404
+    assert (await client.delete(ajena, headers=h)).status_code == 404
+
+    propia = await db.get(Mascota, portal["mascota_id"])
+    propia.activa = False
+    propia.dada_de_baja_en = datetime.now(ZONA_NEGOCIO)
+    propia.motivo_baja = "Fallecio"
+    await db.commit()
+    resp = await client.put(
+        f"/api/v1/portal/mascotas/{portal['mascota_id']}/foto",
+        files={"foto": ("x.png", FOTO, "image/png")},
+        headers=h,
+    )
+    assert resp.status_code == 404
+
+
+async def test_la_base_no_deja_a_la_familia_cambiar_una_mascota_ajena(db, portal):
+    """Si Python fallara, RLS sigue filtrando: la familia solo actualiza sus mascotas."""
+
+    def como_familia(s) -> tuple[int, int]:
+        fijar_contexto(
+            s,
+            ContextoDb(
+                rol="familia", usuario_id=portal["usuario_id"], familia_id=portal["familia_id"]
+            ),
+        )
+        consulta = text("UPDATE mascotas SET foto_archivo_id = NULL WHERE id = :m")
+        ajena = s.execute(consulta, {"m": portal["mascota_ajena_id"]}).rowcount
+        propia = s.execute(consulta, {"m": portal["mascota_id"]}).rowcount
+        return ajena, propia
+
+    assert await db.run_sync(como_familia) == (0, 1)
+
+
+async def test_el_equipo_quita_la_foto_de_una_mascota(client, portal, headers, almacenamiento):
+    url = f"/api/v1/mascotas/{portal['mascota_id']}/foto"
+    await client.put(url, files={"foto": ("x.png", FOTO, "image/png")}, headers=headers)
+    resp = await client.delete(url, headers=headers)
+    assert resp.status_code == 200 and resp.json()["foto_url"] is None

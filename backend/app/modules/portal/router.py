@@ -3,13 +3,13 @@
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, File, Response, UploadFile, status
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.api.deps import DbSession, FamiliaActual
+from app.api.deps import CurrentUser, DbSession, FamiliaActual
 from app.core.errores import NoEncontrado
 from app.core.validaciones import TelefonoCO
 from app.modules.archivos import service as archivos
@@ -20,8 +20,9 @@ from app.modules.cartera.schemas import EstadoCuenta
 from app.modules.clinica import service as clinica
 from app.modules.documentos import service as documentos
 from app.modules.documentos.service import DocumentoRead
+from app.modules.familias import service as familias
 from app.modules.familias.models import Familia
-from app.modules.familias.schemas import FamiliaRead
+from app.modules.familias.schemas import FamiliaRead, MascotaRead
 from app.modules.portal import service
 from app.modules.preventivos import service as preventivos
 from app.modules.servicios.models import Servicio
@@ -135,6 +136,31 @@ async def mis_documentos(
 async def estado_cuenta(db: DbSession, familia: FamiliaActual) -> Any:
     """F1-CAR-10 La misma consulta del panel, siempre sobre la familia conectada."""
     return await db.run_sync(cartera.estado_cuenta, familia.id)
+
+
+# --- 6.1 Fotos de sus mascotas ----------------------------------------------------------------
+
+
+@router.put("/mascotas/{mascota_id}/foto", response_model=MascotaRead)
+async def subir_foto(
+    db: DbSession,
+    familia: FamiliaActual,
+    usuario: CurrentUser,
+    mascota_id: UUID,
+    foto: Annotated[UploadFile, File(description="JPG, PNG o WEBP de hasta 5 MB")],
+) -> MascotaRead:
+    """Lo unico de sus mascotas que la familia cambia: la foto."""
+    mascota = await db.run_sync(familias.mascota_de_la_familia, familia, mascota_id)
+    contenido = await archivos.leer(foto, "foto_mascota")
+    mascota = await db.run_sync(familias.subir_foto, mascota, contenido, foto.filename, usuario.id)
+    return await db.run_sync(familias.mascota_read, mascota)
+
+
+@router.delete("/mascotas/{mascota_id}/foto", response_model=MascotaRead)
+async def quitar_foto(db: DbSession, familia: FamiliaActual, mascota_id: UUID) -> MascotaRead:
+    mascota = await db.run_sync(familias.mascota_de_la_familia, familia, mascota_id)
+    mascota = await db.run_sync(familias.quitar_foto, mascota)
+    return await db.run_sync(familias.mascota_read, mascota)
 
 
 # --- F3-POR-02 / 03 Historia clinica y carnet -------------------------------------------------
