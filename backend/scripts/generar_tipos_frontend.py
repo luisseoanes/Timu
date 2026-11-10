@@ -39,6 +39,7 @@ ESQUEMAS = [
     "TipoServicioRead",
     "EsquemaPreventivoRead",
     "Periodicidad",
+    "ColorPlan",
     "EstadoPago",
     "TarifaRead",
     "TarifaPeriodicidadRead",

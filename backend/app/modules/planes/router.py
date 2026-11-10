@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import select
 
 from app.api.deps import INTERNOS, DbSession, requiere
-from app.core.enums import Periodicidad, Rol
+from app.core.enums import ColorPlan, Periodicidad, Rol
 from app.core.errores import NoEncontrado
 from app.modules.auth.models import Usuario
 from app.modules.catalogos import service as catalogos
@@ -72,12 +72,16 @@ class PlanCreate(BaseModel):
     tarifas: TarifasIn
     especies: list[str] = Field(default_factory=list, description="Vacio = todas")
     beneficios: list[BeneficioIn] = Field(default_factory=list)
+    color: ColorPlan = Field(
+        default=ColorPlan.VERDE, description="Color del logo que lo identifica"
+    )
 
 
 class PlanUpdate(BaseModel):
     nombre: str | None = Field(default=None, min_length=2, max_length=120)
     descripcion: str | None = None
     activo: bool | None = None
+    color: ColorPlan | None = None
 
 
 class PlanRead(BaseModel):
@@ -92,6 +96,7 @@ class PlanRead(BaseModel):
     tarifas_periodicidad: list[TarifaPeriodicidadRead]
     especies: list[str]
     activo: bool
+    color: ColorPlan
     beneficios: list[BeneficioRead]
 
     @field_validator("ciudades", mode="before")
@@ -197,7 +202,7 @@ async def crear(db: DbSession, data: PlanCreate) -> Plan:
 
 @router.patch("/{plan_id}", response_model=PlanRead, dependencies=[ADMIN])
 async def actualizar(db: DbSession, plan_id: UUID, data: PlanUpdate) -> Plan:
-    """Nombre, descripcion y si se vende. Las tarifas y las ciudades tienen su ruta."""
+    """Nombre, descripcion, color y si se vende. Las tarifas y las ciudades tienen su ruta."""
     plan = await db.run_sync(service.obtener, plan_id)
     for campo, valor in data.model_dump(exclude_unset=True).items():
         setattr(plan, campo, valor)

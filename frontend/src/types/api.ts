@@ -145,6 +145,8 @@ export interface EsquemaPreventivoRead {
 
 export type Periodicidad = 'mensual' | 'trimestral' | 'semestral' | 'anual'
 
+export type ColorPlan = 'verde' | 'naranja' | 'azul'
+
 export type EstadoPago = 'pendiente' | 'aprobado' | 'rechazado' | 'reversado' | 'anulado'
 
 export interface TarifaRead {
@@ -167,6 +169,7 @@ export interface PlanRead {
   tarifas_periodicidad: TarifaPeriodicidadRead[]
   especies: string[]
   activo: boolean
+  color: ColorPlan
   beneficios: BeneficioRead[]
 }
 
@@ -746,6 +749,7 @@ export interface PlanPublico {
   nombre: string
   descripcion: string | null
   especies: string[]
+  color: ColorPlan
   tarifas: TarifaRead[]
   tarifas_periodicidad: TarifaPeriodicidadRead[]
   beneficios: BeneficioPublico[]

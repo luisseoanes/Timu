@@ -271,6 +271,15 @@ class PeriodoCupo(StrEnum):
     ANUAL = "anual"
 
 
+class ColorPlan(StrEnum):
+    """Color con el que la interfaz reconoce un plan: uno de los colores del logo
+    (docs/manual-de-marca.md, secciones 4 y 10). La interfaz lo toma de aqui, nunca del nombre."""
+
+    VERDE = "verde"
+    NARANJA = "naranja"
+    AZUL = "azul"
+
+
 class Periodicidad(StrEnum):
     """6.2 Cada cuanto paga la familia. Con un solo peludo, los periodos largos tienen su
     propio precio (tarifas_periodicidad); con mas, se paga el mensual por los meses."""

@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import Settings, settings
 from app.core.database import CLAVE_CONTEXTO, SISTEMA, SessionLocal
-from app.core.enums import Rol
+from app.core.enums import ColorPlan, Rol
 from app.core.security import hash_password
 from app.models import Plan, Usuario
 from app.modules.planes import service as planes
@@ -24,13 +24,14 @@ ADMIN_EMAIL = "admin@timu.co"
 ADMIN_PASSWORD = "cambiar123"  # noqa: S105  solo en local
 MIN_CLAVE_DESPLEGADA = 12
 
-# Los planes que publica TIMU: (codigo, nombre, ciudades, tarifa por peludo con 1 a 4 peludos,
-# precio de cada periodo largo para un peludo). El trimestral es tentativo. En un ambiente
-# desplegado los da de alta el administrador desde el panel.
+# Los planes que publica TIMU: (codigo, nombre, color del manual de marca, ciudades, tarifa
+# por peludo con 1 a 4 peludos, precio de cada periodo largo para un peludo). El trimestral
+# es tentativo. En un ambiente desplegado los da de alta el administrador desde el panel.
 PLANES_TIMU = [
     (
         "colita_feliz",
         "Colita Feliz",
+        "naranja",
         ["Bogota", "Medellin"],
         ["35500", "30500", "26000", "24000"],
         {"trimestral": "103800", "semestral": "202350", "anual": "378000"},
@@ -38,6 +39,7 @@ PLANES_TIMU = [
     (
         "mi_amigo_fiel",
         "Mi Amigo Fiel",
+        "verde",
         ["Bogota", "Medellin"],
         ["69000", "61000", "57500", "57000"],
         {"trimestral": "201800", "semestral": "393300", "anual": "745200"},
@@ -45,6 +47,7 @@ PLANES_TIMU = [
     (
         "amigos_por_siempre",
         "Amigos por Siempre",
+        "azul",
         ["Medellin"],
         ["98000", "88000", "83500", "82000"],
         {"trimestral": "286650", "semestral": "558600", "anual": "1058400"},
@@ -98,13 +101,14 @@ def crear_planes_timu(db: Session) -> list[Plan]:
             {
                 "codigo": codigo,
                 "nombre": nombre,
+                "color": ColorPlan(color),
                 "especies": ["canino", "felino"],
                 "tarifas": [Decimal(v) for v in por_peludos],
                 "tarifas_periodicidad": {k: Decimal(v) for k, v in largos.items()},
                 "ciudades": ciudades,
             },
         )
-        for codigo, nombre, ciudades, por_peludos, largos in PLANES_TIMU
+        for codigo, nombre, color, ciudades, por_peludos, largos in PLANES_TIMU
     ]
 
 

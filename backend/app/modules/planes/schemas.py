@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.core.enums import Periodicidad
+from app.core.enums import ColorPlan, Periodicidad
 from app.modules.planes.service import Cotizacion
 
 
@@ -85,6 +85,7 @@ class PlanPublico(BaseModel):
     nombre: str
     descripcion: str | None
     especies: list[str]
+    color: ColorPlan
     tarifas: list[TarifaRead]
     tarifas_periodicidad: list[TarifaPeriodicidadRead]
     beneficios: list[BeneficioPublico]

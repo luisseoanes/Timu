@@ -8,7 +8,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import select, text
 
-from app.core.enums import Rol
+from app.core.enums import ColorPlan, Rol
 from app.core.errores import ReglaNegocio
 from app.core.tiempo import hoy
 from app.modules.cartera import contratos
@@ -92,12 +92,13 @@ async def test_beneficio_con_tipo_inexistente(client: AsyncClient, headers):
 async def timu(client: AsyncClient, headers) -> dict[str, str]:
     """Los tres planes de TIMU, creados por la API como lo haria el administrador."""
     ids = {}
-    for codigo, nombre, ciudades, por_peludos, largos in seed.PLANES_TIMU:
+    for codigo, nombre, color, ciudades, por_peludos, largos in seed.PLANES_TIMU:
         resp = await client.post(
             "/api/v1/planes",
             json={
                 "codigo": codigo,
                 "nombre": nombre,
+                "color": color,
                 "ciudades": ciudades,
                 "especies": ["canino", "felino"],
                 "tarifas": {"por_peludos": por_peludos, **largos},
@@ -134,6 +135,45 @@ async def test_los_planes_que_siembra_el_seed_se_pueden_cotizar(db):
         await db.run_sync(
             service.cotizar, "Bogota", [("canino", creados["amigos_por_siempre"].id)], "mensual"
         )
+
+
+async def test_los_planes_de_timu_llevan_el_color_del_manual_de_marca(db):
+    """R1-PLA-01: la interfaz reconoce el plan por su color, que sale del catalogo y no de
+    comparar nombres (docs/manual-de-marca.md, seccion 4)."""
+    creados = {p.codigo: p.color for p in await db.run_sync(seed.crear_planes_timu)}
+    assert creados == {
+        "colita_feliz": ColorPlan.NARANJA,
+        "mi_amigo_fiel": ColorPlan.VERDE,
+        "amigos_por_siempre": ColorPlan.AZUL,
+    }
+
+
+async def test_un_plan_nuevo_es_verde_hasta_que_se_le_cambia_el_color(client: AsyncClient, headers):
+    creado = await client.post(
+        "/api/v1/planes",
+        json={
+            "codigo": "basico",
+            "nombre": "Plan Basico",
+            "ciudades": ["Cali"],
+            "tarifas": {"por_peludos": ["30000", "28000", "26000", "24000"]},
+        },
+        headers=headers,
+    )
+    assert creado.status_code == 201, creado.text
+    assert creado.json()["color"] == "verde"
+
+    cambiado = await client.patch(
+        f"/api/v1/planes/{creado.json()['id']}", json={"color": "azul"}, headers=headers
+    )
+    assert cambiado.status_code == 200, cambiado.text
+    assert cambiado.json()["color"] == "azul"
+
+
+async def test_el_color_de_un_plan_solo_puede_ser_uno_del_logo(client: AsyncClient, headers, timu):
+    resp = await client.patch(
+        f"/api/v1/planes/{timu['colita_feliz']}", json={"color": "rojo"}, headers=headers
+    )
+    assert resp.status_code == 422
 
 
 async def test_un_plan_guarda_sus_tarifas_y_sus_ciudades(client: AsyncClient, headers, timu):

@@ -15,7 +15,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.auditoria import Auditable
 from app.core.database import Base, EnumDb, JSONTipo, TimestampMixin, UUIDMixin
-from app.core.enums import ModoCambioPlan, Periodicidad, PeriodoCupo, TipoCambioPlan
+from app.core.enums import ColorPlan, ModoCambioPlan, Periodicidad, PeriodoCupo, TipoCambioPlan
 
 
 class Plan(Base, UUIDMixin, TimestampMixin, Auditable):
@@ -33,6 +33,7 @@ class Plan(Base, UUIDMixin, TimestampMixin, Auditable):
     descripcion: Mapped[str | None] = mapped_column(Text)
     especies: Mapped[list[str]] = mapped_column(JSONTipo, default=list)  # vacio = todas
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    color: Mapped[ColorPlan] = mapped_column(EnumDb(ColorPlan), default=ColorPlan.VERDE)
 
     # Solo los beneficios vigentes. Los reemplazados quedan con activo = False: lo que cubria
     # el plan antes no se borra (fase 3 de docs/plan-persistencia.md).
