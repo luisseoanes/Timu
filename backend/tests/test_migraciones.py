@@ -53,6 +53,11 @@ _BASE_MIGRACION = "timu_migracion_uuidv7"
 
 @pytest.fixture
 def base_en_0013():
+    yield from _base_en("0013")
+
+
+def _base_en(revision: str):
+    """Base aparte llevada hasta `revision`, para llenarla y migrar sobre datos."""
     url_async = make_url(URL_ASYNC).set(database=_BASE_MIGRACION)
     servidor = create_engine(URL_SYNC, isolation_level="AUTOCOMMIT")
     with servidor.connect() as conn:
@@ -60,7 +65,7 @@ def base_en_0013():
         conn.execute(text(f"CREATE DATABASE {_BASE_MIGRACION}"))
     cfg = config_alembic()
     cfg.set_main_option("sqlalchemy.url", url_async.render_as_string(hide_password=False))
-    command.upgrade(cfg, "0013")
+    command.upgrade(cfg, revision)
     engine = create_engine(
         url_async.set(drivername="postgresql+psycopg").render_as_string(hide_password=False)
     )
@@ -248,3 +253,59 @@ def test_las_migraciones_de_persistencia_se_revierten_y_se_vuelven_a_aplicar(bas
         ).scalar_one()
         assert tipos == 0
     command.upgrade(cfg, "head")
+
+
+# --- 0032: tarifas y ciudades de los planes existentes ----------------------------------------
+
+
+@pytest.fixture
+def base_en_0031():
+    yield from _base_en("0031")
+
+
+def test_0032_da_tarifas_y_ciudades_a_los_planes_existentes(base_en_0031):
+    """Cada plan recibe cuatro tarifas con su valor mensual y sus ciudades: la suya o, si no
+    tenia, todas las activas. Un plan de valor 0 no tiene tarifa que dar (el CHECK la exige
+    positiva): queda sin tarifas y no se puede cotizar hasta que se le pongan."""
+    cfg, engine = base_en_0031
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO ciudades (codigo, nombre, departamento, activa) VALUES"
+                " ('11001', 'Bogota', 'Bogota', true), ('05001', 'Medellin', 'Antioquia', true),"
+                " ('76001', 'Cali', 'Valle', false)"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO planes (codigo, nombre, ciudad, valor_mensual, cupos_mascotas,"
+                " especies, activo) VALUES"
+                " ('todas', 'Todas', NULL, 45000, 1, '[]', true),"
+                " ('paisa', 'Paisa', 'Medellin', 69000, 2, '[]', true),"
+                " ('gratis', 'Gratis', 'Bogota', 0, 1, '[]', true)"
+            )
+        )
+    command.upgrade(cfg, "0032")
+    with engine.connect() as conn:
+        tarifas = conn.execute(
+            text(
+                "SELECT p.codigo, array_agg(t.peludos ORDER BY t.peludos),"
+                " min(t.valor), max(t.valor)"
+                " FROM tarifas_plan t JOIN planes p ON p.id = t.plan_id GROUP BY p.codigo"
+            )
+        ).all()
+        assert {c: (n, int(a), int(b)) for c, n, a, b in tarifas} == {
+            "todas": ([1, 2, 3, 4], 45000, 45000),
+            "paisa": ([1, 2, 3, 4], 69000, 69000),
+        }
+        ciudades = conn.execute(
+            text(
+                "SELECT p.codigo, array_agg(c.ciudad ORDER BY c.ciudad) FROM ciudades_plan c"
+                " JOIN planes p ON p.id = c.plan_id WHERE c.activa GROUP BY p.codigo"
+            )
+        ).all()
+        assert dict(ciudades) == {
+            "todas": ["Bogota", "Medellin"],
+            "paisa": ["Medellin"],
+            "gratis": ["Bogota"],
+        }

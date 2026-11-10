@@ -2,21 +2,21 @@
 esta en cartera/router.py (vive en el contrato), con la misma ruta bajo /planes."""
 
 from decimal import Decimal
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
-from pydantic import BaseModel, ConfigDict, Field
+from fastapi import APIRouter, Body, Depends, Query, status
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import select
 
 from app.api.deps import INTERNOS, DbSession, requiere
-from app.core.enums import Rol
+from app.core.enums import Periodicidad, Rol
 from app.core.errores import NoEncontrado
 from app.modules.auth.models import Usuario
 from app.modules.catalogos import service as catalogos
 from app.modules.catalogos.models import TipoServicioCatalogo
 from app.modules.planes import service
-from app.modules.planes.models import Plan
+from app.modules.planes.models import CiudadPlan, Plan
 
 router = APIRouter(prefix="/planes", tags=["planes"])
 
@@ -38,13 +38,32 @@ class BeneficioRead(BeneficioIn):
     id: UUID
 
 
+Valor = Annotated[Decimal, Field(gt=0, max_digits=12, decimal_places=2)]
+
+
+class TarifasIn(BaseModel):
+    """6.2 / 6.3 Valor mensual por peludo con 1, 2, 3 y 4 o mas peludos, y el precio total de
+    cada periodo largo para un solo peludo (vacio = sin descuento por ese periodo)."""
+
+    por_peludos: list[Valor] = Field(min_length=4, max_length=4)
+    trimestral: Valor | None = None
+    semestral: Valor | None = None
+    anual: Valor | None = None
+
+    def periodicidad(self) -> dict[str, Decimal | None]:
+        return {
+            Periodicidad.TRIMESTRAL: self.trimestral,
+            Periodicidad.SEMESTRAL: self.semestral,
+            Periodicidad.ANUAL: self.anual,
+        }
+
+
 class PlanCreate(BaseModel):
     codigo: str = Field(pattern=r"^[a-z0-9_]{2,40}$")
     nombre: str = Field(min_length=2, max_length=120)
     descripcion: str | None = None
-    ciudad: str | None = Field(default=None, description="Vacio = todas las ciudades")
-    valor_mensual: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
-    cupos_mascotas: int = Field(default=1, ge=1, le=20)
+    ciudades: list[str] = Field(min_length=1, description="Donde se vende")
+    tarifas: TarifasIn
     especies: list[str] = Field(default_factory=list, description="Vacio = todas")
     beneficios: list[BeneficioIn] = Field(default_factory=list)
 
@@ -52,9 +71,21 @@ class PlanCreate(BaseModel):
 class PlanUpdate(BaseModel):
     nombre: str | None = Field(default=None, min_length=2, max_length=120)
     descripcion: str | None = None
-    valor_mensual: Decimal | None = Field(default=None, gt=0, max_digits=12, decimal_places=2)
-    cupos_mascotas: int | None = Field(default=None, ge=1, le=20)
     activo: bool | None = None
+
+
+class TarifaRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    peludos: int
+    valor: Decimal
+
+
+class TarifaPeriodicidadRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    periodicidad: Periodicidad
+    valor: Decimal
 
 
 class PlanRead(BaseModel):
@@ -64,12 +95,50 @@ class PlanRead(BaseModel):
     codigo: str
     nombre: str
     descripcion: str | None
-    ciudad: str | None
-    valor_mensual: Decimal
-    cupos_mascotas: int
+    ciudades: list[str]
+    tarifas: list[TarifaRead]
+    tarifas_periodicidad: list[TarifaPeriodicidadRead]
+    valor_mensual: Decimal = Field(description="Obsoleto: la tarifa de un peludo")
+    cupos_mascotas: int = Field(description="Obsoleto: lo sustituyen las tarifas por peludos")
     especies: list[str]
     activo: bool
     beneficios: list[BeneficioRead]
+
+    @field_validator("ciudades", mode="before")
+    @classmethod
+    def _nombres(cls, v: Any) -> list[str]:
+        return [c if isinstance(c, str) else c.ciudad for c in v]
+
+
+class PeludoIn(BaseModel):
+    especie: str = Field(max_length=40)
+    plan_id: UUID
+
+
+class CotizacionIn(BaseModel):
+    ciudad: str
+    peludos: list[PeludoIn] = Field(min_length=1)
+
+
+class PeludoCotizadoRead(BaseModel):
+    especie: str
+    plan_id: UUID
+    plan_nombre: str
+    valor_mensual: Decimal
+
+
+class CotizacionRead(BaseModel):
+    """Lo que pagaria la afiliacion con cada periodicidad. `valor_periodo` es lo que cobra
+    cada cuota; `ahorro`, lo que se ahorra frente a pagar el mensual por los mismos meses."""
+
+    periodicidad: Periodicidad
+    meses: int
+    tarifa_de: int = Field(description="Peludos cuya tarifa se aplica (de 1 a 4)")
+    peludos: list[PeludoCotizadoRead]
+    valor_mensual: Decimal
+    valor_periodo: Decimal
+    descuento: bool
+    ahorro: Decimal
 
 
 class Recomendacion(BaseModel):
@@ -90,11 +159,53 @@ async def _validar_beneficios(db: DbSession, beneficios: list[BeneficioIn]) -> N
 
 
 @router.get("", response_model=list[PlanRead], dependencies=[EQUIPO])
-async def listar(db: DbSession, incluir_inactivos: bool = False) -> list[Plan]:
+async def listar(
+    db: DbSession, incluir_inactivos: bool = False, ciudad: str | None = None
+) -> list[Plan]:
+    """Con `ciudad`, solo los que se venden alli."""
     stmt = select(Plan).order_by(Plan.valor_mensual)
     if not incluir_inactivos:
         stmt = stmt.where(Plan.activo.is_(True))
+    if ciudad:
+        stmt = stmt.where(
+            Plan.id.in_(
+                select(CiudadPlan.plan_id).where(
+                    CiudadPlan.ciudad == ciudad, CiudadPlan.activa.is_(True)
+                )
+            )
+        )
     return list(await db.scalars(stmt))
+
+
+@router.post("/cotizacion", response_model=list[CotizacionRead], dependencies=[EQUIPO])
+async def cotizacion(db: DbSession, data: CotizacionIn) -> list[CotizacionRead]:
+    """6.2 / 6.3 Precio de una afiliacion con cada periodicidad: cada peludo con su plan."""
+    ciudad = await db.run_sync(catalogos.ciudad_valida, data.ciudad)
+    peludos = [(p.especie, p.plan_id) for p in data.peludos]
+    opciones = []
+    for periodicidad in Periodicidad:
+        c = await db.run_sync(service.cotizar, ciudad, peludos, periodicidad)
+        opciones.append(
+            CotizacionRead(
+                periodicidad=Periodicidad(c.periodicidad),
+                meses=c.meses,
+                tarifa_de=c.tarifa_de,
+                peludos=[
+                    PeludoCotizadoRead(
+                        especie=p.especie,
+                        plan_id=p.plan.id,
+                        plan_nombre=p.plan.nombre,
+                        valor_mensual=p.valor_mensual,
+                    )
+                    for p in c.peludos
+                ],
+                valor_mensual=c.valor_mensual,
+                valor_periodo=c.valor_periodo,
+                descuento=c.descuento,
+                ahorro=c.ahorro,
+            )
+        )
+    return opciones
 
 
 @router.get("/recomendacion", response_model=Recomendacion, dependencies=[EQUIPO])
@@ -111,27 +222,51 @@ async def recomendacion(
 
 @router.get("/{plan_id}", response_model=PlanRead, dependencies=[EQUIPO])
 async def obtener(db: DbSession, plan_id: UUID) -> Plan:
-    return await db.run_sync(service.obtener, plan_id)
+    plan = await db.run_sync(service.obtener, plan_id)
+    return await db.run_sync(service.con_detalle, plan)
 
 
 @router.post("", response_model=PlanRead, status_code=status.HTTP_201_CREATED, dependencies=[ADMIN])
 async def crear(db: DbSession, data: PlanCreate) -> Plan:
-    """F1-PLA-01 Plan con valor, cupos y beneficios por tipo de servicio."""
+    """F1-PLA-01 Plan con sus tarifas, sus ciudades y sus beneficios por tipo de servicio."""
     await _validar_beneficios(db, data.beneficios)
-    if data.ciudad:
-        data.ciudad = await db.run_sync(catalogos.ciudad_valida, data.ciudad)
-    return await db.run_sync(service.crear, data.model_dump())
+    ciudades = [await db.run_sync(catalogos.ciudad_valida, c) for c in data.ciudades]
+    datos = data.model_dump(exclude={"tarifas", "ciudades"})
+    datos |= {
+        "tarifas": data.tarifas.por_peludos,
+        "tarifas_periodicidad": data.tarifas.periodicidad(),
+        "ciudades": ciudades,
+    }
+    return await db.run_sync(service.crear, datos)
 
 
 @router.patch("/{plan_id}", response_model=PlanRead, dependencies=[ADMIN])
 async def actualizar(db: DbSession, plan_id: UUID, data: PlanUpdate) -> Plan:
-    """Un nuevo valor aplica a contratos nuevos y a cambios de plan; los contratos vigentes
-    conservan su valor hasta la renovacion."""
+    """Nombre, descripcion y si se vende. Las tarifas y las ciudades tienen su ruta."""
     plan = await db.run_sync(service.obtener, plan_id)
     for campo, valor in data.model_dump(exclude_unset=True).items():
         setattr(plan, campo, valor)
     await db.flush()
-    return plan
+    return await db.run_sync(service.con_detalle, plan)
+
+
+@router.put("/{plan_id}/tarifas", response_model=PlanRead, dependencies=[ADMIN])
+async def reemplazar_tarifas(db: DbSession, plan_id: UUID, data: TarifasIn) -> Plan:
+    """Aplica a afiliaciones nuevas y a los recalculos (alta o retiro de un peludo, cambio
+    de plan); las cuotas ya emitidas no cambian."""
+    plan = await db.run_sync(service.obtener, plan_id)
+    return await db.run_sync(
+        service.reemplazar_tarifas, plan, data.por_peludos, data.periodicidad()
+    )
+
+
+@router.put("/{plan_id}/ciudades", response_model=PlanRead, dependencies=[ADMIN])
+async def fijar_ciudades(
+    db: DbSession, plan_id: UUID, ciudades: Annotated[list[str], Body(min_length=1)]
+) -> Plan:
+    validas = [await db.run_sync(catalogos.ciudad_valida, c) for c in ciudades]
+    plan = await db.run_sync(service.obtener, plan_id)
+    return await db.run_sync(service.fijar_ciudades, plan, validas)
 
 
 @router.put("/{plan_id}/beneficios", response_model=PlanRead, dependencies=[ADMIN])

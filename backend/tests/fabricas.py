@@ -3,15 +3,17 @@
 from datetime import date
 from itertools import count
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import set_committed_value
 
 from app.modules.cartera import service as cartera
 from app.modules.cartera.models import Contrato
+from app.modules.catalogos.models import Ciudad
 from app.modules.comunicaciones.models import PlantillaWhatsApp
 from app.modules.familias.models import Familia, Mascota
-from app.modules.planes.models import Beneficio, Plan
+from app.modules.planes.models import Beneficio, CiudadPlan, Plan, TarifaPlan
 
 _documentos = count(70_000_000)
 
@@ -51,6 +53,8 @@ def plan(
     ciudad: str | None = None,
     beneficios: list[dict] | None = None,
 ) -> Plan:
+    """Plan con el mismo valor para 1 a 4 peludos, como deja la migracion 0032 a los planes
+    anteriores. Sin `ciudad`, se vende en todas las del catalogo."""
     p = Plan(
         codigo=codigo,
         nombre=f"Plan {codigo}",
@@ -62,6 +66,11 @@ def plan(
     p.beneficios = [Beneficio(**b) for b in beneficios or []]
     db.add(p)
     db.flush()
+    db.add_all(TarifaPlan(plan_id=p.id, peludos=n, valor=valor) for n in range(1, 5))
+    ciudades = [ciudad] if ciudad else list(db.scalars(select(Ciudad.nombre)))
+    db.add_all(CiudadPlan(plan_id=p.id, ciudad=c) for c in ciudades)
+    db.flush()
+    db.refresh(p, ["tarifas", "ciudades"])
     return p
 
 

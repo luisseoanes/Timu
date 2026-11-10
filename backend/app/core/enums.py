@@ -261,6 +261,24 @@ class PeriodoCupo(StrEnum):
     ANUAL = "anual"
 
 
+class Periodicidad(StrEnum):
+    """6.2 Cada cuanto paga la familia. Con un solo peludo, los periodos largos tienen su
+    propio precio (tarifas_periodicidad); con mas, se paga el mensual por los meses."""
+
+    MENSUAL = "mensual"
+    TRIMESTRAL = "trimestral"
+    SEMESTRAL = "semestral"
+    ANUAL = "anual"
+
+
+MESES_PERIODICIDAD: dict[str, int] = {
+    Periodicidad.MENSUAL: 1,
+    Periodicidad.TRIMESTRAL: 3,
+    Periodicidad.SEMESTRAL: 6,
+    Periodicidad.ANUAL: 12,
+}
+
+
 class TipoCambioPlan(StrEnum):
     CAMBIO_PLAN = "cambio_plan"
     MASCOTA_ALTA = "mascota_alta"

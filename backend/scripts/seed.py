@@ -1,4 +1,4 @@
-"""Seed inicial: crea el usuario administrador y un par de planes de ejemplo.
+"""Seed inicial: crea el usuario administrador y, en local, los planes de TIMU.
 
 En un ambiente desplegado no hay clave de desarrollo ni planes de ejemplo: el administrador
 se crea con ADMIN_PASSWORD_INICIAL, y sin ella el script se niega. Una cuenta de
@@ -8,18 +8,48 @@ Uso: docker compose exec api python -m scripts.seed (despues de scripts.cargar_c
 """
 
 import asyncio
+from decimal import Decimal
 
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.core.config import Settings, settings
 from app.core.database import CLAVE_CONTEXTO, SISTEMA, SessionLocal
 from app.core.enums import Rol
 from app.core.security import hash_password
 from app.models import Plan, Usuario
+from app.modules.planes import service as planes
 
 ADMIN_EMAIL = "admin@timu.co"
 ADMIN_PASSWORD = "cambiar123"  # noqa: S105  solo en local
 MIN_CLAVE_DESPLEGADA = 12
+
+# Los planes que publica TIMU: (codigo, nombre, ciudades, tarifa por peludo con 1 a 4 peludos,
+# precio de cada periodo largo para un peludo). El trimestral es tentativo. En un ambiente
+# desplegado los da de alta el administrador desde el panel.
+PLANES_TIMU = [
+    (
+        "colita_feliz",
+        "Colita Feliz",
+        ["Bogota", "Medellin"],
+        ["35500", "30500", "26000", "24000"],
+        {"trimestral": "103800", "semestral": "202350", "anual": "378000"},
+    ),
+    (
+        "mi_amigo_fiel",
+        "Mi Amigo Fiel",
+        ["Bogota", "Medellin"],
+        ["69000", "61000", "57500", "57000"],
+        {"trimestral": "201800", "semestral": "393300", "anual": "745200"},
+    ),
+    (
+        "amigos_por_siempre",
+        "Amigos por Siempre",
+        ["Medellin"],
+        ["98000", "88000", "83500", "82000"],
+        {"trimestral": "286650", "semestral": "558600", "anual": "1058400"},
+    ),
+]
 
 
 def clave_inicial(ajustes: Settings) -> str:
@@ -52,27 +82,30 @@ async def main() -> None:
                 + ("" if settings.es_desplegado else f" / {clave}")
             )
 
-        # Precios inventados: en un ambiente desplegado los planes los define TIMU.
         if not settings.es_desplegado and not await db.scalar(select(Plan).limit(1)):
-            db.add_all(
-                [
-                    Plan(
-                        codigo="individual",
-                        nombre="Plan Individual",
-                        valor_mensual=45000,
-                        cupos_mascotas=1,
-                    ),
-                    Plan(
-                        codigo="familiar",
-                        nombre="Plan Familiar",
-                        valor_mensual=75000,
-                        cupos_mascotas=3,
-                    ),
-                ]
-            )
-            print("Planes de ejemplo creados")
+            await db.run_sync(crear_planes_timu)
+            print("Planes de TIMU creados")
 
         await db.commit()
+
+
+def crear_planes_timu(db: Session) -> list[Plan]:
+    """Por el mismo servicio que usa la API: con sus tarifas y sus ciudades, listos para
+    cotizar y afiliar."""
+    return [
+        planes.crear(
+            db,
+            {
+                "codigo": codigo,
+                "nombre": nombre,
+                "especies": ["canino", "felino"],
+                "tarifas": [Decimal(v) for v in por_peludos],
+                "tarifas_periodicidad": {k: Decimal(v) for k, v in largos.items()},
+                "ciudades": ciudades,
+            },
+        )
+        for codigo, nombre, ciudades, por_peludos, largos in PLANES_TIMU
+    ]
 
 
 if __name__ == "__main__":

@@ -50,7 +50,7 @@ FAMILIAS: list[dict[str, Any]] = [
                 "peso_kg": 4.2,
             },
         ],
-        "plan": "familiar",
+        "plan": "mi_amigo_fiel",
     },
     {
         "titular_nombre": "Carlos Perez",
@@ -69,7 +69,7 @@ FAMILIAS: list[dict[str, Any]] = [
                 "peso_kg": 11.5,
             }
         ],
-        "plan": "individual",
+        "plan": "colita_feliz",
     },
     {
         "titular_nombre": "Laura Gomez",
@@ -87,7 +87,7 @@ FAMILIAS: list[dict[str, Any]] = [
                 "peso_kg": 3.8,
             }
         ],
-        "plan": "individual",
+        "plan": "colita_feliz",
     },
     {
         "titular_nombre": "Jorge Ramirez",
@@ -115,7 +115,7 @@ FAMILIAS: list[dict[str, Any]] = [
                 "peso_kg": 24.5,
             },
         ],
-        "plan": "familiar",
+        "plan": "mi_amigo_fiel",
     },
     {
         "titular_nombre": "Marcela Torres",

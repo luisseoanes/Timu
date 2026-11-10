@@ -4,9 +4,12 @@ from datetime import timedelta
 from decimal import Decimal
 from uuid import UUID
 
+import pytest
 from httpx import AsyncClient
 from sqlalchemy import select, text
 
+from app.core.enums import Rol
+from app.core.errores import ReglaNegocio
 from app.core.tiempo import hoy
 from app.modules.cartera import contratos
 from app.modules.cartera import service as cartera
@@ -15,7 +18,9 @@ from app.modules.cartera.models import Cuota
 from app.modules.cartera.periodos import dias_del_periodo, dinero
 from app.modules.planes import service
 from app.modules.reglas.models import Regla
+from scripts import seed
 from tests import fabricas
+from tests.conftest import crear_usuario, login
 
 
 async def test_crear_plan_con_beneficios(client: AsyncClient, headers):
@@ -24,8 +29,8 @@ async def test_crear_plan_con_beneficios(client: AsyncClient, headers):
         json={
             "codigo": "premium",
             "nombre": "Plan Premium",
-            "valor_mensual": "95000",
-            "cupos_mascotas": 2,
+            "ciudades": ["Cali"],
+            "tarifas": {"por_peludos": ["95000", "90000", "85000", "80000"]},
             "beneficios": [
                 {"tipo_servicio_codigo": "consulta_domiciliaria", "cupo": 4},
                 {"tipo_servicio_codigo": "vacunacion"},
@@ -68,12 +73,220 @@ async def test_beneficio_con_tipo_inexistente(client: AsyncClient, headers):
         json={
             "codigo": "plan_x",
             "nombre": "Plan X",
-            "valor_mensual": "1",
+            "ciudades": ["Cali"],
+            "tarifas": {"por_peludos": ["1", "1", "1", "1"]},
             "beneficios": [{"tipo_servicio_codigo": "peluqueria"}],
         },
         headers=headers,
     )
     assert resp.status_code == 404
+
+
+# --- 6.2 / 6.3 Tarifas por peludos, por periodicidad y por ciudad ------------------------------
+
+
+@pytest.fixture
+async def timu(client: AsyncClient, headers) -> dict[str, str]:
+    """Los tres planes de TIMU, creados por la API como lo haria el administrador."""
+    ids = {}
+    for codigo, nombre, ciudades, por_peludos, largos in seed.PLANES_TIMU:
+        resp = await client.post(
+            "/api/v1/planes",
+            json={
+                "codigo": codigo,
+                "nombre": nombre,
+                "ciudades": ciudades,
+                "especies": ["canino", "felino"],
+                "tarifas": {"por_peludos": por_peludos, **largos},
+            },
+            headers=headers,
+        )
+        assert resp.status_code == 201, resp.text
+        ids[codigo] = resp.json()["id"]
+    return ids
+
+
+async def _cotizar(client, headers, ciudad: str, *peludos: tuple[str, str]) -> dict[str, dict]:
+    resp = await client.post(
+        "/api/v1/planes/cotizacion",
+        json={"ciudad": ciudad, "peludos": [{"especie": e, "plan_id": p} for e, p in peludos]},
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    return {c["periodicidad"]: c for c in resp.json()}
+
+
+async def test_los_planes_que_siembra_el_seed_se_pueden_cotizar(db):
+    """En local el seed crea los planes de TIMU: sin tarifas ni ciudades no se podria
+    afiliar a nadie en un stack recien levantado."""
+    creados = {p.codigo: p for p in await db.run_sync(seed.crear_planes_timu)}
+    cotizacion = await db.run_sync(
+        service.cotizar,
+        "Bogota",
+        [("felino", creados["colita_feliz"].id), ("canino", creados["mi_amigo_fiel"].id)],
+        "mensual",
+    )
+    assert cotizacion.valor_mensual == Decimal("91500")
+    with pytest.raises(ReglaNegocio, match="no esta disponible en Bogota"):
+        await db.run_sync(
+            service.cotizar, "Bogota", [("canino", creados["amigos_por_siempre"].id)], "mensual"
+        )
+
+
+async def test_un_plan_guarda_sus_tarifas_y_sus_ciudades(client: AsyncClient, headers, timu):
+    plan = (await client.get(f"/api/v1/planes/{timu['colita_feliz']}", headers=headers)).json()
+    assert plan["ciudades"] == ["Bogota", "Medellin"]
+    assert [(t["peludos"], t["valor"]) for t in plan["tarifas"]] == [
+        (1, "35500.00"),
+        (2, "30500.00"),
+        (3, "26000.00"),
+        (4, "24000.00"),
+    ]
+    assert {t["periodicidad"]: t["valor"] for t in plan["tarifas_periodicidad"]} == {
+        "trimestral": "103800.00",
+        "semestral": "202350.00",
+        "anual": "378000.00",
+    }
+
+
+async def test_un_solo_peludo_tiene_el_descuento_de_cada_periodo(
+    client: AsyncClient, headers, timu
+):
+    opciones = await _cotizar(client, headers, "Medellin", ("felino", timu["colita_feliz"]))
+    resumen = {
+        p: (c["valor_mensual"], c["valor_periodo"], c["descuento"], c["ahorro"])
+        for p, c in opciones.items()
+    }
+    assert resumen == {
+        "mensual": ("35500.00", "35500.00", False, "0.00"),
+        "trimestral": ("35500.00", "103800.00", True, "2700.00"),
+        "semestral": ("35500.00", "202350.00", True, "10650.00"),
+        # El anual de Colita Feliz es un precio especial: se respeta tal cual.
+        "anual": ("35500.00", "378000.00", True, "48000.00"),
+    }
+    assert opciones["mensual"]["tarifa_de"] == 1
+
+
+async def test_con_dos_peludos_cada_uno_paga_la_tarifa_de_dos_aunque_esten_en_planes_distintos(
+    client: AsyncClient, headers, timu
+):
+    opciones = await _cotizar(
+        client,
+        headers,
+        "Bogota",
+        ("felino", timu["colita_feliz"]),
+        ("canino", timu["mi_amigo_fiel"]),
+    )
+    mensual = opciones["mensual"]
+    assert mensual["tarifa_de"] == 2
+    assert [p["valor_mensual"] for p in mensual["peludos"]] == ["30500.00", "61000.00"]
+    assert mensual["valor_mensual"] == "91500.00"
+    # El descuento de cantidad no se acumula con el de periodicidad: periodos largos sin
+    # descuento, el mensual por los meses.
+    assert (opciones["trimestral"]["valor_periodo"], opciones["trimestral"]["descuento"]) == (
+        "274500.00",
+        False,
+    )
+    assert opciones["anual"]["valor_periodo"] == "1098000.00"
+
+
+async def test_desde_cuatro_peludos_todos_pagan_la_tarifa_de_cuatro_y_el_maximo_es_diez(
+    client: AsyncClient, headers, timu
+):
+    cinco = [("canino", timu["colita_feliz"])] * 5
+    mensual = (await _cotizar(client, headers, "Medellin", *cinco))["mensual"]
+    assert (mensual["tarifa_de"], mensual["valor_mensual"]) == (4, "120000.00")
+    once = await client.post(
+        "/api/v1/planes/cotizacion",
+        json={
+            "ciudad": "Medellin",
+            "peludos": [{"especie": "canino", "plan_id": timu["colita_feliz"]}] * 11,
+        },
+        headers=headers,
+    )
+    assert once.status_code == 422 and "maximo 10" in once.text
+
+
+async def test_la_cotizacion_respeta_la_ciudad_y_la_especie_del_plan(
+    client: AsyncClient, headers, timu
+):
+    en_bogota = await client.post(
+        "/api/v1/planes/cotizacion",
+        json={
+            "ciudad": "Bogota",
+            "peludos": [{"especie": "canino", "plan_id": timu["amigos_por_siempre"]}],
+        },
+        headers=headers,
+    )
+    assert en_bogota.status_code == 422 and "no esta disponible en Bogota" in en_bogota.text
+    ave = await client.post(
+        "/api/v1/planes/cotizacion",
+        json={
+            "ciudad": "Medellin",
+            "peludos": [{"especie": "ave", "plan_id": timu["colita_feliz"]}],
+        },
+        headers=headers,
+    )
+    assert ave.status_code == 422 and "no cubre: ave" in ave.text
+    # El listado por ciudad solo trae lo que se vende alli.
+    bogota = (await client.get("/api/v1/planes?ciudad=Bogota", headers=headers)).json()
+    assert {p["codigo"] for p in bogota} == {"colita_feliz", "mi_amigo_fiel"}
+
+
+async def test_el_administrador_cambia_tarifas_y_ciudades_sin_borrar_nada(
+    client: AsyncClient, db, headers, timu
+):
+    plan = timu["colita_feliz"]
+    resp = await client.put(
+        f"/api/v1/planes/{plan}/tarifas",
+        json={"por_peludos": ["36000", "31000", "26500", "24500"], "semestral": "205000"},
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    # Sin trimestral ni anual: esos descuentos se retiran.
+    assert [t["periodicidad"] for t in resp.json()["tarifas_periodicidad"]] == ["semestral"]
+    opciones = await _cotizar(client, headers, "Medellin", ("canino", plan))
+    assert (opciones["trimestral"]["valor_periodo"], opciones["trimestral"]["descuento"]) == (
+        "108000.00",
+        False,
+    )
+    retiradas = await db.scalar(
+        text("SELECT count(*) FROM tarifas_periodicidad WHERE plan_id = :p AND NOT activa"),
+        {"p": plan},
+    )
+    assert retiradas == 2
+
+    resp = await client.put(f"/api/v1/planes/{plan}/ciudades", json=["medellin"], headers=headers)
+    assert resp.status_code == 200 and resp.json()["ciudades"] == ["Medellin"]
+    resp = await client.put(
+        f"/api/v1/planes/{plan}/ciudades", json=["Medellin", "Bogota"], headers=headers
+    )
+    assert resp.json()["ciudades"] == ["Bogota", "Medellin"]
+    filas = await db.scalar(
+        text("SELECT count(*) FROM ciudades_plan WHERE plan_id = :p"), {"p": plan}
+    )
+    assert filas == 2  # Bogota volvio a activarse; no se creo otra fila
+
+    tres = await client.put(
+        f"/api/v1/planes/{plan}/tarifas",
+        json={"por_peludos": ["1", "2", "3"]},
+        headers=headers,
+    )
+    assert tres.status_code == 422
+
+
+async def test_solo_el_administrador_cambia_tarifas(client: AsyncClient, db, timu):
+    await crear_usuario(db, "comercial@timu.co", Rol.COMERCIAL)
+    comercial = await login(client, "comercial@timu.co")
+    resp = await client.put(
+        f"/api/v1/planes/{timu['colita_feliz']}/tarifas",
+        json={"por_peludos": ["1", "1", "1", "1"]},
+        headers=comercial,
+    )
+    assert resp.status_code == 403
+    # Cotizar si: el equipo comercial la usa para afiliar.
+    opciones = await _cotizar(client, comercial, "Medellin", ("canino", timu["colita_feliz"]))
+    assert opciones["mensual"]["valor_periodo"] == "35500.00"
 
 
 # --- F1-PLA-04 --------------------------------------------------------------------------------
@@ -142,8 +355,6 @@ async def test_no_cambia_de_plan_en_mora(db):
     _, contrato = await fabricas.afiliada(db, hoy() - timedelta(days=10), basico)
     await db.run_sync(cartera.reevaluar_estado, contrato)
     import pytest
-
-    from app.core.errores import ReglaNegocio
 
     with pytest.raises(ReglaNegocio, match="al dia"):
         await db.run_sync(contratos.cambiar_plan, contrato, superior, None)
