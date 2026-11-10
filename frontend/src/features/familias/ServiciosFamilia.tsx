@@ -62,7 +62,7 @@ export function ServiciosFamilia({ familia }: { familia: FamiliaRead }) {
             ))}
           </select>
         </label>
-        <label className="campo acciones">
+        <label className="acciones">
           <input
             type="checkbox"
             checked={filtros.incluir_cancelados ?? false}

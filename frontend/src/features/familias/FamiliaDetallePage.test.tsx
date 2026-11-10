@@ -8,7 +8,7 @@ import { FamiliaDetallePage } from './FamiliaDetallePage'
 import { FAMILIA, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
-import type { EstadoCuenta, MascotaRead } from '@/types'
+import type { DocumentoRead, EstadoCuenta, MascotaRead } from '@/types'
 
 const API = '*/api/v1'
 
@@ -727,5 +727,133 @@ describe('FamiliaDetallePage', () => {
     expect(within(modal).queryByRole('button', { name: 'Guardar cambios' })).not.toBeInTheDocument()
     expect(within(modal).queryByLabelText(/foto/i, { selector: 'input' })).not.toBeInTheDocument()
     expect(within(modal).getByLabelText('Nombre')).toBeDisabled()
+  })
+
+  const SUBIDO: DocumentoRead = {
+    archivo_id: 'a1',
+    documento_id: 'd1',
+    origen: 'subido',
+    categoria: 'identificacion',
+    descripcion: 'Cédula del titular',
+    mascota_id: null,
+    nombre: 'cedula.pdf',
+    content_type: 'application/pdf',
+    tamano_bytes: 2048,
+    visible_familia: false,
+    creado_en: '2026-11-02T15:00:00Z',
+    url: 'https://s3.local/cedula.pdf',
+  }
+  const CONTRATO_PDF: DocumentoRead = {
+    ...SUBIDO,
+    archivo_id: 'a2',
+    documento_id: null,
+    origen: 'contrato',
+    categoria: null,
+    descripcion: 'Contrato TM-0001',
+    visible_familia: true,
+    url: 'https://s3.local/contrato.pdf',
+  }
+
+  async function abrirDocumentos(documentos: DocumentoRead[] = [SUBIDO, CONTRATO_PDF]) {
+    const consultas: URLSearchParams[] = []
+    server.use(
+      http.get(`${API}/familias/:id/documentos`, ({ request }) => {
+        consultas.push(new URL(request.url).searchParams)
+        return HttpResponse.json(documentos)
+      }),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Documentos' }))
+    return { user, consultas }
+  }
+
+  it('lista los documentos subidos y los generados, y filtra por mascota', async () => {
+    const { user, consultas } = await abrirDocumentos()
+    const tabla = await screen.findByRole('table', { name: 'Documentos' })
+    expect(within(tabla).getByRole('link', { name: 'Cédula del titular' })).toHaveAttribute('href', SUBIDO.url)
+    expect(within(tabla).getByText('Identificación')).toBeInTheDocument()
+    expect(within(tabla).getByText('Contrato')).toBeInTheDocument()
+    expect(within(tabla).getAllByText('Familia')).toHaveLength(2)
+    // Solo los subidos se editan o se quitan; los generados se gestionan donde nacen.
+    expect(within(tabla).getAllByRole('button', { name: 'Editar' })).toHaveLength(1)
+    await user.selectOptions(screen.getByLabelText('Mascota'), 'Luna')
+    await waitFor(() => expect(consultas.at(-1)?.get('mascota_id')).toBe(FAMILIA.mascotas?.[0]?.id))
+  })
+
+  it('sube un documento y no envía uno de más de 10 MB', async () => {
+    const cuerpos: string[] = []
+    server.use(
+      http.post(`${API}/familias/:id/documentos`, async ({ request }) => {
+        cuerpos.push(await request.text())
+        return HttpResponse.json(SUBIDO, { status: 201 })
+      }),
+    )
+    const { user } = await abrirDocumentos([])
+    expect(await screen.findByText('No hay documentos.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Subir documento' }))
+    const modal = await screen.findByRole('dialog')
+    const grande = new File([new Uint8Array(10 * 1024 * 1024 + 1)], 'grande.pdf', { type: 'application/pdf' })
+    await user.selectOptions(within(modal).getByLabelText('Categoría'), 'Examen externo')
+    await user.click(within(modal).getByRole('button', { name: 'Subir' }))
+    expect(await within(modal).findByText('Elige el fichero que vas a subir.')).toBeInTheDocument()
+    await user.upload(within(modal).getByLabelText('Fichero'), grande)
+    expect(await within(modal).findByText(/pesa más de 10 MB/)).toBeInTheDocument()
+    await user.click(within(modal).getByRole('button', { name: 'Subir' }))
+    expect(cuerpos).toHaveLength(0)
+
+    await user.upload(within(modal).getByLabelText('Fichero'), new File(['%PDF'], 'eco.pdf', { type: 'application/pdf' }))
+    await user.selectOptions(within(modal).getByLabelText('De'), 'Luna')
+    await user.type(within(modal).getByLabelText('Descripción (opcional)'), 'Ecografía')
+    await user.click(within(modal).getByLabelText('La familia lo ve en su portal'))
+    await user.click(within(modal).getByRole('button', { name: 'Subir' }))
+    await waitFor(() => expect(cuerpos).toHaveLength(1))
+    for (const [campo, valor] of [
+      ['categoria', 'examen_externo'],
+      ['visible_familia', 'true'],
+      ['descripcion', 'Ecografía'],
+      ['mascota_id', FAMILIA.mascotas?.[0]?.id ?? ''],
+    ]) {
+      expect(cuerpos[0]).toMatch(new RegExp(`name="${campo}"\\r\\n\\r\\n${valor}`))
+    }
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+
+  it('edita y quita un documento subido', async () => {
+    let cambios: unknown = null
+    let quitado = ''
+    server.use(
+      http.patch(`${API}/documentos/:id`, async ({ request }) => {
+        cambios = await request.json()
+        return HttpResponse.json(SUBIDO)
+      }),
+      http.post(`${API}/documentos/:id/baja`, ({ params }) => {
+        quitado = String(params.id)
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    const { user } = await abrirDocumentos()
+    await user.click(await screen.findByRole('button', { name: 'Editar' }))
+    let modal = await screen.findByRole('dialog')
+    await user.clear(within(modal).getByLabelText('Descripción (opcional)'))
+    await user.click(within(modal).getByLabelText('La familia lo ve en su portal'))
+    await user.click(within(modal).getByRole('button', { name: 'Guardar' }))
+    await waitFor(() =>
+      expect(cambios).toEqual({ categoria: 'identificacion', descripcion: null, visible_familia: true }),
+    )
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+    await user.click(screen.getByRole('button', { name: 'Quitar' }))
+    modal = await screen.findByRole('dialog')
+    await user.click(within(modal).getByRole('button', { name: 'Quitar documento' }))
+    await waitFor(() => expect(quitado).toBe('d1'))
+  })
+
+  it('dice cuándo no pudo cargar los documentos', async () => {
+    server.use(http.get(`${API}/familias/:id/documentos`, () => HttpResponse.json({ detail: 'Fallo' }, { status: 500 })))
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Documentos' }))
+    expect(await screen.findByText(/No fue posible cargar los documentos/)).toBeInTheDocument()
   })
 })

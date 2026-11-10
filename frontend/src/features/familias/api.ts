@@ -3,7 +3,9 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { api } from '@/api/client'
 import type {
   CambioHistorial,
+  CategoriaDocumento,
   ContactoRead,
+  DocumentoRead,
   EstadoAfiliacion,
   EstadoCuenta,
   FamiliaRead,
@@ -264,6 +266,69 @@ export function useMensajesFamilia(familiaId: string, offset: number) {
           params: { familia_id: familiaId, orden: '-created_at', limit: 20, offset },
         })
       ).data,
+  })
+}
+
+/** 6.1 Documentos de la familia: los subidos y los generados (contratos, carnets, clínicos). */
+export function useDocumentos(familiaId: string, mascotaId?: string) {
+  return useQuery({
+    queryKey: ['documentos', familiaId, mascotaId ?? null],
+    queryFn: async () =>
+      (
+        await api.get<DocumentoRead[]>(`/familias/${familiaId}/documentos`, {
+          params: mascotaId ? { mascota_id: mascotaId } : undefined,
+        })
+      ).data,
+  })
+}
+
+export interface NuevoDocumento {
+  archivo: File
+  categoria: CategoriaDocumento
+  descripcion?: string
+  mascota_id?: string
+  visible_familia: boolean
+}
+
+function useInvalidarDocumentos(familiaId: string) {
+  const qc = useQueryClient()
+  return () => qc.invalidateQueries({ queryKey: ['documentos', familiaId] })
+}
+
+export function useSubirDocumento(familiaId: string) {
+  const invalidar = useInvalidarDocumentos(familiaId)
+  return useMutation({
+    mutationFn: async ({ archivo, ...datos }: NuevoDocumento) => {
+      const forma = new FormData()
+      forma.append('archivo', archivo)
+      forma.append('categoria', datos.categoria)
+      forma.append('visible_familia', String(datos.visible_familia))
+      if (datos.descripcion) forma.append('descripcion', datos.descripcion)
+      if (datos.mascota_id) forma.append('mascota_id', datos.mascota_id)
+      return (await api.post<DocumentoRead>(`/familias/${familiaId}/documentos`, forma)).data
+    },
+    onSuccess: invalidar,
+  })
+}
+
+export type CambiosDocumento = { categoria?: CategoriaDocumento; descripcion?: string | null; visible_familia?: boolean }
+
+export function useActualizarDocumento(familiaId: string) {
+  const invalidar = useInvalidarDocumentos(familiaId)
+  return useMutation({
+    mutationFn: async ({ id, ...cambios }: CambiosDocumento & { id: string }) =>
+      (await api.patch<DocumentoRead>(`/documentos/${id}`, cambios)).data,
+    onSuccess: invalidar,
+  })
+}
+
+export function useQuitarDocumento(familiaId: string) {
+  const invalidar = useInvalidarDocumentos(familiaId)
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.post(`/documentos/${id}/baja`)
+    },
+    onSuccess: invalidar,
   })
 }
 

@@ -15,6 +15,7 @@ import { CarteraFamilia } from './CarteraFamilia'
 import { ComunicacionesFamilia } from './ComunicacionesFamilia'
 import { ContactosFamilia } from './ContactosFamilia'
 import { DatosFamilia } from './DatosFamilia'
+import { DocumentosFamilia } from './DocumentosFamilia'
 import { ServiciosFamilia } from './ServiciosFamilia'
 import { MascotasFamilia } from './MascotasFamilia'
 
@@ -58,6 +59,7 @@ export function FamiliaDetallePage() {
               { valor: 'mascotas', titulo: 'Mascotas', contenido: <MascotasFamilia familia={f} /> },
               { valor: 'cartera', titulo: 'Cartera', contenido: <CarteraFamilia familia={f} /> },
               { valor: 'servicios', titulo: 'Servicios', contenido: <ServiciosFamilia familia={f} /> },
+              { valor: 'documentos', titulo: 'Documentos', contenido: <DocumentosFamilia familia={f} /> },
               {
                 valor: 'comunicaciones',
                 titulo: 'Comunicaciones',

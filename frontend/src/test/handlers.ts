@@ -120,6 +120,7 @@ export const handlers = [
     })
   }),
   http.get(`${API}/comunicaciones/mensajes`, () => HttpResponse.json(vacia)),
+  http.get(`${API}/portal/documentos`, () => HttpResponse.json([])),
   http.get(`${API}/tareas`, () => HttpResponse.json(vacia)),
   http.get(`${API}/preventivos`, () => HttpResponse.json(vacia)),
   http.get(`${API}/cartera/contratos`, () => HttpResponse.json(vacia)),
