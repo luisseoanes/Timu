@@ -8,7 +8,7 @@ Versión navegable con filtros: [https://claude.ai/code/artifact/15e07e31-e456-4
 
 ## Estado
 
-Revisado el 2026-11-04 contra el código de `main`; `F1-FAM-06` a `F1-FAM-09` se añadieron el 2026-11-09 al revisar el requisito 6.1, y `F1-PLA-01` a `F1-PLA-03` y `F1-CAR-02` se reescribieron el 2026-11-10 con el modelo de precios de TIMU. Cada unidad lleva uno de tres estados:
+Revisado el 2026-11-04 contra el código de `main`; `F1-FAM-06` a `F1-FAM-09` se añadieron el 2026-11-09 al revisar el requisito 6.1, `F1-PLA-01` a `F1-PLA-03` y `F1-CAR-02` se reescribieron el 2026-11-10 con el modelo de precios de TIMU, y `F1-AFI-01`, el mismo día, con el registro en línea por pasos. Cada unidad lleva uno de tres estados:
 
 - **Hecho**: implementado y cubierto por pruebas automáticas que corren en el CI. Las integraciones externas (Wompi, Meta, Google Maps, Claude, correo) se prueban contra dobles: ninguna se ha validado desde el repositorio contra el proveedor real, y `F1-CAR-08` sigue dependiendo de la habilitación comercial de la pasarela.
 - **Parcial**: hay implementación, pero el criterio de aceptación no se cumple entero. La celda dice qué falta.
@@ -111,7 +111,7 @@ Familias, cartera, planes, servicios, afiliación y WhatsApp base.
 
 | ID | Trabajo | Criterio de aceptación | Req. | Estado |
 | --- | --- | --- | --- | --- |
-| `F1-AFI-01` | Formulario, pago, contrato y perfil sin redigitación | El ciclo completo corre solo desde el envío del formulario hasta el perfil creado y el plan activo. | 6.12 | Hecho |
+| `F1-AFI-01` | Registro en línea: pago, contrato y perfil sin redigitación | Por pasos: ciudad con cobertura (las demás solo ven el aviso), solo perros y gatos, un plan por peludo y la forma de pago, con el valor que calcula el backend. Tras el pago, un formulario con los datos de la familia y de cada peludo crea el perfil, el contrato y el acceso al portal sin redigitar. Quien no lo completa recibe el enlace de nuevo a las 24 h y deja una tarea comercial a las 48 h; un documento con contrato vigente pasa a revisión del equipo en vez de afiliarse dos veces. | 6.1 · 6.12 | Hecho |
 | `F1-AFI-02` | Contrato en PDF y aceptación | Se genera el documento con los datos reales y queda registrada la aceptación con fecha y medio. | 6.12 | Hecho |
 | `F1-AFI-03` | Calendario preventivo desde la afiliación | Al afiliar, cada mascota queda con su calendario preventivo calculado por especie y edad. | 6.13 | Hecho |
 
