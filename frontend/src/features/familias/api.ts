@@ -3,6 +3,7 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { api } from '@/api/client'
 import type {
   CambioHistorial,
+  ContactoRead,
   EstadoAfiliacion,
   EstadoCuenta,
   FamiliaRead,
@@ -174,3 +175,40 @@ export function useMascotas(ids: string[]) {
   consultas.forEach((c) => c.data && porId.set(c.data.id, c.data))
   return porId
 }
+
+/** 6.1 Contacto adicional: solo consulta, sin acceso a la plataforma ni mensajes. */
+export interface DatosContacto {
+  nombre: string
+  telefono: string
+  relacion?: string
+  email?: string
+}
+
+export function useAgregarContacto(familiaId: string) {
+  const invalidar = useInvalidarFamilias()
+  return useMutation({
+    mutationFn: async (datos: DatosContacto) =>
+      (await api.post<ContactoRead>(`/familias/${familiaId}/contactos`, datos)).data,
+    onSuccess: invalidar,
+  })
+}
+
+export function useActualizarContacto(familiaId: string) {
+  const invalidar = useInvalidarFamilias()
+  return useMutation({
+    mutationFn: async ({ id, ...datos }: Partial<DatosContacto> & { id: string }) =>
+      (await api.patch<ContactoRead>(`/familias/${familiaId}/contactos/${id}`, datos)).data,
+    onSuccess: invalidar,
+  })
+}
+
+export function useBajaContacto(familiaId: string) {
+  const invalidar = useInvalidarFamilias()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.post(`/familias/${familiaId}/contactos/${id}/baja`)
+    },
+    onSuccess: invalidar,
+  })
+}
+

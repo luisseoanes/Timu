@@ -13,6 +13,7 @@ import type { CambioHistorial, FamiliaRead } from '@/types'
 import { useFamilia, useHistorial, useServiciosFamilia } from './api'
 import { AccionesFamilia } from './AccionesFamilia'
 import { CarteraFamilia } from './CarteraFamilia'
+import { ContactosFamilia } from './ContactosFamilia'
 import { DatosFamilia } from './DatosFamilia'
 import { MascotasFamilia } from './MascotasFamilia'
 
@@ -43,7 +44,16 @@ export function FamiliaDetallePage() {
           <Pestanas
             etiqueta="Secciones de la familia"
             pestanas={[
-              { valor: 'datos', titulo: 'Datos', contenido: <DatosFamilia familia={f} /> },
+              {
+                valor: 'datos',
+                titulo: 'Datos',
+                contenido: (
+                  <>
+                    <DatosFamilia familia={f} />
+                    <ContactosFamilia familia={f} />
+                  </>
+                ),
+              },
               { valor: 'mascotas', titulo: 'Mascotas', contenido: <MascotasFamilia familia={f} /> },
               { valor: 'cartera', titulo: 'Cartera', contenido: <CarteraFamilia familia={f} /> },
               { valor: 'servicios', titulo: 'Servicios', contenido: <ServiciosFamilia familia={f} /> },

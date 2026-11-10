@@ -395,4 +395,63 @@ describe('FamiliaDetallePage', () => {
     await user.click(within(modal).getByRole('button', { name: 'Confirmar baja' }))
     await waitFor(() => expect(baja).toEqual({ motivo: 'Falleció' }))
   })
+
+  const CONTACTO = { id: 'k1', posicion: 1, nombre: 'Rocío Ruiz', telefono: '+573009998877', relacion: 'hermana', email: null }
+
+  it('lista los contactos adicionales y no deja pasar de tres', async () => {
+    server.use(
+      http.get(`${API}/familias/:id`, () =>
+        HttpResponse.json({
+          ...FAMILIA,
+          contactos: [
+            CONTACTO,
+            { ...CONTACTO, id: 'k2', posicion: 2, nombre: 'Pedro Ruiz', relacion: null },
+            { ...CONTACTO, id: 'k3', posicion: 3, nombre: 'Marta Gil', relacion: null },
+          ],
+        }),
+      ),
+    )
+    abrirFicha()
+    expect(await screen.findByText('Rocío Ruiz')).toBeInTheDocument()
+    expect(screen.getByText('hermana')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Añadir contacto' })).toBeDisabled()
+  })
+
+  it('añade un contacto con solo los campos que se llenaron', async () => {
+    let enviado: unknown = null
+    server.use(
+      http.post(`${API}/familias/:id/contactos`, async ({ request }) => {
+        enviado = await request.json()
+        return HttpResponse.json(CONTACTO, { status: 201 })
+      }),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    expect(await screen.findByText('Esta familia no tiene contactos adicionales.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Añadir contacto' }))
+    const modal = await screen.findByRole('dialog')
+    await user.type(within(modal).getByLabelText('Nombre'), 'Rocío Ruiz')
+    await user.type(within(modal).getByLabelText('Celular'), '3009998877')
+    await user.type(within(modal).getByLabelText('Relación (opcional)'), 'hermana')
+    await user.click(within(modal).getByRole('button', { name: 'Guardar contacto' }))
+    await waitFor(() => expect(enviado).toEqual({ nombre: 'Rocío Ruiz', telefono: '3009998877', relacion: 'hermana' }))
+  })
+
+  it('quita un contacto tras confirmarlo en la página', async () => {
+    let quitado = ''
+    server.use(
+      http.get(`${API}/familias/:id`, () => HttpResponse.json({ ...FAMILIA, contactos: [CONTACTO] })),
+      http.post(`${API}/familias/:id/contactos/:contacto/baja`, ({ params }) => {
+        quitado = String(params.contacto)
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('button', { name: 'Quitar' }))
+    const modal = await screen.findByRole('dialog')
+    expect(within(modal).getByText('Quitar a Rocío Ruiz')).toBeInTheDocument()
+    await user.click(within(modal).getByRole('button', { name: 'Quitar contacto' }))
+    await waitFor(() => expect(quitado).toBe('k1'))
+  })
 })
