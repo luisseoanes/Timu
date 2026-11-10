@@ -467,8 +467,11 @@ async def test_cada_check_y_cada_unico_del_modelo_estan_en_la_base(db: AsyncSess
                     " JOIN pg_class c ON c.oid = i.indexrelid"
                     " WHERE c.relnamespace = 'public'::regnamespace AND i.indisunique"
                     " AND c.relname LIKE 'uq\\_%'"
-                    " AND NOT EXISTS"
-                    " (SELECT 1 FROM pg_constraint k WHERE k.conindid = i.indexrelid)"
+                    # Los que respaldan una restriccion UNIQUE o PRIMARY KEY se comparan
+                    # arriba; una llave foranea tambien apunta al indice que referencia, y
+                    # no por eso deja de ser un `__unicos__`.
+                    " AND NOT EXISTS (SELECT 1 FROM pg_constraint k"
+                    " WHERE k.conindid = i.indexrelid AND k.contype IN ('u', 'p'))"
                 )
             )
         )
@@ -1209,6 +1212,7 @@ _LISTADOS_DE_FAMILIA = (
     "/api/v1/servicios/resumen?familia_id={familia}",
     "/api/v1/servicios?familia_id={familia}&mascota_id={mascota}",
     "/api/v1/comunicaciones/mensajes?familia_id={familia}",
+    "/api/v1/familias/{familia}/documentos",
 )
 
 

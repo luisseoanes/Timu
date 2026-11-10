@@ -98,6 +98,8 @@ class Mascota(Base, UUIDMixin, TimestampMixin, Auditable):
         "peso_positivo": "peso_kg IS NULL OR peso_kg > 0",
         "baja_coherente": "activa = (dada_de_baja_en IS NULL)",
     }
+    # Destino de la clave compuesta de documentos_familia: la mascota de esa familia.
+    __unicos__ = {"id_familia": (["id", "familia_id"], None)}
     __columna_familia__ = "familia_id"
 
     familia_id: Mapped[UUID] = mapped_column(

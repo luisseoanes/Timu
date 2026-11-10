@@ -67,6 +67,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "cuotas": "SIU",
         "destinatarios_campana": "SU",
         "distancias_cache": "S",
+        "documentos_familia": "SIU",
         "ejecuciones_campana": "SU",
         "encuestas": "S",
         "especies": "SIU",
@@ -143,6 +144,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "conversaciones_whatsapp": "S",
         "cuotas": "SIU",
         "destinatarios_campana": "SU",
+        "documentos_familia": "SIU",
         "ejecuciones_campana": "SU",
         "encuestas": "S",
         "especies": "S",
@@ -189,6 +191,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "contactos_familia": "S",
         "contratos": "S",
         "cuotas": "S",
+        "documentos_familia": "S",
         "especies": "S",
         "esquemas_preventivos": "S",
         "eventos_preventivos": "S",
@@ -228,6 +231,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "cuotas": "S",
         "destinatarios_campana": "S",
         "distancias_cache": "S",
+        "documentos_familia": "SIU",
         "ejecuciones_campana": "S",
         "encuestas": "S",
         "especies": "S",
@@ -280,6 +284,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "cuotas": "S",
         "destinatarios_campana": "S",
         "distancias_cache": "S",
+        "documentos_familia": "SIU",
         "ejecuciones_campana": "S",
         "encuestas": "S",
         "especies": "S",
@@ -377,6 +382,8 @@ CONDICIONES: dict[str, dict[str, str | dict[str, str]]] = {
         "familias": f"id = {_F} OR usuario_portal_id = app_usuario()",
         "mascotas": f"familia_id = {_F}",
         "contactos_familia": f"familia_id = {_F}",
+        # Solo lo que el equipo marco visible y sigue vigente.
+        "documentos_familia": f"familia_id = {_F} AND visible_familia AND activo",
         "contratos": f"familia_id = {_F}",
         "pagos": f"familia_id = {_F}",
         "servicios": f"familia_id = {_F}",
@@ -396,6 +403,8 @@ CONDICIONES: dict[str, dict[str, str | dict[str, str]]] = {
             " OR id IN (SELECT archivo_id FROM adjuntos_clinicos"
             f" WHERE historia_id IN {_HISTORIAS})"
             f" OR id IN (SELECT archivo_id FROM carnets_emitidos WHERE mascota_id IN {_MASCOTAS})"
+            " OR id IN (SELECT archivo_id FROM documentos_familia"
+            f" WHERE familia_id = {_F} AND visible_familia AND activo)"
         ),
         "mensajes": f"familia_id = {_F}",
         "bajas_comunicaciones": f"destino IN {_contactos(f'({_F})')}",

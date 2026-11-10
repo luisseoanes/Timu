@@ -10,6 +10,8 @@ export type EstadoServicio = 'solicitado' | 'agendado' | 'en_ruta' | 'en_atencio
 
 export type TipoDocumento = 'CC' | 'CE' | 'TI' | 'PA' | 'PPT' | 'NIT'
 
+export type CategoriaDocumento = 'identificacion' | 'examen_externo' | 'otro'
+
 export interface MascotaRead {
   nombre: string
   especie: string
@@ -32,6 +34,21 @@ export interface ContactoRead {
   telefono: string
   relacion?: string | null
   email?: string | null
+}
+
+export interface DocumentoRead {
+  archivo_id: string
+  documento_id?: string | null
+  origen: 'subido' | 'contrato' | 'carnet' | 'adjunto_clinico' | 'formula'
+  categoria?: CategoriaDocumento | null
+  descripcion?: string | null
+  mascota_id?: string | null
+  nombre: string
+  content_type: string
+  tamano_bytes: number
+  visible_familia: boolean
+  creado_en: string
+  url?: string | null
 }
 
 export interface FamiliaRead {

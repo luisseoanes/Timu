@@ -18,6 +18,8 @@ from app.modules.cartera import contratos
 from app.modules.cartera import service as cartera
 from app.modules.cartera.schemas import EstadoCuenta
 from app.modules.clinica import service as clinica
+from app.modules.documentos import service as documentos
+from app.modules.documentos.service import DocumentoRead
 from app.modules.familias.models import Familia
 from app.modules.familias.schemas import FamiliaRead
 from app.modules.portal import service
@@ -117,6 +119,16 @@ async def contrato(db: DbSession, familia: FamiliaActual) -> dict[str, str]:
     if vigente is None:
         raise NoEncontrado("La familia no tiene contrato vigente")
     return await db.run_sync(cartera.url_documento, vigente)
+
+
+@router.get("/documentos", response_model=list[DocumentoRead])
+async def mis_documentos(
+    db: DbSession, familia: FamiliaActual, mascota_id: UUID | None = None
+) -> Any:
+    """6.1 Sus contratos, sus carnets y los documentos que el equipo marco visibles."""
+    return await db.run_sync(
+        lambda s: documentos.listar(s, familia, mascota_id=mascota_id, para_familia=True)
+    )
 
 
 @router.get("/estado-cuenta", response_model=EstadoCuenta)

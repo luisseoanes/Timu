@@ -52,6 +52,7 @@ from app.modules.comunicaciones.models import (  # noqa: F401
     PlantillaWhatsApp,
 )
 from app.modules.dashboard.models import ReporteProgramado  # noqa: F401
+from app.modules.documentos.models import DocumentoFamilia  # noqa: F401
 from app.modules.encuestas.models import ConfiguracionEncuesta, Encuesta  # noqa: F401
 from app.modules.familias.models import ContactoFamilia, Familia, Mascota  # noqa: F401
 from app.modules.ia.models import CasoPruebaIA, ConsultaIA, PromptIA  # noqa: F401

@@ -99,6 +99,15 @@ class PropositoArchivo(StrEnum):
     CONTRATO = "contrato"
     FORMULA = "formula"
     CARNET = "carnet"
+    DOCUMENTO_FAMILIA = "documento_familia"
+
+
+class CategoriaDocumento(StrEnum):
+    """6.1 Categoria de un documento que el equipo adjunta a la familia o a una mascota."""
+
+    IDENTIFICACION = "identificacion"
+    EXAMEN_EXTERNO = "examen_externo"
+    OTRO = "otro"
 
 
 class PropositoToken(StrEnum):

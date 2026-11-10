@@ -15,6 +15,7 @@ from app.modules.catalogos.models import Ciudad
 from app.modules.catalogos.service import cargar
 from app.modules.comercial.models import Interesado
 from app.modules.comunicaciones.models import Mensaje
+from app.modules.documentos.models import DocumentoFamilia
 from app.modules.familias import service
 from app.modules.familias.models import ContactoFamilia, Familia
 from tests import fabricas
@@ -591,6 +592,30 @@ async def _familia_con_rastro(db) -> tuple[Familia, Usuario]:
             email="rocio@ejemplo.co",
         )
     )
+    # Documentos subidos: el de identificacion se purga; el examen externo es clinico y queda.
+    for clave, categoria, descripcion in (
+        ("documento_familia/2026/11/cedula.pdf", "identificacion", "Cedula de Ana Ruiz"),
+        ("documento_familia/2026/11/eco.pdf", "examen_externo", "Ecografia de Mascota0"),
+    ):
+        archivo = Archivo(
+            clave=clave,
+            proposito="documento_familia",
+            nombre_original=f"{descripcion}.pdf",
+            content_type="application/pdf",
+            tamano_bytes=10,
+            sha256="0" * 64,
+        )
+        db.add(archivo)
+        await db.flush()
+        db.add(
+            DocumentoFamilia(
+                familia_id=familia.id,
+                mascota_id=familia.mascotas[0].id,
+                archivo_id=archivo.id,
+                categoria=categoria,
+                descripcion=descripcion,
+            )
+        )
     await db.commit()
     return familia, portal
 
@@ -611,22 +636,33 @@ async def test_anonimizar_no_deja_datos_personales(client: AsyncClient, db, head
         "interesados",
         "mensajes",
         "contactos_familia",
+        "documentos_familia",
         "auditoria",
     ):
         filas = await db.scalar(
             text(f"SELECT count(*) FROM {tabla} t WHERE to_jsonb(t)::text ~ :pii"),
             {
                 "pii": "Ana Ruiz|ana@ejemplo\\.co|Hola Ana|3001112233|Mascota0|Rosales|Torre 9"
-                "|Rocio|3009998877|rocio@ejemplo|hermana"
+                "|Rocio|3009998877|rocio@ejemplo|hermana|Cedula de|Ecografia de"
             },
         )
         assert filas == 0, tabla
     await db.refresh(portal)
     assert portal.activo is False
     # Las fotos se borran del almacenamiento despues de confirmar, no dentro de la transaccion.
-    assert await tareas.de("familias.purgar_archivos") == [(["foto_mascota/2026/11/abc.jpg"],)]
-    purgada = await db.scalar(text("SELECT purgado_en FROM archivos WHERE clave LIKE 'foto%'"))
-    assert purgada is not None
+    ((purgadas,),) = await tareas.de("familias.purgar_archivos")
+    assert sorted(purgadas) == [
+        "documento_familia/2026/11/cedula.pdf",
+        "foto_mascota/2026/11/abc.jpg",
+    ]
+    filas = await db.execute(
+        text("SELECT clave, purgado_en IS NOT NULL, nombre_original FROM archivos")
+    )
+    estado = {clave: (purgado, nombre) for clave, purgado, nombre in filas.tuples()}
+    assert estado["foto_mascota/2026/11/abc.jpg"] == (True, "anonimizado")
+    assert estado["documento_familia/2026/11/cedula.pdf"] == (True, "anonimizado")
+    # El examen externo es clinico: se conserva el fichero, no su descripcion ni su nombre.
+    assert estado["documento_familia/2026/11/eco.pdf"] == (False, "anonimizado")
 
 
 async def test_anonimizar_dos_veces_o_con_contrato_vigente(client: AsyncClient, db, headers):

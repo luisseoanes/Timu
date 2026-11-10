@@ -16,6 +16,7 @@ from app.modules.clinica.router import router as clinica_router
 from app.modules.comercial.router import router as comercial_router
 from app.modules.comunicaciones.router import router as comunicaciones_router
 from app.modules.dashboard.router import router as dashboard_router
+from app.modules.documentos.router import router as documentos_router
 from app.modules.encuestas.router import router as encuestas_router
 from app.modules.familias.router import mascotas_router
 from app.modules.familias.router import router as familias_router
@@ -58,6 +59,7 @@ for r in (
     campanas_router,
     comercial_router,
     segmentos_router,
+    documentos_router,
     encuestas_router,
     aliadas_router,
     portal_router,
