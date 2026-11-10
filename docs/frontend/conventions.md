@@ -74,6 +74,10 @@ La sesión vive en una **cookie httpOnly con SameSite=lax** que pone el backend 
 ingresar. El frontend no guarda ni lee tokens, y hay una regla de ESLint que rechaza
 `localStorage`: es legible desde JavaScript y una XSS se llevaría la sesión, con
 historia clínica de por medio. Para saber si hay sesión se pregunta a `/auth/me`.
+Única excepción: el token de un solo uso del registro en línea vive en `sessionStorage`
+(`features/publico/registro.ts`), solo en la pestaña que pagó. No abre sesión y deja de valer
+al completar el registro; si falta (otra pestaña u otro equipo), la familia usa el enlace que
+le llega por correo y WhatsApp.
 
 **Un fallo pasajero nunca cierra la sesión.** Sin respuesta, 408, 429 o 5xx
 (`esErrorPasajero` en `src/lib/errores.ts`) no dicen nada de la sesión: `AuthContext`

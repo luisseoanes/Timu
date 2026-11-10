@@ -4,6 +4,10 @@ Decidido el 2026-11-04. Este documento es el plan de trabajo y el registro de su
 las reglas permanentes que salen de él viven en `backend/CLAUDE.md` y en los guardas de la
 suite, no aquí.
 
+**Cerrado el 2026-11-05**, con las seis fases hechas. Queda como registro de las decisiones y
+de cómo se verificó cada fase. Los cambios posteriores (migraciones `0027` en adelante) siguen
+las reglas de `backend/CLAUDE.md` y no se registran aquí.
+
 ## Principio
 
 **La base garantiza; Python explica.** Toda regla que la base puede hacer cumplir se hace
@@ -17,7 +21,7 @@ de la hora actual.
 
 | Tema | Decisión |
 | --- | --- |
-| Entornos | Solo local y CI; los datos se regeneran con `inicializar` y `datos_demo`. Aun así, toda migración de datos se escribe y se prueba como si hubiera datos reales. |
+| Entornos | Al decidirlo, solo local y CI; los datos se regeneraban con `inicializar` y `datos_demo`. Desde noviembre de 2026 hay un entorno de pruebas en Railway, así que ninguna migración puede dar los datos por desechables: toda migración de datos se escribe y se prueba como si hubiera datos reales. |
 | Motor | PostgreSQL 18: `uuidv7()` y `uuid_extract_version()` nativos. Imagen, `db-test`, CI y cliente de respaldos en la misma versión. |
 | Roles | `timu` dueño del esquema (migraciones, `inicializar`); `timu_app` sin superusuario ni `BYPASSRLS`, para API, worker, beat **y pruebas**. |
 | Contexto | Cada transacción fija con `set_config(..., true)` `app.usuario_id`, `app.rol`, `app.familia_id`, `app.clinica_id` y `app.request_id`. Sin contexto, la política no devuelve filas. Los workers fijan `app.rol = 'sistema'`. |

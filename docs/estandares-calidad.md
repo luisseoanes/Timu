@@ -59,11 +59,16 @@ ciclo y no queda ninguno. Cómo se hizo, en [`deuda-ciclos-dominios.md`](deuda-c
 | Las herramientas de desarrollo y de publicación corren en el CI con sus permisos: ninguna vulnerabilidad en las de Python y ninguna alta o crítica en las de npm (las moderadas quedan listadas en el registro del paso). | Mismo job: `pip-audit -r requirements-dev.txt` y `npm audit --audit-level=high` en el panel y en la raíz |
 | Sin patrones inseguros en el código: `subprocess`, `eval`, `pickle`, SQL armado con cadenas, secretos literales. | `ruff` con las reglas `S`; cada excepción lleva `noqa` con motivo |
 | La sesión no es legible por JavaScript (cookies httpOnly), ni el panel usa `fetch` o `localStorage`. | ESLint del panel, `e2e/sesion.spec.ts` |
+| Datos personales (Ley 1581): anonimizar una familia no deja datos suyos en ninguna tabla ni en la bitácora, y lo clínico se conserva sin las menciones exactas a la familia. El contacto de un registro en línea que nunca se pagó se borra a los seis meses. | `test_anonimizar_no_deja_datos_personales` (recorre todas las tablas; las excepciones van en `CONSERVAN_DATOS` con su motivo), `test_a_los_seis_meses_se_borra_el_contacto_de_lo_que_nunca_se_pago` |
 
 **Deuda**: avisos moderados sin versión corregida en herramientas de desarrollo: `minimatch`
 en la cadena de ESLint y el `npm` que trae `semantic-release`; se ven en el registro del job.
 La auditoría corre en cada empuje, no en un horario (decidido: un aviso nuevo sin empujes se
 ve en el siguiente).
+
+**Deuda (datos personales)**: en el texto libre clínico, una mención indirecta (un apodo,
+solo el nombre de pila) no se detecta al anonimizar. Las familias anonimizadas antes de la
+migración `0036` no se reprocesaron: si producción tiene alguna, se limpia a mano.
 
 ## Integridad de la información
 
@@ -98,7 +103,8 @@ ve en el siguiente).
 webhooks salientes; la API solo admite sesiones de personas. Es lo que pedirían la página
 web, las hojas de cálculo, Google Calendar o las «APIs externas» de la Sección 9. Hay una
 sola pasarela de pagos (`PAYMENTS_PROVIDER` solo admite `wompi`). Ninguna integración se ha
-validado contra el proveedor real desde el repositorio (`docs/backlog.md`).
+validado contra el proveedor real desde el repositorio ([integraciones](integraciones.md); lo
+que falta, en [pendientes externos](pendientes-externos.md)).
 
 ## Sostenibilidad tecnológica
 

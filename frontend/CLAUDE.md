@@ -23,7 +23,9 @@ perfil), el portal de familias (`/portal`) y el de la clínica aliada (`/aliada`
   frontend no guarda ni lee tokens: `localStorage` es legible por JavaScript y una XSS
   se llevaría la sesión, con historia clínica de por medio. Por eso el cliente va con
   `withCredentials: true` y `AuthContext` averigua si hay sesión preguntando a
-  `/auth/me`. Hay una regla de ESLint que rechaza `localStorage`.
+  `/auth/me`. Hay una regla de ESLint que rechaza `localStorage`. Única excepción: el token
+  de un solo uso del registro en línea vive en `sessionStorage` (`features/publico/registro.ts`),
+  solo en la pestaña que pagó; no abre sesión y deja de valer al completar el registro.
 - **Un fallo pasajero nunca cierra la sesión.** Pasajero es sin respuesta, 408, 429 o 5xx
   (`esErrorPasajero` en `src/lib/errores.ts`): no dice nada de la sesión. `AuthContext`
   reintenta `/auth/me` con espera creciente (respeta `Retry-After`) y, si sigue sin
