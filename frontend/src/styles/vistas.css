@@ -30,25 +30,25 @@
   font-weight: 600;
   font-size: var(--t-cuerpo);
 }
-.nav a:hover { background: var(--verde-50); color: var(--verde-700); }
-.nav a.active { background: var(--verde-50); color: var(--verde-700); box-shadow: inset 3px 0 0 var(--verde-500); }
+.nav a:hover { background: var(--superficie-seleccion); color: var(--texto-titulo); }
+.nav a.active { background: var(--superficie-seleccion); color: var(--texto-titulo); box-shadow: inset 3px 0 0 var(--indicador-seleccion); }
 .nav svg { flex: none; }
 
 .usuario {
   display: grid; gap: var(--e2);
   padding-top: var(--e4);
-  border-top: 1px solid var(--linea);
+  border-top: 1px solid var(--borde);
 }
 .usuario-datos { display: flex; align-items: center; gap: var(--e3); }
 .avatar {
   width: 38px; height: 38px; flex: none;
   border-radius: var(--r-pastilla);
-  background: var(--verde-100); color: var(--verde-700);
+  background: var(--accion-suave-fondo); color: var(--accion-suave-texto);
   display: grid; place-items: center;
   font-family: var(--fuente-titulo); font-weight: 600;
 }
-.usuario-datos strong { display: block; color: var(--tinta); font-size: var(--t-menor); }
-.usuario-datos div span { display: block; font-size: var(--t-etiqueta); color: var(--apagado); text-transform: capitalize; }
+.usuario-datos strong { display: block; color: var(--texto-titulo); font-size: var(--t-menor); }
+.usuario-datos div span { display: block; font-size: var(--t-etiqueta); color: var(--texto-suave); text-transform: capitalize; }
 
 /* ================= Cabecera y contenido ================= */
 .shell > .principal { display: flex; flex-direction: column; gap: var(--e4); min-width: 0; }
@@ -58,7 +58,7 @@
 }
 .topbar-titulo { flex: 1; min-width: 0; }
 .topbar-titulo h2 { font-size: var(--t-titulo); }
-.topbar-titulo p { font-size: var(--t-menor); color: var(--apagado); }
+.topbar-titulo p { font-size: var(--t-menor); color: var(--texto-suave); }
 
 .contenido { display: grid; gap: var(--e4); align-content: start; padding-bottom: var(--e7); }
 
@@ -73,7 +73,7 @@
   display: grid; gap: var(--e3);
   padding: var(--e6);
   border-radius: var(--r-panel);
-  background: linear-gradient(120deg, var(--verde-50) 0%, var(--superficie) 62%);
+  background: var(--superficie);
   box-shadow: var(--sombra-2);
   overflow: hidden;
 }
@@ -121,11 +121,8 @@
   flex-direction: column;
   gap: var(--e7);
   padding: var(--e8) clamp(var(--e6), 5vw, 72px);
-  color: var(--sobre-marca);
-  background:
-    radial-gradient(70% 55% at 85% 10%, var(--verde-500) 0%, transparent 70%),
-    radial-gradient(60% 50% at 0% 100%, var(--verde-600) 0%, transparent 70%),
-    linear-gradient(160deg, var(--verde-700) 0%, var(--marca-profunda) 100%);
+  color: var(--texto-sobre-marca);
+  background: var(--superficie-marca);
 }
 
 .marca { display: inline-grid; grid-template-columns: auto auto; justify-content: start; column-gap: var(--e3); row-gap: 2px; align-items: center; width: fit-content; }
@@ -134,16 +131,16 @@
   width: 44px; height: 44px;
   display: grid; place-items: center;
   border-radius: var(--r-tarjeta);
-  background: var(--verde-500);
-  color: var(--sobre-marca);
+  background: var(--accion-fondo);
+  color: var(--accion-texto);
   box-shadow: var(--sombra-2);
 }
-.marca-nombre { font-family: var(--fuente-titulo); font-weight: 700; font-size: 22px; letter-spacing: .14em; color: var(--tinta); line-height: 1; }
-.marca-sub { font-size: var(--t-etiqueta); letter-spacing: .12em; text-transform: uppercase; color: var(--apagado); }
+.marca-nombre { font-family: var(--fuente-titulo); font-weight: 700; font-size: 22px; letter-spacing: .14em; color: var(--texto-titulo); line-height: 1; }
+.marca-sub { font-size: var(--t-etiqueta); letter-spacing: .12em; text-transform: uppercase; color: var(--texto-suave); }
 .sidebar .marca-sub { font-size: 10px; letter-spacing: .04em; white-space: nowrap; }
-.marca-clara .marca-sello { background: var(--sobre-marca-velo); border: 1px solid var(--sobre-marca-borde); }
-.marca-clara .marca-nombre { color: var(--sobre-marca); }
-.marca-clara .marca-sub { color: var(--sobre-marca-suave); }
+.marca-clara .marca-sello { background: var(--superficie-sobre-marca); border: 1px solid var(--borde-sobre-marca); }
+.marca-clara .marca-nombre { color: var(--texto-sobre-marca); }
+.marca-clara .marca-sub { color: var(--texto-sobre-marca-suave); }
 
 .ingreso-mensaje { display: grid; gap: var(--e5); max-width: 520px; margin-top: auto; }
 .ingreso-kicker {
@@ -151,26 +148,26 @@
   width: fit-content;
   padding: 6px var(--e3);
   border-radius: var(--r-pastilla);
-  background: var(--sobre-marca-velo);
-  border: 1px solid var(--sobre-marca-borde);
+  background: var(--superficie-sobre-marca);
+  border: 1px solid var(--borde-sobre-marca);
   font-size: var(--t-menor); font-weight: 700;
 }
 .ingreso-mensaje h2 {
-  color: var(--sobre-marca);
+  color: var(--texto-sobre-marca);
   font-size: clamp(26px, 2.6vw, 38px);
   line-height: 1.2;
   font-weight: 600;
 }
 .ingreso-pilares { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e4); }
 .ingreso-pilares li { display: grid; grid-template-columns: auto 1fr; gap: var(--e3); align-items: start; }
-.ingreso-pilares strong { display: block; color: var(--sobre-marca); font-size: var(--t-cuerpo); }
-.ingreso-pilares li span span { color: var(--sobre-marca-suave); font-size: var(--t-menor); }
+.ingreso-pilares strong { display: block; color: var(--texto-sobre-marca); font-size: var(--t-cuerpo); }
+.ingreso-pilares li span span { color: var(--texto-sobre-marca-suave); font-size: var(--t-menor); }
 .ingreso-pilar-icono {
   width: 36px; height: 36px;
   display: grid; place-items: center;
   border-radius: var(--r-campo);
-  background: var(--sobre-marca-velo);
-  border: 1px solid var(--sobre-marca-borde);
+  background: var(--superficie-sobre-marca);
+  border: 1px solid var(--borde-sobre-marca);
 }
 
 /* Tarjeta de vista previa: vidrio esmerilado sobre la marca. */
@@ -178,85 +175,83 @@
   max-width: 420px;
   padding: var(--e4) var(--e5);
   border-radius: var(--r-tarjeta);
-  background: var(--sobre-marca-velo);
-  border: 1px solid var(--sobre-marca-borde);
+  background: var(--superficie-sobre-marca);
+  border: 1px solid var(--borde-sobre-marca);
   backdrop-filter: blur(8px);
   box-shadow: var(--sombra-3);
   display: grid; gap: var(--e3);
 }
 .ingreso-vista-cabeza { display: grid; grid-template-columns: auto 1fr auto; gap: var(--e3); align-items: center; }
-.ingreso-vista-cabeza strong { display: block; color: var(--sobre-marca); font-size: var(--t-cuerpo); }
-.ingreso-vista-cabeza span span { color: var(--sobre-marca-suave); font-size: var(--t-menor); }
+.ingreso-vista-cabeza strong { display: block; color: var(--texto-sobre-marca); font-size: var(--t-cuerpo); }
+.ingreso-vista-cabeza span span { color: var(--texto-sobre-marca-suave); font-size: var(--t-menor); }
 .ingreso-avatar {
   width: 38px; height: 38px; display: grid; place-items: center;
-  border-radius: var(--r-pastilla); background: var(--sobre-marca); color: var(--verde-700);
+  border-radius: var(--r-pastilla); background: var(--superficie); color: var(--accion-suave-texto);
 }
 .ingreso-chip {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 4px 10px; border-radius: var(--r-pastilla);
-  background: var(--ok-bg); color: var(--ok-tx);
+  background: var(--estado-ok-fondo); color: var(--estado-ok-texto);
   font-size: var(--t-etiqueta); font-weight: 700;
 }
 .ingreso-pulso { width: 100%; height: 40px; }
-.ingreso-pulso path { fill: none; stroke: var(--verde-200); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.ingreso-vista-pie { display: flex; flex-wrap: wrap; gap: var(--e4); font-size: var(--t-menor); color: var(--sobre-marca-suave); }
+.ingreso-pulso path { fill: none; stroke: var(--texto-sobre-marca-acento); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ingreso-vista-pie { display: flex; flex-wrap: wrap; gap: var(--e4); font-size: var(--t-menor); color: var(--texto-sobre-marca-suave); }
 .ingreso-vista-pie span { display: inline-flex; align-items: center; gap: 6px; }
-.ingreso-legal { display: inline-flex; align-items: center; gap: var(--e2); font-size: var(--t-menor); color: var(--sobre-marca-suave); }
+.ingreso-legal { display: inline-flex; align-items: center; gap: var(--e2); font-size: var(--t-menor); color: var(--texto-sobre-marca-suave); }
 
 /* --- Formulario --- */
 .ingreso-contenido {
   display: grid;
   place-items: center;
   padding: var(--e8) var(--e6);
-  background:
-    radial-gradient(80% 60% at 100% 0%, var(--verde-50) 0%, transparent 60%),
-    var(--superficie);
+  background: var(--superficie);
 }
 .ingreso-panel { width: min(400px, 100%); display: grid; gap: var(--e6); }
 .ingreso-panel > .marca { display: none; }
 .ingreso-titulo { display: grid; gap: var(--e2); }
 .ingreso-titulo h1 { font-size: var(--t-display); font-weight: 600; }
-.ingreso-titulo p { color: var(--apagado); }
+.ingreso-titulo p { color: var(--texto-suave); }
 .ingreso-form { display: grid; gap: var(--e4); }
 .ingreso-ayuda { display: flex; justify-content: flex-end; align-items: center; gap: var(--e2); font-size: var(--t-menor); }
 .ingreso-pie {
   display: flex; align-items: center; justify-content: center; gap: var(--e2);
-  font-size: var(--t-menor); color: var(--apagado);
-  padding-top: var(--e4); border-top: 1px solid var(--linea);
+  font-size: var(--t-menor); color: var(--texto-suave);
+  padding-top: var(--e4); border-top: 1px solid var(--borde);
 }
-.ingreso-pie svg { color: var(--verde-600); }
+.ingreso-pie svg { color: var(--accion-suave-texto); }
 
 /* Selector Equipo / Familias */
 .segmento {
   display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
   padding: 4px; gap: 4px;
   border-radius: var(--r-pastilla);
-  background: var(--superficie-2);
-  border: 1px solid var(--linea);
+  background: var(--superficie-hundida);
+  border: 1px solid var(--borde);
 }
 .segmento-opcion {
   font: inherit; font-weight: 700; font-size: var(--t-menor);
   display: inline-flex; align-items: center; justify-content: center; gap: var(--e2);
   padding: 9px var(--e3);
   border: 0; border-radius: var(--r-pastilla);
-  background: transparent; color: var(--apagado); cursor: pointer;
+  background: transparent; color: var(--texto-suave); cursor: pointer;
   transition: background .15s, color .15s, box-shadow .15s;
 }
-.segmento-opcion[data-state="active"] { background: var(--superficie); color: var(--verde-700); box-shadow: var(--sombra-2); }
+.segmento-opcion[data-state="active"] { background: var(--superficie); color: var(--texto-titulo); box-shadow: var(--sombra-2); }
 
 /* Campo con icono a la izquierda y acción opcional a la derecha */
 .campo-adorno { position: relative; display: flex; align-items: center; }
-.campo-adorno > svg { position: absolute; left: 14px; color: var(--apagado); pointer-events: none; }
-.campo-adorno:focus-within > svg { color: var(--verde-600); }
+.campo-adorno > svg { position: absolute; left: 14px; color: var(--texto-suave); pointer-events: none; }
+.campo-adorno:focus-within > svg { color: var(--foco); }
 .campo-adorno .input { width: 100%; padding-left: 42px; min-height: 48px; }
 .campo-adorno .input:has(+ .campo-accion) { padding-right: 46px; }
 .campo-accion {
   position: absolute; right: 6px;
   width: 36px; height: 36px; display: grid; place-items: center;
   border: 0; border-radius: var(--r-pastilla); background: transparent;
-  color: var(--apagado); cursor: pointer;
+  color: var(--texto-suave); cursor: pointer;
 }
-.campo-accion:hover { color: var(--verde-700); background: var(--verde-50); }
+.campo-accion:hover { color: var(--texto-titulo); background: var(--superficie-hundida); }
 
 .btn-grande { min-height: 48px; font-size: 15px; }
 .codigo-input { letter-spacing: .5em; font-size: 20px; text-align: center; font-family: var(--fuente-titulo); }
@@ -267,11 +262,11 @@
   border-radius: var(--r-campo);
   font-size: var(--t-menor);
 }
-.aviso-error { background: var(--peligro-bg); color: var(--peligro-tx); }
-.aviso-ok { background: var(--ok-bg); color: var(--ok-tx); }
+.aviso-error { background: var(--estado-peligro-fondo); color: var(--estado-peligro-texto); }
+.aviso-ok { background: var(--estado-ok-fondo); color: var(--estado-ok-texto); }
 
 /* Página pública sencilla: encuesta, verificación de carnet, afiliación */
-.publica { min-height: 100vh; display: grid; place-items: start center; align-content: start; gap: var(--e5); padding: var(--e8) var(--e4); background: var(--fondo); }
+.publica { min-height: 100vh; display: grid; place-items: start center; align-content: start; gap: var(--e5); padding: var(--e8) var(--e4); background: var(--superficie-lienzo); }
 .publica-tarjeta {
   width: min(560px, 100%);
   display: grid; gap: var(--e5);
@@ -294,7 +289,7 @@
 @media (max-width: 900px) { .tres-columnas { grid-template-columns: 1fr; } }
 
 /* ================= Portal de familias ================= */
-.portal { min-height: 100vh; background: var(--fondo); padding-bottom: 84px; }
+.portal { min-height: 100vh; background: var(--superficie-lienzo); padding-bottom: 84px; }
 .portal-cabeza {
   position: sticky; top: 0; z-index: 5;
   display: flex; align-items: center; justify-content: space-between; gap: var(--e4);
@@ -306,25 +301,25 @@
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
   display: grid; grid-template-columns: repeat(5, 1fr);
   background: var(--superficie);
-  border-top: 1px solid var(--linea);
+  border-top: 1px solid var(--borde);
   box-shadow: var(--sombra-3);
 }
 .portal-nav a {
   display: grid; justify-items: center; gap: 2px;
   padding: var(--e2) 0 var(--e3);
-  font-size: var(--t-etiqueta); font-weight: 700; color: var(--apagado);
+  font-size: var(--t-etiqueta); font-weight: 700; color: var(--texto-suave);
 }
-.portal-nav a.active { color: var(--verde-700); }
+.portal-nav a.active { color: var(--accion-suave-texto); }
 .portal-contenido { width: min(960px, 100%); margin: 0 auto; padding: var(--e5) var(--e4); }
 .portal-hola {
   display: grid; gap: var(--e3);
   padding: var(--e6);
   border-radius: var(--r-panel);
-  color: var(--sobre-marca);
-  background: linear-gradient(150deg, var(--verde-500) 0%, var(--verde-700) 100%);
+  color: var(--texto-sobre-marca);
+  background: var(--superficie-marca);
 }
-.portal-hola h1 { color: var(--sobre-marca); }
-.portal-hola p { color: var(--sobre-marca-suave); }
+.portal-hola h1 { color: var(--texto-sobre-marca); }
+.portal-hola p { color: var(--texto-sobre-marca-suave); }
 .portal-hola .acceso { color: var(--texto); }
 
 @media (min-width: 900px) {
@@ -338,5 +333,5 @@
     padding: var(--e2) var(--e3); border-radius: var(--r-pastilla);
     font-size: var(--t-menor);
   }
-  .portal-nav a.active { background: var(--verde-50); }
+  .portal-nav a.active { background: var(--superficie-seleccion); }
 }

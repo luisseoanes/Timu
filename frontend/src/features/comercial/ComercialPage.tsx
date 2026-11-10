@@ -347,7 +347,7 @@ function Conversaciones() {
       >
         {(d) =>
           d.map((c) => (
-            <div key={c.id} className="pila" style={{ gap: 'var(--e2)', paddingBlock: 'var(--e3)', borderBottom: '1px solid var(--linea)' }}>
+            <div key={c.id} className="pila" style={{ gap: 'var(--e2)', paddingBlock: 'var(--e3)', borderBottom: '1px solid var(--borde)' }}>
               <div className="acciones">
                 <strong className="numero">{c.telefono}</strong>
                 <span className={`distintivo distintivo-${c.estado === 'con_asesor' ? 'alerta' : 'info'}`}>

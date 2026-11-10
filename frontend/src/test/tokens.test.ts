@@ -167,7 +167,88 @@ describe('guarda de tokens: comprobaciones de la propia guarda', () => {
   it('encuentra las variables definidas en tokens.css', () => {
     expect(definidas.size).toBeGreaterThan(20)
   })
+
+  it('calcula el contraste como WCAG, también con un fondo translúcido', () => {
+    const valores = new Map([
+      ['--a', '#111537'],
+      ['--b', 'var(--c)'],
+      ['--c', '#FFFFFF'],
+      ['--velo', 'rgb(255 255 255 / 50%)'],
+    ])
+    expect(contraste(valores, '--a', '--b')).toBeCloseTo(17.7, 1)
+    // Blanco al 50 % sobre marino queda a medio camino: ni 1:1 ni 17.7:1.
+    expect(contraste(valores, '--a', '--velo', '--a')).toBeCloseTo(5.19, 1)
+  })
+
+  it('lee el bloque de pares de tokens.css', () => {
+    expect(pares.length).toBeGreaterThan(30)
+  })
 })
+
+// --- Pares permitidos y roles (docs/manual-de-marca.md, secciones 10 y 15) ---------------
+
+const textoTokens = fuentes.find(({ fichero }) => fichero === TOKENS)!.texto
+const valores = new Map(
+  [...textoTokens.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)].map(
+    ([, nombre, valor]) => [nombre, valor.trim()] as [string, string],
+  ),
+)
+const PALETA = /^--(?:(?:verde|naranja|azul|marino|rojo)-\d+|lienzo|blanco)$/
+/** Roles que tienen que aparecer a la izquierda de algún par: los que se leen o se ven. */
+const ROL_CON_PAR = /^--(?:texto(?!-deshabilitado$)[a-z-]*|borde-control[a-z-]*|foco[a-z-]*|indicador-[a-z-]+|serie-\d+|accion(?:-suave)?-texto|peligro-accion-texto|estado-[a-z]+-texto|plan-[a-z]+-texto)$/
+
+interface Par { texto: string; fondo: string; base?: string; minimo: number; linea: string }
+const pares: Par[] = (/^@pares\s*$([\s\S]*?)\*\//m.exec(textoTokens)?.[1] ?? '')
+  .split('\n')
+  .map((l) => l.trim())
+  .filter(Boolean)
+  .map((linea) => {
+    const [izquierda, minimo] = [linea.slice(0, linea.lastIndexOf(' ')), linea.slice(linea.lastIndexOf(' ') + 1)]
+    const [texto, fondo, base] = izquierda.split('/').map((s) => s.trim())
+    return { texto, fondo, base, minimo: Number(minimo), linea }
+  })
+
+type Rgba = [number, number, number, number]
+
+function rgba(valores: Map<string, string>, nombre: string, visto = new Set<string>()): Rgba {
+  const valor = valores.get(nombre)
+  if (valor === undefined) throw new Error(`${nombre} no está definida en tokens.css`)
+  if (visto.has(nombre)) throw new Error(`${nombre} se refiere a sí misma`)
+  const ref = /^var\(\s*(--[a-z0-9-]+)\s*\)$/.exec(valor)
+  if (ref) return rgba(valores, ref[1], new Set([...visto, nombre]))
+  const hex = /^#([0-9a-f]{6})$/i.exec(valor)
+  if (hex) return [0, 2, 4].map((i) => parseInt(hex[1].slice(i, i + 2), 16)).concat(1) as Rgba
+  const rgb = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)(?:\s*[/,]\s*([\d.]+)(%?))?\s*\)$/.exec(valor)
+  if (rgb) {
+    const alfa = rgb[4] === undefined ? 1 : Number(rgb[4]) / (rgb[5] ? 100 : 1)
+    return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3]), alfa]
+  }
+  throw new Error(`${nombre}: no sé leer el color «${valor}»`)
+}
+
+function encima([r, g, b, a]: Rgba, [r2, g2, b2]: Rgba): Rgba {
+  return [r * a + r2 * (1 - a), g * a + g2 * (1 - a), b * a + b2 * (1 - a), 1]
+}
+
+function luminancia([r, g, b]: Rgba): number {
+  const [R, G, B] = [r, g, b].map((c) => {
+    const s = c / 255
+    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4
+  })
+  return 0.2126 * R + 0.7152 * G + 0.0722 * B
+}
+
+/** Contraste WCAG; un fondo translúcido se compone sobre su base, y el texto sobre ese fondo. */
+function contraste(valores: Map<string, string>, texto: string, fondo: string, base?: string): number {
+  let f = rgba(valores, fondo)
+  if (f[3] < 1) {
+    if (!base) throw new Error(`${fondo} es translúcido: el par necesita una base`)
+    f = encima(f, rgba(valores, base))
+  }
+  const t = encima(rgba(valores, texto), f)
+  const [claro, oscuro] = [luminancia(t), luminancia(f)].sort((x, y) => y - x)
+  return (claro + 0.05) / (oscuro + 0.05)
+}
 
 describe('guarda de tokens', () => {
   it('fuera de tokens.css no se escribe ningún color a mano', () => {
@@ -184,5 +265,29 @@ describe('guarda de tokens', () => {
       [...texto.matchAll(USO)].map((m) => m[1]).filter((v) => !definidas.has(v)).map((v) => `${fichero}: ${v}`),
     )
     expect(sinDefinir, 'define la variable en tokens.css o corrige el nombre').toEqual([])
+  })
+
+  it('fuera de tokens.css solo se usan roles, nunca un color de la paleta', () => {
+    const usos = fuentes
+      .filter(({ fichero }) => fichero !== TOKENS)
+      .flatMap(({ fichero, texto }) =>
+        [...texto.matchAll(USO)].map((m) => m[1]).filter((v) => PALETA.test(v)).map((v) => `${fichero}: ${v}`),
+      )
+    expect(usos, 'usa el rol de la sección 10 del manual que corresponde a ese uso').toEqual([])
+  })
+
+  it('cada par permitido llega a su mínimo de contraste', () => {
+    const cortos = pares
+      .map((p) => ({ ...p, valor: contraste(valores, p.texto, p.fondo, p.base) }))
+      .filter((p) => p.valor < p.minimo)
+      .map((p) => `${p.linea} → ${p.valor.toFixed(2)}:1`)
+    expect(cortos, 'cambia el paso de la paleta al que apunta el rol (manual, sección 9)').toEqual([])
+  })
+
+  it('todo rol de texto, borde de control, foco, indicador o serie tiene un par declarado', () => {
+    const conPar = new Set(pares.map((p) => p.texto))
+    const roles = [...valores.keys()].filter((v) => ROL_CON_PAR.test(v))
+    expect(roles.length).toBeGreaterThan(20)
+    expect(roles.filter((r) => !conPar.has(r)), 'declara en @pares sobre qué fondos se usa').toEqual([])
   })
 })

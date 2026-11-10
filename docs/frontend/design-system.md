@@ -5,57 +5,23 @@ Los nombres de los tokens son los que se usan en el código.
 
 ## Color
 
-### Marca
+El color lo define el [manual de marca](../manual-de-marca.md): la paleta de TIMU, los tonos
+auxiliares, los roles que usan los componentes y los contrastes mínimos. La paleta en tonos
+menta que describía esta sección está descartada.
 
-El verde menta es el único color de acento. Se usa para acción, selección y énfasis;
-nunca para decorar superficies grandes fuera del ingreso.
+`tokens.css` lo implementa en tres capas: la paleta, que solo se nombra dentro de ese fichero;
+los roles, que son lo único que usan los componentes; y el bloque `@pares`, con cada
+combinación permitida y su contraste mínimo.
 
-| Token | Valor | Uso |
-| --- | --- | --- |
-| `--verde-50` | `#edf8f6` | Fondo de estado activo, botón suave, avisos |
-| `--verde-100` | `#d7f0ec` | Pista del anillo, avatares, hover de botón suave |
-| `--verde-200` | `#aee2db` | Bordes en hover |
-| `--verde-300` / `--verde-400` | `#7cd0c7` / `#4fc3b7` | Degradados e ilustración |
-| `--verde-500` | `#2fb7aa` | **Color principal**: botones, barra del activo, foco |
-| `--verde-600` | `#20998e` | Hover y presionado del botón principal, título del ingreso |
-| `--verde-700` | `#177b73` | Texto de marca sobre fondo claro, enlaces |
-| `--verde-800` | `#12615b` | Texto sobre fondos verdes suaves |
-
-### Neutros
-
-Los grises llevan una pizca de verde para que convivan con la marca; un gris puro se ve
-sucio al lado del menta.
-
-| Token | Valor | Uso |
-| --- | --- | --- |
-| `--fondo` | `#e9f4f1` | Lienzo de la aplicación. Nunca blanco. |
-| `--superficie` | `#ffffff` | Tarjetas, barra lateral, campos |
-| `--superficie-2` | `#f5faf9` | Zonas hundidas: buscador, métricas, fila en hover |
-| `--tinta` | `#1d2e33` | Títulos y valores destacados |
-| `--texto` | `#3a4e54` | Cuerpo |
-| `--apagado` | `#7a9198` | Etiquetas, texto secundario, iconos inactivos |
-| `--linea` | `#e4efec` | Separadores y bordes de tarjeta plana |
-| `--linea-fuerte` | `#cfe0dc` | Bordes de campos y controles |
-
-### Semánticos
-
-Se declaran siempre en pares fondo + texto, y **no** se mezclan con el verde de marca: el
-verde significa "acción", no "correcto".
-
-| Estado | Fondo | Texto | Se usa en |
-| --- | --- | --- | --- |
-| Correcto | `--ok-bg` `#e4f5ec` | `--ok-tx` `#257f52` | Afiliación activa, cuota al día, preventivo aplicado |
-| Alerta | `--alerta-bg` `#fdf1e3` | `--alerta-tx` `#a9631f` | Mora temprana, preventivo por vencer |
-| Información | `--info-bg` `#e6f1fa` | `--info-tx` `#2b6f9e` | Prospecto, servicio programado |
-| Peligro | `--peligro-bg` `#fbe9e7` | `--peligro-tx` `#b23f34` | Cancelada, preventivo vencido, errores |
-
-### Contraste
-
-Texto sobre superficie y cualquier par semántico cumplen AA (4.5:1). El blanco sobre
-`--verde-500` se usa sólo con peso 700 y a partir de 14 px; para texto pequeño sobre verde
-se usa `--verde-700` sobre `--verde-50`.
+`src/test/tokens.test.ts` hace fallar la suite si un componente escribe un color a mano, usa
+un color de la paleta en vez de un rol o una variable que no está definida, si un par no
+llega a su mínimo o si un rol de texto o de control no tiene ningún par declarado.
 
 ## Tipografía
+
+> Se reemplaza en `R1-TOK-02`: el [manual de marca](../manual-de-marca.md#12-tipografía-en-la-plataforma)
+> fija Inter para toda la interfaz, servida desde el propio proyecto. Lo que sigue describe
+> lo que hay hoy en el código.
 
 Dos familias, cargadas desde Google Fonts en `index.html`:
 

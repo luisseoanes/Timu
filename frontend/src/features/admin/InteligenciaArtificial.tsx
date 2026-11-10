@@ -164,7 +164,7 @@ function FilaPrompt({ prompt: p }: { prompt: PromptRead }) {
   const aprobado = evaluacion !== null && evaluacion.total > 0 && evaluacion.aprobados === evaluacion.total
 
   return (
-    <div className="pila" style={{ gap: 'var(--e2)', paddingBlock: 'var(--e3)', borderBottom: '1px solid var(--linea)' }}>
+    <div className="pila" style={{ gap: 'var(--e2)', paddingBlock: 'var(--e3)', borderBottom: '1px solid var(--borde)' }}>
       <div className="acciones">
         <strong>
           {USOS[p.codigo] ?? p.codigo} · v{p.version}

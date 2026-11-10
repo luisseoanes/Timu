@@ -1,44 +1,148 @@
 /* ------------------------------------------------------------------
    Tokens de diseño — TIMU
-   Única fuente de verdad del sistema visual. Ningún componente escribe
-   un color, un radio o una sombra a mano: todo sale de aquí.
+   Única fuente de verdad del sistema visual. Implementa el manual de
+   marca (docs/manual-de-marca.md) en tres capas:
+
+   1. Paleta: los pasos de la sección 9. Solo se nombran en este fichero.
+   2. Roles: los de la sección 10. Son lo único que usan componentes,
+      vistas y style={{}}.
+   3. Pares permitidos: el bloque @pares del final. src/test/tokens.test.ts
+      recalcula el contraste de cada par y falla si no llega a su mínimo.
+
+   Ampliar: paso en la paleta (si falta), rol, y sus pares. Ningún
+   componente escribe un color, un radio o una sombra a mano.
    ------------------------------------------------------------------ */
 
 :root {
-  /* --- Marca: verde menta --------------------------------------- */
-  --verde-50:  #edf8f6;
-  --verde-100: #d7f0ec;
-  --verde-200: #aee2db;
-  --verde-300: #7cd0c7;
-  --verde-400: #4fc3b7;
-  --verde-500: #2fb7aa;  /* color principal: botones, activo, énfasis */
-  --verde-600: #20998e;  /* hover y estados presionados */
-  --verde-700: #177b73;  /* texto de marca sobre fondo claro */
-  --verde-800: #12615b;
+  /* === 1. Paleta ===================================================== */
 
-  /* --- Neutros con sesgo verde ---------------------------------- */
-  --fondo:        #e9f4f1;  /* lienzo de la aplicación */
-  --superficie:   #ffffff;  /* tarjetas */
-  --superficie-2: #f5faf9;  /* zonas hundidas: buscador, filas alternas */
-  --tinta:        #1d2e33;  /* títulos */
-  --texto:        #3a4e54;  /* cuerpo */
-  --apagado:      #7a9198;  /* etiquetas y texto secundario */
-  --linea:        #e4efec;  /* bordes y separadores */
-  --linea-fuerte: #cfe0dc;  /* bordes de campos e interactivos */
+  /* Verde TIMU (500: letras T y U del logo) */
+  --verde-50:  #F3F6E7;
+  --verde-100: #E5EDCC;
+  --verde-200: #D6E3AD;
+  --verde-300: #C1D485;
+  --verde-400: #ADC65C;
+  --verde-500: #98B833;
+  --verde-600: #769116;
+  --verde-700: #587000;
+  --verde-800: #415800;
+  --verde-900: #2E4200;
 
-  /* --- Semánticos: siempre par fondo + texto -------------------- */
-  --ok-bg: #e4f5ec;      --ok-tx: #257f52;
-  --alerta-bg: #fdf1e3;  --alerta-tx: #a9631f;
-  --info-bg: #e6f1fa;    --info-tx: #2b6f9e;
-  --peligro-bg: #fbe9e7; --peligro-tx: #b23f34;
+  /* Naranja TIMU (500: mitad izquierda de la M) */
+  --naranja-50:  #FAF1E2;
+  --naranja-100: #F5E2C4;
+  --naranja-200: #EFD0A0;
+  --naranja-300: #E6B970;
+  --naranja-400: #DEA141;
+  --naranja-500: #D68A11;
+  --naranja-600: #BE7700;
+  --naranja-700: #9B5600;
+  --naranja-800: #813E00;
 
-  /* --- Sobre la marca: texto y superficies encima de un fondo verde --- */
-  --sobre-marca:        #ffffff;
-  --sobre-marca-suave:  rgba(255, 255, 255, .78);  /* texto secundario sobre verde */
-  --sobre-marca-velo:   rgba(255, 255, 255, .12);  /* tarjetas translúcidas sobre verde */
-  --sobre-marca-borde:  rgba(255, 255, 255, .22);
-  --marca-profunda:     #0d4f4a;                    /* fondo del panel de marca del ingreso */
-  --velo:               rgb(0 0 0 / 45%);           /* fondo detrás de una ventana modal */
+  /* Azul TIMU (500: mitad derecha de la M) */
+  --azul-50:  #E9EEF2;
+  --azul-100: #D1DBE4;
+  --azul-200: #B5C6D5;
+  --azul-300: #91A9BF;
+  --azul-400: #6C8DAA;
+  --azul-500: #477095;
+  --azul-600: #396186;
+  --azul-700: #274F73;
+  --azul-800: #153E60;
+
+  /* Marino TIMU: neutros de la plataforma (900: texto y siluetas del logo) */
+  --marino-100: #E2E3E7;
+  --marino-200: #C4C4CD;
+  --marino-300: #A0A1AF;
+  --marino-400: #85889D;
+  --marino-500: #707387;
+  --marino-600: #5F6275;
+  --marino-700: #41445F;
+  --marino-800: #282E53;
+  --marino-900: #111537;
+
+  /* Rojo auxiliar: solo peligro, error y acción destructiva */
+  --rojo-50:  #FFF2EF;
+  --rojo-100: #FFD9CE;
+  --rojo-500: #C0392B;
+  --rojo-700: #A92115;
+  --rojo-800: #892319;
+
+  --lienzo: #F5F6F1;
+  --blanco: #FFFFFF;
+
+  /* === 2. Roles ====================================================== */
+
+  /* Superficies */
+  --superficie-lienzo:      var(--lienzo);      /* fondo de la aplicación */
+  --superficie:             var(--blanco);      /* tarjetas, barra lateral, campos */
+  --superficie-hundida:     var(--lienzo);      /* zonas hundidas: métricas, fila en hover */
+  --superficie-seleccion:   var(--verde-50);    /* elemento seleccionado o activo */
+  --superficie-marca:       var(--marino-900);  /* paneles de marca: ingreso, cabecera del portal */
+  --superficie-marca-hover: var(--marino-800);
+  --superficie-sobre-marca: rgb(255 255 255 / 8%);   /* tarjeta translúcida sobre la marca */
+  --pista:                  var(--marino-100);  /* pista de barras y anillos; decorativa */
+  --velo:                   rgb(17 21 55 / 50%);    /* detrás de una ventana modal */
+
+  /* Texto */
+  --texto-titulo:             var(--marino-900);
+  --texto:                    var(--marino-700);
+  --texto-suave:              var(--marino-600);
+  --texto-deshabilitado:      var(--marino-300);  /* WCAG lo exime */
+  --texto-enlace:             var(--azul-500);
+  --texto-enlace-hover:       var(--azul-700);
+  --texto-error:              var(--rojo-700);
+  --texto-sobre-marca:        var(--blanco);
+  --texto-sobre-marca-suave:  var(--marino-200);
+  --texto-sobre-marca-acento: var(--verde-500);
+
+  /* Bordes */
+  --borde:               var(--marino-100);  /* separadores; decorativo */
+  --borde-control:       var(--marino-400);  /* campos, casillas y controles */
+  --borde-control-hover: var(--marino-500);
+  --borde-sobre-marca:   rgb(255 255 255 / 22%);  /* decorativo */
+
+  /* Acciones */
+  --accion-fondo:                var(--verde-500);
+  --accion-texto:                var(--marino-900);
+  --accion-fondo-hover:          var(--verde-600);
+  --accion-suave-fondo:          var(--verde-50);
+  --accion-suave-texto:          var(--verde-800);
+  --accion-suave-fondo-hover:    var(--verde-100);
+  --peligro-accion-fondo:        var(--rojo-500);
+  --peligro-accion-texto:        var(--blanco);
+  --peligro-accion-fondo-hover:  var(--rojo-700);
+
+  /* Selección y foco */
+  --indicador-seleccion: var(--verde-600);
+  --foco:                var(--azul-500);
+  --foco-sobre-marca:    var(--verde-500);
+
+  /* Estados: siempre par fondo + texto, y siempre con texto e icono además del color */
+  --estado-ok-fondo:      var(--verde-50);
+  --estado-ok-texto:      var(--verde-800);
+  --estado-alerta-fondo:  var(--naranja-50);
+  --estado-alerta-texto:  var(--naranja-800);
+  --estado-info-fondo:    var(--azul-50);
+  --estado-info-texto:    var(--azul-700);
+  --estado-peligro-fondo: var(--rojo-50);
+  --estado-peligro-texto: var(--rojo-800);
+  --estado-neutro-fondo:  var(--marino-100);
+  --estado-neutro-texto:  var(--marino-700);
+
+  /* Planes: el color sale del campo `color` del catálogo, nunca del nombre del plan */
+  --plan-naranja:       var(--naranja-500);
+  --plan-naranja-texto: var(--marino-900);
+  --plan-verde:         var(--verde-500);
+  --plan-verde-texto:   var(--marino-900);
+  --plan-azul:          var(--azul-500);
+  --plan-azul-texto:    var(--blanco);
+
+  /* Series de gráfico, siempre en este orden */
+  --serie-1: var(--verde-600);
+  --serie-2: var(--naranja-600);
+  --serie-3: var(--azul-500);
+  --serie-4: var(--marino-900);
 
   /* --- Tipografía ----------------------------------------------- */
   --fuente-titulo: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -61,10 +165,10 @@
   --r-tarjeta: 16px;
   --r-panel: 24px;
 
-  /* --- Sombras: difusas y de baja opacidad ---------------------- */
-  --sombra-1: 0 1px 2px rgba(29, 46, 51, .04);
-  --sombra-2: 0 4px 16px rgba(29, 46, 51, .06);
-  --sombra-3: 0 12px 32px rgba(29, 46, 51, .10);
+  /* --- Sombras: difusas, de baja opacidad y teñidas de marino --- */
+  --sombra-1: 0 1px 2px rgb(17 21 55 / 4%);
+  --sombra-2: 0 4px 16px rgb(17 21 55 / 6%);
+  --sombra-3: 0 12px 32px rgb(17 21 55 / 12%);
 
   /* --- Estructura ------------------------------------------------ */
   --ancho-sidebar: 236px;
@@ -73,3 +177,63 @@
 
   color-scheme: light;
 }
+
+/* === 3. Pares permitidos ==============================================
+   texto-o-control / fondo [/ base si el fondo es translúcido]  mínimo
+   4.5 para texto (WCAG 1.4.3); 3 para controles, indicadores, foco y
+   gráficos (1.4.11, 2.4.13). Todo rol de texto, borde de control, foco,
+   indicador o serie aparece al menos una vez a la izquierda.
+
+@pares
+  --texto-titulo / --superficie 4.5
+  --texto-titulo / --superficie-lienzo 4.5
+  --texto-titulo / --superficie-seleccion 4.5
+  --texto / --superficie 4.5
+  --texto / --superficie-lienzo 4.5
+  --texto-suave / --superficie 4.5
+  --texto-suave / --superficie-lienzo 4.5
+  --texto-suave / --superficie-seleccion 4.5
+  --texto-suave / --estado-neutro-fondo 4.5
+  --texto-suave / --estado-info-fondo 4.5
+  --texto-enlace / --superficie 4.5
+  --texto-enlace / --superficie-lienzo 4.5
+  --texto-enlace-hover / --superficie 4.5
+  --texto-enlace-hover / --superficie-lienzo 4.5
+  --texto-error / --superficie 4.5
+  --texto-error / --superficie-lienzo 4.5
+  --texto-sobre-marca / --superficie-marca 4.5
+  --texto-sobre-marca / --superficie-marca-hover 4.5
+  --texto-sobre-marca / --superficie-sobre-marca / --superficie-marca 4.5
+  --texto-sobre-marca-suave / --superficie-marca 4.5
+  --texto-sobre-marca-suave / --superficie-sobre-marca / --superficie-marca 4.5
+  --texto-sobre-marca-acento / --superficie-marca 4.5
+  --accion-texto / --accion-fondo 4.5
+  --accion-texto / --accion-fondo-hover 4.5
+  --accion-suave-texto / --accion-suave-fondo 4.5
+  --accion-suave-texto / --accion-suave-fondo-hover 4.5
+  --accion-suave-texto / --superficie 4.5
+  --peligro-accion-texto / --peligro-accion-fondo 4.5
+  --peligro-accion-texto / --peligro-accion-fondo-hover 4.5
+  --estado-ok-texto / --estado-ok-fondo 7
+  --estado-ok-texto / --superficie 4.5
+  --estado-alerta-texto / --estado-alerta-fondo 7
+  --estado-info-texto / --estado-info-fondo 7
+  --estado-peligro-texto / --estado-peligro-fondo 7
+  --estado-neutro-texto / --estado-neutro-fondo 7
+  --plan-naranja-texto / --plan-naranja 4.5
+  --plan-verde-texto / --plan-verde 4.5
+  --plan-azul-texto / --plan-azul 4.5
+  --borde-control / --superficie 3
+  --borde-control / --superficie-lienzo 3
+  --borde-control-hover / --superficie 3
+  --borde-control-hover / --superficie-lienzo 3
+  --indicador-seleccion / --superficie 3
+  --indicador-seleccion / --superficie-lienzo 3
+  --foco / --superficie 3
+  --foco / --superficie-lienzo 3
+  --foco-sobre-marca / --superficie-marca 3
+  --serie-1 / --superficie 3
+  --serie-2 / --superficie 3
+  --serie-3 / --superficie 3
+  --serie-4 / --superficie 3
+*/
