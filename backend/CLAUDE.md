@@ -126,6 +126,9 @@ Reglas que atraviesan todo el backend:
 Integraciones (`app/integrations/`) y webhooks (`app/api/v1/webhooks.py`) están separados a
 propósito: los webhooks son públicos y se validan por token de verificación (Meta) o firma
 HMAC (pasarela), nunca por JWT. Su trabajo es responder rápido y encolar en Celery.
+`@pasarela.al_aprobar(PREFIJO)` registra el manejador de un pago aprobado al importar su
+módulo: tiene que importarse en la API y en el worker (`afiliaciones/altas.py` lo importan
+`portal/router.py` y `workers/tasks/afiliaciones.py`).
 
 Celery (`app/workers/`) corre en dos contenedores distintos: `worker` ejecuta y `beat`
 programa. El `beat_schedule` está en `celery_app.py` en zona `America/Bogota`; las tareas
@@ -181,6 +184,9 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
   que `aplicar_orden` y cualquier `ORDER BY` que deba ser alfabético usan `cast(col, String)`;
   y `case({...}, value=col)` compara con `varchar`, así que también lleva el `cast`. El valor
   por defecto va en Python (`default=`), no en un `server_default` que el modelo no declare.
+  Un `CHECK` que use un valor recién añadido con `ADD VALUE` compara `estado::text`: el valor
+  no se puede usar en la transacción que lo crea. Quitarlo en el `downgrade` exige soltar y
+  recrear antes `tr_<tabla>_transicion_estado`, que depende de la columna.
 - **Toda referencia a un catálogo es una clave foránea.** Una columna que guarda la
   ciudad, la especie, un plan, una plantilla o una regla (`ciudad`, `especie`, `*_codigo`)
   lleva `ForeignKey` a su catálogo, con `onupdate="CASCADE"` si apunta a un código o un
@@ -231,8 +237,9 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
   admite el contexto de un administrador y se niega con un contrato vigente: sustituye los
   datos personales y su rastro en la bitácora, conserva lo clínico y lo contable, y devuelve
   las claves de los ficheros que `familias.purgar_archivos` borra del almacenamiento después
-  de confirmar. Un dato personal nuevo en una tabla ligada a la familia exige añadirlo a esa
-  función (con su migración) y a `test_anonimizar_no_deja_datos_personales`.
+  de confirmar. `test_anonimizar_no_deja_datos_personales` recorre todas las tablas: un dato
+  personal nuevo lo borra esa función (con su migración) o su tabla va en `CONSERVAN_DATOS`
+  con su motivo. En texto libre clínico solo se borran menciones (`borrar_menciones`).
   `test_la_aplicacion_solo_borra_estado_tecnico` falla si una tabla de negocio recupera
   `DELETE`. Una familia dada de baja no tiene contrato vigente, por los dos lados (migración `0027`):
   `tr_familias_baja_sin_contrato_vigente` rechaza marcar la baja con uno vigente, así que la
@@ -245,7 +252,8 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
   bloquear con `FOR UPDATE` sin poder editar), `CONDICIONES` (las filas de `familia`,
   `aliada` y `publico`, y las sesiones propias del equipo) y `CATALOGOS`. Sin contexto, la base no
   devuelve nada. `sistema` lo tiene todo; los webhooks pasan a `sistema` tras validar la
-  firma. Toda escritura lleva lectura, porque `INSERT … RETURNING` exige pasar la política de
+  firma, y las rutas públicas con token de un solo uso (registro en línea), tras validarlo.
+  Toda escritura lleva lectura, porque `INSERT … RETURNING` exige pasar la política de
   `SELECT`. Una ruta nueva, o una que pase a tocar otra tabla, exige actualizar la matriz y
   escribir la migración que regenera sus políticas; si no, la prueba de esa ruta falla
   porque la base niega el acceso. Esa migración no importa la matriz, la congela: se genera
@@ -339,6 +347,13 @@ Una migración que borra o renombra columnas necesita dos despliegues si no se q
 cortar el servicio: primero el código que tolera las dos formas, después la migración
 destructiva. La primera migración no tiene ese problema porque parte de una base vacía.
 
+- Una migración que redefine una función SQL (`anonimizar_familia`) copia la versión anterior
+  de la migración previa con `runpy.run_path(...)["_ANONIMIZAR"]`: el `downgrade` queda exacto.
+- Columna `NOT NULL` nueva en una tabla con filas: `server_default` para rellenarlas y
+  `alter_column(..., server_default=None)` después; el valor por defecto lo declara el modelo.
+- Lo que corre dentro de una función plpgsql no lo ve la guarda de caminos calientes (analiza
+  `SELECT f()`): dentro, filtra `auditoria` por `entidad` para usar `ix_auditoria_entidad`.
+
 ## Pruebas
 
 Las del backend corren **contra PostgreSQL**, no contra SQLite: el esquema usa JSONB,
@@ -366,3 +381,5 @@ Trampas conocidas:
 - **Nunca dos `pytest` a la vez contra `db-test`**: el fixture `esquema` borra y recrea el esquema al arrancar y rompe la otra ejecución.
 - Dentro de una prueba todo comparte transacción y `created_at`: no se compara orden por fecha de creación; se comparan conjuntos.
 - Clientes de terceros: se sustituye `httpx.Client` por uno con `httpx.MockTransport` (fixture `red` en `tests/test_integraciones.py`); tareas de Celery con la sesión de la prueba: fixture `en_worker` en `tests/conftest.py`.
+- Tras `await db.commit()` los objetos ORM caducan: leer un atributo en una prueba async da `MissingGreenlet`. Guarda los ids antes del `commit`.
+- asyncpg no acepta dos sentencias en un mismo `text()`: una `db.execute` por sentencia.

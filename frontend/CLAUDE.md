@@ -64,3 +64,5 @@ de revisión y la deuda conocida (sin tema oscuro).
 
 - **MSW usa el primer handler que coincide**: en `server.use(...base, override)` gana `base`. Los comunes van en un `beforeEach` y cada prueba los sustituye con su propio `server.use`.
 - En jsdom el parser multipart de undici no acepta el `File` de jsdom, y el nombre llega como `blob`: una subida se comprueba leyendo `await request.text()`, no con `request.formData()`.
+- Al simular `window.location` con `vi.stubGlobal`, dale el `pathname` de una página pública: si no, el cliente manda a `/login` ante el 401 de `/auth/me` (`PAGINAS_PUBLICAS` en `src/api/client.ts`).
+- El proyecto no usa Prettier: no corras `npx prettier`, que descarga uno y reformatea el fichero entero. El formato lo revisa ESLint.

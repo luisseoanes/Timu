@@ -91,6 +91,7 @@ docker compose stop
 docker compose -p timu-verificacion up --build -d
 docker compose -p timu-verificacion ps -a        # inicializar «Exited (0)», el resto en marcha
 curl -fsS "$(docker compose -p timu-verificacion port api 8000)/health"   # db, redis y workers en «ok»
+# recién levantado responde 503 unos segundos, hasta que los workers se registran: reintenta
 docker compose -p timu-verificacion down -v --rmi local
 docker compose up -d
 ```
@@ -200,6 +201,10 @@ Todo está en [`CONTRIBUTING.md`](CONTRIBUTING.md): **léelo antes de cada commi
 qué va en cada commit, el formato `tipo(scope): descripción`, la lista de scopes, la
 longitud, los pies permitidos (ningún `Co-Authored-By` ni enlace de sesión de Claude) y
 cómo `semantic-release` decide la versión.
+
+En el worktree de commits, Vitest necesita `ln -s <repo>/frontend/node_modules`. Ese enlace
+aparece como no rastreado: añade rutas explícitas (nunca `git add -A`) y bórralo antes de
+`git worktree remove --force`.
 
 ## Convenciones de escritura
 
