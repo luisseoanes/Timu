@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 
 import { Consulta } from '@/components/Consulta'
 import { Icono } from '@/components/Icono'
@@ -6,7 +6,7 @@ import { Modal } from '@/components/Modal'
 import { useCiudades, useEspecies, useTiposServicio } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
 import { moneda } from '@/lib/formato'
-import type { Periodicidad, PlanRead } from '@/types'
+import type { ColorPlan, Periodicidad, PlanRead } from '@/types'
 
 import {
   useActualizarPlan,
@@ -44,6 +44,7 @@ export function Planes() {
             {d.map((p) => (
               <article key={p.id} className="plan" aria-label={p.nombre}>
                 <div className="acciones">
+                  <span className="marcador-plan" data-color={p.color} aria-hidden="true" />
                   <h4>{p.nombre}</h4>
                   {!p.activo && <span className="distintivo distintivo-neutro">Inactivo</span>}
                 </div>
@@ -130,6 +131,7 @@ function NuevoPlan({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => vo
               nombre: String(d.get('nombre')).trim(),
               descripcion: String(d.get('descripcion') ?? '').trim() || undefined,
               especies: d.getAll('especies').map(String),
+              color: String(d.get('color')) as ColorPlan,
               ...datos,
             },
             { onSuccess: onCerrar },
@@ -148,6 +150,7 @@ function NuevoPlan({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => vo
           <span>Descripción</span>
           <textarea className="input" name="descripcion" rows={2} />
         </label>
+        <CampoColor />
         <CampoEspecies />
         <CamposPlan />
         {(aviso || crear.isError) && (
@@ -184,6 +187,28 @@ function leerPlan(d: FormData): { ciudades: string[]; tarifas: Tarifas } {
       anual: largo('anual'),
     },
   }
+}
+
+const COLORES: Record<ColorPlan, string> = { verde: 'Verde', naranja: 'Naranja', azul: 'Azul' }
+
+/** El color con el que la interfaz reconoce el plan (manual de marca, secciones 4 y 10). */
+function CampoColor({ actual = 'verde' }: { actual?: ColorPlan }) {
+  const id = useId()
+  return (
+    <div className="campo">
+      <label htmlFor={id}>Color del plan</label>
+      <select className="input" id={id} name="color" defaultValue={actual} aria-describedby={`${id}-ayuda`}>
+        {(Object.keys(COLORES) as ColorPlan[]).map((c) => (
+          <option key={c} value={c}>
+            {COLORES[c]}
+          </option>
+        ))}
+      </select>
+      <span className="campo-ayuda" id={`${id}-ayuda`}>
+        Uno de los colores del logo; así se reconoce el plan en el panel y en el portal.
+      </span>
+    </div>
+  )
 }
 
 function CampoEspecies() {
@@ -303,7 +328,7 @@ function EditarPlan({ plan, onCerrar }: { plan: PlanRead; onCerrar: () => void }
           }
           setAviso(null)
           try {
-            await actualizar.mutateAsync({ id: plan.id, nombre: String(d.get('nombre')).trim() })
+            await actualizar.mutateAsync({ id: plan.id, nombre: String(d.get('nombre')).trim(), color: String(d.get('color')) as ColorPlan })
             await guardarCiudades.mutateAsync({ id: plan.id, ciudades: datos.ciudades })
             await guardarTarifas.mutateAsync({ id: plan.id, tarifas: datos.tarifas })
             await guardarBeneficios.mutateAsync({ id: plan.id, beneficios })
@@ -318,6 +343,7 @@ function EditarPlan({ plan, onCerrar }: { plan: PlanRead; onCerrar: () => void }
             <span>Nombre</span>
             <input className="input" name="nombre" defaultValue={plan.nombre} required />
           </label>
+          <CampoColor actual={plan.color} />
           <CamposPlan plan={plan} />
         </div>
         <h4 className="subtitulo">Beneficios</h4>

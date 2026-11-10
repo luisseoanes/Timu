@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import type {
   CasoRead,
+  ColorPlan,
   ConsultaRead,
   EsquemaPreventivoRead,
   EventoPasarelaRead,
@@ -171,6 +172,7 @@ export interface NuevoPlan {
   descripcion?: string
   ciudades: string[]
   especies: string[]
+  color: ColorPlan
   tarifas: Tarifas
 }
 
@@ -180,7 +182,7 @@ export function useCrearPlan() {
 
 export function useActualizarPlan() {
   return useMutacion(
-    async ({ id, ...datos }: { id: string; activo?: boolean; nombre?: string; descripcion?: string | null }) =>
+    async ({ id, ...datos }: { id: string; activo?: boolean; nombre?: string; descripcion?: string | null; color?: ColorPlan }) =>
       (await api.patch<PlanRead>(`/planes/${id}`, datos)).data,
     'planes',
   )

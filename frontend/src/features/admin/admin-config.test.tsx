@@ -78,10 +78,12 @@ describe('Administración: planes', () => {
     await user.click(within(modal).getByRole('button', { name: 'Quitar beneficio' }))
     await user.selectOptions(within(modal).getByLabelText('Agregar beneficio'), 'vacunacion')
     await user.type(within(modal).getByLabelText('Cupo (vacío = ilimitado)'), '4')
+    expect(within(modal).getByLabelText('Color del plan')).toHaveValue('naranja')
+    await user.selectOptions(within(modal).getByLabelText('Color del plan'), 'azul')
     await user.click(within(modal).getByRole('button', { name: 'Guardar' }))
     await waitFor(() => expect(pedidos).toHaveLength(4))
     expect(pedidos).toEqual([
-      ['plan', { nombre: 'Colita Feliz' }],
+      ['plan', { nombre: 'Colita Feliz', color: 'azul' }],
       ['ciudades', ['Bogota']],
       ['tarifas', { por_peludos: ['36000', '30500', '26000', '24000'], trimestral: '103800', semestral: '202350' }],
       ['beneficios', [{ tipo_servicio_codigo: 'vacunacion', cupo: 4, periodo_cupo: 'anual', cobertura_pct: 100, copago: '0' }]],
@@ -133,12 +135,14 @@ describe('Administración: planes', () => {
     ] as const) {
       await user.type(within(modal).getByLabelText(campo), valor)
     }
+    expect(within(modal).getByLabelText('Color del plan')).toHaveValue('verde')
     await user.click(within(modal).getByRole('button', { name: 'Crear plan' }))
     await waitFor(() =>
       expect(creado).toEqual({
         codigo: 'mi_amigo_fiel',
         nombre: 'Mi Amigo Fiel',
         especies: ['perro'],
+        color: 'verde',
         ciudades: ['Bogota'],
         tarifas: { por_peludos: ['69000', '61000', '57500', '57000'], semestral: '393300' },
       }),

@@ -421,6 +421,11 @@ a.acceso { text-decoration: none; }
   border: 1px solid var(--borde); border-radius: var(--r-tarjeta);
   background: var(--superficie-hundida);
 }
+/* Marcador de plan: identidad, no estado (manual de marca, regla 4). El color sale del campo
+   `color` del catálogo; el nombre del plan va siempre al lado, en texto. */
+.marcador-plan { width: 12px; height: 12px; flex: none; border-radius: 3px; background: var(--plan-verde); }
+.marcador-plan[data-color="naranja"] { background: var(--plan-naranja); }
+.marcador-plan[data-color="azul"] { background: var(--plan-azul); }
 .beneficios { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: var(--t-menor); }
 .beneficios svg { color: var(--estado-ok-texto); vertical-align: -2px; }
 .bloque-codigo {
