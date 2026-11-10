@@ -4,12 +4,14 @@ import { api } from '@/api/client'
 import type {
   CambioHistorial,
   CategoriaDocumento,
+  CotizacionRead,
   ContactoRead,
   DocumentoRead,
   EstadoAfiliacion,
   EstadoCuenta,
   FamiliaRead,
   MensajeRead,
+  Periodicidad,
   MascotaRead,
   Page,
   ResumenServiciosRead,
@@ -146,7 +148,8 @@ export function useHabilitarPortal(id: string) {
 export function useAgregarMascota(familiaId: string) {
   const invalidar = useInvalidarFamilias()
   return useMutation({
-    mutationFn: async (mascota: NuevaMascota) =>
+    // Con afiliacion vigente, `plan_id` es el plan con que entra al contrato.
+    mutationFn: async (mascota: NuevaMascota & { plan_id?: string }) =>
       (await api.post<MascotaRead>(`/familias/${familiaId}/mascotas`, mascota)).data,
     onSuccess: invalidar,
   })
@@ -337,6 +340,79 @@ export function useQuitarDocumento(familiaId: string) {
       await api.post(`/documentos/${id}/baja`)
     },
     onSuccess: invalidar,
+  })
+}
+
+/** Un peludo con el plan elegido, para cotizar o afiliar. */
+export interface PeludoElegido {
+  mascota_id: string
+  especie: string
+  plan_id: string
+}
+
+/** 6.2 / 6.3 Lo que pagaría la afiliación con cada periodicidad, del mismo cálculo que cobra. */
+export function useCotizacion(ciudad: string, peludos: PeludoElegido[]) {
+  const completa = peludos.length > 0 && peludos.every((p) => p.plan_id)
+  return useQuery({
+    queryKey: ['planes', 'cotizacion', ciudad, peludos.map((p) => [p.especie, p.plan_id])],
+    enabled: completa,
+    queryFn: async () =>
+      (
+        await api.post<CotizacionRead[]>('/planes/cotizacion', {
+          ciudad,
+          peludos: peludos.map(({ especie, plan_id }) => ({ especie, plan_id })),
+        })
+      ).data,
+  })
+}
+
+export interface InicioAfiliacion {
+  solicitud_id: string
+  valor: string
+  enlace_pago: string
+}
+
+export interface DatosAfiliacion {
+  peludos: { mascota_id: string; plan_id: string }[]
+  periodicidad: Periodicidad
+  medio_aceptacion: string
+  detalle_aceptacion?: string
+}
+
+function useRefrescarAfiliacion() {
+  const qc = useQueryClient()
+  return () => {
+    void qc.invalidateQueries({ queryKey: ['familias'] })
+    void qc.invalidateQueries({ queryKey: ['cartera'] })
+  }
+}
+
+/** F1-AFI Afiliación asistida: cada peludo con su plan; devuelve el enlace de pago. */
+export function useAfiliarAsistida(familiaId: string) {
+  const refrescar = useRefrescarAfiliacion()
+  return useMutation({
+    mutationFn: async (datos: DatosAfiliacion) =>
+      (await api.post<InicioAfiliacion>('/afiliaciones/asistida', { familia_id: familiaId, ...datos })).data,
+    onSuccess: refrescar,
+  })
+}
+
+export function usePagoManualAfiliacion() {
+  const refrescar = useRefrescarAfiliacion()
+  return useMutation({
+    mutationFn: async ({ solicitudId, ...datos }: { solicitudId: string; medio: string; comprobante: string }) =>
+      (await api.post(`/afiliaciones/${solicitudId}/pago-manual`, datos)).data,
+    onSuccess: refrescar,
+  })
+}
+
+/** F1-PLA-02 Un peludo cambia de plan; cómo se cobra lo decide la regla `plan.cambio`. */
+export function useCambiarPlanMascota() {
+  const refrescar = useRefrescarAfiliacion()
+  return useMutation({
+    mutationFn: async ({ contratoId, mascotaId, planId }: { contratoId: string; mascotaId: string; planId: string }) =>
+      (await api.post(`/planes/contratos/${contratoId}/cambio`, { mascota_id: mascotaId, plan_id: planId })).data,
+    onSuccess: refrescar,
   })
 }
 

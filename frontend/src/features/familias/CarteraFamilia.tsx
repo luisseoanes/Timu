@@ -57,7 +57,7 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
       <section className="tarjeta">
         <div className="tarjeta-cabeza">
           <h3>
-            Contrato {c.contrato.numero} · {c.plan.nombre}
+            Contrato {c.contrato.numero} · pago {c.contrato.periodicidad}
           </h3>
           {puede(usuario, 'gestionarAfiliacion') && (
             <button className="btn btn-primario" type="button" onClick={() => setPagando(true)}>
@@ -66,7 +66,8 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
           )}
         </div>
         <dl className="ficha">
-          <div><dt>Valor mensual</dt><dd className="numero">{moneda(c.contrato.valor_mensual)}</dd></div>
+          <div><dt>Valor de cada cuota</dt><dd className="numero">{moneda(c.contrato.valor_periodo)}</dd></div>
+          <div><dt>Valor mensual de los peludos</dt><dd className="numero">{moneda(c.contrato.valor_mensual)}</dd></div>
           <div><dt>Saldo pendiente</dt><dd className="numero">{moneda(c.saldo_pendiente)}</dd></div>
           <div><dt>Saldo vencido</dt><dd className="numero">{moneda(c.saldo_vencido)}</dd></div>
           <div><dt>Días de mora</dt><dd className="numero">{c.dias_mora}</dd></div>
@@ -79,6 +80,36 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
           </div>
           <div><dt>Renovación</dt><dd className="numero">{fecha(c.contrato.fecha_renovacion)}</dd></div>
         </dl>
+      </section>
+
+      <section className="tarjeta">
+        <div className="tarjeta-cabeza">
+          <h3>Peludos afiliados</h3>
+        </div>
+        {c.mascotas.length === 0 ? (
+          <p className="apagado">El contrato no tiene peludos vigentes.</p>
+        ) : (
+          <div className="scroll-x">
+            <table className="tabla" aria-label="Peludos afiliados">
+              <thead>
+                <tr>
+                  <th>Peludo</th>
+                  <th>Plan</th>
+                  <th>Al mes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {c.mascotas.map((m) => (
+                  <tr key={m.mascota_id}>
+                    <td className="principal">{m.nombre}</td>
+                    <td>{m.plan_nombre}</td>
+                    <td className="numero">{moneda(m.valor_mensual)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <section className="tarjeta">

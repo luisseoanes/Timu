@@ -101,7 +101,7 @@ export function CarteraPage() {
                     <th>Titular</th>
                     <th>Ciudad</th>
                     <th>Plan</th>
-                    <th>Mensualidad</th>
+                    <th>Cuota</th>
                     <th>Saldo vencido</th>
                     <th>Días de mora</th>
                     <th>Renovación</th>
@@ -117,7 +117,10 @@ export function CarteraPage() {
                       </td>
                       <td>{c.ciudad}</td>
                       <td>{c.plan}</td>
-                      <td className="numero">{moneda(c.valor_mensual)}</td>
+                      <td className="numero">
+                        {moneda(c.valor_periodo)}
+                        {c.periodicidad !== 'mensual' && <span className="apagado"> · {c.periodicidad}</span>}
+                      </td>
                       <td className="numero">{Number(c.saldo_vencido) > 0 ? moneda(c.saldo_vencido) : '—'}</td>
                       <td className="numero">{c.dias_mora > 0 ? c.dias_mora : '—'}</td>
                       <td className="numero">{fecha(c.fecha_renovacion)}</td>

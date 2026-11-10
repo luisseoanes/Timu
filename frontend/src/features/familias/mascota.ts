@@ -12,3 +12,14 @@ export function leerCamposMascota(d: FormData, prefijo = '') {
     esterilizada: esterilizada === '' ? undefined : esterilizada === 'si',
   }
 }
+
+/** Los planes activos que se venden en la ciudad y cubren la especie (sin especies = todas). */
+export function planesPara<P extends { activo: boolean; ciudades: string[]; especies: string[] }>(
+  planes: P[] | undefined,
+  ciudad: string,
+  especie: string,
+): P[] {
+  return (planes ?? []).filter(
+    (p) => p.activo && p.ciudades.includes(ciudad) && (p.especies.length === 0 || p.especies.includes(especie)),
+  )
+}

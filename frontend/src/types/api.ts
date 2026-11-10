@@ -163,8 +163,6 @@ export interface PlanRead {
   ciudades: string[]
   tarifas: TarifaRead[]
   tarifas_periodicidad: TarifaPeriodicidadRead[]
-  valor_mensual: string
-  cupos_mascotas: number
   especies: string[]
   activo: boolean
   beneficios: BeneficioRead[]
@@ -205,7 +203,9 @@ export interface ContratoListado {
   ciudad: string
   plan: string
   estado: string
+  periodicidad: Periodicidad
   valor_mensual: string
+  valor_periodo: string
   saldo_vencido: string
   dias_mora: number
   fecha_renovacion: string
@@ -215,15 +215,13 @@ export interface ContratoRead {
   id: string
   numero: string
   familia_id: string
-  plan_id: string
   fecha_inicio: string
   fecha_renovacion: string
   fecha_fin: string | null
   dia_corte: number
-  valor_plan: string
-  mascotas_adicionales: number
-  valor_adicional_mascota: string
+  periodicidad: Periodicidad
   valor_mensual: string
+  valor_periodo: string
   saldo_a_favor: string
   estado: string
   aceptado_en: string | null
@@ -234,6 +232,7 @@ export interface CuotaRead {
   id: string
   periodo: string
   tipo: string
+  meses: number
   fecha_vencimiento: string
   valor: string
   valor_pagado: string
@@ -255,10 +254,13 @@ export interface PagoRead {
   aplicado: boolean
 }
 
-export interface PlanResumen {
-  id: string
-  codigo: string
+export interface PeludoContratoRead {
+  mascota_id: string
   nombre: string
+  especie: string
+  plan_id: string
+  plan_nombre: string
+  valor_mensual: string
 }
 
 export interface ProximoCobro {
@@ -268,7 +270,7 @@ export interface ProximoCobro {
 
 export interface EstadoCuenta {
   contrato: ContratoRead
-  plan: PlanResumen
+  mascotas: PeludoContratoRead[]
   estado: string
   saldo_pendiente: string
   saldo_vencido: string
@@ -345,6 +347,7 @@ export interface CupoBeneficioRead {
   cupo: number | null
   usados: number
   periodo: string
+  mascota_id: string | null
 }
 
 export interface ResumenServiciosRead {
@@ -708,6 +711,7 @@ export interface Recomendacion {
 export interface CambioPlanRead {
   id: string
   contrato_id: string
+  mascota_id: string | null
   tipo: string
   plan_anterior_id: string | null
   plan_nuevo_id: string | null
@@ -718,6 +722,14 @@ export interface CambioPlanRead {
   regla_codigo: string | null
   fecha_efectiva: unknown
   aplicado: boolean
+}
+
+export interface PeludoSolicitudRead {
+  mascota_id: string | null
+  nombre: string
+  especie: string
+  plan_id: string
+  valor_mensual: string
 }
 
 export interface SolicitudVirtualRead {
@@ -747,7 +759,8 @@ export interface PlantillaConsultaRead {
 export interface SolicitudAfiliacionRead {
   id: string
   familia_id: string
-  plan_id: string
+  periodicidad: Periodicidad
+  peludos: PeludoSolicitudRead[]
   valor_inicial: string
   referencia_pago: string
   estado: string

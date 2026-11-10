@@ -26,19 +26,28 @@ const CUENTA: EstadoCuenta = {
     id: 'c1',
     numero: 'TM-0001',
     familia_id: FAMILIA.id,
-    plan_id: 'p1',
     fecha_inicio: '2026-01-01',
     fecha_renovacion: '2027-01-01',
     fecha_fin: null,
     dia_corte: 5,
-    valor_plan: '89000.00',
-    mascotas_adicionales: 0,
-    valor_adicional_mascota: '0.00',
+    periodicidad: 'mensual',
     valor_mensual: '89000.00',
+    valor_periodo: '89000.00',
     saldo_a_favor: '0.00',
-    estado: 'activo',
-  } as EstadoCuenta['contrato'],
-  plan: { id: 'p1', codigo: 'esencial', nombre: 'Plan Esencial' },
+    estado: 'activa',
+    aceptado_en: null,
+    medio_aceptacion: null,
+  },
+  mascotas: [
+    {
+      mascota_id: FAMILIA.mascotas![0]!.id,
+      nombre: 'Luna',
+      especie: 'perro',
+      plan_id: 'p1',
+      plan_nombre: 'Plan Esencial',
+      valor_mensual: '89000.00',
+    },
+  ],
   estado: 'en_mora',
   saldo_pendiente: '89000.00',
   saldo_vencido: '89000.00',
@@ -49,7 +58,8 @@ const CUENTA: EstadoCuenta = {
     {
       id: 'q1',
       periodo: '2026-09',
-      tipo: 'mensual',
+      tipo: 'cuota',
+      meses: 1,
       fecha_vencimiento: '2026-09-05',
       valor: '89000.00',
       valor_pagado: '0.00',
@@ -111,18 +121,35 @@ describe('FamiliaDetallePage', () => {
     expect(await screen.findByText(/aún no tiene contrato/i)).toBeInTheDocument()
   })
 
-  it('afilia a una familia sin contrato y registra el pago recibido', async () => {
+  it('afilia con un plan por peludo, la forma de pago y el precio del backend', async () => {
     const pedidos: unknown[] = []
+    const cotizacion = (periodicidad: string, meses: number, valor: string, descuento: boolean, ahorro = '0.00') => ({
+      periodicidad,
+      meses,
+      tarifa_de: 1,
+      peludos: [{ especie: 'perro', plan_id: 'p1', plan_nombre: 'Colita Feliz', valor_mensual: '35500.00' }],
+      valor_mensual: '35500.00',
+      valor_periodo: valor,
+      descuento,
+      ahorro,
+    })
     server.use(
-      http.get(`${API}/planes`, () =>
-        HttpResponse.json([{ ...PLAN, valor_mensual: '75000.00', cupos_mascotas: 3 }]),
-      ),
+      http.get(`${API}/planes`, () => HttpResponse.json([PLAN])),
+      http.post(`${API}/planes/cotizacion`, async ({ request }) => {
+        pedidos.push(['cotizacion', await request.json()])
+        return HttpResponse.json([
+          cotizacion('mensual', 1, '35500.00', false),
+          cotizacion('trimestral', 3, '106500.00', false),
+          cotizacion('semestral', 6, '202350.00', true, '10650.00'),
+          cotizacion('anual', 12, '378000.00', true, '48000.00'),
+        ])
+      }),
       http.post(`${API}/afiliaciones/asistida`, async ({ request }) => {
-        pedidos.push(await request.json())
-        return HttpResponse.json({ solicitud_id: 'sol1', valor: '75000.00', enlace_pago: 'https://pago/abc' }, { status: 201 })
+        pedidos.push(['asistida', await request.json()])
+        return HttpResponse.json({ solicitud_id: 'sol1', valor: '202350.00', enlace_pago: 'https://pago/abc' }, { status: 201 })
       }),
       http.post(`${API}/afiliaciones/sol1/pago-manual`, async ({ request }) => {
-        pedidos.push(await request.json())
+        pedidos.push(['pago', await request.json()])
         return HttpResponse.json({})
       }),
     )
@@ -131,16 +158,32 @@ describe('FamiliaDetallePage', () => {
     await user.click(await screen.findByRole('tab', { name: 'Cartera' }))
     await user.click(await screen.findByRole('button', { name: 'Afiliar a un plan' }))
     const modal = await screen.findByRole('dialog')
-    await waitFor(() => expect(within(modal).getByRole('option', { name: /colita feliz/i })).toBeInTheDocument())
-    await user.selectOptions(within(modal).getByLabelText('Plan'), 'p1')
+    expect(within(modal).getByText('Elige el plan de cada peludo para ver el precio.')).toBeInTheDocument()
+    expect(within(modal).getByRole('button', { name: 'Iniciar afiliación' })).toBeDisabled()
+    const plan = within(modal).getByLabelText('Luna · Perro')
+    await waitFor(() => expect(within(plan).getByRole('option', { name: /colita feliz/i })).toBeInTheDocument())
+    await user.selectOptions(plan, 'p1')
+    await user.selectOptions(within(modal).getByLabelText('Forma de pago'), 'semestral')
+    const precio = await within(modal).findByRole('status', { name: 'Precio de la afiliación' })
+    expect(precio).toHaveTextContent(/202\.350 cada 6 meses/)
+    expect(precio).toHaveTextContent(/ahorra .*10\.650/)
     await user.click(within(modal).getByRole('button', { name: 'Iniciar afiliación' }))
     expect(await within(modal).findByLabelText('Enlace de pago')).toHaveValue('https://pago/abc')
     await user.type(within(modal).getByLabelText('Comprobante'), 'TRF-99')
     await user.click(within(modal).getByRole('button', { name: 'Registrar pago recibido' }))
     expect(await within(modal).findByText(/la afiliación quedó activa/i)).toBeInTheDocument()
     expect(pedidos).toEqual([
-      { familia_id: FAMILIA.id, plan_id: 'p1', medio_aceptacion: 'whatsapp' },
-      { medio: 'transferencia', comprobante: 'TRF-99' },
+      ['cotizacion', { ciudad: FAMILIA.ciudad, peludos: [{ especie: 'perro', plan_id: 'p1' }] }],
+      [
+        'asistida',
+        {
+          familia_id: FAMILIA.id,
+          peludos: [{ mascota_id: FAMILIA.mascotas![0]!.id, plan_id: 'p1' }],
+          periodicidad: 'semestral',
+          medio_aceptacion: 'whatsapp',
+        },
+      ],
+      ['pago', { medio: 'transferencia', comprobante: 'TRF-99' }],
     ])
   })
 
@@ -660,7 +703,7 @@ describe('FamiliaDetallePage', () => {
     )
     const { modal } = await abrirFichaDeLuna()
     expect(within(modal).getByRole('heading', { name: 'Luna' })).toBeInTheDocument()
-    expect(await within(modal).findByText(`Plan ${CUENTA.plan.nombre}, el de la familia.`)).toBeInTheDocument()
+    expect(await within(modal).findByText(/^Plan Plan Esencial: paga .*89\.000 al mes\.$/)).toBeInTheDocument()
     expect(await within(modal).findByText(/Este mes: 1 pendientes y 0 utilizados/)).toBeInTheDocument()
     expect((consultado as URLSearchParams | null)?.get('mascota_id')).toBe(LUNA.id)
     expect(within(modal).getByRole('link', { name: 'Historia clínica' })).toHaveAttribute('href', `/clinica/mascotas/${LUNA.id}`)
@@ -869,5 +912,55 @@ describe('FamiliaDetallePage', () => {
     abrirFicha()
     await user.click(await screen.findByRole('tab', { name: 'Documentos' }))
     expect(await screen.findByText(/No fue posible cargar los documentos/)).toBeInTheDocument()
+  })
+
+  it('con afiliación vigente, el alta de una mascota pide su plan y lo envía', async () => {
+    let enviado: Record<string, unknown> | null = null
+    server.use(
+      http.get(`${API}/cartera/familias/:id/estado-cuenta`, () => HttpResponse.json(CUENTA)),
+      http.get(`${API}/planes`, () => HttpResponse.json([PLAN])),
+      http.post(`${API}/familias/:id/mascotas`, async ({ request }) => {
+        enviado = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ ...FAMILIA.mascotas![0]!, id: 'm9', nombre: 'Coco' }, { status: 201 })
+      }),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Mascotas' }))
+    await user.click(await screen.findByRole('button', { name: 'Agregar mascota' }))
+    const modal = await screen.findByRole('dialog')
+    expect(await within(modal).findByText(/todos pagan la tarifa del nuevo número de peludos/)).toBeInTheDocument()
+    await user.type(within(modal).getByLabelText('Nombre'), 'Coco')
+    await user.selectOptions(within(modal).getByLabelText('Especie'), 'gato')
+    const plan = await within(modal).findByLabelText('Plan')
+    await waitFor(() => expect(within(plan).getByRole('option', { name: /colita feliz/i })).toBeInTheDocument())
+    await user.selectOptions(plan, 'p1')
+    await user.type(within(modal).getByLabelText('Fecha de nacimiento'), '2024-06-01')
+    await user.type(within(modal).getByLabelText('Peso (kg)'), '3')
+    await user.click(within(modal).getByRole('button', { name: 'Agregar' }))
+    await waitFor(() => expect(enviado).toMatchObject({ nombre: 'Coco', especie: 'gato', plan_id: 'p1' }))
+  })
+
+  it('cambia el plan de un peludo desde su ficha', async () => {
+    let cambio: unknown = null
+    const FIEL = { ...PLAN, id: 'p2', codigo: 'mi_amigo_fiel', nombre: 'Mi Amigo Fiel' }
+    server.use(
+      http.get(`${API}/cartera/familias/:id/estado-cuenta`, () =>
+        HttpResponse.json({ ...CUENTA, mascotas: [{ ...CUENTA.mascotas[0]!, mascota_id: LUNA.id }] }),
+      ),
+      http.get(`${API}/planes`, () => HttpResponse.json([PLAN, FIEL])),
+      http.post(`${API}/planes/contratos/:id/cambio`, async ({ request, params }) => {
+        cambio = { contrato: params.id, ...((await request.json()) as object) }
+        return HttpResponse.json({})
+      }),
+    )
+    const { user, modal } = await abrirFichaDeLuna()
+    const nuevo = await within(modal).findByLabelText('Cambiar de plan')
+    expect(within(modal).getByRole('button', { name: 'Cambiar plan' })).toBeDisabled()
+    await waitFor(() => expect(within(nuevo).getByRole('option', { name: /mi amigo fiel/i })).toBeInTheDocument())
+    await user.selectOptions(nuevo, 'p2')
+    await user.click(within(modal).getByRole('button', { name: 'Cambiar plan' }))
+    await waitFor(() => expect(cambio).toEqual({ contrato: 'c1', mascota_id: LUNA.id, plan_id: 'p2' }))
+    expect(await within(modal).findByText('Plan cambiado.')).toBeInTheDocument()
   })
 })

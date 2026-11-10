@@ -7,8 +7,9 @@ import { mensajeError } from '@/lib/errores'
 import { fecha } from '@/lib/formato'
 import type { FamiliaRead, MascotaRead } from '@/types'
 
-import { useAgregarMascota, useBajaMascota, type NuevaMascota } from './api'
+import { useAgregarMascota, useBajaMascota, useEstadoCuenta, type NuevaMascota } from './api'
 import { CamposMascota } from './CamposMascota'
+import { ElegirPlan } from './ElegirPlan'
 import { FichaMascotaModal } from './FichaMascota'
 import { leerCamposMascota } from './mascota'
 
@@ -85,7 +86,7 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
           </table>
         </div>
       )}
-      <AgregarMascotaModal familiaId={familia.id} abierto={agregando} onCerrar={() => setAgregando(false)} />
+      <AgregarMascotaModal familia={familia} abierto={agregando} onCerrar={() => setAgregando(false)} />
       <BajaMascotaModal mascota={deBaja} onCerrar={() => setDeBaja(null)} />
       <FichaMascotaModal
         familia={familia}
@@ -97,9 +98,13 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
   )
 }
 
-function AgregarMascotaModal({ familiaId, abierto, onCerrar }: { familiaId: string; abierto: boolean; onCerrar: () => void }) {
-  const agregar = useAgregarMascota(familiaId)
+function AgregarMascotaModal({ familia, abierto, onCerrar }: { familia: FamiliaRead; abierto: boolean; onCerrar: () => void }) {
+  const agregar = useAgregarMascota(familia.id)
   const especies = useEspecies()
+  const cuenta = useEstadoCuenta(familia.id)
+  // Con afiliacion vigente entra al contrato con su plan: los demas cambian de tarifa.
+  const afiliada = Boolean(cuenta.data && cuenta.data.contrato.estado !== 'cancelada')
+  const [especie, setEspecie] = useState('')
 
   function guardar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -112,7 +117,8 @@ function AgregarMascotaModal({ familiaId, abierto, onCerrar }: { familiaId: stri
       sexo: opcional('sexo') as NuevaMascota['sexo'],
       ...leerCamposMascota(d),
     }
-    agregar.mutate(mascota, { onSuccess: onCerrar })
+    const plan = String(d.get('plan_id') ?? '') || undefined
+    agregar.mutate({ ...mascota, plan_id: plan }, { onSuccess: onCerrar })
   }
 
   return (
@@ -125,7 +131,11 @@ function AgregarMascotaModal({ familiaId, abierto, onCerrar }: { familiaId: stri
         }
       }}
       titulo="Agregar mascota"
-      descripcion="Cada mascota adicional puede cambiar el valor mensual del contrato."
+      descripcion={
+        afiliada
+          ? 'Entra al contrato con su plan; desde la siguiente cuota todos pagan la tarifa del nuevo número de peludos.'
+          : undefined
+      }
       pie={
         <button className="btn btn-primario" type="submit" form="agregar-mascota" disabled={agregar.isPending}>
           {agregar.isPending ? 'Guardando…' : 'Agregar'}
@@ -139,7 +149,7 @@ function AgregarMascotaModal({ familiaId, abierto, onCerrar }: { familiaId: stri
         </label>
         <label className="campo">
           <span>Especie</span>
-          <select className="input" name="especie" required defaultValue="">
+          <select className="input" name="especie" required value={especie} onChange={(e) => setEspecie(e.target.value)}>
             <option value="" disabled>Selecciona la especie</option>
             {especies.data
               ?.filter((e) => e.activa)
@@ -148,6 +158,9 @@ function AgregarMascotaModal({ familiaId, abierto, onCerrar }: { familiaId: stri
               ))}
           </select>
         </label>
+        {afiliada && especie && (
+          <ElegirPlan key={especie} etiqueta="Plan" name="plan_id" ciudad={familia.ciudad} especie={especie} />
+        )}
         <label className="campo">
           <span>Raza (opcional)</span>
           <input className="input" name="raza" />

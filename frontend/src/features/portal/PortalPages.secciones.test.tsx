@@ -32,8 +32,8 @@ const CUENTA = {
   saldo_vencido: '0.00',
   proximo_cobro: { valor: '75000.00', fecha: '2026-12-05' },
   cuotas: [
-    { id: 'q1', periodo: '2026-11', tipo: 'mensual', fecha_vencimiento: '2026-11-05', valor: '75000.00', valor_pagado: '0.00', estado: 'pendiente', dias_mora: 0, descripcion: null },
-    { id: 'q0', periodo: '2026-10', tipo: 'mensual', fecha_vencimiento: '2026-10-05', valor: '75000.00', valor_pagado: '75000.00', estado: 'pagada', dias_mora: 0, descripcion: 'Octubre' },
+    { id: 'q1', periodo: '2026-11', tipo: 'cuota', meses: 1, fecha_vencimiento: '2026-11-05', valor: '75000.00', valor_pagado: '0.00', estado: 'pendiente', dias_mora: 0, descripcion: null },
+    { id: 'q0', periodo: '2026-10', tipo: 'cuota', meses: 1, fecha_vencimiento: '2026-10-05', valor: '75000.00', valor_pagado: '75000.00', estado: 'pagada', dias_mora: 0, descripcion: 'Octubre' },
   ],
   pagos: [],
 }
@@ -68,21 +68,31 @@ describe('inicio del portal', () => {
       ),
       http.get(`${API}/portal/plan`, () =>
         HttpResponse.json({
-          plan: 'Plan Familiar',
           estado: 'activa',
-          valor_mensual: '75000.00',
+          periodicidad: 'trimestral',
+          valor_periodo: '103800.00',
+          valor_mensual: '35500.00',
           fecha_inicio: '2026-01-01',
           fecha_renovacion: '2027-01-01',
-          beneficios: [
-            { tipo_servicio: 'orientacion_virtual', cupo: null, periodo: 'anual', usados: 3, disponibles: null, cobertura_pct: 100 },
-            { tipo_servicio: 'vacunacion', cupo: 2, periodo: 'mensual', usados: 1, disponibles: 1, cobertura_pct: 100 },
+          mascotas: [
+            {
+              mascota_id: LUNA.id,
+              mascota: 'Luna',
+              plan: 'Colita Feliz',
+              valor_mensual: '35500.00',
+              beneficios: [
+                { tipo_servicio: 'orientacion_virtual', cupo: null, periodo: 'anual', usados: 3, disponibles: null, cobertura_pct: 100 },
+                { tipo_servicio: 'vacunacion', cupo: 2, periodo: 'mensual', usados: 1, disponibles: 1, cobertura_pct: 100 },
+              ],
+            },
           ],
         }),
       ),
     )
     renderizar(<PortalInicio />)
     expect(await screen.findByText(/ilimitado/)).toBeInTheDocument()
-    expect(screen.getByText(/te quedan 1 de 2 este mes/)).toBeInTheDocument()
+    expect(screen.getByText(/le quedan 1 de 2 este mes/)).toBeInTheDocument()
+    expect(screen.getByText(/Pago trimestral/)).toBeInTheDocument()
     await waitFor(() => expect(screen.getAllByText('Consulta domiciliaria')).toHaveLength(3))
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })

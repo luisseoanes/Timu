@@ -1,13 +1,15 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { FotoEditable } from '@/components/FotoEditable'
 import { Modal } from '@/components/Modal'
 import { mensajeError } from '@/lib/errores'
-import { mesEnCurso } from '@/lib/formato'
+import { mesEnCurso, moneda } from '@/lib/formato'
 import type { FamiliaRead, MascotaRead } from '@/types'
 
 import {
   useActualizarMascota,
+  useCambiarPlanMascota,
   useEstadoCuenta,
   useQuitarFotoMascota,
   useResumenServicios,
@@ -15,6 +17,7 @@ import {
   type CambiosMascota,
 } from './api'
 import { CamposMascota } from './CamposMascota'
+import { ElegirPlan } from './ElegirPlan'
 import { leerCamposMascota } from './mascota'
 
 /**
@@ -72,7 +75,7 @@ export function FichaMascotaModal({
       {mascota && (
         <div className="pila">
           <FotoMascota mascota={mascota} editable={editable} />
-          <PlanYServicios familiaId={familia.id} mascotaId={mascota.id} />
+          <PlanYServicios familia={familia} mascota={mascota} editable={editable} />
           <div className="acciones">
             <Link to={`/clinica/mascotas/${mascota.id}`} className="btn btn-suave">
               Historia clínica
@@ -142,25 +145,86 @@ function FotoMascota({ mascota, editable }: { mascota: MascotaRead; editable: bo
   )
 }
 
-function PlanYServicios({ familiaId, mascotaId }: { familiaId: string; mascotaId: string }) {
-  const cuenta = useEstadoCuenta(familiaId)
-  const servicios = useResumenServicios(familiaId, { ...mesEnCurso(), mascota_id: mascotaId })
+function PlanYServicios({
+  familia,
+  mascota,
+  editable,
+}: {
+  familia: FamiliaRead
+  mascota: MascotaRead
+  editable: boolean
+}) {
+  const cuenta = useEstadoCuenta(familia.id)
+  const servicios = useResumenServicios(familia.id, { ...mesEnCurso(), mascota_id: mascota.id })
+  const vigente = cuenta.data && cuenta.data.contrato.estado !== 'cancelada' ? cuenta.data : null
+  const afiliada = vigente?.mascotas.find((m) => m.mascota_id === mascota.id)
   const plan = cuenta.isPending
     ? 'Cargando el plan…'
     : cuenta.isError
       ? 'No fue posible cargar el plan.'
-      : cuenta.data
-        ? `Plan ${cuenta.data.plan.nombre}, el de la familia.`
-        : 'La familia no tiene un plan vigente.'
+      : !vigente
+        ? 'La familia no tiene un plan vigente.'
+        : afiliada
+          ? `Plan ${afiliada.plan_nombre}: paga ${moneda(afiliada.valor_mensual)} al mes.`
+          : 'No está afiliada en el contrato de la familia.'
   const delMes = servicios.isPending
     ? 'Cargando sus servicios…'
     : servicios.isError
       ? 'No fue posible cargar sus servicios.'
       : `Este mes: ${servicios.data.pendientes.length} pendientes y ${servicios.data.utilizados.length} utilizados. El detalle está en la pestaña Servicios.`
   return (
-    <div>
-      <p>{plan}</p>
-      <p className="apagado">{delMes}</p>
+    <div className="pila">
+      <div>
+        <p>{plan}</p>
+        <p className="apagado">{delMes}</p>
+      </div>
+      {editable && vigente && afiliada && (
+        <CambioDePlan
+          contratoId={vigente.contrato.id}
+          familia={familia}
+          mascota={mascota}
+          planActual={afiliada.plan_id}
+        />
+      )}
+    </div>
+  )
+}
+
+/** F1-PLA-02 El peludo pasa a otro plan; cómo se cobra lo decide la regla `plan.cambio`. */
+function CambioDePlan({
+  contratoId,
+  familia,
+  mascota,
+  planActual,
+}: {
+  contratoId: string
+  familia: FamiliaRead
+  mascota: MascotaRead
+  planActual: string
+}) {
+  const cambiar = useCambiarPlanMascota()
+  const [plan, setPlan] = useState(planActual)
+  return (
+    <div className="acciones">
+      <ElegirPlan etiqueta="Cambiar de plan" ciudad={familia.ciudad} especie={mascota.especie} valor={plan} onCambio={setPlan} />
+      <button
+        className="btn btn-suave"
+        type="button"
+        disabled={plan === planActual || cambiar.isPending}
+        onClick={() => cambiar.mutate({ contratoId, mascotaId: mascota.id, planId: plan })}
+      >
+        {cambiar.isPending ? 'Cambiando…' : 'Cambiar plan'}
+      </button>
+      {cambiar.isSuccess && (
+        <p className="apagado" role="status">
+          Plan cambiado.
+        </p>
+      )}
+      {cambiar.isError && (
+        <p className="error" role="alert">
+          {mensajeError(cambiar.error, 'No fue posible cambiar el plan.')}
+        </p>
+      )}
     </div>
   )
 }

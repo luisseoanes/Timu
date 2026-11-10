@@ -112,20 +112,28 @@ export function PortalInicio() {
               ) : (
                 <div className="pila" style={{ gap: 'var(--e3)' }}>
                   <div className="acciones">
-                    <strong className="indicador-valor">{p.plan}</strong>
+                    <strong className="indicador-valor numero">{moneda(p.valor_periodo)}</strong>
                     <Distintivo dominio="afiliacion" valor={p.estado} />
                   </div>
                   <span className="apagado">
-                    {moneda(p.valor_mensual)} al mes · renueva el {fecha(p.fecha_renovacion)}
+                    Pago {p.periodicidad} · renueva el {fecha(p.fecha_renovacion)}
                   </span>
-                  <ul className="beneficios">
-                    {p.beneficios.map((b) => (
-                      <li key={b.tipo_servicio}>
-                        <Icono nombre="check" size={14} /> {nombreTipo(b.tipo_servicio)}:{' '}
-                        {b.disponibles === null ? 'ilimitado' : `te quedan ${b.disponibles} de ${b.cupo} este ${b.periodo === 'anual' ? 'año' : 'mes'}`}
-                      </li>
-                    ))}
-                  </ul>
+                  {p.mascotas.map((m) => (
+                    <div key={m.mascota_id}>
+                      <strong>
+                        {m.mascota} · {m.plan}
+                      </strong>
+                      <span className="apagado"> · {moneda(m.valor_mensual)} al mes</span>
+                      <ul className="beneficios">
+                        {m.beneficios.map((b) => (
+                          <li key={b.tipo_servicio}>
+                            <Icono nombre="check" size={14} /> {nombreTipo(b.tipo_servicio)}:{' '}
+                            {b.disponibles === null ? 'ilimitado' : `le quedan ${b.disponibles} de ${b.cupo} este ${b.periodo === 'anual' ? 'año' : 'mes'}`}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </div>
               )
             }

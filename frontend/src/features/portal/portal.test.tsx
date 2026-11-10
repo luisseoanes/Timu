@@ -21,12 +21,22 @@ describe('Portal de la familia', () => {
       ...comoFamilia,
       http.get(`${API}/portal/plan`, () =>
         HttpResponse.json({
-          plan: 'Plan Familiar',
           estado: 'activa',
-          valor_mensual: '75000.00',
+          periodicidad: 'mensual',
+          valor_periodo: '91500.00',
+          valor_mensual: '91500.00',
           fecha_inicio: '2026-01-01',
           fecha_renovacion: '2027-01-01',
-          beneficios: [{ tipo_servicio: 'consulta_domiciliaria', cupo: 6, periodo: 'anual', usados: 2, disponibles: 4, cobertura_pct: 100 }],
+          mascotas: [
+            {
+              mascota_id: 'm1',
+              mascota: 'Luna',
+              plan: 'Colita Feliz',
+              valor_mensual: '30500.00',
+              beneficios: [{ tipo_servicio: 'consulta_domiciliaria', cupo: 6, periodo: 'anual', usados: 2, disponibles: 4, cobertura_pct: 100 }],
+            },
+            { mascota_id: 'm2', mascota: 'Max', plan: 'Mi Amigo Fiel', valor_mensual: '61000.00', beneficios: [] },
+          ],
         }),
       ),
       http.get(`${API}/portal/estado-cuenta`, () => HttpResponse.json({ saldo_vencido: '75000.00', cuotas: [], pagos: [] })),
@@ -34,7 +44,10 @@ describe('Portal de la familia', () => {
     )
     renderizar(<PortalInicio />)
     expect(await screen.findByRole('heading', { name: 'Hola, Ana' })).toBeInTheDocument()
-    expect(await screen.findByText(/te quedan 4 de 6 este año/)).toBeInTheDocument()
+    expect(await screen.findByText(/le quedan 4 de 6 este año/)).toBeInTheDocument()
+    // Cada peludo con su plan: tienen planes distintos.
+    expect(screen.getByText('Luna · Colita Feliz')).toBeInTheDocument()
+    expect(screen.getByText('Max · Mi Amigo Fiel')).toBeInTheDocument()
     expect(await screen.findByRole('alert')).toHaveTextContent('vencidos')
   })
 
@@ -84,7 +97,7 @@ describe('Portal de la familia', () => {
           saldo_pendiente: '75000.00',
           saldo_vencido: '0.00',
           proximo_cobro: null,
-          cuotas: [{ id: 'q1', periodo: '2026-11', tipo: 'mensual', fecha_vencimiento: '2026-11-05', valor: '75000.00', valor_pagado: '0.00', estado: 'pendiente', dias_mora: 0, descripcion: 'Cuota noviembre' }],
+          cuotas: [{ id: 'q1', periodo: '2026-11', tipo: 'cuota', meses: 1, fecha_vencimiento: '2026-11-05', valor: '75000.00', valor_pagado: '0.00', estado: 'pendiente', dias_mora: 0, descripcion: 'Cuota noviembre' }],
           pagos: [],
         }),
       ),

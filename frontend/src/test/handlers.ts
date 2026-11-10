@@ -60,9 +60,7 @@ export const PLAN: PlanRead = {
     { periodicidad: 'semestral', valor: '202350.00' },
     { periodicidad: 'anual', valor: '378000.00' },
   ],
-  valor_mensual: '35500.00',
-  cupos_mascotas: 10,
-  especies: ['canino', 'felino'],
+  especies: ['perro', 'gato'],
   activo: true,
   beneficios: [],
 }

@@ -9,25 +9,30 @@ import type {
   InicioPago,
   MascotaRead,
   PagoPortalRead,
+  Periodicidad,
   ServicioPortalRead,
 } from '@/types'
 
 import type { Carnet } from '@/features/preventivos'
 
+export interface BeneficioPortal {
+  tipo_servicio: string
+  cupo: number | null
+  periodo: string
+  usados: number
+  disponibles: number | null
+  cobertura_pct: number
+}
+
+/** La afiliación vigente: cada peludo con su plan, lo que paga y sus beneficios. */
 export interface PlanPortal {
-  plan: string
   estado: string
+  periodicidad: Periodicidad
+  valor_periodo: string
   valor_mensual: string
   fecha_inicio: string
   fecha_renovacion: string
-  beneficios: {
-    tipo_servicio: string
-    cupo: number | null
-    periodo: string
-    usados: number
-    disponibles: number | null
-    cobertura_pct: number
-  }[]
+  mascotas: { mascota_id: string; mascota: string; plan: string; valor_mensual: string; beneficios: BeneficioPortal[] }[]
 }
 
 /** Historia en la vista de la familia: todo lo clínico menos las notas internas. */

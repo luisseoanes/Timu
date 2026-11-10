@@ -1,45 +1,37 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
-import { api } from '@/api/client'
 import { Modal } from '@/components/Modal'
-import { usePlanes } from '@/features/catalogos'
+import { useEspecies } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
 import { moneda } from '@/lib/formato'
-import type { FamiliaRead } from '@/types'
+import type { CotizacionRead, FamiliaRead, Periodicidad } from '@/types'
 
-interface InicioAfiliacion {
-  solicitud_id: string
-  valor: string
-  enlace_pago: string
-}
+import {
+  useAfiliarAsistida,
+  useCotizacion,
+  usePagoManualAfiliacion,
+  type DatosAfiliacion,
+  type InicioAfiliacion,
+  type PeludoElegido,
+} from './api'
+import { ElegirPlan } from './ElegirPlan'
+
+const PERIODOS: { valor: Periodicidad; etiqueta: string }[] = [
+  { valor: 'mensual', etiqueta: 'Mensual' },
+  { valor: 'trimestral', etiqueta: 'Trimestral' },
+  { valor: 'semestral', etiqueta: 'Semestral' },
+  { valor: 'anual', etiqueta: 'Anual' },
+]
 
 /**
- * Afiliación asistida (F1-AFI): el comercial elige el plan y deja registrada cómo
- * aceptó la familia. Se genera el enlace de pago; si la familia ya pagó por otro medio,
- * se registra el pago manual y la afiliación queda activa.
+ * Afiliación asistida (F1-AFI, 6.3): el comercial elige el plan de cada peludo y la forma de
+ * pago, ve el precio que calcula el backend y deja registrada cómo aceptó la familia. Se
+ * genera el enlace de pago; si la familia ya pagó por otro medio, se registra el pago manual.
  */
 export function AfiliarModal({ familia, abierto, onCerrar }: { familia: FamiliaRead; abierto: boolean; onCerrar: () => void }) {
-  const qc = useQueryClient()
-  const planes = usePlanes()
+  const afiliar = useAfiliarAsistida(familia.id)
+  const pagoManual = usePagoManualAfiliacion()
   const [inicio, setInicio] = useState<InicioAfiliacion | null>(null)
-  const refrescar = () => {
-    void qc.invalidateQueries({ queryKey: ['familias'] })
-    void qc.invalidateQueries({ queryKey: ['cartera'] })
-  }
-  const afiliar = useMutation({
-    mutationFn: async (datos: { plan_id: string; medio_aceptacion: string; detalle_aceptacion?: string }) =>
-      (await api.post<InicioAfiliacion>('/afiliaciones/asistida', { familia_id: familia.id, ...datos })).data,
-    onSuccess: (r) => {
-      setInicio(r)
-      refrescar()
-    },
-  })
-  const pagoManual = useMutation({
-    mutationFn: async (datos: { medio: string; comprobante: string }) =>
-      (await api.post(`/afiliaciones/${inicio?.solicitud_id}/pago-manual`, datos)).data,
-    onSuccess: refrescar,
-  })
 
   function cerrar() {
     afiliar.reset()
@@ -65,7 +57,11 @@ export function AfiliarModal({ familia, abierto, onCerrar }: { familia: FamiliaR
             onSubmit={(e) => {
               e.preventDefault()
               const d = new FormData(e.currentTarget)
-              pagoManual.mutate({ medio: String(d.get('medio')), comprobante: String(d.get('comprobante')).trim() })
+              pagoManual.mutate({
+                solicitudId: inicio.solicitud_id,
+                medio: String(d.get('medio')),
+                comprobante: String(d.get('comprobante')).trim(),
+              })
             }}
           >
             <p className="subtitulo ancho">¿Ya pagó por otro medio?</p>
@@ -93,53 +89,132 @@ export function AfiliarModal({ familia, abierto, onCerrar }: { familia: FamiliaR
           </form>
         </div>
       ) : (
-        <form
-          className="formulario"
-          onSubmit={(e) => {
-            e.preventDefault()
-            const d = new FormData(e.currentTarget)
-            afiliar.mutate({
-              plan_id: String(d.get('plan_id')),
-              medio_aceptacion: String(d.get('medio_aceptacion')),
-              detalle_aceptacion: String(d.get('detalle') ?? '').trim() || undefined,
-            })
-          }}
-        >
-          <label className="campo ancho">
-            <span>Plan</span>
-            <select className="input" name="plan_id" required defaultValue="">
-              <option value="" disabled>Elige el plan</option>
-              {planes.data
-                ?.filter((p) => p.activo)
-                .map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nombre} · {moneda(p.valor_mensual)} · hasta {p.cupos_mascotas} mascotas
-                  </option>
-                ))}
-            </select>
-          </label>
-          <label className="campo">
-            <span>Cómo aceptó las condiciones</span>
-            <select className="input" name="medio_aceptacion" defaultValue="whatsapp">
-              <option value="whatsapp">Por WhatsApp</option>
-              <option value="llamada">En llamada</option>
-              <option value="presencial">En persona</option>
-            </select>
-          </label>
-          <label className="campo">
-            <span>Soporte (quién, cuándo)</span>
-            <input className="input" name="detalle" />
-          </label>
-          {afiliar.isError && (
-            <p className="error ancho" role="alert">
-              {mensajeError(afiliar.error, 'No fue posible iniciar la afiliación.')}
-            </p>
-          )}
-          <button className="btn btn-primario ancho" type="submit" disabled={afiliar.isPending}>
-            Iniciar afiliación
-          </button>
-        </form>
+        <ElegirAfiliacion familia={familia} enviando={afiliar.isPending} error={afiliar.error} onAfiliar={(datos) => afiliar.mutate(datos, { onSuccess: setInicio })} />
       )}
     </Modal>
+  )
+}
+
+function ElegirAfiliacion({
+  familia,
+  enviando,
+  error,
+  onAfiliar,
+}: {
+  familia: FamiliaRead
+  enviando: boolean
+  error: Error | null
+  onAfiliar: (datos: DatosAfiliacion) => void
+}) {
+  const especies = useEspecies()
+  const activas = (familia.mascotas ?? []).filter((m) => m.activa)
+  const [planes, setPlanes] = useState<Record<string, string>>({})
+  const [periodicidad, setPeriodicidad] = useState<Periodicidad>('mensual')
+  const peludos: PeludoElegido[] = activas.map((m) => ({ mascota_id: m.id, especie: m.especie, plan_id: planes[m.id] ?? '' }))
+  const cotizacion = useCotizacion(familia.ciudad, peludos)
+  const opcion = cotizacion.data?.find((c) => c.periodicidad === periodicidad)
+  const nombreEspecie = (codigo: string) => especies.data?.find((e) => e.codigo === codigo)?.nombre ?? codigo
+
+  if (activas.length === 0) {
+    return <p className="apagado">La familia no tiene mascotas activas: agrégalas antes de afiliar.</p>
+  }
+
+  return (
+    <form
+      className="formulario"
+      onSubmit={(e) => {
+        e.preventDefault()
+        const d = new FormData(e.currentTarget)
+        onAfiliar({
+          peludos: peludos.map(({ mascota_id, plan_id }) => ({ mascota_id, plan_id })),
+          periodicidad,
+          medio_aceptacion: String(d.get('medio_aceptacion')),
+          detalle_aceptacion: String(d.get('detalle') ?? '').trim() || undefined,
+        })
+      }}
+    >
+      <fieldset className="ancho formulario">
+        <legend className="ancho">Plan de cada peludo</legend>
+        {activas.map((m) => (
+          <ElegirPlan
+            key={m.id}
+            etiqueta={`${m.nombre} · ${nombreEspecie(m.especie)}`}
+            ciudad={familia.ciudad}
+            especie={m.especie}
+            valor={planes[m.id]}
+            onCambio={(planId) => setPlanes((p) => ({ ...p, [m.id]: planId }))}
+          />
+        ))}
+      </fieldset>
+      <label className="campo">
+        <span>Forma de pago</span>
+        <select className="input" value={periodicidad} onChange={(e) => setPeriodicidad(e.target.value as Periodicidad)}>
+          {PERIODOS.map((p) => (
+            <option key={p.valor} value={p.valor}>
+              {p.etiqueta}
+            </option>
+          ))}
+        </select>
+      </label>
+      <Resumen cargando={cotizacion.isFetching} error={cotizacion.error} opcion={opcion} peludos={activas.length} />
+      <label className="campo">
+        <span>Cómo aceptó las condiciones</span>
+        <select className="input" name="medio_aceptacion" defaultValue="whatsapp">
+          <option value="whatsapp">Por WhatsApp</option>
+          <option value="llamada">En llamada</option>
+          <option value="presencial">En persona</option>
+        </select>
+      </label>
+      <label className="campo">
+        <span>Soporte (quién, cuándo)</span>
+        <input className="input" name="detalle" />
+      </label>
+      {error && (
+        <p className="error ancho" role="alert">
+          {mensajeError(error, 'No fue posible iniciar la afiliación.')}
+        </p>
+      )}
+      <button className="btn btn-primario ancho" type="submit" disabled={enviando || !opcion}>
+        Iniciar afiliación
+      </button>
+    </form>
+  )
+}
+
+function Resumen({
+  cargando,
+  error,
+  opcion,
+  peludos,
+}: {
+  cargando: boolean
+  error: Error | null
+  opcion: CotizacionRead | undefined
+  peludos: number
+}) {
+  if (error) {
+    return (
+      <p className="error ancho" role="alert">
+        {mensajeError(error, 'No fue posible calcular el precio.')}
+      </p>
+    )
+  }
+  if (!opcion) {
+    return <p className="apagado ancho">{cargando ? 'Calculando el precio…' : 'Elige el plan de cada peludo para ver el precio.'}</p>
+  }
+  const cada = opcion.meses === 1 ? 'al mes' : `cada ${opcion.meses} meses`
+  return (
+    <div className="ancho" role="status" aria-label="Precio de la afiliación">
+      <p>
+        <strong className="numero">{moneda(opcion.valor_periodo)}</strong> {cada}
+        {opcion.descuento && <span className="apagado"> · ahorra {moneda(opcion.ahorro)}</span>}
+      </p>
+      {peludos > 1 && (
+        <p className="apagado">
+          Con {peludos} peludos cada uno paga la tarifa de {opcion.tarifa_de}, aunque estén en planes distintos
+          {opcion.meses > 1 ? '; el descuento por periodo es solo para un peludo' : ''}.
+        </p>
+      )}
+    </div>
   )
 }
