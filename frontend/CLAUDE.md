@@ -43,9 +43,10 @@ perfil), el portal de familias (`/portal`) y el de la clínica aliada (`/aliada`
   acepta.
 - **Los estilos son CSS propio con cascada de orden fijo**: `tokens → base → componentes →
   vistas`, impuesto por `src/styles/index.css`. Alterar ese orden rompe las vistas.
-- **Ningún color, radio o sombra literal en un componente**: todo sale de `tokens.css`. Un
-  `#` en el diff de un componente no debe llegar a `main`: ningún lint lo detecta, así que lo
-  comprueba quien empuja (`docs/frontend/conventions.md`, «Qué revisar antes de empujar»).
+- **Ningún color, radio o sombra literal en un componente**: todo sale de `tokens.css`.
+  `src/test/tokens.test.ts` rechaza un color escrito a mano fuera de ese fichero (también en
+  `style={{}}` y en atributos `fill`) y un `var(--…)` sin definir. Los radios y las sombras
+  los revisa quien empuja (`docs/frontend/conventions.md`, «Qué revisar antes de empujar»).
 - Toda lectura va por React Query con clave que incluya los filtros (`['familias', filtros]`)
   y toda pantalla cubre carga, error y vacío.
 - **Toda pantalla nueva llega con sus pruebas.** Vitest + Testing Library para
@@ -56,9 +57,19 @@ perfil), el portal de familias (`/portal`) y el de la clínica aliada (`/aliada`
   `getByLabelText`), no por clase CSS: si la prueba no encuentra el control, un lector
   de pantalla tampoco.
 
-[`docs/frontend/`](../docs/frontend/) (design-system, components, layouts, conventions) es normativo para
-cualquier pantalla nueva: léelo antes de escribir UI. `conventions.md` incluye la checklist
-de revisión y la deuda conocida (sin tema oscuro).
+## Diseño
+
+La interfaz está en rediseño con la marca real de TIMU: el orden y el estado de cada unidad
+están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
+
+- **Color, tipografía, logo y voz**: [`docs/manual-de-marca.md`](../docs/manual-de-marca.md).
+  Los componentes usan los roles de su sección 10, nunca un color de la paleta.
+- **Decisiones de diseño**: la skill del repositorio, `/impeccable`, con el contexto de
+  [`PRODUCT.md`](../PRODUCT.md) y, cuando exista, el sistema de `DESIGN.md`. Su hook revisa
+  cada fichero de interfaz que se edita.
+- [`docs/frontend/`](../docs/frontend/) (design-system, components, layouts, conventions)
+  describe lo construido. `conventions.md` incluye la checklist de revisión y la deuda
+  conocida (sin tema oscuro).
 
 ## Trampas conocidas de las pruebas
 

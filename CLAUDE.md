@@ -22,8 +22,13 @@ El código y el backlog citan los dos documentos así:
   propuesta.
 
 Al implementar un módulo pendiente, busca su ID en el backlog y respeta el criterio de
-aceptación que ya está escrito allí. Lo que falta fuera del código para cerrar un requisito
-(sandbox de Wompi, plantillas de Meta, decisiones de TIMU) está en
+aceptación que ya está escrito allí. El frontend está en rediseño con la marca real de TIMU:
+sus unidades (`R0-…` a `R4-…`) están en
+[`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md), la identidad en
+[`docs/manual-de-marca.md`](docs/manual-de-marca.md) y el contexto de producto para diseñar
+en [`PRODUCT.md`](PRODUCT.md). El diseño lo gobierna la skill del repositorio (`/impeccable`,
+en `.claude/skills/`, con su hook en `.claude/settings.json`). Lo que falta fuera del código
+para cerrar un requisito (sandbox de Wompi, plantillas de Meta, decisiones de TIMU) está en
 [`docs/pendientes-externos.md`](docs/pendientes-externos.md).
 
 ## Comandos
@@ -148,6 +153,8 @@ parte de las propias suites; ninguno se desactiva:
 | `backend/tests/test_arquitectura.py` | Una capa que importa de otra superior, un dominio que usa el router de otro, una dependencia entre dominios que cierra un ciclo nuevo, una entrada de `CICLOS_CONOCIDOS` que ya no hace falta, o un import de `app` dentro de una función. |
 | `backend/tests/test_permisos.py` (`test_la_guarda_recorre_todas_las_rutas_de_la_api`) | Que la guarda de permisos deje de ver rutas que publica el OpenAPI (pasó al subir a FastAPI 0.162: `app.routes` ya no las lista). |
 | Job **Vulnerabilidades conocidas** de `ci.yml` | Una dependencia de la API, el worker o el panel con una vulnerabilidad publicada. |
+| `frontend/src/test/tokens.test.ts` | Un color escrito a mano en `frontend/src` fuera de `styles/tokens.css` (`#hex`, `rgb()`, `oklch()`, un nombre de color, también en `style={{}}` y en atributos SVG), o un `var(--…)` que no está definido. |
+| `frontend/e2e-stack/responsive.spec.ts` | Una ruta que, a 375, 768 o 1280 px, desborda en horizontal o tiene texto con contraste insuficiente según axe-core, sin estar en `PENDIENTES`; una entrada de `PENDIENTES` que ya no falla (la lista solo encoge); o una pantalla de `App.tsx` que el recorrido no abre. |
 | `frontend/src/test/arquitectura.test.ts` y `no-restricted-imports` de ESLint | Un import a un fichero interno de otro dominio del panel (por alias o por ruta relativa), un `index.ts` que reexporta algo ajeno, la base o `auth`/`catalogos` dependiendo de un dominio, un espacio de entrada importado fuera de `App.tsx`, o un ciclo entre dominios. |
 | `frontend/src/test/suite.test.ts` | Una prueba del panel fuera de los patrones de Vitest (`src/**/*.{test,spec}.ts(x)`) o de Playwright (`e2e/`, `e2e-stack/`), o desactivada con `.only`, `.skip`, `.todo` o `.fixme`. |
 | `frontend/src/test/setup.ts` | Una petición del panel que ninguna prueba simuló con MSW: la prueba falla en lugar de seguir en verde con un error de red que nadie miró. Los catálogos comunes van en `frontend/src/test/handlers.ts`. |
@@ -166,10 +173,12 @@ Reglas que mantienen esto vivo:
   rápido y determinista; `e2e-stack/` recorre panel, portal y clínica aliada contra el stack
   real con los usuarios de `scripts.datos_demo`, en el job «Stack con un solo comando». Un
   recorrido nuevo que dependa de datos los crea `datos_demo`, no la prueba. Ingresan una vez
-  por perfil (`e2e-stack/sesiones.setup.ts`): login y renovación comparten un límite de 10
-  por minuto y por IP, y una suite que ingresa en cada prueba se bloquea a sí misma.
+  por perfil (`e2e-stack/sesiones.setup.ts`, cinco perfiles): login y renovación comparten un
+  límite de 10 por minuto y por IP, y una suite que ingresa en cada prueba se bloquea a sí
+  misma. En local, dos ejecuciones seguidas ya lo agotan: espera un minuto entre una y otra.
   El perfil de equipo es `comercial@timu.co`, no el admin: `datos_demo` gasta el cupo de
-  120 por minuto del admin justo antes.
+  120 por minuto del admin justo antes. Por eso Administración se recorre con
+  `gerencia@timu.co`, un administrador que `datos_demo` crea solo para los recorridos.
 - **Una prueba que no puede pasar se arregla o se borra**, con la razón en el cuerpo del
   commit. No se salta, no se marca `xfail` y no se comenta.
 - **Un tipo de prueba nuevo llega cableado al CI en el mismo cambio**: un runner, una

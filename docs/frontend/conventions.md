@@ -138,7 +138,8 @@ resultado.
 
 ## Qué revisar antes de empujar
 
-1. ¿La pantalla usa sólo tokens? Buscar `#` en el diff: un color literal es un rechazo.
+1. ¿La pantalla usa sólo tokens? Los colores escritos a mano y las variables sin definir los
+   rechaza `src/test/tokens.test.ts`. Los radios y las sombras se revisan en el diff.
 2. ¿Reutiliza los componentes existentes en vez de crear una variante casi igual?
 3. ¿Lo interactivo se apoya en Radix en vez de reimplementarlo a mano?
 4. ¿Tiene los estados de carga, error y vacío, **y pruebas de los tres**?
