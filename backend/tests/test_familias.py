@@ -303,6 +303,26 @@ async def test_foto_con_enlace_firmado(client: AsyncClient, headers, almacenamie
     assert contenido == PNG and tipo == "image/png"
 
 
+async def test_la_ficha_de_la_familia_trae_la_foto_de_cada_mascota(
+    client: AsyncClient, headers, almacenamiento
+):
+    """La ficha del panel y el portal leen las mascotas desde la familia: sin esto la foto
+    recien subida no se veria en ninguno de los dos."""
+    familia = await _crear(client, headers)
+    mascota_id = familia["mascotas"][0]["id"]
+    await client.put(
+        f"/api/v1/mascotas/{mascota_id}/foto",
+        files={"foto": ("kira.png", PNG, "image/png")},
+        headers=headers,
+    )
+    ficha = (await client.get(f"/api/v1/familias/{familia['id']}", headers=headers)).json()
+    assert "firma=" in (ficha["mascotas"][0]["foto_url"] or "")
+    listado = (
+        await client.get(f"/api/v1/familias?q={familia['documento']}", headers=headers)
+    ).json()
+    assert "firma=" in (listado["items"][0]["mascotas"][0]["foto_url"] or "")
+
+
 async def test_foto_rechaza_tipo_disfrazado(client: AsyncClient, headers, almacenamiento):
     familia = await _crear(client, headers)
     resp = await client.put(

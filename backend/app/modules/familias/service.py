@@ -15,7 +15,6 @@ from app.core.scope import Alcance, permite, restringir
 from app.core.tiempo import ahora
 from app.integrations import geocodificacion
 from app.modules.archivos import service as archivos
-from app.modules.archivos.models import Archivo
 from app.modules.auth.service import crear_usuario_portal
 from app.modules.catalogos import service as catalogos
 from app.modules.catalogos.models import Ciudad
@@ -331,11 +330,9 @@ def subir_foto(
 
 
 def mascota_read(db: Session, mascota: Mascota) -> MascotaRead:
-    lectura = MascotaRead.model_validate(mascota)
-    if mascota.foto_archivo_id:
-        archivo = db.get(Archivo, mascota.foto_archivo_id)
-        lectura.foto_url = archivos.url(archivo) if archivo else None
-    return lectura
+    # La foto puede haber cambiado en esta misma peticion: se recarga antes de firmarla.
+    db.refresh(mascota, ["foto"])
+    return MascotaRead.model_validate(mascota)
 
 
 # --- Geocodificacion (F1-FAM-05) --------------------------------------------------------------

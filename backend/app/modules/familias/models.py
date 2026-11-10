@@ -18,6 +18,8 @@ from app.core.auditoria import Auditable
 from app.core.database import Base, EnumDb, TimestampMixin, UUIDMixin
 from app.core.enums import EstadoAfiliacion, GeoPrecision, SexoMascota
 from app.core.validaciones import TipoDocumento
+from app.modules.archivos import service as archivos
+from app.modules.archivos.models import Archivo
 
 
 class Familia(Base, UUIDMixin, TimestampMixin, Auditable):
@@ -120,6 +122,14 @@ class Mascota(Base, UUIDMixin, TimestampMixin, Auditable):
     motivo_baja: Mapped[str | None] = mapped_column(String(255))
 
     familia: Mapped[Familia] = relationship(back_populates="mascotas")
+    # Se carga con las mascotas: toda lectura de la familia (ficha, listado, portal) trae
+    # la URL firmada de cada foto sin una consulta por mascota.
+    foto: Mapped[Archivo | None] = relationship(lazy="selectin", viewonly=True)
+
+    @property
+    def foto_url(self) -> str | None:
+        """URL firmada y temporal de la foto; nunca la clave del almacenamiento."""
+        return archivos.url(self.foto) if self.foto and not self.foto.purgado_en else None
 
 
 class ContactoFamilia(Base, UUIDMixin, TimestampMixin, Auditable):
