@@ -16,7 +16,7 @@ from app.modules.familias.schemas import (
     ContactoIn,
     ContactoRead,
     ContactoUpdate,
-    FamiliaCreate,
+    FamiliaAlta,
     FamiliaRead,
     FamiliaUpdate,
     MascotaRead,
@@ -68,7 +68,7 @@ async def listar_familias(
 @router.post(
     "", response_model=FamiliaRead, status_code=status.HTTP_201_CREATED, dependencies=[EQUIPO]
 )
-async def crear_familia(db: DbSession, data: FamiliaCreate) -> Familia:
+async def crear_familia(db: DbSession, data: FamiliaAlta) -> Familia:
     return await db.run_sync(service.crear, data)
 
 

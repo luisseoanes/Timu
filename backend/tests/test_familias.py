@@ -26,7 +26,9 @@ PAYLOAD = {
     "documento": "1020304050",
     "telefono": "573001112233",
     "ciudad": "Bogota",
-    "mascotas": [{"nombre": "Kira", "especie": "canino"}],
+    "mascotas": [
+        {"nombre": "Kira", "especie": "canino", "fecha_nacimiento": "2021-03-01", "peso_kg": 12.5}
+    ],
 }
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
@@ -118,7 +120,17 @@ async def test_ciudad_se_guarda_con_nombre_canonico(client: AsyncClient, headers
 async def test_especie_fuera_del_catalogo(client: AsyncClient, headers):
     resp = await client.post(
         "/api/v1/familias",
-        json={**PAYLOAD, "mascotas": [{"nombre": "Nemo", "especie": "pez"}]},
+        json={
+            **PAYLOAD,
+            "mascotas": [
+                {
+                    "nombre": "Nemo",
+                    "especie": "pez",
+                    "fecha_nacimiento": "2021-03-01",
+                    "peso_kg": 12.5,
+                }
+            ],
+        },
         headers=headers,
     )
     assert resp.status_code == 422
@@ -188,7 +200,13 @@ async def test_ciclo_de_mascota(client: AsyncClient, headers):
     familia = await _crear(client, headers)
     nueva = await client.post(
         f"/api/v1/familias/{familia['id']}/mascotas",
-        json={"nombre": "Milo", "especie": "felino", "sexo": "macho"},
+        json={
+            "nombre": "Milo",
+            "especie": "felino",
+            "sexo": "macho",
+            "fecha_nacimiento": "2021-03-01",
+            "peso_kg": 12.5,
+        },
         headers=headers,
     )
     assert nueva.status_code == 201
@@ -226,10 +244,44 @@ async def test_fecha_de_nacimiento_futura(client: AsyncClient, headers):
     familia = await _crear(client, headers)
     resp = await client.post(
         f"/api/v1/familias/{familia['id']}/mascotas",
-        json={"nombre": "X", "especie": "canino", "fecha_nacimiento": "2999-01-01"},
+        json={"nombre": "X", "especie": "canino", "fecha_nacimiento": "2999-01-01", "peso_kg": 3},
         headers=headers,
     )
     assert resp.status_code == 422
+
+
+async def test_el_panel_da_de_alta_mascotas_solo_con_peso_y_fecha(client: AsyncClient, headers):
+    familia = await _crear(client, headers)
+    for falta in ("peso_kg", "fecha_nacimiento"):
+        cuerpo = {"nombre": "Milo", "especie": "felino", "fecha_nacimiento": "2022-01-01"}
+        cuerpo["peso_kg"] = 4  # type: ignore[assignment]
+        del cuerpo[falta]
+        resp = await client.post(
+            f"/api/v1/familias/{familia['id']}/mascotas", json=cuerpo, headers=headers
+        )
+        assert resp.status_code == 422 and falta in resp.text, falta
+    sin_peso = {**PAYLOAD, "documento": "80123456"}
+    sin_peso["mascotas"] = [
+        {"nombre": "Kira", "especie": "canino", "fecha_nacimiento": "2021-03-01"}
+    ]
+    resp = await client.post("/api/v1/familias", json=sin_peso, headers=headers)
+    assert resp.status_code == 422 and "peso_kg" in resp.text
+
+
+async def test_editar_una_mascota_no_vacia_peso_ni_fecha_ni_pone_una_futura(
+    client: AsyncClient, headers
+):
+    familia = await _crear(client, headers)
+    mascota_id = familia["mascotas"][0]["id"]
+    url = f"/api/v1/mascotas/{mascota_id}"
+    for cuerpo in ({"peso_kg": None}, {"fecha_nacimiento": None}, {"nombre": None}):
+        resp = await client.patch(url, json=cuerpo, headers=headers)
+        assert resp.status_code == 422 and "vacio" in resp.text, cuerpo
+    resp = await client.patch(url, json={"fecha_nacimiento": "2999-01-01"}, headers=headers)
+    assert resp.status_code == 422 and "futura" in resp.text
+    resp = await client.patch(url, json={"peso_kg": 13.2, "raza": None}, headers=headers)
+    assert resp.status_code == 200
+    assert (resp.json()["peso_kg"], resp.json()["raza"]) == (13.2, None)
 
 
 # --- F0-11 Foto de mascota con enlace firmado -------------------------------------------------

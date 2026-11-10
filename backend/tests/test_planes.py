@@ -178,7 +178,12 @@ async def test_mascota_sobre_el_cupo_se_rechaza(client: AsyncClient, db, headers
     await db.commit()
     resp = await client.post(
         f"/api/v1/familias/{familia.id}/mascotas",
-        json={"nombre": "Otra", "especie": "canino"},
+        json={
+            "nombre": "Otra",
+            "especie": "canino",
+            "fecha_nacimiento": "2021-03-01",
+            "peso_kg": 12.5,
+        },
         headers=headers,
     )
     assert resp.status_code == 422
@@ -208,7 +213,12 @@ async def test_mascota_adicional_con_regla_de_ajuste(client: AsyncClient, db, he
 
     alta = await client.post(
         f"/api/v1/familias/{familia.id}/mascotas",
-        json={"nombre": "Luna", "especie": "canino"},
+        json={
+            "nombre": "Luna",
+            "especie": "canino",
+            "fecha_nacimiento": "2021-03-01",
+            "peso_kg": 12.5,
+        },
         headers=headers,
     )
     assert alta.status_code == 201
@@ -238,6 +248,7 @@ async def test_mascota_nueva_recibe_calendario_preventivo(client: AsyncClient, d
             "nombre": "Michi",
             "especie": "felino",
             "fecha_nacimiento": str(hoy() - timedelta(weeks=4)),
+            "peso_kg": 0.6,
         },
         headers=headers,
     )

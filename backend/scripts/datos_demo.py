@@ -34,8 +34,21 @@ FAMILIAS: list[dict[str, Any]] = [
         "barrio": "Chapinero",
         "direccion": "Calle 80 # 15-20",
         "mascotas": [
-            {"nombre": "Luna", "especie": "canino", "sexo": "hembra", "raza": "Criolla"},
-            {"nombre": "Michi", "especie": "felino", "sexo": "macho"},
+            {
+                "nombre": "Luna",
+                "especie": "canino",
+                "sexo": "hembra",
+                "raza": "Criolla",
+                "fecha_nacimiento": "2020-05-10",
+                "peso_kg": 18.0,
+            },
+            {
+                "nombre": "Michi",
+                "especie": "felino",
+                "sexo": "macho",
+                "fecha_nacimiento": "2022-01-15",
+                "peso_kg": 4.2,
+            },
         ],
         "plan": "familiar",
     },
@@ -46,7 +59,16 @@ FAMILIAS: list[dict[str, Any]] = [
         "ciudad": "Bogota",
         "barrio": "Usaquén",
         "direccion": "Carrera 7 # 120-45",
-        "mascotas": [{"nombre": "Toby", "especie": "canino", "sexo": "macho", "raza": "Beagle"}],
+        "mascotas": [
+            {
+                "nombre": "Toby",
+                "especie": "canino",
+                "sexo": "macho",
+                "raza": "Beagle",
+                "fecha_nacimiento": "2019-08-01",
+                "peso_kg": 11.5,
+            }
+        ],
         "plan": "individual",
     },
     {
@@ -56,7 +78,15 @@ FAMILIAS: list[dict[str, Any]] = [
         "ciudad": "Bogota",
         "barrio": "Teusaquillo",
         "direccion": "Avenida 19 # 100-12",
-        "mascotas": [{"nombre": "Nala", "especie": "felino", "sexo": "hembra"}],
+        "mascotas": [
+            {
+                "nombre": "Nala",
+                "especie": "felino",
+                "sexo": "hembra",
+                "fecha_nacimiento": "2021-11-20",
+                "peso_kg": 3.8,
+            }
+        ],
         "plan": "individual",
     },
     {
@@ -68,8 +98,22 @@ FAMILIAS: list[dict[str, Any]] = [
         "barrio": "Suba",
         "direccion": "Calle 140 # 9-30",
         "mascotas": [
-            {"nombre": "Rocky", "especie": "canino", "sexo": "macho", "raza": "Labrador"},
-            {"nombre": "Kira", "especie": "canino", "sexo": "hembra", "raza": "Golden"},
+            {
+                "nombre": "Rocky",
+                "especie": "canino",
+                "sexo": "macho",
+                "raza": "Labrador",
+                "fecha_nacimiento": "2018-02-14",
+                "peso_kg": 32.0,
+            },
+            {
+                "nombre": "Kira",
+                "especie": "canino",
+                "sexo": "hembra",
+                "raza": "Golden",
+                "fecha_nacimiento": "2023-06-30",
+                "peso_kg": 24.5,
+            },
         ],
         "plan": "familiar",
     },
@@ -79,7 +123,15 @@ FAMILIAS: list[dict[str, Any]] = [
         "telefono": "3015556677",
         "ciudad": "Medellin",
         "barrio": "El Poblado",
-        "mascotas": [{"nombre": "Simba", "especie": "felino", "sexo": "macho"}],
+        "mascotas": [
+            {
+                "nombre": "Simba",
+                "especie": "felino",
+                "sexo": "macho",
+                "fecha_nacimiento": "2020-09-09",
+                "peso_kg": 5.1,
+            }
+        ],
         "plan": None,
     },
 ]

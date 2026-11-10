@@ -60,7 +60,12 @@ async def test_edicion_sin_cambios_reales_no_deja_rastro(client: AsyncClient, db
 
 
 async def test_mascota_anidada_tambien_se_audita(client: AsyncClient, db, headers):
-    payload = _familia("1003", mascotas=[{"nombre": "Kira", "especie": "canino"}])
+    payload = _familia(
+        "1003",
+        mascotas=[
+            {"nombre": "Kira", "especie": "canino", "fecha_nacimiento": "2021-03-01", "peso_kg": 9}
+        ],
+    )
     creada = await client.post("/api/v1/familias", json=payload, headers=headers)
     mascota_id = creada.json()["mascotas"][0]["id"]
     registros = await _registros(db, mascota_id)

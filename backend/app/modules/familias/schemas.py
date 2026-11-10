@@ -2,13 +2,19 @@ from datetime import date, datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from app.core.enums import EstadoAfiliacion
 from app.core.tiempo import hoy
 from app.core.validaciones import DocumentoCO, TelefonoCO, TipoDocumento
 
 Sexo = Literal["macho", "hembra"]
+
+
+def _fecha_no_futura(v: date | None) -> date | None:
+    if v and v > hoy():
+        raise ValueError("La fecha de nacimiento no puede ser futura")
+    return v
 
 
 class MascotaBase(BaseModel):
@@ -20,16 +26,23 @@ class MascotaBase(BaseModel):
     peso_kg: float | None = Field(default=None, gt=0, lt=150)
     esterilizada: bool | None = None
 
-    @field_validator("fecha_nacimiento")
-    @classmethod
-    def _no_futura(cls, v: date | None) -> date | None:
-        if v and v > hoy():
-            raise ValueError("La fecha de nacimiento no puede ser futura")
-        return v
+    _no_futura = field_validator("fecha_nacimiento")(_fecha_no_futura)
 
 
 class MascotaCreate(MascotaBase):
     pass
+
+
+class MascotaAlta(MascotaCreate):
+    """6.1 Alta de una mascota desde el panel: el peso y la fecha de nacimiento son
+    obligatorios. Si no se conoce la fecha exacta, se pone una aproximada.
+
+    La base los admite vacios a proposito: el registro en linea crea la mascota al pagar,
+    con solo nombre y especie, y la familia los completa despues, y hay mascotas anteriores
+    a esta regla sin ellos."""
+
+    fecha_nacimiento: date  # type: ignore[assignment]
+    peso_kg: float = Field(gt=0, lt=150)  # type: ignore[assignment]
 
 
 class MascotaUpdate(BaseModel):
@@ -39,6 +52,19 @@ class MascotaUpdate(BaseModel):
     fecha_nacimiento: date | None = None
     peso_kg: float | None = Field(default=None, gt=0, lt=150)
     esterilizada: bool | None = None
+
+    _no_futura = field_validator("fecha_nacimiento")(_fecha_no_futura)
+
+    @model_validator(mode="after")
+    def _sin_vaciar(self) -> "MascotaUpdate":
+        vaciados = [
+            c
+            for c in ("nombre", "fecha_nacimiento", "peso_kg")
+            if c in self.model_fields_set and getattr(self, c) is None
+        ]
+        if vaciados:
+            raise ValueError(f"No se puede dejar vacio: {', '.join(vaciados)}")
+        return self
 
 
 class MascotaRead(MascotaBase):
@@ -97,6 +123,13 @@ class FamiliaCreate(FamiliaBase):
     latitud: float | None = Field(default=None, ge=-5, le=14, description="Solo si es manual")
     longitud: float | None = Field(default=None, ge=-82, le=-66)
     mascotas: list[MascotaCreate] = []
+
+
+class FamiliaAlta(FamiliaCreate):
+    """Alta desde el panel: sus mascotas llegan con peso y fecha de nacimiento (`MascotaAlta`).
+    El formulario publico crea la familia con `FamiliaCreate`, sin ellos."""
+
+    mascotas: list[MascotaAlta] = []  # type: ignore[assignment]
 
 
 class FamiliaUpdate(BaseModel):

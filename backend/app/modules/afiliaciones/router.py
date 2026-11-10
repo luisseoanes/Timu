@@ -22,7 +22,7 @@ from app.modules.familias.schemas import (
     Baja,
     FamiliaRead,
     FormularioFamilia,
-    MascotaCreate,
+    MascotaAlta,
     MascotaRead,
 )
 from app.modules.planes import service as planes
@@ -208,7 +208,7 @@ async def anonimizar(db: DbSession, familia_id: UUID) -> Familia:
     status_code=status.HTTP_201_CREATED,
     dependencies=[EQUIPO],
 )
-async def agregar_mascota(db: DbSession, familia_id: UUID, data: MascotaCreate) -> Mascota:
+async def agregar_mascota(db: DbSession, familia_id: UUID, data: MascotaAlta) -> Mascota:
     familia = await db.run_sync(familias.obtener, familia_id)
     return await db.run_sync(ciclo.agregar_mascota, familia, data)
 
