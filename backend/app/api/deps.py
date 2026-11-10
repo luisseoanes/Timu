@@ -34,7 +34,10 @@ from app.core.security import decode_access_token
 from app.modules.auth.models import Sesion, Usuario
 from app.modules.familias.models import Familia
 
-DbSession = Annotated[AsyncSession, Depends(get_db)]
+# scope="function": el commit de get_db ocurre antes de enviar la respuesta. Con el alcance por
+# defecto ("request", desde FastAPI 0.118) se confirmaba despues: el cliente recibia el exito
+# antes de que existiera lo escrito (tests/test_transacciones.py).
+DbSession = Annotated[AsyncSession, Depends(get_db, scope="function")]
 
 # Perfiles del equipo de TIMU (todo menos el portal de familias).
 INTERNOS = (Rol.ADMIN, Rol.COMERCIAL, Rol.OPERACIONES, Rol.MEDICO)
