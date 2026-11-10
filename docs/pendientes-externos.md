@@ -102,3 +102,35 @@ y propone un solo plan para todos los peludos. TIMU tiene que decir qué plan re
 según ciudad, especie y número de peludos. Con eso se ajustan las reglas en
 Administración → Reglas y se reemplazan las de `datos.py`, que solo se cargan en una base
 nueva.
+
+## Marca e identidad ([manual de marca](manual-de-marca.md))
+
+Para aplicar la marca a la plataforma, TIMU tiene que entregar dos cosas. Mientras tanto, el
+panel funciona con lo provisional que se indica:
+
+- **Logo en vector (SVG) y su versión para fondo oscuro.** El manual en PDF solo trae una
+  imagen de 569×308 px. Además, el texto y las siluetas del logo van en marino y no se ven
+  sobre fondo oscuro. Hasta que llegue, el panel muestra el nombre «TIMU» en texto.
+- **Archivo de GeosansLight y su licencia de uso web.** El manual la exige, pero el archivo
+  no se adjuntó y la fuente no está en Google Fonts. Hasta que llegue, todo va en Inter.
+- **Recursos gráficos para la portada pública (index).** La portada se construye cuando
+  lleguen; el resto de páginas públicas no la esperan ([hoja de ruta del
+  rediseño](hoja-de-ruta-rediseno.md#fuera-de-alcance)).
+
+## Web pública (timu.com.co) frente al manual de marca
+
+Revisada el 2026-11-10. Son contenidos de la web de TIMU, no de la plataforma, pero chocan
+con el manual y con lo que la plataforma muestra. Los resuelve TIMU; mientras tanto, la
+plataforma sigue el manual y toma planes, precios y coberturas del catálogo de la API:
+
+- **Se presenta como seguro.** El inicio dice «Somos especialistas en salud veterinaria y
+  especialistas en seguros», y el manual prohíbe hablar de «seguro para mascotas».
+- **Usa «ilimitado»** en las coberturas de los tres planes (chat, procedimientos, cirugía,
+  exámenes…), una palabra que el manual también prohíbe.
+- **Precios que no coinciden.** `/planes/` publica Colita Feliz $29.200, Mi Amigo Fiel
+  $57.200 y Amigos por Siempre $81.000. El inicio y la página de cada plan publican $35.500,
+  $69.000 y $98.000. El catálogo de la plataforma tiene que coincidir con lo que TIMU confirme.
+- **Coberturas contradictorias y sin términos publicados.** La hospitalización de Mi Amigo
+  Fiel sale al 80 % en el inicio y al 40 % en su página. Las consultas aparecen como «1 vez»
+  o «2 veces» en el inicio y «al mes» en las páginas de los planes. Todo dice «Aplica términos
+  y condiciones», pero la web no publica ningún documento de términos.
