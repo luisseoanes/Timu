@@ -9,7 +9,7 @@ import type {
   FamiliaRead,
   MascotaRead,
   Page,
-  ServicioRead,
+  ResumenServiciosRead,
 } from '@/types'
 
 export interface FiltrosFamilias {
@@ -83,15 +83,6 @@ export function useEstadoCuenta(familiaId: string) {
       )
       return status === 404 ? null : data
     },
-  })
-}
-
-export function useServiciosFamilia(familiaId: string) {
-  return useQuery({
-    queryKey: ['servicios', { familia_id: familiaId }],
-    queryFn: async () =>
-      (await api.get<Page<ServicioRead>>('/servicios', { params: { familia_id: familiaId, orden: '-programado_para' } }))
-        .data,
   })
 }
 
@@ -209,6 +200,29 @@ export function useBajaContacto(familiaId: string) {
       await api.post(`/familias/${familiaId}/contactos/${id}/baja`)
     },
     onSuccess: invalidar,
+  })
+}
+
+/** Rango y filtros del resumen de servicios de la ficha: fechas en formato AAAA-MM-DD. */
+export interface FiltrosResumen {
+  desde: string
+  hasta: string
+  mascota_id?: string
+  incluir_cancelados?: boolean
+}
+
+/** 6.1 Utilizados y pendientes de la familia (o de una mascota) en un rango, con su cupo. */
+export function useResumenServicios(familiaId: string, filtros: FiltrosResumen) {
+  return useQuery({
+    queryKey: ['servicios', 'resumen', familiaId, filtros],
+    // Mientras se escribe una fecha, o con el rango al revés, no hay nada que pedir.
+    enabled: Boolean(filtros.desde && filtros.hasta) && filtros.desde <= filtros.hasta,
+    queryFn: async () =>
+      (
+        await api.get<ResumenServiciosRead>('/servicios/resumen', {
+          params: { familia_id: familiaId, ...filtros },
+        })
+      ).data,
   })
 }
 

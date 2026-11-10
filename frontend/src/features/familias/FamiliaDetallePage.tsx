@@ -5,16 +5,16 @@ import { Distintivo } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Pestanas } from '@/components/Pestanas'
 import { useAuth } from '@/features/auth'
-import { useNombreTipoServicio } from '@/features/catalogos'
 import { fecha, fechaHora } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
-import type { CambioHistorial, FamiliaRead } from '@/types'
+import type { CambioHistorial } from '@/types'
 
-import { useFamilia, useHistorial, useServiciosFamilia } from './api'
+import { useFamilia, useHistorial } from './api'
 import { AccionesFamilia } from './AccionesFamilia'
 import { CarteraFamilia } from './CarteraFamilia'
 import { ContactosFamilia } from './ContactosFamilia'
 import { DatosFamilia } from './DatosFamilia'
+import { ServiciosFamilia } from './ServiciosFamilia'
 import { MascotasFamilia } from './MascotasFamilia'
 
 /** Ficha de una familia: sus datos, mascotas, cuenta, servicios e historial. */
@@ -63,49 +63,6 @@ export function FamiliaDetallePage() {
         </>
       )}
     </Consulta>
-  )
-}
-
-function ServiciosFamilia({ familia }: { familia: FamiliaRead }) {
-  const servicios = useServiciosFamilia(familia.id)
-  const nombreTipo = useNombreTipoServicio()
-  return (
-    <section className="tarjeta">
-      <Consulta
-        consulta={servicios}
-        cargando="Cargando servicios…"
-        error="No fue posible cargar los servicios."
-        vacio="Esta familia todavía no tiene servicios programados."
-        estaVacio={(d) => d.items.length === 0}
-      >
-        {(d) => (
-          <div className="scroll-x">
-            <table className="tabla">
-              <thead>
-                <tr>
-                  <th>Servicio</th>
-                  <th>Mascota</th>
-                  <th>Programado</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {d.items.map((s) => (
-                  <tr key={s.id}>
-                    <td className="principal">{nombreTipo(s.tipo_codigo)}</td>
-                    <td>{familia.mascotas?.find((m) => m.id === s.mascota_id)?.nombre ?? '—'}</td>
-                    <td className="numero">{fechaHora(s.programado_para)}</td>
-                    <td>
-                      <Distintivo dominio="servicio" valor={s.estado} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Consulta>
-    </section>
   )
 }
 

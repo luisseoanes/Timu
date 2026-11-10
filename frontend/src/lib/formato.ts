@@ -52,3 +52,10 @@ export function hoyISO(): string {
 export function porcentaje(valor: number | null | undefined): string {
   return valor === null || valor === undefined ? '—' : `${Math.round(valor * 100)}%`
 }
+
+/** Primer y último día del mes en curso en Colombia, como `YYYY-MM-DD`. */
+export function mesEnCurso(): { desde: string; hasta: string } {
+  const [anio, mes] = hoyISO().split('-')
+  const ultimo = new Date(Number(anio), Number(mes), 0).getDate()
+  return { desde: `${anio}-${mes}-01`, hasta: `${anio}-${mes}-${String(ultimo).padStart(2, '0')}` }
+}

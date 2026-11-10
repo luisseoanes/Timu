@@ -273,34 +273,113 @@ describe('FamiliaDetallePage', () => {
     expect(screen.getByText('Registro creado')).toBeInTheDocument()
   })
 
-  it('lista los servicios de la familia con su mascota', async () => {
+  const SERVICIO = {
+    id: 's1',
+    familia_id: FAMILIA.id,
+    mascota_id: FAMILIA.mascotas?.[0]?.id,
+    tipo_codigo: 'consulta_domiciliaria',
+    tipo: 'domiciliario',
+    estado: 'agendado',
+    ciudad: 'Bogota',
+    programado_para: '2026-11-02T15:00:00Z',
+  }
+
+  function resumen(datos: Record<string, unknown> = {}) {
+    return {
+      desde: '2026-11-01',
+      hasta: '2026-11-30',
+      utilizados: [],
+      pendientes: [],
+      cancelados: [],
+      pendientes_atencion: [],
+      cupos: [],
+      ...datos,
+    }
+  }
+
+  it('separa los servicios pendientes de los utilizados, con el cupo del plan', async () => {
+    let consultado: URLSearchParams | null = null
     server.use(
-      http.get(`${API}/servicios`, () =>
-        HttpResponse.json({
-          items: [
-            {
-              id: 's1',
-              familia_id: FAMILIA.id,
-              mascota_id: FAMILIA.mascotas?.[0]?.id,
-              tipo_codigo: 'consulta_domiciliaria',
-              tipo: 'Consulta domiciliaria',
-              estado: 'agendado',
-              ciudad: 'Bogota',
-              programado_para: '2026-11-02T15:00:00Z',
-            },
-          ],
-          total: 1,
-          limit: 50,
-          offset: 0,
-        }),
-      ),
+      http.get(`${API}/servicios/resumen`, ({ request }) => {
+        consultado = new URL(request.url).searchParams
+        return HttpResponse.json(
+          resumen({
+            pendientes: [SERVICIO],
+            utilizados: [{ ...SERVICIO, id: 's2', estado: 'completado' }],
+            pendientes_atencion: [
+              {
+                id: 'p1',
+                servicio_origen_id: 's2',
+                descripcion: 'Ecografía abdominal',
+                requiere_autorizacion: true,
+                estado: 'pendiente_autorizacion',
+              },
+            ],
+            cupos: [{ tipo_codigo: 'consulta_domiciliaria', cupo: 4, usados: 1, periodo: 'anual' }],
+          }),
+        )
+      }),
     )
     const user = userEvent.setup()
     abrirFicha()
     await user.click(await screen.findByRole('tab', { name: 'Servicios' }))
-    expect(await screen.findByText('Consulta domiciliaria')).toBeInTheDocument()
-    expect(screen.getByText('Luna')).toBeInTheDocument()
-    expect(screen.getByText('Agendado')).toBeInTheDocument()
+    const pendientes = await screen.findByRole('table', { name: 'Pendientes' })
+    expect(within(pendientes).getByText('Agendado')).toBeInTheDocument()
+    expect(within(pendientes).getByText('Luna')).toBeInTheDocument()
+    expect(within(screen.getByRole('table', { name: 'Utilizados' })).getByText('Completado')).toBeInTheDocument()
+    expect(screen.getByText('Ecografía abdominal')).toBeInTheDocument()
+    expect(screen.getByText('1 de 4')).toBeInTheDocument()
+    expect(screen.getByText('Este año')).toBeInTheDocument()
+    // Por defecto, el mes en curso.
+    const params = consultado as URLSearchParams | null
+    expect(params?.get('familia_id')).toBe(FAMILIA.id)
+    expect(params?.get('desde')).toMatch(/^\d{4}-\d{2}-01$/)
+  })
+
+  it('filtra por mascota, por rango y muestra los cancelados si se piden', async () => {
+    const consultas: URLSearchParams[] = []
+    server.use(
+      http.get(`${API}/servicios/resumen`, ({ request }) => {
+        consultas.push(new URL(request.url).searchParams)
+        return HttpResponse.json(resumen())
+      }),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Servicios' }))
+    expect(await screen.findByText('No hay servicios pendientes en este rango.')).toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Mascota'), 'Luna')
+    await waitFor(() => expect(consultas.at(-1)?.get('mascota_id')).toBe(FAMILIA.mascotas?.[0]?.id))
+
+    const desde = screen.getByLabelText('Desde')
+    await user.clear(desde)
+    await user.type(desde, '2026-01-01')
+    await waitFor(() => expect(consultas.at(-1)?.get('desde')).toBe('2026-01-01'))
+
+    await user.click(screen.getByLabelText('Ver cancelados'))
+    await waitFor(() => expect(consultas.at(-1)?.get('incluir_cancelados')).toBe('true'))
+    expect(await screen.findByText('No hay servicios cancelados en este rango.')).toBeInTheDocument()
+  })
+
+  it('no consulta con un rango incompleto o invertido y lo explica', async () => {
+    const consultas: URLSearchParams[] = []
+    server.use(
+      http.get(`${API}/servicios/resumen`, ({ request }) => {
+        consultas.push(new URL(request.url).searchParams)
+        return HttpResponse.json(resumen())
+      }),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Servicios' }))
+    await screen.findByText('No hay servicios pendientes en este rango.')
+    const hasta = screen.getByLabelText('Hasta')
+    await user.clear(hasta)
+    expect(await screen.findByText('Elige la fecha inicial y la final del rango.')).toBeInTheDocument()
+    await user.type(hasta, '2000-01-01')
+    expect(await screen.findByText('La fecha final es anterior a la inicial.')).toBeInTheDocument()
+    expect(consultas.every((c) => c.get('hasta') !== '' && c.get('hasta') !== '2000-01-01')).toBe(true)
   })
 
   it('avisa que la familia está dada de baja y no ofrece acciones', async () => {
