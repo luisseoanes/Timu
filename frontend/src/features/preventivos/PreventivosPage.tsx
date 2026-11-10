@@ -44,12 +44,15 @@ const TIPO_SERVICIO: Record<string, string> = {
 
 export function PreventivosPage() {
   const [params] = useSearchParams()
+  // Desde la ficha de una mascota se llega con ?mascota=<id>, directo a su carnet.
+  const mascota = params.get('mascota')
   return (
     <Pestanas
       etiqueta="Secciones de preventivos"
+      inicial={mascota ? 'carnet' : undefined}
       pestanas={[
         { valor: 'agenda', titulo: 'Calendario preventivo', contenido: <Calendario porAutorizar={params.get('autorizacion') === '1'} /> },
-        { valor: 'carnet', titulo: 'Carnet por mascota', contenido: <CarnetMascota /> },
+        { valor: 'carnet', titulo: 'Carnet por mascota', contenido: <CarnetMascota mascotaInicial={mascota} /> },
       ]}
     />
   )
@@ -374,9 +377,13 @@ function FormAgendar({ evento, pendiente, onEnviar }: { evento: EventoRead; pend
   )
 }
 
-function CarnetMascota() {
-  const [familia, setFamilia] = useState<FamiliaRead | null>(null)
-  const [mascotaId, setMascotaId] = useState<string | null>(null)
+function CarnetMascota({ mascotaInicial }: { mascotaInicial: string | null }) {
+  // undefined: aún no se eligió ninguna, y vale la de la mascota con que se llegó.
+  const [elegida, setFamilia] = useState<FamiliaRead | null | undefined>(undefined)
+  const [mascotaId, setMascotaId] = useState<string | null>(mascotaInicial)
+  const inicial = useMascotas(mascotaInicial ? [mascotaInicial] : []).get(mascotaInicial ?? '')
+  const deLaInicial = useFamilia(elegida === undefined ? inicial?.familia_id : undefined)
+  const familia = elegida === undefined ? (deLaInicial.data ?? null) : elegida
   const carnet = useCarnet(mascotaId)
   const generar = useGenerarCalendario()
   const emitir = useEmitirCarnet()

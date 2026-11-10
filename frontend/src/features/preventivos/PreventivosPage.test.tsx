@@ -124,4 +124,26 @@ describe('PreventivosPage', () => {
     await user.click(screen.getByRole('button', { name: /emitir carnet pdf/i }))
     expect(await screen.findByRole('link', { name: 'Página de verificación' })).toHaveAttribute('href', '/verificar/ABC234')
   })
+
+  it('desde la ficha de una mascota abre directo su carnet', async () => {
+    let pedido = ''
+    server.use(
+      http.get(`${API}/mascotas/:id`, () => HttpResponse.json(LUNA)),
+      http.get(`${API}/preventivos/mascotas/:id/carnet`, ({ params }) => {
+        pedido = String(params.id)
+        return HttpResponse.json({
+          mascota: { id: LUNA.id, nombre: 'Luna', especie: 'Canino', raza: null, fecha_nacimiento: null },
+          aplicados: [],
+          vencidos: [],
+          proximos: [],
+        })
+      }),
+    )
+    renderizar(<PreventivosPage />, { ruta: `/preventivos?mascota=${LUNA.id}` })
+    expect(await screen.findByRole('tab', { name: 'Carnet por mascota', selected: true })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Carnet de Luna' })).toBeInTheDocument()
+    expect(pedido).toBe(LUNA.id)
+    // Con la familia de la mascota ya elegida, se puede pasar a otra de sus mascotas.
+    expect(await screen.findByLabelText('Mascota')).toHaveValue(LUNA.id)
+  })
 })
