@@ -156,18 +156,47 @@ export function useActualizarUsuario() {
   )
 }
 
+/** 6.2 / 6.3 Tarifa por peludo con 1, 2, 3 y 4 o más peludos, y el precio de cada periodo
+ * largo para un solo peludo (vacío = sin descuento). Los valores van como texto: son dinero. */
+export interface Tarifas {
+  por_peludos: [string, string, string, string]
+  trimestral?: string
+  semestral?: string
+  anual?: string
+}
+
+export interface NuevoPlan {
+  codigo: string
+  nombre: string
+  descripcion?: string
+  ciudades: string[]
+  especies: string[]
+  tarifas: Tarifas
+}
+
 export function useCrearPlan() {
-  return useMutacion(
-    async (datos: { codigo: string; nombre: string; descripcion?: string; ciudad?: string; valor_mensual: string; cupos_mascotas: number }) =>
-      (await api.post<PlanRead>('/planes', datos)).data,
-    'planes',
-  )
+  return useMutacion(async (datos: NuevoPlan) => (await api.post<PlanRead>('/planes', datos)).data, 'planes')
 }
 
 export function useActualizarPlan() {
   return useMutacion(
-    async ({ id, ...datos }: { id: string; valor_mensual?: string; activo?: boolean; cupos_mascotas?: number; nombre?: string }) =>
+    async ({ id, ...datos }: { id: string; activo?: boolean; nombre?: string; descripcion?: string | null }) =>
       (await api.patch<PlanRead>(`/planes/${id}`, datos)).data,
+    'planes',
+  )
+}
+
+export function useGuardarTarifas() {
+  return useMutacion(
+    async ({ id, tarifas }: { id: string; tarifas: Tarifas }) => (await api.put<PlanRead>(`/planes/${id}/tarifas`, tarifas)).data,
+    'planes',
+  )
+}
+
+export function useGuardarCiudades() {
+  return useMutacion(
+    async ({ id, ciudades }: { id: string; ciudades: string[] }) =>
+      (await api.put<PlanRead>(`/planes/${id}/ciudades`, ciudades)).data,
     'planes',
   )
 }

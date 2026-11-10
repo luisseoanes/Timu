@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { CampanasPage } from './CampanasPage'
-import { USUARIO_ADMIN } from '@/test/handlers'
+import { PLAN as PLAN_TIMU, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { CampanaRead, MensajeRead, PlanRead } from '@/types'
@@ -39,18 +39,7 @@ const PLANTILLA = {
   activa: true,
 }
 
-const PLAN: PlanRead = {
-  id: 'pl1',
-  codigo: 'familiar',
-  nombre: 'Plan Familiar',
-  descripcion: null,
-  ciudad: null,
-  valor_mensual: '75000',
-  cupos_mascotas: 3,
-  especies: [],
-  activo: true,
-  beneficios: [],
-}
+const PLAN: PlanRead = { ...PLAN_TIMU, id: 'pl1' }
 
 const base = [
   http.get(`${API}/campanas`, () => HttpResponse.json([CAMPANA])),
@@ -265,7 +254,7 @@ describe('nueva campaña', () => {
     await user.selectOptions(within(modal).getByLabelText('Plantilla'), 'recordatorio_renovacion')
     const ciudades = within(modal).getByRole('group', { name: 'Ciudades' })
     await user.click(await within(ciudades).findByRole('button', { name: 'Bogota' }))
-    await user.click(await within(within(modal).getByRole('group', { name: 'Planes' })).findByRole('button', { name: 'Plan Familiar' }))
+    await user.click(await within(within(modal).getByRole('group', { name: 'Planes' })).findByRole('button', { name: 'Colita Feliz' }))
     const activa = within(modal).getByRole('button', { name: 'Activa' })
     await user.click(activa)
     await user.click(activa)
@@ -278,12 +267,12 @@ describe('nueva campaña', () => {
     await user.type(within(modal).getByLabelText('Mascotas mínimas'), '2')
     await user.click(within(modal).getByRole('button', { name: 'Contar audiencia' }))
     expect(await within(modal).findByRole('status')).toHaveTextContent('3 familias · Ana, Beto, Carla…')
-    expect(contado).toMatchObject({ ciudades: ['Bogota'], planes: ['familiar'], dias_mora_min: 30, sin_servicio_dias: 90, mascotas_min: 2 })
+    expect(contado).toMatchObject({ ciudades: ['Bogota'], planes: ['colita_feliz'], dias_mora_min: 30, sin_servicio_dias: 90, mascotas_min: 2 })
     await user.click(within(modal).getByRole('button', { name: 'Crear campaña' }))
     await waitFor(() =>
       expect(enviado?.segmento).toEqual({
         ciudades: ['Bogota'],
-        planes: ['familiar'],
+        planes: ['colita_feliz'],
         estados: [],
         dias_mora_min: 30,
         sin_servicio_dias: 90,

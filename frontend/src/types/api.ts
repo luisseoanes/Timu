@@ -143,17 +143,49 @@ export interface EsquemaPreventivoRead {
   activo: boolean
 }
 
+export type Periodicidad = 'mensual' | 'trimestral' | 'semestral' | 'anual'
+
+export interface TarifaRead {
+  peludos: number
+  valor: string
+}
+
+export interface TarifaPeriodicidadRead {
+  periodicidad: Periodicidad
+  valor: string
+}
+
 export interface PlanRead {
   id: string
   codigo: string
   nombre: string
   descripcion: string | null
-  ciudad: string | null
+  ciudades: string[]
+  tarifas: TarifaRead[]
+  tarifas_periodicidad: TarifaPeriodicidadRead[]
   valor_mensual: string
   cupos_mascotas: number
   especies: string[]
   activo: boolean
   beneficios: BeneficioRead[]
+}
+
+export interface CotizacionRead {
+  periodicidad: Periodicidad
+  meses: number
+  tarifa_de: number
+  peludos: PeludoCotizadoRead[]
+  valor_mensual: string
+  valor_periodo: string
+  descuento: boolean
+  ahorro: string
+}
+
+export interface PeludoCotizadoRead {
+  especie: string
+  plan_id: string
+  plan_nombre: string
+  valor_mensual: string
 }
 
 export interface BeneficioRead {

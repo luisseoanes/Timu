@@ -5,7 +5,7 @@ import { Route, Routes } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
 import { FamiliaDetallePage } from './FamiliaDetallePage'
-import { FAMILIA, USUARIO_ADMIN } from '@/test/handlers'
+import { FAMILIA, PLAN, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { DocumentoRead, EstadoCuenta, MascotaRead } from '@/types'
@@ -115,7 +115,7 @@ describe('FamiliaDetallePage', () => {
     const pedidos: unknown[] = []
     server.use(
       http.get(`${API}/planes`, () =>
-        HttpResponse.json([{ id: 'p1', codigo: 'familiar', nombre: 'Plan Familiar', valor_mensual: '75000.00', cupos_mascotas: 3, activo: true, beneficios: [] }]),
+        HttpResponse.json([{ ...PLAN, valor_mensual: '75000.00', cupos_mascotas: 3 }]),
       ),
       http.post(`${API}/afiliaciones/asistida`, async ({ request }) => {
         pedidos.push(await request.json())
@@ -131,7 +131,7 @@ describe('FamiliaDetallePage', () => {
     await user.click(await screen.findByRole('tab', { name: 'Cartera' }))
     await user.click(await screen.findByRole('button', { name: 'Afiliar a un plan' }))
     const modal = await screen.findByRole('dialog')
-    await waitFor(() => expect(within(modal).getByRole('option', { name: /plan familiar/i })).toBeInTheDocument())
+    await waitFor(() => expect(within(modal).getByRole('option', { name: /colita feliz/i })).toBeInTheDocument())
     await user.selectOptions(within(modal).getByLabelText('Plan'), 'p1')
     await user.click(within(modal).getByRole('button', { name: 'Iniciar afiliación' }))
     expect(await within(modal).findByLabelText('Enlace de pago')).toHaveValue('https://pago/abc')

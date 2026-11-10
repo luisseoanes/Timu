@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 
-import type { CiudadRead, EspecieRead, FamiliaRead, TipoServicioRead, Usuario } from '@/types'
+import type { CiudadRead, EspecieRead, FamiliaRead, PlanRead, TipoServicioRead, Usuario } from '@/types'
 
 export const USUARIO_ADMIN: Usuario = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -41,6 +41,30 @@ export const FAMILIA: FamiliaRead = {
       activa: true,
     },
   ],
+}
+
+/** Un plan como lo publica TIMU: tarifa por peludo de 1 a 4+, periodos largos y ciudades. */
+export const PLAN: PlanRead = {
+  id: 'p1',
+  codigo: 'colita_feliz',
+  nombre: 'Colita Feliz',
+  descripcion: null,
+  ciudades: ['Bogota', 'Medellin'],
+  tarifas: [
+    { peludos: 1, valor: '35500.00' },
+    { peludos: 2, valor: '30500.00' },
+    { peludos: 3, valor: '26000.00' },
+    { peludos: 4, valor: '24000.00' },
+  ],
+  tarifas_periodicidad: [
+    { periodicidad: 'semestral', valor: '202350.00' },
+    { periodicidad: 'anual', valor: '378000.00' },
+  ],
+  valor_mensual: '35500.00',
+  cupos_mascotas: 10,
+  especies: ['canino', 'felino'],
+  activo: true,
+  beneficios: [],
 }
 
 export const CIUDADES: CiudadRead[] = [

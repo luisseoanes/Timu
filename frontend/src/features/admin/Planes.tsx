@@ -3,12 +3,21 @@ import { useState } from 'react'
 import { Consulta } from '@/components/Consulta'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
-import { useTiposServicio } from '@/features/catalogos'
+import { useCiudades, useEspecies, useTiposServicio } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
 import { moneda } from '@/lib/formato'
-import type { PlanRead } from '@/types'
+import type { Periodicidad, PlanRead } from '@/types'
 
-import { useActualizarPlan, useCrearPlan, useGuardarBeneficios, usePlanesAdmin, type Beneficio } from './api'
+import {
+  useActualizarPlan,
+  useCrearPlan,
+  useGuardarBeneficios,
+  useGuardarCiudades,
+  useGuardarTarifas,
+  usePlanesAdmin,
+  type Beneficio,
+  type Tarifas,
+} from './api'
 
 export function Planes() {
   const planes = usePlanesAdmin()
@@ -38,11 +47,22 @@ export function Planes() {
                   <h4>{p.nombre}</h4>
                   {!p.activo && <span className="distintivo distintivo-neutro">Inactivo</span>}
                 </div>
-                <strong className="indicador-valor numero">{moneda(p.valor_mensual)}</strong>
-                <span className="apagado">
-                  por mes · hasta {p.cupos_mascotas} {p.cupos_mascotas === 1 ? 'mascota' : 'mascotas'}
-                  {p.ciudad ? ` · ${p.ciudad}` : ''}
-                </span>
+                <strong className="indicador-valor numero">{moneda(tarifa(p, 1))}</strong>
+                <span className="apagado">por peludo al mes · {p.ciudades.join(', ') || 'sin ciudades'}</span>
+                <dl className="ficha" aria-label={`Tarifas de ${p.nombre}`}>
+                  {p.tarifas.map((t) => (
+                    <div key={t.peludos}>
+                      <dt>{ETIQUETA_PELUDOS[t.peludos - 1]}</dt>
+                      <dd className="numero">{moneda(t.valor)}</dd>
+                    </div>
+                  ))}
+                  {p.tarifas_periodicidad.map((t) => (
+                    <div key={t.periodicidad}>
+                      <dt>{PERIODOS[t.periodicidad]} (1 peludo)</dt>
+                      <dd className="numero">{moneda(t.valor)}</dd>
+                    </div>
+                  ))}
+                </dl>
                 <ul className="beneficios">
                   {p.beneficios.map((b) => (
                     <li key={b.id}>
@@ -73,16 +93,19 @@ export function Planes() {
 
 function NuevoPlan({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => void }) {
   const crear = useCrearPlan()
+  const [aviso, setAviso] = useState<string | null>(null)
   return (
     <Modal
       abierto={abierto}
       onCambio={(v) => {
         if (!v) {
           crear.reset()
+          setAviso(null)
           onCerrar()
         }
       }}
       titulo="Nuevo plan"
+      descripcion="Cada peludo paga la tarifa de su plan según cuántos peludos tiene la afiliación, aunque estén en planes distintos."
       pie={
         <button className="btn btn-primario" type="submit" form="nuevo-plan" disabled={crear.isPending}>
           Crear plan
@@ -95,13 +118,19 @@ function NuevoPlan({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => vo
         onSubmit={(e) => {
           e.preventDefault()
           const d = new FormData(e.currentTarget)
+          const datos = leerPlan(d)
+          if (datos.ciudades.length === 0) {
+            setAviso('Elige al menos una ciudad donde se vende el plan.')
+            return
+          }
+          setAviso(null)
           crear.mutate(
             {
               codigo: String(d.get('codigo')).trim(),
               nombre: String(d.get('nombre')).trim(),
               descripcion: String(d.get('descripcion') ?? '').trim() || undefined,
-              valor_mensual: String(d.get('valor_mensual')),
-              cupos_mascotas: Number(d.get('cupos_mascotas')),
+              especies: d.getAll('especies').map(String),
+              ...datos,
             },
             { onSuccess: onCerrar },
           )
@@ -115,21 +144,15 @@ function NuevoPlan({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => vo
           <span>Nombre</span>
           <input className="input" name="nombre" required />
         </label>
-        <label className="campo">
-          <span>Valor mensual (COP)</span>
-          <input className="input" name="valor_mensual" type="number" min={0} required />
-        </label>
-        <label className="campo">
-          <span>Mascotas incluidas</span>
-          <input className="input" name="cupos_mascotas" type="number" min={1} defaultValue={1} required />
-        </label>
         <label className="campo ancho">
           <span>Descripción</span>
           <textarea className="input" name="descripcion" rows={2} />
         </label>
-        {crear.isError && (
+        <CampoEspecies />
+        <CamposPlan />
+        {(aviso || crear.isError) && (
           <p className="error ancho" role="alert">
-            {mensajeError(crear.error, 'No fue posible crear el plan.')}
+            {aviso ?? mensajeError(crear.error, 'No fue posible crear el plan.')}
           </p>
         )}
       </form>
@@ -137,10 +160,107 @@ function NuevoPlan({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => vo
   )
 }
 
+const ETIQUETA_PELUDOS = ['1 peludo', '2 peludos (c/u)', '3 peludos (c/u)', '4 o más (c/u)']
+const PERIODOS: Record<Periodicidad, string> = { mensual: 'Mensual', trimestral: 'Trimestral', semestral: 'Semestral', anual: 'Anual' }
+const LARGOS = ['trimestral', 'semestral', 'anual'] as const
+
+function tarifa(plan: PlanRead, peludos: number): string {
+  return plan.tarifas.find((t) => t.peludos === peludos)?.valor ?? '0'
+}
+
+function valorLargo(plan: PlanRead | undefined, periodo: Periodicidad): number | string {
+  const valor = plan?.tarifas_periodicidad.find((t) => t.periodicidad === periodo)?.valor
+  return valor ? Number(valor) : ''
+}
+
+function leerPlan(d: FormData): { ciudades: string[]; tarifas: Tarifas } {
+  const largo = (campo: string) => String(d.get(campo) ?? '').trim() || undefined
+  return {
+    ciudades: d.getAll('ciudades').map(String),
+    tarifas: {
+      por_peludos: [1, 2, 3, 4].map((n) => String(d.get(`tarifa_${n}`))) as Tarifas['por_peludos'],
+      trimestral: largo('trimestral'),
+      semestral: largo('semestral'),
+      anual: largo('anual'),
+    },
+  }
+}
+
+function CampoEspecies() {
+  const especies = useEspecies()
+  return (
+    <fieldset className="ancho acciones">
+      <legend>Especies (ninguna marcada = todas)</legend>
+      {especies.data
+        ?.filter((e) => e.activa)
+        .map((e) => (
+          <label key={e.codigo} className="acciones">
+            <input type="checkbox" name="especies" value={e.codigo} />
+            <span>{e.nombre}</span>
+          </label>
+        ))}
+    </fieldset>
+  )
+}
+
+/** Ciudades donde se vende, las cuatro tarifas por número de peludos y los periodos largos. */
+function CamposPlan({ plan }: { plan?: PlanRead }) {
+  const ciudades = useCiudades()
+  return (
+    <>
+      <fieldset className="ancho acciones">
+        <legend>Ciudades donde se vende</legend>
+        {ciudades.data
+          ?.filter((c) => c.activa)
+          .map((c) => (
+            <label key={c.nombre} className="acciones">
+              <input type="checkbox" name="ciudades" value={c.nombre} defaultChecked={plan?.ciudades.includes(c.nombre)} />
+              <span>{c.nombre}</span>
+            </label>
+          ))}
+      </fieldset>
+      <fieldset className="ancho formulario">
+        <legend className="ancho">Valor mensual por peludo (COP)</legend>
+        {ETIQUETA_PELUDOS.map((etiqueta, i) => (
+          <label key={etiqueta} className="campo">
+            <span>{etiqueta}</span>
+            <input
+              className="input"
+              name={`tarifa_${i + 1}`}
+              type="number"
+              min={1}
+              required
+              defaultValue={plan ? Number(tarifa(plan, i + 1)) : undefined}
+            />
+          </label>
+        ))}
+      </fieldset>
+      <fieldset className="ancho formulario">
+        <legend className="ancho">Pago por periodo con un solo peludo (COP, total; vacío = sin descuento)</legend>
+        {LARGOS.map((periodo) => (
+          <label key={periodo} className="campo">
+            <span>{PERIODOS[periodo]}</span>
+            <input
+              className="input"
+              name={periodo}
+              type="number"
+              min={1}
+              defaultValue={valorLargo(plan, periodo)}
+            />
+          </label>
+        ))}
+      </fieldset>
+    </>
+  )
+}
+
 function EditarPlan({ plan, onCerrar }: { plan: PlanRead; onCerrar: () => void }) {
   const tipos = useTiposServicio()
   const actualizar = useActualizarPlan()
   const guardarBeneficios = useGuardarBeneficios()
+  const guardarTarifas = useGuardarTarifas()
+  const guardarCiudades = useGuardarCiudades()
+  const [aviso, setAviso] = useState<string | null>(null)
   const [beneficios, setBeneficios] = useState<Beneficio[]>(
     plan.beneficios.map((b) => ({
       tipo_servicio_codigo: b.tipo_servicio_codigo,
@@ -151,7 +271,8 @@ function EditarPlan({ plan, onCerrar }: { plan: PlanRead; onCerrar: () => void }
     })),
   )
   const disponibles = tipos.data?.filter((t) => !beneficios.some((b) => b.tipo_servicio_codigo === t.codigo)) ?? []
-  const error = actualizar.error ?? guardarBeneficios.error
+  const error = actualizar.error ?? guardarCiudades.error ?? guardarTarifas.error ?? guardarBeneficios.error
+  const guardando = actualizar.isPending || guardarCiudades.isPending || guardarTarifas.isPending || guardarBeneficios.isPending
 
   function cambiar(i: number, cambio: Partial<Beneficio>) {
     setBeneficios((a) => a.map((b, j) => (j === i ? { ...b, ...cambio } : b)))
@@ -162,9 +283,9 @@ function EditarPlan({ plan, onCerrar }: { plan: PlanRead; onCerrar: () => void }
       abierto
       onCambio={(v) => !v && onCerrar()}
       titulo={`Editar ${plan.nombre}`}
-      descripcion="El nuevo valor aplica a las cuotas que se emitan desde ahora; las ya emitidas no cambian."
+      descripcion="Las tarifas nuevas aplican a afiliaciones nuevas y a los recálculos; las cuotas ya emitidas no cambian."
       pie={
-        <button className="btn btn-primario" type="submit" form="editar-plan" disabled={actualizar.isPending || guardarBeneficios.isPending}>
+        <button className="btn btn-primario" type="submit" form="editar-plan" disabled={guardando}>
           Guardar
         </button>
       }
@@ -175,14 +296,21 @@ function EditarPlan({ plan, onCerrar }: { plan: PlanRead; onCerrar: () => void }
         onSubmit={async (e) => {
           e.preventDefault()
           const d = new FormData(e.currentTarget)
-          await actualizar.mutateAsync({
-            id: plan.id,
-            nombre: String(d.get('nombre')).trim(),
-            valor_mensual: String(d.get('valor_mensual')),
-            cupos_mascotas: Number(d.get('cupos_mascotas')),
-          })
-          await guardarBeneficios.mutateAsync({ id: plan.id, beneficios })
-          onCerrar()
+          const datos = leerPlan(d)
+          if (datos.ciudades.length === 0) {
+            setAviso('Elige al menos una ciudad donde se vende el plan.')
+            return
+          }
+          setAviso(null)
+          try {
+            await actualizar.mutateAsync({ id: plan.id, nombre: String(d.get('nombre')).trim() })
+            await guardarCiudades.mutateAsync({ id: plan.id, ciudades: datos.ciudades })
+            await guardarTarifas.mutateAsync({ id: plan.id, tarifas: datos.tarifas })
+            await guardarBeneficios.mutateAsync({ id: plan.id, beneficios })
+            onCerrar()
+          } catch {
+            // El error de cada paso lo muestra el aviso de abajo.
+          }
         }}
       >
         <div className="formulario">
@@ -190,14 +318,7 @@ function EditarPlan({ plan, onCerrar }: { plan: PlanRead; onCerrar: () => void }
             <span>Nombre</span>
             <input className="input" name="nombre" defaultValue={plan.nombre} required />
           </label>
-          <label className="campo">
-            <span>Valor mensual (COP)</span>
-            <input className="input" name="valor_mensual" type="number" min={0} defaultValue={Number(plan.valor_mensual)} required />
-          </label>
-          <label className="campo">
-            <span>Mascotas incluidas</span>
-            <input className="input" name="cupos_mascotas" type="number" min={1} defaultValue={plan.cupos_mascotas} required />
-          </label>
+          <CamposPlan plan={plan} />
         </div>
         <h4 className="subtitulo">Beneficios</h4>
         {beneficios.map((b, i) => (
@@ -249,9 +370,9 @@ function EditarPlan({ plan, onCerrar }: { plan: PlanRead; onCerrar: () => void }
             ))}
           </select>
         )}
-        {error && (
+        {(aviso || error) && (
           <p className="error" role="alert">
-            {mensajeError(error, 'No fue posible guardar el plan.')}
+            {aviso ?? mensajeError(error, 'No fue posible guardar el plan.')}
           </p>
         )}
       </form>

@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 
 import { AdminPage } from './AdminPage'
-import { USUARIO_ADMIN } from '@/test/handlers'
+import { PLAN, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 
@@ -61,15 +61,7 @@ describe('AdminPage', () => {
       http.get(`${API}/planes`, () =>
         HttpResponse.json([
           {
-            id: 'p1',
-            codigo: 'familiar',
-            nombre: 'Plan Familiar',
-            descripcion: null,
-            ciudad: null,
-            valor_mensual: '75000.00',
-            cupos_mascotas: 3,
-            especies: [],
-            activo: true,
+            ...PLAN,
             beneficios: [{ id: 'b1', tipo_servicio_codigo: 'consulta_domiciliaria', cupo: 6, periodo_cupo: 'anual', cobertura_pct: 100, copago: '0' }],
           },
         ]),
@@ -78,7 +70,7 @@ describe('AdminPage', () => {
     const user = userEvent.setup()
     renderizar(<AdminPage />)
     await user.click(await screen.findByRole('tab', { name: 'Planes' }))
-    const plan = await screen.findByRole('article', { name: 'Plan Familiar' })
+    const plan = await screen.findByRole('article', { name: 'Colita Feliz' })
     expect(within(plan).getByText(/consulta domiciliaria · 6 al año/)).toBeInTheDocument()
   })
 
