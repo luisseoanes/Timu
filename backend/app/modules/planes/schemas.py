@@ -64,3 +64,27 @@ def cotizacion_read(c: Cotizacion) -> CotizacionRead:
         descuento=c.descuento,
         ahorro=c.ahorro,
     )
+
+
+class BeneficioPublico(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    tipo_servicio_codigo: str
+    cupo: int | None
+    periodo_cupo: str
+
+
+class PlanPublico(BaseModel):
+    """Lo que ve quien se afilia, o la familia que suma un peludo: precios, especies y
+    beneficios, sin datos internos."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    codigo: str
+    nombre: str
+    descripcion: str | None
+    especies: list[str]
+    tarifas: list[TarifaRead]
+    tarifas_periodicidad: list[TarifaPeriodicidadRead]
+    beneficios: list[BeneficioPublico]

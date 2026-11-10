@@ -532,10 +532,12 @@ async def test_a_las_48_horas_sin_pago_se_cierra_y_comercial_recibe_la_tarea(
     assert await en_worker(cerrar_registros_sin_pago) == {
         "canceladas": 2,
         "tareas": 1,
+        "altas_canceladas": 0,
     }
     assert await en_worker(cerrar_registros_sin_pago) == {
         "canceladas": 0,
         "tareas": 0,
+        "altas_canceladas": 0,
     }
     estados = {
         r: (await _solicitud(db, r)).estado
@@ -590,6 +592,7 @@ async def test_a_los_seis_meses_se_borra_el_contacto_de_lo_que_nunca_se_pago(
     assert await en_worker(cerrar_registros_sin_pago) == {
         "canceladas": 1,
         "tareas": 1,
+        "altas_canceladas": 0,
     }
     assert await en_worker(anonimizar_registros_abandonados) == {"anonimizados": 0}
 

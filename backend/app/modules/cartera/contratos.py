@@ -18,7 +18,7 @@ from app.core.enums import MESES_PERIODICIDAD, EstadoAfiliacion
 from app.core.errores import ReglaNegocio
 from app.core.tiempo import ahora, hoy
 from app.modules.cartera.models import AfiliacionMascota, Contrato, Cuota, EstadoCuota
-from app.modules.cartera.periodos import dinero, periodo, sumar_meses
+from app.modules.cartera.periodos import dinero, periodo, sumar_meses, vencimiento
 from app.modules.familias.models import Familia, Mascota
 from app.modules.planes import service as planes
 from app.modules.planes.models import CambioPlan, Plan
@@ -195,11 +195,17 @@ def _recalcular(
 def validar_alta(db: Session, contrato: Contrato, especie: str, plan_id: UUID) -> None:
     """Antes de guardar la mascota nueva: su plan se vende en la ciudad, cubre su especie y
     la familia no pasa del maximo de peludos. Un rechazo no deja nada escrito."""
+    cotizar_alta(db, contrato, especie, plan_id)
+
+
+def cotizar_alta(db: Session, contrato: Contrato, especie: str, plan_id: UUID) -> Cotizacion:
+    """El contrato con un peludo mas: los que ya estan y el nuevo, a la tarifa del nuevo
+    numero de peludos. Valida solo el plan del nuevo."""
     familia = db.get(Familia, contrato.familia_id)
     assert familia is not None
     actuales = lineas(db, contrato)
     especies = _especies(db, [v.mascota_id for v in actuales])
-    planes.cotizar(
+    return planes.cotizar(
         db,
         familia.ciudad,
         [(especies[v.mascota_id], v.plan_id) for v in actuales] + [(especie, plan_id)],
@@ -276,7 +282,30 @@ def ciclo_actual(contrato: Contrato, dia: date) -> tuple[date, date]:
     return inicio, sumar_meses(inicio, meses)
 
 
-def _cargar_ajuste(db: Session, contrato: Contrato, valor: Decimal, dia: date) -> Cuota:
+def cuotas_emitidas_desde(db: Session, contrato: Contrato, desde: date) -> int:
+    """Cuotas regulares ya emitidas que vencen en `desde` o despues: se emiten unos dias antes
+    de vencer, con el valor del contrato en ese momento, asi que un cambio de valor no las
+    alcanza."""
+    periodos = db.scalars(
+        select(Cuota.periodo).where(Cuota.contrato_id == contrato.id, Cuota.tipo == "cuota")
+    )
+    return sum(1 for per in periodos if vencimiento(per, contrato.dia_corte) >= desde)
+
+
+def prorrateo(contrato: Contrato, diferencia: Decimal, dia: date) -> Decimal:
+    """La parte de `diferencia` que corresponde a lo que queda del periodo en curso, por dias:
+    lo que se cobra al subir el valor del contrato a mitad de periodo."""
+    inicio, fin = ciclo_actual(contrato, dia)
+    return dinero(diferencia * (fin - dia).days / (fin - inicio).days)
+
+
+def cargar_ajuste(
+    db: Session,
+    contrato: Contrato,
+    valor: Decimal,
+    dia: date,
+    descripcion: str = "Ajuste por cambio de plan",
+) -> Cuota:
     per = periodo(dia)
     existentes = list(
         db.scalars(
@@ -297,9 +326,10 @@ def _cargar_ajuste(db: Session, contrato: Contrato, valor: Decimal, dia: date) -
         tipo="ajuste" if not existentes else f"ajuste{len(existentes) + 1}",
         fecha_vencimiento=dia,
         valor=valor,
-        descripcion="Ajuste por cambio de plan",
+        descripcion=descripcion,
     )
     db.add(cuota)
+    db.flush()
     return cuota
 
 
@@ -341,13 +371,12 @@ def cambiar_plan(
     modo = resultado.accion["modo"]
 
     dia = hoy()
-    inicio, fin = ciclo_actual(contrato, dia)
     ajuste = dinero(0)
     fecha_efectiva = dia
     if modo == "diario":
-        ajuste = dinero((nuevo - anterior) * (fin - dia).days / (fin - inicio).days)
+        ajuste = prorrateo(contrato, nuevo - anterior, dia)
     elif modo == "proximo_ciclo":
-        fecha_efectiva = fin
+        fecha_efectiva = ciclo_actual(contrato, dia)[1]
 
     cambio = CambioPlan(
         contrato_id=contrato.id,
@@ -368,7 +397,7 @@ def cambiar_plan(
     if cambio.aplicado:
         _aplicar(contrato, vigentes, cot)
         if ajuste > 0:
-            _cargar_ajuste(db, contrato, ajuste, dia)
+            cargar_ajuste(db, contrato, ajuste, dia)
         elif ajuste < 0:
             contrato.saldo_a_favor = dinero(contrato.saldo_a_favor) - ajuste
     db.flush()

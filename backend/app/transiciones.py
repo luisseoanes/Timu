@@ -81,6 +81,7 @@ TRANSICIONES: dict[tuple[str, str], Grafo] = {
         # Un pago que se aprueba despues de marcar el error completa la afiliacion.
         "error": {"completada"},
     },
+    ("altas_peludo", "estado"): {"pendiente_pago": {"completada", "cancelada", "error"}},
 }
 
 

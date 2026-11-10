@@ -2,7 +2,7 @@
 que no se paga y borrado de su contacto pasado el plazo (Ley 1581)."""
 
 from app.core.database import sesion_worker
-from app.modules.afiliaciones import registro
+from app.modules.afiliaciones import altas, registro
 from app.workers.celery_app import celery_app
 
 
@@ -16,10 +16,15 @@ def recordar_registros() -> dict[str, int]:
 
 @celery_app.task(name="afiliaciones.cerrar_registros_sin_pago")
 def cerrar_registros_sin_pago() -> dict[str, int]:
-    """A las 48 horas del ultimo enlace sin pago: se cancela y comercial recibe una tarea."""
+    """A las 48 horas del ultimo enlace sin pago se cancela: el registro, con una tarea comercial,
+    y el alta de un peludo desde el portal."""
     with sesion_worker() as db:
         canceladas, tareas = registro.cerrar_sin_pago(db)
-        return {"canceladas": canceladas, "tareas": tareas}
+        return {
+            "canceladas": canceladas,
+            "tareas": tareas,
+            "altas_canceladas": altas.cerrar_sin_pago(db),
+        }
 
 
 @celery_app.task(name="afiliaciones.anonimizar_registros_abandonados")

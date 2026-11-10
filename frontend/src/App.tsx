@@ -10,7 +10,16 @@ import { ClinicaPage, EntradaPage, HistoriaMascotaPage } from '@/features/clinic
 import { ComercialPage } from '@/features/comercial'
 import { DashboardPage } from '@/features/dashboard'
 import { FamiliaDetallePage, FamiliasPage } from '@/features/familias'
-import { PortalCitas, PortalDatos, PortalInicio, PortalLayout, PortalMascota, PortalMascotas, PortalPagos } from '@/features/portal'
+import {
+  PortalAgregarPeludo,
+  PortalCitas,
+  PortalDatos,
+  PortalInicio,
+  PortalLayout,
+  PortalMascota,
+  PortalMascotas,
+  PortalPagos,
+} from '@/features/portal'
 import { PreventivosPage } from '@/features/preventivos'
 import {
   CompletarRegistroPage,
@@ -79,6 +88,7 @@ export default function App() {
               <Route path="portal" element={<PortalLayout />}>
                 <Route index element={<PortalInicio />} />
                 <Route path="mascotas" element={<PortalMascotas />} />
+                <Route path="mascotas/nueva" element={<PortalAgregarPeludo />} />
                 <Route path="mascotas/:mascotaId" element={<PortalMascota />} />
                 <Route path="citas" element={<PortalCitas />} />
                 <Route path="pagos" element={<PortalPagos />} />

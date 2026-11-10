@@ -10,8 +10,10 @@ from fastapi import APIRouter, File, Response, UploadFile, status
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.api.deps import CurrentUser, DbSession, FamiliaActual
+from app.core.enums import EstadoAltaPeludo, EstadoPago, Periodicidad
 from app.core.errores import NoEncontrado
 from app.core.validaciones import TelefonoCO
+from app.modules.afiliaciones import altas, registro
 from app.modules.archivos import service as archivos
 from app.modules.archivos.models import Archivo
 from app.modules.cartera import contratos
@@ -22,7 +24,8 @@ from app.modules.documentos import service as documentos
 from app.modules.documentos.service import DocumentoRead
 from app.modules.familias import service as familias
 from app.modules.familias.models import Familia
-from app.modules.familias.schemas import FamiliaRead, MascotaRead
+from app.modules.familias.schemas import FamiliaRead, MascotaAlta, MascotaRead
+from app.modules.planes.schemas import PlanPublico
 from app.modules.portal import service
 from app.modules.preventivos import service as preventivos
 from app.modules.servicios.models import Servicio
@@ -291,3 +294,90 @@ async def comprobante(db: DbSession, familia: FamiliaActual, pago_id: UUID) -> R
             "Cache-Control": "private, no-store",
         },
     )
+
+
+# --- 6.1 Agregar un peludo con el contrato vigente --------------------------------------------
+
+
+class CotizacionAltaIn(BaseModel):
+    especie: str = Field(max_length=40)
+    plan_id: UUID
+
+
+class CotizacionAltaRead(BaseModel):
+    """Lo que cobra el contrato desde la siguiente cuota y lo que se paga hoy por lo que queda
+    del periodo en curso con esa tarifa."""
+
+    periodicidad: Periodicidad
+    valor_periodo_actual: Decimal
+    valor_periodo_nuevo: Decimal
+    valor_ajuste: Decimal
+    hasta: date
+    cuotas_adelantadas: int = Field(
+        description="Cuotas siguientes ya emitidas con el valor anterior: el ajuste las incluye"
+    )
+
+
+class PeludoNuevoIn(MascotaAlta):
+    plan_id: UUID
+
+
+class AltaIniciada(BaseModel):
+    alta_id: UUID
+    valor: Decimal
+    enlace_pago: str
+
+
+class AltaPeludoRead(BaseModel):
+    id: UUID
+    nombre: str
+    especie: str
+    plan_id: UUID
+    valor_ajuste: Decimal
+    valor_periodo_nuevo: Decimal
+    estado: EstadoAltaPeludo
+    estado_pago: EstadoPago | None
+    created_at: datetime
+
+
+@router.get("/peludos/planes", response_model=list[PlanPublico])
+async def planes_para_alta(db: DbSession, familia: FamiliaActual) -> Any:
+    """Los planes que se venden en la ciudad de la familia."""
+    return await db.run_sync(registro.planes_en, familia.ciudad)
+
+
+@router.post("/peludos/cotizacion", response_model=CotizacionAltaRead)
+async def cotizar_alta(
+    db: DbSession, familia: FamiliaActual, data: CotizacionAltaIn
+) -> altas.Cotizacion:
+    return await db.run_sync(altas.cotizar, familia, data.especie, data.plan_id)
+
+
+@router.post("/peludos", response_model=AltaIniciada, status_code=status.HTTP_201_CREATED)
+async def agregar_peludo(
+    db: DbSession, familia: FamiliaActual, data: PeludoNuevoIn
+) -> AltaIniciada:
+    """Guarda la ficha y el plan y devuelve el enlace para pagar lo que queda del periodo en
+    curso. El peludo entra al contrato cuando la pasarela aprueba el pago."""
+    datos = MascotaAlta.model_validate(data.model_dump(exclude={"plan_id"}))
+    alta, enlace = await db.run_sync(altas.iniciar, familia, datos, data.plan_id)
+    return AltaIniciada(alta_id=alta.id, valor=alta.valor_ajuste, enlace_pago=enlace)
+
+
+@router.get("/peludos/altas", response_model=list[AltaPeludoRead])
+async def altas_de_peludos(db: DbSession, familia: FamiliaActual) -> list[AltaPeludoRead]:
+    filas = await db.run_sync(altas.listar, familia.id)
+    return [
+        AltaPeludoRead(
+            id=alta.id,
+            nombre=alta.nombre,
+            especie=alta.especie,
+            plan_id=alta.plan_id,
+            valor_ajuste=alta.valor_ajuste,
+            valor_periodo_nuevo=alta.valor_periodo_nuevo,
+            estado=EstadoAltaPeludo(alta.estado),
+            estado_pago=EstadoPago(estado_pago) if estado_pago else None,
+            created_at=alta.created_at,
+        )
+        for alta, estado_pago in filas
+    ]

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.auditoria import Auditable
 from app.core.database import Base, EnumDb, JSONTipo, TimestampMixin, UUIDMixin
-from app.core.enums import OrigenSolicitudAfiliacion, Periodicidad
+from app.core.enums import EstadoAltaPeludo, OrigenSolicitudAfiliacion, Periodicidad
 
 
 class EstadoSolicitud(StrEnum):
@@ -108,3 +108,37 @@ class PeludoSolicitud(Base, UUIDMixin, TimestampMixin, Auditable):
     )
     plan_id: Mapped[UUID] = mapped_column(ForeignKey("planes.id"), index=True)
     valor_mensual: Mapped[Decimal] = mapped_column(Numeric(12, 2))
+
+
+class AltaPeludo(Base, UUIDMixin, TimestampMixin, Auditable):
+    """6.1 Un peludo mas desde el portal, con el contrato vigente. La familia paga por la
+    pasarela la parte del periodo en curso con la tarifa nueva (`valor_ajuste`) y el peludo
+    entra al contrato cuando el pago se aprueba; hasta entonces su ficha espera aqui. Desde
+    la siguiente cuota el contrato cobra `valor_periodo_nuevo`."""
+
+    __tablename__ = "altas_peludo"
+    __checks__ = {
+        "ajuste_positivo": "valor_ajuste > 0",
+        "periodo_no_negativo": "valor_periodo_nuevo >= 0",
+        "completada_con_mascota": "estado <> 'completada' OR mascota_id IS NOT NULL",
+    }
+    __columna_familia__ = "familia_id"
+
+    familia_id: Mapped[UUID] = mapped_column(ForeignKey("familias.id"), index=True)
+    contrato_id: Mapped[UUID] = mapped_column(ForeignKey("contratos.id"), index=True)
+    plan_id: Mapped[UUID] = mapped_column(ForeignKey("planes.id"), index=True)
+    nombre: Mapped[str] = mapped_column(String(120))
+    especie: Mapped[str] = mapped_column(
+        String(40), ForeignKey("especies.codigo", onupdate="CASCADE"), index=True
+    )
+    # Raza, sexo, fecha de nacimiento, peso y esterilizacion, como los pide la ficha.
+    ficha: Mapped[dict[str, Any]] = mapped_column(JSONTipo, default=dict)
+    valor_ajuste: Mapped[Decimal] = mapped_column(Numeric(12, 2))
+    valor_periodo_nuevo: Mapped[Decimal] = mapped_column(Numeric(12, 2))
+    referencia_pago: Mapped[str] = mapped_column(String(60), unique=True)
+    pago_id: Mapped[UUID] = mapped_column(ForeignKey("pagos.id"), index=True)
+    mascota_id: Mapped[UUID | None] = mapped_column(ForeignKey("mascotas.id"), index=True)
+    estado: Mapped[str] = mapped_column(
+        EnumDb(EstadoAltaPeludo), default=EstadoAltaPeludo.PENDIENTE_PAGO, index=True
+    )
+    error: Mapped[str | None] = mapped_column(Text)

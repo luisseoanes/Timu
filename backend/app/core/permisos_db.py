@@ -45,6 +45,7 @@ PERMISOS: dict[str, dict[str, str]] = {
     "admin": {
         "adjuntos_clinicos": "S",
         "afiliaciones_mascota": "SIU",
+        "altas_peludo": "SIU",
         "aplicaciones_pago": "SI",
         "arboles_conversacion": "SIU",
         "archivos": "SI",
@@ -131,6 +132,7 @@ PERMISOS: dict[str, dict[str, str]] = {
     "comercial": {
         "adjuntos_clinicos": "S",
         "afiliaciones_mascota": "SIU",
+        "altas_peludo": "SIU",
         "aplicaciones_pago": "SI",
         "arboles_conversacion": "S",
         "archivos": "SI",
@@ -192,6 +194,7 @@ PERMISOS: dict[str, dict[str, str]] = {
     "familia": {
         "adjuntos_clinicos": "S",
         "afiliaciones_mascota": "S",
+        "altas_peludo": "SIU",
         "aplicaciones_pago": "S",
         "archivos": "SI",
         "bajas_comunicaciones": "S",
@@ -230,6 +233,7 @@ PERMISOS: dict[str, dict[str, str]] = {
     "medico": {
         "adjuntos_clinicos": "SI",
         "afiliaciones_mascota": "SIU",
+        "altas_peludo": "S",
         "archivos": "SI",
         "auditoria": "S",
         "bajas_comunicaciones": "SI",
@@ -288,6 +292,7 @@ PERMISOS: dict[str, dict[str, str]] = {
     "operaciones": {
         "adjuntos_clinicos": "S",
         "afiliaciones_mascota": "SIU",
+        "altas_peludo": "S",
         "archivos": "SI",
         "auditoria": "S",
         "bajas_comunicaciones": "SI",
@@ -416,6 +421,7 @@ CONDICIONES: dict[str, dict[str, str | dict[str, str]]] = {
         "documentos_familia": f"familia_id = {_F} AND visible_familia AND activo",
         "contratos": f"familia_id = {_F}",
         "afiliaciones_mascota": f"familia_id = {_F}",
+        "altas_peludo": f"familia_id = {_F}",
         "pagos": f"familia_id = {_F}",
         "servicios": f"familia_id = {_F}",
         "tareas": f"familia_id = {_F}",

@@ -2,6 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
 import type {
+  AltaIniciada,
+  AltaPeludoRead,
+  CotizacionAltaRead,
   CupoRead,
   DocumentoRead,
   EstadoCuenta,
@@ -9,7 +12,9 @@ import type {
   InicioPago,
   MascotaRead,
   PagoPortalRead,
+  PeludoNuevoIn,
   Periodicidad,
+  PlanPublico,
   ServicioPortalRead,
 } from '@/types'
 
@@ -203,4 +208,37 @@ export async function urlContrato(): Promise<string> {
 
 export async function urlAdjuntoPortal(id: string): Promise<string> {
   return (await api.get<{ url: string }>(`/portal/adjuntos/${id}/url`)).data.url
+}
+
+/** 6.1 Los planes que se venden en la ciudad de la familia, para el peludo nuevo. */
+export function usePlanesAlta() {
+  return useQuery({
+    queryKey: ['portal', 'peludos', 'planes'],
+    queryFn: async () => (await api.get<PlanPublico[]>('/portal/peludos/planes')).data,
+  })
+}
+
+/** El valor nuevo del contrato y lo que se paga hoy: lo calcula el backend. */
+export function useCotizacionAlta(especie: string, planId: string) {
+  return useQuery({
+    queryKey: ['portal', 'peludos', 'cotizacion', especie, planId],
+    enabled: Boolean(especie && planId),
+    retry: false,
+    queryFn: async () =>
+      (await api.post<CotizacionAltaRead>('/portal/peludos/cotizacion', { especie, plan_id: planId })).data,
+  })
+}
+
+/** Mientras un pago espera a la pasarela, se vuelve a preguntar cada pocos segundos. */
+export function useAltasPeludo() {
+  return useQuery({
+    queryKey: ['portal', 'peludos', 'altas'],
+    refetchInterval: (consulta) =>
+      consulta.state.data?.some((a) => a.estado === 'pendiente_pago' && a.estado_pago === 'pendiente') ? 5000 : false,
+    queryFn: async () => (await api.get<AltaPeludoRead[]>('/portal/peludos/altas')).data,
+  })
+}
+
+export function useAgregarPeludo() {
+  return useMutacion(async (datos: PeludoNuevoIn) => (await api.post<AltaIniciada>('/portal/peludos', datos)).data)
 }

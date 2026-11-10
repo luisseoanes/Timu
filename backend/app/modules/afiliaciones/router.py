@@ -38,12 +38,7 @@ from app.modules.familias.schemas import (
     MascotaRead,
 )
 from app.modules.planes import service as planes
-from app.modules.planes.schemas import (
-    CotizacionRead,
-    TarifaPeriodicidadRead,
-    TarifaRead,
-    cotizacion_read,
-)
+from app.modules.planes.schemas import CotizacionRead, PlanPublico, cotizacion_read
 from app.schemas.common import Mensaje
 
 logger = structlog.get_logger(__name__)
@@ -242,29 +237,6 @@ async def formulario_familia(db: DbSession, data: FormularioFamilia) -> Mensaje:
 # --- 6.1 Registro en linea ---------------------------------------------------------------------
 
 PUBLICO = Depends(publico)
-
-
-class BeneficioPublico(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    tipo_servicio_codigo: str
-    cupo: int | None
-    periodo_cupo: str
-
-
-class PlanPublico(BaseModel):
-    """Lo que ve quien se afilia: precios, especies y beneficios, sin datos internos."""
-
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
-    codigo: str
-    nombre: str
-    descripcion: str | None
-    especies: list[str]
-    tarifas: list[TarifaRead]
-    tarifas_periodicidad: list[TarifaPeriodicidadRead]
-    beneficios: list[BeneficioPublico]
 
 
 class PeludoCotizar(BaseModel):

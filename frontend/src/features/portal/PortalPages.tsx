@@ -215,6 +215,9 @@ export function PortalMascotas() {
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
         <h3>Mis mascotas</h3>
+        <Link to="/portal/mascotas/nueva" className="btn btn-suave">
+          <Icono nombre="mas" size={16} /> Agregar un peludo
+        </Link>
       </div>
       <Consulta consulta={familia} cargando="Cargando…" error="No pudimos cargar tus mascotas.">
         {(f) => (

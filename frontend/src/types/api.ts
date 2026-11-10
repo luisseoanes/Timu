@@ -763,6 +763,46 @@ export interface ReintentoRegistro {
   enlace_pago: string
 }
 
+export type EstadoAltaPeludo = 'pendiente_pago' | 'completada' | 'cancelada' | 'error'
+
+export interface CotizacionAltaRead {
+  periodicidad: Periodicidad
+  valor_periodo_actual: string
+  valor_periodo_nuevo: string
+  valor_ajuste: string
+  hasta: string
+  cuotas_adelantadas: number
+}
+
+export interface PeludoNuevoIn {
+  nombre: string
+  especie: string
+  raza?: string | null
+  sexo?: 'macho' | 'hembra' | null
+  fecha_nacimiento: string
+  peso_kg: number
+  esterilizada?: boolean | null
+  plan_id: string
+}
+
+export interface AltaIniciada {
+  alta_id: string
+  valor: string
+  enlace_pago: string
+}
+
+export interface AltaPeludoRead {
+  id: string
+  nombre: string
+  especie: string
+  plan_id: string
+  valor_ajuste: string
+  valor_periodo_nuevo: string
+  estado: EstadoAltaPeludo
+  estado_pago: EstadoPago | null
+  created_at: string
+}
+
 export interface PeludoRegistroRead {
   posicion: number
   nombre: string

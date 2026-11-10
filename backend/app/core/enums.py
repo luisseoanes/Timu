@@ -58,6 +58,16 @@ class EstadoPago(StrEnum):
 # base: `test_persistencia` compara las dos listas. Ver docs/plan-persistencia.md (fase 2a).
 
 
+class EstadoAltaPeludo(StrEnum):
+    """6.1 Un peludo mas desde el portal: espera el pago de la parte del periodo en curso."""
+
+    PENDIENTE_PAGO = "pendiente_pago"
+    COMPLETADA = "completada"
+    CANCELADA = "cancelada"
+    # El pago entro pero el peludo no pudo entrar al contrato: lo resuelve el equipo.
+    ERROR = "error"
+
+
 class ProveedorPago(StrEnum):
     MANUAL = "manual"
     WOMPI = "wompi"

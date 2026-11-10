@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { Icono } from '@/components/Icono'
 import { MarcaTimu } from '@/components/MarcaTimu'
@@ -157,6 +158,9 @@ function PasoCiudad({ ciudad, onElegir }: { ciudad: string; onElegir: (ciudad: s
       <button className="btn btn-primario btn-grande ancho" type="submit" disabled={!elegida || sinCobertura}>
         Continuar
       </button>
+      <p className="apagado ancho">
+        ¿Ya estás afiliado? Agrega tu peludo desde <Link to="/portal/mascotas/nueva">tu portal</Link>.
+      </p>
     </form>
   )
 }
