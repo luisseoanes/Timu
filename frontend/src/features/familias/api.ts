@@ -173,6 +173,14 @@ export function useSubirFotoMascota() {
   })
 }
 
+export function useQuitarFotoMascota() {
+  const invalidar = useInvalidarFamilias()
+  return useMutation({
+    mutationFn: async (id: string) => (await api.delete<MascotaRead>(`/mascotas/${id}/foto`)).data,
+    onSuccess: invalidar,
+  })
+}
+
 export function useBajaMascota() {
   const invalidar = useInvalidarFamilias()
   return useMutation({

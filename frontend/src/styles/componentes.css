@@ -429,3 +429,14 @@ a.acceso { text-decoration: none; }
 }
 .barra-presupuesto { height: 10px; border-radius: var(--r-pastilla); background: var(--superficie-2); overflow: hidden; }
 .barra-presupuesto span { display: block; height: 100%; background: var(--verde-600); border-radius: var(--r-pastilla); }
+
+/* Foto con sus acciones (FotoEditable): la de una mascota en el panel y en el portal. */
+.foto-editable { display: flex; align-items: center; gap: var(--e4); flex-wrap: wrap; }
+.foto-editable-imagen {
+  width: 96px; height: 96px; flex: none;
+  border-radius: var(--r-tarjeta);
+  object-fit: cover;
+  background: var(--verde-50); color: var(--apagado);
+  display: grid; place-items: center;
+  font-size: var(--t-etiqueta);
+}

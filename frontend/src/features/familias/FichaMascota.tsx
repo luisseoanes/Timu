@@ -1,6 +1,6 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
+import { FotoEditable } from '@/components/FotoEditable'
 import { Modal } from '@/components/Modal'
 import { mensajeError } from '@/lib/errores'
 import { mesEnCurso } from '@/lib/formato'
@@ -9,16 +9,13 @@ import type { FamiliaRead, MascotaRead } from '@/types'
 import {
   useActualizarMascota,
   useEstadoCuenta,
+  useQuitarFotoMascota,
   useResumenServicios,
   useSubirFotoMascota,
   type CambiosMascota,
 } from './api'
 import { CamposMascota } from './CamposMascota'
 import { leerCamposMascota } from './mascota'
-
-/** Igual que el backend: JPG, PNG o WEBP de hasta 5 MB. */
-const FORMATOS_FOTO = 'image/jpeg,image/png,image/webp'
-const MAX_FOTO = 5 * 1024 * 1024
 
 /**
  * 6.1 Ficha de una mascota en el panel: foto, datos editables, el plan que tiene, sus
@@ -124,42 +121,24 @@ export function FichaMascotaModal({
 
 function FotoMascota({ mascota, editable }: { mascota: MascotaRead; editable: boolean }) {
   const subir = useSubirFotoMascota()
-  const [aviso, setAviso] = useState<string | null>(null)
-
-  function elegir(e: React.ChangeEvent<HTMLInputElement>) {
-    const foto = e.target.files?.[0]
-    e.target.value = ''
-    if (!foto) return
-    subir.reset()
-    if (foto.size > MAX_FOTO) {
-      setAviso('La foto pesa más de 5 MB. Elige una más liviana.')
-      return
-    }
-    setAviso(null)
-    subir.mutate({ id: mascota.id, foto })
-  }
-
+  const quitar = useQuitarFotoMascota()
+  const fallo = subir.error ?? quitar.error
   return (
-    <div className="mascota-cabeza">
-      {mascota.foto_url ? (
-        <img className="foto-mascota" src={mascota.foto_url} alt={`Foto de ${mascota.nombre}`} />
-      ) : (
-        <div className="foto-mascota" aria-hidden="true">
-          Sin foto
-        </div>
-      )}
-      {editable && (
-        <label className="btn btn-suave">
-          {subir.isPending ? 'Subiendo…' : mascota.foto_url ? 'Cambiar foto' : 'Subir foto'}
-          <input className="sr-only" type="file" accept={FORMATOS_FOTO} onChange={elegir} disabled={subir.isPending} />
-        </label>
-      )}
-      {(aviso || subir.isError) && (
-        <p className="error" role="alert">
-          {aviso ?? mensajeError(subir.error, 'No fue posible subir la foto.')}
-        </p>
-      )}
-    </div>
+    <FotoEditable
+      url={mascota.foto_url}
+      alt={`Foto de ${mascota.nombre}`}
+      editable={editable}
+      ocupada={subir.isPending || quitar.isPending}
+      error={fallo ? mensajeError(fallo, 'No fue posible guardar la foto.') : null}
+      onSubir={(foto) => {
+        quitar.reset()
+        subir.mutate({ id: mascota.id, foto })
+      }}
+      onQuitar={() => {
+        subir.reset()
+        quitar.mutate(mascota.id)
+      }}
+    />
   )
 }
 

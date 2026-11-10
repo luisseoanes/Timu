@@ -718,6 +718,20 @@ describe('FamiliaDetallePage', () => {
     expect(within(modal).queryByText(/pesa más de 5 MB/)).not.toBeInTheDocument()
   })
 
+  it('quita la foto de la mascota', async () => {
+    let quitada = ''
+    server.use(
+      http.delete(`${API}/mascotas/:id/foto`, ({ params }) => {
+        quitada = String(params.id)
+        return HttpResponse.json({ ...LUNA, foto_url: null })
+      }),
+    )
+    const { user, modal } = await abrirFichaDeLuna({ ...FAMILIA, mascotas: [{ ...LUNA, foto_url: 'https://s3.local/luna.jpg' }] })
+    expect(within(modal).getByText('Cambiar foto')).toBeInTheDocument()
+    await user.click(within(modal).getByRole('button', { name: 'Quitar foto' }))
+    await waitFor(() => expect(quitada).toBe(LUNA.id))
+  })
+
   it('muestra la foto y no deja editar una mascota de baja', async () => {
     const { modal } = await abrirFichaDeLuna({
       ...FAMILIA,
