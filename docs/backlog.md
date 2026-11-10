@@ -8,7 +8,7 @@ Versión navegable con filtros: [https://claude.ai/code/artifact/15e07e31-e456-4
 
 ## Estado
 
-Revisado el 2026-11-04 contra el código de `main`; `F1-FAM-06` a `F1-FAM-09` se añadieron el 2026-11-09 al revisar el requisito 6.1, `F1-PLA-01` a `F1-PLA-03` y `F1-CAR-02` se reescribieron el 2026-11-10 con el modelo de precios de TIMU, y `F1-AFI-01`, el mismo día, con el registro en línea por pasos. Cada unidad lleva uno de tres estados:
+Revisado el 2026-11-04 contra el código de `main`; `F1-FAM-06` a `F1-FAM-09` se añadieron el 2026-11-09 al revisar el requisito 6.1, `F1-PLA-01` a `F1-PLA-03` y `F1-CAR-02` se reescribieron el 2026-11-10 con el modelo de precios de TIMU, y `F1-AFI-01`, el mismo día, con el registro en línea por pasos. Lo que queda pendiente de terceros vive en [pendientes externos](pendientes-externos.md). Cada unidad lleva uno de tres estados:
 
 - **Hecho**: implementado y cubierto por pruebas automáticas que corren en el CI. Las integraciones externas (Wompi, Meta, Google Maps, Claude, correo) se prueban contra dobles: ninguna se ha validado desde el repositorio contra el proveedor real, y `F1-CAR-08` sigue dependiendo de la habilitación comercial de la pasarela.
 - **Parcial**: hay implementación, pero el criterio de aceptación no se cumple entero. La celda dice qué falta.
@@ -260,88 +260,10 @@ Lo que el scaffold del repositorio ya resuelve, y que este backlog no vuelve a e
 - **Esqueleto de integraciones**: cliente de Meta Cloud API, pasarela con validación de firma, optimizador OR-Tools.
 - **Celery y beat** con los cuatro trabajos recurrentes declarados, y despliegue en Docker Compose.
 
-## Pendientes para cerrar revisiones
+## Pendientes externos
 
-Lo que falta fuera del código, o detrás de un tercero, para dar por cerrada la revisión de
-un requisito. Se tacha aquí cuando se resuelve.
-
-### Requisito 6.1 (con el 6.12)
-
-El código está completo (`F1-FAM-06` a `F1-FAM-09`, `F1-AFI-01`), pero la revisión no se
-cierra hasta validar el registro en línea contra los terceros reales:
-
-- **Prueba de punta a punta en el sandbox de Wompi de TIMU.** Registro en línea, pago en
-  el checkout de pruebas, evento firmado que llega a la API por un túnel, formulario
-  posterior y, al final, familia, contrato y acceso al portal. Comprueba lo que hoy solo se
-  prueba contra dobles: la firma de integridad, la URL de vuelta y el pago rechazado.
-  Bloqueada hasta tener las credenciales del sandbox de TIMU (llave pública, de integridad
-  y de eventos) y el túnel para los eventos. En la misma sesión se comprueba lo que la
-  documentación de Wompi no aclara sobre el cierre de lo que no se paga:
-  - que el checkout acepta la firma de integridad **con** la fecha de `expiration-time`
-    (`<referencia><monto><moneda><fecha><secreto>`). El ejemplo de la documentación
-    conserva la firma sin fecha, así que no sirve de prueba.
-  - qué pasa al vencer el enlace a las 24 h: si el checkout rechaza el pago y si Wompi
-    emite algún evento. La documentación solo menciona un contador.
-  - que, tras un rechazo, el pago con la referencia nueva de «Intentar de nuevo» se aprueba
-    y completa el registro.
-  - el reintento propio de Wompi (3 minutos, misma referencia): un aprobado con la
-    referencia anterior debe pagar el registro y anular el intento nuevo. Si se pagan los
-    dos, debe quedar la tarea «Pago doble de un registro en línea».
-  - un evento aprobado que llega después del cierre de las 48 h debe dejar la tarea «Pago
-    recibido de un registro en línea ya cerrado» y no afiliar.
-  - qué datos del pagador trae de verdad la transacción de Wompi. El borrado de los seis
-    meses quita `customer_email`, `customer_data`, `shipping_address` y `billing_data` del
-    evento y vacía el `payload` del pago; si llegan con otros nombres, hay que añadirlos a
-    `anonimizar_registros_abandonados()` (migración `0035`).
-- **Plantilla `completar_afiliacion` aprobada en Meta** antes de producción. Sin ella, el
-  enlace del formulario (al pagar y en el recordatorio de las 24 h) solo llega por correo.
-  Se resuelve con la integración de la cuenta de WhatsApp Business de TIMU.
-- **Agregar un peludo con contrato vigente desde el portal.** Implementado el 2026-11-10
-  (migración `0037`, `afiliaciones/altas.py`, «Agregar un peludo» en el portal):
-  - la familia elige ficha y plan y ve el valor nuevo del contrato;
-  - paga por Wompi lo que queda del periodo en curso con la tarifa nueva, más la diferencia
-    de las cuotas siguientes que ya se emitieron con el valor anterior (salen 5 días antes);
-  - el peludo entra al contrato cuando se aprueba el pago;
-  - lo que no se paga se cancela a las 48 h;
-  - el registro público avisa que un afiliado agrega su peludo desde el portal.
-
-  Pendiente de TIMU, con valores provisionales en el código: sin periodo de carencia para
-  el peludo nuevo, y no se permite con el contrato en mora ni congelado. En el sandbox de
-  la fase 4 se comprueba el pago del alta de punta a punta y el monto mínimo que acepta
-  Wompi: un alta el penúltimo día del periodo cobra muy poco.
-- **El alta de un peludo desde el panel no cobra lo del periodo en curso.** El equipo lo da
-  de alta con su plan y el valor nuevo corre desde la siguiente cuota no emitida: ni se
-  prorratea el periodo en curso ni se ajusta una cuota que ya se emitió. Es la regla
-  anterior al alta desde el portal y está por decidir con TIMU si se iguala.
-- ~~**Hueco de la Ley 1581 en `anonimizar_familia()`**~~ Resuelto el 2026-11-10 (migración
-  `0036`, tras una auditoría columna por columna). Ahora también borra:
-  - los datos del pagador que guardó la pasarela;
-  - la IP y el navegador de las sesiones y de la evidencia de aceptación;
-  - las coordenadas de la casa en las paradas de ruta y en la caché de distancias;
-  - el PDF de las fórmulas;
-  - los mensajes de la IA comercial;
-  - los mensajes y las tareas del registro en línea, que ahora pasan a la familia al
-    completarlo.
-
-  En el texto libre clínico y operativo (historias, fórmulas, servicios, pendientes, tareas,
-  notas de pago) reemplaza las menciones exactas a la familia (nombres, dirección,
-  documento, correos, teléfonos) por `[anonimizado]`, y conserva el resto. Una mención
-  indirecta, como un apodo o solo el nombre de pila, no se detecta. La lista de bajas de
-  comunicaciones conserva el teléfono a propósito: impide volver a escribirle.
-  `test_anonimizar_no_deja_datos_personales` recorre ahora todas las tablas. Pendiente: las
-  familias anonimizadas antes de la `0036` no se reprocesan; si producción tiene alguna, hay
-  que limpiarla a mano.
-
-### Recomendación de plan del bot comercial (`F1-PLA-04`, `F3-COM-03`)
-
-El bot toma los precios del catálogo de planes, el mismo con el que cobra el registro: eso
-está al día. Le falta el criterio. Las reglas `plan.recomendacion` que carga
-`backend/app/modules/reglas/datos.py` recomiendan `familiar` e `individual`, planes que ya
-no existen, así que siempre cae en «el plan de menor valor que cubre a todas las mascotas»
-y propone un solo plan para todos los peludos. TIMU tiene que decir qué plan recomendar
-según ciudad, especie y número de peludos. Con eso se ajustan las reglas en
-Administración → Reglas y se reemplazan las de `datos.py`, que solo se cargan en una base
-nueva.
+Lo que falta fuera del código para cerrar un requisito (sandbox de Wompi, plantillas de Meta,
+decisiones de TIMU) está en [pendientes externos](pendientes-externos.md).
 
 ## Riesgos y dependencias de terceros
 
