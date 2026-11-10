@@ -6,7 +6,9 @@ dominios: familias, planes, afiliaciones, cartera, servicios, preventivos, clín
 comunicaciones, comercial, campañas, encuestas, clínicas aliadas, IA, portal y dashboard.
 
 Tres espacios con su propio acceso: el **panel del equipo** (administración, comercial,
-operaciones y médicos), el **portal de familias** y el de la **clínica aliada**.
+operaciones y médicos), el **portal de familias** y el de la **clínica aliada**, y páginas
+públicas sin sesión: el registro en línea con pago (`/afiliacion`), las encuestas y la
+verificación de carnets.
 
 ## Stack
 
@@ -21,7 +23,7 @@ operaciones y médicos), el **portal de familias** y el de la **clínica aliada*
 | WhatsApp | Meta Cloud API oficial |
 | Pagos | Wompi (webhooks firmados para la conciliación) |
 | Rutas | Google OR-Tools + Google Maps Platform |
-| IA | Claude, con prompts versionados que se evalúan antes de activarse |
+| IA | Claude hoy (decidido pasar a Gemini), con prompts versionados que se evalúan antes de activarse |
 | Infraestructura | Docker / Docker Compose |
 
 ## Puesta en marcha
@@ -34,8 +36,8 @@ Un solo comando: el servicio `inicializar` aplica las migraciones, carga los cat
 crea el usuario `admin@timu.co / cambiar123` y el bucket de adjuntos, y solo
 entonces arrancan `api`, `worker` y `beat`. No hace falta copiar ningún `.env`:
 `backend/.env.example` es la base y `backend/.env`, si existe, la sobrescribe. Las
-integraciones externas (WhatsApp, Wompi, Maps, SMTP) se apagan solas mientras sus
-variables estén vacías.
+integraciones externas (WhatsApp, Wompi, Maps, IA, SMTP) se apagan solas mientras sus
+variables estén vacías ([integraciones](docs/integraciones.md)).
 
 Si otro proyecto ocupa algún puerto del host, cópialo en la raíz y cámbialo ahí:
 
@@ -100,7 +102,7 @@ npm run test:e2e:stack   # recorridos contra el stack real (docker compose up + 
 ```
 
 La prueba de carga (k6, con el volumen proyectado a 12 meses) se corre en un proyecto aparte
-porque mete datos sintéticos: ver «Prueba de carga» en [`CLAUDE.md`](CLAUDE.md).
+porque mete datos sintéticos: ver [docs/prueba-de-carga.md](docs/prueba-de-carga.md).
 
 El CI (`.github/workflows/ci.yml`) corre todo en cada empuje a `main`, incluido un job que
 levanta el stack con un solo comando, recorre panel, portal y clínica aliada contra él, corre
@@ -149,8 +151,14 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [docs/documento-requerimientos-funcionales.md](docs/documento-requerimientos-funcionales.md) | Lo que TIMU pidió, transcrito literal: los requisitos que citan el código y el backlog (6.10, Sección 8…) |
 | [docs/propuesta-timu-puntos-15-19.md](docs/propuesta-timu-puntos-15-19.md) | Contrato funcional: la propuesta que responde a ese documento (secciones A a E) |
 | [docs/backlog.md](docs/backlog.md) | Backlog del backend: 105 unidades con criterio de aceptación y estado, por fase |
-| [docs/plan-persistencia.md](docs/plan-persistencia.md) | Por qué la base garantiza integridad y permisos: decisiones y registro de cada fase |
+| [docs/pendientes-externos.md](docs/pendientes-externos.md) | Lo que falta fuera del código para cerrar un requisito: sandbox de Wompi, plantillas de Meta, decisiones de TIMU |
+| [docs/estandares-calidad.md](docs/estandares-calidad.md) | Cada estándar de calidad pedido (Secciones 3 y 4) traducido a reglas, con la prueba que las hace cumplir y la deuda que queda |
+| [docs/integraciones.md](docs/integraciones.md) | Cada servicio externo: qué hace, variables, dónde vive en el código y estado de validación |
+| [docs/costos-infraestructura.md](docs/costos-infraestructura.md) | Estimación de costos de tres nubes, integraciones e IA (10 de noviembre de 2026) |
+| [docs/prueba-de-carga.md](docs/prueba-de-carga.md) | Cómo correr la prueba de carga con el volumen a 12 meses |
 | [docs/indicadores.md](docs/indicadores.md) | Definición de cada indicador del dashboard y de los exportables |
+| [docs/plan-persistencia.md](docs/plan-persistencia.md) | Registro (cerrado): por qué la base garantiza integridad y permisos, decisiones y verificación de cada fase |
+| [docs/deuda-ciclos-dominios.md](docs/deuda-ciclos-dominios.md) | Registro (cerrado): cómo se eliminaron los ciclos entre dominios del backend |
 | [docs/frontend/](docs/frontend/) | Sistema visual del panel: tokens, componentes, plantillas y convenciones |
 | [infra/respaldos/README.md](infra/respaldos/README.md) | Respaldo y restauración de la base |
 | `CLAUDE.md`, `backend/CLAUDE.md`, `frontend/CLAUDE.md` | Reglas de arquitectura para Claude Code; también sirven de guía técnica |
