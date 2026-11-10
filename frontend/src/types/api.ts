@@ -758,6 +758,11 @@ export interface InicioRegistro {
   token: string
 }
 
+export interface ReintentoRegistro {
+  referencia: string
+  enlace_pago: string
+}
+
 export interface PeludoRegistroRead {
   posicion: number
   nombre: string

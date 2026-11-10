@@ -96,6 +96,7 @@ ESQUEMAS = [
     "BeneficioPublico",
     "PlanPublico",
     "InicioRegistro",
+    "ReintentoRegistro",
     "PeludoRegistroRead",
     "RegistroRead",
     "ResultadoRegistro",

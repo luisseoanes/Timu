@@ -10,15 +10,20 @@ completa sus datos en un formulario.
    afiliacion. Si la familia ya tiene un contrato vigente no se afilia dos veces: el equipo
    decide.
 4. `recordar` (beat): a las 24 horas reenvia el enlace; a las 48, tarea comercial.
+
+Lo que no se paga: el enlace de pago vence a las 24 horas; tras un rechazo, `reintentar`
+da otro pago a la misma solicitud. `cerrar_sin_pago` (beat) cancela a las 48 horas del
+ultimo enlace y deja una tarea comercial, y `anonimizar_abandonados` (beat) borra a los seis
+meses el contacto de lo que nunca se pago (Ley 1581).
 """
 
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, or_, select, text
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -26,13 +31,13 @@ from app.core.database import acotar_publico, nuevo_id
 from app.core.enums import EstadoPago
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.security import generar_token_opaco, hash_token
-from app.core.tiempo import ahora
+from app.core.tiempo import ZONA_NEGOCIO, ahora, hoy
 from app.integrations.payments import construir_link_pago
 from app.modules.afiliaciones import ciclo, documento, enlaces, service
 from app.modules.afiliaciones.models import EstadoSolicitud, PeludoSolicitud, SolicitudAfiliacion
 from app.modules.cartera import contratos
 from app.modules.cartera.models import Pago
-from app.modules.cartera.periodos import centavos, dinero
+from app.modules.cartera.periodos import centavos, dinero, sumar_meses
 from app.modules.familias import service as familias
 from app.modules.familias.models import Familia, Mascota
 from app.modules.familias.schemas import ContactoIn, FormularioFamilia, MascotaAlta
@@ -42,6 +47,10 @@ from app.modules.tareas import service as tareas
 
 RECORDAR_DESPUES = timedelta(hours=24)
 TAREA_DESPUES = timedelta(hours=48)
+VIGENCIA_ENLACE = timedelta(hours=24)
+# Margen sobre la vigencia del enlace para los eventos que la pasarela entrega tarde.
+CERRAR_SIN_PAGO = timedelta(hours=48)
+RETENCION_SIN_PAGO_MESES = 6
 
 
 def ciudades_con_cobertura(db: Session) -> list[str]:
@@ -95,20 +104,11 @@ def iniciar(
         raise ReglaNegocio("Cada peludo necesita un nombre distinto")
     cot = planes.cotizar(db, ciudad, [(p.especie, p.plan_id) for p in peludos], periodicidad)
     valor = dinero(cot.valor_periodo)
-    referencia = f"{service.PREFIJO}{uuid4().hex[:20].upper()}"
+    referencia = _referencia()
     solicitud_id = nuevo_id()
     acotar_publico(db, registro=solicitud_id, referencia_pago=referencia)
     token = generar_token_opaco()
-    pago = Pago(
-        id=nuevo_id(),
-        familia_id=None,
-        referencia_externa=referencia,
-        proveedor="wompi",
-        valor=valor,
-        estado="pendiente",
-    )
-    db.add(pago)
-    db.flush()
+    pago = _pago(db, referencia, valor)
     solicitud = SolicitudAfiliacion(
         id=solicitud_id,
         familia_id=None,
@@ -156,13 +156,58 @@ def iniciar(
         nombre=contacto.nombre,
         ciudad=ciudad,
     )
-    enlace = construir_link_pago(
-        referencia,
-        centavos(valor),
-        contacto.email,
-        redireccion=f"{settings.FRONTEND_URL}/afiliacion/resultado",
+    return solicitud, _enlace(solicitud), token
+
+
+def _referencia() -> str:
+    return f"{service.PREFIJO}{uuid4().hex[:20].upper()}"
+
+
+def _pago(db: Session, referencia: str, valor: Decimal) -> Pago:
+    pago = Pago(
+        id=nuevo_id(),
+        familia_id=None,
+        referencia_externa=referencia,
+        proveedor="wompi",
+        valor=valor,
+        estado="pendiente",
     )
-    return solicitud, enlace, token
+    db.add(pago)
+    db.flush()
+    return pago
+
+
+def _enlace(solicitud: SolicitudAfiliacion) -> str:
+    """Vence a las 24 horas: `cerrar_sin_pago` cancela despues sin dejar un enlace vivo."""
+    return construir_link_pago(
+        solicitud.referencia_pago,
+        centavos(solicitud.valor_inicial),
+        solicitud.contacto_email,
+        redireccion=f"{settings.FRONTEND_URL}/afiliacion/resultado",
+        vence=ahora() + VIGENCIA_ENLACE,
+    )
+
+
+def reintentar(db: Session, solicitud: SolicitudAfiliacion) -> str:
+    """Tras un pago rechazado, otro pago para la misma solicitud, con referencia nueva: la
+    pasarela no documenta que una referencia rechazada se pueda volver a usar. La anterior se
+    guarda para reconocer un aprobado tardio con ella (`service.completar`). Con el contexto
+    ya en `sistema`, como `completar`."""
+    if solicitud.estado != EstadoSolicitud.PENDIENTE_PAGO or solicitud.familia_id is not None:
+        raise ReglaNegocio("Este registro ya no espera un pago")
+    anterior = db.get(Pago, solicitud.pago_id) if solicitud.pago_id else None
+    if anterior is None or anterior.estado != EstadoPago.RECHAZADO:
+        raise ReglaNegocio("Solo se puede reintentar un pago rechazado")
+    referencia = _referencia()
+    pago = _pago(db, referencia, solicitud.valor_inicial)
+    solicitud.referencias_anteriores = [
+        *solicitud.referencias_anteriores,
+        solicitud.referencia_pago,
+    ]
+    solicitud.referencia_pago = referencia
+    solicitud.pago_id = pago.id
+    db.flush()
+    return _enlace(solicitud)
 
 
 def por_token(db: Session, token: str) -> SolicitudAfiliacion:
@@ -363,3 +408,101 @@ def recordar(db: Session) -> tuple[int, int]:
             llamadas += tarea is not None
     db.flush()
     return recordadas, llamadas
+
+
+def cerrar_sin_pago(db: Session) -> tuple[int, int]:
+    """Registros sin pagar a las 48 horas del ultimo enlace: se cancelan, su pago pendiente se
+    anula y comercial recibe una tarea para contactar, salvo que esa persona ya se haya
+    afiliado por otra via. Un pago ya aprobado no se toca: lo resuelve `service.completar`."""
+    limite = ahora() - CERRAR_SIN_PAGO
+    vencidas = list(
+        db.scalars(
+            select(SolicitudAfiliacion)
+            .join(Pago, Pago.id == SolicitudAfiliacion.pago_id)
+            .where(
+                SolicitudAfiliacion.estado == EstadoSolicitud.PENDIENTE_PAGO,
+                SolicitudAfiliacion.familia_id.is_(None),
+                Pago.created_at <= limite,
+            )
+        )
+    )
+    canceladas = avisos = 0
+    for solicitud in vencidas:
+        # Un dato raro en un registro no revierte el lote.
+        with db.begin_nested():
+            pago = db.get(Pago, solicitud.pago_id)
+            assert pago is not None
+            if pago.estado == EstadoPago.APROBADO:
+                continue
+            if pago.estado == EstadoPago.PENDIENTE:
+                pago.estado = EstadoPago.ANULADO
+            solicitud.estado = EstadoSolicitud.CANCELADA
+            canceladas += 1
+            if not _ya_afiliado(db, solicitud):
+                avisos += _tarea_sin_pago(db, solicitud, pago) is not None
+    db.flush()
+    return canceladas, avisos
+
+
+def _ya_afiliado(db: Session, solicitud: SolicitudAfiliacion) -> bool:
+    """La misma persona (telefono o correo) ya es familia o pago otro registro."""
+    familia = db.scalar(
+        select(Familia.id)
+        .where(
+            or_(
+                Familia.telefono == solicitud.contacto_telefono,
+                Familia.email == solicitud.contacto_email,
+            )
+        )
+        .limit(1)
+    )
+    if familia is not None:
+        return True
+    otra = db.scalar(
+        select(SolicitudAfiliacion.id)
+        .where(
+            SolicitudAfiliacion.id != solicitud.id,
+            SolicitudAfiliacion.estado.in_(
+                [EstadoSolicitud.PAGADA, EstadoSolicitud.COMPLETADA, EstadoSolicitud.ERROR]
+            ),
+            or_(
+                SolicitudAfiliacion.contacto_telefono == solicitud.contacto_telefono,
+                SolicitudAfiliacion.contacto_email == solicitud.contacto_email,
+            ),
+        )
+        .limit(1)
+    )
+    return otra is not None
+
+
+def _tarea_sin_pago(db: Session, solicitud: SolicitudAfiliacion, pago: Pago) -> object:
+    peludos = ", ".join(f"{p.nombre} ({p.especie})" for p in solicitud.peludos)
+    motivo = "la pasarela rechazo el pago" if pago.estado == EstadoPago.RECHAZADO else "no pago"
+    return tareas.crear(
+        db,
+        titulo="Registro en linea sin pagar",
+        descripcion=(
+            f"{solicitud.contacto_nombre} ({solicitud.contacto_telefono}, "
+            f"{solicitud.contacto_email}) eligio planes en {solicitud.ciudad} para {peludos} "
+            f"por {centavos(solicitud.valor_inicial) // 100} pesos y {motivo}: contactar."
+        ),
+        area="comercial",
+        prioridad="media",
+        vence_en_dias=2,
+        origen="afiliacion",
+        clave=f"registro_sin_pago:{solicitud.id}",
+    )
+
+
+def anonimizar_abandonados(db: Session) -> int:
+    """Ley 1581: el contacto de los registros que nunca se pagaron se conserva seis meses
+    para el seguimiento comercial; despues lo borra anonimizar_registros_abandonados() de la
+    base, tambien su rastro en la bitacora, el interesado que creo y la tarea del cierre."""
+    limite = datetime.combine(sumar_meses(hoy(), -RETENCION_SIN_PAGO_MESES), time.min)
+    return int(
+        db.scalar(
+            text("SELECT anonimizar_registros_abandonados(:limite)"),
+            {"limite": limite.replace(tzinfo=ZONA_NEGOCIO)},
+        )
+        or 0
+    )

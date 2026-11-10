@@ -311,6 +311,11 @@ class Token(BaseModel):
     token: str = Field(min_length=20, max_length=128)
 
 
+class ReintentoRegistro(BaseModel):
+    referencia: str
+    enlace_pago: str
+
+
 class PeludoRegistroRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -442,6 +447,20 @@ async def consultar_registro(db: DbSession, data: Token) -> Any:
     lectura = RegistroRead.model_validate(solicitud)
     lectura.estado_pago = await db.run_sync(registro.estado_pago, solicitud)
     return lectura
+
+
+@router.post("/registro/reintentar", response_model=ReintentoRegistro, dependencies=[PUBLICO])
+async def reintentar_registro(db: DbSession, request: Request, data: Token) -> ReintentoRegistro:
+    """Tras un pago rechazado, otro enlace de pago para el mismo registro: lo elegido se
+    conserva y no queda otra solicitud colgada."""
+    solicitud = await db.run_sync(registro.por_token, data.token)
+    # Como en `completar`: el token ya probo quien es, y el pago nuevo se escribe como sistema.
+    await db.run_sync(
+        fijar_contexto,
+        ContextoDb(rol="sistema", request_id=getattr(request.state, "request_id", None)),
+    )
+    enlace = await db.run_sync(registro.reintentar, solicitud)
+    return ReintentoRegistro(referencia=solicitud.referencia_pago, enlace_pago=enlace)
 
 
 @router.post("/registro/completar", response_model=ResultadoRegistro, dependencies=[PUBLICO])

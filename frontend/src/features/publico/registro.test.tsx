@@ -241,14 +241,49 @@ describe('Regreso de la pasarela', () => {
     expect(await screen.findByText('Formulario de la familia')).toBeInTheDocument()
   })
 
-  it('con el pago rechazado ofrece volver a intentarlo', async () => {
+  it('con el pago rechazado reintenta en el mismo registro', async () => {
     window.sessionStorage.setItem('timu-registro', TOKEN)
     consulta({ ...REGISTRO_PAGADO, estado: 'pendiente_pago', estado_pago: 'rechazado' })
+    let enviado: unknown = null
+    server.use(
+      http.post(`${REGISTRO}/reintentar`, async ({ request }) => {
+        enviado = await request.json()
+        return HttpResponse.json({ referencia: 'AFI-2', enlace_pago: 'https://checkout.wompi.co/p/?reference=AFI-2' })
+      }),
+    )
     const user = userEvent.setup()
     abrir()
     expect(await screen.findByRole('alert')).toHaveTextContent('La pasarela no aprobó el pago')
-    await user.click(screen.getByRole('link', { name: 'Intentar de nuevo' }))
+    await user.click(screen.getByRole('button', { name: /intentar de nuevo/i }))
+    await waitFor(() => expect(asignar).toHaveBeenCalledWith('https://checkout.wompi.co/p/?reference=AFI-2'))
+    expect(enviado).toEqual({ token: TOKEN })
+    // El token sigue en la pestaña: al volver se consulta el pago nuevo.
+    expect(window.sessionStorage.getItem('timu-registro')).toBe(TOKEN)
+  })
+
+  it('si ya no se puede reintentar, ofrece empezar de nuevo', async () => {
+    window.sessionStorage.setItem('timu-registro', TOKEN)
+    consulta({ ...REGISTRO_PAGADO, estado: 'pendiente_pago', estado_pago: 'rechazado' })
+    server.use(
+      http.post(`${REGISTRO}/reintentar`, () =>
+        HttpResponse.json({ detail: 'Este registro ya no espera un pago' }, { status: 422 }),
+      ),
+    )
+    const user = userEvent.setup()
+    abrir()
+    await user.click(await screen.findByRole('button', { name: /intentar de nuevo/i }))
+    expect(await screen.findByText(/Este registro ya no espera un pago/)).toBeInTheDocument()
+    await user.click(screen.getByRole('link', { name: 'Empezar de nuevo' }))
     expect(window.sessionStorage.getItem('timu-registro')).toBeNull()
+    expect(asignar).not.toHaveBeenCalled()
+  })
+
+  it('un registro cerrado sin pago no dice que se recibió', async () => {
+    window.sessionStorage.setItem('timu-registro', TOKEN)
+    consulta({ ...REGISTRO_PAGADO, estado: 'cancelada', estado_pago: 'anulado' })
+    abrir()
+    expect(await screen.findByRole('status')).toHaveTextContent('se cerró porque no recibimos el pago')
+    expect(screen.queryByText(/Recibimos tu pago/)).not.toBeInTheDocument()
   })
 })
 

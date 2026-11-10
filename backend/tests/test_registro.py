@@ -1,6 +1,6 @@
 """6.1 Registro en linea: ciudad, peludos con su plan, pago y formulario posterior."""
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 from urllib.parse import parse_qs, urlparse
 from uuid import UUID
@@ -389,3 +389,245 @@ async def test_la_base_solo_deja_ver_a_publico_el_registro_de_sus_llaves(
     con_llaves = (("registro", str(solicitud.id)), ("referencia_pago", uno["referencia"]))
     assert await db.run_sync(como_publico, con_llaves) == (1, 2, 1)
     assert registro.RECORDAR_DESPUES < registro.TAREA_DESPUES
+
+
+# --- Lo que no se paga: reintento, cierre a las 48 horas y borrado a los seis meses -----------
+
+
+async def _rechazar(db, referencia: str, valor: Decimal, **tx) -> None:
+    evento_wompi = _evento(referencia, int(valor * 100), "DECLINED", tx_id=f"tx-{referencia}")
+    evento_wompi["data"]["transaction"].update(tx)
+    evento, _ = await db.run_sync(pasarela.registrar_evento, evento_wompi)
+    await db.run_sync(pasarela.procesar_evento, evento.id)
+    await db.commit()
+
+
+async def _envejecer_enlace(db, *referencias: str) -> None:
+    """El ultimo enlace se dio hace 49 horas: pasa el plazo del cierre."""
+    await db.execute(
+        text(
+            "UPDATE pagos SET created_at = now() - interval '49 hours'"
+            " WHERE referencia_externa = ANY(:referencias)"
+        ),
+        {"referencias": list(referencias)},
+    )
+    await db.commit()
+
+
+async def _solicitud(db, referencia: str) -> SolicitudAfiliacion:
+    solicitud = await db.scalar(
+        select(SolicitudAfiliacion).where(SolicitudAfiliacion.referencia_pago == referencia)
+    )
+    await db.refresh(solicitud)
+    return solicitud
+
+
+async def test_el_enlace_de_pago_vence_a_las_24_horas(client: AsyncClient, timu):
+    inicio = (await client.post(API, json=_registro(timu))).json()
+    vence = parse_qs(urlparse(inicio["enlace_pago"]).query)["expiration-time"][0]
+    restante = datetime.fromisoformat(vence) - ahora()
+    assert timedelta(hours=23, minutes=59) < restante <= timedelta(hours=24)
+
+
+async def test_tras_un_rechazo_se_reintenta_en_la_misma_solicitud(client: AsyncClient, db, timu):
+    inicio = (await client.post(API, json=_registro(timu))).json()
+    token = {"token": inicio["token"]}
+    # Mientras el pago no se rechaza no hay reintento: el primero aun puede aprobarse.
+    assert (await client.post(f"{API}/reintentar", json=token)).status_code == 422
+    await _rechazar(db, inicio["referencia"], Decimal(inicio["valor"]))
+
+    resp = await client.post(f"{API}/reintentar", json=token)
+    assert resp.status_code == 200, resp.text
+    nuevo = resp.json()
+    assert nuevo["referencia"] != inicio["referencia"]
+    assert parse_qs(urlparse(nuevo["enlace_pago"]).query)["reference"] == [nuevo["referencia"]]
+    consulta = (await client.post(f"{API}/consulta", json=token)).json()
+    assert (consulta["estado"], consulta["estado_pago"]) == ("pendiente_pago", "pendiente")
+    solicitud = await _solicitud(db, nuevo["referencia"])
+    assert solicitud.referencias_anteriores == [inicio["referencia"]]
+    assert await db.scalar(select(func.count()).select_from(SolicitudAfiliacion)) == 1
+
+    # El pago nuevo completa el registro como el primero.
+    await _pagar(db, nuevo["referencia"], Decimal(inicio["valor"]))
+    assert (await client.post(f"{API}/consulta", json=token)).json()["estado"] == "pagada"
+
+
+async def test_un_aprobado_con_la_referencia_anterior_paga_y_uno_doble_va_al_equipo(
+    client: AsyncClient, db, timu
+):
+    """El reintento propio de Wompi aprueba con la referencia rechazada aunque ya hayamos
+    dado otra: ese pago cuenta, y si despues tambien se paga el enlace nuevo, es doble."""
+    inicio = (await client.post(API, json=_registro(timu))).json()
+    valor = Decimal(inicio["valor"])
+    await _rechazar(db, inicio["referencia"], valor)
+    nuevo = (await client.post(f"{API}/reintentar", json={"token": inicio["token"]})).json()
+
+    evento, _ = await db.run_sync(
+        pasarela.registrar_evento, _evento(inicio["referencia"], int(valor * 100), tx_id="tx-2")
+    )
+    assert await db.run_sync(pasarela.procesar_evento, evento.id) == "procesado"
+    await db.commit()
+    solicitud = await _solicitud(db, inicio["referencia"])
+    assert solicitud.estado == "pagada"
+    assert solicitud.referencias_anteriores == [nuevo["referencia"]]
+    vigente = await db.scalar(select(Pago).where(Pago.referencia_externa == nuevo["referencia"]))
+    assert vigente.estado == "anulado"
+
+    evento, _ = await db.run_sync(
+        pasarela.registrar_evento, _evento(nuevo["referencia"], int(valor * 100), tx_id="tx-3")
+    )
+    await db.run_sync(pasarela.procesar_evento, evento.id)
+    await db.commit()
+    doble = await db.scalar(
+        select(Tarea).where(Tarea.clave == f"registro_pago_doble:{nuevo['referencia']}")
+    )
+    assert doble is not None and doble.prioridad == "alta"
+    await db.refresh(solicitud)
+    assert solicitud.estado == "pagada"
+
+
+async def test_a_las_48_horas_sin_pago_se_cierra_y_comercial_recibe_la_tarea(
+    client: AsyncClient, db, timu, en_worker
+):
+    from app.workers.tasks.afiliaciones import cerrar_registros_sin_pago
+
+    vencido = (await client.post(API, json=_registro(timu))).json()
+    rechazado = (
+        await client.post(
+            API,
+            json=_registro(
+                timu,
+                contacto={
+                    "nombre": "Luis Mora",
+                    "telefono": "3017778899",
+                    "email": "luis@correo.co",
+                },
+            ),
+        )
+    ).json()
+    reciente = (
+        await client.post(
+            API,
+            json=_registro(
+                timu,
+                contacto={"nombre": "Eva Paz", "telefono": "3024445566", "email": "eva@correo.co"},
+            ),
+        )
+    ).json()
+    await _rechazar(db, rechazado["referencia"], Decimal(rechazado["valor"]))
+    # Luis ya es familia (se afilio con el equipo): no hace falta llamarlo.
+    familia = await db.run_sync(fabricas.familia, ciudad="Medellin", mascotas=0)
+    familia.email = "luis@correo.co"
+    await _envejecer_enlace(db, vencido["referencia"], rechazado["referencia"])
+
+    assert await en_worker(cerrar_registros_sin_pago) == {
+        "canceladas": 2,
+        "tareas": 1,
+    }
+    assert await en_worker(cerrar_registros_sin_pago) == {
+        "canceladas": 0,
+        "tareas": 0,
+    }
+    estados = {
+        r: (await _solicitud(db, r)).estado
+        for r in (vencido["referencia"], rechazado["referencia"], reciente["referencia"])
+    }
+    assert estados == {
+        vencido["referencia"]: "cancelada",
+        rechazado["referencia"]: "cancelada",
+        reciente["referencia"]: "pendiente_pago",
+    }
+    pagos = dict((await db.execute(select(Pago.referencia_externa, Pago.estado))).tuples().all())
+    assert pagos[vencido["referencia"]] == "anulado"
+    assert pagos[rechazado["referencia"]] == "rechazado"
+    tarea = await db.scalar(select(Tarea).where(Tarea.titulo == "Registro en linea sin pagar"))
+    solicitud = await _solicitud(db, vencido["referencia"])
+    assert tarea.clave == f"registro_sin_pago:{solicitud.id}" and tarea.area == "comercial"
+    assert "Ana Ruiz (+573001234567, ana@correo.co)" in tarea.descripcion
+    assert "Luna (felino), Max (canino)" in tarea.descripcion
+
+    # Si aun asi llega el pago (un evento tardio), no se afilia solo: lo decide el equipo.
+    await _pagar(db, vencido["referencia"], Decimal(vencido["valor"]))
+    tardio = await db.scalar(
+        select(Tarea).where(Tarea.titulo == "Pago recibido de un registro en linea ya cerrado")
+    )
+    assert tardio is not None and tardio.prioridad == "alta"
+
+
+async def test_a_los_seis_meses_se_borra_el_contacto_de_lo_que_nunca_se_pago(
+    client: AsyncClient, db, timu, en_worker
+):
+    from app.workers.tasks.afiliaciones import (
+        anonimizar_registros_abandonados,
+        cerrar_registros_sin_pago,
+    )
+
+    abandonado = (await client.post(API, json=_registro(timu))).json()
+    await _rechazar(
+        db,
+        abandonado["referencia"],
+        Decimal(abandonado["valor"]),
+        customer_email="ana@correo.co",
+        customer_data={"full_name": "Ana Ruiz", "phone_number": "+573001234567"},
+    )
+    # Uno pagado del mismo periodo no se toca: es un cliente.
+    pagado = await _iniciar_y_pagar(
+        client,
+        db,
+        timu,
+        contacto={"nombre": "Luis Mora", "telefono": "3017778899", "email": "luis@correo.co"},
+    )
+    await _envejecer_enlace(db, abandonado["referencia"])
+    assert await en_worker(cerrar_registros_sin_pago) == {
+        "canceladas": 1,
+        "tareas": 1,
+    }
+    assert await en_worker(anonimizar_registros_abandonados) == {"anonimizados": 0}
+
+    hace_siete_meses = "now() - interval '7 months'"
+    await db.execute(text(f"UPDATE solicitudes_afiliacion SET created_at = {hace_siete_meses}"))
+    await db.execute(
+        text(
+            f"UPDATE interesados SET created_at = {hace_siete_meses},"
+            f" ultimo_contacto = {hace_siete_meses}"
+        )
+    )
+    await db.commit()
+    assert await en_worker(anonimizar_registros_abandonados) == {"anonimizados": 1}
+    assert await en_worker(anonimizar_registros_abandonados) == {"anonimizados": 0}
+
+    for tabla in (
+        "solicitudes_afiliacion",
+        "peludos_solicitud",
+        "interesados",
+        "tareas",
+        "pagos",
+        "eventos_pasarela",
+        "auditoria",
+    ):
+        filas = await db.scalar(
+            text(f"SELECT count(*) FROM {tabla} t WHERE to_jsonb(t)::text ~ :pii"),
+            {"pii": "Ana Ruiz|ana@correo|3001234567"},
+        )
+        assert filas == 0, tabla
+    solicitud = await _solicitud(db, abandonado["referencia"])
+    assert solicitud.anonimizada_en is not None and solicitud.contacto_nombre == "Anonimizado"
+    # La evidencia de aceptacion se conserva sin la IP ni el navegador.
+    assert {"ip", "agente"}.isdisjoint(solicitud.aceptacion)
+    assert solicitud.aceptacion["medio"] == "formulario_web"
+    # El pagado conserva todo.
+    conservado = await _solicitud(db, pagado["referencia"])
+    assert (conservado.contacto_nombre, conservado.anonimizada_en) == ("Luis Mora", None)
+    assert {"ip", "agente"} <= set(conservado.aceptacion)
+    assert (
+        await db.scalar(
+            select(func.count()).select_from(Interesado).where(Interesado.email == "luis@correo.co")
+        )
+        == 1
+    )
+
+
+async def test_solo_el_sistema_borra_los_registros_abandonados(db):
+    await db.run_sync(fijar_contexto, ContextoDb(rol="admin"))
+    with pytest.raises(Exception, match="Solo el sistema"):
+        await db.execute(text("SELECT anonimizar_registros_abandonados(now())"))

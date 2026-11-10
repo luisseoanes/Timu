@@ -61,6 +61,9 @@ class SolicitudAfiliacion(Base, UUIDMixin, TimestampMixin, Auditable):
     # Lo que cobra la primera cuota, cotizado al iniciar: el pago debe coincidir.
     valor_inicial: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     referencia_pago: Mapped[str] = mapped_column(String(60), unique=True)
+    # Registro en linea: reintentar tras un rechazo crea un pago con otra referencia. Un pago
+    # aprobado con una anterior (el reintento propio de Wompi usa la misma) se reconoce igual.
+    referencias_anteriores: Mapped[list[str]] = mapped_column(JSONTipo, default=list)
     pago_id: Mapped[UUID | None] = mapped_column(ForeignKey("pagos.id"), index=True)
     contrato_id: Mapped[UUID | None] = mapped_column(ForeignKey("contratos.id"), index=True)
     estado: Mapped[str] = mapped_column(
@@ -71,6 +74,9 @@ class SolicitudAfiliacion(Base, UUIDMixin, TimestampMixin, Auditable):
     aceptacion: Mapped[dict[str, Any]] = mapped_column(JSONTipo, default=dict)
     completada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     error: Mapped[str | None] = mapped_column(Text)
+    # Ley 1581: el contacto de un registro que nunca se pago se borra a los seis meses
+    # (anonimizar_registros_abandonados() de la base).
+    anonimizada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     peludos: Mapped[list["PeludoSolicitud"]] = relationship(
         order_by="PeludoSolicitud.posicion", lazy="selectin", cascade="save-update, merge"

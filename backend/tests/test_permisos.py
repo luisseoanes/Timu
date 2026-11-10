@@ -87,6 +87,7 @@ PUBLICAS_ESPERADAS = {
     "POST /api/v1/afiliaciones/registro",
     "POST /api/v1/afiliaciones/registro/consulta",
     "POST /api/v1/afiliaciones/registro/completar",
+    "POST /api/v1/afiliaciones/registro/reintentar",
     "GET /api/v1/webhooks/whatsapp",
     "POST /api/v1/webhooks/whatsapp",  # autorizada por firma de Meta
     "POST /api/v1/webhooks/pagos",  # autorizada por firma de la pasarela

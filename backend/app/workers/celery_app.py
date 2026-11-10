@@ -60,6 +60,14 @@ celery_app.conf.update(
             "task": "afiliaciones.recordar_registros",
             "schedule": crontab(minute=20),
         },
+        "cerrar-registros-sin-pago": {
+            "task": "afiliaciones.cerrar_registros_sin_pago",
+            "schedule": crontab(minute=40),
+        },
+        "anonimizar-registros-abandonados": {
+            "task": "afiliaciones.anonimizar_registros_abandonados",
+            "schedule": crontab(hour=3, minute=50),
+        },
         # F1-WHA-01 mensajes cuya tarea se perdio (worker caido a mitad del envio)
         "comunicaciones-reencolar": {
             "task": "comunicaciones.reencolar_pendientes",

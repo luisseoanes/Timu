@@ -10,7 +10,9 @@ import hashlib
 import hmac
 import json
 import smtplib
+from datetime import datetime
 from urllib.parse import parse_qs, urlparse
+from zoneinfo import ZoneInfo
 
 import httpx
 import pytest
@@ -128,6 +130,17 @@ def test_link_de_pago_firmado_con_integridad(wompi):
     sin_opcionales = parse_qs(urlparse(payments.construir_link_pago("AF-2", 100)).query)
     assert "customer-data:email" not in sin_opcionales
     assert "redirect-url" not in sin_opcionales
+    assert "expiration-time" not in sin_opcionales
+
+
+def test_link_de_pago_con_vencimiento_firma_tambien_la_fecha(wompi):
+    # Bogota es UTC-5: la fecha viaja en UTC, con el formato del ejemplo de Wompi.
+    vence = datetime(2026, 11, 11, 9, 30, tzinfo=ZoneInfo("America/Bogota"))
+    url = payments.construir_link_pago("AF-3", 9150000, vence=vence)
+    params = {k: v[0] for k, v in parse_qs(urlparse(url).query).items()}
+    assert params["expiration-time"] == "2026-11-11T14:30:00.000Z"
+    cadena = b"AF-39150000COP2026-11-11T14:30:00.000Zintegridad"
+    assert params["signature:integrity"] == hashlib.sha256(cadena).hexdigest()
 
 
 def test_token_de_aceptacion_con_la_llave_publica(wompi, red):

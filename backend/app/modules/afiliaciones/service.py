@@ -12,12 +12,13 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import structlog
-from sqlalchemy import select
+from sqlalchemy import select, type_coerce
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import nuevo_id
-from app.core.enums import Periodicidad
+from app.core.enums import EstadoPago, Periodicidad
 from app.core.errores import ErrorDominio, NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
 from app.integrations.payments import construir_link_pago
@@ -156,15 +157,30 @@ def completar(db: Session, pago: Pago) -> None:
         )
     )
     if solicitud is None:
-        raise ReglaNegocio(f"No hay solicitud de afiliacion para {pago.referencia_externa}")
+        solicitud = db.scalar(
+            select(SolicitudAfiliacion).where(
+                type_coerce(SolicitudAfiliacion.referencias_anteriores, JSONB).contains(
+                    [pago.referencia_externa]
+                )
+            )
+        )
+        if solicitud is None:
+            raise ReglaNegocio(f"No hay solicitud de afiliacion para {pago.referencia_externa}")
+        if not _de_un_intento_anterior(db, solicitud, pago):
+            return
     if solicitud.estado == EstadoSolicitud.COMPLETADA:
         return
     if solicitud.estado == EstadoSolicitud.CANCELADA:
-        # Pagaron el enlace de un intento que despues se reemplazo (otro plan, otro valor):
-        # afiliar con las condiciones viejas seria un error, y el dinero ya entro.
+        # Pagaron el enlace de un intento que despues se reemplazo (otro plan, otro valor) o
+        # de un registro en linea ya cerrado sin pago: afiliar con esas condiciones seria un
+        # error, y el dinero ya entro.
         tareas.crear(
             db,
-            titulo="Pago recibido de una solicitud de afiliacion reemplazada",
+            titulo=(
+                "Pago recibido de un registro en linea ya cerrado"
+                if solicitud.familia_id is None
+                else "Pago recibido de una solicitud de afiliacion reemplazada"
+            ),
             descripcion=(
                 f"Referencia {pago.referencia_externa}: decidir si se aplica a la solicitud "
                 "vigente o se devuelve."
@@ -188,6 +204,43 @@ def completar(db: Session, pago: Pago) -> None:
         db.flush()
         return
     completar_o_dejar_tarea(db, solicitud, pago)
+
+
+def _de_un_intento_anterior(db: Session, solicitud: SolicitudAfiliacion, pago: Pago) -> bool:
+    """Registro en linea: aprobaron una referencia que `registro.reintentar` ya reemplazo (el
+    reintento propio de la pasarela la reutiliza). Si la solicitud aun espera el pago, ese
+    pago la paga y el intento vigente se anula; si ya estaba pagada, el pago es doble y el
+    equipo decide la devolucion. Devuelve si hay que seguir como con un pago normal."""
+    if solicitud.estado == EstadoSolicitud.CANCELADA:
+        return True  # registro ya cerrado: lo resuelve la tarea de `completar`
+    if solicitud.estado != EstadoSolicitud.PENDIENTE_PAGO:
+        tareas.crear(
+            db,
+            titulo="Pago doble de un registro en linea",
+            descripcion=(
+                f"Referencia {pago.referencia_externa}: la solicitud ya tenia su pago "
+                f"({solicitud.referencia_pago}). Devolver uno de los dos."
+            ),
+            area="comercial",
+            prioridad="alta",
+            vence_en_dias=1,
+            familia_id=solicitud.familia_id,
+            origen="afiliacion",
+            clave=f"registro_pago_doble:{pago.referencia_externa}",
+        )
+        db.flush()
+        return False
+    vigente = db.get(Pago, solicitud.pago_id) if solicitud.pago_id else None
+    if vigente is not None and vigente.estado == EstadoPago.PENDIENTE:
+        vigente.estado = EstadoPago.ANULADO
+    solicitud.referencias_anteriores = [
+        *(r for r in solicitud.referencias_anteriores if r != pago.referencia_externa),
+        solicitud.referencia_pago,
+    ]
+    solicitud.referencia_pago = pago.referencia_externa
+    solicitud.pago_id = pago.id
+    db.flush()
+    return True
 
 
 def completar_o_dejar_tarea(db: Session, solicitud: SolicitudAfiliacion, pago: Pago) -> bool:

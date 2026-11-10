@@ -1,7 +1,15 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { CotizacionRead, InicioRegistro, Periodicidad, PlanPublico, RegistroRead, ResultadoRegistro } from '@/types'
+import type {
+  CotizacionRead,
+  InicioRegistro,
+  Periodicidad,
+  PlanPublico,
+  RegistroRead,
+  ReintentoRegistro,
+  ResultadoRegistro,
+} from '@/types'
 
 const REGISTRO = '/afiliaciones/registro'
 
@@ -129,6 +137,14 @@ export function useConsultaRegistro(token: string | null) {
 /** El pago sigue en la pasarela: ni confirmado ni rechazado. */
 export function esperandoPago(registro: RegistroRead | undefined): boolean {
   return registro?.estado === 'pendiente_pago' && (registro.estado_pago ?? 'pendiente') === 'pendiente'
+}
+
+/** Tras un rechazo, otro enlace de pago para el mismo registro: lo elegido no se pierde. */
+export function useReintentarRegistro() {
+  return useMutation({
+    mutationFn: async (token: string) =>
+      (await api.post<ReintentoRegistro>(`${REGISTRO}/reintentar`, { token })).data,
+  })
 }
 
 export function useCompletarRegistro() {

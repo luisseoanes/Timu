@@ -7,13 +7,16 @@ implementacion la ajustaria a Wompi.
 - Eventos: `signature.checksum` = SHA256(valores de `signature.properties` + timestamp +
   secreto de eventos). https://docs.wompi.co/docs/colombia/eventos/
 - Transacciones: firma de integridad = SHA256(referencia + monto en centavos + moneda +
-  secreto de integridad).
+  [fecha de expiracion +] secreto de integridad). La fecha entra en la firma solo si el
+  enlace la lleva (`expiration-time`, ISO 8601 en UTC).
+  https://docs.wompi.co/docs/colombia/widget-checkout-web/
 - Cobro recurrente: la tarjeta se tokeniza en el navegador (widget de Wompi); aqui solo
   llega el token, con el que se crea una fuente de pago reutilizable.
 """
 
 import hashlib
 import hmac
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlencode
 
@@ -52,22 +55,38 @@ def verificar_evento_wompi(evento: dict[str, Any]) -> bool:
     return hmac.compare_digest(esperado, str(firma.get("checksum", "")).lower())
 
 
-def firma_integridad(referencia: str, valor_centavos: int, moneda: str = "COP") -> str:
-    cadena = f"{referencia}{valor_centavos}{moneda}{settings.WOMPI_INTEGRITY_SECRET}"
+def firma_integridad(
+    referencia: str, valor_centavos: int, moneda: str = "COP", expiracion: str = ""
+) -> str:
+    cadena = f"{referencia}{valor_centavos}{moneda}{expiracion}{settings.WOMPI_INTEGRITY_SECRET}"
     return hashlib.sha256(cadena.encode()).hexdigest()
 
 
+def fecha_expiracion(momento: datetime) -> str:
+    """El formato del ejemplo de Wompi (`2023-06-09T20:28:50.000Z`): el mismo texto va en el
+    enlace y en la firma."""
+    return momento.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
+
 def construir_link_pago(
-    referencia: str, valor_centavos: int, email: str | None = None, redireccion: str | None = None
+    referencia: str,
+    valor_centavos: int,
+    email: str | None = None,
+    redireccion: str | None = None,
+    vence: datetime | None = None,
 ) -> str:
-    """Checkout web de Wompi para pagos puntuales (afiliacion, cuota desde el portal)."""
-    params = {
+    """Checkout web de Wompi para pagos puntuales (afiliacion, cuota desde el portal). Con
+    `vence`, el checkout deja de aceptar el pago a esa hora."""
+    expiracion = fecha_expiracion(vence) if vence else ""
+    params: dict[str, Any] = {
         "public-key": settings.WOMPI_PUBLIC_KEY,
         "currency": "COP",
         "amount-in-cents": valor_centavos,
         "reference": referencia,
-        "signature:integrity": firma_integridad(referencia, valor_centavos),
+        "signature:integrity": firma_integridad(referencia, valor_centavos, expiracion=expiracion),
     }
+    if expiracion:
+        params["expiration-time"] = expiracion
     if email:
         params["customer-data:email"] = email
     if redireccion:

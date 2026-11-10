@@ -16,6 +16,7 @@ import {
   subirFotos,
   useCompletarRegistro,
   useConsultaRegistro,
+  useReintentarRegistro,
   type FormularioRegistro,
 } from './registro'
 
@@ -43,15 +44,30 @@ function SinEnlace() {
   )
 }
 
-function PagoRechazado() {
+/** Reintenta en el mismo registro: lo elegido se conserva y vuelve a la pasarela. */
+function PagoRechazado({ token }: { token: string }) {
+  const reintentar = useReintentarRegistro()
   return (
     <>
       <p className="aviso-error" role="alert">
         La pasarela no aprobó el pago. No se hizo ningún cobro.
       </p>
-      <Link to="/afiliacion" className="btn btn-primario" onClick={olvidarToken}>
-        Intentar de nuevo
-      </Link>
+      {reintentar.isError && (
+        <p className="aviso-error" role="alert">
+          {mensajeError(reintentar.error, 'No pudimos generar otro intento de pago.')}{' '}
+          <Link to="/afiliacion" onClick={olvidarToken}>
+            Empezar de nuevo
+          </Link>
+        </p>
+      )}
+      <button
+        className="btn btn-primario"
+        type="button"
+        disabled={reintentar.isPending || reintentar.isSuccess}
+        onClick={() => reintentar.mutate(token, { onSuccess: (r) => window.location.assign(r.enlace_pago) })}
+      >
+        <Icono nombre="pago" size={18} /> {reintentar.isPending ? 'Preparando el pago…' : 'Intentar de nuevo'}
+      </button>
     </>
   )
 }
@@ -92,12 +108,12 @@ export function RegistroResultadoPage() {
           <SinEnlace />
         </>
       )}
-      {registro && <EstadoRegistro registro={registro} />}
+      {registro && <EstadoRegistro token={token} registro={registro} />}
     </Publica>
   )
 }
 
-function EstadoRegistro({ registro }: { registro: RegistroRead }) {
+function EstadoRegistro({ token, registro }: { token: string; registro: RegistroRead }) {
   if (esperandoPago(registro)) {
     return (
       <p className="apagado" role="status">
@@ -106,7 +122,17 @@ function EstadoRegistro({ registro }: { registro: RegistroRead }) {
       </p>
     )
   }
-  if (registro.estado === 'pendiente_pago') return <PagoRechazado />
+  if (registro.estado === 'pendiente_pago') return <PagoRechazado token={token} />
+  if (registro.estado === 'cancelada') {
+    return (
+      <p className="apagado" role="status">
+        Este registro se cerró porque no recibimos el pago.{' '}
+        <Link to="/afiliacion" onClick={olvidarToken}>
+          Empezar una afiliación
+        </Link>
+      </p>
+    )
+  }
   if (registro.estado === 'completada') {
     return (
       <>
@@ -166,7 +192,7 @@ export function CompletarRegistroPage() {
   if (registro.estado !== 'pagada') {
     return (
       <Publica titulo="Completa tu afiliación">
-        <EstadoRegistro registro={registro} />
+        <EstadoRegistro token={token} registro={registro} />
       </Publica>
     )
   }
