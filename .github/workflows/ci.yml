@@ -147,9 +147,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      # pip-audit resuelve en un entorno con el Python de pipx: sin --python seria el del
+      # runner, no el de la app, y una dependencia sin ruedas para el (ortools) no se instala.
       - name: API y worker
         working-directory: backend
-        run: pipx run pip-audit==2.10.1 -r requirements-worker.txt --progress-spinner off
+        run: pipx run --python "$(command -v python)" pip-audit==2.10.1 -r requirements-worker.txt --progress-spinner off
 
       - name: Panel en produccion
         working-directory: frontend
@@ -157,7 +159,7 @@ jobs:
 
       - name: Herramientas de Python
         working-directory: backend
-        run: pipx run pip-audit==2.10.1 -r requirements-dev.txt --progress-spinner off
+        run: pipx run --python "$(command -v python)" pip-audit==2.10.1 -r requirements-dev.txt --progress-spinner off
 
       - name: Herramientas del panel (bloquean altas y criticas)
         working-directory: frontend
