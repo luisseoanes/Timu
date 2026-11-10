@@ -244,6 +244,26 @@ def encolar_correo(
 # --- Envio (ejecutado por el worker) ----------------------------------------------------------
 
 
+def asignar_familia(db: Session, familia_id: UUID, destinos: list[str], desde: datetime) -> int:
+    """Mensajes enviados a estos destinos desde `desde` sin familia (el registro en linea
+    escribe antes de que exista): pasan a la familia, a su historial y a su anonimizacion."""
+    if not destinos:
+        return 0
+    mensajes = list(
+        db.scalars(
+            select(Mensaje).where(
+                Mensaje.familia_id.is_(None),
+                Mensaje.destino.in_(destinos),
+                Mensaje.created_at >= desde,
+            )
+        )
+    )
+    for mensaje in mensajes:
+        mensaje.familia_id = familia_id
+    db.flush()
+    return len(mensajes)
+
+
 def procesar_envio(db: Session, mensaje_id: UUID, cliente: WhatsAppClient | None = None) -> str:
     """Intenta enviar. Devuelve el estado resultante, o 'reintentar' si el fallo es temporal
     y quedan intentos: el worker reprograma la tarea con espera creciente."""

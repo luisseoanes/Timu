@@ -234,6 +234,15 @@ async def test_el_formulario_crea_la_familia_la_afiliacion_y_abre_la_sesion(
         await db.scalars(select(Mensaje.plantilla).where(Mensaje.familia_id == familia.id))
     )
     assert "bienvenida" in plantillas and "activar_cuenta" not in plantillas
+    # El enlace del formulario salio antes de que existiera la familia: ahora es suyo, sale en
+    # su historial y se anonimiza con ella.
+    previos = (
+        select(func.count())
+        .select_from(Mensaje)
+        .where(Mensaje.destino.in_(["ana@correo.co", "+573001234567"]))
+    )
+    assert await db.scalar(previos.where(Mensaje.familia_id.is_(None))) == 0
+    assert await db.scalar(previos.where(Mensaje.familia_id == familia.id)) >= 2
 
     # Con la clave elegida entra al portal; el formulario no se repite.
     ingreso = await client.post(

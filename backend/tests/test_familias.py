@@ -1,24 +1,33 @@
 """F1-FAM-01..05 Familias y mascotas; F0-09 catalogos; F0-11 archivos."""
 
+import json
+from datetime import timedelta
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import DBAPIError
 
-from app.core.enums import Rol
-from app.core.tiempo import hoy
+from app.core.enums import EstadoServicio, Rol, TipoServicio
+from app.core.tiempo import ahora, hoy
 from app.core.validaciones import normalizar_documento, normalizar_telefono
 from app.integrations import geocodificacion
 from app.modules.afiliaciones.models import PeludoSolicitud, SolicitudAfiliacion
 from app.modules.archivos.models import Archivo
-from app.modules.auth.models import Usuario
+from app.modules.auth.models import Sesion, Usuario
+from app.modules.cartera.models import EventoPasarela, Pago
 from app.modules.catalogos.models import Ciudad
 from app.modules.catalogos.service import cargar
+from app.modules.clinica.models import HistoriaClinica
 from app.modules.comercial.models import Interesado
 from app.modules.comunicaciones.models import Mensaje
 from app.modules.documentos.models import DocumentoFamilia
 from app.modules.familias import service
 from app.modules.familias.models import ContactoFamilia, Familia
+from app.modules.ia.models import ConsultaIA
+from app.modules.rutas.models import DistanciaCache, ParadaRuta, Ruta
+from app.modules.servicios.models import Servicio
+from app.modules.tareas.models import Tarea
 from tests import fabricas
 from tests.conftest import autenticar, crear_usuario, login
 
@@ -663,8 +672,140 @@ async def _familia_con_rastro(db) -> tuple[Familia, Usuario]:
                 descripcion=descripcion,
             )
         )
+    await _rastro_operativo(db, familia, portal, solicitud)
     await db.commit()
     return familia, portal
+
+
+async def _rastro_operativo(db, familia: Familia, portal: Usuario, solicitud) -> None:
+    """Lo que dejan la pasarela, las tareas, las sesiones, el registro en linea, las rutas,
+    la clinica y la IA: auditoria del 2026-11-10 (migracion 0036)."""
+    familia.latitud, familia.longitud = 6.2091, -75.5677
+    solicitud.aceptacion = {
+        "medio": "formulario_web",
+        "ip": "203.0.113.77",
+        "agente": "NavegadorDeAna/1.0",
+    }
+    pago = Pago(
+        familia_id=familia.id,
+        referencia_externa="WEB-ANON",
+        proveedor="wompi",
+        valor=45_000,
+        payload=json.dumps({"customer_email": "ana@ejemplo.co", "customer_data": {}}),
+        notas="Consignacion de Ana Ruiz",
+    )
+    db.add(pago)
+    cliente = {"full_name": "Ana Ruiz", "phone_number": "+573001112233"}
+    db.add(
+        EventoPasarela(
+            proveedor="wompi",
+            id_evento="ev-anon",
+            tipo="transaction.updated",
+            referencia="WEB-ANON",
+            payload={
+                "data": {
+                    "transaction": {
+                        "reference": "WEB-ANON",
+                        "status": "APPROVED",
+                        "customer_email": "ana@ejemplo.co",
+                        "customer_data": cliente,
+                    }
+                }
+            },
+        )
+    )
+    db.add_all(
+        [
+            Tarea(
+                titulo="Llamar a Ana Ruiz",
+                descripcion="Ana Ruiz (3001112233) pidio cambiar la cita",
+                area="comercial",
+                familia_id=familia.id,
+            ),
+            # Las del registro en linea nacen sin familia.
+            Tarea(
+                titulo="Registro pagado sin formulario",
+                descripcion="Ana Ruiz (+573001112233) pago y no completo sus datos",
+                area="comercial",
+                clave=f"registro_sin_formulario:{solicitud.id}",
+            ),
+            Sesion(
+                usuario_id=portal.id,
+                refresh_hash="a" * 64,
+                expira_en=ahora() + timedelta(days=1),
+                ip="203.0.113.77",
+                user_agent="NavegadorDeAna/1.0",
+            ),
+            # El enlace del formulario sale antes de que exista la familia.
+            Mensaje(
+                canal="email",
+                destino="ana@ejemplo.co",
+                asunto="Completa la afiliacion",
+                contenido="Hola Ana, completa tus datos",
+            ),
+            ConsultaIA(
+                prompt_codigo="comercial_guion",
+                estado="ok",
+                contexto="whatsapp:+573001112233",
+                entrada="Mensaje de la persona: soy Ana Ruiz",
+                salida="Hola Ana, te cuento los planes",
+            ),
+            DistanciaCache(
+                origen="6.2091,-75.5677", destino="6.2500,-75.6000", metros=1, segundos=1
+            ),
+        ]
+    )
+    medico = Usuario(
+        email="medica@timu.co", nombre="Dra Paula", rol=Rol.MEDICO, hashed_password="x"
+    )
+    db.add(medico)
+    await db.flush()
+    servicio = Servicio(
+        familia_id=familia.id,
+        mascota_id=familia.mascotas[0].id,
+        tipo_codigo="consulta_domiciliaria",
+        tipo=TipoServicio.DOMICILIARIO,
+        ciudad=familia.ciudad,
+        programado_para=ahora(),
+        estado=EstadoServicio.COMPLETADO,
+        observaciones="Porteria: preguntar por Ana Ruiz",
+    )
+    ruta = Ruta(fecha=hoy(), ciudad=familia.ciudad)
+    db.add_all([servicio, ruta])
+    await db.flush()
+    db.add_all(
+        [
+            ParadaRuta(
+                ruta_id=ruta.id,
+                servicio_id=servicio.id,
+                orden=1,
+                latitud=6.2091,
+                longitud=-75.5677,
+                nota="Timbre de Ana Ruiz",
+            ),
+            # Firmada: lo clinico se conserva, sin las menciones a la familia.
+            HistoriaClinica(
+                mascota_id=familia.mascotas[0].id,
+                familia_id=familia.id,
+                servicio_id=servicio.id,
+                fecha=hoy(),
+                motivo="Cojera leve",
+                anamnesis="Ana Ruiz cuenta que cojea desde el lunes; llamar al 3001112233",
+                diagnostico="Esguince",
+                estado="firmada",
+                firmada_en=ahora(),
+                firmada_por_id=medico.id,
+            ),
+        ]
+    )
+    await db.flush()
+
+
+# Tablas que conservan a proposito un dato de la familia anonimizada, con su motivo.
+CONSERVAN_DATOS = {
+    "bajas_comunicaciones": "el telefono de quien pidio no recibir mensajes: impide volver a "
+    "escribirle",
+}
 
 
 async def test_anonimizar_no_deja_datos_personales(client: AsyncClient, db, headers, tareas):
@@ -675,27 +816,48 @@ async def test_anonimizar_no_deja_datos_personales(client: AsyncClient, db, head
     assert datos["titular_nombre"] == "Anonimizado" and datos["email"] is None
     assert datos["estado"] == "cancelada" and datos["documento"].startswith("ANON")
 
-    # Nada de lo que la identificaba queda en la base, tampoco en la bitacora.
-    for tabla in (
-        "familias",
-        "usuarios",
-        "mascotas",
-        "interesados",
-        "mensajes",
-        "contactos_familia",
-        "documentos_familia",
-        "peludos_solicitud",
-        "solicitudes_afiliacion",
-        "auditoria",
-    ):
+    # Nada de lo que la identificaba queda en ninguna tabla, tampoco en la bitacora. Se
+    # recorren todas: una columna nueva con datos personales que la funcion no borre falla
+    # aqui, no en una auditoria.
+    filas_tablas = await db.execute(
+        text(
+            "SELECT tablename, has_table_privilege(tablename, 'SELECT') FROM pg_tables"
+            " WHERE schemaname = 'public'"
+        )
+    )
+    legibles = dict(filas_tablas.tuples().all())
+    # La aplicacion lee todas salvo dos sin datos de nadie: la version de Alembic y el grafo
+    # de estados que consulta el trigger de transiciones.
+    no_legibles = {t for t, puede in legibles.items() if not puede}
+    assert no_legibles == {"alembic_version", "transiciones_estado"}
+    tablas = {t for t, puede in legibles.items() if puede}
+    assert set(CONSERVAN_DATOS) <= tablas
+    for tabla in sorted(tablas - set(CONSERVAN_DATOS)):
         filas = await db.scalar(
             text(f"SELECT count(*) FROM {tabla} t WHERE to_jsonb(t)::text ~ :pii"),
             {
                 "pii": "Ana Ruiz|ana@ejemplo\\.co|Hola Ana|3001112233|Mascota0|Rosales|Torre 9"
                 "|Rocio|3009998877|rocio@ejemplo|hermana|Cedula de|Ecografia de"
+                "|203\\.0\\.113\\.77|NavegadorDeAna|6\\.2091|75\\.5677"
             },
         )
         assert filas == 0, tabla
+    # Lo clinico y lo operativo se conservan, sin las menciones a la familia.
+    historia = await db.scalar(
+        select(HistoriaClinica).where(HistoriaClinica.familia_id == familia.id)
+    )
+    assert (historia.motivo, historia.diagnostico, historia.estado) == (
+        "Cojera leve",
+        "Esguince",
+        "firmada",
+    )
+    assert historia.anamnesis == (
+        "[anonimizado] cuenta que cojea desde el lunes; llamar al [anonimizado]"
+    )
+    titulos = set(await db.scalars(select(Tarea.titulo)))
+    assert titulos == {"Llamar a [anonimizado]", "Registro pagado sin formulario"}
+    pago = await db.scalar(select(Pago).where(Pago.referencia_externa == "WEB-ANON"))
+    assert (pago.payload, pago.notas, pago.valor) == (None, "Consignacion de [anonimizado]", 45_000)
     await db.refresh(portal)
     assert portal.activo is False
     # Las fotos se borran del almacenamiento despues de confirmar, no dentro de la transaccion.

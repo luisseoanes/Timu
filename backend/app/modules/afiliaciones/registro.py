@@ -38,6 +38,7 @@ from app.modules.afiliaciones.models import EstadoSolicitud, PeludoSolicitud, So
 from app.modules.cartera import contratos
 from app.modules.cartera.models import Pago
 from app.modules.cartera.periodos import centavos, dinero, sumar_meses
+from app.modules.comunicaciones import service as comunicaciones
 from app.modules.familias import service as familias
 from app.modules.familias.models import Familia, Mascota
 from app.modules.familias.schemas import ContactoIn, FormularioFamilia, MascotaAlta
@@ -338,6 +339,12 @@ def completar(
     familias.habilitar_portal(db, familia, clave)
     solicitud.familia_id = familia.id
     pago.familia_id = familia.id
+    comunicaciones.asignar_familia(
+        db,
+        familia.id,
+        [d for d in (solicitud.contacto_email, solicitud.contacto_telefono) if d],
+        solicitud.created_at,
+    )
     db.flush()
     if not service.completar_o_dejar_tarea(db, solicitud, pago):
         return Resultado(
