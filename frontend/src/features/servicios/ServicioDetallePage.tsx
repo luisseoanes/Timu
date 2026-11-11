@@ -61,7 +61,7 @@ function DetalleServicio({ servicio: s }: { servicio: ServicioRead }) {
         <Link to="/servicios" className="btn btn-plano" aria-label="Volver a servicios">
           <Icono nombre="volver" size={16} />
         </Link>
-        <h1>{nombreTipo(s.tipo_codigo)}</h1>
+        <h2>{nombreTipo(s.tipo_codigo)}</h2>
         <Distintivo dominio="servicio" valor={s.estado} />
       </div>
 

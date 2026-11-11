@@ -30,7 +30,7 @@ export function HistoriaMascotaPage() {
         <Link to="/clinica" className="btn btn-plano" aria-label="Volver a clínica">
           <Icono nombre="volver" size={16} />
         </Link>
-        <h1>Historia de {mascota?.nombre ?? '…'}</h1>
+        <h2>Historia de {mascota?.nombre ?? '…'}</h2>
         {familia.data && (
           <Link to={`/familias/${familia.data.id}`} className="distintivo distintivo-info">
             {familia.data.titular_nombre}

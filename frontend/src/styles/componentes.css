@@ -73,15 +73,21 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 }
 .input-linea:focus { border-bottom-color: var(--foco); box-shadow: none; }
 
+/* Misma forma que .input (radio, alto, borde): junto a un select en un filtro, son un solo
+   tipo de control. */
 .buscador {
   display: flex; align-items: center; gap: var(--e2);
-  background: var(--superficie-hundida);
-  border: 1px solid var(--borde);
-  border-radius: var(--r-pastilla);
-  padding: 8px var(--e4);
+  min-height: 40px;
+  background: var(--superficie);
+  border: 1px solid var(--borde-control);
+  border-radius: var(--r-campo);
+  padding: 0 var(--e3);
   min-width: 260px;
   color: var(--texto-suave);
+  transition: border-color var(--duracion) var(--curva);
 }
+.buscador:hover:not(:focus-within) { border-color: var(--borde-control-hover); }
+.buscador:focus-within { border-color: var(--foco); box-shadow: 0 0 0 1px var(--foco); }
 .buscador input { border: 0; background: transparent; font: inherit; color: var(--texto); width: 100%; }
 .buscador input:focus { outline: none; }
 
@@ -317,6 +323,7 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 .acciones { display: flex; flex-wrap: wrap; gap: var(--e2); align-items: center; }
 
 /* --- Pestañas (Radix Tabs) -------------------------------------- */
+/* En pantallas estrechas las pestañas no se reparten en varias filas: se desplazan en la suya. */
 .pestanas-lista {
   display: flex; gap: var(--e1); flex-wrap: wrap;
   border-bottom: 1px solid var(--borde);
@@ -479,9 +486,9 @@ a.acceso { text-decoration: none; }
    Zonas de 44 px (WCAG 2.5.8 pide 24; 44 es lo cómodo con el pulgar) y letra de 16 px en los
    campos: por debajo, iOS amplía la página al enfocar. */
 @media (max-width: 900px), (pointer: coarse) {
-  .btn, .input, .boton-icono { min-height: 44px; }
+  .btn, .input, .boton-icono, .buscador { min-height: 44px; }
   .boton-icono { min-width: 44px; }
-  .input { font-size: 1rem; }
+  .input, .buscador input { font-size: 1rem; }
 }
 
 /* --- Carga y error de una consulta (Consulta.tsx) ---------------- */
@@ -491,3 +498,8 @@ a.acceso { text-decoration: none; }
 .esqueleto-linea:nth-child(4) { width: 55%; }
 @keyframes esqueleto { from { opacity: 1; } to { opacity: .45; } }
 .consulta-error { flex-wrap: wrap; align-items: center; justify-content: space-between; }
+
+@media (max-width: 600px) {
+  .pestanas-lista { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
+  .pestana { white-space: nowrap; }
+}

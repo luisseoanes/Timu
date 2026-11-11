@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import * as Menu from '@radix-ui/react-dropdown-menu'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { Icono, type NombreIcono } from '@/components/Icono'
 import { MarcaTimu } from '@/components/MarcaTimu'
 import { useAuth } from '@/features/auth'
 import { NOMBRE_ROL, puede, type Accion } from '@/lib/permisos'
+import type { Rol } from '@/types'
 
 interface ItemNav {
   to: string
@@ -33,13 +35,76 @@ const NAV: ItemNav[] = [
   { to: '/admin', label: 'Administración', icono: 'ajustes', titulo: 'Administración', sub: 'Usuarios, planes, reglas e IA', permiso: 'administrar' },
 ]
 
+/** Los cuatro módulos que cada perfil usa más: van en la barra inferior del celular. */
+const PRINCIPALES: Partial<Record<Rol, string[]>> = {
+  medico: ['/rutas', '/servicios', '/clinica', '/familias'],
+  operaciones: ['/', '/servicios', '/rutas', '/tareas'],
+  comercial: ['/', '/familias', '/comercial', '/tareas'],
+  admin: ['/', '/familias', '/cartera', '/servicios'],
+}
+
+// Cuántos módulos caben en la barra superior según el ancho. Con 0 la navegación pasa a la
+// barra inferior. Sin matchMedia (pruebas en jsdom) se asume el escritorio ancho.
+const CORTES: [string, number][] = [
+  ['(min-width: 1360px)', 8],
+  ['(min-width: 1180px)', 6],
+  ['(min-width: 900px)', 3],
+]
+
+function capacidadActual(): number {
+  if (typeof window.matchMedia !== 'function') return CORTES[0][1]
+  return CORTES.find(([consulta]) => window.matchMedia(consulta).matches)?.[1] ?? 0
+}
+
+function useCapacidad(): number {
+  const [capacidad, setCapacidad] = useState(capacidadActual)
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return
+    const consultas = CORTES.map(([consulta]) => window.matchMedia(consulta))
+    const cambiar = () => setCapacidad(capacidadActual())
+    consultas.forEach((c) => c.addEventListener('change', cambiar))
+    return () => consultas.forEach((c) => c.removeEventListener('change', cambiar))
+  }, [])
+  return capacidad
+}
+
+const esActual = (item: ItemNav, pathname: string) => (item.end ? pathname === item.to : pathname.startsWith(item.to))
+
+/** Menú «Más»: los módulos que no caben, como enlaces. */
+function MenuMas({ items, activo, arriba }: { items: ItemNav[]; activo: boolean; arriba?: boolean }) {
+  return (
+    <Menu.Root>
+      <Menu.Trigger className="mas" data-activo={activo}>
+        {/* Ni «+», que se lee como «crear»: en la barra inferior, tres puntos; arriba, una flecha. */}
+        {arriba && <Icono nombre="puntos" size={22} />}
+        Más
+        {!arriba && <Icono nombre="abajo" size={16} />}
+      </Menu.Trigger>
+      <Menu.Portal>
+        <Menu.Content className="menu" side={arriba ? 'top' : 'bottom'} align="end" sideOffset={6}>
+          {items.map((item) => (
+            <Menu.Item key={item.to} asChild>
+              <NavLink className="menu-item" to={item.to} end={item.end}>
+                <Icono nombre={item.icono} size={18} />
+                {item.label}
+              </NavLink>
+            </Menu.Item>
+          ))}
+        </Menu.Content>
+      </Menu.Portal>
+    </Menu.Root>
+  )
+}
+
 export function AppLayout() {
   const { usuario, logout } = useAuth()
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const capacidad = useCapacidad()
   const [busqueda, setBusqueda] = useState('')
   const visibles = NAV.filter((n) => !n.permiso || puede(usuario, n.permiso))
-  const actual = visibles.find((n) => (n.end ? pathname === n.to : pathname.startsWith(n.to))) ?? NAV[0]
+  const actual = visibles.find((n) => esActual(n, pathname)) ?? NAV[0]
+  const movil = capacidad === 0
   const iniciales = (usuario?.nombre ?? '')
     .split(' ')
     .slice(0, 2)
@@ -47,41 +112,27 @@ export function AppLayout() {
     .join('')
     .toUpperCase()
 
+  const enBarra = visibles.slice(0, capacidad)
+  const enMas = visibles.slice(capacidad)
+  const rutasPrincipales = (usuario && PRINCIPALES[usuario.rol]) ?? NAV.slice(0, 4).map((n) => n.to)
+  const principales = visibles.filter((n) => rutasPrincipales.includes(n.to))
+  const resto = visibles.filter((n) => !rutasPrincipales.includes(n.to))
+
   return (
-    <div className="shell">
-      <aside className="sidebar">
-        <MarcaTimu />
-
-        <nav className="nav" aria-label="Módulos">
-          {visibles.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end}>
-              <Icono nombre={item.icono} />
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="usuario">
-          <div className="usuario-datos">
-            <span className="avatar">{iniciales || '—'}</span>
-            <div>
-              <strong>{usuario?.nombre}</strong>
-              <span>{usuario ? NOMBRE_ROL[usuario.rol] : ''}</span>
-            </div>
-          </div>
-          <button className="btn btn-suave" type="button" onClick={logout}>
-            <Icono nombre="salir" size={16} />
-            Cerrar sesión
-          </button>
-        </div>
-      </aside>
-
-      <div className="principal">
-        <header className="topbar">
-          <div className="topbar-titulo">
-            <h2>{actual.titulo}</h2>
-            <p>{actual.sub}</p>
-          </div>
+    <div className="shell" data-movil={movil}>
+      <header className="barra-marca">
+        <MarcaTimu claro />
+        {!movil && (
+          <nav className="modulos" aria-label="Módulos">
+            {enBarra.map((item) => (
+              <NavLink key={item.to} to={item.to} end={item.end}>
+                {item.label}
+              </NavLink>
+            ))}
+            {enMas.length > 0 && <MenuMas items={enMas} activo={enMas.includes(actual)} />}
+          </nav>
+        )}
+        {!movil && (
           <form
             role="search"
             onSubmit={(e) => {
@@ -94,19 +145,53 @@ export function AppLayout() {
               <Icono nombre="buscar" size={18} />
               <input
                 type="search"
-                placeholder="Buscar familia por nombre, documento o celular"
+                placeholder="Buscar familia"
                 aria-label="Buscar familias"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
               />
             </label>
           </form>
-        </header>
+        )}
+        <Menu.Root>
+          <Menu.Trigger className="cuenta" aria-label={`Cuenta de ${usuario?.nombre ?? 'usuario'}`}>
+            {iniciales || '—'}
+          </Menu.Trigger>
+          <Menu.Portal>
+            <Menu.Content className="menu" align="end" sideOffset={8}>
+              <Menu.Label className="menu-etiqueta">
+                <strong>{usuario?.nombre}</strong>
+                <span>{usuario ? NOMBRE_ROL[usuario.rol] : ''}</span>
+              </Menu.Label>
+              <Menu.Separator className="menu-separador" />
+              <Menu.Item className="menu-item" onSelect={logout}>
+                <Icono nombre="salir" size={18} />
+                Cerrar sesión
+              </Menu.Item>
+            </Menu.Content>
+          </Menu.Portal>
+        </Menu.Root>
+      </header>
 
-        <main className="contenido">
-          <Outlet />
-        </main>
-      </div>
+      <main className="contenido">
+        <header className="cabecera-pagina">
+          <h1>{actual.titulo}</h1>
+          <p>{actual.sub}</p>
+        </header>
+        <Outlet />
+      </main>
+
+      {movil && (
+        <nav className="barra-inferior" aria-label="Módulos principales">
+          {principales.map((item) => (
+            <NavLink key={item.to} to={item.to} end={item.end}>
+              <Icono nombre={item.icono} size={22} />
+              {item.label}
+            </NavLink>
+          ))}
+          {resto.length > 0 && <MenuMas items={resto} activo={resto.includes(actual)} arriba />}
+        </nav>
+      )}
     </div>
   )
 }

@@ -59,7 +59,7 @@ export function DashboardPage() {
     <div className="con-rail">
       <div className="pila">
         <section className="bienvenida">
-          <h1>Hola {nombre}</h1>
+          <h2>Hola {nombre}</h2>
           <p className="apagado">
             {gerencial
               ? 'Así va la operación: afiliaciones, recaudo, rutas y satisfacción del período.'

@@ -61,7 +61,7 @@ function DetalleEntrada({ entrada: e }: { entrada: EntradaHistoria }) {
         <Link to={`/clinica/mascotas/${e.mascota_id}`} className="btn btn-plano" aria-label="Volver a la historia">
           <Icono nombre="volver" size={16} />
         </Link>
-        <h1>Consulta del {fecha(e.fecha)}</h1>
+        <h2>Consulta del {fecha(e.fecha)}</h2>
         <Distintivo dominio="historia" valor={e.estado} />
         {e.version && e.version > 1 && <Insignia tono="neutro">Versión {e.version}</Insignia>}
         {esMedico && (

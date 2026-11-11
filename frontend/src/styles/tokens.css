@@ -118,6 +118,7 @@
   --seleccion-texto:     var(--verde-200);  /* fondo del texto seleccionado con el ratón */
   --foco:                var(--azul-500);
   --foco-sobre-marca:    var(--verde-500);
+  --indicador-sobre-marca: var(--verde-500);  /* módulo activo en la barra marina */
 
   /* Estados: siempre par fondo + texto, y siempre con texto e icono además del color */
   --estado-ok-fondo:      var(--verde-50);
@@ -180,9 +181,7 @@
   --curva: cubic-bezier(0.2, 0, 0, 1);
 
   /* --- Estructura ------------------------------------------------ */
-  --ancho-sidebar: 236px;
   --ancho-rail: 300px;   /* columna derecha de widgets */
-  --alto-topbar: 68px;
 
   color-scheme: light;
 }
@@ -242,6 +241,7 @@
   --foco / --superficie 3
   --foco / --superficie-lienzo 3
   --foco-sobre-marca / --superficie-marca 3
+  --indicador-sobre-marca / --superficie-marca 3
   --serie-1 / --superficie 3
   --serie-2 / --superficie 3
   --serie-3 / --superficie 3

@@ -1,69 +1,119 @@
 /* Plantillas de página. Aquí vive la estructura; los componentes no la conocen. */
 
-/* ================= Shell del panel ================= */
-.shell {
-  display: grid;
-  grid-template-columns: var(--ancho-sidebar) 1fr;
-  min-height: 100vh;
-  padding: var(--e4);
-  gap: var(--e4);
+/* ================= Estructura del panel =================
+   Contrato de dirección «la línea de metro» (.impeccable/surfaces): barra superior marina
+   con los módulos y el buscador; en pantallas estrechas, barra inferior al alcance del
+   pulgar. AppLayout decide cuántos módulos caben y manda el resto a «Más». */
+.shell { min-height: 100vh; display: grid; grid-template-rows: auto 1fr; }
+
+.barra-marca {
+  position: sticky; top: 0; z-index: 10;
+  height: 64px;
+  display: flex; align-items: center; gap: var(--e6);
+  padding-inline: var(--e6);
+  background: var(--superficie-marca);
+  color: var(--texto-sobre-marca);
+}
+.barra-marca :focus-visible { outline-color: var(--foco-sobre-marca); }
+.barra-marca .marca { flex: none; }
+
+.modulos { flex: 1; min-width: 0; height: 100%; display: flex; align-items: stretch; gap: var(--e1); }
+.modulos a, .modulos .mas {
+  display: flex; align-items: center; gap: var(--e2);
+  padding-inline: var(--e3);
+  border: 0; background: none; font: inherit;
+  font-size: var(--t-menor); font-weight: 600; white-space: nowrap;
+  color: var(--texto-sobre-marca-suave);
+  box-shadow: inset 0 -4px 0 transparent;
+  cursor: pointer;
+  transition: color var(--duracion) var(--curva), background-color var(--duracion) var(--curva);
+}
+.modulos a:hover, .modulos .mas:hover { color: var(--texto-sobre-marca); background: var(--superficie-marca-hover); }
+.modulos a.active, .modulos .mas[data-activo="true"] {
+  color: var(--texto-sobre-marca);
+  box-shadow: inset 0 -4px 0 var(--indicador-sobre-marca);
 }
 
-.sidebar {
-  background: var(--superficie);
-  border-radius: var(--r-panel);
-  padding: var(--e5) var(--e4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--e5);
-  box-shadow: var(--sombra-2);
-  position: sticky;
-  top: var(--e4);
-  height: calc(100vh - var(--e7));
+.barra-marca .buscador { background: var(--superficie); border-color: var(--superficie); min-width: 280px; }
+/* Por debajo de 1360 px la barra no cabe con el lema y el buscador ancho: se quedan el nombre y
+   un buscador más estrecho, y AppLayout manda más módulos a «Más». */
+@media (max-width: 1359px) {
+  .barra-marca .marca-sub { display: none; }
+  .barra-marca .buscador { min-width: 0; width: 220px; }
 }
-.nav { display: grid; gap: var(--e1); flex: 1; align-content: start; }
-.nav a {
-  display: flex; align-items: center; gap: var(--e3);
-  padding: 10px var(--e3);
-  border-radius: var(--r-campo);
-  color: var(--texto);
-  font-weight: 600;
-  font-size: var(--t-cuerpo);
-}
-.nav a:hover { background: var(--superficie-seleccion); color: var(--texto-titulo); }
-.nav a.active { background: var(--superficie-seleccion); color: var(--texto-titulo); box-shadow: inset 3px 0 0 var(--indicador-seleccion); }
-.nav svg { flex: none; }
 
-.usuario {
-  display: grid; gap: var(--e2);
-  padding-top: var(--e4);
-  border-top: 1px solid var(--borde);
-}
-.usuario-datos { display: flex; align-items: center; gap: var(--e3); }
-.avatar {
-  width: 38px; height: 38px; flex: none;
-  border-radius: var(--r-pastilla);
-  background: var(--accion-suave-fondo); color: var(--accion-suave-texto);
+.cuenta {
+  flex: none; margin-left: auto;
+  width: 40px; height: 40px;
   display: grid; place-items: center;
-  font-family: var(--fuente); font-weight: 600;
+  border-radius: var(--r-pastilla);
+  border: 1px solid var(--borde-sobre-marca);
+  background: var(--superficie-sobre-marca);
+  color: var(--texto-sobre-marca);
+  font: inherit; font-weight: 600; font-size: var(--t-menor);
+  cursor: pointer;
 }
-.usuario-datos strong { display: block; color: var(--texto-titulo); font-size: var(--t-menor); }
-.usuario-datos div span { display: block; font-size: var(--t-etiqueta); color: var(--texto-suave); text-transform: capitalize; }
+.barra-marca form[role="search"] { margin-left: auto; }
+.barra-marca form[role="search"] + .cuenta { margin-left: 0; }
 
-/* ================= Cabecera y contenido ================= */
-.shell > .principal { display: flex; flex-direction: column; gap: var(--e4); min-width: 0; }
-.topbar {
+/* Menús desplegables (Radix DropdownMenu): «Más» y la cuenta. */
+.menu {
+  z-index: 20;
+  min-width: 220px;
+  padding: var(--e1);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--r-tarjeta);
+  box-shadow: var(--sombra-3);
+}
+.menu-item {
   display: flex; align-items: center; gap: var(--e3);
-  min-height: var(--alto-topbar);
+  min-height: 40px; padding-inline: var(--e3);
+  border-radius: var(--r-campo);
+  color: var(--texto); font-weight: 500;
+  cursor: pointer; outline: none;
 }
-.topbar-titulo { flex: 1; min-width: 0; }
-.topbar-titulo h2 { font-size: var(--t-titulo); }
-.topbar-titulo p { font-size: var(--t-menor); color: var(--texto-suave); }
+.menu-item[data-highlighted] { background: var(--superficie-seleccion); color: var(--texto-titulo); }
+.menu-item.active { color: var(--texto-titulo); font-weight: 700; }
+.menu-etiqueta { display: grid; padding: var(--e2) var(--e3); }
+.menu-etiqueta strong { color: var(--texto-titulo); font-size: var(--t-cuerpo); }
+.menu-etiqueta span { color: var(--texto-suave); font-size: var(--t-menor); }
+.menu-separador { height: 1px; margin: var(--e1) 0; background: var(--borde); }
 
-.contenido { display: grid; gap: var(--e4); align-content: start; padding-bottom: var(--e7); }
+/* ================= Contenido ================= */
+.contenido {
+  width: 100%; max-width: 1440px; margin-inline: auto;
+  display: grid; gap: var(--e4); align-content: start;
+  padding: var(--e6) var(--e6) var(--e8);
+}
 /* Un hijo de la rejilla puede encoger: si no, una tabla ancha estira la página en vez de
    desplazarse dentro de su .scroll-x. */
 .contenido > * { min-width: 0; }
+.cabecera-pagina h1 { font-size: var(--t-titulo); }
+.cabecera-pagina p { font-size: var(--t-menor); color: var(--texto-suave); }
+
+/* ================= Barra inferior (pantallas estrechas) ================= */
+.barra-inferior {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--superficie);
+  border-top: 1px solid var(--borde);
+}
+.barra-inferior a, .barra-inferior .mas {
+  min-height: 56px;
+  display: grid; justify-items: center; align-content: center; gap: 2px;
+  border: 0; background: none; font: inherit;
+  font-size: var(--t-etiqueta); font-weight: 600;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+.barra-inferior a.active, .barra-inferior .mas[data-activo="true"] {
+  color: var(--texto-titulo);
+  box-shadow: inset 0 3px 0 var(--indicador-seleccion);
+}
+.shell[data-movil="true"] .barra-marca { padding-inline: var(--e4); }
+.shell[data-movil="true"] .contenido { padding: var(--e4) var(--e4) calc(56px + var(--e6) + env(safe-area-inset-bottom, 0px)); }
 
 /* Dashboard: contenido principal + columna de widgets */
 .con-rail { display: grid; grid-template-columns: minmax(0, 1fr) var(--ancho-rail); gap: var(--e4); }
@@ -82,7 +132,7 @@
   box-shadow: var(--sombra-2);
   overflow: hidden;
 }
-.bienvenida h1 { display: flex; align-items: center; gap: var(--e2); }
+.bienvenida h2 { display: flex; align-items: center; gap: var(--e2); font-size: var(--t-display); }
 .bienvenida .apagado { max-width: 46ch; }
 .bienvenida-datos { display: flex; flex-wrap: wrap; gap: var(--e2); margin-top: var(--e2); }
 
@@ -94,9 +144,6 @@
   .rail { grid-template-columns: repeat(2, 1fr); display: grid; }
 }
 @media (max-width: 900px) {
-  .shell { grid-template-columns: 1fr; }
-  .sidebar { position: static; height: auto; }
-  .nav { grid-template-columns: repeat(2, 1fr); }
   .dos-columnas, .rail { grid-template-columns: 1fr; }
   .accesos { grid-template-columns: repeat(2, 1fr); }
 }
@@ -104,7 +151,7 @@
 /* ================= Detalle de un registro ================= */
 /* Columna principal con pestañas y columna derecha de acciones (misma grilla del panel). */
 .detalle-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e3); margin-bottom: var(--e4); }
-.detalle-cabeza h1 { font-size: var(--t-titulo); }
+.detalle-cabeza h2 { font-size: var(--t-titulo); }
 .pila { display: grid; gap: var(--e4); align-content: start; }
 
 @media (max-width: 900px) {

@@ -33,7 +33,7 @@ export function FamiliaDetallePage() {
             <Link to="/familias" className="btn btn-plano" aria-label="Volver a familias">
               <Icono nombre="volver" size={16} />
             </Link>
-            <h1>{f.titular_nombre}</h1>
+            <h2>{f.titular_nombre}</h2>
             <Distintivo dominio="afiliacion" valor={f.estado} />
             {f.usuario_portal_id && <Insignia tono="info">Con portal</Insignia>}
             {puede(usuario, 'gestionarAfiliacion') && <AccionesFamilia familia={f} />}

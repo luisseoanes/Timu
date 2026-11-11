@@ -14,7 +14,8 @@ test.describe('equipo', () => {
 
   test('busca una familia en el panel y abre su ficha con sus mascotas', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByRole('heading', { level: 1, name: /^Hola/ })).toBeVisible()
+    // El h1 es el título del módulo (AppLayout); el saludo cuelga de él.
+    await expect(page.getByRole('heading', { level: 2, name: /^Hola/ })).toBeVisible()
     await page.getByRole('link', { name: 'Familias' }).first().click()
     await page.getByRole('link', { name: 'Ana Ruiz' }).click()
     await expect(page.getByRole('heading', { name: 'Ana Ruiz' })).toBeVisible()

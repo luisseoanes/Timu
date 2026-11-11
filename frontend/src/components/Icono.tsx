@@ -8,7 +8,7 @@ export type NombreIcono =
   | 'salir' | 'usuario' | 'llave' | 'calendario' | 'pago' | 'mas' | 'cerrar'
   | 'tareas' | 'comercial' | 'aliadas' | 'encuestas' | 'ajustes' | 'descargar' | 'volver'
   | 'ojo' | 'ojo-cerrado' | 'escudo' | 'huella' | 'telefono' | 'correo' | 'pulso' | 'check'
-  | 'ia' | 'mensaje' | 'subir' | 'editar' | 'portal' | 'candado' | 'alerta' | 'info' | 'menos'
+  | 'ia' | 'mensaje' | 'subir' | 'editar' | 'portal' | 'candado' | 'alerta' | 'info' | 'menos' | 'abajo' | 'puntos'
 
 const TRAZOS: Record<NombreIcono, string> = {
   panel: 'M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z',
@@ -53,6 +53,8 @@ const TRAZOS: Record<NombreIcono, string> = {
   alerta: 'M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z',
   info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-5v-5M12 8h.01',
   menos: 'M5 12h14',
+  abajo: 'M6 9l6 6 6-6',
+  puntos: 'M5 12h.01M12 12h.01M19 12h.01',
 }
 
 export function Icono({ nombre, size = 20 }: { nombre: NombreIcono; size?: number }) {
