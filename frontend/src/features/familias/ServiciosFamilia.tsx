@@ -4,7 +4,7 @@ import { Consulta } from '@/components/Consulta'
 import { Distintivo } from '@/components/Distintivo'
 import { useNombreTipoServicio } from '@/features/catalogos'
 import { fechaHora, mesEnCurso } from '@/lib/formato'
-import type { FamiliaRead, PendienteRead, ServicioRead } from '@/types'
+import type { CupoBeneficioRead, FamiliaRead, PendienteRead, ServicioRead } from '@/types'
 
 import { useResumenServicios, type FiltrosResumen } from './api'
 
@@ -82,31 +82,7 @@ export function ServiciosFamilia({ familia }: { familia: FamiliaRead }) {
         <Consulta consulta={resumen} cargando="Cargando servicios…" error="No fue posible cargar los servicios.">
           {(d) => (
             <>
-              {d.cupos.length > 0 && (
-                <>
-                  <h4>Cupo del plan</h4>
-                  <div className="scroll-x">
-                    <table className="tabla">
-                      <thead>
-                        <tr>
-                          <th>Beneficio</th>
-                          <th>Usados</th>
-                          <th>Periodo</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {d.cupos.map((c) => (
-                          <tr key={c.tipo_codigo}>
-                            <td className="principal">{nombreTipo(c.tipo_codigo)}</td>
-                            <td className="numero">{c.cupo === null || c.cupo === undefined ? `${c.usados} (sin límite)` : `${c.usados} de ${c.cupo}`}</td>
-                            <td>{c.periodo === 'mensual' ? 'Este mes' : 'Este año'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              )}
+              <CuposPorMascota cupos={d.cupos} nombreTipo={nombreTipo} nombreMascota={nombreMascota} />
               <TablaServicios
                 titulo="Pendientes"
                 vacio="No hay servicios pendientes en este rango."
@@ -139,6 +115,51 @@ export function ServiciosFamilia({ familia }: { familia: FamiliaRead }) {
       )}
     </section>
   )
+}
+
+/**
+ * El cupo del plan es de cada mascota: dos peludos con el mismo plan tienen cada uno su
+ * consulta domiciliaria. Una tabla por mascota, con su nombre.
+ */
+function CuposPorMascota({
+  cupos,
+  nombreTipo,
+  nombreMascota,
+}: {
+  cupos: CupoBeneficioRead[]
+  nombreTipo: (codigo: string) => string
+  nombreMascota: (id: string | null | undefined) => string
+}) {
+  const grupos = new Map<string, CupoBeneficioRead[]>()
+  for (const c of cupos) grupos.set(c.mascota_id ?? '', [...(grupos.get(c.mascota_id ?? '') ?? []), c])
+  return [...grupos].map(([mascotaId, beneficios]) => {
+    const titulo = mascotaId ? `Cupo de ${nombreMascota(mascotaId)}` : 'Cupo de la familia'
+    return (
+      <div key={mascotaId || 'familia'}>
+        <h4>{titulo}</h4>
+        <div className="scroll-x">
+          <table className="tabla" aria-label={titulo}>
+            <thead>
+              <tr>
+                <th>Beneficio</th>
+                <th>Usados</th>
+                <th>Periodo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {beneficios.map((c) => (
+                <tr key={c.tipo_codigo}>
+                  <td className="principal">{nombreTipo(c.tipo_codigo)}</td>
+                  <td className="numero">{c.cupo === null || c.cupo === undefined ? `${c.usados} (sin límite)` : `${c.usados} de ${c.cupo}`}</td>
+                  <td>{c.periodo === 'mensual' ? 'Este mes' : 'Este año'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  })
 }
 
 function TablaServicios({

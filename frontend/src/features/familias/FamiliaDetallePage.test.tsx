@@ -388,7 +388,7 @@ describe('FamiliaDetallePage', () => {
                 estado: 'pendiente_autorizacion',
               },
             ],
-            cupos: [{ tipo_codigo: 'consulta_domiciliaria', cupo: 4, usados: 1, periodo: 'anual' }],
+            cupos: [{ tipo_codigo: 'consulta_domiciliaria', cupo: 4, usados: 1, periodo: 'anual', mascota_id: FAMILIA.mascotas![0]!.id }],
           }),
         )
       }),
@@ -407,6 +407,30 @@ describe('FamiliaDetallePage', () => {
     const params = consultado as URLSearchParams | null
     expect(params?.get('familia_id')).toBe(FAMILIA.id)
     expect(params?.get('desde')).toMatch(/^\d{4}-\d{2}-01$/)
+  })
+
+  it('separa el cupo de cada mascota aunque compartan beneficio', async () => {
+    const luna = FAMILIA.mascotas![0]!
+    const kira = { ...luna, id: 'm2', nombre: 'Kira' }
+    const cupo = (mascota_id: string, usados: number) => ({ tipo_codigo: 'consulta_domiciliaria', cupo: 4, usados, periodo: 'anual', mascota_id })
+    server.use(
+      http.get(`${API}/familias/:id`, () => HttpResponse.json({ ...FAMILIA, mascotas: [luna, kira] })),
+      http.get(`${API}/servicios/resumen`, () =>
+        HttpResponse.json({
+          desde: '2026-11-01',
+          hasta: '2026-11-30',
+          utilizados: [],
+          pendientes: [],
+          pendientes_atencion: [],
+          cupos: [cupo(luna.id, 1), cupo('m2', 3)],
+        }),
+      ),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('tab', { name: 'Servicios' }))
+    expect(within(await screen.findByRole('table', { name: 'Cupo de Luna' })).getByText('1 de 4')).toBeInTheDocument()
+    expect(within(screen.getByRole('table', { name: 'Cupo de Kira' })).getByText('3 de 4')).toBeInTheDocument()
   })
 
   it('filtra por mascota, por rango y muestra los cancelados si se piden', async () => {
