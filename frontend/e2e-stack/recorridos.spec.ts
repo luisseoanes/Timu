@@ -76,6 +76,30 @@ test.describe('equipo', () => {
     expect(boton!.y + boton!.height, 'el botón principal se ve entero').toBeLessThanOrEqual(caja!.y + caja!.height)
   })
 
+  test('la ficha de familia tiene una sola acción verde llena en cada pestaña', async ({ page }) => {
+    // Manual de marca, sección 11, regla 2: un solo botón principal por vista.
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+    // Una familia con próxima estación: su ficha lleva ya la acción verde de la cabecera, y
+    // cualquier otra verde en una pestaña sería la segunda.
+    const { items } = await (await page.request.get('/api/v1/familias', { params: { limit: 50 } })).json()
+    const ids = items.map((f: { id: string }) => f.id)
+    const lineas = await (
+      await page.request.get(`/api/v1/afiliaciones/lineas?${ids.map((id: string) => `familia_id=${id}`).join('&')}`)
+    ).json()
+    const conProxima = lineas.find((l: { estaciones: { estado: string }[] }) => l.estaciones.some((e) => e.estado === 'proxima'))
+    expect(conProxima, 'datos_demo deja alguna familia con una estación próxima').toBeTruthy()
+    await page.goto(`/familias/${conProxima.familia_id}`)
+    await expect(page.locator('.ficha-acciones .btn-primario')).toBeVisible()
+    const verdes: Record<string, number> = {}
+    for (const pestana of await page.getByRole('tab').allTextContents()) {
+      await page.getByRole('tab', { name: pestana, exact: true }).click()
+      await page.waitForLoadState('networkidle')
+      verdes[pestana] = await page.locator('.btn-primario:visible').count()
+    }
+    expect(Object.entries(verdes).filter(([, n]) => n > 1)).toEqual([])
+  })
+
   test('la foto de una mascota se sube y su URL firmada abre desde el navegador', async ({ page }) => {
     await page.goto('/')
     // `page.request` comparte las cookies de la sesión del navegador.

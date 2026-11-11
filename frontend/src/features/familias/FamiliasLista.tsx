@@ -55,7 +55,9 @@ export function FamiliasLista({ seleccionada }: { seleccionada?: string }) {
           Familias <span className="apagado numero">{familias.data?.total ?? 0}</span>
         </h2>
         {puede(usuario, 'gestionarAfiliacion') && (
-          <button className="btn btn-primario" type="button" onClick={() => setNueva(true)}>
+          // Una sola acción verde llena por vista (manual, sección 11): con una familia abierta,
+          // la principal es la de su próxima estación.
+          <button className={`btn ${seleccionada ? 'btn-suave' : 'btn-primario'}`} type="button" onClick={() => setNueva(true)}>
             <Icono nombre="mas" size={16} />
             Nueva familia
           </button>

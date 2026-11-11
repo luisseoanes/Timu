@@ -119,7 +119,7 @@ export function DatosFamilia({ familia }: { familia: FamiliaRead }) {
           </p>
         )}
         <div className="acciones ancho">
-          <button className="btn btn-primario" type="submit" disabled={actualizar.isPending}>
+          <button className="btn btn-suave" type="submit" disabled={actualizar.isPending}>
             {actualizar.isPending ? 'Guardando…' : 'Guardar cambios'}
           </button>
           <button className="btn btn-plano" type="button" onClick={() => setEditando(false)}>
