@@ -175,7 +175,9 @@ Reglas que mantienen esto vivo:
   recorrido nuevo que dependa de datos los crea `datos_demo`, no la prueba. Ingresan una vez
   por perfil (`e2e-stack/sesiones.setup.ts`, cinco perfiles): login y renovación comparten un
   límite de 10 por minuto y por IP, y una suite que ingresa en cada prueba se bloquea a sí
-  misma. En local, dos ejecuciones seguidas ya lo agotan: espera un minuto entre una y otra.
+  misma. Solo el perfil de equipo ingresa por el formulario, que gasta dos (renovación y
+  ingreso); el resto, por la API. Con el ingreso previo del job suman 7: un perfil nuevo por el
+  formulario cuesta dos. En local, dos ejecuciones seguidas ya lo agotan: espera un minuto.
   El perfil de equipo es `comercial@timu.co`, no el admin: `datos_demo` gasta el cupo de
   120 por minuto del admin justo antes. Por eso Administración se recorre con
   `gerencia@timu.co`, un administrador que `datos_demo` crea solo para los recorridos.
