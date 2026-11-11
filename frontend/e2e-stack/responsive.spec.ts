@@ -183,12 +183,18 @@ async function esperarPantalla(page: Page) {
 
 interface FalloApi { estado: number; ruta: string; espera: number }
 
-/** Anota las respuestas de la API que dejan la pantalla en un error (429 y 5xx). */
-function vigilarApi(page: Page): FalloApi[] {
+/**
+ * Anota las respuestas de la API que dejan la pantalla en un error (429 y 5xx). En una página
+ * pública no cuenta /auth/: sin sesión, el cliente pregunta por ella y la renueva, y esa
+ * renovación comparte el límite del ingreso (10 por minuto y por IP), pero la página se pinta
+ * igual con o sin sesión.
+ */
+function vigilarApi(page: Page, publica: boolean): FalloApi[] {
   const fallos: FalloApi[] = []
   page.on('response', (r) => {
     const estado = r.status()
     if (!r.url().includes('/api/') || (estado !== 429 && estado < 500)) return
+    if (publica && r.url().includes('/api/v1/auth/')) return
     fallos.push({ estado, ruta: new URL(r.url()).pathname, espera: Number(r.headers()['retry-after'] ?? 1) })
   })
   return fallos
@@ -202,7 +208,10 @@ async function cargarConDatos(page: Page, fallos: FalloApi[], cargar: (reintento
     await esperarPantalla(page)
     const limite = fallos.find((f) => f.estado === 429)
     if (!limite) break
-    await page.waitForTimeout(Math.min(Math.max(limite.espera, 1), 60) * 1000 + 500)
+    const espera = Math.min(Math.max(limite.espera, 1), 60) * 1000 + 500
+    // La espera no cuenta contra el tiempo de la prueba: se le suma.
+    test.info().setTimeout(test.info().timeout + espera)
+    await page.waitForTimeout(espera)
   }
   expect(
     fallos.map((f) => `${f.estado} ${f.ruta}`),
@@ -218,7 +227,7 @@ for (const perfil of [null, 'equipo', 'medico', 'admin', 'familia', 'aliada'] as
       test(ruta.app, async ({ page }) => {
         await page.setViewportSize({ width: ANCHOS[ANCHOS.length - 1], height: ALTO })
         const url = typeof ruta.url === 'string' ? ruta.url : await ruta.url(page)
-        const fallosApi = vigilarApi(page)
+        const fallosApi = vigilarApi(page, perfil === null)
         await cargarConDatos(page, fallosApi, async (reintento) => {
           await (reintento ? page.reload() : page.goto(url))
         })
