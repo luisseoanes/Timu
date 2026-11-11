@@ -18,6 +18,11 @@ import { sesion, type Perfil } from './sesiones'
  * no está en el DOM hasta que se elige. La clave de un fallo lleva entonces la pestaña
  * (`familias/:id#Cartera@375:desborde`). Cada pantalla rediseñada la activa al cerrarse.
  *
+ * Una medida solo vale si la pantalla cargó sus datos. Con un 429 (el límite de la API es por
+ * usuario, y el barrido hace muchas peticiones con el mismo) o un 5xx, la pantalla pinta un
+ * error, que no desborda: daría por arreglado lo que no lo está. Ante un 429 se espera lo que
+ * dice Retry-After y se vuelve a cargar; si el error sigue, la prueba falla.
+ *
  * PENDIENTES es la deuda del rediseño: cada entrada es un fallo medido en una ruta y un ancho.
  * La prueba falla si aparece un fallo que no está en la lista y también si una entrada ya no
  * falla, así que la lista solo puede encogerse. Debe quedar vacía en R4-CIE-01.
@@ -176,6 +181,35 @@ async function esperarPantalla(page: Page) {
   await page.evaluate(() => document.fonts.ready)
 }
 
+interface FalloApi { estado: number; ruta: string; espera: number }
+
+/** Anota las respuestas de la API que dejan la pantalla en un error (429 y 5xx). */
+function vigilarApi(page: Page): FalloApi[] {
+  const fallos: FalloApi[] = []
+  page.on('response', (r) => {
+    const estado = r.status()
+    if (!r.url().includes('/api/') || (estado !== 429 && estado < 500)) return
+    fallos.push({ estado, ruta: new URL(r.url()).pathname, espera: Number(r.headers()['retry-after'] ?? 1) })
+  })
+  return fallos
+}
+
+/** Carga (o vuelve a cargar) hasta que la API responde sin límite; falla si no lo consigue. */
+async function cargarConDatos(page: Page, fallos: FalloApi[], cargar: (reintento: boolean) => Promise<void>) {
+  for (let intento = 0; intento < 3; intento++) {
+    fallos.length = 0
+    await cargar(intento > 0)
+    await esperarPantalla(page)
+    const limite = fallos.find((f) => f.estado === 429)
+    if (!limite) break
+    await page.waitForTimeout(Math.min(Math.max(limite.espera, 1), 60) * 1000 + 500)
+  }
+  expect(
+    fallos.map((f) => `${f.estado} ${f.ruta}`),
+    'la API respondió con error: se mediría la pantalla de error, no la de verdad',
+  ).toEqual([])
+}
+
 for (const perfil of [null, 'equipo', 'medico', 'admin', 'familia', 'aliada'] as const) {
   test.describe(perfil ? `responsive y contraste · ${perfil}` : 'responsive y contraste · público', () => {
     test.use({ storageState: perfil ? sesion(perfil) : { cookies: [], origins: [] } })
@@ -184,8 +218,10 @@ for (const perfil of [null, 'equipo', 'medico', 'admin', 'familia', 'aliada'] as
       test(ruta.app, async ({ page }) => {
         await page.setViewportSize({ width: ANCHOS[ANCHOS.length - 1], height: ALTO })
         const url = typeof ruta.url === 'string' ? ruta.url : await ruta.url(page)
-        await page.goto(url)
-        await esperarPantalla(page)
+        const fallosApi = vigilarApi(page)
+        await cargarConDatos(page, fallosApi, async (reintento) => {
+          await (reintento ? page.reload() : page.goto(url))
+        })
         // Si el perfil no puede entrar, ProtectedRoute lo saca: eso mediría otra pantalla.
         expect(new URL(page.url()).pathname, 'la ruta no redirige a otra pantalla').toBe(url.split('?')[0])
 
@@ -195,8 +231,13 @@ for (const perfil of [null, 'equipo', 'medico', 'admin', 'familia', 'aliada'] as
         for (const pestana of pestanas.length > 0 ? pestanas : [null]) {
           if (pestana) {
             await page.setViewportSize({ width: ANCHOS[ANCHOS.length - 1], height: ALTO })
-            await page.getByRole('tab', { name: pestana, exact: true }).click()
-            await esperarPantalla(page)
+            await cargarConDatos(page, fallosApi, async (reintento) => {
+              if (reintento) {
+                await page.reload()
+                await esperarPantalla(page)
+              }
+              await page.getByRole('tab', { name: pestana, exact: true }).click()
+            })
           }
           const vista = pestana ? `${ruta.app}#${pestana}` : ruta.app
           for (const ancho of ANCHOS) {
