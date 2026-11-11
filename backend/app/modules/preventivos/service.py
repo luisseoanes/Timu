@@ -190,6 +190,7 @@ def aplicar(
     lote: str | None,
     usuario_id: UUID,
     servicio_id: UUID | None = None,
+    peso_kg: float | None = None,
 ) -> EventoPreventivo:
     """Registra la aplicacion y recalcula la siguiente fecha a partir de la fecha REAL,
     no de la programada: si la segunda dosis se puso una semana tarde, la tercera corre."""
@@ -203,6 +204,7 @@ def aplicar(
     evento.fecha_aplicacion = fecha
     evento.producto = producto
     evento.lote = lote
+    evento.peso_kg = peso_kg
     evento.aplicado_por_id = usuario_id
     if servicio_id:
         evento.servicio_id = servicio_id
@@ -344,6 +346,7 @@ def _fila_carnet(evento: EventoPreventivo, esquemas: dict[str, str]) -> dict[str
         ),
         "producto": evento.producto,
         "lote": evento.lote,
+        "peso_kg": evento.peso_kg,
         "proxima_fecha": evento.proxima_fecha.isoformat() if evento.proxima_fecha else None,
     }
 
@@ -434,7 +437,10 @@ def verificar_carnet(db: Session, codigo: str) -> dict[str, Any]:
         "sha256": registro.sha256,
         "mascota": {k: mascota.get(k) for k in ("nombre", "especie", "raza")},
         "aplicados": [
-            {k: a.get(k) for k in ("nombre", "dosis", "fecha_aplicacion", "producto", "lote")}
+            {
+                k: a.get(k)
+                for k in ("nombre", "dosis", "fecha_aplicacion", "producto", "lote", "peso_kg")
+            }
             for a in registro.contenido["aplicados"]
         ],
     }

@@ -17,6 +17,7 @@ class EventoPreventivo(Base, UUIDMixin, TimestampMixin, Auditable):
     __checks__ = {
         "dosis_minimo": "dosis_numero >= 1",
         "aplicado_con_fecha": "estado <> 'aplicado' OR fecha_aplicacion IS NOT NULL",
+        "peso_positivo": "peso_kg IS NULL OR peso_kg > 0",
     }
 
     mascota_id: Mapped[UUID] = mapped_column(ForeignKey("mascotas.id"), index=True)
@@ -33,6 +34,9 @@ class EventoPreventivo(Base, UUIDMixin, TimestampMixin, Auditable):
     )
     producto: Mapped[str | None] = mapped_column(String(120))
     lote: Mapped[str | None] = mapped_column(String(60))
+    # 6.8 «Registrar peso cuando sea pertinente» (F2-PRE-07): el de la mascota el dia de la
+    # aplicacion. Va en el carnet junto a cada desparasitacion, como en el carnet impreso.
+    peso_kg: Mapped[float | None] = mapped_column()
     fecha_programada: Mapped[date] = mapped_column(Date, index=True)
     fecha_aplicacion: Mapped[date | None] = mapped_column(Date)
     proxima_fecha: Mapped[date | None] = mapped_column(Date, index=True)

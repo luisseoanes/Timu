@@ -15,6 +15,23 @@ def _fecha(iso: str | None) -> str:
     return f"{date.fromisoformat(iso):%d/%m/%Y}" if iso else "-"
 
 
+def _peso(kg: float | None) -> str:
+    """El peso como lo escribe una persona: «12,5 kg», sin decimales si no los tiene."""
+    if kg is None:
+        return ""
+    return f"{kg:.1f}".rstrip("0").rstrip(".").replace(".", ",") + " kg"
+
+
+def linea_aplicada(fila: dict[str, Any]) -> str:
+    """Una aplicacion del carnet: fecha, que, producto, lote, peso (si se anoto) y proxima."""
+    peso = f"  peso {_peso(fila.get('peso_kg'))}" if fila.get("peso_kg") else ""
+    return (
+        f"{_fecha(fila['fecha_aplicacion'])}  {fila['nombre']} (dosis {fila['dosis']})  "
+        f"{fila.get('producto') or ''} lote {fila.get('lote') or '-'}{peso}  "
+        f"proxima: {_fecha(fila.get('proxima_fecha'))}"
+    )
+
+
 def generar_carnet(datos: dict[str, Any], *, codigo: str, url_verificacion: str) -> bytes:
     mascota = datos["mascota"]
     pdf = FPDF(format="Letter")
@@ -49,11 +66,7 @@ def generar_carnet(datos: dict[str, Any], *, codigo: str, url_verificacion: str)
             return
         for f in filas:
             if aplicado:
-                linea = (
-                    f"{_fecha(f['fecha_aplicacion'])}  {f['nombre']} (dosis {f['dosis']})  "
-                    f"{f.get('producto') or ''} lote {f.get('lote') or '-'}  "
-                    f"proxima: {_fecha(f.get('proxima_fecha'))}"
-                )
+                linea = linea_aplicada(f)
             else:
                 linea = f"{_fecha(f['fecha_programada'])}  {f['nombre']} (dosis {f['dosis']})"
             pdf.multi_cell(0, 5, _texto(linea), new_x="LMARGIN", new_y="NEXT")

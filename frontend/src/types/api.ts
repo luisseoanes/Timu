@@ -418,6 +418,7 @@ export interface EventoRead {
   proxima_fecha: string | null
   producto: string | null
   lote: string | null
+  peso_kg: number | null
   requiere_autorizacion: boolean
   autorizado: boolean
   medio_autorizacion: string | null

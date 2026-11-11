@@ -9,7 +9,7 @@ from sqlalchemy import select
 from app.core.enums import Rol
 from app.core.tiempo import hoy
 from app.modules.comunicaciones.models import Mensaje, PlantillaWhatsApp
-from app.modules.preventivos import service
+from app.modules.preventivos import documento, service
 from app.modules.preventivos.models import EventoPreventivo
 from app.modules.servicios.models import Franja
 from tests import fabricas
@@ -174,11 +174,27 @@ async def test_flujo_http_autorizar_y_aplicar(client: AsyncClient, db, headers):
     assert autorizado.json()["autorizado"] is True
     aplicado = await client.post(
         f"{url}/aplicacion",
-        json={"fecha": str(HOY), "producto": "Rabisin", "lote": "R-77"},
+        json={"fecha": str(HOY), "producto": "Rabisin", "lote": "R-77", "peso_kg": 12.5},
         headers=headers,
     )
     assert aplicado.status_code == 200, aplicado.text
     assert aplicado.json()["proxima_fecha"] == str(HOY + timedelta(days=365))
+    assert aplicado.json()["peso_kg"] == 12.5
+
+
+@pytest.mark.parametrize("peso", [0, -3, 150])
+async def test_un_peso_imposible_no_se_registra(client: AsyncClient, db, headers, peso):
+    _, mascota = await _cachorro(db)
+    evento_id = (await _eventos(db, mascota, "can_desp_interna"))[0].id
+    await db.commit()
+    url = f"/api/v1/preventivos/{evento_id}"
+    await client.post(f"{url}/autorizacion", json={"medio": "whatsapp"}, headers=headers)
+    respuesta = await client.post(
+        f"{url}/aplicacion",
+        json={"fecha": str(HOY), "producto": "Drontal", "peso_kg": peso},
+        headers=headers,
+    )
+    assert respuesta.status_code == 422
 
 
 # --- F2-PRE-04 Agenda -------------------------------------------------------------------------
@@ -262,10 +278,27 @@ async def test_carnet_separa_aplicado_vencido_y_proximo(db, admin):
 
     datos = await db.run_sync(service.carnet, mascota.id, HOY)
     assert [a["nombre"] for a in datos["aplicados"]] == ["Antirrabica canina"]
+    assert datos["aplicados"][0]["peso_kg"] is None
     assert any(v["id"] == str(externa.id) for v in datos["vencidos"])
     assert all(p["fecha_programada"] >= str(HOY) for p in datos["proximos"])
     # Nada programado aparece como aplicado.
     assert all(a["fecha_aplicacion"] for a in datos["aplicados"])
+
+
+async def test_el_carnet_lleva_el_peso_de_cada_desparasitacion(db, admin):
+    _, mascota = await _cachorro(db)
+    interna = (await _eventos(db, mascota, "can_desp_interna"))[0]
+    await _autorizado(db, interna, admin.id)
+    await db.run_sync(
+        lambda s: service.aplicar(
+            s, interna, fecha=HOY, producto="Drontal", lote=None, usuario_id=admin.id, peso_kg=8.4
+        )
+    )
+    (fila,) = (await db.run_sync(service.carnet, mascota.id, HOY))["aplicados"]
+    assert fila["peso_kg"] == 8.4
+    assert "peso 8,4 kg" in documento.linea_aplicada(fila)
+    assert "peso" not in documento.linea_aplicada({**fila, "peso_kg": None})
+    assert "peso 12 kg" in documento.linea_aplicada({**fila, "peso_kg": 12.0})
 
 
 async def test_carnet_pdf_verificable_sin_datos_de_la_familia(
@@ -295,6 +328,8 @@ async def test_carnet_pdf_verificable_sin_datos_de_la_familia(
     assert publico.status_code == 200
     cuerpo = publico.text
     assert publico.json()["aplicados"][0]["lote"] == "R1"
+    # El peso es de la mascota: lo ve el tercero que verifica (aqui no se anoto).
+    assert publico.json()["aplicados"][0]["peso_kg"] is None
     assert titular not in cuerpo and documento not in cuerpo
     assert (await client.get("/api/v1/verificacion/carnets/NOEXISTE00")).status_code == 404
 

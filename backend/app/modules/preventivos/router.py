@@ -46,6 +46,7 @@ class EventoRead(BaseModel):
     proxima_fecha: date | None
     producto: str | None
     lote: str | None
+    peso_kg: float | None
     requiere_autorizacion: bool
     autorizado: bool
     medio_autorizacion: str | None
@@ -63,6 +64,7 @@ class AplicacionIn(BaseModel):
     fecha: date
     producto: str = Field(min_length=2, max_length=120)
     lote: str | None = Field(default=None, max_length=60)
+    peso_kg: float | None = Field(default=None, gt=0, lt=150)
     servicio_id: UUID | None = None
 
 
@@ -142,6 +144,7 @@ async def aplicar(
             fecha=data.fecha,
             producto=data.producto,
             lote=data.lote,
+            peso_kg=data.peso_kg,
             usuario_id=usuario.id,
             servicio_id=data.servicio_id,
         )
