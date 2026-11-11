@@ -204,9 +204,11 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
     display: flex; justify-content: space-between; align-items: baseline; gap: var(--e3);
     padding: var(--e1) 0; border: 0; text-align: right; overflow-wrap: anywhere;
   }
+  /* La misma voz que la cabecera de su columna y que los datos de una ficha. */
   .tabla-apilable td::before {
     content: attr(data-etiqueta); flex: none; max-width: 45%;
-    color: var(--texto-suave); font-size: var(--t-menor); font-weight: 400; text-align: left;
+    color: var(--texto-suave); font-size: var(--t-etiqueta); font-weight: 700;
+    letter-spacing: .09em; text-transform: uppercase; text-align: left;
   }
   .tabla-apilable td:first-child { padding-bottom: var(--e2); color: var(--texto-titulo); font-weight: 700; text-align: left; }
   .tabla-apilable td:first-child::before, .tabla-apilable .tabla-acciones::before { content: none; }
