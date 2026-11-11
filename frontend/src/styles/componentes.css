@@ -131,10 +131,12 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
   background: var(--accion-suave-fondo);
   color: var(--accion-suave-texto);
 }
-.fila-cuerpo { flex: 1; min-width: 0; }
+.fila-cuerpo { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .fila-cuerpo strong { display: block; color: var(--texto-titulo); font-size: var(--t-cuerpo); }
 .fila-cuerpo span { display: block; font-size: var(--t-menor); color: var(--texto-suave); }
-.fila-lado { text-align: right; font-size: var(--t-menor); color: var(--texto-suave); white-space: nowrap; }
+/* La fecha se parte en dos líneas antes de apretar el texto de la fila: en una columna
+   estrecha, sin tope, la fila le daba todo su ancho y el texto se montaba encima. */
+.fila-lado { flex: 0 1 auto; max-width: 40%; text-wrap: balance; text-align: right; font-size: var(--t-menor); color: var(--texto-suave); }
 
 /* --- Accesos rápidos ------------------------------------------- */
 .accesos { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--e3); }

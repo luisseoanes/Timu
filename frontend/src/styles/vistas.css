@@ -68,6 +68,8 @@
 /* Dashboard: contenido principal + columna de widgets */
 .con-rail { display: grid; grid-template-columns: minmax(0, 1fr) var(--ancho-rail); gap: var(--e4); }
 .rail { display: grid; gap: var(--e4); align-content: start; }
+/* Como en .contenido: una tarjeta de la rejilla no puede ser más ancha que su columna. */
+.con-rail > *, .rail > * { min-width: 0; }
 .dos-columnas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e4); }
 
 /* Saludo con figura, equivalente al bloque de bienvenida de la referencia */
