@@ -116,26 +116,24 @@ mostrador). Lo que resuelve y lo que deja abierto:
   integrarlas; hasta entonces, el panel muestra el nombre «TIMU» en texto.
 - **GeosansLight: recibido el archivo, falta la licencia.** Llegan la regular y la oblicua
   (Manfred Klein, 2004), con todos los caracteres del español. El archivo no declara
-  licencia: TIMU tiene que confirmar que puede usarse en la web antes de servirla. Hasta
-  entonces, todo va en Inter.
+  licencia: TIMU tiene que confirmar que puede usarse en la web antes de servirla. Decidido
+  con TIMU el 2026-11-11: mientras tanto, todo sigue en Inter.
 - **Minimal, la tipografía del logotipo, no sirve para la interfaz:** su ficha dice
   «Copyright info pending», solo permite incrustarla para vista e impresión y le faltan ¿, ¡
   y €. No hace falta: el logo va en vector.
-- **Los colores del texto del manual de 2021 no coinciden con su propio logo.** El texto da
-  un azul petróleo (RGB 0, 128, 155) y un naranja claro (RGB 244, 172, 100); el logo en
-  vector, sus variantes, los patrones y todas las piezas usan los de la plataforma (azul
-  `#477194`, naranja `#D48100`). TIMU tiene que confirmar que valen los del logo. El naranja
-  de la plataforma (`#D68A11`) se desvía un poco del vector y se ajustaría a `#D48100`.
-- **Servicios fúnebres.** El plegable y el pendón venden «salud y servicios fúnebres», y el
-  servicio fúnebre es beneficio de los tres planes. No está en el documento de
-  requerimientos ni en el catálogo de la plataforma: TIMU tiene que decir si la plataforma
-  lo gestiona.
-- **Fotografías.** Las piezas usan fotos de perros y gatos recortados que parecen de banco de
-  imágenes. Para las páginas públicas hacen falta los originales y la confirmación de que
-  TIMU tiene derechos de uso.
+- **Colores: resuelto.** El texto del manual de 2021 da un azul petróleo y un naranja claro
+  que no usa ni su propio logo ni ninguna pieza. TIMU confirmó el 2026-11-11 que valen los
+  del logo, los de la plataforma. El naranja se ajustó al de las exportaciones del logo
+  para pantalla (`#D48200`, antes `#D68A11`).
+- **Servicios fúnebres: no se gestionan.** El plegable y el pendón venden «salud y servicios
+  fúnebres», y el servicio fúnebre es beneficio de los tres planes, pero no está en el
+  documento de requerimientos. Decidido con TIMU el 2026-11-11: de momento la plataforma se
+  queda en los requerimientos.
+- **Fotografías: son de TIMU.** TIMU confirmó el 2026-11-11 que las fotos de perros y gatos
+  de las piezas son propias. Para las páginas públicas conviene pedir los originales en alta
+  resolución; las de las piezas vienen recortadas e incrustadas en los PDF.
 - **Recursos gráficos para la portada pública (index).** Los patrones, las fotos y el
-  contenido del plegable son ese material; la portada se construye cuando TIMU confirme los
-  dos puntos anteriores. El resto de páginas públicas no la esperan ([hoja de ruta del
+  contenido del plegable son ese material; la portada se construye con ellos. El resto de páginas públicas no la esperan ([hoja de ruta del
   rediseño](hoja-de-ruta-rediseno.md#fuera-de-alcance)).
 
 ## Web pública (timu.com.co) frente al manual de marca
@@ -157,4 +155,5 @@ plataforma sigue el manual y toma planes, precios y coberturas del catálogo de 
   y condiciones», pero la web no publica ningún documento de términos.
 - **El plegable 2026 resuelve parte de lo anterior:** la hospitalización de Mi Amigo Fiel es
   al 40 % (al 80 % en Amigos por Siempre) y las consultas son «al mes» (una en Mi Amigo Fiel,
-  dos en Amigos por Siempre). No trae precios, así que los precios siguen sin confirmar.
+  dos en Amigos por Siempre). No trae precios: los precios siguen sin confirmar, aplazado por
+  TIMU el 2026-11-11.
