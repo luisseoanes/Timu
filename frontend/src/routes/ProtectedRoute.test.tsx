@@ -1,6 +1,6 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { http, HttpResponse } from 'msw'
+import { delay, http, HttpResponse } from 'msw'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Route, Routes } from 'react-router-dom'
 
@@ -23,6 +23,17 @@ describe('ProtectedRoute', () => {
     server.use(sinSesion)
     renderizar(arbol())
     await waitFor(() => expect(screen.getByText('pantalla de ingreso')).toBeInTheDocument())
+  })
+
+  it('mientras comprueba la sesión muestra la marca y lo anuncia, sin la barra de ningún espacio', async () => {
+    server.use(http.get('*/api/v1/auth/me', async () => {
+      await delay('infinite')
+      return HttpResponse.json(USUARIO_ADMIN)
+    }))
+    renderizar(arbol())
+    expect(screen.getByRole('status')).toHaveTextContent('Comprobando tu sesión…')
+    expect(screen.getByText('TIMU')).toBeInTheDocument()
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
   })
 
   it('deja pasar a un usuario con sesión', async () => {
@@ -52,6 +63,7 @@ describe('ProtectedRoute', () => {
       renderizar(arbol())
       await vi.advanceTimersByTimeAsync(14000)
       expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos comprobar tu sesión')
+      expect(screen.getByRole('heading', { level: 1, name: 'No pudimos comprobar tu sesión' })).toBeInTheDocument()
       expect(screen.queryByText('pantalla de ingreso')).not.toBeInTheDocument()
 
       caido = false

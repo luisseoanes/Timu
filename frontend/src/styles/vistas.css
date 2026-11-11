@@ -200,6 +200,21 @@
 .marca-clara .marca-nombre { color: var(--texto-sobre-marca); }
 .marca-clara .marca-sub { color: var(--texto-sobre-marca-suave); }
 
+/* Comprobación de la sesión (ProtectedRoute): la marca y el estado, centrados en el lienzo. */
+.espera-sesion {
+  min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: var(--e6);
+  padding: var(--e6) var(--e4); background: var(--superficie-lienzo); text-align: center;
+}
+.espera-sesion-esqueleto { width: min(320px, 80vw); }
+.espera-sesion-aviso {
+  display: grid; justify-items: center; gap: var(--e3); max-width: 420px;
+  padding: var(--e6); background: var(--superficie); border-radius: var(--r-panel);
+  color: var(--texto);
+}
+.espera-sesion-aviso svg { color: var(--texto-error); }
+.espera-sesion-aviso h1 { font-size: var(--t-seccion); }
+.espera-sesion-aviso .btn { margin-top: var(--e2); }
+
 .ingreso-mensaje { display: grid; gap: var(--e5); max-width: 520px; margin-top: auto; }
 .ingreso-kicker {
   display: inline-flex; align-items: center; gap: var(--e2);
