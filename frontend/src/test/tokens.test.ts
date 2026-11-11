@@ -284,6 +284,23 @@ describe('guarda de tokens', () => {
     expect(cortos, 'cambia el paso de la paleta al que apunta el rol (manual, sección 9)').toEqual([])
   })
 
+  it('todo z-index sale de la escala de capas de tokens.css', () => {
+    // Un número suelto pinta una estación o una barra por encima de una ventana abierta.
+    const sueltos = fuentes
+      .filter(({ fichero }) => fichero !== TOKENS)
+      .flatMap(({ fichero, texto }) =>
+        [...texto.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/(?:z-index\s*:|zIndex\s*:)\s*([^;,}\n]+)/g)]
+          .map((m) => m[1].trim())
+          .filter((valor) => !/^['"]?var\(--capa-[a-z-]+\)['"]?$/.test(valor))
+          .map((valor) => `${fichero}: z-index ${valor}`),
+      )
+    expect(sueltos, 'usa una capa de tokens.css (--capa-…)').toEqual([])
+    const capa = (nombre: string) => Number(valores.get(nombre))
+    expect(capa('--capa-velo'), 'la ventana tapa las barras').toBeGreaterThan(capa('--capa-barra'))
+    expect(capa('--capa-ventana')).toBeGreaterThan(capa('--capa-velo'))
+    expect(capa('--capa-menu'), 'un menú abierto desde una ventana se ve').toBeGreaterThan(capa('--capa-ventana'))
+  })
+
   it('todo rol de texto, borde de control, foco, indicador o serie tiene un par declarado', () => {
     const conPar = new Set(pares.map((p) => p.texto))
     const roles = [...valores.keys()].filter((v) => ROL_CON_PAR.test(v))

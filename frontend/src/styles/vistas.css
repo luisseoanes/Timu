@@ -7,7 +7,7 @@
 .shell { min-height: 100vh; display: grid; grid-template-rows: auto 1fr; }
 
 .barra-marca {
-  position: sticky; top: 0; z-index: 10;
+  position: sticky; top: 0; z-index: var(--capa-barra);
   height: 64px;
   display: flex; align-items: center; gap: var(--e6);
   padding-inline: var(--e6);
@@ -58,7 +58,7 @@
 
 /* Menús desplegables (Radix DropdownMenu): «Más» y la cuenta. */
 .menu {
-  z-index: 20;
+  z-index: var(--capa-menu);
   min-width: 220px;
   padding: var(--e1);
   background: var(--superficie);
@@ -95,7 +95,7 @@
 
 /* ================= Barra inferior (pantallas estrechas) ================= */
 .barra-inferior {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--capa-barra);
   display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--superficie);
@@ -334,14 +334,14 @@
 /* ================= Portal de familias ================= */
 .portal { min-height: 100vh; background: var(--superficie-lienzo); padding-bottom: 84px; }
 .portal-cabeza {
-  position: sticky; top: 0; z-index: 5;
+  position: sticky; top: 0; z-index: var(--capa-barra);
   display: flex; align-items: center; justify-content: space-between; gap: var(--e4);
   padding: var(--e3) var(--e5);
   background: var(--superficie);
   box-shadow: var(--sombra-1);
 }
 .portal-nav {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--capa-barra);
   display: grid; grid-template-columns: repeat(5, 1fr);
   background: var(--superficie);
   border-top: 1px solid var(--borde);
@@ -462,7 +462,7 @@
 }
 .parada { position: relative; flex: 1 1 0; min-width: 0; display: grid; justify-items: center; gap: var(--e2); }
 .parada-punto {
-  position: relative; z-index: 1;
+  position: relative; z-index: var(--capa-elevada);
   width: 24px; height: 24px; padding: 0;
   display: grid; place-items: center;
   border-radius: var(--r-pastilla);
@@ -486,10 +486,10 @@
 .parada:focus-within .parada-etiqueta { opacity: 1; }
 .parada[data-estado="vencida"] .parada-etiqueta strong { color: var(--texto-error); }
 
-.linea-hoy { position: relative; z-index: 1; flex: 0 0 auto; display: grid; justify-items: center; gap: var(--e1); padding-inline: var(--e2); }
+.linea-hoy { position: relative; z-index: var(--capa-elevada); flex: 0 0 auto; display: grid; justify-items: center; gap: var(--e1); padding-inline: var(--e2); }
 .linea-hoy-marca { width: 4px; height: 24px; border-radius: 2px; background: var(--texto-titulo); }
 .linea-hoy-texto { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--texto-titulo); }
-.linea-tramo { position: relative; z-index: 1; flex: 0 0 auto; padding-inline: var(--e2); }
+.linea-tramo { position: relative; z-index: var(--capa-elevada); flex: 0 0 auto; padding-inline: var(--e2); }
 .linea-tramo-boton {
   min-height: 24px; padding: 0 var(--e3);
   border: 1px solid var(--borde-control); border-radius: var(--r-pastilla);

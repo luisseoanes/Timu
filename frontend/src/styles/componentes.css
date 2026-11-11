@@ -219,11 +219,13 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 .velo {
   position: fixed;
   inset: 0;
+  z-index: var(--capa-velo);
   background: var(--velo);
 }
 
 .modal {
   position: fixed;
+  z-index: var(--capa-ventana);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);

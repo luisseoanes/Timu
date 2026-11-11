@@ -177,6 +177,14 @@
   --sombra-2: none;
   --sombra-3: 0 12px 32px rgb(17 21 55 / 16%);
 
+  /* --- Capas: todo z-index sale de aquí. La ventana va por encima de las barras, y lo que
+     se abre desde ella (un menú) por encima de la ventana. */
+  --capa-elevada: 1;    /* algo que pisa a sus vecinos, como una estación sobre su línea */
+  --capa-barra: 10;     /* barras fijas: la marina, la inferior y las del portal */
+  --capa-velo: 30;
+  --capa-ventana: 31;
+  --capa-menu: 40;
+
   /* --- Movimiento: corto y solo para cambios de estado ----------- */
   --duracion: 160ms;
   --curva: cubic-bezier(0.2, 0, 0, 1);

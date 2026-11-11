@@ -25,6 +25,33 @@ test.describe('equipo', () => {
     expect(await page.evaluate(() => window.localStorage.length)).toBe(0)
   })
 
+  test('una ventana abierta queda por encima de la línea y de las barras', async ({ page }) => {
+    // En el celular la ficha de una mascota es una hoja que sube desde abajo sobre la línea.
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    const familias = await (await page.request.get('/api/v1/familias', { params: { q: 'Ana Ruiz' } })).json()
+    await page.goto(`/familias/${familias.items[0].id}`)
+    await expect(page.locator('.parada-punto').first()).toBeVisible()
+    await page.getByRole('tab', { name: 'Mascotas' }).click()
+    await page.getByRole('button', { name: 'Ficha' }).first().click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+    const encima = await page.evaluate(() => {
+      // Radix quita los eventos de puntero a todo lo que queda fuera de la ventana, y
+      // elementFromPoint se los salta: se devuelven mientras se mide el orden de pintado.
+      const antes = document.body.style.pointerEvents
+      document.body.style.pointerEvents = 'auto'
+      const tapan = [...document.querySelectorAll('.parada-punto, .linea-hoy, .barra-marca, .barra-inferior')].flatMap((e) => {
+        const r = e.getBoundingClientRect()
+        const [x, y] = [r.left + r.width / 2, r.top + r.height / 2]
+        if (r.width === 0 || y < 0 || y > window.innerHeight) return []
+        return document.elementFromPoint(x, y)?.closest('[role="dialog"], .velo') ? [] : [e.className]
+      })
+      document.body.style.pointerEvents = antes
+      return tapan
+    })
+    expect(encima, 'elementos pintados sobre la ventana').toEqual([])
+  })
+
   test('la foto de una mascota se sube y su URL firmada abre desde el navegador', async ({ page }) => {
     await page.goto('/')
     // `page.request` comparte las cookies de la sesión del navegador.
