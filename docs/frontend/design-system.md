@@ -24,10 +24,14 @@ llega a su mínimo o si un rol de texto o de control no tiene ningún par declar
 
 ## Tipografía
 
-Una sola familia, **Inter** (`--fuente`), servida desde el propio proyecto
-(`@fontsource-variable/inter`, importada en `main.tsx`): no hay petición a Google Fonts. Es la
-que fija el [manual de marca](../manual-de-marca.md#12-tipografía-en-la-plataforma);
-GeosansLight se reserva para títulos de 20 px o más cuando TIMU entregue el archivo.
+Dos familias, servidas desde el propio proyecto (no hay petición a Google Fonts), como fija
+el [manual de marca](../manual-de-marca.md#12-tipografía-en-la-plataforma):
+
+- **Inter** (`--fuente`, `@fontsource-variable/inter` importada en `main.tsx`) para toda la
+  interfaz.
+- **GeosansLight** (`--fuente-titulos`, `@font-face` en `base.css` sobre
+  `src/assets/fuentes/geosans-light.woff2`) solo en `h1` y `h2`, que miden 20 px o más. Un
+  título que se reduce por debajo vuelve a Inter.
 
 La escala es fija en `rem`: una interfaz de trabajo no escala el tipo con la ventana.
 

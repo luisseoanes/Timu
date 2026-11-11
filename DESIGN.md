@@ -55,9 +55,9 @@ colors:
   serie-4: "#111537"
 typography:
   display:
-    fontFamily: "Inter Variable, Inter, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontFamily: "GeosansLight, Inter Variable, Inter, system-ui, sans-serif"
     fontSize: "2.125rem"
-    fontWeight: 600
+    fontWeight: 400
     lineHeight: 1.2
     letterSpacing: "-0.01em"
   cifra:
@@ -67,9 +67,9 @@ typography:
     lineHeight: 1.2
     fontFeature: "tnum"
   headline:
-    fontFamily: "Inter Variable, Inter, system-ui, -apple-system, Segoe UI, sans-serif"
+    fontFamily: "GeosansLight, Inter Variable, Inter, system-ui, sans-serif"
     fontSize: "1.25rem"
-    fontWeight: 600
+    fontWeight: 400
     lineHeight: 1.2
   title:
     fontFamily: "Inter Variable, Inter, system-ui, -apple-system, Segoe UI, sans-serif"
@@ -247,7 +247,7 @@ cada fila del listado.
 
 Solo hay tema claro, por decisión de producto (`color-scheme: light`). El logo es el SVG del
 vector de TIMU (`MarcaTimu`): completo con su lema, o compacto donde el lema no se leería.
-GeosansLight para títulos grandes espera la licencia web; mientras tanto todo es Inter.
+Los títulos de 20 px o más van en GeosansLight y todo lo demás en Inter.
 
 **Key Characteristics:**
 - Barra de marca marina de 64 px; módulo activo con un subrayado verde de 4 px.
@@ -325,18 +325,22 @@ miniatura.
 
 ## Typography
 
-**Display Font:** Inter Variable (con Inter, system-ui, -apple-system, Segoe UI)
-**Body Font:** Inter Variable (misma pila)
+**Display Font:** GeosansLight (`--fuente-titulos`, con Inter de respaldo), solo en títulos de
+20 px o más
+**Body Font:** Inter Variable (con Inter, system-ui, -apple-system, Segoe UI)
 
-**Character:** Una sola familia, servida desde el proyecto (`@fontsource-variable/inter`), con
-la jerarquía hecha de tamaño y peso 600/700 y nada más. Cuando TIMU entregue GeosansLight con
-licencia web, entra solo en títulos de 20 px o más (sección 12 del manual).
+**Character:** Dos familias servidas desde el proyecto: GeosansLight, la complementaria del
+manual, en los títulos de 20 px o más (`h1` y `h2`), en su único peso, fino, sin negrita
+sintetizada; e Inter (`@fontsource-variable/inter`) en todo lo demás, con la jerarquía hecha
+de tamaño y peso 600/700. Un `h1` o `h2` que se reduce por debajo de 20 px vuelve a Inter.
+Las cifras siguen en Inter por sus números tabulares (sección 12 del manual).
 
 ### Hierarchy
-- **Display** (600, `--t-display` 2.125rem / 34 px, 1.2, −0.01em en la ficha): el nombre de la
-  familia abierta, el saludo y el ingreso. Uno por pantalla.
+- **Display** (GeosansLight 400, `--t-display` 2.125rem / 34 px, 1.2, −0.01em en la ficha): el
+  nombre de la familia abierta, el saludo y el ingreso. Uno por pantalla.
 - **Cifra** (600, `--t-cifra` 1.5rem / 24 px): cifras destacadas de indicadores.
-- **Headline** (600, `--t-titulo` 1.25rem / 20 px, 1.2): título de página (`cabecera-pagina`).
+- **Headline** (GeosansLight 400, `--t-titulo` 1.25rem / 20 px, 1.2): título de página
+  (`cabecera-pagina`).
 - **Title** (600, `--t-seccion` 1rem / 16 px, 1.2): encabezado de bloque, título de ventana,
   cabecera del listado.
 - **Body** (400, `--t-cuerpo` 0.875rem / 14 px, 1.55): texto de la interfaz, botones, celdas.

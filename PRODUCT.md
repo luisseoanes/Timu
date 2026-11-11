@@ -84,8 +84,7 @@ como seguro (manual de marca, sección Voz).
   remisión, aliada, ruta.
 - Estados que la interfaz debe distinguir: afiliación (prospecto, activa, en mora, congelada,
   cancelada) y servicio (máquina de estados del requisito 6.10).
-- **Por decidir (TIMU)**: licencia web de GeosansLight (el archivo ya llegó); precios y
-  términos y condiciones publicables de cada plan.
+- **Por decidir (TIMU)**: precios y términos y condiciones publicables de cada plan.
 
 ## Brand Commitments
 
@@ -97,8 +96,7 @@ Vinculantes por decisión del usuario:
 - Paleta: los cuatro colores del logo (verde `#98B833`, naranja `#D48200`, azul `#477095`,
   marino `#111537`) con sus tintes, más los tonos auxiliares definidos en el manual del
   repositorio. Acción principal: verde con texto marino.
-- Tipografía: GeosansLight solo para títulos grandes, cuando TIMU entregue el archivo y la
-  licencia; Inter para todo lo demás.
+- Tipografía: GeosansLight en los títulos de 20 px o más; Inter para todo lo demás.
 - Logo: no se modifica ni se recolorea. Es el SVG del vector de TIMU, completo o compacto.
 - Voz con dos registros: cercano y juguetón (bienvenida, recordatorios, portal) y experto y
   preciso (salud, urgencias, condiciones del plan). Se tutea a la familia.

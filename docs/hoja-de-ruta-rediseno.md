@@ -13,7 +13,7 @@ Documentos que manda este trabajo:
 - `DESIGN.md`: el sistema de interfaz. Lo escribe la skill al cerrar la primera superficie
   (`R2-PAN-03`), a partir de lo construido.
 - [Pendientes externos](pendientes-externos.md#marca-e-identidad-manual-de-marca): lo que tiene
-  que falta de TIMU (la licencia web de GeosansLight, los precios).
+  que falta de TIMU (los precios, los originales de las fotos).
 
 Los IDs siguen el patrón `fase-módulo-consecutivo` del [backlog](backlog.md), con fases `R0` a
 `R4` para no confundirlas con las del backend.
@@ -184,8 +184,8 @@ Confirmadas por el usuario el 2026-11-10:
   texto rompe las que lo buscan literalmente. Se ajustan en la misma unidad.
 - **El sorteo necesita red.** La telemetría está apagada, pero los sorteos consultan el
   catálogo de direcciones de impeccable.style.
-- **Falta la licencia web de GeosansLight.** El logo en vector ya llegó y está integrado;
-  la fuente llegó, pero hasta que TIMU confirme su licencia todo va en Inter.
+- **Las entregas de marca de TIMU ya están aplicadas.** El logo en vector y GeosansLight
+  (títulos de 20 px o más) están integrados.
 - **El recorrido de `e2e-stack/` solo corre en CI al empujar a `main`.** En local hay que
   correrlo con el stack y `datos_demo` antes de empujar.
 

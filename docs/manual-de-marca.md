@@ -395,9 +395,10 @@ como serie, para que no se lea como alarma.
 
 - **Inter** para toda la interfaz: texto, controles, tablas y cifras (con números tabulares
   donde se comparan en columna). Es la sustituta que usa el propio manual.
-- **GeosansLight** solo para títulos de 20 px o más, cuando TIMU entregue el archivo y la
-  licencia web. Tiene un único peso y trazo fino, así que no se usa en texto corrido, tablas
-  ni botones de la plataforma, aunque el manual lo permita en piezas impresas.
+- **GeosansLight** solo para títulos de 20 px o más (`--fuente-titulos`, en `h1` y `h2`),
+  servida desde el proyecto (TIMU confirmó la licencia el 2026-11-11). Tiene un único peso y
+  trazo fino, así que no se usa en texto corrido, tablas ni botones de la plataforma, aunque
+  el manual lo permita en piezas impresas, y nunca con negrita sintetizada.
 - La escala de la Parte I (en puntos) es para piezas impresas y PDF. La escala de la interfaz,
   en píxeles, la define `DESIGN.md`.
 

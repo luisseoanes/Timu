@@ -1,5 +1,15 @@
 /* Base: reinicio corto, tipografía y utilidades de texto. */
 
+/* GeosansLight, la tipografía complementaria del manual, servida desde el proyecto como Inter.
+   Solo tiene la versión regular (fina): nada de negrita sintetizada. */
+@font-face {
+  font-family: "GeosansLight";
+  src: url("../assets/fuentes/geosans-light.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
@@ -20,6 +30,9 @@ h1, h2, h3, h4 {
   line-height: 1.2;
   text-wrap: balance;
 }
+/* Los títulos de 20 px o más van en GeosansLight, en su único peso; uno que se reduzca por
+   debajo de 20 px vuelve a Inter (ver vistas.css). */
+h1, h2 { font-family: var(--fuente-titulos); font-weight: 400; font-synthesis: none; }
 h1 { font-size: var(--t-display); }
 h2 { font-size: var(--t-titulo); }
 h3 { font-size: var(--t-seccion); }

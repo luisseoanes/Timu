@@ -114,10 +114,10 @@ mostrador). Lo que resuelve y lo que deja abierto:
   versiones (con las siluetas bajo el lema, con perro y gato, y con animales grandes). La
   plataforma usa la primera, completa o compacta, a color o en blanco
   (`frontend/src/assets/marca/`).
-- **GeosansLight: recibido el archivo, falta la licencia.** Llegan la regular y la oblicua
-  (Manfred Klein, 2004), con todos los caracteres del español. El archivo no declara
-  licencia: TIMU tiene que confirmar que puede usarse en la web antes de servirla. Decidido
-  con TIMU el 2026-11-11: mientras tanto, todo sigue en Inter.
+- **GeosansLight: recibida y en uso.** Llegan la regular y la oblicua (Manfred Klein, 2004),
+  con todos los caracteres del español. El archivo no declara licencia; TIMU confirmó el
+  2026-11-11 que la tiene. La plataforma la sirve desde el proyecto en los títulos de 20 px o
+  más (manual, sección 12).
 - **Minimal, la tipografía del logotipo, no sirve para la interfaz:** su ficha dice
   «Copyright info pending», solo permite incrustarla para vista e impresión y le faltan ¿, ¡
   y €. No hace falta: el logo va en vector.

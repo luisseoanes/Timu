@@ -151,6 +151,8 @@
   /* Inter servida desde el proyecto (@fontsource-variable/inter en main.tsx). Manual,
      sección 12. Escala fija en rem: una interfaz de trabajo no escala el tipo con la ventana. */
   --fuente: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* GeosansLight (manual, sección 12): solo títulos de 20 px o más. Un único peso, fino. */
+  --fuente-titulos: "GeosansLight", var(--fuente);
 
   --t-display:  2.125rem;  /* 34 px: nombre de la familia abierta, saludo, ingreso */
   --t-cifra:    1.5rem;    /* 24 px: cifras destacadas de indicadores y métricas */
