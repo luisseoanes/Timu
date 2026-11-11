@@ -130,8 +130,9 @@ mostrador). Lo que resuelve y lo que deja abierto:
   documento de requerimientos. Decidido con TIMU el 2026-11-11: de momento la plataforma se
   queda en los requerimientos.
 - **Fotografías: son de TIMU.** TIMU confirmó el 2026-11-11 que las fotos de perros y gatos
-  de las piezas son propias. Para las páginas públicas conviene pedir los originales en alta
-  resolución; las de las piezas vienen recortadas e incrustadas en los PDF.
+  de las piezas son propias y que puede usarse cualquiera del banco de fotos que compartió.
+  Para las páginas públicas faltan los originales en alta resolución; las de las piezas
+  vienen recortadas e incrustadas en los PDF.
 - **Recursos gráficos para la portada pública (index).** Los patrones, las fotos y el
   contenido del plegable son ese material; la portada se construye con ellos. El resto de páginas públicas no la esperan ([hoja de ruta del
   rediseño](hoja-de-ruta-rediseno.md#fuera-de-alcance)).
