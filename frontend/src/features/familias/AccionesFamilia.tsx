@@ -1,5 +1,7 @@
+import * as Menu from '@radix-ui/react-dropdown-menu'
 import { useState } from 'react'
 
+import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { mensajeError } from '@/lib/errores'
 import type { EstadoAfiliacion, FamiliaRead } from '@/types'
@@ -21,21 +23,32 @@ export function AccionesFamilia({ familia }: { familia: FamiliaRead }) {
   const dadaDeBaja = Boolean(familia.dada_de_baja_en)
 
   return (
-    <div className="acciones" style={{ marginLeft: 'auto' }}>
+    <>
       {!familia.usuario_portal_id && !dadaDeBaja && (
         <button className="btn btn-suave" type="button" disabled={portal.isPending} onClick={() => portal.mutate()}>
           {portal.isPending ? 'Habilitando…' : 'Habilitar portal'}
         </button>
       )}
+      {/* Cambiar el estado y dar de baja son raros y uno es destructivo: van en un menú, no
+          junto a la acción principal. */}
       {!dadaDeBaja && (
-        <>
-          <button className="btn btn-suave" type="button" onClick={() => setModal('estado')}>
-            Cambiar estado
-          </button>
-          <button className="btn btn-plano" type="button" onClick={() => setModal('baja')}>
-            Dar de baja
-          </button>
-        </>
+        <Menu.Root modal={false}>
+          <Menu.Trigger className="btn btn-suave">
+            Gestionar afiliación
+            <Icono nombre="abajo" size={16} />
+          </Menu.Trigger>
+          <Menu.Portal>
+            <Menu.Content className="menu" align="start" sideOffset={6}>
+              <Menu.Item className="menu-item" onSelect={() => setModal('estado')}>
+                Cambiar estado
+              </Menu.Item>
+              <Menu.Separator className="menu-separador" />
+              <Menu.Item className="menu-item menu-item-peligro" onSelect={() => setModal('baja')}>
+                Dar de baja
+              </Menu.Item>
+            </Menu.Content>
+          </Menu.Portal>
+        </Menu.Root>
       )}
       {portal.isError && (
         <p className="error" role="alert">
@@ -49,7 +62,7 @@ export function AccionesFamilia({ familia }: { familia: FamiliaRead }) {
       )}
       <CambiarEstadoModal familia={familia} abierto={modal === 'estado'} onCerrar={() => setModal(null)} />
       <BajaModal familia={familia} abierto={modal === 'baja'} onCerrar={() => setModal(null)} />
-    </div>
+    </>
   )
 }
 

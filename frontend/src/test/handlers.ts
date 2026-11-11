@@ -131,6 +131,9 @@ export const handlers = [
       new URL(request.url).searchParams.getAll('familia_id').map((familia_id) => ({ familia_id, planes: [], estaciones: [] })),
     ),
   ),
+  http.get(`${API}/familias/:id/linea`, ({ params }) =>
+    HttpResponse.json({ familia_id: params.id, planes: [], estaciones: [] }),
+  ),
   // Sin contrato por defecto; las pruebas de cartera lo reemplazan.
   http.get(`${API}/cartera/familias/:id/estado-cuenta`, () =>
     HttpResponse.json({ detail: 'La familia no tiene contrato' }, { status: 404 }),

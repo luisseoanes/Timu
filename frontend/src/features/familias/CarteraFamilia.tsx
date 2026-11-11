@@ -194,17 +194,22 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
   )
 }
 
-function RegistrarPagoModal({
+/** Pago recibido fuera de la pasarela. Con `cuotaId` (desde una estación de la línea) llega con
+ * la cuota elegida y su saldo como valor. */
+export function RegistrarPagoModal({
   familiaId,
   cuotas,
+  cuotaId,
   abierto,
   onCerrar,
 }: {
   familiaId: string
   cuotas: CuotaRead[]
+  cuotaId?: string
   abierto: boolean
   onCerrar: () => void
 }) {
+  const elegida = cuotas.find((q) => q.id === cuotaId)
   const registrar = useRegistrarPago()
 
   function guardar(e: React.FormEvent<HTMLFormElement>) {
@@ -244,7 +249,16 @@ function RegistrarPagoModal({
       <form id="registrar-pago" className="formulario" onSubmit={guardar}>
         <label className="campo">
           <span>Valor (COP)</span>
-          <input className="input" name="valor" type="number" min="1" step="1" required inputMode="numeric" />
+          <input
+            className="input"
+            name="valor"
+            type="number"
+            min="1"
+            step="1"
+            required
+            inputMode="numeric"
+            defaultValue={elegida ? Number(elegida.valor) - Number(elegida.valor_pagado) : undefined}
+          />
         </label>
         <label className="campo">
           <span>Medio</span>
@@ -260,7 +274,7 @@ function RegistrarPagoModal({
         </label>
         <label className="campo">
           <span>Cuota</span>
-          <select className="input" name="cuota_id" defaultValue="">
+          <select className="input" name="cuota_id" defaultValue={elegida?.id ?? ''}>
             <option value="">La más antigua pendiente</option>
             {cuotas.map((q) => (
               <option key={q.id} value={q.id}>

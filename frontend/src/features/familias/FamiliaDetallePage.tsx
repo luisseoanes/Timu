@@ -1,4 +1,5 @@
-import { Link, useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
 import { Distintivo, Insignia } from '@/components/Distintivo'
@@ -7,70 +8,181 @@ import { Pestanas } from '@/components/Pestanas'
 import { useAuth } from '@/features/auth'
 import { fecha, fechaHora } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
-import type { CambioHistorial } from '@/types'
+import type { CambioHistorial, EstacionRead, FamiliaRead, LineaFamiliaRead } from '@/types'
 
-import { useFamilia, useHistorial } from './api'
+import { useEstadoCuenta, useFamilia, useHistorial, useLinea } from './api'
 import { AccionesFamilia } from './AccionesFamilia'
-import { CarteraFamilia } from './CarteraFamilia'
+import { CarteraFamilia, RegistrarPagoModal } from './CarteraFamilia'
 import { ComunicacionesFamilia } from './ComunicacionesFamilia'
 import { ContactosFamilia } from './ContactosFamilia'
 import { DatosFamilia } from './DatosFamilia'
 import { DocumentosFamilia } from './DocumentosFamilia'
-import { ServiciosFamilia } from './ServiciosFamilia'
+import { FamiliasLista } from './FamiliasLista'
+import { LineaFamilia } from './LineaFamilia'
+import type { Parada } from './linea'
 import { MascotasFamilia } from './MascotasFamilia'
+import { ResumenCartera, ResumenMascotas } from './ResumenFamilia'
+import { ServiciosFamilia } from './ServiciosFamilia'
 
-/** Ficha de una familia: sus datos, mascotas, cuenta, servicios e historial. */
+/** Dónde se atiende cada tipo de estación de la línea. */
+const SECCION: Record<EstacionRead['tipo'], string> = {
+  cuota: 'cartera',
+  preventivo: 'mascotas',
+  servicio: 'servicios',
+}
+
+/** Una familia abierta: el listado a la izquierda y su ficha con la línea a la derecha. */
 export function FamiliaDetallePage() {
   const { id = '' } = useParams()
-  const { usuario } = useAuth()
+  return (
+    <div className="familias" data-abierta="true">
+      <FamiliasLista seleccionada={id} />
+      {/* La clave reinicia la ficha al cambiar de familia: pestaña y línea plegada vuelven al principio. */}
+      <FichaFamilia key={id} id={id} />
+    </div>
+  )
+}
+
+function FichaFamilia({ id }: { id: string }) {
   const familia = useFamilia(id)
+  const linea = useLinea(id)
+  return (
+    <section className="familias-detalle" aria-label="Familia abierta">
+      <Consulta consulta={familia} cargando="Cargando la familia…" error="No fue posible cargar la familia.">
+        {(f) => <Ficha familia={f} linea={linea.data} lineaCargando={linea.isPending} lineaError={linea.isError} />}
+      </Consulta>
+    </section>
+  )
+}
+
+function Ficha({
+  familia: f,
+  linea,
+  lineaCargando,
+  lineaError,
+}: {
+  familia: FamiliaRead
+  linea: LineaFamiliaRead | undefined
+  lineaCargando: boolean
+  lineaError: boolean
+}) {
+  const { usuario } = useAuth()
+  const [params] = useSearchParams()
+  const navegar = useNavigate()
+  const [seccion, setSeccion] = useState('datos')
+  const [pagando, setPagando] = useState<string | null>(null)
+  const cuenta = useEstadoCuenta(f.id)
+  const abiertas = cuenta.data?.cuotas.filter((q) => q.estado !== 'pagada' && q.estado !== 'anulada') ?? []
+  const planes = linea?.planes ?? []
+  const proxima = linea?.estaciones.find((e) => e.estado === 'proxima')
+
+  /** Cómo se atiende una estación: una cuota pendiente se paga ahí mismo (si el perfil puede),
+   * un servicio se abre en su ficha y el resto lleva a su sección de la familia. */
+  const accion = (e: EstacionRead): 'pagar' | 'abrir' | 'ver' =>
+    e.tipo === 'servicio'
+      ? 'abrir'
+      : e.tipo === 'cuota' && puede(usuario, 'gestionarAfiliacion') && abiertas.some((q) => q.id === e.referencia_id)
+        ? 'pagar'
+        : 'ver'
+  const atender = (parada: Pick<Parada, 'estaciones'>) => {
+    const [primera] = parada.estaciones
+    const a = accion(primera)
+    if (a === 'abrir') navegar(`/servicios/${primera.referencia_id}`)
+    else if (a === 'pagar') setPagando(primera.referencia_id)
+    else setSeccion(SECCION[primera.tipo])
+  }
+  const VERBO = { pagar: 'Registrar pago de', abrir: 'Abrir', ver: 'Ver' }
 
   return (
-    <Consulta consulta={familia} cargando="Cargando la familia…" error="No fue posible cargar la familia.">
-      {(f) => (
-        <>
-          <div className="detalle-cabeza">
-            <Link to="/familias" className="btn btn-plano" aria-label="Volver a familias">
-              <Icono nombre="volver" size={16} />
-            </Link>
-            <h2>{f.titular_nombre}</h2>
-            <Distintivo dominio="afiliacion" valor={f.estado} />
-            {f.usuario_portal_id && <Insignia tono="info">Con portal</Insignia>}
-            {puede(usuario, 'gestionarAfiliacion') && <AccionesFamilia familia={f} />}
-          </div>
-          {f.dada_de_baja_en && (
-            <p className="error" role="status">
-              Dada de baja el {fecha(f.dada_de_baja_en.slice(0, 10))}: {f.motivo_baja}
-            </p>
+    <>
+      <header className="ficha-cabeza">
+        <Link to={`/familias${params.toString() ? `?${params}` : ''}`} className="btn btn-plano ficha-volver" aria-label="Volver a familias">
+          <Icono nombre="volver" size={16} />
+        </Link>
+        <h2>{f.titular_nombre}</h2>
+        <div className="ficha-datos">
+          {planes.map((p) => (
+            <span key={p.plan_id} className="familia-fila-marcador">
+              <span className="marcador-plan" data-color={p.color} aria-hidden="true" />
+              {p.nombre}
+            </span>
+          ))}
+          <Distintivo dominio="afiliacion" valor={f.estado} />
+          {f.usuario_portal_id && <Insignia tono="info">Con portal</Insignia>}
+          <span className="apagado">
+            {f.ciudad} · {f.barrio}
+          </span>
+        </div>
+        <div className="ficha-acciones">
+          {proxima && (
+            <button className="btn btn-primario" type="button" onClick={() => atender({ estaciones: [proxima] })}>
+              {VERBO[accion(proxima)]} {proxima.titulo.toLowerCase()}
+              {proxima.mascota ? ` de ${proxima.mascota}` : ''}
+            </button>
           )}
-          <Pestanas
-            etiqueta="Secciones de la familia"
-            pestanas={[
-              {
-                valor: 'datos',
-                titulo: 'Datos',
-                contenido: (
-                  <>
-                    <DatosFamilia familia={f} />
-                    <ContactosFamilia familia={f} />
-                  </>
-                ),
-              },
-              { valor: 'mascotas', titulo: 'Mascotas', contenido: <MascotasFamilia familia={f} /> },
-              { valor: 'cartera', titulo: 'Cartera', contenido: <CarteraFamilia familia={f} /> },
-              { valor: 'servicios', titulo: 'Servicios', contenido: <ServiciosFamilia familia={f} /> },
-              { valor: 'documentos', titulo: 'Documentos', contenido: <DocumentosFamilia familia={f} /> },
-              {
-                valor: 'comunicaciones',
-                titulo: 'Comunicaciones',
-                contenido: <ComunicacionesFamilia familiaId={f.id} />,
-              },
-              { valor: 'historial', titulo: 'Historial', contenido: <HistorialFamilia familiaId={f.id} /> },
-            ]}
-          />
-        </>
+          {puede(usuario, 'gestionarAfiliacion') && <AccionesFamilia familia={f} />}
+        </div>
+      </header>
+      {f.dada_de_baja_en && (
+        <p className="error" role="status">
+          Dada de baja el {fecha(f.dada_de_baja_en.slice(0, 10))}: {f.motivo_baja}
+        </p>
       )}
-    </Consulta>
+
+      <section className="ficha-linea" aria-label="Línea de la familia">
+        {lineaCargando ? (
+          <div className="esqueleto" role="status">
+            <span className="sr-only">Cargando la línea…</span>
+            <span className="esqueleto-linea" aria-hidden="true" />
+          </div>
+        ) : lineaError || !linea ? (
+          <p className="error">No fue posible cargar la línea de la familia.</p>
+        ) : (
+          <LineaFamilia estaciones={linea.estaciones} color={planes[0]?.color} onActivar={atender} />
+        )}
+      </section>
+
+      <div className="ficha-resumen">
+        <ResumenMascotas familia={f} planes={planes} />
+        <ResumenCartera familiaId={f.id} />
+      </div>
+
+      <RegistrarPagoModal
+        familiaId={f.id}
+        cuotas={abiertas}
+        cuotaId={pagando ?? undefined}
+        abierto={pagando !== null}
+        onCerrar={() => setPagando(null)}
+      />
+
+      <Pestanas
+        etiqueta="Secciones de la familia"
+        valor={seccion}
+        onCambio={setSeccion}
+        pestanas={[
+          {
+            valor: 'datos',
+            titulo: 'Datos',
+            contenido: (
+              <>
+                <DatosFamilia familia={f} />
+                <ContactosFamilia familia={f} />
+              </>
+            ),
+          },
+          { valor: 'mascotas', titulo: 'Mascotas', contenido: <MascotasFamilia familia={f} /> },
+          { valor: 'cartera', titulo: 'Cartera', contenido: <CarteraFamilia familia={f} /> },
+          { valor: 'servicios', titulo: 'Servicios', contenido: <ServiciosFamilia familia={f} /> },
+          { valor: 'documentos', titulo: 'Documentos', contenido: <DocumentosFamilia familia={f} /> },
+          {
+            valor: 'comunicaciones',
+            titulo: 'Comunicaciones',
+            contenido: <ComunicacionesFamilia familiaId={f.id} />,
+          },
+          { valor: 'historial', titulo: 'Historial', contenido: <HistorialFamilia familiaId={f.id} /> },
+        ]}
+      />
+    </>
   )
 }
 

@@ -1,8 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
+import { FamiliaDetallePage } from './FamiliaDetallePage'
 import { FamiliasPage } from './FamiliasPage'
 import { FAMILIA } from '@/test/handlers'
 import { server } from '@/test/server'
@@ -39,7 +41,22 @@ const LINEA: LineaFamiliaRead = {
 const conLinea = () =>
   server.use(
     http.get('*/api/v1/afiliaciones/lineas', () => HttpResponse.json([LINEA])),
+    http.get('*/api/v1/familias/:id/linea', () => HttpResponse.json(LINEA)),
   )
+
+function Ubicacion() {
+  return <p data-testid="ubicacion">{useLocation().pathname}</p>
+}
+
+function abrirFicha() {
+  return renderizar(
+    <Routes>
+      <Route path="/familias/:id" element={<FamiliaDetallePage />} />
+      <Route path="/servicios/:id" element={<Ubicacion />} />
+    </Routes>,
+    { ruta: `/familias/${FAMILIA.id}` },
+  )
+}
 
 describe('Familias con la línea de metro', () => {
   it('cada fila muestra el plan con su color y resume la línea', async () => {
@@ -60,6 +77,33 @@ describe('Familias con la línea de metro', () => {
     await waitFor(() => expect(fila.querySelector('.linea-mini')).toHaveAttribute('data-color', 'ninguno'))
   })
 
+  it('bajo la línea quedan a la vista las mascotas con su plan y la cartera', async () => {
+    conLinea()
+    abrirFicha()
+    const mascotas = await screen.findByRole('region', { name: 'Mascotas' })
+    expect(within(mascotas).getByText('Luna')).toBeInTheDocument()
+    // La especie con su nombre del catálogo, no con el código.
+    expect(await within(mascotas).findByText(/^Perro/)).toBeInTheDocument()
+    expect(within(mascotas).getByText('Mi Amigo Fiel')).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'Cartera' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Datos' })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('un servicio de la línea se atiende en su propia ficha', async () => {
+    server.use(
+      http.get('*/api/v1/familias/:id/linea', () =>
+        HttpResponse.json({
+          ...LINEA,
+          estaciones: [estacion(5, 'proxima', 'Consulta', { tipo: 'servicio', referencia_id: 's9', mascota: 'Luna' })],
+        }),
+      ),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('button', { name: 'Abrir consulta de Luna' }))
+    expect(await screen.findByTestId('ubicacion')).toHaveTextContent('/servicios/s9')
+  })
+
   it('sin familia abierta explica qué aparecerá al elegir una', async () => {
     renderizar(<FamiliasPage />)
     expect(await screen.findByText(/Elige una familia para ver su línea/)).toBeInTheDocument()
@@ -76,5 +120,65 @@ describe('Familias con la línea de metro', () => {
       'href',
       `/familias/${FAMILIA.id}?q=Ana`,
     )
+  })
+
+  it('la acción principal lleva a donde se atiende lo próximo', async () => {
+    conLinea()
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('button', { name: 'Ver cuota de diciembre' }))
+    expect(screen.getByRole('tab', { name: 'Cartera' })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('activar una estación abre su sección', async () => {
+    conLinea()
+    const user = userEvent.setup()
+    abrirFicha()
+    const linea = await screen.findByRole('list', { name: 'Línea de la familia' })
+    await user.click(within(linea).getByRole('button', { name: /^Vacuna de Luna, programada, / }))
+    expect(screen.getByRole('tab', { name: 'Mascotas' })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('marca hoy, rotula lo vencido y pliega las hechas antiguas hasta que se piden', async () => {
+    conLinea()
+    const user = userEvent.setup()
+    abrirFicha()
+    const linea = await screen.findByRole('list', { name: 'Línea de la familia' })
+    expect(within(linea).getByText('Hoy').closest('li')).toHaveAttribute('aria-current', 'date')
+    expect(within(linea).getByRole('button', { name: /^Cuota de septiembre, vencida/ })).toBeInTheDocument()
+    // Tres hechas antes de hoy: se pliegan las dos más antiguas y queda la de octubre.
+    expect(within(linea).queryByRole('button', { name: /^Cuota de junio/ })).not.toBeInTheDocument()
+    await user.click(within(linea).getByRole('button', { name: '3 hechas' }))
+    await waitFor(() => expect(within(linea).getByRole('button', { name: /^Cuota de junio, hecha/ })).toBeInTheDocument())
+  })
+
+  it('una familia sin nada en la ventana lo dice en vez de dibujar una línea vacía', async () => {
+    abrirFicha()
+    expect(await screen.findByText(/Sin cuotas, preventivos ni servicios/)).toBeInTheDocument()
+  })
+})
+
+describe('parada con varios eventos el mismo día', () => {
+  it('rotula la primera y cuántas más, y el botón las nombra todas', async () => {
+    server.use(
+      http.get('*/api/v1/familias/:id/linea', () =>
+        HttpResponse.json({
+          ...LINEA,
+          estaciones: [
+            estacion(20, 'proxima', 'Vacuna', { tipo: 'preventivo', mascota: 'Luna' }),
+            estacion(20, 'futura', 'Desparasitación interna', { tipo: 'preventivo', mascota: 'Luna' }),
+            estacion(20, 'futura', 'Vacuna', { tipo: 'preventivo', mascota: 'Kira' }),
+          ],
+        }),
+      ),
+    )
+    abrirFicha()
+    const linea = await screen.findByRole('list', { name: 'Línea de la familia' })
+    expect(within(linea).getByText('Vacuna y 2 más')).toBeInTheDocument()
+    expect(
+      within(linea).getByRole('button', {
+        name: /^Vacuna de Luna y Desparasitación interna de Luna y Vacuna de Kira, próxima, /,
+      }),
+    ).toBeInTheDocument()
   })
 })

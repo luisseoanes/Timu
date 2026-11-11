@@ -94,7 +94,7 @@ describe('FamiliaDetallePage', () => {
     for (const nombre of ['Datos', 'Mascotas', 'Cartera', 'Servicios', 'Historial']) {
       expect(within(pestanas).getByRole('tab', { name: nombre })).toBeInTheDocument()
     }
-    expect(screen.getByRole('button', { name: 'Cambiar estado' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Gestionar afiliación' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Habilitar portal' })).toBeInTheDocument()
   })
 
@@ -102,16 +102,17 @@ describe('FamiliaDetallePage', () => {
     server.use(http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'operaciones' })))
     abrirFicha()
     await screen.findByRole('heading', { name: FAMILIA.titular_nombre })
-    expect(screen.queryByRole('button', { name: 'Cambiar estado' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Dar de baja' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Gestionar afiliación' })).not.toBeInTheDocument()
   })
 
   it('lista las mascotas con el nombre de la especie del catálogo', async () => {
     const user = userEvent.setup()
     abrirFicha()
     await user.click(await screen.findByRole('tab', { name: 'Mascotas' }))
-    expect(await screen.findByText('Luna')).toBeInTheDocument()
-    expect(await screen.findByText('Perro')).toBeInTheDocument()
+    // Luna también sale en el resumen bajo la línea: se busca dentro de la pestaña.
+    const pestana = screen.getByRole('tabpanel')
+    expect(await within(pestana).findByText('Luna')).toBeInTheDocument()
+    expect(await within(pestana).findByText('Perro')).toBeInTheDocument()
   })
 
   it('explica que no hay cartera cuando la familia no tiene contrato', async () => {
@@ -221,6 +222,33 @@ describe('FamiliaDetallePage', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
+  it('una cuota pendiente de la línea se paga desde su estación, con la cuota y el saldo puestos', async () => {
+    const cuota = { tipo: 'cuota' as const, referencia_id: 'q1', fecha: '2099-01-05', estado: 'proxima' as const, titulo: 'Cuota septiembre', mascota: null }
+    server.use(
+      http.get(`${API}/cartera/familias/:id/estado-cuenta`, () => HttpResponse.json(CUENTA)),
+      http.get(`${API}/familias/:id/linea`, () => HttpResponse.json({ familia_id: FAMILIA.id, planes: [], estaciones: [cuota] })),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('button', { name: 'Registrar pago de cuota septiembre' }))
+    const modal = await screen.findByRole('dialog', { name: 'Registrar pago' })
+    expect(within(modal).getByLabelText('Cuota')).toHaveValue('q1')
+    expect(within(modal).getByLabelText('Valor (COP)')).toHaveValue(89000)
+  })
+
+  it('sin permiso para cobrar, la cuota de la línea solo lleva a la cartera', async () => {
+    const cuota = { tipo: 'cuota' as const, referencia_id: 'q1', fecha: '2099-01-05', estado: 'proxima' as const, titulo: 'Cuota septiembre', mascota: null }
+    server.use(
+      http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'operaciones' })),
+      http.get(`${API}/cartera/familias/:id/estado-cuenta`, () => HttpResponse.json(CUENTA)),
+      http.get(`${API}/familias/:id/linea`, () => HttpResponse.json({ familia_id: FAMILIA.id, planes: [], estaciones: [cuota] })),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('button', { name: 'Ver cuota septiembre' }))
+    expect(screen.getByRole('tab', { name: 'Cartera' })).toHaveAttribute('aria-selected', 'true')
+  })
+
   it('muestra el historial vacío sin dejar la pestaña en blanco', async () => {
     const user = userEvent.setup()
     abrirFicha()
@@ -238,7 +266,8 @@ describe('FamiliaDetallePage', () => {
     )
     const user = userEvent.setup()
     abrirFicha()
-    await user.click(await screen.findByRole('button', { name: 'Dar de baja' }))
+    await user.click(await screen.findByRole('button', { name: 'Gestionar afiliación' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Dar de baja' }))
     const modal = await screen.findByRole('dialog')
     await user.type(within(modal).getByLabelText('Motivo de la baja'), 'Se muda del país')
     await user.click(within(modal).getByRole('button', { name: 'Confirmar baja' }))
@@ -440,7 +469,7 @@ describe('FamiliaDetallePage', () => {
     abrirFicha()
     expect(await screen.findByText(/dada de baja el 01\/10\/2026: se mudó/i)).toBeInTheDocument()
     expect(screen.getByText('Con portal')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Cambiar estado' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Gestionar afiliación' })).not.toBeInTheDocument()
   })
 
   it('cambia el estado con su motivo', async () => {
@@ -453,7 +482,8 @@ describe('FamiliaDetallePage', () => {
     )
     const user = userEvent.setup()
     abrirFicha()
-    await user.click(await screen.findByRole('button', { name: 'Cambiar estado' }))
+    await user.click(await screen.findByRole('button', { name: 'Gestionar afiliación' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Cambiar estado' }))
     const modal = await screen.findByRole('dialog')
     await user.selectOptions(within(modal).getByLabelText('Nuevo estado'), 'congelada')
     await user.type(within(modal).getByLabelText('Motivo'), 'Viaje largo')

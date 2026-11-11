@@ -82,6 +82,13 @@ export function useLineas(ids: string[]) {
   })
 }
 
+export function useLinea(id: string) {
+  return useQuery({
+    queryKey: ['linea', id],
+    queryFn: async () => (await api.get<LineaFamiliaRead>(`/familias/${id}/linea`)).data,
+  })
+}
+
 export function useFamilia(id: string | undefined) {
   return useQuery({
     queryKey: ['familias', id],
