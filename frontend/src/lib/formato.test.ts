@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { mensajeError } from './errores'
 import { estado } from './estados'
-import { fecha, fechaCorta, fechaHora, moneda, porcentaje } from './formato'
+import { fecha, fechaCorta, fechaHora, moneda, peso, porcentaje } from './formato'
 
 describe('formato colombiano', () => {
   it('muestra pesos sin decimales y con punto de miles', () => {
@@ -43,5 +43,11 @@ describe('estados', () => {
 describe('mensajeError', () => {
   it('sin respuesta del servidor, dice qué hacer', () => {
     expect(mensajeError(new Error('x'))).toMatch(/intenta de nuevo/i)
+  })
+
+  it('escribe el peso con coma decimal y sin ceros de más', () => {
+    expect(peso(8.4)).toBe('8,4 kg')
+    expect(peso(12)).toBe('12 kg')
+    expect(peso(null)).toBe('—')
   })
 })

@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { Consulta } from '@/components/Consulta'
 import { Icono } from '@/components/Icono'
 import { MarcaTimu } from '@/components/MarcaTimu'
-import { fecha, fechaHora } from '@/lib/formato'
+import { fecha, fechaHora, peso } from '@/lib/formato'
 
 import { useCarnetVerificado } from './api'
 
@@ -47,6 +47,7 @@ export function VerificarCarnetPage() {
                         <th>Fecha</th>
                         <th>Producto</th>
                         <th>Lote</th>
+                        <th>Peso</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -59,6 +60,7 @@ export function VerificarCarnetPage() {
                           <td className="numero">{fecha(a.fecha_aplicacion)}</td>
                           <td>{a.producto ?? '—'}</td>
                           <td className="numero">{a.lote ?? '—'}</td>
+                          <td className="numero">{peso(a.peso_kg)}</td>
                         </tr>
                       ))}
                     </tbody>

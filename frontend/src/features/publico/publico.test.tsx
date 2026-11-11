@@ -85,7 +85,7 @@ describe('Verificación de carnet', () => {
           emitido_en: '2026-10-01T15:00:00Z',
           sha256: 'f'.repeat(64),
           mascota: { nombre: 'Luna', especie: 'canino', raza: null },
-          aplicados: [{ nombre: 'Rabia', dosis: 'Única', fecha_aplicacion: '2026-09-01', producto: 'Nobivac', lote: 'L-77' }],
+          aplicados: [{ nombre: 'Rabia', dosis: 'Única', fecha_aplicacion: '2026-09-01', producto: 'Nobivac', lote: 'L-77', peso_kg: 8.4 }],
         }),
       ),
     )
@@ -94,6 +94,7 @@ describe('Verificación de carnet', () => {
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Carnet auténtico'))
     expect(screen.getByText('Rabia · Única')).toBeInTheDocument()
     expect(screen.getByText('L-77')).toBeInTheDocument()
+    expect(screen.getByText('8,4 kg')).toBeInTheDocument()
   })
 
   it('avisa cuando el código no existe', async () => {

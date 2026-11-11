@@ -20,10 +20,10 @@ Revisado el 2026-11-04 contra el código de `main`; `F1-FAM-06` a `F1-FAM-09` se
 | --- | ---: | ---: | ---: | ---: |
 | Base técnica transversal | 12 | 11 | 1 | 0 |
 | Fase 1 — Núcleo operativo | 40 | 40 | 0 | 0 |
-| Fase 2 — Operación y clínica | 22 | 21 | 0 | 1 |
+| Fase 2 — Operación y clínica | 22 | 22 | 0 | 0 |
 | Fase 3 — Portal, pagos y autogestión | 20 | 20 | 0 | 0 |
 | Fase 4 — Inteligencia y cierre | 12 | 7 | 3 | 2 |
-| **Total** | **106** | **99** | **4** | **3** |
+| **Total** | **106** | **100** | **4** | **2** |
 
 ## Base técnica transversal
 
@@ -149,7 +149,7 @@ Rutas, preventivos, historia clínica, carnet y clínicas aliadas.
 | `F2-PRE-04` | Agenda preventiva automática | El proceso diario convierte los eventos próximos en servicios agendables y notifica a la familia. | 6.8 · 6.13 | Hecho |
 | `F2-PRE-05` | Carnet preventivo digital | El carnet se arma solo con lo efectivamente aplicado y muestra lo vencido y lo próximo. | 6.15 | Hecho |
 | `F2-PRE-06` | Carnet descargable y verificable | Se genera en PDF con código de verificación que un tercero puede validar sin entrar al sistema. | 6.15 | Hecho |
-| `F2-PRE-07` | Peso en la desparasitación | Al registrar la aplicación de una desparasitación (interna o externa) se puede anotar el peso de la mascota, opcional en vacunas; el carnet, en pantalla y en PDF, lo muestra en cada desparasitación. | 6.8 · 6.15 | Pendiente |
+| `F2-PRE-07` | Peso en la desparasitación | Al registrar la aplicación de una desparasitación (interna o externa) se puede anotar el peso de la mascota, opcional en vacunas; el carnet, en pantalla y en PDF, lo muestra en cada desparasitación. | 6.8 · 6.15 | Hecho |
 
 ### Clínica
 

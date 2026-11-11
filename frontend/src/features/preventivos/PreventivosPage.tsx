@@ -12,7 +12,7 @@ import { SelectorFamilia, useFamilia, useMascotas } from '@/features/familias'
 import { useDisponibilidad } from '@/features/servicios'
 import { mensajeError } from '@/lib/errores'
 import type { Tono } from '@/lib/estados'
-import { fecha, hora, hoyISO } from '@/lib/formato'
+import { fecha, hora, hoyISO, peso } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
 import type { EventoRead, FamiliaRead } from '@/types'
 
@@ -253,6 +253,7 @@ function GestionPreventivo({ evento, onCerrar }: { evento: EventoRead | null; on
                   fecha: String(d.get('fecha')),
                   producto: String(d.get('producto')).trim(),
                   lote: String(d.get('lote') ?? '').trim() || undefined,
+                  peso_kg: d.get('peso_kg') ? Number(d.get('peso_kg')) : undefined,
                 },
                 { onSuccess: cerrar },
               )
@@ -269,6 +270,11 @@ function GestionPreventivo({ evento, onCerrar }: { evento: EventoRead | null; on
             <label className="campo">
               <span>Lote</span>
               <input className="input" name="lote" />
+            </label>
+            {/* 6.8 «Registrar peso cuando sea pertinente»: el de hoy, que va al carnet. */}
+            <label className="campo">
+              <span>Peso de la mascota (kg, opcional)</span>
+              <input className="input" name="peso_kg" type="number" min={0.1} max={149} step={0.1} inputMode="decimal" />
             </label>
             <div className="acciones ancho">
               <button className="btn btn-primario" type="submit" disabled={pendiente}>
@@ -486,6 +492,7 @@ function ListaCarnet({ titulo, filas, vacio, tono }: { titulo: string; filas: Fi
                   {f.fecha_aplicacion ? `Aplicado ${fecha(f.fecha_aplicacion)}` : `Programado ${fecha(f.fecha_programada)}`}
                   {f.producto ? ` · ${f.producto}` : ''}
                   {f.lote ? ` · lote ${f.lote}` : ''}
+                  {f.peso_kg ? ` · ${peso(f.peso_kg)}` : ''}
                 </span>
               </span>
             </li>

@@ -12,7 +12,7 @@ import { useNombreTipoServicio, useTiposServicio } from '@/features/catalogos'
 import { descargar } from '@/lib/descargas'
 import { mensajeError } from '@/lib/errores'
 import { estadoCuota } from '@/lib/estados'
-import { fecha, fechaHora, hora, hoyISO, moneda } from '@/lib/formato'
+import { fecha, fechaHora, hora, hoyISO, moneda, peso } from '@/lib/formato'
 import type { MascotaRead, ServicioPortalRead } from '@/types'
 
 import {
@@ -319,7 +319,10 @@ function CarnetPortal({ mascotaId }: { mascotaId: string }) {
               {c.aplicados.map((a) => (
                 <li key={a.id} className="hecho">
                   <strong>{a.nombre}</strong> · dosis {a.dosis}
-                  <div className="apagado">Aplicado el {fecha(a.fecha_aplicacion)}</div>
+                  <div className="apagado">
+                    Aplicado el {fecha(a.fecha_aplicacion)}
+                    {a.peso_kg ? ` · pesaba ${peso(a.peso_kg)}` : ''}
+                  </div>
                 </li>
               ))}
               {c.proximos.map((a) => (

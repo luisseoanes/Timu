@@ -205,13 +205,17 @@ describe('mascotas', () => {
   it('el carnet distingue lo aplicado de lo programado', async () => {
     server.use(
       carnet({
-        aplicados: [{ id: 'a1', nombre: 'Rabia', dosis: 1, fecha_aplicacion: '2026-09-01' }],
+        aplicados: [
+          { id: 'a1', nombre: 'Rabia', dosis: 1, fecha_aplicacion: '2026-09-01' },
+          { id: 'a2', nombre: 'Desparasitación interna', dosis: 1, fecha_aplicacion: '2026-09-05', peso_kg: 8.4 },
+        ],
         proximos: [{ id: 'p1', nombre: 'Polivalente', dosis: 2, fecha_programada: '2026-12-01' }],
       }),
     )
     abrirMascota()
     expect(await screen.findByRole('heading', { name: 'Luna' })).toBeInTheDocument()
-    expect(await screen.findByText(/Aplicado el/)).toBeInTheDocument()
+    expect((await screen.findAllByText(/Aplicado el/)).length).toBe(2)
+    expect(screen.getByText(/pesaba 8,4 kg/)).toBeInTheDocument()
     expect(screen.getByText(/Programado para el/)).toBeInTheDocument()
     expect(screen.queryByText('Aún no hay preventivos registrados.')).not.toBeInTheDocument()
   })

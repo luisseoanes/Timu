@@ -59,6 +59,12 @@ export function hoyISO(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(new Date())
 }
 
+/** Peso de una mascota como en Colombia: «8,4 kg», sin decimales si no los tiene. */
+export function peso(kg: number | null | undefined): string {
+  if (kg === null || kg === undefined) return '—'
+  return `${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 }).format(kg)} kg`
+}
+
 export function porcentaje(valor: number | null | undefined): string {
   return valor === null || valor === undefined ? '—' : `${Math.round(valor * 100)}%`
 }

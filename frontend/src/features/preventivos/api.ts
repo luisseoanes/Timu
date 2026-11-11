@@ -23,6 +23,8 @@ export interface FilaCarnet {
   fecha_aplicacion: string | null
   producto: string | null
   lote: string | null
+  /** F2-PRE-07 El de la mascota el día de la aplicación, si se anotó. */
+  peso_kg: number | null
   proxima_fecha: string | null
 }
 
@@ -77,7 +79,7 @@ export function useAutorizarPreventivo() {
 
 export function useAplicarPreventivo() {
   return useMutacion(
-    async ({ id, ...datos }: { id: string; fecha: string; producto: string; lote?: string }) =>
+    async ({ id, ...datos }: { id: string; fecha: string; producto: string; lote?: string; peso_kg?: number }) =>
       (await api.post<EventoRead>(`/preventivos/${id}/aplicacion`, datos)).data,
   )
 }

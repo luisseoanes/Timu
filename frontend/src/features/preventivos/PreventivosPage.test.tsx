@@ -25,6 +25,7 @@ const EVENTO: EventoRead = {
   proxima_fecha: null,
   producto: null,
   lote: null,
+  peso_kg: null,
   requiere_autorizacion: true,
   autorizado: false,
   medio_autorizacion: null,
@@ -94,8 +95,9 @@ describe('PreventivosPage', () => {
     await user.click(within(modal).getByRole('button', { name: 'Registrar aplicación' }))
     await user.type(within(modal).getByLabelText('Producto'), 'Nobivac Rabia')
     await user.type(within(modal).getByLabelText('Lote'), 'L-77')
+    await user.type(within(modal).getByLabelText('Peso de la mascota (kg, opcional)'), '8.4')
     await user.click(within(modal).getAllByRole('button', { name: 'Registrar aplicación' }).at(-1)!)
-    await waitFor(() => expect(enviado).toMatchObject({ producto: 'Nobivac Rabia', lote: 'L-77' }))
+    await waitFor(() => expect(enviado).toMatchObject({ producto: 'Nobivac Rabia', lote: 'L-77', peso_kg: 8.4 }))
   })
 
   it('muestra el carnet de una mascota y emite el PDF', async () => {
@@ -104,7 +106,8 @@ describe('PreventivosPage', () => {
         HttpResponse.json({
           mascota: { id: LUNA.id, nombre: 'Luna', especie: 'Canino', raza: null, fecha_nacimiento: null },
           aplicados: [
-            { id: 'a1', tipo: 'vacuna', nombre: 'Rabia', dosis: 1, refuerzo: false, fecha_programada: '2026-09-01', fecha_aplicacion: '2026-09-01', producto: 'Nobivac', lote: 'L-1', proxima_fecha: null },
+            { id: 'a1', tipo: 'vacuna', nombre: 'Rabia', dosis: 1, refuerzo: false, fecha_programada: '2026-09-01', fecha_aplicacion: '2026-09-01', producto: 'Nobivac', lote: 'L-1', peso_kg: null, proxima_fecha: null },
+            { id: 'a2', tipo: 'desparasitacion_interna', nombre: 'Desparasitación interna', dosis: 1, refuerzo: false, fecha_programada: '2026-09-05', fecha_aplicacion: '2026-09-05', producto: 'Drontal', lote: null, peso_kg: 8.4, proxima_fecha: null },
           ],
           vencidos: [],
           proximos: [],
@@ -120,6 +123,8 @@ describe('PreventivosPage', () => {
     await user.type(screen.getByRole('searchbox'), 'Ana')
     await user.click(await screen.findByRole('button', { name: /ana ruiz/i }))
     expect(await screen.findByText('Rabia · dosis 1')).toBeInTheDocument()
+    // La desparasitación lleva el peso que se anotó al aplicarla.
+    expect(screen.getByText(/Drontal · 8,4 kg/)).toBeInTheDocument()
     expect(screen.getByText('Nada vencido.')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /emitir carnet pdf/i }))
     expect(await screen.findByRole('link', { name: 'Página de verificación' })).toHaveAttribute('href', '/verificar/ABC234')

@@ -23,6 +23,7 @@ export interface CarnetVerificado {
     fecha_aplicacion: string | null
     producto: string | null
     lote: string | null
+    peso_kg?: number | null
   }[]
 }
 
