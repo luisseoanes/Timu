@@ -48,6 +48,7 @@ export function VerificarCarnetPage() {
                         <th>Producto</th>
                         <th>Lote</th>
                         <th>Peso</th>
+                        <th>Aplicó</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -61,6 +62,7 @@ export function VerificarCarnetPage() {
                           <td>{a.producto ?? '—'}</td>
                           <td className="numero">{a.lote ?? '—'}</td>
                           <td className="numero">{peso(a.peso_kg)}</td>
+                          <td>{a.aplicado_por ?? '—'}</td>
                         </tr>
                       ))}
                     </tbody>

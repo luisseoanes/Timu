@@ -24,6 +24,7 @@ export interface CarnetVerificado {
     producto: string | null
     lote: string | null
     peso_kg?: number | null
+    aplicado_por?: string | null
   }[]
 }
 

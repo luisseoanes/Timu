@@ -85,7 +85,7 @@ describe('Verificación de carnet', () => {
           emitido_en: '2026-10-01T15:00:00Z',
           sha256: 'f'.repeat(64),
           mascota: { nombre: 'Luna', especie: 'canino', raza: null },
-          aplicados: [{ nombre: 'Rabia', dosis: 'Única', fecha_aplicacion: '2026-09-01', producto: 'Nobivac', lote: 'L-77', peso_kg: 8.4 }],
+          aplicados: [{ nombre: 'Rabia', dosis: 'Única', fecha_aplicacion: '2026-09-01', producto: 'Nobivac', lote: 'L-77', peso_kg: 8.4, aplicado_por: 'Dra. Paula Gómez' }],
         }),
       ),
     )
@@ -95,6 +95,7 @@ describe('Verificación de carnet', () => {
     expect(screen.getByText('Rabia · Única')).toBeInTheDocument()
     expect(screen.getByText('L-77')).toBeInTheDocument()
     expect(screen.getByText('8,4 kg')).toBeInTheDocument()
+    expect(screen.getByText('Dra. Paula Gómez')).toBeInTheDocument()
   })
 
   it('avisa cuando el código no existe', async () => {

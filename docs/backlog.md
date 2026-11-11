@@ -149,7 +149,7 @@ Rutas, preventivos, historia clínica, carnet y clínicas aliadas.
 | `F2-PRE-04` | Agenda preventiva automática | El proceso diario convierte los eventos próximos en servicios agendables y notifica a la familia. | 6.8 · 6.13 | Hecho |
 | `F2-PRE-05` | Carnet preventivo digital | El carnet se arma solo con lo efectivamente aplicado y muestra lo vencido y lo próximo. | 6.15 | Hecho |
 | `F2-PRE-06` | Carnet descargable y verificable | Se genera en PDF con código de verificación que un tercero puede validar sin entrar al sistema. | 6.15 | Hecho |
-| `F2-PRE-07` | Peso en la desparasitación | Al registrar la aplicación de una desparasitación (interna o externa) se puede anotar el peso de la mascota, opcional en vacunas; el carnet, en pantalla y en PDF, lo muestra en cada desparasitación. | 6.8 · 6.15 | Hecho |
+| `F2-PRE-07` | Peso en la desparasitación | Al registrar la aplicación de una desparasitación (interna o externa) se puede anotar el peso de la mascota, opcional en vacunas; el carnet, en pantalla y en PDF, lo muestra en cada desparasitación. El peso pasa a la ficha de la mascota si es el más reciente, y el carnet dice quién aplicó cada preventivo, como el sello del impreso. | 6.8 · 6.15 | Hecho |
 
 ### Clínica
 

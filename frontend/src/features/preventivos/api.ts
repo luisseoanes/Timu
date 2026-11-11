@@ -25,6 +25,8 @@ export interface FilaCarnet {
   lote: string | null
   /** F2-PRE-07 El de la mascota el día de la aplicación, si se anotó. */
   peso_kg: number | null
+  /** Quien registró la aplicación, como el sello del carnet impreso. */
+  aplicado_por: string | null
   proxima_fecha: string | null
 }
 
@@ -53,13 +55,15 @@ export function useCarnet(mascotaId: string | null) {
   })
 }
 
-function useMutacion<T, R>(fn: (datos: T) => Promise<R>) {
+/** `ademas`: otras cachés que cambian con la mutación, además de preventivos y servicios. */
+function useMutacion<T, R>(fn: (datos: T) => Promise<R>, ademas: string[] = []) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: fn,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['preventivos'] })
       void qc.invalidateQueries({ queryKey: ['servicios'] })
+      for (const clave of ademas) void qc.invalidateQueries({ queryKey: [clave] })
     },
   })
 }
@@ -81,6 +85,8 @@ export function useAplicarPreventivo() {
   return useMutacion(
     async ({ id, ...datos }: { id: string; fecha: string; producto: string; lote?: string; peso_kg?: number }) =>
       (await api.post<EventoRead>(`/preventivos/${id}/aplicacion`, datos)).data,
+    // El peso anotado pasa a la ficha de la mascota (F2-PRE-07).
+    ['familias', 'mascotas'],
   )
 }
 

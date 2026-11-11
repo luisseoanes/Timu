@@ -493,6 +493,7 @@ function ListaCarnet({ titulo, filas, vacio, tono }: { titulo: string; filas: Fi
                   {f.producto ? ` · ${f.producto}` : ''}
                   {f.lote ? ` · lote ${f.lote}` : ''}
                   {f.peso_kg ? ` · ${peso(f.peso_kg)}` : ''}
+                  {f.aplicado_por ? ` · aplicó ${f.aplicado_por}` : ''}
                 </span>
               </span>
             </li>

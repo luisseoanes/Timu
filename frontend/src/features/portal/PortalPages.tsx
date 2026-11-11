@@ -321,6 +321,7 @@ function CarnetPortal({ mascotaId }: { mascotaId: string }) {
                   <strong>{a.nombre}</strong> · dosis {a.dosis}
                   <div className="apagado">
                     Aplicado el {fecha(a.fecha_aplicacion)}
+                    {a.aplicado_por ? ` por ${a.aplicado_por}` : ''}
                     {a.peso_kg ? ` · pesaba ${peso(a.peso_kg)}` : ''}
                   </div>
                 </li>
