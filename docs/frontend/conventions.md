@@ -150,3 +150,21 @@ resultado.
 ## Deuda conocida
 
 - **Sin tema oscuro.** Decisión de producto; los tokens están listos para agregarlo.
+
+Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñó:
+
+- **Espaciado de la etiqueta en mayúsculas sin token.** Es `.09em` en `.etiqueta`,
+  `.tabla th`, `.ficha dt` y la tabla apilada, y `.08em` en `.resumen h3`, `.linea-hoy-texto`
+  e `.indicador-titulo`. Hace falta un token y una sola medida.
+- **Radios escritos a mano**: 3 px en `.marcador-plan`, 4 px en `.esqueleto-linea` y en
+  `.barra-pista`/`.barra-valor`, 2 px en `.linea-hoy-marca` y 6 px en `:focus-visible` (el
+  valor de `--r-campo`).
+- **Cortes a 899 y a 900 px mezclados.** A 900 px justos, `.formulario` y `.dos-columnas` ya
+  pasan a una columna mientras `.familias` sigue a dos.
+- **`--sombra-1` y `--sombra-2` valen `none`** y siguen referenciados. Es coherente con el
+  diseño plano, pero son tokens muertos: o se retiran o se les da uso.
+- **El ingreso, el portal y los módulos sin rediseñar** contradicen el sistema en puntos que
+  sus unidades de la hoja de ruta corrigen: el antetítulo en pastilla y el vidrio de
+  `.ingreso-vista`, la sombra de `.portal-nav` y la opacidad de `.cupo:disabled`.
+- **Nombres de catálogo sin tildes** («Atencion en clinica aliada», «Vacunacion»): vienen de
+  `backend/app/modules/catalogos/datos.py` y se ven en la línea y en los botones.

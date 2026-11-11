@@ -1,5 +1,10 @@
 # Sistema de diseño
 
+> **El sistema de diseño es [`DESIGN.md`](../../DESIGN.md)**, escrito por la skill de diseño
+> desde lo construido (`R2-PAN-03`), con su versión para herramientas en
+> `.impeccable/design.json`. Este documento queda como guía de los tokens y sus guardas; si
+> los dos dicen cosas distintas, manda `DESIGN.md`.
+
 Todo lo de este documento está implementado en [`frontend/src/styles/tokens.css`](../../frontend/src/styles/tokens.css).
 Los nombres de los tokens son los que se usan en el código.
 

@@ -1,0 +1,996 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-11T00:00:00Z",
+  "title": "Design System: TIMU",
+  "extensions": {
+    "colorMeta": {
+      "superficie-marca": {
+        "role": "neutral",
+        "displayName": "Marino noche",
+        "canonical": "var(--marino-900)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "superficie-marca-hover": {
+        "role": "neutral",
+        "displayName": "Marino de hover",
+        "canonical": "var(--marino-800)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "superficie-sobre-marca": {
+        "role": "neutral",
+        "displayName": "Vidrio sobre la marca",
+        "canonical": "rgb(255 255 255 / 8%)"
+      },
+      "borde-sobre-marca": {
+        "role": "neutral",
+        "displayName": "Hilo sobre la marca",
+        "canonical": "rgb(255 255 255 / 22%)"
+      },
+      "texto-sobre-marca": {
+        "role": "neutral",
+        "displayName": "Blanco",
+        "canonical": "var(--blanco)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "texto-sobre-marca-suave": {
+        "role": "neutral",
+        "displayName": "Marino claro",
+        "canonical": "var(--marino-200)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "indicador-sobre-marca": {
+        "role": "primary",
+        "displayName": "Verde TIMU sobre la marca",
+        "canonical": "var(--verde-500)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
+      },
+      "accion-fondo": {
+        "role": "primary",
+        "displayName": "Verde TIMU",
+        "canonical": "var(--verde-500)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
+      },
+      "accion-fondo-hover": {
+        "role": "primary",
+        "displayName": "Verde hondo",
+        "canonical": "var(--verde-600)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
+      },
+      "accion-texto": {
+        "role": "neutral",
+        "displayName": "Marino noche",
+        "canonical": "var(--marino-900)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "accion-suave-fondo": {
+        "role": "primary",
+        "displayName": "Verde tenue",
+        "canonical": "var(--verde-50)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
+      },
+      "accion-suave-fondo-hover": {
+        "role": "primary",
+        "displayName": "Verde tenue de hover",
+        "canonical": "var(--verde-100)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
+      },
+      "accion-suave-texto": {
+        "role": "primary",
+        "displayName": "Verde oscuro",
+        "canonical": "var(--verde-800)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
+      },
+      "indicador-seleccion": {
+        "role": "primary",
+        "displayName": "Verde hondo",
+        "canonical": "var(--verde-600)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
+      },
+      "superficie-seleccion": {
+        "role": "primary",
+        "displayName": "Verde tenue",
+        "canonical": "var(--verde-50)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
+      },
+      "seleccion-texto": {
+        "role": "primary",
+        "displayName": "Verde de selección",
+        "canonical": "var(--verde-200)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
+      },
+      "foco": {
+        "role": "secondary",
+        "displayName": "Azul TIMU",
+        "canonical": "var(--azul-500)",
+        "tonalRamp": [
+          "#153E60",
+          "#274F73",
+          "#396186",
+          "#477095",
+          "#6C8DAA",
+          "#91A9BF",
+          "#D1DBE4",
+          "#E9EEF2"
+        ]
+      },
+      "texto-enlace": {
+        "role": "secondary",
+        "displayName": "Azul TIMU",
+        "canonical": "var(--azul-500)",
+        "tonalRamp": [
+          "#153E60",
+          "#274F73",
+          "#396186",
+          "#477095",
+          "#6C8DAA",
+          "#91A9BF",
+          "#D1DBE4",
+          "#E9EEF2"
+        ]
+      },
+      "texto-enlace-hover": {
+        "role": "secondary",
+        "displayName": "Azul hondo",
+        "canonical": "var(--azul-700)",
+        "tonalRamp": [
+          "#153E60",
+          "#274F73",
+          "#396186",
+          "#477095",
+          "#6C8DAA",
+          "#91A9BF",
+          "#D1DBE4",
+          "#E9EEF2"
+        ]
+      },
+      "superficie-lienzo": {
+        "role": "neutral",
+        "displayName": "Lienzo",
+        "canonical": "var(--lienzo)"
+      },
+      "superficie": {
+        "role": "neutral",
+        "displayName": "Blanco",
+        "canonical": "var(--blanco)"
+      },
+      "texto-titulo": {
+        "role": "neutral",
+        "displayName": "Marino noche",
+        "canonical": "var(--marino-900)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "texto": {
+        "role": "neutral",
+        "displayName": "Marino texto",
+        "canonical": "var(--marino-700)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "texto-suave": {
+        "role": "neutral",
+        "displayName": "Marino suave",
+        "canonical": "var(--marino-600)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "texto-deshabilitado": {
+        "role": "neutral",
+        "displayName": "Marino apagado",
+        "canonical": "var(--marino-300)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "borde": {
+        "role": "neutral",
+        "displayName": "Hilo",
+        "canonical": "var(--marino-100)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "borde-control": {
+        "role": "neutral",
+        "displayName": "Borde de control",
+        "canonical": "var(--marino-400)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "borde-control-hover": {
+        "role": "neutral",
+        "displayName": "Borde de control en hover",
+        "canonical": "var(--marino-500)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "velo": {
+        "role": "neutral",
+        "displayName": "Velo marino",
+        "canonical": "rgb(17 21 55 / 50%)"
+      },
+      "estado-ok-fondo": {
+        "role": "primary",
+        "displayName": "Correcto, fondo",
+        "canonical": "var(--verde-50)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
+      },
+      "estado-ok-texto": {
+        "role": "primary",
+        "displayName": "Correcto, texto",
+        "canonical": "var(--verde-800)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
+      },
+      "estado-alerta-fondo": {
+        "role": "tertiary",
+        "displayName": "Alerta, fondo",
+        "canonical": "var(--naranja-50)",
+        "tonalRamp": [
+          "#813E00",
+          "#9B5600",
+          "#BE7700",
+          "#D68A11",
+          "#DEA141",
+          "#E6B970",
+          "#F5E2C4",
+          "#FAF1E2"
+        ]
+      },
+      "estado-alerta-texto": {
+        "role": "tertiary",
+        "displayName": "Alerta, texto",
+        "canonical": "var(--naranja-800)",
+        "tonalRamp": [
+          "#813E00",
+          "#9B5600",
+          "#BE7700",
+          "#D68A11",
+          "#DEA141",
+          "#E6B970",
+          "#F5E2C4",
+          "#FAF1E2"
+        ]
+      },
+      "estado-info-fondo": {
+        "role": "secondary",
+        "displayName": "Información, fondo",
+        "canonical": "var(--azul-50)",
+        "tonalRamp": [
+          "#153E60",
+          "#274F73",
+          "#396186",
+          "#477095",
+          "#6C8DAA",
+          "#91A9BF",
+          "#D1DBE4",
+          "#E9EEF2"
+        ]
+      },
+      "estado-info-texto": {
+        "role": "secondary",
+        "displayName": "Información, texto",
+        "canonical": "var(--azul-700)",
+        "tonalRamp": [
+          "#153E60",
+          "#274F73",
+          "#396186",
+          "#477095",
+          "#6C8DAA",
+          "#91A9BF",
+          "#D1DBE4",
+          "#E9EEF2"
+        ]
+      },
+      "estado-peligro-fondo": {
+        "role": "tertiary",
+        "displayName": "Peligro, fondo",
+        "canonical": "var(--rojo-50)",
+        "tonalRamp": [
+          "#892319",
+          "#A92115",
+          "#C0392B",
+          "#FFD9CE",
+          "#FFF2EF"
+        ]
+      },
+      "estado-peligro-texto": {
+        "role": "tertiary",
+        "displayName": "Peligro, texto",
+        "canonical": "var(--rojo-800)",
+        "tonalRamp": [
+          "#892319",
+          "#A92115",
+          "#C0392B",
+          "#FFD9CE",
+          "#FFF2EF"
+        ]
+      },
+      "estado-neutro-fondo": {
+        "role": "neutral",
+        "displayName": "Neutro, fondo",
+        "canonical": "var(--marino-100)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "estado-neutro-texto": {
+        "role": "neutral",
+        "displayName": "Neutro, texto",
+        "canonical": "var(--marino-700)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "peligro-accion-fondo": {
+        "role": "tertiary",
+        "displayName": "Rojo auxiliar",
+        "canonical": "var(--rojo-500)",
+        "tonalRamp": [
+          "#892319",
+          "#A92115",
+          "#C0392B",
+          "#FFD9CE",
+          "#FFF2EF"
+        ]
+      },
+      "peligro-accion-fondo-hover": {
+        "role": "tertiary",
+        "displayName": "Rojo hondo",
+        "canonical": "var(--rojo-700)",
+        "tonalRamp": [
+          "#892319",
+          "#A92115",
+          "#C0392B",
+          "#FFD9CE",
+          "#FFF2EF"
+        ]
+      },
+      "peligro-accion-texto": {
+        "role": "neutral",
+        "displayName": "Blanco",
+        "canonical": "var(--blanco)"
+      },
+      "texto-error": {
+        "role": "tertiary",
+        "displayName": "Rojo de error",
+        "canonical": "var(--rojo-700)",
+        "tonalRamp": [
+          "#892319",
+          "#A92115",
+          "#C0392B",
+          "#FFD9CE",
+          "#FFF2EF"
+        ]
+      },
+      "plan-verde": {
+        "role": "primary",
+        "displayName": "Plan verde",
+        "canonical": "var(--verde-500)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
+      },
+      "plan-naranja": {
+        "role": "tertiary",
+        "displayName": "Plan naranja",
+        "canonical": "var(--naranja-500)",
+        "tonalRamp": [
+          "#813E00",
+          "#9B5600",
+          "#BE7700",
+          "#D68A11",
+          "#DEA141",
+          "#E6B970",
+          "#F5E2C4",
+          "#FAF1E2"
+        ]
+      },
+      "plan-azul": {
+        "role": "secondary",
+        "displayName": "Plan azul",
+        "canonical": "var(--azul-500)",
+        "tonalRamp": [
+          "#153E60",
+          "#274F73",
+          "#396186",
+          "#477095",
+          "#6C8DAA",
+          "#91A9BF",
+          "#D1DBE4",
+          "#E9EEF2"
+        ]
+      },
+      "plan-ninguno": {
+        "role": "neutral",
+        "displayName": "Sin plan",
+        "canonical": "var(--marino-300)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
+      "serie-1": {
+        "role": "primary",
+        "displayName": "Serie 1",
+        "canonical": "var(--verde-600)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
+      },
+      "serie-2": {
+        "role": "tertiary",
+        "displayName": "Serie 2",
+        "canonical": "var(--naranja-600)",
+        "tonalRamp": [
+          "#813E00",
+          "#9B5600",
+          "#BE7700",
+          "#D68A11",
+          "#DEA141",
+          "#E6B970",
+          "#F5E2C4",
+          "#FAF1E2"
+        ]
+      },
+      "serie-3": {
+        "role": "secondary",
+        "displayName": "Serie 3",
+        "canonical": "var(--azul-500)",
+        "tonalRamp": [
+          "#153E60",
+          "#274F73",
+          "#396186",
+          "#477095",
+          "#6C8DAA",
+          "#91A9BF",
+          "#D1DBE4",
+          "#E9EEF2"
+        ]
+      },
+      "serie-4": {
+        "role": "neutral",
+        "displayName": "Serie 4",
+        "canonical": "var(--marino-900)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display (--t-display)",
+        "purpose": "Nombre de la familia abierta, saludo, ingreso. Uno por pantalla."
+      },
+      "cifra": {
+        "displayName": "Cifra (--t-cifra)",
+        "purpose": "Cifras destacadas de indicadores y métricas."
+      },
+      "headline": {
+        "displayName": "Título de página (--t-titulo)",
+        "purpose": "Título de página en la cabecera del contenido."
+      },
+      "title": {
+        "displayName": "Sección (--t-seccion)",
+        "purpose": "Encabezado de bloque, título de ventana, cabecera del listado."
+      },
+      "body": {
+        "displayName": "Cuerpo (--t-cuerpo)",
+        "purpose": "Texto de la interfaz, botones y celdas."
+      },
+      "body-menor": {
+        "displayName": "Menor (--t-menor)",
+        "purpose": "Metadatos, pestañas, módulos de la barra, rótulos de estación."
+      },
+      "label": {
+        "displayName": "Etiqueta (--t-etiqueta)",
+        "purpose": "Mayúsculas espaciadas que nombran un dato: cabeceras de columna, dt, bloques del resumen, «Hoy». Nunca antetítulo."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sombra-3",
+        "value": "0 12px 32px rgb(17 21 55 / 16%)",
+        "purpose": "Solo lo que flota: menús, ventanas, lista de opciones."
+      },
+      {
+        "name": "sombra-1",
+        "value": "none",
+        "purpose": "Plano a propósito: superficies quietas sin sombra."
+      },
+      {
+        "name": "sombra-2",
+        "value": "none",
+        "purpose": "Plano a propósito: superficies quietas sin sombra."
+      },
+      {
+        "name": "anillo-campo",
+        "value": "0 0 0 1px var(--foco)",
+        "purpose": "Campo o buscador enfocado, junto a su borde azul."
+      },
+      {
+        "name": "subrayado-modulo",
+        "value": "inset 0 -4px 0 var(--indicador-sobre-marca)",
+        "purpose": "Módulo activo en la barra marina."
+      },
+      {
+        "name": "halo-proxima",
+        "value": "0 0 0 4px var(--superficie-seleccion)",
+        "purpose": "Estación próxima de la línea."
+      }
+    ],
+    "motion": [
+      {
+        "name": "duracion",
+        "value": "160ms",
+        "purpose": "Toda transición de estado (hover, foco, rótulo de estación)."
+      },
+      {
+        "name": "curva",
+        "value": "cubic-bezier(0.2, 0, 0, 1)",
+        "purpose": "Curva única de las transiciones y del esqueleto."
+      },
+      {
+        "name": "esqueleto",
+        "value": "opacity 1 → 0.45, 1.2s alternate",
+        "purpose": "Carga de una consulta y espera de sesión."
+      },
+      {
+        "name": "reducido",
+        "value": "prefers-reduced-motion: reduce → sin transiciones ni animaciones",
+        "purpose": "Accesibilidad."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "hoja",
+        "value": "600px",
+        "purpose": "Ventana como hoja inferior; línea siempre vertical; pestañas en una fila desplazable; historial a una columna."
+      },
+      {
+        "name": "tabla-apilable",
+        "value": "640px (container query)",
+        "purpose": "La tabla se apila según el ancho de su contenedor."
+      },
+      {
+        "name": "movil",
+        "value": "900px",
+        "purpose": "Barra inferior; listado o ficha; formularios a una columna; controles de 44 px."
+      },
+      {
+        "name": "barra-6",
+        "value": "1180px",
+        "purpose": "Seis módulos en la barra; el rail baja."
+      },
+      {
+        "name": "barra-8",
+        "value": "1360px",
+        "purpose": "Ocho módulos, lema y buscador ancho."
+      }
+    ],
+    "zIndex": [
+      {
+        "name": "capa-elevada",
+        "value": "1"
+      },
+      {
+        "name": "capa-barra",
+        "value": "10"
+      },
+      {
+        "name": "capa-velo",
+        "value": "30"
+      },
+      {
+        "name": "capa-ventana",
+        "value": "31"
+      },
+      {
+        "name": "capa-menu",
+        "value": "40"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón principal",
+      "kind": "button",
+      "refersTo": "btn-primario",
+      "description": "La acción más importante de la vista; uno por vista.",
+      "html": "<button class=\"ds-btn ds-btn-primario\">Registrar pago</button>",
+      "css": ".ds-btn { font-family: var(--fuente); font-size: var(--t-cuerpo); font-weight: 600; min-height: 40px; padding: 0 var(--e5); border-radius: var(--r-campo); border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: var(--e2); transition: background-color var(--duracion) var(--curva), border-color var(--duracion) var(--curva), color var(--duracion) var(--curva); } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; } .ds-btn-primario { background: var(--accion-fondo); color: var(--accion-texto); } .ds-btn-primario:hover { background: var(--accion-fondo-hover); }"
+    },
+    {
+      "name": "Botón suave",
+      "kind": "button",
+      "refersTo": "btn-suave",
+      "description": "Acciones que acompañan al principal.",
+      "html": "<button class=\"ds-btn ds-btn-suave\">Habilitar portal</button>",
+      "css": ".ds-btn { font-family: var(--fuente); font-size: var(--t-cuerpo); font-weight: 600; min-height: 40px; padding: 0 var(--e5); border-radius: var(--r-campo); border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: var(--e2); transition: background-color var(--duracion) var(--curva); } .ds-btn:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; } .ds-btn-suave { background: var(--accion-suave-fondo); color: var(--accion-suave-texto); } .ds-btn-suave:hover { background: var(--accion-suave-fondo-hover); }"
+    },
+    {
+      "name": "Botón secundario",
+      "kind": "button",
+      "refersTo": "btn-secundario",
+      "description": "Acción neutra con borde de control.",
+      "html": "<button class=\"ds-btn ds-btn-secundario\">Cancelar</button>",
+      "css": ".ds-btn { font-family: var(--fuente); font-size: var(--t-cuerpo); font-weight: 600; min-height: 40px; padding: 0 var(--e5); border-radius: var(--r-campo); border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; transition: background-color var(--duracion) var(--curva), border-color var(--duracion) var(--curva); } .ds-btn:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; } .ds-btn-secundario { background: var(--superficie); color: var(--texto-titulo); border-color: var(--borde-control); } .ds-btn-secundario:hover { border-color: var(--borde-control-hover); background: var(--superficie-hundida); }"
+    },
+    {
+      "name": "Campo",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo con etiqueta encima; foco azul con anillo de 1 px.",
+      "html": "<label class=\"ds-campo\"><span>Valor (COP)</span><input class=\"ds-input\" value=\"75000\"></label>",
+      "css": ".ds-campo { display: grid; gap: 6px; font-family: var(--fuente); } .ds-campo > span { font-size: var(--t-menor); font-weight: 600; color: var(--texto-titulo); } .ds-input { font: inherit; font-size: var(--t-cuerpo); min-height: 40px; padding: 8px var(--e3); border: 1px solid var(--borde-control); border-radius: var(--r-campo); background: var(--superficie); color: var(--texto); transition: border-color var(--duracion) var(--curva); } .ds-input:hover:not(:focus) { border-color: var(--borde-control-hover); } .ds-input:focus { outline: none; border-color: var(--foco); box-shadow: 0 0 0 1px var(--foco); }"
+    },
+    {
+      "name": "Distintivo de estado",
+      "kind": "chip",
+      "refersTo": "distintivo-alerta",
+      "description": "Pastilla tintada con icono y texto; el estado nunca solo por color.",
+      "html": "<span class=\"ds-distintivo ds-distintivo-alerta\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z\"/></svg>En mora</span> <span class=\"ds-distintivo ds-distintivo-neutro\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/></svg>Congelada</span>",
+      "css": ".ds-distintivo { display: inline-flex; align-items: center; gap: 4px; line-height: 1.4; font-family: var(--fuente); font-size: var(--t-etiqueta); font-weight: 700; padding: 3px 10px; border-radius: var(--r-pastilla); white-space: nowrap; } .ds-distintivo-alerta { background: var(--estado-alerta-fondo); color: var(--estado-alerta-texto); } .ds-distintivo-neutro { background: var(--estado-neutro-fondo); color: var(--estado-neutro-texto); }"
+    },
+    {
+      "name": "Barra de marca",
+      "kind": "nav",
+      "refersTo": "barra-marca",
+      "description": "Barra marina de 64 px; módulo activo subrayado en verde.",
+      "html": "<header class=\"ds-barra\"><span class=\"ds-marca\">TIMU</span><nav class=\"ds-modulos\"><a href=\"#\">Panel</a><a href=\"#\" class=\"ds-activo\">Familias</a><a href=\"#\">Cartera</a></nav></header>",
+      "css": ".ds-barra { height: 64px; display: flex; align-items: center; gap: var(--e6); padding-inline: var(--e6); background: var(--superficie-marca); font-family: var(--fuente); } .ds-marca { font-weight: 700; font-size: var(--t-titulo); letter-spacing: .14em; color: var(--texto-sobre-marca); } .ds-modulos { height: 100%; display: flex; align-items: stretch; gap: var(--e1); } .ds-modulos a { display: flex; align-items: center; padding-inline: var(--e3); font-size: var(--t-menor); font-weight: 600; color: var(--texto-sobre-marca-suave); text-decoration: none; box-shadow: inset 0 -4px 0 transparent; transition: color var(--duracion) var(--curva), background-color var(--duracion) var(--curva); } .ds-modulos a:hover { color: var(--texto-sobre-marca); background: var(--superficie-marca-hover); } .ds-modulos a:focus-visible { outline: 2px solid var(--foco-sobre-marca); outline-offset: -2px; } .ds-modulos a.ds-activo { color: var(--texto-sobre-marca); box-shadow: inset 0 -4px 0 var(--indicador-sobre-marca); }"
+    },
+    {
+      "name": "Pestañas",
+      "kind": "nav",
+      "refersTo": "pestana-activa",
+      "description": "Pestañas de la ficha; activa con subrayado verde hondo de 3 px.",
+      "html": "<div class=\"ds-pestanas\" role=\"tablist\"><button class=\"ds-pestana\" aria-selected=\"true\">Datos</button><button class=\"ds-pestana\">Mascotas</button><button class=\"ds-pestana\">Cartera</button></div>",
+      "css": ".ds-pestanas { display: flex; gap: var(--e1); border-bottom: 1px solid var(--borde); } .ds-pestana { font-family: var(--fuente); font-weight: 700; font-size: var(--t-menor); padding: var(--e2) var(--e4); border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--texto-suave); cursor: pointer; } .ds-pestana:hover { color: var(--texto-titulo); } .ds-pestana:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; } .ds-pestana[aria-selected=\"true\"] { color: var(--texto-titulo); border-bottom-color: var(--indicador-seleccion); }"
+    },
+    {
+      "name": "Fila del listado de familias",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Nombre, estado, plan como cuadrado y nombre, vencidas en texto y la línea en miniatura.",
+      "html": "<div class=\"ds-fila\"><div class=\"ds-fila-cabeza\"><strong>Jorge Ramirez</strong></div><div class=\"ds-fila-plan\"><span class=\"ds-cuadro\"></span>Plan Familiar</div><div class=\"ds-vencidas\">12 vencidas</div><span class=\"ds-mini\"><i class=\"ds-p ds-v\"></i><i class=\"ds-p ds-v\"></i><i class=\"ds-p ds-h\"></i><i class=\"ds-hoy\"></i><i class=\"ds-p ds-x\"></i></span></div>",
+      "css": ".ds-fila { display: grid; gap: 6px; padding: var(--e3) var(--e4); background: var(--superficie); border-top: 1px solid var(--borde); font-family: var(--fuente); font-size: var(--t-menor); color: var(--texto); transition: background-color var(--duracion) var(--curva); } .ds-fila:hover { background: var(--superficie-hundida); } .ds-fila strong { color: var(--texto-titulo); font-weight: 600; font-size: var(--t-cuerpo); } .ds-fila-plan { display: inline-flex; align-items: center; gap: 6px; } .ds-cuadro { width: 12px; height: 12px; border-radius: 3px; background: var(--plan-verde); } .ds-vencidas { font-weight: 600; color: var(--texto-error); } .ds-mini { position: relative; display: flex; align-items: center; justify-content: space-between; height: 12px; } .ds-mini::before { content: \"\"; position: absolute; left: 0; right: 0; top: 5px; height: 2px; background: var(--plan-verde); } .ds-p { position: relative; width: 10px; height: 10px; border-radius: var(--r-pastilla); border: 2px solid var(--plan-verde); background: var(--superficie); } .ds-h { background: var(--plan-verde); } .ds-v { border-color: var(--peligro-accion-fondo); background: var(--peligro-accion-fondo); } .ds-x { border-color: var(--texto-titulo); } .ds-hoy { position: relative; width: 2px; height: 12px; background: var(--texto-titulo); }"
+    },
+    {
+      "name": "La línea de la familia",
+      "kind": "custom",
+      "refersTo": "parada-punto",
+      "description": "Línea de 8 px del color del plan con estaciones de 24 px: hecha, vencida, hoy, próxima.",
+      "html": "<ol class=\"ds-linea\"><li class=\"ds-parada\" data-e=\"hecha\"><button class=\"ds-punto\" aria-label=\"Cuota de julio, hecha\"></button><span class=\"ds-rot\"><strong>Cuota de julio</strong><span>21 jul</span></span></li><li class=\"ds-parada\" data-e=\"vencida\"><button class=\"ds-punto\" aria-label=\"Cuota de agosto, vencida\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z\"/></svg></button><span class=\"ds-rot\"><strong>Cuota de agosto</strong><span>21 ago</span></span></li><li class=\"ds-hoy\"><span class=\"ds-hoy-marca\"></span><span class=\"ds-hoy-texto\">Hoy</span></li><li class=\"ds-parada\" data-e=\"proxima\"><button class=\"ds-punto\" aria-label=\"Vacuna de Rocky, próxima\"></button><span class=\"ds-rot\"><strong>Vacuna de Rocky</strong><span>14 nov</span></span></li></ol>",
+      "css": ".ds-linea { --c: var(--plan-verde); position: relative; display: flex; align-items: flex-start; list-style: none; margin: 0; padding: 0; font-family: var(--fuente); } .ds-linea::before { content: \"\"; position: absolute; left: 0; right: 0; top: 8px; height: 8px; border-radius: var(--r-pastilla); background: var(--c); } .ds-parada { position: relative; flex: 1 1 0; display: grid; justify-items: center; gap: var(--e2); } .ds-punto { position: relative; z-index: 1; width: 24px; height: 24px; padding: 0; display: grid; place-items: center; border-radius: var(--r-pastilla); border: 4px solid var(--c); background: var(--superficie); color: var(--peligro-accion-texto); cursor: pointer; } .ds-punto:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; } .ds-parada[data-e=\"hecha\"] .ds-punto { background: var(--c); } .ds-parada[data-e=\"proxima\"] .ds-punto { border-color: var(--texto-titulo); box-shadow: 0 0 0 4px var(--superficie-seleccion); } .ds-parada[data-e=\"vencida\"] .ds-punto { border-color: var(--peligro-accion-fondo); background: var(--peligro-accion-fondo); } .ds-rot { display: grid; gap: 2px; text-align: center; font-size: var(--t-menor); } .ds-rot strong { color: var(--texto-titulo); font-weight: 600; } .ds-rot span { color: var(--texto-suave); font-size: var(--t-etiqueta); } .ds-parada[data-e=\"vencida\"] .ds-rot strong { color: var(--texto-error); } .ds-parada[data-e=\"hecha\"] .ds-rot { opacity: 0; transition: opacity var(--duracion) var(--curva); } .ds-parada:hover .ds-rot, .ds-parada:focus-within .ds-rot { opacity: 1; } .ds-hoy { position: relative; z-index: 1; display: grid; justify-items: center; gap: var(--e1); padding-inline: var(--e2); } .ds-hoy-marca { width: 4px; height: 24px; border-radius: 2px; background: var(--texto-titulo); } .ds-hoy-texto { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--texto-titulo); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "La línea de metro",
+    "overview": "Cada familia es una línea de metro. Su plan se dibuja como una línea del color del plan cuyas estaciones son cuotas, preventivos y servicios: hechas, próxima o vencidas. El mundo visual es la señalética del Metro de Medellín con la paleta de TIMU: una barra superior marina con los módulos y el activo subrayado en verde, superficies blancas planas sobre un lienzo cálido, y símbolos geométricos simples (líneas, círculos, cuadrados) que se leen de un vistazo. La interfaz es de trabajo: densa, sin decoración, pensada para quien la usa ocho horas al día en escritorio y para el médico en ruta con el celular.\n\nLa densidad viene de la información, no del adorno. No hay sombras en lo que está quieto, ni bordes de adorno, ni degradados; la jerarquía la dan el tamaño del tipo, el peso, el marino del título frente al marino suave del texto, y el único verde lleno de la acción principal. La geometría de la línea (8 px, esquinas de pastilla, estaciones de 24 px) es el elemento que identifica el producto y el que más se reutiliza: aparece entera en la ficha y en miniatura en cada fila del listado.\n\nSolo hay tema claro, por decisión de producto (`color-scheme: light`). El logo es un marcador de texto (`MarcaTimu`) hasta que TIMU entregue el SVG, y GeosansLight para títulos grandes está pendiente de entrega; mientras tanto todo es Inter.",
+    "keyCharacteristics": [
+      "Barra de marca marina de 64 px; módulo activo con un subrayado verde de 4 px.",
+      "Superficies blancas planas sobre lienzo `superficie-lienzo`; sombra solo en lo que flota.",
+      "La línea de la familia: 8 px del color del plan, estaciones circulares con estado por forma.",
+      "Inter con escala fija en rem, cifras tabulares, etiquetas de 12 px en mayúsculas espaciadas.",
+      "Un solo verde lleno por vista; el resto de acciones son suaves, secundarias o planas.",
+      "El estado nunca se lee solo por el color: siempre lleva texto e icono."
+    ],
+    "rules": [
+      {
+        "name": "La regla de los roles",
+        "body": "Fuera de `tokens.css` no se escribe un color ni se nombra un paso de la paleta: solo roles. Un rol nuevo llega con su par en `@pares`. Lo hace cumplir `frontend/src/test/tokens.test.ts` (sin `#hex`, `rgb()`, `oklch()` ni nombres de color en `src`, también en `style={{}}` y atributos SVG; ninguna `var(--…)` sin definir; cada par llega a su mínimo).",
+        "section": "colors"
+      },
+      {
+        "name": "La regla del verde único",
+        "body": "Un solo botón principal (verde lleno) por vista; el resto son suaves, secundarias o planas (regla 2 de la sección 11 del manual). En la ficha de una familia, el principal es la acción de la próxima estación y nombra lo que hace.",
+        "section": "colors"
+      },
+      {
+        "name": "La regla de plan contra estado",
+        "body": "El plan es identidad: un cuadrado de 12 px del color del plan (`marcador-plan`) y el nombre al lado en texto, o la línea de la familia. El estado es una pastilla tintada con texto oscuro e icono. El color del plan sale del campo `color` del catálogo (`data-color`), nunca del nombre del plan.",
+        "section": "colors"
+      },
+      {
+        "name": "La regla de la señal doble",
+        "body": "El estado nunca se comunica solo con color (WCAG 1.4.1): el distintivo lleva icono por tono (`check`, `alerta`, `info`, `cerrar`, `menos`), la estación vencida lleva el icono de alerta, y la fila del listado dice «N vencidas» en texto junto a la miniatura.",
+        "section": "colors"
+      },
+      {
+        "name": "La regla de la escala fija",
+        "body": "El tipo se mide en rem con los siete pasos de `tokens.css`; una interfaz de trabajo no escala el tipo con la ventana (nada de `clamp()` ni `vw` en tamaños de letra). En pantallas táctiles o de 900 px o menos, campos y buscadores suben a 1rem para que iOS no amplíe la página al enfocar.",
+        "section": "typography"
+      },
+      {
+        "name": "La regla de las cifras tabulares",
+        "body": "Importes, fechas, totales y contadores llevan `.numero` (`font-variant-numeric: tabular-nums`) donde se comparan en columna o se actualizan.",
+        "section": "typography"
+      },
+      {
+        "name": "La regla de la etiqueta que nombra",
+        "body": "La etiqueta en mayúsculas nombra un dato o un bloque de datos; es el título de lo que tiene debajo, nunca una línea decorativa encima de otro título.",
+        "section": "typography"
+      },
+      {
+        "name": "La regla del contenedor",
+        "body": "Lo que cambia de forma según el sitio que tiene lo decide su contenedor, no la ventana: junto al listado, la ficha es estrecha en un escritorio ancho. La `tabla-apilable` se apila con una container query por debajo de 640 px de su `.scroll-x`, y la línea de la familia pasa a vertical cuando mide que sus paradas no caben con su rótulo (y siempre por debajo de 600 px de ventana).",
+        "section": "layout"
+      },
+      {
+        "name": "La regla de sin desborde",
+        "body": "Ninguna ruta desborda en horizontal a 375, 768 ni 1280 px, ni tiene texto con contraste insuficiente según axe-core; las rutas con pestañas se comprueban pestaña por pestaña. Lo vigila `frontend/e2e-stack/responsive.spec.ts`, cuya lista `PENDIENTES` (deuda de los módulos sin rediseñar) solo puede encoger.",
+        "section": "layout"
+      },
+      {
+        "name": "La regla de lo que flota",
+        "body": "Sombra solo para lo que tapa a otra cosa y desaparece al cerrarse. Un panel, una tarjeta o una barra nunca la llevan.",
+        "section": "elevation"
+      },
+      {
+        "name": "La regla de las capas",
+        "body": "Todo `z-index` sale de `--capa-*`; lo comprueba `tokens.test.ts`, y `frontend/e2e-stack/recorridos.spec.ts` comprueba que menús y ventanas abiertas quedan por encima de las barras fijas.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do usa solo roles de `tokens.css` en componentes, vistas y `style={{}}`; si falta uno, añade el paso (si hace falta), el rol y su par en `@pares`.",
+      "Do deja un solo botón verde lleno por vista y haz suaves o secundarias las demás acciones.",
+      "Do acompaña todo estado de texto e icono además del color (distintivo, estación vencida, «N vencidas»).",
+      "Do dibuja el plan como identidad: cuadrado de 12 px o línea de 8 px del color del catálogo, con el nombre en texto al lado.",
+      "Do usa la escala fija en rem, `.numero` en cifras que se comparan, y etiquetas de 12 px en mayúsculas espaciadas para nombrar datos.",
+      "Do decide los cambios de forma por el ancho del contenedor (`tabla-apilable`, la línea), no por el de la ventana.",
+      "Do saca todo `z-index` de `--capa-*` y toda sombra de `--sombra-3`, solo en lo que flota.",
+      "Do mantén los controles en 40 px y 44 px en táctil, con foco azul visible de 2 px."
+    ],
+    "donts": [
+      "Don't escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.",
+      "Don't pongas sombra, borde de adorno ni degradado en paneles, tarjetas o barras.",
+      "Don't pongas una etiqueta en mayúsculas encima de un título como antetítulo: la etiqueta nombra el dato o el bloque que tiene debajo.",
+      "Don't deduzcas el color de un plan de su nombre ni uses el color de plan como estado.",
+      "Don't uses verde o naranja de marca como texto sobre claro (regla 1 del manual); sobre la barra marina solo blanco, marino-200, verde-500 y naranja-500 (regla 6).",
+      "Don't imites el logo pintando las letras de TIMU; hasta que llegue el SVG va el marcador de texto (sección 13 del manual).",
+      "Don't resuelvas la línea con scroll horizontal ni con una ventana de «Anteriores» y «Siguientes»: escondían una cuota vencida.",
+      "Don't añadas un tema oscuro ni uses GeosansLight por debajo de 20 px, en texto corrido, tablas o botones.",
+      "Don't uses «+» para «Más» en la navegación: se lee como crear."
+    ]
+  }
+}
