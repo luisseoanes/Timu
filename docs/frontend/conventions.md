@@ -166,5 +166,9 @@ Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñ
 - **El ingreso, el portal y los módulos sin rediseñar** contradicen el sistema en puntos que
   sus unidades de la hoja de ruta corrigen: el antetítulo en pastilla y el vidrio de
   `.ingreso-vista`, la sombra de `.portal-nav` y la opacidad de `.cupo:disabled`.
+- **El contrato, la fórmula médica y el comprobante de pago siguen en PDF sin marca**, con las
+  fuentes base del PDF (latin-1), que estropean las tildes. El carnet ya usa
+  `app/core/marca_pdf.py` (logo, paleta, GeosansLight e Inter); los demás lo adoptan en su
+  unidad.
 - **Nombres de catálogo sin tildes** («Atencion en clinica aliada», «Vacunacion»): vienen de
   `backend/app/modules/catalogos/datos.py` y se ven en la línea y en los botones.

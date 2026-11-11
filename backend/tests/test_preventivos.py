@@ -296,9 +296,33 @@ async def test_el_carnet_lleva_el_peso_de_cada_desparasitacion(db, admin):
     )
     (fila,) = (await db.run_sync(service.carnet, mascota.id, HOY))["aplicados"]
     assert fila["peso_kg"] == 8.4
-    assert "peso 8,4 kg" in documento.linea_aplicada(fila)
-    assert "peso" not in documento.linea_aplicada({**fila, "peso_kg": None})
-    assert "peso 12 kg" in documento.linea_aplicada({**fila, "peso_kg": 12.0})
+    # En el PDF, la tabla de la desparasitacion interna lleva el peso en su columna.
+    (en_pdf,) = documento.filas_seccion("desparasitacion_interna", [fila])
+    assert en_pdf[1] == "8,4 kg"
+    assert (
+        documento.filas_seccion("desparasitacion_interna", [{**fila, "peso_kg": 12.0}])[0][1]
+        == "12 kg"
+    )
+    assert (
+        documento.filas_seccion("desparasitacion_interna", [{**fila, "peso_kg": None}])[0][1] == "—"
+    )
+    # Una vacuna no va en esa tabla.
+    assert documento.filas_seccion("vacuna", [fila]) == []
+
+
+def test_el_carnet_pdf_lleva_las_fuentes_de_la_marca():
+    """Con las fuentes base del PDF (latin-1) las tildes se perdian: ahora va con las de TIMU."""
+    datos = {
+        "mascota": {"nombre": "Ñoño", "especie": "Canino", "raza": None, "fecha_nacimiento": None},
+        "aplicados": [],
+        "vencidos": [{"nombre": "Antirrábica", "dosis": 1, "fecha_programada": "2026-01-01"}],
+        "proximos": [],
+    }
+    pdf = documento.generar_carnet(datos, codigo="ABC234DEFG", url_verificacion="https://x/v")
+    assert pdf.startswith(b"%PDF-")
+    assert b"GeosansLight" in pdf
+    assert b"Inter" in pdf
+    assert b"Helvetica" not in pdf
 
 
 async def test_carnet_pdf_verificable_sin_datos_de_la_familia(
