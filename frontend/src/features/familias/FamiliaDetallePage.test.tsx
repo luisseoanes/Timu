@@ -237,6 +237,24 @@ describe('FamiliaDetallePage', () => {
     expect(within(modal).getByLabelText('Valor (COP)')).toHaveValue(89000)
   })
 
+  it('una cuota vencida también se paga desde su estación en la línea', async () => {
+    // La API la guarda pendiente con días de mora; la línea la marca vencida.
+    const cuota = { tipo: 'cuota' as const, referencia_id: 'q1', fecha: '2026-09-05', estado: 'vencida' as const, titulo: 'Cuota septiembre', mascota: null }
+    server.use(
+      http.get(`${API}/cartera/familias/:id/estado-cuenta`, () => HttpResponse.json(CUENTA)),
+      http.get(`${API}/familias/:id/linea`, () => HttpResponse.json({ familia_id: FAMILIA.id, planes: [], estaciones: [cuota] })),
+    )
+    const user = userEvent.setup()
+    abrirFicha()
+    const linea = await screen.findByRole('list', { name: 'Línea de la familia' })
+    await screen.findByRole('region', { name: 'Cartera' })
+    await waitFor(() => expect(screen.queryByText('Cargando la cartera…')).not.toBeInTheDocument())
+    await user.click(within(linea).getByRole('button', { name: /^Cuota septiembre, vencida/ }))
+    const modal = await screen.findByRole('dialog', { name: 'Registrar pago' })
+    expect(within(modal).getByLabelText('Cuota')).toHaveValue('q1')
+    expect(within(modal).getByLabelText('Valor (COP)')).toHaveValue(89000)
+  })
+
   it('sin permiso para cobrar, la cuota de la línea solo lleva a la cartera', async () => {
     const cuota = { tipo: 'cuota' as const, referencia_id: 'q1', fecha: '2099-01-05', estado: 'proxima' as const, titulo: 'Cuota septiembre', mascota: null }
     server.use(
