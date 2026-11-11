@@ -43,9 +43,16 @@ Los cuatro colores del logo: verde, naranja, azul y marino.
 | Color | Dónde está en el logo | Hex | RGB |
 | --- | --- | --- | --- |
 | Verde TIMU | Letras T y U | `#98B833` | 152, 184, 51 |
-| Naranja TIMU | M, mitad izquierda | `#D68A11` | 214, 138, 17 |
+| Naranja TIMU | M, mitad izquierda | `#D48200` | 212, 130, 0 |
 | Azul TIMU | M, mitad derecha | `#477095` | 71, 112, 149 |
 | Marino TIMU | Texto y siluetas | `#111537` | 17, 21, 55 |
+
+Son los colores con que la diseñadora exporta el logo para pantalla (las láminas PNG del
+manual original). El naranja se ajustó el 2026-11-11 a ese valor: antes era `#D68A11`,
+medido sobre una imagen del logo. El logo en vector (`Marca TIMU.ai`) guarda los mismos
+números en Adobe RGB; convertidos con gestión de color saldrían más saturados, pero las
+exportaciones de la diseñadora no lo hacen, y la plataforma sigue a las exportaciones. El texto del manual original de 2021 da otros valores (un azul petróleo y un
+naranja claro) que no usa ni su logo ni ninguna pieza; TIMU confirmó que valen los del logo.
 
 ### Escalas
 
@@ -54,7 +61,7 @@ Cada color con cinco tintes, del más intenso al más claro:
 | Color | Base | Tinte 1 | Tinte 2 | Tinte 3 | Tinte 4 | Tinte 5 |
 | --- | --- | --- | --- | --- | --- | --- |
 | Verde | `#98B833` | `#ADC65C` | `#C1D485` | `#D6E3AD` | `#E5EDCC` | `#F3F6E7` |
-| Naranja | `#D68A11` | `#DEA141` | `#E6B970` | `#EFD0A0` | `#F5E2C4` | `#FAF1E2` |
+| Naranja | `#D48200` | `#DD9B33` | `#E5B466` | `#EECD99` | `#F4E0BF` | `#FAF0E0` |
 | Azul | `#477095` | `#6C8DAA` | `#91A9BF` | `#B5C6D5` | `#D1DBE4` | `#E9EEF2` |
 | Marino | `#111537` | `#41445F` | `#707387` | `#A0A1AF` | `#C4C4CD` | `#E2E3E7` |
 
@@ -143,7 +150,7 @@ Tokens que trae el manual para diseño y desarrollo web:
 ```css
 :root {
   --timu-verde:   #98B833;  /* letras T y U */
-  --timu-naranja: #D68A11;  /* M, mitad izquierda */
+  --timu-naranja: #D48200;  /* M, mitad izquierda */
   --timu-azul:    #477095;  /* M, mitad derecha */
   --timu-marino:  #111537;  /* texto y siluetas */
   --timu-blanco:  #FFFFFF;
@@ -164,7 +171,7 @@ En la plataforma estos valores son los pasos `500` de verde, naranja y azul y el
 
 El manual define la identidad, pero una aplicación necesita más:
 
-- **Tonos oscuros.** Sobre blanco, el verde da 2.27:1 y el naranja 2.80:1: no sirven para texto
+- **Tonos oscuros.** Sobre blanco, el verde da 2.27:1 y el naranja 3.00:1: no sirven para texto
   (4.5) ni para un gráfico con significado (3.0). Las escalas del manual solo aclaran, así que
   sin tonos oscuros no hay texto de marca, ni estado al pasar el cursor, ni texto legible sobre
   los tintes.
@@ -199,12 +206,12 @@ contra blanco (`#FFFFFF`) y contra el lienzo (`#F5F6F1`).
 
 | Paso | Hex | Origen | vs blanco | vs lienzo | Para qué |
 | --- | --- | --- | --- | --- | --- |
-| 50 | `#FAF1E2` | manual | 1.12 | 1.03 | Fondo del estado de alerta |
-| 100 | `#F5E2C4` | manual | 1.27 | 1.17 | |
-| 200 | `#EFD0A0` | manual | 1.48 | 1.36 | |
-| 300 | `#E6B970` | manual | 1.82 | 1.68 | Ilustración |
-| 400 | `#DEA141` | manual | 2.26 | 2.08 | Ilustración |
-| **500** | `#D68A11` | **manual · logo** | 2.80 | 2.58 | Color del plan Colita Feliz, con texto marino |
+| 50 | `#FAF0E0` | derivado | 1.13 | 1.04 | Fondo del estado de alerta |
+| 100 | `#F4E0BF` | derivado | 1.29 | 1.19 | |
+| 200 | `#EECD99` | derivado | 1.52 | 1.40 | |
+| 300 | `#E5B466` | derivado | 1.90 | 1.75 | Ilustración |
+| 400 | `#DD9B33` | derivado | 2.38 | 2.19 | Ilustración |
+| **500** | `#D48200` | **logo** | 3.00 | 2.77 | Color del plan Colita Feliz, con texto marino |
 | 600 | `#BE7700` | derivado | 3.60 | 3.32 | Serie de gráfico |
 | 700 | `#9B5600` | derivado | 5.64 | 5.19 | Texto naranja sobre claro |
 | 800 | `#813E00` | derivado | 8.01 | 7.37 | Texto del estado de alerta |
@@ -333,7 +340,7 @@ Cada estado es un par fondo + texto, y siempre lleva texto e icono además del c
 | Estado | Ejemplos | Fondo | Texto | Contraste |
 | --- | --- | --- | --- | --- |
 | Correcto (`--estado-ok-*`) | Afiliación activa, cuota al día, preventivo aplicado | verde-50 | verde-800 | 7.31 |
-| Alerta (`--estado-alerta-*`) | Mora temprana, preventivo por vencer | naranja-50 | naranja-800 | 7.15 |
+| Alerta (`--estado-alerta-*`) | Mora temprana, preventivo por vencer | naranja-50 | naranja-800 | 7.09 |
 | Información (`--estado-info-*`) | Prospecto, servicio programado | azul-50 | azul-700 | 7.33 |
 | Peligro (`--estado-peligro-*`) | Cancelada, preventivo vencido, error | rojo-50 | rojo-800 | 8.28 |
 | Neutro (`--estado-neutro-*`) | Congelada, sin datos, borrador | marino-100 | marino-700 | 7.39 |
@@ -342,7 +349,7 @@ Cada estado es un par fondo + texto, y siempre lleva texto e icono además del c
 
 | Rol | Paso | Texto encima | Contraste |
 | --- | --- | --- | --- |
-| `--plan-naranja` / `--plan-naranja-texto` | naranja-500 | marino-900 | 6.32 |
+| `--plan-naranja` / `--plan-naranja-texto` | naranja-500 | marino-900 | 5.89 |
 | `--plan-verde` / `--plan-verde-texto` | verde-500 | marino-900 | 7.79 |
 | `--plan-azul` / `--plan-azul-texto` | azul-500 | blanco | 5.22 |
 

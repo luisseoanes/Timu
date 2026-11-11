@@ -94,7 +94,7 @@ Vinculantes por decisión del usuario:
 - El manual de marca de TIMU es la base (`docs/manual-de-marca.md`, transcrito del PDF y
   ampliado con los colores auxiliares). La paleta anterior, en tonos menta, queda descartada
   por completo.
-- Paleta: los cuatro colores del logo (verde `#98B833`, naranja `#D68A11`, azul `#477095`,
+- Paleta: los cuatro colores del logo (verde `#98B833`, naranja `#D48200`, azul `#477095`,
   marino `#111537`) con sus tintes, más los tonos auxiliares definidos en el manual del
   repositorio. Acción principal: verde con texto marino.
 - Tipografía: GeosansLight solo para títulos grandes, cuando TIMU entregue el archivo y la
