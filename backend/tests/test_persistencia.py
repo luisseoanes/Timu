@@ -1217,6 +1217,8 @@ _LISTADOS_DE_FAMILIA = (
     "/api/v1/servicios?familia_id={familia}&mascota_id={mascota}",
     "/api/v1/comunicaciones/mensajes?familia_id={familia}",
     "/api/v1/familias/{familia}/documentos",
+    "/api/v1/familias/{familia}/linea",
+    "/api/v1/afiliaciones/lineas?familia_id={familia}",
 )
 
 

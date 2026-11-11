@@ -147,6 +147,28 @@ export type Periodicidad = 'mensual' | 'trimestral' | 'semestral' | 'anual'
 
 export type ColorPlan = 'verde' | 'naranja' | 'azul'
 
+export interface EstacionRead {
+  tipo: 'cuota' | 'preventivo' | 'servicio'
+  referencia_id: string
+  fecha: string
+  estado: 'hecha' | 'vencida' | 'proxima' | 'futura'
+  titulo: string
+  mascota: string | null
+}
+
+export interface PlanDeFamiliaRead {
+  plan_id: string
+  nombre: string
+  color: ColorPlan
+  mascotas: string[]
+}
+
+export interface LineaFamiliaRead {
+  familia_id: string
+  planes: PlanDeFamiliaRead[]
+  estaciones: EstacionRead[]
+}
+
 export type EstadoPago = 'pendiente' | 'aprobado' | 'rechazado' | 'reversado' | 'anulado'
 
 export interface TarifaRead {
