@@ -165,7 +165,7 @@ function PlanYServicios({
       : !vigente
         ? 'La familia no tiene un plan vigente.'
         : afiliada
-          ? `Plan ${afiliada.plan_nombre}: paga ${moneda(afiliada.valor_mensual)} al mes.`
+          ? `${afiliada.plan_nombre}: paga ${moneda(afiliada.valor_mensual)} al mes.`
           : 'No está afiliada en el contrato de la familia.'
   const delMes = servicios.isPending
     ? 'Cargando sus servicios…'

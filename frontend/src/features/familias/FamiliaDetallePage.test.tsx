@@ -758,7 +758,8 @@ describe('FamiliaDetallePage', () => {
     )
     const { modal } = await abrirFichaDeLuna()
     expect(within(modal).getByRole('heading', { name: 'Luna' })).toBeInTheDocument()
-    expect(await within(modal).findByText(/^Plan Plan Esencial: paga .*89\.000 al mes\.$/)).toBeInTheDocument()
+    // El nombre del plan ya dice «Plan»: no se antepone otra vez.
+    expect(await within(modal).findByText(/^Plan Esencial: paga .*89\.000 al mes\.$/)).toBeInTheDocument()
     expect(await within(modal).findByText(/Este mes: 1 pendientes y 0 utilizados/)).toBeInTheDocument()
     expect((consultado as URLSearchParams | null)?.get('mascota_id')).toBe(LUNA.id)
     expect(within(modal).getByRole('link', { name: 'Historia clínica' })).toHaveAttribute('href', `/clinica/mascotas/${LUNA.id}`)
