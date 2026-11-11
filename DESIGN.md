@@ -245,9 +245,9 @@ geometría de la línea (8 px, esquinas de pastilla, estaciones de 24 px) es el 
 identifica el producto y el que más se reutiliza: aparece entera en la ficha y en miniatura en
 cada fila del listado.
 
-Solo hay tema claro, por decisión de producto (`color-scheme: light`). El logo es un marcador
-de texto (`MarcaTimu`) hasta que TIMU entregue el SVG, y GeosansLight para títulos grandes está
-pendiente de entrega; mientras tanto todo es Inter.
+Solo hay tema claro, por decisión de producto (`color-scheme: light`). El logo es el SVG del
+vector de TIMU (`MarcaTimu`): completo con su lema, o compacto donde el lema no se leería.
+GeosansLight para títulos grandes espera la licencia web; mientras tanto todo es Inter.
 
 **Key Characteristics:**
 - Barra de marca marina de 64 px; módulo activo con un subrayado verde de 4 px.
@@ -578,8 +578,8 @@ de metro: espaciado esquemático, no proporcional al tiempo.
 - **Don't** deduzcas el color de un plan de su nombre ni uses el color de plan como estado.
 - **Don't** uses verde o naranja de marca como texto sobre claro (regla 1 del manual); sobre la
   barra marina solo blanco, marino-200, verde-500 y naranja-500 (regla 6).
-- **Don't** imites el logo pintando las letras de TIMU; hasta que llegue el SVG va el marcador de
-  texto (sección 13 del manual).
+- **Don't** recolorees el logo ni lo dibujes con texto: va el SVG de `MarcaTimu`, a color o en
+  blanco (sección 13 del manual).
 - **Don't** resuelvas la línea con scroll horizontal ni con una ventana de «Anteriores» y
   «Siguientes»: escondían una cuota vencida.
 - **Don't** añadas un tema oscuro ni uses GeosansLight por debajo de 20 px, en texto corrido,

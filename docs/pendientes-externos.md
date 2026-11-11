@@ -110,10 +110,10 @@ El 2026-11-11 llegó el material gráfico de la marca: el manual original de la 
 los patrones y las piezas impresas (carnet de vacunación, plegable 2026, pendón y piezas de
 mostrador). Lo que resuelve y lo que deja abierto:
 
-- **Logo en vector: recibido.** `Marca TIMU.ai` trae el logo a color en sus tres versiones
-  (con las siluetas bajo el lema, con perro y gato, y con animales grandes), y el manual
-  fuente trae las versiones en blanco para fondo oscuro. Falta sacarlas a SVG e
-  integrarlas; hasta entonces, el panel muestra el nombre «TIMU» en texto.
+- **Logo en vector: recibido e integrado.** `Marca TIMU.ai` trae el logo a color en sus tres
+  versiones (con las siluetas bajo el lema, con perro y gato, y con animales grandes). La
+  plataforma usa la primera, completa o compacta, a color o en blanco
+  (`frontend/src/assets/marca/`).
 - **GeosansLight: recibido el archivo, falta la licencia.** Llegan la regular y la oblicua
   (Manfred Klein, 2004), con todos los caracteres del español. El archivo no declara
   licencia: TIMU tiene que confirmar que puede usarse en la web antes de servirla. Decidido

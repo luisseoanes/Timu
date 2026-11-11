@@ -1,13 +1,24 @@
+import blanco from '@/assets/marca/timu-blanco.svg'
+import color from '@/assets/marca/timu-color.svg'
+import compactoBlanco from '@/assets/marca/timu-compacto-blanco.svg'
+import compactoColor from '@/assets/marca/timu-compacto-color.svg'
+
 /**
- * Marcador de la marca mientras TIMU entrega el logo en vector (docs/manual-de-marca.md,
- * sección 13). Es solo texto: no imita el logo ni lo recolorea. Cuando llegue el SVG, este
- * componente lo muestra tal cual, con su versión para fondo oscuro en `claro`.
+ * El logo de TIMU (docs/manual-de-marca.md, sección 3), sacado del vector que entregó TIMU
+ * (Marca TIMU.ai). No se recolorea: a color sobre fondo claro y en blanco (`claro`) sobre la
+ * superficie de marca. `compacta` es el logotipo sin el lema ni las siluetas, que el manual
+ * permite; va donde el lema no se leería (por debajo de unos 60 px de alto).
+ *
+ * Los SVG llevan los colores de la paleta escritos dentro: son el activo de la marca, no
+ * colores de la interfaz, y la guarda de tokens no revisa los .svg.
  */
-export function MarcaTimu({ claro = false }: { claro?: boolean }) {
+export function MarcaTimu({ claro = false, compacta = false }: { claro?: boolean; compacta?: boolean }) {
+  const src = compacta ? (claro ? compactoBlanco : compactoColor) : claro ? blanco : color
   return (
-    <span className={`marca${claro ? ' marca-clara' : ''}`}>
-      <span className="marca-nombre">TIMU</span>
-      <span className="marca-sub">Medicina veterinaria prepagada</span>
-    </span>
+    <img
+      className={`marca${compacta ? ' marca-compacta' : ''}`}
+      src={src}
+      alt={compacta ? 'TIMU' : 'TIMU · Medicina veterinaria prepagada'}
+    />
   )
 }

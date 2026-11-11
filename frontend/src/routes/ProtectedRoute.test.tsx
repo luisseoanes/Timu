@@ -32,7 +32,7 @@ describe('ProtectedRoute', () => {
     }))
     renderizar(arbol())
     expect(screen.getByRole('status')).toHaveTextContent('Comprobando tu sesión…')
-    expect(screen.getByText('TIMU')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /^TIMU/ })).toBeInTheDocument()
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
   })
 

@@ -84,8 +84,8 @@ como seguro (manual de marca, sección Voz).
   remisión, aliada, ruta.
 - Estados que la interfaz debe distinguir: afiliación (prospecto, activa, en mora, congelada,
   cancelada) y servicio (máquina de estados del requisito 6.10).
-- **Por decidir (TIMU)**: logo en vector y su versión para fondo oscuro; archivo y licencia web
-  de GeosansLight; términos y condiciones publicables de cada plan.
+- **Por decidir (TIMU)**: licencia web de GeosansLight (el archivo ya llegó); precios y
+  términos y condiciones publicables de cada plan.
 
 ## Brand Commitments
 
@@ -99,7 +99,7 @@ Vinculantes por decisión del usuario:
   repositorio. Acción principal: verde con texto marino.
 - Tipografía: GeosansLight solo para títulos grandes, cuando TIMU entregue el archivo y la
   licencia; Inter para todo lo demás.
-- Logo: no se modifica ni se recolorea. Mientras llega en vector, se usa un marcador de texto.
+- Logo: no se modifica ni se recolorea. Es el SVG del vector de TIMU, completo o compacto.
 - Voz con dos registros: cercano y juguetón (bienvenida, recordatorios, portal) y experto y
   preciso (salud, urgencias, condiciones del plan). Se tutea a la familia.
   - Sí: «plan de salud prepagado», «medicina veterinaria prepagada», «peludito», «peludo»,

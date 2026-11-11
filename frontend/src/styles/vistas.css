@@ -15,7 +15,7 @@
   color: var(--texto-sobre-marca);
 }
 .barra-marca :focus-visible { outline-color: var(--foco-sobre-marca); }
-.barra-marca .marca { flex: none; }
+.barra-marca .marca { flex: none; height: 26px; }
 
 .modulos { flex: 1; min-width: 0; height: 100%; display: flex; align-items: stretch; gap: var(--e1); }
 .modulos a, .modulos .mas {
@@ -35,10 +35,8 @@
 }
 
 .barra-marca .buscador { background: var(--superficie); border-color: var(--superficie); min-width: 280px; }
-/* Por debajo de 1360 px la barra no cabe con el lema y el buscador ancho: se quedan el nombre y
-   un buscador más estrecho, y AppLayout manda más módulos a «Más». */
+/* Por debajo de 1360 px el buscador se estrecha y AppLayout manda más módulos a «Más». */
 @media (max-width: 1359px) {
-  .barra-marca .marca-sub { display: none; }
   .barra-marca .buscador { min-width: 0; width: 220px; }
 }
 
@@ -194,11 +192,10 @@
 }
 
 /* Marcador de texto de la marca (MarcaTimu): «TIMU» y el lema, sin imitar el logo. */
-.marca { display: inline-grid; gap: 2px; justify-items: start; width: fit-content; }
-.marca-nombre { font-family: var(--fuente); font-weight: 700; font-size: var(--t-titulo); letter-spacing: .14em; color: var(--texto-titulo); line-height: 1; }
-.marca-sub { font-size: var(--t-etiqueta); color: var(--texto-suave); white-space: nowrap; }
-.marca-clara .marca-nombre { color: var(--texto-sobre-marca); }
-.marca-clara .marca-sub { color: var(--texto-sobre-marca-suave); }
+/* El logo (MarcaTimu): el SVG fija la proporción y cada sitio, el alto. Completo, 72 px;
+   compacto (sin lema), 28 px. Por debajo de unos 60 px el lema no se lee. */
+.marca { display: block; height: 72px; width: auto; max-width: 100%; }
+.marca-compacta { height: 28px; }
 
 /* Comprobación de la sesión (ProtectedRoute): la marca y el estado, centrados en el lienzo. */
 .espera-sesion {
@@ -282,6 +279,7 @@
 }
 .ingreso-panel { width: min(400px, 100%); display: grid; gap: var(--e6); }
 .ingreso-panel > .marca { display: none; }
+.ingreso-marca .marca { height: 112px; }
 .ingreso-titulo { display: grid; gap: var(--e2); }
 .ingreso-titulo h1 { font-size: var(--t-display); font-weight: 600; }
 .ingreso-titulo p { color: var(--texto-suave); }
@@ -353,7 +351,7 @@
 @media (max-width: 900px) {
   .ingreso { grid-template-columns: 1fr; }
   .ingreso-marca { display: none; }
-  .ingreso-panel > .marca { display: inline-grid; }
+  .ingreso-panel > .marca { display: block; }
   .publica-tarjeta { padding: var(--e5); }
 }
 

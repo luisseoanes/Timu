@@ -21,7 +21,7 @@ export function PortalLayout() {
   return (
     <div className="portal">
       <header className="portal-cabeza">
-        <MarcaTimu />
+        <MarcaTimu compacta />
         <nav className="portal-nav" aria-label="Portal">
           {NAV.map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end}>

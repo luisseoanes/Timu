@@ -22,7 +22,7 @@ export function MiClinicaPage() {
   return (
     <div className="publica">
       <div className="acciones" style={{ width: 'min(760px, 100%)', justifyContent: 'space-between' }}>
-        <MarcaTimu />
+        <MarcaTimu compacta />
         <div className="acciones">
           <span className="apagado">{usuario?.nombre}</span>
           <button className="btn btn-plano" type="button" onClick={logout}>

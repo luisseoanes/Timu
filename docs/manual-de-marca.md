@@ -403,12 +403,16 @@ como serie, para que no se lea como alarma.
 
 ## 13. Logo en la plataforma
 
-- Mientras no llegue el logo en vector, se muestra el nombre **TIMU** en texto, en marino sobre
-  claro y en blanco sobre la superficie de marca. Ese marcador no imita el logo: nada de letras
-  pintadas con los colores de la T, la M y la U.
-- El lema es **«Medicina veterinaria prepagada»**.
-- Cuando llegue el SVG, se usa tal cual. Sobre fondo oscuro solo se usa la versión para fondo
-  oscuro que entregue TIMU.
+- El logo es el SVG sacado del vector que entregó TIMU (`Marca TIMU.ai`), en
+  `frontend/src/assets/marca/`, y lo pinta `MarcaTimu`. Va a color sobre fondo claro y en
+  blanco sobre la superficie de marca, como en las variantes del manual original; no se
+  recolorea de otra forma.
+- Hay dos formas: **completa**, con el lema «Medicina veterinaria prepagada» y las siluetas, y
+  **compacta**, solo el logotipo, que el manual permite. Por debajo de unos 60 px de alto el
+  lema no se lee: ahí va la compacta (la barra del panel, la cabecera del portal).
+- Los colores del SVG son los de la paleta, los de las exportaciones de la diseñadora: el
+  vector guarda los mismos números en Adobe RGB, y convertirlos con gestión de color los
+  cambiaría.
 
 ## 14. Voz en la plataforma
 

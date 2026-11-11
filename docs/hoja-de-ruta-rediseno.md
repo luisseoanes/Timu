@@ -13,7 +13,7 @@ Documentos que manda este trabajo:
 - `DESIGN.md`: el sistema de interfaz. Lo escribe la skill al cerrar la primera superficie
   (`R2-PAN-03`), a partir de lo construido.
 - [Pendientes externos](pendientes-externos.md#marca-e-identidad-manual-de-marca): lo que tiene
-  que entregar TIMU (logo en vector, GeosansLight).
+  que falta de TIMU (la licencia web de GeosansLight, los precios).
 
 Los IDs siguen el patrón `fase-módulo-consecutivo` del [backlog](backlog.md), con fases `R0` a
 `R4` para no confundirlas con las del backend.
@@ -111,7 +111,7 @@ salen de su contrato.
 | `R1-CMP-01` | Acciones y campos | Botones (principal, secundario, suave, destructivo y de icono), campos de texto, listas, áreas de texto, casillas, opciones e interruptores, cada uno con su etiqueta, ayuda y error. Tienen todos los estados y una zona táctil de 44 px o más en el móvil. | Hecho: `.btn-secundario` y `.btn-peligro` nuevos, estados completos, campos con estado inválido y deshabilitado, 44 px y letra de 16 px en pantallas táctiles; selección de texto, cursor, casillas y barras de desplazamiento con la paleta. |
 | `R1-CMP-02` | Datos | La tabla con su versión para el móvil (la forma la fija la dirección), la paginación, los filtros y el orden. El distintivo de estado (pastilla, icono y texto) y el marcador de plan (regla 4 del manual). | Parcial: `Insignia` (pastilla con icono por tono) sustituye a los 23 distintivos escritos a mano, y el marcador de plan está hecho. La versión móvil de la tabla está hecha con las de Familias: `tabla-apilable` pasa a una fila por bloque cuando su contenedor mide menos de 640 px, con la etiqueta de cada celda en `data-etiqueta`. Cada módulo la adopta en su unidad. Faltan la paginación, los filtros y el orden comunes. |
 | `R1-CMP-03` | Capas y avisos | La ventana modal sobre Radix (en el móvil, hoja que sube desde abajo), los avisos, las pestañas y los menús. Los estados de carga con esqueleto, los vacíos que explican qué hacer y los errores con «Reintentar». | Parcial: esqueleto de carga anunciado a los lectores de pantalla, «Reintentar» solo ante fallos pasajeros y la ventana modal como hoja inferior en pantallas estrechas. Que cada vacío diga qué hacer se revisa con cada pantalla en R2 y R3; hoy no hay menús. |
-| `R1-CMP-04` | Marca e iconos | `MarcaTimu` pasa a ser el marcador de texto del manual (sección 13), con el lema «Medicina veterinaria prepagada». Los iconos se ajustan al lenguaje de la dirección. | Hecho: `MarcaTimu` es el marcador de texto con el lema del manual, sin la huella. Los iconos se mantienen: un trazo y sin relleno, como los pictogramas de señalética de la dirección. |
+| `R1-CMP-04` | Marca e iconos | `MarcaTimu` pasa a ser el marcador de texto del manual (sección 13), con el lema «Medicina veterinaria prepagada». Los iconos se ajustan al lenguaje de la dirección. | Hecho: `MarcaTimu` pinta el logo en SVG sacado del vector de TIMU (2026-11-11), completo o compacto, a color o en blanco; antes era un marcador de texto. Los iconos se mantienen: un trazo y sin relleno, como los pictogramas de señalética de la dirección. |
 
 ## R2 — Panel del equipo
 
@@ -184,8 +184,8 @@ Confirmadas por el usuario el 2026-11-10:
   texto rompe las que lo buscan literalmente. Se ajustan en la misma unidad.
 - **El sorteo necesita red.** La telemetría está apagada, pero los sorteos consultan el
   catálogo de direcciones de impeccable.style.
-- **Faltan dos entregas de TIMU.** Sin logo en vector se usa el marcador de texto, y sin
-  GeosansLight todo va en Inter. Cuando lleguen, se abre una unidad para aplicarlos.
+- **Falta la licencia web de GeosansLight.** El logo en vector ya llegó y está integrado;
+  la fuente llegó, pero hasta que TIMU confirme su licencia todo va en Inter.
 - **El recorrido de `e2e-stack/` solo corre en CI al empujar a `main`.** En local hay que
   correrlo con el stack y `datos_demo` antes de empujar.
 

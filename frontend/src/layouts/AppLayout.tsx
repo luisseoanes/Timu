@@ -121,7 +121,7 @@ export function AppLayout() {
   return (
     <div className="shell" data-movil={movil}>
       <header className="barra-marca">
-        <MarcaTimu claro />
+        <MarcaTimu claro compacta />
         {!movil && (
           <nav className="modulos" aria-label="Módulos">
             {enBarra.map((item) => (
