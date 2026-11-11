@@ -24,6 +24,16 @@ export function fecha(valor: string | null | undefined): string {
   return `${dia}/${mes}/${anio}`
 }
 
+const FECHA_CORTA = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' })
+
+/** «18 nov»: día y mes de una fecha ISO, sin pasar por la zona horaria del navegador. */
+export function fechaCorta(valor: string): string {
+  const [anio, mes, dia] = valor.slice(0, 10).split('-').map(Number)
+  const partes = FECHA_CORTA.formatToParts(new Date(anio, mes - 1, dia))
+  const parte = (tipo: string) => partes.find((p) => p.type === tipo)?.value.replace('.', '') ?? ''
+  return `${parte('day')} ${parte('month')}`
+}
+
 const FECHA_HORA = new Intl.DateTimeFormat('es-CO', {
   timeZone: ZONA,
   day: '2-digit',

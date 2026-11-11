@@ -125,6 +125,12 @@ export const handlers = [
   ),
   http.get(`${API}/familias/:id`, () => HttpResponse.json(FAMILIA)),
   http.get(`${API}/familias/:id/historial`, () => HttpResponse.json([])),
+  // La línea y los planes de cada familia (R2-PAN-02): vacíos salvo que la prueba los defina.
+  http.get(`${API}/afiliaciones/lineas`, ({ request }) =>
+    HttpResponse.json(
+      new URL(request.url).searchParams.getAll('familia_id').map((familia_id) => ({ familia_id, planes: [], estaciones: [] })),
+    ),
+  ),
   // Sin contrato por defecto; las pruebas de cartera lo reemplazan.
   http.get(`${API}/cartera/familias/:id/estado-cuenta`, () =>
     HttpResponse.json({ detail: 'La familia no tiene contrato' }, { status: 404 }),

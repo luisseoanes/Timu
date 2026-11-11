@@ -10,6 +10,7 @@ import type {
   EstadoAfiliacion,
   EstadoCuenta,
   FamiliaRead,
+  LineaFamiliaRead,
   MensajeRead,
   Periodicidad,
   MascotaRead,
@@ -65,6 +66,19 @@ export function useFamilias(filtros: FiltrosFamilias = {}) {
   return useQuery({
     queryKey: ['familias', filtros],
     queryFn: async () => (await api.get<Page<FamiliaRead>>('/familias', { params: filtros })).data,
+  })
+}
+
+/** R2-PAN-02 La línea y los planes de varias familias: una petición por página del listado. */
+export function useLineas(ids: string[]) {
+  return useQuery({
+    queryKey: ['lineas', ids],
+    enabled: ids.length > 0,
+    queryFn: async () =>
+      (await api.get<LineaFamiliaRead[]>('/afiliaciones/lineas', {
+        params: { familia_id: ids },
+        paramsSerializer: { indexes: null },
+      })).data,
   })
 }
 

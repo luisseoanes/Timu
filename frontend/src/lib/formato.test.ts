@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { mensajeError } from './errores'
 import { estado } from './estados'
-import { fecha, fechaHora, moneda, porcentaje } from './formato'
+import { fecha, fechaCorta, fechaHora, moneda, porcentaje } from './formato'
 
 describe('formato colombiano', () => {
   it('muestra pesos sin decimales y con punto de miles', () => {
@@ -12,6 +12,11 @@ describe('formato colombiano', () => {
 
   it('no corre una fecha de calendario por la zona horaria', () => {
     expect(fecha('2026-10-24')).toBe('24/10/2026')
+  })
+
+  it('abrevia una fecha a día y mes, sin mover el día por la zona horaria', () => {
+    expect(fechaCorta('2026-11-18')).toBe('18 nov')
+    expect(fechaCorta('2027-01-01')).toBe('1 ene')
   })
 
   it('muestra los instantes en hora de Colombia', () => {

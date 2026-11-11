@@ -139,6 +139,7 @@
   --plan-verde-texto:   var(--marino-900);
   --plan-azul:          var(--azul-500);
   --plan-azul-texto:    var(--blanco);
+  --plan-ninguno:       var(--marino-300);  /* línea de una familia sin plan; decorativa */
 
   /* Series de gráfico, siempre en este orden */
   --serie-1: var(--verde-600);

@@ -377,3 +377,64 @@
   }
   .portal-nav a.active { background: var(--superficie-seleccion); }
 }
+
+/* ================= Familias (R2-PAN-02) =================
+   Listado a la izquierda y familia abierta a la derecha (contrato «la línea de metro»). En
+   pantallas estrechas se ve uno u otro: el listado sin familia abierta, la ficha con ella. */
+.familias { display: grid; grid-template-columns: minmax(320px, 420px) minmax(0, 1fr); gap: var(--e5); align-items: start; }
+.familias > * { min-width: 0; }
+
+.familias-lista { display: grid; gap: var(--e3); padding: var(--e4); background: var(--superficie); border-radius: var(--r-panel); }
+.familias-lista-cabeza { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); }
+.familias-lista-cabeza h2 { display: flex; align-items: baseline; gap: var(--e2); font-size: var(--t-seccion); }
+.familias-lista .filtros > .buscador { flex: 1 1 200px; min-width: 0; }
+.familias-lista .filtros > .input { flex: 0 1 auto; width: auto; }
+
+.familias-filas { list-style: none; margin: 0 calc(var(--e4) * -1); padding: 0; }
+.familia-fila {
+  position: relative;
+  display: grid; gap: 6px;
+  padding: var(--e3) var(--e4);
+  border-top: 1px solid var(--borde);
+  transition: background-color var(--duracion) var(--curva);
+}
+.familia-fila:hover { background: var(--superficie-hundida); }
+.familia-fila[data-seleccionada="true"] { background: var(--superficie-seleccion); box-shadow: inset 0 0 0 1px var(--indicador-seleccion); }
+.familia-fila:has(.familia-fila-enlace:focus-visible) { outline: 2px solid var(--foco); outline-offset: -2px; }
+.familia-fila-cabeza { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); }
+.familia-fila-enlace { color: var(--texto-titulo); font-weight: 600; }
+.familia-fila-enlace:hover { color: var(--texto-titulo); }
+.familia-fila-enlace:focus-visible { outline: none; }
+/* El enlace es solo el nombre; esto lo extiende a toda la fila. */
+.familia-fila-enlace::after { content: ""; position: absolute; inset: 0; }
+.familia-fila-plan { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e1) var(--e3); font-size: var(--t-menor); color: var(--texto); }
+.familia-fila-marcador { display: inline-flex; align-items: center; gap: 6px; }
+/* Lo vencido en texto junto a la miniatura: el punto rojo no basta (WCAG 1.4.1). */
+.familia-fila-vencidas { display: inline-flex; align-items: center; gap: var(--e1); font-size: var(--t-menor); font-weight: 600; color: var(--texto-error); }
+
+.familias-detalle { display: grid; gap: var(--e5); padding: var(--e6); background: var(--superficie); border-radius: var(--r-panel); }
+.familias-detalle > * { min-width: 0; }
+.familias-sin-seleccion { min-height: 240px; place-items: center; text-align: center; color: var(--texto-suave); }
+.familias-sin-seleccion p { max-width: 40ch; }
+
+/* ---- Color de la línea: el del plan, o gris sin plan ---- */
+.linea, .linea-mini { --color-linea: var(--plan-ninguno); }
+.linea[data-color="verde"], .linea-mini[data-color="verde"] { --color-linea: var(--plan-verde); }
+.linea[data-color="naranja"], .linea-mini[data-color="naranja"] { --color-linea: var(--plan-naranja); }
+.linea[data-color="azul"], .linea-mini[data-color="azul"] { --color-linea: var(--plan-azul); }
+
+/* Miniatura de una fila del listado: solo dibujo; el resumen va en aria-label. */
+.linea-mini { position: relative; display: flex; align-items: center; justify-content: space-between; height: 12px; }
+.linea-mini::before { content: ""; position: absolute; left: 0; right: 0; top: 5px; height: 2px; background: var(--color-linea); }
+.linea-mini-punto { position: relative; width: 10px; height: 10px; border-radius: var(--r-pastilla); border: 2px solid var(--color-linea); background: var(--superficie); }
+.linea-mini-punto[data-estado="hecha"] { background: var(--color-linea); }
+.linea-mini-punto[data-estado="proxima"] { border-color: var(--texto-titulo); }
+.linea-mini-punto[data-estado="vencida"] { border-color: var(--peligro-accion-fondo); background: var(--peligro-accion-fondo); }
+.linea-mini-hoy { position: relative; width: 2px; height: 12px; background: var(--texto-titulo); }
+
+@media (max-width: 899px) {
+  .familias { grid-template-columns: minmax(0, 1fr); }
+  .familias[data-abierta="true"] .familias-lista { display: none; }
+  .familias:not([data-abierta]) .familias-sin-seleccion { display: none; }
+  .familias-detalle { padding: var(--e4); }
+}
