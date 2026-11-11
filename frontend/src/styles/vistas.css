@@ -162,7 +162,7 @@
 .historial { list-style: none; margin: 0; padding: 0; }
 .historial li {
   display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr); gap: var(--e1) var(--e4);
-  padding-block: var(--e3); font-size: var(--t-menor);
+  padding: var(--e3) 0; font-size: var(--t-menor);
 }
 .historial li + li { border-top: 1px solid var(--borde); }
 .historial strong { color: var(--texto-titulo); font-size: var(--t-cuerpo); }
