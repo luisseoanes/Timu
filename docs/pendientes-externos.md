@@ -105,16 +105,37 @@ nueva.
 
 ## Marca e identidad ([manual de marca](manual-de-marca.md))
 
-Para aplicar la marca a la plataforma, TIMU tiene que entregar dos cosas. Mientras tanto, el
-panel funciona con lo provisional que se indica:
+El 2026-11-11 llegó el material gráfico de la marca: el manual original de la diseñadora
+(2021, con su fuente de 40 páginas en Illustrator), el logo en vector, las tipografías,
+los patrones y las piezas impresas (carnet de vacunación, plegable 2026, pendón y piezas de
+mostrador). Lo que resuelve y lo que deja abierto:
 
-- **Logo en vector (SVG) y su versión para fondo oscuro.** El manual en PDF solo trae una
-  imagen de 569×308 px. Además, el texto y las siluetas del logo van en marino y no se ven
-  sobre fondo oscuro. Hasta que llegue, el panel muestra el nombre «TIMU» en texto.
-- **Archivo de GeosansLight y su licencia de uso web.** El manual la exige, pero el archivo
-  no se adjuntó y la fuente no está en Google Fonts. Hasta que llegue, todo va en Inter.
-- **Recursos gráficos para la portada pública (index).** La portada se construye cuando
-  lleguen; el resto de páginas públicas no la esperan ([hoja de ruta del
+- **Logo en vector: recibido.** `Marca TIMU.ai` trae el logo a color en sus tres versiones
+  (con las siluetas bajo el lema, con perro y gato, y con animales grandes), y el manual
+  fuente trae las versiones en blanco para fondo oscuro. Falta sacarlas a SVG e
+  integrarlas; hasta entonces, el panel muestra el nombre «TIMU» en texto.
+- **GeosansLight: recibido el archivo, falta la licencia.** Llegan la regular y la oblicua
+  (Manfred Klein, 2004), con todos los caracteres del español. El archivo no declara
+  licencia: TIMU tiene que confirmar que puede usarse en la web antes de servirla. Hasta
+  entonces, todo va en Inter.
+- **Minimal, la tipografía del logotipo, no sirve para la interfaz:** su ficha dice
+  «Copyright info pending», solo permite incrustarla para vista e impresión y le faltan ¿, ¡
+  y €. No hace falta: el logo va en vector.
+- **Los colores del texto del manual de 2021 no coinciden con su propio logo.** El texto da
+  un azul petróleo (RGB 0, 128, 155) y un naranja claro (RGB 244, 172, 100); el logo en
+  vector, sus variantes, los patrones y todas las piezas usan los de la plataforma (azul
+  `#477194`, naranja `#D48100`). TIMU tiene que confirmar que valen los del logo. El naranja
+  de la plataforma (`#D68A11`) se desvía un poco del vector y se ajustaría a `#D48100`.
+- **Servicios fúnebres.** El plegable y el pendón venden «salud y servicios fúnebres», y el
+  servicio fúnebre es beneficio de los tres planes. No está en el documento de
+  requerimientos ni en el catálogo de la plataforma: TIMU tiene que decir si la plataforma
+  lo gestiona.
+- **Fotografías.** Las piezas usan fotos de perros y gatos recortados que parecen de banco de
+  imágenes. Para las páginas públicas hacen falta los originales y la confirmación de que
+  TIMU tiene derechos de uso.
+- **Recursos gráficos para la portada pública (index).** Los patrones, las fotos y el
+  contenido del plegable son ese material; la portada se construye cuando TIMU confirme los
+  dos puntos anteriores. El resto de páginas públicas no la esperan ([hoja de ruta del
   rediseño](hoja-de-ruta-rediseno.md#fuera-de-alcance)).
 
 ## Web pública (timu.com.co) frente al manual de marca
@@ -134,3 +155,6 @@ plataforma sigue el manual y toma planes, precios y coberturas del catálogo de 
   Fiel sale al 80 % en el inicio y al 40 % en su página. Las consultas aparecen como «1 vez»
   o «2 veces» en el inicio y «al mes» en las páginas de los planes. Todo dice «Aplica términos
   y condiciones», pero la web no publica ningún documento de términos.
+- **El plegable 2026 resuelve parte de lo anterior:** la hospitalización de Mi Amigo Fiel es
+  al 40 % (al 80 % en Amigos por Siempre) y las consultas son «al mes» (una en Mi Amigo Fiel,
+  dos en Amigos por Siempre). No trae precios, así que los precios siguen sin confirmar.
