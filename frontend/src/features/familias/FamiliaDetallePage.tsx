@@ -195,6 +195,27 @@ const ACCIONES: Record<string, string> = {
   eliminar: 'Registro eliminado',
 }
 
+/** Nombre legible de cada campo de la familia; uno sin nombre se muestra tal cual. */
+const CAMPOS: Record<string, string> = {
+  titular_nombre: 'Titular',
+  tipo_documento: 'Tipo de documento',
+  documento: 'Documento',
+  email: 'Correo',
+  telefono: 'Celular',
+  ciudad: 'Ciudad',
+  barrio: 'Barrio',
+  direccion: 'Dirección',
+  complemento: 'Complemento',
+  notas: 'Notas',
+  estado: 'Estado',
+  latitud: 'Latitud',
+  longitud: 'Longitud',
+  geo_precision: 'Precisión de la ubicación',
+  origen: 'Origen',
+  motivo_baja: 'Motivo de la baja',
+  dada_de_baja_en: 'Fecha de baja',
+}
+
 function valor(v: unknown): string {
   if (v === null || v === undefined || v === '') return 'vacío'
   return typeof v === 'object' ? JSON.stringify(v) : String(v)
@@ -206,7 +227,7 @@ function detalle(c: CambioHistorial): string {
   return Object.entries(c.cambios)
     .map(([campo, par]) => {
       const [antes, despues] = Array.isArray(par) ? par : [undefined, par]
-      return `${campo.replace(/_/g, ' ')}: ${valor(antes)} → ${valor(despues)}`
+      return `${CAMPOS[campo] ?? campo.replace(/_/g, ' ')}: ${valor(antes)} → ${valor(despues)}`
     })
     .join(' · ')
 }
@@ -223,14 +244,19 @@ function HistorialFamilia({ familiaId }: { familiaId: string }) {
         estaVacio={(d) => d.length === 0}
       >
         {(d) => (
-          <ol className="pila" aria-label="Historial de cambios">
-            {d.map((c, i) => (
-              <li key={`${c.fecha}-${i}`}>
-                <strong>{ACCIONES[c.accion] ?? c.accion}</strong>{' '}
-                <span className="apagado numero">{fechaHora(c.fecha)}</span>
-                {detalle(c) && <div className="apagado">{detalle(c)}</div>}
-              </li>
-            ))}
+          // Lo más reciente primero: es lo que se viene a mirar.
+          <ol className="historial" aria-label="Historial de cambios">
+            {[...d]
+              .sort((a, b) => b.fecha.localeCompare(a.fecha))
+              .map((c, i) => (
+                <li key={`${c.fecha}-${i}`}>
+                  <span className="historial-fecha numero">{fechaHora(c.fecha)}</span>
+                  <div>
+                    <strong>{ACCIONES[c.accion] ?? c.accion}</strong>
+                    {detalle(c) && <p className="apagado">{detalle(c)}</p>}
+                  </div>
+                </li>
+              ))}
           </ol>
         )}
       </Consulta>

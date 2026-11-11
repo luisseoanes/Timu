@@ -135,7 +135,7 @@ function CuposPorMascota({
   return [...grupos].map(([mascotaId, beneficios]) => {
     const titulo = mascotaId ? `Cupo de ${nombreMascota(mascotaId)}` : 'Cupo de la familia'
     return (
-      <div key={mascotaId || 'familia'}>
+      <div key={mascotaId || 'familia'} className="bloque">
         <h4>{titulo}</h4>
         <div className="scroll-x">
           <table className="tabla" aria-label={titulo}>
@@ -176,7 +176,7 @@ function TablaServicios({
   nombreMascota: (id: string | null | undefined) => string
 }) {
   return (
-    <>
+    <div className="bloque">
       <h4>{titulo}</h4>
       {servicios.length === 0 ? (
         <p className="apagado">{vacio}</p>
@@ -206,13 +206,13 @@ function TablaServicios({
           </table>
         </div>
       )}
-    </>
+    </div>
   )
 }
 
 function TablaPendientesAtencion({ pendientes }: { pendientes: PendienteRead[] }) {
   return (
-    <>
+    <div className="bloque">
       <h4>Pendientes de una atención</h4>
       <div className="scroll-x">
         <table className="tabla" aria-label="Pendientes de una atención">
@@ -234,6 +234,6 @@ function TablaPendientesAtencion({ pendientes }: { pendientes: PendienteRead[] }
           </tbody>
         </table>
       </div>
-    </>
+    </div>
   )
 }

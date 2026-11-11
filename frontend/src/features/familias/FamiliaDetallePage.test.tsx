@@ -332,18 +332,24 @@ describe('FamiliaDetallePage', () => {
     server.use(
       http.get(`${API}/familias/:id/historial`, () =>
         HttpResponse.json([
-          { fecha: '2026-10-01T15:00:00Z', accion: 'cambio_estado', usuario_id: null, cambios: { estado: ['activa', 'congelada'] } },
-          { fecha: '2026-09-01T15:00:00Z', accion: 'editar', usuario_id: null, cambios: { direccion: [null, 'Calle 1'] } },
           { fecha: '2026-08-01T15:00:00Z', accion: 'crear', usuario_id: null, cambios: {} },
+          { fecha: '2026-09-01T15:00:00Z', accion: 'editar', usuario_id: null, cambios: { direccion: [null, 'Calle 1'] } },
+          { fecha: '2026-10-01T15:00:00Z', accion: 'cambio_estado', usuario_id: null, cambios: { estado: ['activa', 'congelada'] } },
         ]),
       ),
     )
     const user = userEvent.setup()
     abrirFicha()
     await user.click(await screen.findByRole('tab', { name: 'Historial' }))
-    expect(await screen.findByText('estado: activa → congelada')).toBeInTheDocument()
-    expect(screen.getByText('direccion: vacío → Calle 1')).toBeInTheDocument()
-    expect(screen.getByText('Registro creado')).toBeInTheDocument()
+    expect(await screen.findByText('Estado: activa → congelada')).toBeInTheDocument()
+    expect(screen.getByText('Dirección: vacío → Calle 1')).toBeInTheDocument()
+    // Lo más reciente primero, aunque la API los dé en otro orden.
+    const filas = within(screen.getByRole('list', { name: 'Historial de cambios' })).getAllByRole('listitem')
+    expect(filas.map((f) => f.querySelector('strong')?.textContent)).toEqual([
+      'Cambio de estado',
+      'Datos editados',
+      'Registro creado',
+    ])
   })
 
   const SERVICIO = {

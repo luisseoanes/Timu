@@ -99,6 +99,9 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
   box-shadow: var(--sombra-2);
 }
 .tarjeta-plana { box-shadow: none; border: 1px solid var(--borde); }
+/* Un apartado dentro de una tarjeta (título y su tabla o lista), separado del anterior. */
+.bloque { display: grid; gap: var(--e2); margin-top: var(--e6); }
+.bloque > h4 { font-size: var(--t-cuerpo); }
 .tarjeta-cabeza {
   display: flex; align-items: center; justify-content: space-between;
   gap: var(--e3); margin-bottom: var(--e4);
@@ -304,6 +307,8 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 
 /* --- Formulario: rejilla de campos ------------------------------ */
 .formulario { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e4); }
+/* Una casilla entre campos se alinea con la base de los campos, no con sus etiquetas. */
+.formulario > label.acciones { align-self: end; min-height: 40px; }
 .formulario .ancho { grid-column: 1 / -1; }
 .formulario fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--e3); }
 .formulario legend { font-family: var(--fuente); font-size: var(--t-cuerpo); color: var(--texto-titulo); margin-bottom: var(--e2); }

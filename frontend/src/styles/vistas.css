@@ -155,6 +155,18 @@
 .detalle-cabeza h2 { font-size: var(--t-titulo); }
 .pila { display: grid; gap: var(--e4); align-content: start; }
 
+/* Historial de cambios: la fecha a la izquierda, qué cambió a la derecha. */
+.historial { list-style: none; margin: 0; padding: 0; }
+.historial li {
+  display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr); gap: var(--e1) var(--e4);
+  padding-block: var(--e3); font-size: var(--t-menor);
+}
+.historial li + li { border-top: 1px solid var(--borde); }
+.historial strong { color: var(--texto-titulo); font-size: var(--t-cuerpo); }
+.historial p { margin: 2px 0 0; overflow-wrap: anywhere; }
+.historial-fecha { color: var(--texto-suave); }
+@media (max-width: 600px) { .historial li { grid-template-columns: minmax(0, 1fr); } }
+
 @media (max-width: 900px) {
   .formulario { grid-template-columns: 1fr; }
 }
