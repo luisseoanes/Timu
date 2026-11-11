@@ -310,6 +310,42 @@ async def test_el_carnet_lleva_el_peso_de_cada_desparasitacion(db, admin):
     assert documento.filas_seccion("vacuna", [fila]) == []
 
 
+async def test_el_peso_de_la_aplicacion_pasa_a_la_ficha_si_es_el_mas_reciente(db, admin):
+    _, mascota = await _cachorro(db)
+    mascota.peso_kg = 6.0
+    interna = (await _eventos(db, mascota, "can_desp_interna"))[0]
+    externa = (await _eventos(db, mascota, "can_desp_externa"))[0]
+    for evento in (interna, externa):
+        await _autorizado(db, evento, admin.id)
+
+    def aplicar(evento, fecha, peso):
+        return db.run_sync(
+            lambda s: service.aplicar(
+                s, evento, fecha=fecha, producto="P", lote=None, usuario_id=admin.id, peso_kg=peso
+            )
+        )
+
+    await aplicar(interna, HOY, 8.4)
+    assert mascota.peso_kg == 8.4
+    # Una aplicacion anotada con fecha anterior no pisa el peso mas reciente.
+    await aplicar(externa, HOY - timedelta(days=10), 7.9)
+    assert mascota.peso_kg == 8.4
+    assert externa.peso_kg == 7.9
+
+
+async def test_sin_peso_la_ficha_no_cambia(db, admin):
+    _, mascota = await _cachorro(db)
+    mascota.peso_kg = 6.0
+    interna = (await _eventos(db, mascota, "can_desp_interna"))[0]
+    await _autorizado(db, interna, admin.id)
+    await db.run_sync(
+        lambda s: service.aplicar(
+            s, interna, fecha=HOY, producto="P", lote=None, usuario_id=admin.id
+        )
+    )
+    assert mascota.peso_kg == 6.0
+
+
 def test_el_carnet_pdf_lleva_las_fuentes_de_la_marca():
     """Con las fuentes base del PDF (latin-1) las tildes se perdian: ahora va con las de TIMU."""
     datos = {

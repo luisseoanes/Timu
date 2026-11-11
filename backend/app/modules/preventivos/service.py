@@ -18,7 +18,9 @@ from app.modules.archivos import service as archivos
 from app.modules.cartera import contratos
 from app.modules.catalogos.models import Especie, EsquemaPreventivo
 from app.modules.comunicaciones import service as comunicaciones
+from app.modules.familias import service as familias
 from app.modules.familias.models import Familia, Mascota
+from app.modules.familias.schemas import MascotaUpdate
 from app.modules.preventivos import documento
 from app.modules.preventivos.models import CarnetEmitido, EventoPreventivo
 from app.modules.servicios import service as servicios
@@ -131,6 +133,22 @@ def obtener(db: Session, evento_id: UUID) -> EventoPreventivo:
     return evento
 
 
+def _hay_peso_posterior(db: Session, evento: EventoPreventivo, fecha: date) -> bool:
+    """Si la mascota ya tiene un peso anotado en una aplicacion posterior a `fecha`."""
+    return bool(
+        db.scalar(
+            select(EventoPreventivo.id)
+            .where(
+                EventoPreventivo.mascota_id == evento.mascota_id,
+                EventoPreventivo.id != evento.id,
+                EventoPreventivo.peso_kg.is_not(None),
+                EventoPreventivo.fecha_aplicacion > fecha,
+            )
+            .limit(1)
+        )
+    )
+
+
 def _mascota(db: Session, mascota_id: UUID) -> Mascota:
     mascota = db.get(Mascota, mascota_id)
     if mascota is None:
@@ -206,6 +224,12 @@ def aplicar(
     evento.lote = lote
     evento.peso_kg = peso_kg
     evento.aplicado_por_id = usuario_id
+    if peso_kg is not None and not _hay_peso_posterior(db, evento, fecha):
+        # El peso de la aplicacion es el ultimo conocido: pasa a la ficha de la mascota. Uno
+        # anotado con fecha anterior a otro ya registrado no la pisa.
+        familias.actualizar_mascota(
+            db, _mascota(db, evento.mascota_id), MascotaUpdate(peso_kg=peso_kg)
+        )
     if servicio_id:
         evento.servicio_id = servicio_id
 
