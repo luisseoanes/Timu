@@ -5,6 +5,7 @@ import { Modal } from '@/components/Modal'
 import { useAuth } from '@/features/auth'
 import { type MedioPago, useRegistrarPago } from '@/features/cartera'
 import { mensajeError } from '@/lib/errores'
+import { estadoCuota } from '@/lib/estados'
 import { fecha, moneda } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
 import type { CuotaRead, FamiliaRead } from '@/types'
@@ -138,7 +139,7 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
                     <td className="numero">{moneda(q.valor)}</td>
                     <td className="numero">{moneda(q.valor_pagado)}</td>
                     <td>
-                      <Distintivo dominio="cuota" valor={q.estado} />
+                      <Distintivo dominio="cuota" valor={estadoCuota(q)} />
                     </td>
                   </tr>
                 ))}

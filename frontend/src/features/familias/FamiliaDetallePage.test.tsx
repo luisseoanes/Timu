@@ -63,7 +63,8 @@ const CUENTA: EstadoCuenta = {
       fecha_vencimiento: '2026-09-05',
       valor: '89000.00',
       valor_pagado: '0.00',
-      estado: 'vencida',
+      // La API no envía «vencida»: la cuota está pendiente y la mora la hace vencida.
+      estado: 'pendiente',
       dias_mora: 12,
       descripcion: 'Cuota septiembre',
     },

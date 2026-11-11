@@ -373,6 +373,14 @@ describe('pagos', () => {
     await waitFor(() => expect(asignar).toHaveBeenCalledWith('https://checkout.wompi.co/p/?reference=X'))
   })
 
+  it('una cuota pendiente con mora se ve vencida', async () => {
+    const vencida = { ...CUENTA.cuotas[0]!, dias_mora: 6 }
+    server.use(http.get(`${API}/portal/estado-cuenta`, () => HttpResponse.json({ ...CUENTA, cuotas: [vencida] })))
+    renderizar(<PortalPagos />)
+    expect(await screen.findByText('Vencida')).toBeInTheDocument()
+    expect(screen.queryByText('Pendiente')).not.toBeInTheDocument()
+  })
+
   it('el comprobante solo existe para pagos aprobados y explica si falla', async () => {
     server.use(
       http.get(`${API}/portal/pagos`, () =>

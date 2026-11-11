@@ -11,6 +11,7 @@ import { useAuth } from '@/features/auth'
 import { useNombreTipoServicio, useTiposServicio } from '@/features/catalogos'
 import { descargar } from '@/lib/descargas'
 import { mensajeError } from '@/lib/errores'
+import { estadoCuota } from '@/lib/estados'
 import { fecha, fechaHora, hora, hoyISO, moneda } from '@/lib/formato'
 import type { MascotaRead, ServicioPortalRead } from '@/types'
 
@@ -656,7 +657,7 @@ export function PortalPagos() {
                           {moneda(Number(q.valor) - Number(q.valor_pagado))} · vence {fecha(q.fecha_vencimiento)}
                         </span>
                       </div>
-                      <Distintivo dominio="cuota" valor={q.estado} />
+                      <Distintivo dominio="cuota" valor={estadoCuota(q)} />
                       <button
                         className="btn btn-primario"
                         type="button"

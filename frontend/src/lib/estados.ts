@@ -150,6 +150,15 @@ export const ESTADOS = {
 
 export type Dominio = keyof typeof ESTADOS
 
+/**
+ * El estado que se muestra de una cuota. La API no guarda «vencida»: una cuota pendiente o con
+ * abono parcial está vencida si ya tiene días de mora, y así debe verse.
+ */
+export function estadoCuota(cuota: { estado: string; dias_mora: number }): string {
+  const abierta = cuota.estado === 'pendiente' || cuota.estado === 'parcial'
+  return abierta && cuota.dias_mora > 0 ? 'vencida' : cuota.estado
+}
+
 /** Estado desconocido: se muestra tal cual, en tono neutro, en vez de romper la pantalla. */
 export function estado(dominio: Dominio, valor: string): Estado {
   return ESTADOS[dominio][valor] ?? { label: valor.replaceAll('_', ' '), tono: 'neutro' }
