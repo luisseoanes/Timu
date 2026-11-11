@@ -140,7 +140,7 @@ function BajaModal({ familia, abierto, onCerrar }: { familia: FamiliaRead; abier
       titulo="Dar de baja a la familia"
       descripcion="La familia sale de los listados y deja de recibir cobros y servicios. Sus datos y su historial se conservan."
       pie={
-        <button className="btn btn-primario" type="submit" form="baja-familia" disabled={baja.isPending}>
+        <button className="btn btn-peligro" type="submit" form="baja-familia" disabled={baja.isPending}>
           {baja.isPending ? 'Guardando…' : 'Confirmar baja'}
         </button>
       }

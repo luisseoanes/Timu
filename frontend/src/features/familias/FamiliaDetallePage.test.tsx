@@ -289,6 +289,8 @@ describe('FamiliaDetallePage', () => {
     await user.click(await screen.findByRole('menuitem', { name: 'Dar de baja' }))
     const modal = await screen.findByRole('dialog')
     await user.type(within(modal).getByLabelText('Motivo de la baja'), 'Se muda del país')
+    // Confirmar una baja es destructivo: va en rojo, no en el verde de la acción principal.
+    expect(within(modal).getByRole('button', { name: 'Confirmar baja' })).toHaveClass('btn-peligro')
     await user.click(within(modal).getByRole('button', { name: 'Confirmar baja' }))
     await waitFor(() => expect(motivo).toBe('Se muda del país'))
   })
@@ -605,6 +607,8 @@ describe('FamiliaDetallePage', () => {
     await user.click(within(tabla).getByRole('button', { name: 'Dar de baja' }))
     modal = await screen.findByRole('dialog', { name: 'Dar de baja a Luna' })
     await user.type(within(modal).getByLabelText('Motivo'), 'Falleció')
+    // Confirmar una baja es destructivo: va en rojo, no en el verde de la acción principal.
+    expect(within(modal).getByRole('button', { name: 'Confirmar baja' })).toHaveClass('btn-peligro')
     await user.click(within(modal).getByRole('button', { name: 'Confirmar baja' }))
     await waitFor(() => expect(baja).toEqual({ motivo: 'Falleció' }))
   })
@@ -664,6 +668,8 @@ describe('FamiliaDetallePage', () => {
     await user.click(await screen.findByRole('button', { name: 'Quitar' }))
     const modal = await screen.findByRole('dialog')
     expect(within(modal).getByText('Quitar a Rocío Ruiz')).toBeInTheDocument()
+    // Confirmar una baja es destructivo: va en rojo, no en el verde de la acción principal.
+    expect(within(modal).getByRole('button', { name: 'Quitar contacto' })).toHaveClass('btn-peligro')
     await user.click(within(modal).getByRole('button', { name: 'Quitar contacto' }))
     await waitFor(() => expect(quitado).toBe('k1'))
   })
@@ -982,6 +988,8 @@ describe('FamiliaDetallePage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Quitar' }))
     modal = await screen.findByRole('dialog')
+    // Confirmar una baja es destructivo: va en rojo, no en el verde de la acción principal.
+    expect(within(modal).getByRole('button', { name: 'Quitar documento' })).toHaveClass('btn-peligro')
     await user.click(within(modal).getByRole('button', { name: 'Quitar documento' }))
     await waitFor(() => expect(quitado).toBe('d1'))
   })

@@ -330,7 +330,7 @@ function QuitarDocumentoModal({
       descripcion="Deja de figurar en la ficha y en el portal de la familia. El fichero se conserva."
       pie={
         <button
-          className="btn btn-primario"
+          className="btn btn-peligro"
           type="button"
           disabled={quitar.isPending}
           onClick={() => documento?.documento_id && quitar.mutate(documento.documento_id, { onSuccess: onCerrar })}

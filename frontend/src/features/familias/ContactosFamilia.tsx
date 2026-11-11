@@ -172,7 +172,7 @@ function QuitarContactoModal({
       descripcion="Deja de figurar como contacto de la familia. El registro se conserva en el historial."
       pie={
         <button
-          className="btn btn-primario"
+          className="btn btn-peligro"
           type="button"
           disabled={baja.isPending}
           onClick={() => contacto && baja.mutate(contacto.id, { onSuccess: onCerrar })}

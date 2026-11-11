@@ -207,7 +207,7 @@ function BajaMascotaModal({ mascota, onCerrar }: { mascota: MascotaRead | null; 
       titulo={`Dar de baja a ${mascota?.nombre ?? 'la mascota'}`}
       descripcion="La mascota deja de recibir servicios. Su historia clínica se conserva."
       pie={
-        <button className="btn btn-primario" type="submit" form="baja-mascota" disabled={baja.isPending}>
+        <button className="btn btn-peligro" type="submit" form="baja-mascota" disabled={baja.isPending}>
           {baja.isPending ? 'Guardando…' : 'Confirmar baja'}
         </button>
       }
