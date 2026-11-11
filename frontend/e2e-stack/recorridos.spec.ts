@@ -64,6 +64,18 @@ test.describe('equipo', () => {
     expect(Math.round(sexo!.height)).toBe(Math.round(peso!.height))
   })
 
+  test('el pie de una ventana larga se ve sin desplazarla', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/familias')
+    await page.getByRole('button', { name: 'Nueva familia' }).click()
+    const ventana = page.getByRole('dialog', { name: 'Nueva familia' })
+    const guardar = ventana.getByRole('button', { name: 'Guardar familia' })
+    await expect(guardar).toBeVisible()
+    // La ventana recorta lo que se sale de ella: el botón tiene que acabar antes que su borde.
+    const [boton, caja] = [await guardar.boundingBox(), await ventana.boundingBox()]
+    expect(boton!.y + boton!.height, 'el botón principal se ve entero').toBeLessThanOrEqual(caja!.y + caja!.height)
+  })
+
   test('la foto de una mascota se sube y su URL firmada abre desde el navegador', async ({ page }) => {
     await page.goto('/')
     // `page.request` comparte las cookies de la sesión del navegador.

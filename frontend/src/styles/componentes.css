@@ -268,7 +268,10 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
   transform: translate(-50%, -50%);
   width: min(560px, calc(100vw - var(--e5)));
   max-height: calc(100vh - var(--e5));
-  overflow-y: auto;
+  /* Cabecera y pie fijos; solo el cuerpo se desplaza, así la acción principal se ve siempre. */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--superficie);
   border-radius: var(--r-panel);
   box-shadow: var(--sombra-3);
@@ -309,7 +312,13 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 }
 
 .modal-cuerpo {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   margin-top: var(--e5);
+  /* Sitio para el anillo de foco de los campos, que el desplazamiento recortaría. */
+  margin-inline: calc(var(--e1) * -1);
+  padding-inline: var(--e1);
 }
 
 .modal-pie {
