@@ -52,6 +52,18 @@ test.describe('equipo', () => {
     expect(encima, 'elementos pintados sobre la ventana').toEqual([])
   })
 
+  test('en un formulario cada control conserva su altura aunque el vecino lleve ayuda', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/familias')
+    await page.getByRole('button', { name: 'Nueva familia' }).click()
+    const ventana = page.getByRole('dialog', { name: 'Nueva familia' })
+    await expect(ventana).toBeVisible()
+    // «Sexo» comparte fila con «Fecha de nacimiento», que lleva un texto de ayuda debajo.
+    const sexo = await ventana.getByLabel('Sexo (opcional)').boundingBox()
+    const peso = await ventana.getByLabel('Peso (kg)').boundingBox()
+    expect(Math.round(sexo!.height)).toBe(Math.round(peso!.height))
+  })
+
   test('la foto de una mascota se sube y su URL firmada abre desde el navegador', async ({ page }) => {
     await page.goto('/')
     // `page.request` comparte las cookies de la sesión del navegador.

@@ -42,7 +42,9 @@
 .btn-plano-peligro, .btn-plano-peligro:hover:not(:disabled) { color: var(--texto-error); }
 
 /* --- Campos ---------------------------------------------------- */
-.campo { display: grid; gap: 6px; }
+/* align-content: start. Si el campo vecino de la fila es más alto (lleva ayuda), este no
+   reparte el alto sobrante y su control conserva su altura. */
+.campo { display: grid; gap: 6px; align-content: start; }
 .campo > span, .campo > label { font-size: var(--t-menor); font-weight: 600; color: var(--texto-titulo); }
 /* Ayuda bajo un campo; se enlaza con aria-describedby para que la lea un lector de pantalla. */
 .campo > .campo-ayuda { font-size: var(--t-etiqueta); font-weight: 400; color: var(--texto-suave); }
@@ -343,7 +345,7 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 .formulario > label.acciones { align-self: end; min-height: 40px; }
 .formulario .ancho { grid-column: 1 / -1; }
 .formulario fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--e3); }
-.formulario legend { font-family: var(--fuente); font-size: var(--t-cuerpo); color: var(--texto-titulo); margin-bottom: var(--e2); }
+.formulario legend { padding: 0; font-family: var(--fuente); font-size: var(--t-cuerpo); font-weight: 600; color: var(--texto-titulo); margin-bottom: var(--e2); }
 .exito { color: var(--estado-ok-texto); font-size: var(--t-menor); }
 
 /* --- Ficha de datos: pares etiqueta y valor --------------------- */
