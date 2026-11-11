@@ -163,7 +163,7 @@ async def test_solo_personal_medico_aplica(client: AsyncClient, db, headers):
     assert resp.status_code == 403
 
 
-async def test_flujo_http_autorizar_y_aplicar(client: AsyncClient, db, headers):
+async def test_flujo_http_autorizar_y_aplicar(client: AsyncClient, db, headers, admin):
     _, mascota = await _cachorro(db)
     evento_id = (await _eventos(db, mascota, "can_rabia"))[0].id
     await db.commit()
@@ -180,6 +180,8 @@ async def test_flujo_http_autorizar_y_aplicar(client: AsyncClient, db, headers):
     assert aplicado.status_code == 200, aplicado.text
     assert aplicado.json()["proxima_fecha"] == str(HOY + timedelta(days=365))
     assert aplicado.json()["peso_kg"] == 12.5
+    # Queda quien aplico, como el sello del carnet impreso.
+    assert aplicado.json()["aplicado_por_nombre"] == admin.nombre
 
 
 @pytest.mark.parametrize("peso", [0, -3, 150])
@@ -344,6 +346,29 @@ async def test_sin_peso_la_ficha_no_cambia(db, admin):
         )
     )
     assert mascota.peso_kg == 6.0
+
+
+async def test_el_carnet_dice_quien_aplico_cada_preventivo(db, admin, almacenamiento):
+    _, mascota = await _cachorro(db)
+    interna = (await _eventos(db, mascota, "can_desp_interna"))[0]
+    await _autorizado(db, interna, admin.id)
+    await db.run_sync(
+        lambda s: service.aplicar(
+            s,
+            interna,
+            fecha=HOY,
+            producto="Drontal",
+            lote=None,
+            usuario_id=admin.id,
+            aplicado_por_nombre="Dra. Paula Gómez",
+        )
+    )
+    (fila,) = (await db.run_sync(service.carnet, mascota.id, HOY))["aplicados"]
+    assert fila["aplicado_por"] == "Dra. Paula Gómez"
+    assert documento.filas_seccion("desparasitacion_interna", [fila])[0][-1] == "Dra. Paula Gómez"
+    registro = await db.run_sync(service.emitir_carnet, mascota.id, admin.id)
+    verificado = await db.run_sync(service.verificar_carnet, registro.codigo)
+    assert verificado["aplicados"][0]["aplicado_por"] == "Dra. Paula Gómez"
 
 
 def test_el_carnet_pdf_lleva_las_fuentes_de_la_marca():

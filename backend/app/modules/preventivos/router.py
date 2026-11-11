@@ -47,6 +47,7 @@ class EventoRead(BaseModel):
     producto: str | None
     lote: str | None
     peso_kg: float | None
+    aplicado_por_nombre: str | None
     requiere_autorizacion: bool
     autorizado: bool
     medio_autorizacion: str | None
@@ -146,6 +147,7 @@ async def aplicar(
             lote=data.lote,
             peso_kg=data.peso_kg,
             usuario_id=usuario.id,
+            aplicado_por_nombre=usuario.nombre,
             servicio_id=data.servicio_id,
         )
     )

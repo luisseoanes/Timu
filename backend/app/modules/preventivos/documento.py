@@ -19,8 +19,9 @@ SECCIONES: list[tuple[str, str, tuple[int, int, int]]] = [
     ("desparasitacion_interna", "Desparasitación interna", marca.VERDE),
     ("desparasitacion_externa", "Desparasitación externa", marca.NARANJA),
 ]
-CABECERA_VACUNA = ("Vacuna", "Dosis", "Aplicada", "Producto", "Lote", "Próxima")
-CABECERA_DESPARASITACION = ("Aplicada", "Peso", "Producto", "Lote", "Próxima")
+# «Aplicó» es el sello del carnet impreso: quien registro la aplicacion.
+CABECERA_VACUNA = ("Vacuna", "Dosis", "Aplicada", "Producto", "Lote", "Próxima", "Aplicó")
+CABECERA_DESPARASITACION = ("Aplicada", "Peso", "Producto", "Lote", "Próxima", "Aplicó")
 CABECERA_PENDIENTES = ("Preventivo", "Programado para", "Estado")
 VENCIDO = FontFace(family=marca.CUERPO, emphasis="BOLD", color=marca.ROJO)
 
@@ -40,7 +41,12 @@ def filas_seccion(tipo: str, aplicados: list[dict[str, Any]]) -> list[tuple[str,
     """Las filas de la tabla de un tipo de preventivo. Las desparasitaciones llevan el peso."""
     filas: list[tuple[str, ...]] = []
     for a in (a for a in aplicados if a["tipo"] == tipo):
-        comunes = (a.get("producto") or "—", a.get("lote") or "—", _fecha(a.get("proxima_fecha")))
+        comunes = (
+            a.get("producto") or "—",
+            a.get("lote") or "—",
+            _fecha(a.get("proxima_fecha")),
+            a.get("aplicado_por") or "—",
+        )
         if tipo == "vacuna":
             dosis = f"{a['dosis']}{' (refuerzo)' if a.get('refuerzo') else ''}"
             filas.append((a["nombre"], dosis, _fecha(a["fecha_aplicacion"]), *comunes))
@@ -163,9 +169,9 @@ def generar_carnet(
             pdf.cell(ancho, 6, "Sin aplicaciones registradas.", new_x="LMARGIN", new_y="NEXT")
             pdf.ln(5)
         elif tipo == "vacuna":
-            tabla(CABECERA_VACUNA, filas, (30, 12, 15, 22, 13, 15))
+            tabla(CABECERA_VACUNA, filas, (26, 10, 14, 19, 11, 14, 22))
         else:
-            tabla(CABECERA_DESPARASITACION, filas, (15, 12, 32, 18, 15))
+            tabla(CABECERA_DESPARASITACION, filas, (14, 11, 26, 13, 14, 22))
 
     pendientes = filas_pendientes(datos)
     if pendientes:

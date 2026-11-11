@@ -419,6 +419,7 @@ export interface EventoRead {
   producto: string | null
   lote: string | null
   peso_kg: number | null
+  aplicado_por_nombre: string | null
   requiere_autorizacion: boolean
   autorizado: boolean
   medio_autorizacion: string | null

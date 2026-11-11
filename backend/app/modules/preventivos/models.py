@@ -41,6 +41,10 @@ class EventoPreventivo(Base, UUIDMixin, TimestampMixin, Auditable):
     fecha_aplicacion: Mapped[date | None] = mapped_column(Date)
     proxima_fecha: Mapped[date | None] = mapped_column(Date, index=True)
     aplicado_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
+    # Quien aplico, como lo firmo ese dia: el carnet lo muestra como el sello del impreso. Es
+    # constancia, no referencia (si el usuario cambia de nombre o se va, no cambia), y asi la
+    # familia lo ve en su portal sin poder leer la tabla de usuarios.
+    aplicado_por_nombre: Mapped[str | None] = mapped_column(String(160))
     # F2-PRE-03 Autorizacion previa de la familia: quien la registro, cuando y por que medio.
     requiere_autorizacion: Mapped[bool] = mapped_column(Boolean, default=True)
     autorizado: Mapped[bool] = mapped_column(Boolean, default=False)
