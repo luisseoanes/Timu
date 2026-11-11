@@ -460,6 +460,11 @@
 .ficha-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e2); }
 .ficha-acciones > .error, .ficha-acciones > .exito { flex-basis: 100%; }
 .ficha-linea { padding-block: var(--e4); border-block: 1px solid var(--borde); }
+/* Las secciones de las pestañas son tarjetas también fuera de la ficha; dentro de ella no:
+   blanco sobre blanco solo añadía sangría. Se separan por espacio. */
+.familias-detalle .tarjeta { padding: 0; background: none; border-radius: 0; box-shadow: none; }
+.familias-detalle [role="tabpanel"] .pila { gap: var(--e7); }
+.familias-detalle [role="tabpanel"] .tarjeta + .tarjeta { margin-top: var(--e7); }
 
 /* Mascotas y cartera siempre a la vista bajo la línea; el detalle va en las pestañas. */
 .ficha-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: var(--e5); }
