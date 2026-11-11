@@ -77,7 +77,9 @@ function Ficha({
   const proxima = linea?.estaciones.find((e) => e.estado === 'proxima')
 
   /** Cómo se atiende una estación: una cuota pendiente se paga ahí mismo (si el perfil puede),
-   * un servicio se abre en su ficha y el resto lleva a su sección de la familia. */
+   * un servicio se abre en su ficha y el resto lleva a su sección de la familia.
+   * Pendiente en R2-PAN-08 (decidido con el usuario): un preventivo debe agendarse aquí mismo,
+   * con la acción inyectada desde fuera para no importar `preventivos`. */
   const accion = (e: EstacionRead): 'pagar' | 'abrir' | 'ver' =>
     e.tipo === 'servicio'
       ? 'abrir'

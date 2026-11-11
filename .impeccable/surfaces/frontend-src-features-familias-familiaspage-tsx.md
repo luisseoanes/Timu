@@ -67,3 +67,13 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   vista abierta en «hoy». Descartados: el scroll horizontal (con ratón no se descubre y es
   incómodo con teclado) y una ventana con «Anteriores» y «Siguientes» (escondía una cuota
   vencida fuera de la ventana). Decidido con el usuario.
+
+## Decisiones tomadas (2026-11-11)
+
+- **Atender un preventivo desde su estación se hace en `R2-PAN-08`**, no en `R2-PAN-02`. La STORY
+  pide agendar o registrar desde la misma estación. Hoy una cuota pendiente abre el registro de
+  pago y un servicio abre su ficha, pero un preventivo (vacuna, desparasitación) solo lleva a la
+  pestaña de mascotas: agendarlo es una acción de `preventivos`, y traerla a Familias exige
+  inyectarla sin que `familias` importe `preventivos`. Se hace cuando `R2-PAN-08` rediseñe esa
+  acción. Hasta entonces la STORY se cumple a medias para los preventivos, a sabiendas, y
+  `R2-PAN-08` no se cierra sin esto. Decidido con el usuario.
