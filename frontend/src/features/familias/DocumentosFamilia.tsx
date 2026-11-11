@@ -76,7 +76,7 @@ export function DocumentosFamilia({ familia }: { familia: FamiliaRead }) {
       >
         {(d) => (
           <div className="scroll-x">
-            <table className="tabla" aria-label="Documentos">
+            <table className="tabla tabla-apilable" aria-label="Documentos">
               <thead>
                 <tr>
                   <th>Documento</th>
@@ -90,7 +90,7 @@ export function DocumentosFamilia({ familia }: { familia: FamiliaRead }) {
               <tbody>
                 {d.map((doc) => (
                   <tr key={doc.archivo_id}>
-                    <td className="principal">
+                    <td data-etiqueta="Documento" className="principal">
                       {doc.url ? (
                         <a href={doc.url} target="_blank" rel="noreferrer">
                           {doc.descripcion ?? doc.nombre}
@@ -100,18 +100,18 @@ export function DocumentosFamilia({ familia }: { familia: FamiliaRead }) {
                       )}
                       <span className="apagado"> · {tamano(doc.tamano_bytes)}</span>
                     </td>
-                    <td>{doc.categoria ? CATEGORIAS[doc.categoria] : ORIGENES[doc.origen]}</td>
-                    <td>{nombreMascota(doc.mascota_id)}</td>
-                    <td className="numero">{fecha(doc.creado_en.slice(0, 10))}</td>
-                    <td>{doc.visible_familia ? 'Sí' : 'No'}</td>
+                    <td data-etiqueta="Tipo">{doc.categoria ? CATEGORIAS[doc.categoria] : ORIGENES[doc.origen]}</td>
+                    <td data-etiqueta="De">{nombreMascota(doc.mascota_id)}</td>
+                    <td data-etiqueta="Fecha" className="numero">{fecha(doc.creado_en.slice(0, 10))}</td>
+                    <td data-etiqueta="La familia lo ve">{doc.visible_familia ? 'Sí' : 'No'}</td>
                     {editable && (
-                      <td>
+                      <td className="tabla-acciones">
                         {doc.documento_id && (
                           <>
                             <button className="btn btn-plano" type="button" onClick={() => setEditando(doc)}>
                               Editar
                             </button>
-                            <button className="btn btn-plano" type="button" onClick={() => setQuitando(doc)}>
+                            <button className="btn btn-plano btn-plano-peligro" type="button" onClick={() => setQuitando(doc)}>
                               Quitar
                             </button>
                           </>

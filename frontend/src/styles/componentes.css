@@ -38,6 +38,8 @@
   background: var(--estado-neutro-fondo); color: var(--texto-suave); border-color: transparent;
 }
 .btn-plano:disabled { color: var(--texto-deshabilitado); }
+/* Acción destructiva dentro de una fila (dar de baja, quitar): no pesa como las demás. */
+.btn-plano-peligro, .btn-plano-peligro:hover:not(:disabled) { color: var(--texto-error); }
 
 /* --- Campos ---------------------------------------------------- */
 .campo { display: grid; gap: 6px; }
@@ -180,6 +182,36 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 .tabla tbody tr:last-child td { border-bottom: 0; }
 .tabla tbody tr:hover td { background: var(--superficie-hundida); }
 .tabla .principal { color: var(--texto-titulo); font-weight: 700; }
+.tabla-acciones { white-space: nowrap; text-align: right; }
+
+/* Tabla apilable (R1-CMP-02). En un contenedor de menos de 640 px cada fila se vuelve un
+   bloque: la primera celda es su título y el resto, pares etiqueta y valor (la etiqueta sale
+   de `data-etiqueta`, que repite la cabecera de su columna). Lo decide el ancho del
+   contenedor, no el de la ventana: junto al listado, la ficha es estrecha en un escritorio.
+   La cabecera sigue en el DOM para los lectores de pantalla. */
+.scroll-x:has(> .tabla-apilable) { container-type: inline-size; }
+@container (max-width: 639px) {
+  .tabla-apilable, .tabla-apilable tbody, .tabla-apilable tr { display: block; }
+  .tabla-apilable thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+  .tabla-apilable tr { padding-block: var(--e3); }
+  .tabla-apilable tr + tr { border-top: 1px solid var(--borde); }
+  .tabla-apilable td {
+    display: flex; justify-content: space-between; align-items: baseline; gap: var(--e3);
+    padding: var(--e1) 0; border: 0; text-align: right; overflow-wrap: anywhere;
+  }
+  .tabla-apilable td::before {
+    content: attr(data-etiqueta); flex: none; max-width: 45%;
+    color: var(--texto-suave); font-size: var(--t-menor); font-weight: 400; text-align: left;
+  }
+  .tabla-apilable td:first-child { padding-bottom: var(--e2); color: var(--texto-titulo); font-weight: 700; text-align: left; }
+  .tabla-apilable td:first-child::before, .tabla-apilable .tabla-acciones::before { content: none; }
+  .tabla-apilable .tabla-acciones { justify-content: flex-start; flex-wrap: wrap; gap: var(--e2); padding-top: var(--e2); white-space: normal; }
+  .tabla-apilable .tabla-acciones:empty { display: none; }
+  .tabla-apilable tbody tr:hover td { background: none; }
+}
 
 /* --- Anillo de progreso ---------------------------------------- */
 .anillo { position: relative; display: grid; place-items: center; }

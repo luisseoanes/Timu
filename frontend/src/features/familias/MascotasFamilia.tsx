@@ -37,7 +37,7 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
         <p className="apagado">Esta familia no tiene mascotas registradas.</p>
       ) : (
         <div className="scroll-x">
-          <table className="tabla">
+          <table className="tabla tabla-apilable">
             <thead>
               <tr>
                 <th>Nombre</th>
@@ -53,13 +53,13 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
             <tbody>
               {mascotas.map((m) => (
                 <tr key={m.id}>
-                  <td className="principal">{m.nombre}</td>
-                  <td>{nombreEspecie(m.especie)}</td>
-                  <td>{m.raza ?? '—'}</td>
-                  <td>{m.sexo ?? '—'}</td>
-                  <td className="numero">{fecha(m.fecha_nacimiento)}</td>
-                  <td className="numero">{m.peso_kg ? `${m.peso_kg} kg` : '—'}</td>
-                  <td>
+                  <td data-etiqueta="Nombre" className="principal">{m.nombre}</td>
+                  <td data-etiqueta="Especie">{nombreEspecie(m.especie)}</td>
+                  <td data-etiqueta="Raza">{m.raza ?? '—'}</td>
+                  <td data-etiqueta="Sexo">{m.sexo ?? '—'}</td>
+                  <td data-etiqueta="Nacimiento" className="numero">{fecha(m.fecha_nacimiento)}</td>
+                  <td data-etiqueta="Peso" className="numero">{m.peso_kg ? `${m.peso_kg} kg` : '—'}</td>
+                  <td data-etiqueta="Estado">
                     {m.activa ? (
                       <Insignia tono="ok">Activa</Insignia>
                     ) : (
@@ -68,7 +68,7 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
                       </Insignia>
                     )}
                   </td>
-                  <td>
+                  <td className="tabla-acciones">
                     <button className="btn btn-plano" type="button" onClick={() => setAbiertaId(m.id)}>
                       Ficha
                     </button>
@@ -76,7 +76,7 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
                       Historia
                     </Link>
                     {m.activa && (
-                      <button className="btn btn-plano" type="button" onClick={() => setDeBaja(m)}>
+                      <button className="btn btn-plano btn-plano-peligro" type="button" onClick={() => setDeBaja(m)}>
                         Dar de baja
                       </button>
                     )}

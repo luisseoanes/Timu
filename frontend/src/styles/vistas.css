@@ -154,6 +154,9 @@
 .detalle-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e3); margin-bottom: var(--e4); }
 .detalle-cabeza h2 { font-size: var(--t-titulo); }
 .pila { display: grid; gap: var(--e4); align-content: start; }
+/* Como en .contenido: sin esto, una tabla ancha estira su tarjeta en vez de desplazarse
+   dentro de su .scroll-x. */
+.pila > * { min-width: 0; }
 
 /* Historial de cambios: la fecha a la izquierda, qué cambió a la derecha. */
 .historial { list-style: none; margin: 0; padding: 0; }

@@ -138,7 +138,7 @@ function CuposPorMascota({
       <div key={mascotaId || 'familia'} className="bloque">
         <h4>{titulo}</h4>
         <div className="scroll-x">
-          <table className="tabla" aria-label={titulo}>
+          <table className="tabla tabla-apilable" aria-label={titulo}>
             <thead>
               <tr>
                 <th>Beneficio</th>
@@ -149,9 +149,9 @@ function CuposPorMascota({
             <tbody>
               {beneficios.map((c) => (
                 <tr key={c.tipo_codigo}>
-                  <td className="principal">{nombreTipo(c.tipo_codigo)}</td>
-                  <td className="numero">{c.cupo === null || c.cupo === undefined ? `${c.usados} (sin límite)` : `${c.usados} de ${c.cupo}`}</td>
-                  <td>{c.periodo === 'mensual' ? 'Este mes' : 'Este año'}</td>
+                  <td data-etiqueta="Beneficio" className="principal">{nombreTipo(c.tipo_codigo)}</td>
+                  <td data-etiqueta="Usados" className="numero">{c.cupo === null || c.cupo === undefined ? `${c.usados} (sin límite)` : `${c.usados} de ${c.cupo}`}</td>
+                  <td data-etiqueta="Periodo">{c.periodo === 'mensual' ? 'Este mes' : 'Este año'}</td>
                 </tr>
               ))}
             </tbody>
@@ -182,7 +182,7 @@ function TablaServicios({
         <p className="apagado">{vacio}</p>
       ) : (
         <div className="scroll-x">
-          <table className="tabla" aria-label={titulo}>
+          <table className="tabla tabla-apilable" aria-label={titulo}>
             <thead>
               <tr>
                 <th>Servicio</th>
@@ -194,10 +194,10 @@ function TablaServicios({
             <tbody>
               {servicios.map((s) => (
                 <tr key={s.id}>
-                  <td className="principal">{nombreTipo(s.tipo_codigo)}</td>
-                  <td>{nombreMascota(s.mascota_id)}</td>
-                  <td className="numero">{s.programado_para ? fechaHora(s.programado_para) : 'Sin programar'}</td>
-                  <td>
+                  <td data-etiqueta="Servicio" className="principal">{nombreTipo(s.tipo_codigo)}</td>
+                  <td data-etiqueta="Mascota">{nombreMascota(s.mascota_id)}</td>
+                  <td data-etiqueta="Fecha" className="numero">{s.programado_para ? fechaHora(s.programado_para) : 'Sin programar'}</td>
+                  <td data-etiqueta="Estado">
                     <Distintivo dominio="servicio" valor={s.estado} />
                   </td>
                 </tr>
@@ -215,7 +215,7 @@ function TablaPendientesAtencion({ pendientes }: { pendientes: PendienteRead[] }
     <div className="bloque">
       <h4>Pendientes de una atención</h4>
       <div className="scroll-x">
-        <table className="tabla" aria-label="Pendientes de una atención">
+        <table className="tabla tabla-apilable" aria-label="Pendientes de una atención">
           <thead>
             <tr>
               <th>Qué quedó pendiente</th>
@@ -225,8 +225,8 @@ function TablaPendientesAtencion({ pendientes }: { pendientes: PendienteRead[] }
           <tbody>
             {pendientes.map((p) => (
               <tr key={p.id}>
-                <td className="principal">{p.descripcion}</td>
-                <td>
+                <td data-etiqueta="Qué quedó pendiente" className="principal">{p.descripcion}</td>
+                <td data-etiqueta="Estado">
                   <Distintivo dominio="pendiente" valor={p.estado} />
                 </td>
               </tr>

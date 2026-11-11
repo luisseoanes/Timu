@@ -91,7 +91,7 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
           <p className="apagado">El contrato no tiene peludos vigentes.</p>
         ) : (
           <div className="scroll-x">
-            <table className="tabla" aria-label="Peludos afiliados">
+            <table className="tabla tabla-apilable" aria-label="Peludos afiliados">
               <thead>
                 <tr>
                   <th>Peludo</th>
@@ -102,9 +102,9 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
               <tbody>
                 {c.mascotas.map((m) => (
                   <tr key={m.mascota_id}>
-                    <td className="principal">{m.nombre}</td>
-                    <td>{m.plan_nombre}</td>
-                    <td className="numero">{moneda(m.valor_mensual)}</td>
+                    <td data-etiqueta="Peludo" className="principal">{m.nombre}</td>
+                    <td data-etiqueta="Plan">{m.plan_nombre}</td>
+                    <td data-etiqueta="Al mes" className="numero">{moneda(m.valor_mensual)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -121,7 +121,7 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
           <p className="apagado">El contrato todavía no ha generado cuotas.</p>
         ) : (
           <div className="scroll-x">
-            <table className="tabla">
+            <table className="tabla tabla-apilable">
               <thead>
                 <tr>
                   <th>Periodo</th>
@@ -134,11 +134,11 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
               <tbody>
                 {c.cuotas.map((q) => (
                   <tr key={q.id}>
-                    <td className="principal">{q.descripcion ?? q.periodo}</td>
-                    <td className="numero">{fecha(q.fecha_vencimiento)}</td>
-                    <td className="numero">{moneda(q.valor)}</td>
-                    <td className="numero">{moneda(q.valor_pagado)}</td>
-                    <td>
+                    <td data-etiqueta="Periodo" className="principal">{q.descripcion ?? q.periodo}</td>
+                    <td data-etiqueta="Vence" className="numero">{fecha(q.fecha_vencimiento)}</td>
+                    <td data-etiqueta="Valor" className="numero">{moneda(q.valor)}</td>
+                    <td data-etiqueta="Pagado" className="numero">{moneda(q.valor_pagado)}</td>
+                    <td data-etiqueta="Estado">
                       <Distintivo dominio="cuota" valor={estadoCuota(q)} />
                     </td>
                   </tr>
@@ -157,7 +157,7 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
           <p className="apagado">No hay pagos registrados.</p>
         ) : (
           <div className="scroll-x">
-            <table className="tabla">
+            <table className="tabla tabla-apilable">
               <thead>
                 <tr>
                   <th>Fecha</th>
@@ -170,11 +170,11 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
               <tbody>
                 {c.pagos.map((p) => (
                   <tr key={p.id}>
-                    <td className="numero">{fecha(p.fecha_pago?.slice(0, 10))}</td>
-                    <td className="numero">{moneda(p.valor)}</td>
-                    <td>{p.medio ?? p.proveedor}</td>
-                    <td className="numero">{p.referencia_externa}</td>
-                    <td>
+                    <td data-etiqueta="Fecha" className="numero">{fecha(p.fecha_pago?.slice(0, 10))}</td>
+                    <td data-etiqueta="Valor" className="numero">{moneda(p.valor)}</td>
+                    <td data-etiqueta="Medio">{p.medio ?? p.proveedor}</td>
+                    <td data-etiqueta="Referencia" className="numero">{p.referencia_externa}</td>
+                    <td data-etiqueta="Estado">
                       <Distintivo dominio="pago" valor={p.estado} />
                     </td>
                   </tr>

@@ -32,7 +32,7 @@ export function ComunicacionesFamilia({ familiaId }: { familiaId: string }) {
         {(d) => (
           <>
             <div className="scroll-x">
-              <table className="tabla" aria-label="Comunicaciones">
+              <table className="tabla tabla-apilable" aria-label="Comunicaciones">
                 <thead>
                   <tr>
                     <th>Fecha</th>
@@ -45,15 +45,15 @@ export function ComunicacionesFamilia({ familiaId }: { familiaId: string }) {
                 <tbody>
                   {d.items.map((m) => (
                     <tr key={m.id}>
-                      <td className="numero">{fechaHora(m.enviado_en ?? m.created_at)}</td>
-                      <td>{CANALES[m.canal] ?? m.canal}</td>
-                      <td>{m.direccion === 'entrante' ? 'Recibido' : 'Enviado'}</td>
-                      <td>
+                      <td data-etiqueta="Fecha" className="numero">{fechaHora(m.enviado_en ?? m.created_at)}</td>
+                      <td data-etiqueta="Canal">{CANALES[m.canal] ?? m.canal}</td>
+                      <td data-etiqueta="Sentido">{m.direccion === 'entrante' ? 'Recibido' : 'Enviado'}</td>
+                      <td data-etiqueta="Mensaje">
                         {resumen(m)}
                         {m.masivo && <span className="apagado"> · campaña</span>}
                         {m.error && <p className="error">{m.error}</p>}
                       </td>
-                      <td>
+                      <td data-etiqueta="Estado">
                         <Distintivo dominio="mensaje" valor={m.estado} />
                       </td>
                     </tr>

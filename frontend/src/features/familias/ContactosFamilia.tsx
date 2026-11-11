@@ -37,7 +37,7 @@ export function ContactosFamilia({ familia }: { familia: FamiliaRead }) {
         <p className="apagado">Esta familia no tiene contactos adicionales.</p>
       ) : (
         <div className="scroll-x">
-          <table className="tabla">
+          <table className="tabla tabla-apilable">
             <thead>
               <tr>
                 <th>Nombre</th>
@@ -50,16 +50,16 @@ export function ContactosFamilia({ familia }: { familia: FamiliaRead }) {
             <tbody>
               {contactos.map((c) => (
                 <tr key={c.id}>
-                  <td className="principal">{c.nombre}</td>
-                  <td className="numero">{c.telefono}</td>
-                  <td>{c.relacion ?? '—'}</td>
-                  <td>{c.email ?? '—'}</td>
+                  <td data-etiqueta="Nombre" className="principal">{c.nombre}</td>
+                  <td data-etiqueta="Celular" className="numero">{c.telefono}</td>
+                  <td data-etiqueta="Relación">{c.relacion ?? '—'}</td>
+                  <td data-etiqueta="Correo">{c.email ?? '—'}</td>
                   {editable && (
-                    <td>
+                    <td className="tabla-acciones">
                       <button className="btn btn-plano" type="button" onClick={() => setEditando(c)}>
                         Editar
                       </button>
-                      <button className="btn btn-plano" type="button" onClick={() => setQuitando(c)}>
+                      <button className="btn btn-plano btn-plano-peligro" type="button" onClick={() => setQuitando(c)}>
                         Quitar
                       </button>
                     </td>

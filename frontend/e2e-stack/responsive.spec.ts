@@ -14,6 +14,10 @@ import { sesion, type Perfil } from './sesiones'
  * horizontal (una tabla dentro de su propio contenedor con desplazamiento sí se permite) o si
  * axe-core encuentra texto con contraste insuficiente (WCAG 2.2 AA, 1.4.3).
  *
+ * Una ruta con `pestanas` se mide también con cada una de sus pestañas abierta: su contenido
+ * no está en el DOM hasta que se elige. La clave de un fallo lleva entonces la pestaña
+ * (`familias/:id#Cartera@375:desborde`). Cada pantalla rediseñada la activa al cerrarse.
+ *
  * PENDIENTES es la deuda del rediseño: cada entrada es un fallo medido en una ruta y un ancho.
  * La prueba falla si aparece un fallo que no está en la lista y también si una entrada ya no
  * falla, así que la lista solo puede encogerse. Debe quedar vacía en R4-CIE-01.
@@ -29,7 +33,6 @@ type Fallo = 'desborde' | 'contraste'
 const PENDIENTES: ReadonlySet<string> = new Set([
   'aliadas@375:desborde',
   'campanas@375:desborde',
-  'comercial@375:desborde',
   'preventivos@375:desborde',
   'tareas@375:desborde',
 ])
@@ -41,6 +44,8 @@ interface Ruta {
   perfil: Perfil | null
   /** Dirección que se abre. Las rutas con parámetros piden a la API un registro real. */
   url: string | ((page: Page) => Promise<string>)
+  /** Mide también cada pestaña de la pantalla (ver arriba). */
+  pestanas?: boolean
 }
 
 const SIN_REGISTRO = '00000000-0000-7000-8000-000000000000'
@@ -87,7 +92,12 @@ const RUTAS: Ruta[] = [
   // Panel del equipo.
   { app: 'index:panel', perfil: 'equipo', url: '/' },
   { app: 'familias', perfil: 'equipo', url: '/familias' },
-  { app: 'familias/:id', perfil: 'equipo', url: async (page) => `/familias/${(await familiaDemo(page)).id}` },
+  {
+    app: 'familias/:id',
+    perfil: 'equipo',
+    url: async (page) => `/familias/${(await familiaDemo(page)).id}`,
+    pestanas: true,
+  },
   { app: 'cartera', perfil: 'equipo', url: '/cartera' },
   { app: 'servicios', perfil: 'equipo', url: '/servicios' },
   {
@@ -180,20 +190,32 @@ for (const perfil of [null, 'equipo', 'medico', 'admin', 'familia', 'aliada'] as
         expect(new URL(page.url()).pathname, 'la ruta no redirige a otra pantalla').toBe(url.split('?')[0])
 
         const encontrados = new Map<string, string[]>()
-        for (const ancho of ANCHOS) {
-          await page.setViewportSize({ width: ancho, height: ALTO })
-          await page.evaluate(() => new Promise((listo) => requestAnimationFrame(() => requestAnimationFrame(listo))))
-          const medidas: [Fallo, string[]][] = [
-            ['desborde', await desbordes(page)],
-            ['contraste', await contrastes(page)],
-          ]
-          for (const [fallo, detalle] of medidas) {
-            if (detalle.length > 0) encontrados.set(`${ruta.app}@${ancho}:${fallo}`, detalle)
+        const pestanas = ruta.pestanas ? await page.getByRole('tab').allTextContents() : []
+        if (ruta.pestanas) expect(pestanas.length, 'la pantalla tiene pestañas').toBeGreaterThan(0)
+        for (const pestana of pestanas.length > 0 ? pestanas : [null]) {
+          if (pestana) {
+            await page.setViewportSize({ width: ANCHOS[ANCHOS.length - 1], height: ALTO })
+            await page.getByRole('tab', { name: pestana, exact: true }).click()
+            await esperarPantalla(page)
+          }
+          const vista = pestana ? `${ruta.app}#${pestana}` : ruta.app
+          for (const ancho of ANCHOS) {
+            await page.setViewportSize({ width: ancho, height: ALTO })
+            await page.evaluate(() => new Promise((listo) => requestAnimationFrame(() => requestAnimationFrame(listo))))
+            const medidas: [Fallo, string[]][] = [
+              ['desborde', await desbordes(page)],
+              ['contraste', await contrastes(page)],
+            ]
+            for (const [fallo, detalle] of medidas) {
+              if (detalle.length > 0) encontrados.set(`${vista}@${ancho}:${fallo}`, detalle)
+            }
           }
         }
 
         const nuevos = [...encontrados].filter(([clave]) => !PENDIENTES.has(clave))
-        const resueltos = [...PENDIENTES].filter((p) => p.startsWith(`${ruta.app}@`) && !encontrados.has(p))
+        const resueltos = [...PENDIENTES].filter(
+          (p) => (p.startsWith(`${ruta.app}@`) || p.startsWith(`${ruta.app}#`)) && !encontrados.has(p),
+        )
         expect(nuevos.map(([clave, detalle]) => `${clave}: ${detalle.join(' | ')}`), 'fallos nuevos').toEqual([])
         expect(resueltos, 'ya no fallan: sácalas de PENDIENTES').toEqual([])
       })
@@ -216,8 +238,9 @@ test('el recorrido cubre todas las rutas de App.tsx', () => {
 
 test('PENDIENTES solo nombra rutas, anchos y fallos que existen', () => {
   const invalidas = [...PENDIENTES].filter((p) => {
-    const [, app, ancho] = /^(.+)@(\d+):(?:desborde|contraste)$/.exec(p) ?? []
-    return !RUTAS.some((r) => r.app === app) || !(ANCHOS as readonly number[]).includes(Number(ancho))
+    const [, app, pestana, ancho] = /^(.+?)(?:#([^@]+))?@(\d+):(?:desborde|contraste)$/.exec(p) ?? []
+    const ruta = RUTAS.find((r) => r.app === app)
+    return !ruta || (pestana !== undefined && !ruta.pestanas) || !(ANCHOS as readonly number[]).includes(Number(ancho))
   })
   expect(invalidas).toEqual([])
 })
