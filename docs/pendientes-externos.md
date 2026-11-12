@@ -103,6 +103,17 @@ según ciudad, especie y número de peludos. Con eso se ajustan las reglas en
 Administración → Reglas y se reemplazan las de `datos.py`, que solo se cargan en una base
 nueva.
 
+## Mapa de las rutas (requisito 6.7, `R2-PAN-06`)
+
+El requisito pide «visualizar usuarios/servicios en un mapa». Las rutas se planean con
+distancias reales y cada parada abre la navegación del celular («Cómo llegar», con las
+coordenadas que usó el optimizador), pero el panel no dibuja un mapa: decidido con el usuario el
+2026-11-12 para no meter una dependencia y un proveedor de teselas sin acordarlos. Para cerrarlo
+hace falta que TIMU elija proveedor y presupuesto: Google Maps JavaScript (de pago por carga,
+con la misma cuenta que ya factura la matriz de distancias de `F2-RUT-02`) o teselas de
+OpenStreetMap con un proveedor que admita uso comercial. Con eso, el mapa entra como unidad
+propia.
+
 ## Marca e identidad ([manual de marca](manual-de-marca.md))
 
 El 2026-11-11 llegó el material gráfico de la marca: el manual original de la diseñadora

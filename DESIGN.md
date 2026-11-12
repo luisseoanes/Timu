@@ -49,6 +49,8 @@ colors:
   plan-naranja: "#D48200"
   plan-azul: "#477095"
   plan-ninguno: "#A0A1AF"
+  ruta-recorrida: "#111537"
+  ruta-pendiente: "#85889D"
   serie-1: "#769116"
   serie-2: "#BE7700"
   serie-3: "#477095"
@@ -137,6 +139,11 @@ components:
     rounded: "{rounded.campo}"
     padding: "0 20px"
     height: "40px"
+  btn-icono:
+    rounded: "{rounded.campo}"
+    padding: "0"
+    width: "40px"
+    height: "40px"
   btn-peligro:
     backgroundColor: "{colors.peligro-accion-fondo}"
     textColor: "{colors.peligro-accion-texto}"
@@ -219,7 +226,7 @@ components:
 
 Este fichero describe lo construido, no lo planeado. La primera superficie del sistema es la
 estructura del panel del equipo (`AppLayout`) y Familias (listado, detalle, pestañas y
-ventanas). El resto de módulos del panel, el portal y las páginas públicas todavía usan la
+ventanas); la segunda, Rutas (la ruta del día del médico y su coordinación). El resto de módulos del panel, el portal y las páginas públicas todavía usan la
 maqueta anterior y adoptan este sistema en sus unidades de
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md): lo que se ve hoy en ellos no
 es el sistema. El color, la tipografía, el logo y la voz los fija el
@@ -376,9 +383,16 @@ lema de la marca y el buscador encoge a 220 px. Por debajo de 900 px la navegaci
 barra inferior fija (56 px, al alcance del pulgar) con los cuatro módulos que más usa cada
 perfil y «Más» con el resto; el contenido reserva su alto más el área segura.
 
-**Listado y ficha (Familias).** Dos columnas: listado de 320–420 px y la familia abierta en el
-resto, separadas 20 px. Por debajo de 900 px se ve uno u otro: el listado sin familia abierta,
-la ficha (con botón de volver) con ella.
+**Listado y ficha (`.con-ficha`: Familias, Rutas).** Dos columnas: listado de 320–420 px
+(`.listado`) y el registro abierto en el resto (`.ficha-abierta`), separadas 20 px. Por debajo
+de 900 px se ve uno u otro: el listado sin registro abierto, la ficha (con botón de volver) con
+él.
+
+**La ruta propia (Rutas).** Quien solo sale a campo no ve listado: su ruta del día ocupa una
+columna de hasta 760 px, que se lee igual en el escritorio que en el celular. Encima, una línea
+con el avance («1 de 3 paradas · 22,3 km · hasta las 1:15 p. m.») y el día, un botón compacto
+que dice «Hoy» con el campo de fecha nativo superpuesto; fuera de hoy, el día y «Volver a hoy»
+bajan a su fila.
 
 **Ritmo.** Escala de 4 px (`--e1` a `--e8`). Entre bloques de página 16 px; entre columnas 20
 px; dentro de un panel 20–24 px; entre filas de un listado 12 px de relleno con un hilo
@@ -455,6 +469,8 @@ Firmes y planos; el color dice la jerarquía, no la forma.
 - **Plano:** sin fondo, texto suave; hover a marino sobre lienzo. **Plano peligro** para lo
   destructivo dentro de una fila.
 - **Peligro:** rojo lleno con texto blanco, solo en la confirmación de algo que no se deshace.
+- **De icono** (`btn-icono`, junto a la variante): cuadrado de 40 px (44 en táctil) con solo un
+  icono y su `aria-label`, como llamar o «Más acciones» en una parada.
 - **Hover / Focus / Active:** transición de 160 ms con la curva del sistema; foco con contorno
   azul de 2 px separado 2 px; al pulsar baja 1 px.
 - **Deshabilitado:** el mismo gris neutro para todas las variantes, para que no parezca otra.
@@ -556,6 +572,38 @@ de metro: espaciado esquemático, no proporcional al tiempo.
 - **Miniatura (`LineaMini`):** en cada fila del listado, línea de 2 px con puntos de 10 px y la
   marca de hoy de 2 × 12 px; es dibujo (`role="img"`) con el resumen en `aria-label`, y la fila
   repite las vencidas en texto.
+
+### La línea de la ruta (componente propio)
+`LineaRuta` dibuja la ruta del día con la misma gramática que la línea de la familia, en
+vertical siempre: es una lista que se recorre de arriba abajo.
+- **Línea:** 8 px marina, nunca del color de un plan (una ruta no es un plan). Recorrida en
+  `ruta-recorrida` hasta la parada que toca; por recorrer, en `ruta-pendiente`.
+- **Estaciones:** 24 px con borde de 4 px. Hecha: llena de marino. La que toca: anillo marino con
+  halo verde tenue de 4 px. Pendiente: contorno gris.
+- **Estados:** los del camino normal (en curso, en camino, en sitio, próxima) van en tono
+  informativo; la alerta queda para lo que la merece, como lo que falta por rutear.
+- **La que toca, abierta:** hora (o «Llegó …») y franja acordada, estado, la dirección en Inter
+  600 de 24 px (es casi toda cifras y se lee a pleno sol), complemento y barrio, familia (enlace
+  a su ficha) y mascota con especie, edad y peso, el servicio y sus observaciones, y sus
+  acciones: la de estado («Iniciar ruta», «Voy en camino», «Llegué», «Terminar visita» o, si al
+  servicio le faltan pasos obligatorios, «Registrar la atención»), «Cómo llegar», llamar y un
+  menú con WhatsApp, el servicio, la historia clínica y omitir. En un contenedor de 440 px o
+  menos la acción de estado ocupa su fila, de 48 px.
+- **Pendientes:** hora, franja, a quién y qué; el resumen es un botón que la abre en su sitio.
+- **Hechas:** mientras falte alguna, se pliegan tras una pastilla «N hechas» que las muestra y
+  las vuelve a plegar (`aria-expanded`, con una flecha que gira); la pastilla no desaparece, así
+  que el foco se queda en ella.
+- **Omitidas:** fuera de la línea, en un bloque aparte con su motivo.
+- **Miniatura (`LineaRutaMini`):** en cada fila del listado de rutas, línea de 2 px con puntos de
+  10 px; dibujo con su resumen en `aria-label`.
+
+**La regla del número de casa.** En una dirección colombiana, «# 100-12» se lee como una
+unidad: no se parte entre dos líneas (`partirDireccion` y `.sin-cortes`); si no cabe, baja
+entero. Leído a pleno sol, «100-» arriba y «12» abajo parecen dos cifras.
+
+**La regla de la acción de quien recorre.** La acción de estado de una parada es verde solo para
+quien hace la ruta. Quien coordina también puede avanzarla, pero como secundaria: en su vista la
+acción principal es planear.
 
 ## Do's and Don'ts
 

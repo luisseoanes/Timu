@@ -6,7 +6,8 @@ cada decisión visual está en [`DESIGN.md`](../../DESIGN.md) y en el contrato d
 superficie (`.impeccable/surfaces/`).
 
 > En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)). **Rediseñado:** la estructura
-> del panel, el listado con ficha (Familias), las ventanas y la espera de sesión. **Aún con la
+> del panel, el listado con ficha (Familias y Rutas), la ruta propia del médico, las ventanas y
+> la espera de sesión. **Aún con la
 > composición anterior** (aunque ya con la paleta, la tipografía y el logo): el ingreso, el
 > inicio, el detalle de un registro, el portal y las páginas públicas. Cada uno se rehace en
 > su unidad.
@@ -40,7 +41,7 @@ superficie (`.impeccable/surfaces/`).
   perfil (`PRINCIPALES`: el médico en ruta lleva Rutas, Servicios, Clínica y Familias) y
   «Más» para el resto.
 
-## Listado con ficha — `.familias` (Familias)
+## Listado con ficha — `.con-ficha` (Familias, Rutas)
 
 El patrón de un módulo cuyo trabajo es abrir un registro y actuar sobre él.
 
@@ -55,18 +56,47 @@ El patrón de un módulo cuyo trabajo es abrir un registro y actuar sobre él.
 └────────────────────────┘ └───────────────────────────────────────────┘
 ```
 
-- **Listado** (`.familias-lista`): título con el total, la acción de crear (verde lleno solo si
+- **Listado** (`.listado`, filas en `.listado-filas` > `.listado-fila`): título con el total, la acción de crear (verde lleno solo si
   no hay registro abierto: una acción verde por vista), filtros y filas. La búsqueda, el
   estado y la página viven en la URL, así que abrir un registro y volver no los pierde. La
   fila entera es el enlace (el `a` del nombre se extiende con `::after`), y la abierta se
   marca con `data-seleccionada`.
-- **Ficha** (`.familias-detalle`): cabecera (`.ficha-cabeza`, con el nombre, los datos y
+- **Ficha** (`.ficha-abierta`; `.ficha-vacia` sin registro abierto): cabecera (`.ficha-cabeza`, con el nombre, los datos y
   `.ficha-acciones`), la línea, los resúmenes siempre visibles (`.ficha-resumen`) y las
   pestañas, que abren en «Datos». Dentro de la ficha, las `.tarjeta` de las pestañas pierden
   fondo y relleno.
 - **Por debajo de 900 px** se ve el listado o la ficha, no los dos, con un botón de volver.
 
-Rutas, Clínica y los demás módulos que abren un registro deberían partir de aquí.
+En Familias la acción de crear es «Nueva familia» y la ficha lleva pestañas. En Rutas el listado
+son las rutas del día, cada una con su línea en miniatura, y debajo lo que falta por rutear; la
+ficha es la ruta abierta con su línea (`LineaRuta`). En los dos, el registro abierto vive en la
+URL (`/familias/:id`, `/rutas?ruta=`), igual que los filtros. Clínica y los demás módulos que
+abren un registro deberían partir de aquí.
+
+## La ruta propia — `.rutas-propia` (Rutas)
+
+Quien solo sale a campo (el médico) no ve listado: abre en su ruta del día.
+
+```
+┌─ ruta propia (hasta 760 px) ──────────────┐
+│ 1 de 3 paradas · 22,3 km · hasta… [Hoy]   │  resumen y día (.rutas-barra)
+│ ┌───────────────────────────────────────┐ │
+│ │ (✓ 1 hecha ⌄)                         │ │  pliega y despliega las hechas
+│ │ ◉ Llegó 12:06 · franja 11:45–12:45    │ │  la que toca, abierta
+│ │ │ Avenida 19 # 100-12                 │ │
+│ │ │ Laura Gomez · Nala, felino, 11,3 kg │ │
+│ │ │ [   Registrar la atención   ]       │ │
+│ │ │ [Cómo llegar] [☎] [⋯]              │ │
+│ │ ○ 1:15 p. m. · Jorge Ramirez · Rocky ⌄│ │  las que faltan, plegadas
+│ └───────────────────────────────────────┘ │
+└───────────────────────────────────────────┘
+```
+
+El día es un botón que dice «Hoy» (o «vie 13 nov», con «Volver a hoy» al lado) con el campo de
+fecha del navegador encima, transparente. Fuera de hoy los controles del día bajan a su fila;
+el resumen no lleva la pastilla de estado de la ruta, que la línea ya dice. Con dos rutas el
+mismo día, una ficha por ruta, con su título y su estado. Sin ruta, la ficha vacía dice por
+qué y a quién avisar.
 
 ## Ventanas — `Modal`
 
@@ -118,11 +148,11 @@ cinco destinos. Desde 900 px la navegación sube a la cabecera como pastillas.
 | --- | --- |
 | ≥ 1360 px | Barra con 8 módulos |
 | 1180–1359 px | 6 módulos y buscador más estrecho |
-| 900–1179 px | 3 módulos; el inicio baja su columna derecha; Familias sigue con listado y ficha lado a lado |
+| 900–1179 px | 3 módulos; el inicio baja su columna derecha; Familias y Rutas siguen con listado y ficha lado a lado |
 | < 900 px | Barra inferior; listado o ficha; ingreso en una columna; formularios en una columna |
 | ≤ 600 px | Ventanas como hoja inferior; la línea siempre vertical; pestañas en una fila desplazable |
 
 Además de la ventana, hay piezas que deciden por el **ancho de su contenedor**: la tabla
-apilable (menos de 640 px) y la línea de la familia (cuando sus paradas no caben con su
-rótulo). El cuerpo de la página nunca se desplaza en horizontal: lo que no cabe se desplaza
+apilable (menos de 640 px), la línea de la familia (cuando sus paradas no caben con su
+rótulo) y cada parada de la ruta (en 440 px o menos su acción de estado ocupa su fila). El cuerpo de la página nunca se desplaza en horizontal: lo que no cabe se desplaza
 dentro de su propio contenedor. Toda pantalla se revisa a 1440, 1180, 900 y 390 px.

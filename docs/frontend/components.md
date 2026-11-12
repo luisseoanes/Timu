@@ -7,8 +7,8 @@ usa en el código. Las clases viven en
 `vistas.css`). Si una pantalla necesita algo que no está aquí, se agrega a ese fichero y a
 este documento, no dentro de la vista.
 
-> En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)): la estructura del panel y
-> Familias ya usan la línea nueva; el resto de pantallas usa estas mismas piezas con la
+> En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)): la estructura del panel,
+> Familias y Rutas ya usan la línea nueva; el resto de pantallas usa estas mismas piezas con la
 > composición anterior hasta su unidad.
 
 ## Botones — `.btn`
@@ -22,7 +22,8 @@ este documento, no dentro de la vista.
 | Plano de peligro | `+ .btn-plano-peligro` | Acción destructiva dentro de una fila (*Dar de baja*, *Quitar*): rojo, para que no pese como las demás. |
 | Peligro | `.btn-peligro` | Rojo lleno. **Confirmar** algo destructivo en una ventana (*Confirmar baja*, *Quitar contacto*). |
 | Bloque | `+ .btn-bloque` | Ocupa todo el ancho. |
-| Icono | `.boton-icono` | Cuadrado sin texto (cerrar una ventana, volver). **Exige `aria-label`.** |
+| Icono | `.boton-icono` | Cuadrado sin texto ni borde (cerrar una ventana, volver). **Exige `aria-label`.** |
+| Variante de icono | `+ .btn-icono` | Un botón o enlace de la variante que sea, solo con icono, cuadrado de 40 px (44 en táctil): llamar y «Más acciones» en una parada. **Exige `aria-label`.** |
 
 El texto dice exactamente lo que pasa: *Registrar pago*, *Abrir consulta de Luna*. Nunca
 *Aceptar* ni *Enviar*. Deshabilitados, todos los llenos usan el mismo gris; durante el envío
@@ -123,6 +124,18 @@ cuando las paradas no caben con su rótulo (`orientacion` en `linea.ts`). `Linea
 miniatura de una fila del listado, con su resumen en `aria-label`. El color es el del plan
 (`data-color`), gris sin plan.
 
+## Línea de la ruta — `LineaRuta` y `LineaRutaMini`
+
+`features/rutas/LineaRuta.tsx`. La ruta del día como una lista vertical de estaciones (`ol` con
+`aria-label="Paradas de la ruta"`): las hechas plegadas tras la pastilla «N hechas» (un
+interruptor con `aria-expanded` que no desaparece), la que toca abierta con su
+dirección como `h3` y sus acciones (`AccionesParada`), las que faltan con un botón de resumen
+(`aria-expanded`) que las abre en su sitio, y las omitidas aparte. Qué parada toca, el avance y
+los enlaces de navegación y WhatsApp salen de `ruta.ts`, sin React, con sus pruebas.
+`LineaRutaMini` es la miniatura de una fila del listado de rutas, con su resumen en
+`aria-label`. La línea es marina (`--ruta-recorrida` y `--ruta-pendiente`), nunca del color de un
+plan.
+
 ## Estados de carga, error y vacío — `Consulta`
 
 Los tres son obligatorios en cualquier pantalla que consulte la API. `src/components/
@@ -209,7 +222,8 @@ filtro. Los agotados quedan deshabilitados.
 ## Línea de tiempo — `.linea-tiempo`
 
 Lista con un punto por elemento; `li.hecho` lo marca como hecho. Los pasos de una atención,
-la historia clínica, las paradas de una ruta y el carnet del portal.
+la historia clínica y el carnet del portal. Las paradas de una ruta ya no la usan: tienen
+`LineaRuta`.
 
 ## Borrador de IA — `.borrador-ia`
 
@@ -218,8 +232,9 @@ profesional lo revisa y nunca se envía solo.
 
 ## Utilidades de `src/lib/`
 
-- **`formato.ts`**: moneda, fechas (`fecha`, `fechaCorta`, `fechaHora`), `peso` («8,4 kg») y
-  porcentajes, como en Colombia.
+- **`formato.ts`**: moneda, fechas (`fecha`, `fechaCorta`, `fechaLarga`, `fechaHora`), horas y
+  franjas (`hora`, `rangoHoras`: «10:00 – 11:00 a. m.»), `edad` de una mascota, `peso` («8,4 kg»)
+  y porcentajes, como en Colombia.
 - **`estados.ts`**: el mapeo único de estados a etiqueta y tono, y los estados derivados
   (`estadoCuota`).
 - **`permisos.ts`**: `puede(usuario, accion)` decide qué se muestra e `inicioDeRol(rol)` a

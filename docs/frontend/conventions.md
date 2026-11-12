@@ -184,7 +184,7 @@ Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñ
   `.barra-pista`/`.barra-valor`, 2 px en `.linea-hoy-marca` y 6 px en `:focus-visible` (el
   valor de `--r-campo`).
 - **Cortes a 899 y a 900 px mezclados.** A 900 px justos, `.formulario` y `.dos-columnas` ya
-  pasan a una columna mientras `.familias` sigue a dos.
+  pasan a una columna mientras `.con-ficha` sigue a dos.
 - **`--sombra-1` y `--sombra-2` valen `none`** y siguen referenciados. Es coherente con el
   diseño plano, pero son tokens muertos: o se retiran o se les da uso.
 - **El ingreso, el portal y los módulos sin rediseñar** contradicen el sistema en puntos que

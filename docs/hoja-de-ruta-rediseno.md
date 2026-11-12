@@ -27,10 +27,10 @@ actualiza aquí, igual que en el backlog.
 | --- | ---: | ---: | ---: | ---: |
 | R0 — Preparación | 4 | 4 | 0 | 0 |
 | R1 — Fundaciones | 7 | 5 | 2 | 0 |
-| R2 — Panel del equipo | 10 | 3 | 1 | 6 |
+| R2 — Panel del equipo | 10 | 4 | 1 | 5 |
 | R3 — Familias, aliada y páginas públicas | 6 | 0 | 0 | 6 |
 | R4 — Cierre | 4 | 0 | 0 | 4 |
-| **Total** | **31** | **12** | **3** | **16** |
+| **Total** | **31** | **13** | **3** | **15** |
 
 ## Alcance medido
 
@@ -126,7 +126,7 @@ el móvil.
 | `R2-PAN-03` | Cierre de la línea visual | Revisor final sobre la estructura y Familias con veredicto `ship`. Después, la skill escribe `DESIGN.md` y `.impeccable/design.json` desde lo construido, y `docs/frontend/design-system.md` remite a `DESIGN.md` (el 2026-11-12 se fusionó en `DESIGN.md` y `conventions.md` y se eliminó). | Hecho: `ship` del revisor final tras cuatro pasadas (fallos corregidos: rótulos de la línea que se pisaban, pestañas en lugar del resumen, lo vencido solo con color, cupos duplicados, ventanas bajo las barras, pie de ventana cortado y dos acciones verdes a la vez). `DESIGN.md` y `.impeccable/design.json` escritos desde lo construido; `docs/frontend/design-system.md` remite a `DESIGN.md` (el 2026-11-12 se fusionó en `DESIGN.md` y `conventions.md` y se eliminó), y la deuda que encontró la skill está en `docs/frontend/conventions.md`. |
 | `R2-PAN-04` | Inicio | Sorteo de superficie para el tablero de inicio. Indicadores con su evolución, y series de gráfico según el manual. | Pendiente |
 | `R2-PAN-05` | Servicios y tareas | Listado de servicios, detalle (pensado primero para el móvil), nuevo servicio y tareas. | Pendiente |
-| `R2-PAN-06` | Rutas | Sorteo de superficie. Pensada primero para el móvil: la ruta del día de un médico en la calle. | Pendiente |
+| `R2-PAN-06` | Rutas | Sorteo de superficie. Pensada primero para el móvil: la ruta del día de un médico en la calle. | Hecho (2026-11-12): sorteo de superficie, elegida «La línea del día» (contrato en `.impeccable/surfaces/frontend-src-features-rutas-rutaspage-tsx.md`, boceto en `docs/rediseno/boceto-rutas-linea-del-dia.html`). El médico abre en su ruta del día como una línea vertical: hechas plegadas, la que toca abierta con dirección, familia, mascota, franja y su acción, y las que faltan debajo. Quien coordina ve las rutas del día en la plantilla de listado con ficha (generalizada desde Familias a `.con-ficha`), lo que falta por rutear, y planea, agrega y cancela. La API da en cada parada a quién se atiende y dónde. También: «Registrar la atención» cuando al servicio le faltan pasos obligatorios, la llegada ya no deja dos paradas abiertas (fallo del backend), y `datos_demo` deja una ruta de la médica que recorren el barrido y dos recorridos nuevos. Cerrado con el veredicto `ship` del revisor final tras cuatro pasadas. |
 | `R2-PAN-07` | Clínica | Sorteo de superficie para la entrada clínica. Listado, historia de la mascota y registro de la atención en casa de la familia, desde el celular. | Pendiente |
 | `R2-PAN-08` | Cartera y preventivos | Cuotas, mora, renovaciones, calendario, autorizaciones y carnet. **El carnet en PDF lleva la marca**, como el carnet impreso de TIMU: el logo, los colores, GeosansLight en el título e Inter en el resto, con fuentes que no estropeen las tildes, y el peso de cada desparasitación (`F2-PRE-07`, pedido por el usuario el 2026-11-11). Hecho por adelantado el 2026-11-11, con `app/core/marca_pdf.py` para el resto de documentos. **Incluye, decidido con el usuario (2026-11-11):** agendar un preventivo desde su estación en la línea de la ficha de Familias, como ya se registra el pago de una cuota. La acción se inyecta desde fuera (`App.tsx` o el espacio de entrada) para que `familias` no importe `preventivos`. Hasta entonces, tocar un preventivo solo lleva a la pestaña de mascotas. | Parcial: el carnet en PDF con la marca, el peso de cada desparasitación y quién aplicó (adelantado el 2026-11-11). Falta el resto de la unidad y agendar un preventivo desde su estación. |
 | `R2-PAN-09` | Comercial y campañas | Bandeja de interesados y conversaciones; segmentos, envíos y encuestas. `CampanasPage` (931 líneas) se divide si su tamaño lo exige. | Pendiente |
@@ -177,9 +177,20 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
   lugar de píldoras, y el listado y el detalle como paneles planos a ras en lugar de tarjetas
   con radio de 12 px. Se deciden con el usuario antes de `R4-CIE-02`.
 
-### Siguiente paso propuesto
+### Lo que quedó de Rutas tras su cierre
 
-Sin confirmar con el usuario. Primero lo que más se usa desde el celular (`PRODUCT.md`): Rutas
+- **Mapa embebido** (requisito 6.7): decidido con el usuario dejarlo fuera; cada parada abre la
+  navegación del celular. Para cerrarlo, TIMU elige proveedor y presupuesto
+  ([pendientes externos](pendientes-externos.md#mapa-de-las-rutas-requisito-67-r2-pan-06)).
+- **Registrar los pasos de la atención desde la propia parada**: hoy «Registrar la atención»
+  lleva a la ficha del servicio. Se decide al rediseñar ese detalle en `R2-PAN-05`.
+- **Sugerencias del revisor, opcionales**: etiquetar la hora de «Por rutear» («programado 4:19 a.
+  m.»), centrar la columna del médico en escritorio y capturar una ruta con una parada omitida.
+  Se deciden con el usuario antes de `R4-CIE-02`.
+
+### Orden de lo que sigue
+
+Confirmado por el usuario el 2026-11-12. Primero lo que más se usa desde el celular (`PRODUCT.md`): Rutas
 (`R2-PAN-06`) y Clínica (`R2-PAN-07`) para los médicos, y el portal (`R3-POR-01`, `R3-POR-02`)
 para las familias. Después el resto del panel (`R2-PAN-04`, `05`, `08`, `09`, `10`), el
 ingreso, el registro en línea, la encuesta y la aliada (`R3-PUB-01` a `03`, `R3-ALI-01`), y el
