@@ -22,6 +22,8 @@
 .btn:active:not(:disabled) { transform: translateY(1px); }
 .btn:disabled { cursor: not-allowed; }
 .btn-bloque { width: 100%; }
+/* Solo un icono (llamar, más acciones): cuadrado, con el aspecto de su variante. Exige aria-label. */
+.btn-icono { padding: 0; min-width: 40px; }
 
 .btn-primario { background: var(--accion-fondo); color: var(--accion-texto); }
 .btn-primario:hover:not(:disabled) { background: var(--accion-fondo-hover); }
@@ -105,7 +107,7 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 .tarjeta-plana { box-shadow: none; border: 1px solid var(--borde); }
 /* Un apartado dentro de una tarjeta (título y su tabla o lista), separado del anterior. */
 .bloque { display: grid; gap: var(--e2); margin-top: var(--e6); }
-.bloque > h4 { font-size: var(--t-cuerpo); }
+.bloque > h3, .bloque > h4 { font-size: var(--t-cuerpo); }
 .tarjeta-cabeza {
   display: flex; align-items: center; justify-content: space-between;
   gap: var(--e3); margin-bottom: var(--e4);
@@ -539,7 +541,7 @@ a.acceso { text-decoration: none; }
    campos: por debajo, iOS amplía la página al enfocar. */
 @media (max-width: 900px), (pointer: coarse) {
   .btn, .input, .boton-icono, .buscador { min-height: 44px; }
-  .boton-icono { min-width: 44px; }
+  .boton-icono, .btn-icono { min-width: 44px; }
   .input, .buscador input { font-size: 1rem; }
 }
 

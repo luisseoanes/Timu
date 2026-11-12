@@ -20,7 +20,7 @@ export default defineConfig({
       exclude: ['src/types/**', 'src/main.tsx', 'src/test/**', 'src/**/*.d.ts'],
       // Justo por debajo de lo medido: frenan la degradación. Se suben cuando la
       // cobertura sube y no se bajan sin una razón en el cuerpo del commit.
-      thresholds: { lines: 89, functions: 89, branches: 78, statements: 89 },
+      thresholds: { lines: 90, functions: 90, branches: 80, statements: 90 },
     },
   },
 })

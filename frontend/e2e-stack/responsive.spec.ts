@@ -4,6 +4,7 @@ import path from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 
+import { rutaDemo } from './datos'
 import { sesion, type Perfil } from './sesiones'
 
 /**
@@ -119,7 +120,15 @@ const RUTAS: Ruta[] = [
   { app: 'clinica', perfil: 'medico', url: '/clinica' },
   { app: 'clinica/mascotas/:mascotaId', perfil: 'medico', url: async (page) => `/clinica/mascotas/${(await entradaClinica(page)).mascota}` },
   { app: 'clinica/historias/:id', perfil: 'medico', url: async (page) => `/clinica/historias/${(await entradaClinica(page)).entrada}` },
-  { app: 'rutas', perfil: 'medico', url: '/rutas' },
+  {
+    // La ruta de la médica, en el día en que datos_demo la dejó: sin ella se mediría el vacío.
+    app: 'rutas',
+    perfil: 'medico',
+    url: async (page) => {
+      const yo = await pedir<{ id: string }>(page, '/auth/me')
+      return (await rutaDemo(page.request, yo.id)).url
+    },
+  },
   { app: 'campanas', perfil: 'equipo', url: '/campanas' },
   { app: 'aliadas', perfil: 'equipo', url: '/aliadas' },
   { app: 'comercial', perfil: 'equipo', url: '/comercial' },

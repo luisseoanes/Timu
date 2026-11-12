@@ -141,6 +141,10 @@
   --plan-azul-texto:    var(--blanco);
   --plan-ninguno:       var(--marino-300);  /* línea de una familia sin plan; decorativa */
 
+  /* Rutas: una ruta no es un plan, así que su línea no toma color de plan */
+  --ruta-recorrida: var(--marino-900);  /* tramo hecho; estación hecha o en la que se está */
+  --ruta-pendiente: var(--marino-400);  /* tramo y estación por hacer */
+
   /* Series de gráfico, siempre en este orden */
   --serie-1: var(--verde-600);
   --serie-2: var(--naranja-600);
@@ -254,6 +258,8 @@
   --foco / --superficie-lienzo 3
   --foco-sobre-marca / --superficie-marca 3
   --indicador-sobre-marca / --superficie-marca 3
+  --ruta-recorrida / --superficie 3
+  --ruta-pendiente / --superficie 3
   --serie-1 / --superficie 3
   --serie-2 / --superficie 3
   --serie-3 / --superficie 3

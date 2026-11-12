@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { mensajeError } from './errores'
 import { estado } from './estados'
-import { edad, fecha, fechaCorta, fechaHora, moneda, peso, porcentaje } from './formato'
+import { edad, fecha, fechaCorta, fechaCortaConDia, fechaHora, fechaLarga, moneda, peso, porcentaje, rangoHoras } from './formato'
 
 describe('formato colombiano', () => {
   it('muestra pesos sin decimales y con punto de miles', () => {
@@ -22,6 +22,18 @@ describe('formato colombiano', () => {
   it('muestra los instantes en hora de Colombia', () => {
     // 14:30 UTC son las 9:30 de la mañana en Bogotá.
     expect(fechaHora('2026-10-24T14:30:00Z')).toMatch(/24\/10\/2026.*9:30/)
+  })
+
+  it('escribe una franja con el periodo una sola vez, o los dos si cruza el mediodía', () => {
+    // 15:00 y 16:00 UTC son las 10 y las 11 de la mañana en Bogotá.
+    expect(rangoHoras('2026-11-12T15:00:00Z', '2026-11-12T16:00:00Z')).toMatch(/^10:00 – 11:00 a\.\sm\.$/)
+    expect(rangoHoras('2026-11-12T16:30:00Z', '2026-11-12T17:30:00Z')).toMatch(/^11:30 a\.\sm\. – 12:30 p\.\sm\.$/)
+    expect(rangoHoras('2026-11-12T15:00:00Z', null)).toBeNull()
+  })
+
+  it('nombra el día de la semana de una fecha de calendario', () => {
+    expect(fechaLarga('2026-11-12')).toBe('jueves, 12 de noviembre')
+    expect(fechaCortaConDia('2026-11-14')).toBe('sáb 14 nov')
   })
 
   it('da la edad en meses hasta el año y después en años', () => {

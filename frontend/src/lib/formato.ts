@@ -54,6 +54,38 @@ export function hora(valor: string | null | undefined): string {
   return valor ? HORA.format(new Date(valor)) : '—'
 }
 
+function partesDeHora(valor: string) {
+  const partes = HORA.formatToParts(new Date(valor))
+  const parte = (tipo: string) => partes.find((p) => p.type === tipo)?.value ?? ''
+  return { reloj: `${parte('hour')}:${parte('minute')}`, periodo: parte('dayPeriod') }
+}
+
+/** Una franja en hora de Colombia: «10:00 – 11:00 a. m.», o con los dos periodos si cruza el
+ * mediodía («11:30 a. m. – 12:30 p. m.»). Sin las dos horas no hay franja. */
+export function rangoHoras(desde: string | null | undefined, hasta: string | null | undefined): string | null {
+  if (!desde || !hasta) return null
+  const [inicio, fin] = [partesDeHora(desde), partesDeHora(hasta)]
+  return inicio.periodo === fin.periodo
+    ? `${inicio.reloj} – ${fin.reloj} ${fin.periodo}`
+    : `${inicio.reloj} ${inicio.periodo} – ${fin.reloj} ${fin.periodo}`
+}
+
+const FECHA_LARGA = new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
+
+/** «jueves, 12 de noviembre»: una fecha de calendario con su día de la semana. */
+export function fechaLarga(valor: string): string {
+  const [anio, mes, dia] = valor.slice(0, 10).split('-').map(Number)
+  return FECHA_LARGA.format(new Date(anio, mes - 1, dia))
+}
+
+const DIA_SEMANA = new Intl.DateTimeFormat('es-CO', { weekday: 'short' })
+
+/** «sáb 14 nov»: una fecha de calendario corta, con su día de la semana. */
+export function fechaCortaConDia(valor: string): string {
+  const [anio, mes, dia] = valor.slice(0, 10).split('-').map(Number)
+  return `${DIA_SEMANA.format(new Date(anio, mes - 1, dia)).replace('.', '')} ${fechaCorta(valor)}`
+}
+
 /** Edad a partir de la fecha de nacimiento: en meses hasta el año, después en años. */
 export function edad(nacimiento: string | null | undefined, hoy = new Date()): string | null {
   if (!nacimiento) return null

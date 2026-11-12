@@ -66,12 +66,14 @@ const PREVENTIVO: Record<string, Estado> = {
 
 const RUTA: Record<string, Estado> = {
   planificada: { label: 'Planificada', tono: 'info' },
-  en_curso: { label: 'En curso', tono: 'alerta' },
+  en_curso: { label: 'En curso', tono: 'info' },
   finalizada: { label: 'Finalizada', tono: 'ok' },
   cancelada: { label: 'Cancelada', tono: 'neutro' },
   pendiente: { label: 'Pendiente', tono: 'info' },
-  en_camino: { label: 'En camino', tono: 'alerta' },
-  en_sitio: { label: 'En sitio', tono: 'alerta' },
+  // Derivado: la parada pendiente que toca ahora (features/rutas/ruta.ts).
+  proxima: { label: 'Próxima', tono: 'info' },
+  en_camino: { label: 'En camino', tono: 'info' },
+  en_sitio: { label: 'En sitio', tono: 'info' },
   completada: { label: 'Completada', tono: 'ok' },
   omitida: { label: 'Omitida', tono: 'neutro' },
 }

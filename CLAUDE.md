@@ -198,8 +198,8 @@ Reglas que mantienen esto vivo:
   así que el CI llega cuando el commit ya está en `main`.
 
 Umbrales de cobertura: backend **91%** combinando líneas y ramas (`--cov-fail-under` en
-`pytest.ini`; la cobertura de ramas está activada en `pyproject.toml`), y panel **89%**
-de líneas, sentencias y funciones y **78%** de ramas (`vitest.config.ts`).
+`pytest.ini`; la cobertura de ramas está activada en `pyproject.toml`), y panel **90%**
+de líneas, sentencias y funciones y **80%** de ramas (`vitest.config.ts`).
 Están justo por debajo de lo medido para que no se degraden solos, no como objetivo.
 Cuando la cobertura sube, se suben en el mismo commit; bajarlos requiere una razón
 escrita en el cuerpo del commit. La cobertura del backend se mide con

@@ -539,6 +539,123 @@
 .linea-mini-punto[data-estado="vencida"] { border-color: var(--peligro-accion-fondo); background: var(--peligro-accion-fondo); }
 .linea-mini-hoy { position: relative; width: 2px; height: 12px; background: var(--texto-titulo); }
 
+/* ================= Rutas (R2-PAN-06) =================
+   La ruta del día como una línea vertical (contrato de la superficie): las paradas hechas se
+   pliegan arriba, la que toca se abre con a dónde ir y su acción, y las que faltan van debajo.
+   La línea es marina, no del color de un plan: recorrida en marino, por recorrer en gris. */
+/* El resumen y el día comparten fila mientras quepan (hoy, con el botón «Hoy», caben en el
+   celular); fuera de hoy, «Volver a hoy» baja con el día a su fila en vez de partir el resumen
+   palabra a palabra. El resumen solo se parte entre sus piezas, nunca dentro de una cifra. */
+.rutas-barra { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--e2) var(--e4); }
+.rutas-resumen > span { white-space: nowrap; }
+.rutas-separador { margin-inline: 6px; color: var(--texto-suave); }
+.rutas-resumen { flex: 1 1 14rem; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--e1) 0; color: var(--texto-titulo); font-weight: 600; }
+.rutas-resumen .apagado { font-weight: 400; font-size: var(--t-menor); }
+.rutas-dia { display: flex; align-items: center; gap: var(--e2); flex: 0 0 auto; }
+/* El botón dice el día; el campo de fecha va encima, transparente, y es el que recibe el toque. */
+.rutas-dia-boton { position: relative; }
+.rutas-dia-boton input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 1rem; }
+.rutas-dia-boton:focus-within { outline: 2px solid var(--foco); outline-offset: 2px; }
+/* En escritorio, la ruta propia no se estira a todo el ancho: se lee como en el celular. */
+.rutas-propia { max-width: 760px; }
+.ruta-titulo { font-family: var(--fuente); font-weight: 600; font-size: var(--t-seccion); }
+.ruta-fila-datos { font-size: var(--t-menor); color: var(--texto); }
+.ruta-bloque-titulo { display: flex; align-items: center; gap: var(--e2); }
+
+.linea-ruta { list-style: none; margin: 0; padding: 0; }
+.estacion, .linea-ruta-tramo { position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: var(--e4); }
+/* Cada parada dibuja su tramo; juntos son la línea. El punto queda a 24 px del borde de arriba
+   de la parada (12 de relleno más medio punto): ahí nace y muere la línea, y hasta ahí llega
+   lo recorrido en la parada que toca. */
+.estacion::before, .linea-ruta-tramo::before {
+  content: ""; position: absolute; left: 8px; top: 0; bottom: 0; width: 8px;
+  background: var(--ruta-pendiente);
+}
+.estacion[data-estado="hecha"]::before, .linea-ruta-tramo::before { background: var(--ruta-recorrida); }
+/* Al cumplir una parada, el tramo recorrido avanza: cambia de color con la misma curva que la estación. */
+.estacion::before, .estacion::after { transition: background-color var(--duracion) var(--curva); }
+.estacion[data-estado="actual"]::after {
+  content: ""; position: absolute; left: 8px; top: 0; width: 8px; height: 24px;
+  background: var(--ruta-recorrida);
+}
+.linea-ruta > :first-child::before { top: 24px; }
+.linea-ruta > :first-child::after { display: none; }
+.linea-ruta > .estacion:last-child::before { bottom: auto; height: 24px; }
+.linea-ruta > .estacion:only-child::before { display: none; }
+.linea-ruta-tramo { padding-bottom: var(--e3); }
+.linea-ruta-tramo::before { top: 12px; border-radius: var(--r-pastilla) var(--r-pastilla) 0 0; }
+.linea-ruta-tramo .linea-tramo-boton {
+  grid-column: 1 / -1; justify-self: start; position: relative; z-index: var(--capa-elevada);
+  display: inline-flex; align-items: center; gap: var(--e1); min-height: 32px;
+}
+.linea-tramo-flecha { display: inline-grid; transition: transform var(--duracion) var(--curva); }
+.linea-tramo-boton[aria-expanded="true"] .linea-tramo-flecha { transform: rotate(180deg); }
+
+.estacion-punto {
+  position: relative; z-index: var(--capa-elevada);
+  width: 24px; height: 24px; margin-top: var(--e3);
+  border-radius: var(--r-pastilla);
+  border: 4px solid var(--ruta-pendiente);
+  background: var(--superficie);
+  transition: background-color var(--duracion) var(--curva), border-color var(--duracion) var(--curva), box-shadow var(--duracion) var(--curva);
+}
+.estacion[data-estado="hecha"] .estacion-punto { border-color: var(--ruta-recorrida); background: var(--ruta-recorrida); }
+.estacion[data-estado="actual"] .estacion-punto { border-color: var(--ruta-recorrida); box-shadow: 0 0 0 4px var(--superficie-seleccion); }
+
+/* El cuerpo decide por su ancho, no por el de la ventana: junto al listado es estrecho. */
+.estacion-cuerpo { container-type: inline-size; display: grid; gap: 2px; padding-block: var(--e3) var(--e4); }
+/* Un hilo separa cada parada de la anterior; la que sigue a la pastilla de las hechas no lo lleva. */
+.linea-ruta > .estacion + .estacion .estacion-cuerpo { border-top: 1px solid var(--borde); }
+.estacion-hora { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--e2); min-height: 24px; color: var(--texto-titulo); font-weight: 600; }
+.estacion-franja { font-size: var(--t-menor); font-weight: 400; color: var(--texto-suave); }
+.estacion-quien { color: var(--texto-titulo); font-weight: 600; }
+.estacion-que { font-size: var(--t-menor); color: var(--texto-suave); }
+.sin-cortes { white-space: nowrap; }
+.estacion-detalle { display: grid; gap: 2px; }
+/* La dirección manda: es casi toda números y se lee a pleno sol, así que va en la voz de
+   cifra (Inter 600), no en GeosansLight. */
+.estacion-direccion { margin-top: var(--e1); font-family: var(--fuente); font-size: var(--t-cifra); font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.estacion-lugar { font-size: var(--t-menor); color: var(--texto-suave); }
+.estacion-detalle .estacion-quien { margin-top: var(--e2); }
+.estacion-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e2); margin-top: var(--e3); }
+.estacion-detalle > .error { margin-top: var(--e2); }
+/* Lo que falta para cerrar la visita: va en su propia línea, bajo las acciones. */
+.estacion-pendiente { flex-basis: 100%; font-size: var(--t-menor); color: var(--texto); }
+@container (max-width: 440px) {
+  /* Sin sitio para todo en una línea, la franja baja a la suya y el estado queda junto a la hora. */
+  .estacion-hora > .estacion-franja { order: 1; flex-basis: 100%; }
+  /* En el celular la acción de estado ocupa su fila, al alcance del pulgar. */
+  .estacion-acciones > .btn-primario { flex: 1 0 100%; min-height: 48px; font-size: var(--t-seccion); }
+  .estacion-acciones > .btn-secundario:not(.btn-icono) { flex: 1 1 auto; }
+}
+
+/* Una parada que falta: su resumen es el botón que la abre. */
+.estacion-resumen {
+  position: relative; display: grid; gap: 2px;
+  /* El relleno da sitio al fondo del hover sin mover el texto de su columna. */
+  width: calc(100% + var(--e4)); margin: calc(var(--e2) * -1);
+  padding: var(--e2) var(--e8) var(--e2) var(--e2);
+  border: 0; border-radius: var(--r-campo); background: none;
+  font: inherit; color: inherit; text-align: left; cursor: pointer;
+  transition: background-color var(--duracion) var(--curva);
+}
+.estacion-resumen:hover { background: var(--superficie-hundida); }
+.estacion-resumen[aria-expanded="true"] { margin-bottom: 0; }
+.estacion-flecha { position: absolute; top: var(--e2); right: var(--e2); display: grid; place-items: center; width: 24px; height: 24px; color: var(--texto-suave); transition: transform var(--duracion) var(--curva); }
+.estacion-resumen[aria-expanded="true"] .estacion-flecha { transform: rotate(180deg); }
+
+.ruta-omitidas { list-style: none; margin: 0; padding: 0; }
+.ruta-omitidas li { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); padding-block: var(--e3); border-top: 1px solid var(--borde); }
+.ruta-omitidas li > span:first-child { display: grid; gap: 2px; min-width: 0; font-size: var(--t-menor); }
+.ruta-omitidas strong { color: var(--texto-titulo); font-size: var(--t-cuerpo); }
+
+/* Miniatura de una ruta en su fila del listado: dibujo; el resumen va en aria-label. */
+.linea-ruta-mini { position: relative; display: flex; align-items: center; justify-content: space-between; height: 12px; }
+.linea-ruta-mini::before { content: ""; position: absolute; left: 0; right: 0; top: 5px; height: 2px; background: var(--ruta-pendiente); }
+.linea-ruta-mini-punto { position: relative; width: 10px; height: 10px; border-radius: var(--r-pastilla); border: 2px solid var(--ruta-pendiente); background: var(--superficie); }
+.linea-ruta-mini-punto[data-estado="hecha"] { border-color: var(--ruta-recorrida); background: var(--ruta-recorrida); }
+.linea-ruta-mini-punto[data-estado="actual"] { border-color: var(--ruta-recorrida); }
+
 @media (max-width: 899px) {
   .con-ficha { grid-template-columns: minmax(0, 1fr); }
   .con-ficha[data-abierta="true"] .listado { display: none; }

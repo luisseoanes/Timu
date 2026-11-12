@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 
+import { rutaDemo } from './datos'
 import { sesion } from './sesiones'
 
 /**
@@ -132,6 +133,45 @@ test.describe('equipo comercial', () => {
     await page.goto('/comercial')
     await page.getByRole('tab', { name: 'Conversaciones' }).click()
     expect((await respuesta).status()).toBe(200)
+    await expect(page.getByRole('alert')).toHaveCount(0)
+  })
+})
+
+test.describe('médico en ruta', () => {
+  test.use({ storageState: sesion('medico') })
+
+  // Solo lectura: avanzar paradas gastaría la ruta de prueba y la siguiente pasada no tendría
+  // qué recorrer. Lo que cambia el estado lo cubren las pruebas del panel y las del backend.
+  test('abre en su ruta del día: la parada que sigue dice a dónde ir y a quién atiende', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    const yo = await (await page.request.get('/api/v1/auth/me')).json()
+    const { url } = await rutaDemo(page.request, yo.id)
+    const rutas = page.waitForResponse((r) => r.url().includes('/api/v1/rutas?'))
+    await page.goto(url)
+    expect(new URL((await rutas).url()).searchParams.get('responsable_id')).toBe(yo.id)
+
+    const paradas = page.getByRole('list', { name: 'Paradas de la ruta' })
+    await expect(paradas).toBeVisible()
+    // La parada que toca lleva su dirección como título, y la navegación del celular.
+    await expect(paradas.getByRole('heading', { level: 3 }).first()).toBeVisible()
+    const llegar = paradas.getByRole('link', { name: 'Cómo llegar' }).first()
+    await expect(llegar).toHaveAttribute('href', /^https:\/\/www\.google\.com\/maps\/dir\/\?api=1&destination=/)
+    await expect(paradas.getByRole('link', { name: /^Llamar a / }).first()).toHaveAttribute('href', /^tel:\+57/)
+    await expect(page.getByRole('alert')).toHaveCount(0)
+  })
+})
+
+test.describe('equipo en rutas', () => {
+  test.use({ storageState: sesion('equipo') })
+
+  test('ve las rutas del día y abre una con sus paradas', async ({ page }) => {
+    const { url } = await rutaDemo(page.request)
+    await page.goto(url)
+    const listado = page.getByRole('region', { name: /Rutas del día/ })
+    await listado.getByRole('link').first().click()
+    const abierta = page.getByRole('region', { name: 'Ruta abierta' })
+    await expect(abierta.getByRole('list', { name: 'Paradas de la ruta' })).toBeVisible()
+    await expect(abierta.getByRole('heading', { level: 2 })).not.toHaveText('Sin responsable')
     await expect(page.getByRole('alert')).toHaveCount(0)
   })
 })

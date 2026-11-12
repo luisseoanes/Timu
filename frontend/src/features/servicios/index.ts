@@ -2,4 +2,4 @@
 // (App, layouts) importan de aquí. Lo demás es interno (ver docs/frontend/conventions.md).
 export { ServicioDetallePage } from './ServicioDetallePage'
 export { ServiciosPage } from './ServiciosPage'
-export { useDisponibilidad, useServicios } from './api'
+export { useDisponibilidad, usePasos, useServicios } from './api'

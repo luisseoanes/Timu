@@ -1,449 +1,304 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Fragment, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 
-import { AnilloProgreso } from '@/components/AnilloProgreso'
 import { Consulta } from '@/components/Consulta'
 import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
-import { Modal } from '@/components/Modal'
 import { useAuth, useEquipo } from '@/features/auth'
 import { useCiudades, useNombreTipoServicio } from '@/features/catalogos'
-import { useServicios } from '@/features/servicios'
-import { mensajeError } from '@/lib/errores'
-import { fecha, hora, hoyISO } from '@/lib/formato'
+import { fechaCortaConDia, fechaLarga, hora, hoyISO } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
-import type { ServicioRead } from '@/types'
+import type { RutaRead } from '@/types'
 
-import {
-  useAccionParada,
-  useAccionRuta,
-  useAgregarParada,
-  useOmitirParada,
-  usePlanificacion,
-  usePlanificar,
-  usePorRutear,
-  useRutas,
-  useSalidaParada,
-  type Parada,
-  type ResultadoPlanificacion,
-  type Ruta,
-} from './api'
+import { usePorRutear, useRutas } from './api'
+import { LineaRuta, LineaRutaMini } from './LineaRuta'
+import { PlanearModal } from './PlanearModal'
+import { RutaAbierta } from './RutaAbierta'
+import { donde, enRuta, paradaActual, resumen } from './ruta'
 
-const MOTIVOS_SIN_ASIGNAR: Record<string, string> = {
-  sin_ubicacion: 'la familia no tiene ubicación',
-  no_cabe_en_la_jornada: 'no cabe en la jornada',
-}
-
-/** Rutas domiciliarias del día (6.7): planear con el optimizador y seguir cada parada en campo. */
+/**
+ * Rutas domiciliarias (6.7). Quien solo sale a campo abre en su ruta del día; quien coordina
+ * ve todas las del día, las planea y las ajusta. El día, la ciudad y la ruta abierta viven en
+ * la URL: volver atrás o recargar no los pierde.
+ */
 export function RutasPage() {
   const { usuario } = useAuth()
-  const ciudades = useCiudades()
-  const [dia, setDia] = useState(hoyISO())
-  const [ciudad, setCiudad] = useState('Bogota')
-  const rutas = useRutas(dia, ciudad)
-  const porRutear = usePorRutear(dia, ciudad)
-  const servicios = useServicios({ desde: dia, hasta: dia, ciudad: ciudad || undefined, limit: 200 })
-  const equipo = useEquipo()
-  const [planeando, setPlaneando] = useState(false)
-  const porId = new Map((servicios.data?.items ?? []).map((s) => [s.id, s]))
-  const nombre = (id: string) => equipo.data?.find((m) => m.id === id)?.nombre ?? 'Responsable'
+  const [params, setParams] = useSearchParams()
+  const dia = /^\d{4}-\d{2}-\d{2}$/.test(params.get('dia') ?? '') ? params.get('dia')! : hoyISO()
 
-  const paradas = (rutas.data ?? []).filter((r) => r.estado !== 'cancelada').flatMap((r) => r.paradas)
-  const completadas = paradas.filter((p) => p.estado === 'completada').length
+  function cambiar(cambios: Record<string, string>) {
+    const nuevos = new URLSearchParams(params)
+    for (const [clave, valor] of Object.entries(cambios)) {
+      if (valor) nuevos.set(clave, valor)
+      else nuevos.delete(clave)
+    }
+    // La ruta abierta es de un día y una ciudad: al cambiarlos deja de estar a la vista.
+    if (!('ruta' in cambios)) nuevos.delete('ruta')
+    setParams(nuevos, { replace: true })
+  }
+
+  const elegirDia = (
+    <SelectorDia dia={dia} onCambio={(valor) => cambiar({ dia: valor === hoyISO() ? '' : valor })} />
+  )
+  // Sin saber quién es no se sabe qué vista le toca: la de coordinación pediría todas las rutas.
+  if (!usuario) return null
+  if (puede(usuario, 'campo') && !puede(usuario, 'planearRutas')) return <MiRuta dia={dia} elegirDia={elegirDia} />
+  return <RutasDelDia dia={dia} elegirDia={elegirDia} params={params} cambiar={cambiar} />
+}
+
+/**
+ * El día de las rutas, compacto: dice «Hoy» o «sáb 14 nov». El campo de fecha del navegador va
+ * encima, transparente: al tocarlo el celular abre su calendario, y el teclado y los lectores de
+ * pantalla lo usan con su etiqueta. En escritorio el clic no abre el calendario solo, así que se
+ * pide con `showPicker`.
+ */
+function SelectorDia({ dia, onCambio }: { dia: string; onCambio: (dia: string) => void }) {
+  const hoy = dia === hoyISO()
+  return (
+    <div className="rutas-dia">
+      {!hoy && (
+        <button className="btn btn-plano" type="button" onClick={() => onCambio(hoyISO())}>
+          Volver a hoy
+        </button>
+      )}
+      <label className="btn btn-secundario rutas-dia-boton">
+        <Icono nombre="calendario" size={16} />
+        <span aria-hidden="true">{hoy ? 'Hoy' : fechaCortaConDia(dia)}</span>
+        <input
+          type="date"
+          value={dia}
+          aria-label="Día de las rutas"
+          onClick={(e) => {
+            try {
+              e.currentTarget.showPicker?.()
+            } catch {
+              // Sin gesto válido o sin soporte: el campo sigue enfocado y se edita con el teclado.
+            }
+          }}
+          onChange={(e) => onCambio(e.target.value || hoyISO())}
+        />
+      </label>
+    </div>
+  )
+}
+
+/** «hoy» o «el jueves, 12 de noviembre»: el día dicho como se habla. */
+function nombrarDia(dia: string): string {
+  return dia === hoyISO() ? 'hoy' : `el ${fechaLarga(dia)}`
+}
+
+/** La última llegada estimada de lo que falta: hasta cuándo va la jornada. */
+function ultimaLlegada(ruta: RutaRead): string | null {
+  const ultima = enRuta(ruta)
+    .filter((p) => p.estado === 'pendiente' && p.llegada_estimada)
+    .at(-1)
+  return ultima ? hora(ultima.llegada_estimada) : null
+}
+
+/** La ruta de quien sale a campo: su línea del día, sin buscarla entre las de los demás. */
+function MiRuta({ dia, elegirDia }: { dia: string; elegirDia: React.ReactNode }) {
+  const { usuario } = useAuth()
+  const rutas = useRutas(dia, { responsable: usuario?.id })
+  const mias = rutas.data ?? []
+  const unica = mias.length === 1 ? mias[0] : null
+  const hasta = unica && ultimaLlegada(unica)
 
   return (
-    <div className="con-rail">
-      <div className="pila">
-        <section className="tarjeta">
-          <div className="filtros">
-            <label className="acciones">
-              Día
-              <input className="input" style={{ width: 'auto' }} type="date" value={dia} onChange={(e) => setDia(e.target.value)} />
-            </label>
-            <select className="input" style={{ width: 'auto' }} value={ciudad} onChange={(e) => setCiudad(e.target.value)} aria-label="Ciudad">
-              {ciudades.data?.map((c) => (
-                <option key={c.codigo} value={c.nombre}>{c.nombre}</option>
-              ))}
-            </select>
-            {puede(usuario, 'planearRutas') && (
-              <button className="btn btn-primario" type="button" style={{ marginLeft: 'auto' }} onClick={() => setPlaneando(true)}>
-                <Icono nombre="rutas" size={16} /> Planear rutas
-              </button>
-            )}
-          </div>
-        </section>
+    <div className="pila rutas-propia">
+      <div className="rutas-barra">
+        {/* Sin la pastilla de estado de la ruta: la línea ya lo dice (iniciar, en sitio, todas
+            hechas), y en el celular cada fila de más aleja las paradas del pulgar. */}
+        <p className="rutas-resumen numero">
+          {[...(mias.length > 0 ? resumen(mias).split(' · ') : []), ...(hasta ? [`hasta las ${hasta}`] : [])].map(
+            (pieza, i) => (
+              // Cada pieza se parte por separado; el punto va aparte, con el mismo aire a cada lado.
+              // El espacio entre piezas no ocupa sitio en el flex, pero separa el texto que leen
+              // los lectores de pantalla.
+              <Fragment key={pieza}>
+                {i > 0 && (
+                  <>
+                    {' '}
+                    <span className="rutas-separador" aria-hidden="true">
+                      ·
+                    </span>{' '}
+                  </>
+                )}
+                <span className={pieza.startsWith('hasta') ? 'apagado' : undefined}>{pieza}</span>
+              </Fragment>
+            ),
+          )}
+        </p>
+        {elegirDia}
+      </div>
+      <Consulta consulta={rutas} cargando="Cargando tu ruta…" error="No fue posible cargar tu ruta.">
+        {(datos) =>
+          datos.length === 0 ? (
+            <section className="ficha-abierta ficha-vacia" aria-label="Tu ruta">
+              <p>
+                No tienes ruta para {nombrarDia(dia)}. Operaciones la planea con los domicilios agendados; si esperabas
+                una, avísale.
+              </p>
+            </section>
+          ) : (
+            datos.map((r, i) => (
+              <section key={r.id} className="ficha-abierta" aria-labelledby={`ruta-${r.id}`}>
+                <h2 id={`ruta-${r.id}`} className={unica ? 'sr-only' : 'ruta-titulo'}>
+                  {unica ? `Tu ruta de ${nombrarDia(dia)}` : `Ruta ${i + 1} · ${resumen([r])}`}
+                </h2>
+                {!unica && <Distintivo dominio="ruta" valor={r.estado} />}
+                <LineaRuta ruta={r} />
+              </section>
+            ))
+          )
+        }
+      </Consulta>
+    </div>
+  )
+}
+
+/** Las rutas del día para quien coordina: el listado, lo que falta por rutear y la ruta abierta. */
+function RutasDelDia({
+  dia,
+  elegirDia,
+  params,
+  cambiar,
+}: {
+  dia: string
+  elegirDia: React.ReactNode
+  params: URLSearchParams
+  cambiar: (cambios: Record<string, string>) => void
+}) {
+  const { usuario } = useAuth()
+  const ciudades = useCiudades()
+  const equipo = useEquipo()
+  const nombreTipo = useNombreTipoServicio()
+  const [planeando, setPlaneando] = useState(false)
+  const ciudad = params.get('ciudad') ?? ''
+  const rutas = useRutas(dia, { ciudad })
+  const porRutear = usePorRutear(dia, ciudad)
+  const abierta = rutas.data?.find((r) => r.id === params.get('ruta'))
+  const planea = puede(usuario, 'planearRutas')
+  // Una sola acción verde por vista: si la ruta abierta es la propia y tiene parada que atender,
+  // la principal es la de esa parada; si no, planear.
+  const atiende = abierta?.responsable_id === usuario?.id && Boolean(abierta && paradaActual(abierta))
+  const responsable = (r: RutaRead) => equipo.data?.find((m) => m.id === r.responsable_id)?.nombre ?? 'Sin responsable'
+  const sinRuta = porRutear.data ?? []
+
+  /** La misma vista con otra ruta abierta, o con ninguna. */
+  function enlace(ruta?: string) {
+    const nuevos = new URLSearchParams(params)
+    if (ruta) nuevos.set('ruta', ruta)
+    else nuevos.delete('ruta')
+    return `/rutas${nuevos.toString() ? `?${nuevos}` : ''}`
+  }
+
+  return (
+    <div className="con-ficha" data-abierta={abierta ? 'true' : undefined}>
+      <section className="listado" aria-labelledby="rutas-titulo">
+        <div className="listado-cabeza">
+          <h2 id="rutas-titulo">
+            Rutas del día <span className="apagado numero">{rutas.data?.length ?? 0}</span>
+          </h2>
+          {planea && (
+            <button className={`btn ${atiende ? 'btn-suave' : 'btn-primario'}`} type="button" onClick={() => setPlaneando(true)}>
+              <Icono nombre="rutas" size={16} />
+              Planear rutas
+            </button>
+          )}
+        </div>
+
+        <div className="filtros">
+          {elegirDia}
+          <select className="input" value={ciudad} onChange={(e) => cambiar({ ciudad: e.target.value })} aria-label="Filtrar por ciudad">
+            <option value="">Todas las ciudades</option>
+            {ciudades.data?.map((c) => (
+              <option key={c.codigo} value={c.nombre}>
+                {c.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <Consulta
           consulta={rutas}
           cargando="Cargando rutas…"
           error="No fue posible cargar las rutas."
-          vacio={`No hay rutas para el ${fecha(dia)} en ${ciudad}.`}
+          vacio={`No hay rutas para ${nombrarDia(dia)}${ciudad ? ` en ${ciudad}` : ''}. ${
+            planea
+              ? 'Créalas con «Planear rutas»: el optimizador reparte los domicilios del día.'
+              : 'Operaciones las planea con los domicilios agendados.'
+          }`}
           estaVacio={(d) => d.length === 0}
         >
-          {(d) => (
-            <div className="pila">
-              {d.map((r) => (
-                <TarjetaRuta
-                  key={r.id}
-                  ruta={r}
-                  responsable={nombre(r.responsable_id)}
-                  servicios={porId}
-                  porRutear={porRutear.data ?? []}
-                />
+          {(datos) => (
+            <ul className="listado-filas">
+              {datos.map((r) => (
+                <li key={r.id} className="listado-fila" data-seleccionada={r.id === abierta?.id}>
+                  <span className="listado-fila-cabeza">
+                    {/* El enlace es solo el nombre; ::after lo extiende a toda la fila. */}
+                    <Link className="listado-fila-enlace" to={enlace(r.id)} aria-current={r.id === abierta?.id ? 'page' : undefined}>
+                      {responsable(r)}
+                    </Link>
+                    <Distintivo dominio="ruta" valor={r.estado} />
+                  </span>
+                  <span className="ruta-fila-datos numero">
+                    {resumen([r])} · {r.ciudad}
+                    {r.responsable_id === usuario?.id && ' · tu ruta'}
+                  </span>
+                  <LineaRutaMini ruta={r} />
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </Consulta>
-      </div>
 
-      <aside className="rail">
-        <section className="tarjeta">
-          <div className="tarjeta-cabeza">
-            <h3>Cumplimiento del día</h3>
-          </div>
-          <AnilloProgreso valor={paradas.length ? Math.round((completadas / paradas.length) * 100) : 0} />
-          <p className="apagado" style={{ textAlign: 'center' }}>
-            {completadas} de {paradas.length} paradas completadas
-          </p>
-        </section>
-        <section className="tarjeta">
-          <div className="tarjeta-cabeza">
-            <h3>Por rutear</h3>
-            <Insignia tono="alerta">{porRutear.data?.length ?? 0}</Insignia>
-          </div>
+        <section className="bloque" aria-labelledby="por-rutear-titulo">
+          <h3 id="por-rutear-titulo" className="ruta-bloque-titulo">
+            Por rutear
+            {sinRuta.length > 0 && <Insignia tono="alerta">{sinRuta.length}</Insignia>}
+          </h3>
           <Consulta
             consulta={porRutear}
-            cargando="Buscando servicios…"
-            error="No fue posible consultar."
-            vacio="Todos los servicios a domicilio del día tienen ruta."
+            cargando="Buscando domicilios sin ruta…"
+            error="No fue posible consultar lo que falta por rutear."
+            vacio="Todos los domicilios agendados del día tienen ruta."
             estaVacio={(d) => d.length === 0}
           >
-            {(d) =>
-              d.map((s) => (
-                <Link key={s.id} to={`/servicios/${s.id}`} className="fila">
-                  <span className="fila-icono">
-                    <Icono nombre="servicios" size={16} />
-                  </span>
-                  <span className="fila-cuerpo">
-                    <strong>{hora(s.programado_para)}</strong>
-                  </span>
-                </Link>
-              ))
-            }
+            {(datos) => (
+              <ul className="listado-filas">
+                {datos.map((s) => (
+                  <li key={s.id} className="listado-fila">
+                    <span className="listado-fila-cabeza">
+                      <Link className="listado-fila-enlace" to={`/servicios/${s.id}`}>
+                        {s.familia.titular_nombre}
+                        {s.mascota && ` · ${s.mascota.nombre}`}
+                      </Link>
+                      <span className="apagado numero">{hora(s.programado_para)}</span>
+                    </span>
+                    <span className="ruta-fila-datos">
+                      {nombreTipo(s.tipo_codigo)} · {donde(s.familia)}
+                      {!ciudad && `, ${s.ciudad}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Consulta>
         </section>
-      </aside>
+      </section>
 
-      <PlanearModal abierto={planeando} onCerrar={() => setPlaneando(false)} dia={dia} ciudad={ciudad} />
-    </div>
-  )
-}
-
-function TarjetaRuta({
-  ruta,
-  responsable,
-  servicios,
-  porRutear,
-}: {
-  ruta: Ruta
-  responsable: string
-  servicios: Map<string, ServicioRead>
-  porRutear: { id: string; programado_para: string }[]
-}) {
-  const { usuario } = useAuth()
-  const accion = useAccionRuta()
-  const agregar = useAgregarParada()
-  const [agregando, setAgregando] = useState('')
-  const enCampo = puede(usuario, 'campo')
-  const abierta = ruta.estado === 'planificada' || ruta.estado === 'en_curso'
-
-  return (
-    <section className="tarjeta" aria-label={`Ruta de ${responsable}`}>
-      <div className="tarjeta-cabeza">
-        <div className="acciones">
-          <h3>{responsable}</h3>
-          <Distintivo dominio="ruta" valor={ruta.estado} />
-          <span className="apagado numero">
-            {ruta.paradas.length} paradas
-            {ruta.distancia_km !== null && ` · ${ruta.distancia_km.toFixed(1)} km`}
-            {ruta.duracion_min !== null && ` · ${Math.round(ruta.duracion_min)} min`}
-          </span>
-        </div>
-        <div className="acciones">
-          {ruta.estado === 'planificada' && enCampo && (
-            <button className="btn btn-primario" type="button" disabled={accion.isPending} onClick={() => accion.mutate({ id: ruta.id, accion: 'inicio' })}>
-              Iniciar ruta
-            </button>
-          )}
-          {abierta && puede(usuario, 'planearRutas') && (
-            <button className="btn btn-plano" type="button" disabled={accion.isPending} onClick={() => accion.mutate({ id: ruta.id, accion: 'cancelacion' })}>
-              Cancelar ruta
-            </button>
-          )}
-        </div>
-      </div>
-      {accion.isError && (
-        <p className="error" role="alert">
-          {mensajeError(accion.error, 'No fue posible actualizar la ruta.')}
-        </p>
-      )}
-      <ol className="linea-tiempo">
-        {ruta.paradas.map((p) => (
-          <li key={p.id} className={p.estado === 'completada' ? 'hecho' : ''}>
-            <FilaParada parada={p} servicio={servicios.get(p.servicio_id)} activa={ruta.estado === 'en_curso' && enCampo} />
-          </li>
-        ))}
-      </ol>
-      {abierta && puede(usuario, 'planearRutas') && porRutear.length > 0 && (
-        <div className="acciones" style={{ marginTop: 'var(--e4)' }}>
-          <select className="input" style={{ width: 'auto' }} value={agregando} onChange={(e) => setAgregando(e.target.value)} aria-label="Servicio por agregar">
-            <option value="">Agregar un servicio a esta ruta…</option>
-            {porRutear.map((s) => (
-              <option key={s.id} value={s.id}>{hora(s.programado_para)}</option>
-            ))}
-          </select>
-          <button
-            className="btn btn-suave"
-            type="button"
-            disabled={!agregando || agregar.isPending}
-            onClick={() => agregar.mutate({ rutaId: ruta.id, servicioId: agregando }, { onSuccess: () => setAgregando('') })}
-          >
-            Agregar
-          </button>
-          {agregar.isError && (
-            <span className="error" role="alert">
-              {mensajeError(agregar.error, 'No fue posible agregar.')}
-            </span>
-          )}
-        </div>
-      )}
-    </section>
-  )
-}
-
-function FilaParada({ parada: p, servicio, activa }: { parada: Parada; servicio?: ServicioRead; activa: boolean }) {
-  const nombreTipo = useNombreTipoServicio()
-  const avanzar = useAccionParada()
-  const [modal, setModal] = useState<'salida' | 'omision' | null>(null)
-  const abierta = p.estado !== 'completada' && p.estado !== 'omitida'
-
-  return (
-    <div className="pila" style={{ gap: 'var(--e1)' }}>
-      <div className="acciones">
-        <strong className="numero">{p.orden}.</strong>
-        {servicio ? <Link to={`/servicios/${servicio.id}`}>{nombreTipo(servicio.tipo_codigo)}</Link> : <span>Servicio</span>}
-        <Distintivo dominio="ruta" valor={p.estado} />
-        <span className="apagado numero">
-          {p.llegada_en ? `Llegó ${hora(p.llegada_en)}` : `Estimada ${hora(p.llegada_estimada)}`}
-        </span>
-      </div>
-      {p.nota && <p className="apagado">{p.nota}</p>}
-      {p.motivo_omision && <p className="apagado">Omitida: {p.motivo_omision}</p>}
-      {activa && abierta && (
-        <div className="acciones">
-          {p.estado === 'pendiente' && (
-            <button className="btn btn-suave" type="button" disabled={avanzar.isPending} onClick={() => avanzar.mutate({ id: p.id, accion: 'en-camino' })}>
-              En camino
-            </button>
-          )}
-          {(p.estado === 'pendiente' || p.estado === 'en_camino') && (
-            <button className="btn btn-suave" type="button" disabled={avanzar.isPending} onClick={() => avanzar.mutate({ id: p.id, accion: 'llegada' })}>
-              Llegué
-            </button>
-          )}
-          {p.estado === 'en_sitio' && (
-            <button className="btn btn-primario" type="button" onClick={() => setModal('salida')}>
-              Terminar visita
-            </button>
-          )}
-          <button className="btn btn-plano" type="button" onClick={() => setModal('omision')}>
-            Omitir
-          </button>
-        </div>
-      )}
-      {avanzar.isError && (
-        <p className="error" role="alert">
-          {mensajeError(avanzar.error, 'No fue posible actualizar la parada.')}
-        </p>
-      )}
-      <SalidaModal paradaId={p.id} abierto={modal === 'salida'} onCerrar={() => setModal(null)} />
-      <OmisionModal paradaId={p.id} abierto={modal === 'omision'} onCerrar={() => setModal(null)} />
-    </div>
-  )
-}
-
-function SalidaModal({ paradaId, abierto, onCerrar }: { paradaId: string; abierto: boolean; onCerrar: () => void }) {
-  const salida = useSalidaParada()
-  const [evidencia, setEvidencia] = useState<File | undefined>()
-  return (
-    <Modal
-      abierto={abierto}
-      onCambio={(v) => {
-        if (!v) {
-          salida.reset()
-          onCerrar()
-        }
-      }}
-      titulo="Terminar visita"
-      pie={
-        <button className="btn btn-primario" type="submit" form={`salida-${paradaId}`} disabled={salida.isPending}>
-          Registrar salida
-        </button>
-      }
-    >
-      <form
-        id={`salida-${paradaId}`}
-        className="formulario"
-        onSubmit={(e) => {
-          e.preventDefault()
-          const nota = String(new FormData(e.currentTarget).get('nota') ?? '').trim()
-          salida.mutate({ id: paradaId, nota: nota || undefined, evidencia }, { onSuccess: onCerrar })
-        }}
-      >
-        <label className="campo ancho">
-          <span>Nota de la visita</span>
-          <textarea className="input" name="nota" rows={3} />
-        </label>
-        <label className="campo ancho">
-          <span>Evidencia (foto o PDF, opcional)</span>
-          <input className="input" type="file" accept="image/*,application/pdf" onChange={(e) => setEvidencia(e.target.files?.[0])} />
-        </label>
-        {salida.isError && (
-          <p className="error ancho" role="alert">
-            {mensajeError(salida.error, 'No fue posible registrar la salida.')}
-          </p>
-        )}
-      </form>
-    </Modal>
-  )
-}
-
-function OmisionModal({ paradaId, abierto, onCerrar }: { paradaId: string; abierto: boolean; onCerrar: () => void }) {
-  const omitir = useOmitirParada()
-  return (
-    <Modal
-      abierto={abierto}
-      onCambio={(v) => {
-        if (!v) {
-          omitir.reset()
-          onCerrar()
-        }
-      }}
-      titulo="Omitir parada"
-      descripcion="Las paradas siguientes se renumeran."
-      pie={
-        <button className="btn btn-primario" type="submit" form={`omision-${paradaId}`} disabled={omitir.isPending}>
-          Omitir parada
-        </button>
-      }
-    >
-      <form
-        id={`omision-${paradaId}`}
-        className="formulario"
-        onSubmit={(e) => {
-          e.preventDefault()
-          const d = new FormData(e.currentTarget)
-          omitir.mutate(
-            { id: paradaId, motivo: String(d.get('motivo')).trim(), cancelar_servicio: d.get('cancelar') === 'on' },
-            { onSuccess: onCerrar },
-          )
-        }}
-      >
-        <label className="campo ancho">
-          <span>Motivo</span>
-          <textarea className="input" name="motivo" rows={2} required minLength={3} />
-        </label>
-        <label className="acciones ancho">
-          <input type="checkbox" name="cancelar" />
-          Cancelar también el servicio (si no, queda por reprogramar)
-        </label>
-        {omitir.isError && (
-          <p className="error ancho" role="alert">
-            {mensajeError(omitir.error, 'No fue posible omitir.')}
-          </p>
-        )}
-      </form>
-    </Modal>
-  )
-}
-
-function PlanearModal({ abierto, onCerrar, dia, ciudad }: { abierto: boolean; onCerrar: () => void; dia: string; ciudad: string }) {
-  const equipo = useEquipo()
-  const planificar = usePlanificar()
-  const plan = usePlanificacion(planificar.data?.id ?? null)
-  const [elegidos, setElegidos] = useState<string[]>([])
-  const campo = (equipo.data ?? []).filter((m) => m.rol === 'medico' || m.rol === 'operaciones')
-  const resultado = plan.data?.resultado as ResultadoPlanificacion | undefined
-
-  function cerrar() {
-    planificar.reset()
-    setElegidos([])
-    onCerrar()
-  }
-
-  return (
-    <Modal
-      abierto={abierto}
-      onCambio={(v) => !v && cerrar()}
-      titulo={`Planear rutas · ${ciudad} · ${fecha(dia)}`}
-      descripcion="El optimizador reparte los servicios a domicilio del día entre quienes salen a campo."
-      pie={
-        !planificar.data && (
-          <button
-            className="btn btn-primario"
-            type="button"
-            disabled={elegidos.length === 0 || planificar.isPending}
-            onClick={() => planificar.mutate({ fecha: dia, ciudad, responsables: elegidos })}
-          >
-            Planear
-          </button>
-        )
-      }
-    >
-      {!planificar.data ? (
-        <fieldset className="pila" style={{ border: 0, padding: 0, margin: 0 }}>
-          <legend className="subtitulo">Quiénes salen a campo</legend>
-          {campo.length === 0 && <p className="apagado">No hay médicos ni personal de operaciones activos.</p>}
-          {campo.map((m) => (
-            <label key={m.id} className="acciones">
-              <input
-                type="checkbox"
-                checked={elegidos.includes(m.id)}
-                onChange={(e) => setElegidos((a) => (e.target.checked ? [...a, m.id] : a.filter((x) => x !== m.id)))}
-              />
-              {m.nombre} <span className="apagado">({m.rol === 'medico' ? 'médico' : 'operaciones'})</span>
-            </label>
-          ))}
-        </fieldset>
-      ) : plan.data?.estado === 'pendiente' || !plan.data ? (
-        <p className="apagado" role="status">
-          Optimizando rutas… esto toma unos segundos.
-        </p>
-      ) : plan.data.estado === 'fallida' ? (
-        <p className="aviso-error" role="alert">
-          No fue posible planear: {plan.data.error}
-        </p>
+      {abierta ? (
+        // La clave reinicia la ficha al cambiar de ruta: lo desplegado vuelve a plegarse.
+        <RutaAbierta key={abierta.id} ruta={abierta} responsable={responsable(abierta)} volver={enlace()} porRutear={sinRuta} />
       ) : (
-        <div className="pila" role="status">
-          <p className="aviso-ok">
-            {resultado?.rutas?.length ?? 0} rutas creadas con {resultado?.asignados ?? 0} servicios.
-          </p>
-          {(resultado?.sin_asignar?.length ?? 0) > 0 && (
-            <p className="aviso">
-              {resultado?.sin_asignar?.length} servicios quedaron sin ruta:{' '}
-              {resultado?.sin_asignar?.map((s) => MOTIVOS_SIN_ASIGNAR[s.motivo] ?? s.motivo).join(', ')}.
-            </p>
-          )}
-          <button className="btn btn-suave" type="button" onClick={cerrar}>
-            Ver rutas
-          </button>
-        </div>
+        <section className="ficha-abierta ficha-vacia" aria-label="Ruta abierta">
+          <p>Elige una ruta para ver sus paradas en orden: cuáles van hechas, cuál sigue y a dónde.</p>
+        </section>
       )}
-      {planificar.isError && (
-        <p className="error" role="alert">
-          {mensajeError(planificar.error, 'No fue posible iniciar la planificación.')}
-        </p>
+
+      {planeando && (
+        <PlanearModal dia={dia} ciudadSugerida={ciudad || sinRuta[0]?.ciudad || ''} onCerrar={() => setPlaneando(false)} />
       )}
-    </Modal>
+    </div>
   )
 }
