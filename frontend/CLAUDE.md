@@ -45,7 +45,8 @@ perfil), el portal de familias (`/portal`) y el de la clínica aliada (`/aliada`
   vistas`, impuesto por `src/styles/index.css`. Alterar ese orden rompe las vistas.
 - **Ningún color, radio o sombra literal en un componente**: todo sale de `tokens.css`.
   `src/test/tokens.test.ts` rechaza un color escrito a mano fuera de ese fichero (también en
-  `style={{}}` y en atributos `fill`) y un `var(--…)` sin definir. Los radios y las sombras
+  `style={{}}` y en atributos `fill`), un `var(--…)` sin definir y un `z-index` que no sale de
+  la escala `--capa-*`. Los radios y las sombras
   los revisa quien empuja (`docs/frontend/conventions.md`, «Qué revisar antes de empujar»).
 - Toda lectura va por React Query con clave que incluya los filtros (`['familias', filtros]`)
   y toda pantalla cubre carga, error y vacío.
@@ -64,12 +65,22 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
 
 - **Color, tipografía, logo y voz**: [`docs/manual-de-marca.md`](../docs/manual-de-marca.md).
   Los componentes usan los roles de su sección 10, nunca un color de la paleta.
-- **Decisiones de diseño**: la skill del repositorio, `/impeccable`, con el contexto de
-  [`PRODUCT.md`](../PRODUCT.md) y, cuando exista, el sistema de `DESIGN.md`. Su hook revisa
-  cada fichero de interfaz que se edita.
-- [`docs/frontend/`](../docs/frontend/) (design-system, components, layouts, conventions)
-  describe lo construido. `conventions.md` incluye la checklist de revisión y la deuda
-  conocida (sin tema oscuro).
+- **Decisiones de diseño**: la skill del repositorio, `/impeccable`, con
+  [`PRODUCT.md`](../PRODUCT.md) y el sistema de [`DESIGN.md`](../DESIGN.md), que manda en lo
+  visual. Su hook revisa cada fichero de interfaz que se edita, y
+  cada superficie se cierra con el agente `impeccable-finish-reviewer` hasta su `ship`.
+- **Una sola acción verde llena (`btn-primario`) por vista**; las confirmaciones destructivas
+  van con `btn-peligro`.
+- **Las tablas nuevas usan `tabla-apilable`**, con `data-etiqueta` en cada celda y las acciones
+  de fila en `td.tabla-acciones`.
+- **GeosansLight (`--fuente-titulos`) solo en `h1` y `h2` de 20 px o más**; uno más pequeño
+  vuelve a Inter. El logo es `MarcaTimu` (completo o `compacta`), con la receta de sus SVG en
+  `src/assets/marca/README.md`.
+- **Para mirar una pantalla**: un script de Playwright desde `frontend/` contra :5173, con el
+  ingreso por `request.post('/api/v1/auth/login')`.
+- [`docs/frontend/`](../docs/frontend/) (components, layouts, conventions) describe lo
+  construido: qué pieza y qué plantilla reutilizar. `conventions.md` incluye la checklist de revisión y la deuda
+  conocida (tema oscuro, PDF sin marca, medidas escritas a mano, tildes del catálogo).
 
 ## Trampas conocidas de las pruebas
 
@@ -77,3 +88,5 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
 - En jsdom el parser multipart de undici no acepta el `File` de jsdom, y el nombre llega como `blob`: una subida se comprueba leyendo `await request.text()`, no con `request.formData()`.
 - Al simular `window.location` con `vi.stubGlobal`, dale el `pathname` de una página pública: si no, el cliente manda a `/login` ante el 401 de `/auth/me` (`PAGINAS_PUBLICAS` en `src/api/client.ts`).
 - El proyecto no usa Prettier: no corras `npx prettier`, que descarga uno y reformatea el fichero entero. El formato lo revisa ESLint.
+- Vite incrusta como `data:` los recursos de menos de 4 KB: compara el `src` con el import del fichero, no con su nombre.
+- Con una ventana de Radix abierta, el `body` lleva `pointer-events: none` y `elementFromPoint` se lo salta: quítalo mientras mides qué hay pintado encima.

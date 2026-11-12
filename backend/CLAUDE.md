@@ -122,6 +122,12 @@ Reglas que atraviesan todo el backend:
   no el código. Nada se sirve público, todo con `url_firmada()`, que firma con
   `STORAGE_PUBLIC_ENDPOINT_URL` (el host que ve el navegador; en compose lo fija el propio
   compose).
+- **Los PDF usan `app/core/marca_pdf.py`** (`PdfMarca`: logo, paleta, GeosansLight e Inter,
+  que no estropean las tildes como las fuentes base del PDF). El carnet es la referencia; el
+  contrato, la fórmula y el comprobante aún no lo usan.
+- **Un dato del equipo que la familia ve en el portal se guarda como constancia en la fila**
+  (como `aplicado_por_nombre` en `eventos_preventivos`): RLS no le deja leer `usuarios`, y
+  buscarlo al mostrarlo devolvería vacío sin error.
 
 Integraciones (`app/integrations/`) y webhooks (`app/api/v1/webhooks.py`) están separados a
 propósito: los webhooks son públicos y se validan por token de verificación (Meta) o firma
@@ -353,6 +359,8 @@ destructiva. La primera migración no tiene ese problema porque parte de una bas
   `alter_column(..., server_default=None)` después; el valor por defecto lo declara el modelo.
 - Lo que corre dentro de una función plpgsql no lo ve la guarda de caminos calientes (analiza
   `SELECT f()`): dentro, filtra `auditoria` por `entidad` para usar `ix_auditoria_entidad`.
+- Un `CHECK` se crea con `op.execute("ALTER TABLE … ADD CONSTRAINT ck_<tabla>_<nombre> …")`,
+  no con `op.create_check_constraint`, que le añade otra vez el prefijo de la convención.
 
 ## Pruebas
 

@@ -25,8 +25,9 @@ Al implementar un módulo pendiente, busca su ID en el backlog y respeta el crit
 aceptación que ya está escrito allí. El frontend está en rediseño con la marca real de TIMU:
 sus unidades (`R0-…` a `R4-…`) están en
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md), la identidad en
-[`docs/manual-de-marca.md`](docs/manual-de-marca.md) y el contexto de producto para diseñar
-en [`PRODUCT.md`](PRODUCT.md). El diseño lo gobierna la skill del repositorio (`/impeccable`,
+[`docs/manual-de-marca.md`](docs/manual-de-marca.md), el sistema de diseño en
+[`DESIGN.md`](DESIGN.md) y el contexto de producto en [`PRODUCT.md`](PRODUCT.md). El diseño lo
+gobierna la skill del repositorio (`/impeccable`,
 en `.claude/skills/`, con su hook en `.claude/settings.json`). Lo que falta fuera del código
 para cerrar un requisito (sandbox de Wompi, plantillas de Meta, decisiones de TIMU) está en
 [`docs/pendientes-externos.md`](docs/pendientes-externos.md).
@@ -54,7 +55,8 @@ pytest                              # suite completa, con cobertura y umbral del
 pytest -m unit                      # sólo lo que no toca la base de datos
 pytest tests/test_alcance.py::test_una_familia_solo_se_ve_a_si_misma   # una sola prueba
 ruff format . && ruff check . && mypy app
-python scripts/generar_tipos_frontend.py   # regenera frontend/src/types/api.ts desde el OpenAPI; no se edita a mano
+python scripts/generar_tipos_frontend.py   # regenera frontend/src/types/api.ts desde el OpenAPI; no se edita a mano.
+                                           # Solo exporta los schemas de su lista ESQUEMAS: uno nuevo se añade ahí
 
 # Frontend
 cd frontend && npm install
@@ -153,8 +155,9 @@ parte de las propias suites; ninguno se desactiva:
 | `backend/tests/test_arquitectura.py` | Una capa que importa de otra superior, un dominio que usa el router de otro, una dependencia entre dominios que cierra un ciclo nuevo, una entrada de `CICLOS_CONOCIDOS` que ya no hace falta, o un import de `app` dentro de una función. |
 | `backend/tests/test_permisos.py` (`test_la_guarda_recorre_todas_las_rutas_de_la_api`) | Que la guarda de permisos deje de ver rutas que publica el OpenAPI (pasó al subir a FastAPI 0.162: `app.routes` ya no las lista). |
 | Job **Vulnerabilidades conocidas** de `ci.yml` | Una dependencia de la API, el worker o el panel con una vulnerabilidad publicada. |
-| `frontend/src/test/tokens.test.ts` | Un color escrito a mano en `frontend/src` fuera de `styles/tokens.css` (`#hex`, `rgb()`, `oklch()`, un nombre de color, también en `style={{}}` y en atributos SVG), o un `var(--…)` que no está definido. |
-| `frontend/e2e-stack/responsive.spec.ts` | Una ruta que, a 375, 768 o 1280 px, desborda en horizontal o tiene texto con contraste insuficiente según axe-core, sin estar en `PENDIENTES`; una entrada de `PENDIENTES` que ya no falla (la lista solo encoge); o una pantalla de `App.tsx` que el recorrido no abre. |
+| `frontend/src/test/tokens.test.ts` | Un color escrito a mano en `frontend/src` fuera de `styles/tokens.css` (`#hex`, `rgb()`, `oklch()`, un nombre de color, también en `style={{}}` y en atributos SVG), un `var(--…)` que no está definido, o un `z-index` que no sale de la escala `--capa-*`. |
+| `frontend/e2e-stack/responsive.spec.ts` | Una ruta que, a 375, 768 o 1280 px, desborda en horizontal o tiene texto con contraste insuficiente según axe-core, sin estar en `PENDIENTES`; una entrada de `PENDIENTES` que ya no falla (la lista solo encoge); o una pantalla de `App.tsx` que el recorrido no abre. Con `pestanas: true` mide cada pestaña; ante un 429 espera a `Retry-After` y vuelve a cargar, y si persiste falla en vez de medir una pantalla de error. |
+| `frontend/e2e-stack/recorridos.spec.ts` (ficha de familia) | Barras o línea pintadas sobre una ventana abierta, un control que se estira junto a un campo con ayuda, el pie de una ventana recortado, o más de una acción verde llena por pestaña. |
 | `frontend/src/test/arquitectura.test.ts` y `no-restricted-imports` de ESLint | Un import a un fichero interno de otro dominio del panel (por alias o por ruta relativa), un `index.ts` que reexporta algo ajeno, la base o `auth`/`catalogos` dependiendo de un dominio, un espacio de entrada importado fuera de `App.tsx`, o un ciclo entre dominios. |
 | `frontend/src/test/suite.test.ts` | Una prueba del panel fuera de los patrones de Vitest (`src/**/*.{test,spec}.ts(x)`) o de Playwright (`e2e/`, `e2e-stack/`), o desactivada con `.only`, `.skip`, `.todo` o `.fixme`. |
 | `frontend/src/test/setup.ts` | Una petición del panel que ninguna prueba simuló con MSW: la prueba falla en lugar de seguir en verde con un error de red que nadie miró. Los catálogos comunes van en `frontend/src/test/handlers.ts`. |
@@ -181,6 +184,8 @@ Reglas que mantienen esto vivo:
   El perfil de equipo es `comercial@timu.co`, no el admin: `datos_demo` gasta el cupo de
   120 por minuto del admin justo antes. Por eso Administración se recorre con
   `gerencia@timu.co`, un administrador que `datos_demo` crea solo para los recorridos.
+  Además, la API limita a 120 peticiones por minuto por usuario: no lances scripts propios
+  con `comercial@timu.co` justo antes del barrido, o sus pantallas cargarán un 429.
 - **Una prueba que no puede pasar se arregla o se borra**, con la razón en el cuerpo del
   commit. No se salta, no se marca `xfail` y no se comenta.
 - **Un tipo de prueba nuevo llega cableado al CI en el mismo cambio**: un runner, una
@@ -211,7 +216,9 @@ completa.
 Todo está en [`CONTRIBUTING.md`](CONTRIBUTING.md): **léelo antes de cada commit**. Fija
 qué va en cada commit, el formato `tipo(scope): descripción`, la lista de scopes, la
 longitud, los pies permitidos (ningún `Co-Authored-By` ni enlace de sesión de Claude) y
-cómo `semantic-release` decide la versión.
+cómo `semantic-release` decide la versión. `commits-sin-convencion.mjs` no mide los 72
+caracteres: compruébalo con un comando que falle (exit ≠ 0) encadenado con `&&` antes de
+`git push`.
 
 En el worktree de commits, Vitest necesita `ln -s <repo>/frontend/node_modules`. Ese enlace
 aparece como no rastreado: añade rutas explícitas (nunca `git add -A`) y bórralo antes de
@@ -222,7 +229,7 @@ aparece como no rastreado: añade rutas explícitas (nunca `git add -A`) y bórr
 Todo el repositorio está en español: identificadores de dominio (`familias`, `mascotas`,
 `cartera`), clases CSS en singular (`.tarjeta`, `.distintivo-alerta`), docstrings, mensajes
 de error de la API y commits (`feat(backend): …`). Los ficheros de `docs/` se nombran en
-**kebab-case** (`design-system.md`, `propuesta-timu-puntos-15-19.md`); el código sigue la
+**kebab-case** (`manual-de-marca.md`, `propuesta-timu-puntos-15-19.md`); el código sigue la
 convención de su lenguaje: `snake_case` en Python, `PascalCase` para los componentes de
 React. El código del backend evita tildes en
 docstrings y comentarios; el frontend y la documentación sí las usan. Sigue lo que ya haga
