@@ -42,6 +42,9 @@ para cerrar un requisito (sandbox de Wompi, plantillas de Meta, decisiones de TI
 # Puertos del host ocupados por otro proyecto → .env de la raíz (ver .env.example).
 docker compose up --build
 docker compose exec api python -m scripts.datos_demo   # familias, servicios, rutas… de prueba (solo local)
+                                      # Solo crea lo que falta: no actualiza lo ya sembrado. Si se amplía
+                                      # (un campo nuevo de las mascotas), un stack local viejo conserva los
+                                      # datos antiguos; el del CI, recién levantado, recibe los nuevos.
 docker compose run --rm inicializar   # tras traer una migración nueva, sin reiniciar el stack
 docker compose up -d --build -V       # tras traer dependencias nuevas: el código va montado, las librerías
                                       # van en la imagen, y -V renueva el node_modules anónimo de `web`

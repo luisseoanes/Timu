@@ -66,6 +66,24 @@ técnicas las gobierna el repositorio: el `CLAUDE.md`, las guardas de pruebas y 
    código, y las opciones de cada sorteo se presentan como bocetos HTML. La skill lo prevé para
    las pantallas de trabajo.
 
+### Capturas para el revisor final
+
+Aprendido al cerrar Rutas y Clínica (2026-11-12): una captura inválida le cuesta al revisor una
+ronda entera, porque responde `recapture` y no puntúa nada hasta tenerla.
+
+- Una carpeta por superficie: `.impeccable/review/<superficie>/` (ignorada por git), con el
+  nombre `perfil-estado-ancho.png`. Las de Familias están sueltas en `.impeccable/review/`.
+- Antes de disparar, esperar a un elemento de la pantalla (su título), no solo a la red: la
+  espera de sesión no se distingue por texto (el lema va dentro del SVG del logo) y una
+  captura tomada antes enseña el esqueleto.
+- En una captura de página completa, volver arriba antes (`window.scrollTo(0, 0)`): si la
+  página quedó desplazada, la barra fija sale pintada a media página.
+- El ingreso y la renovación admiten 10 por minuto por IP, y la API 120 peticiones por minuto
+  por usuario: un lote grande de capturas los agota. Esperar un minuto entre lotes, y
+  reutilizar la sesión guardada en vez de ingresar en cada script.
+- Un estado que gasta datos (una parada que se cierra, una consulta que se firma) se captura
+  en el orden en que los datos lo permiten: primero lo que exige el estado anterior.
+
 ### Definición de terminado de cada unidad
 
 Una unidad está **Hecha** cuando:
