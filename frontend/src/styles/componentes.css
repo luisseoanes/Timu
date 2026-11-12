@@ -108,8 +108,9 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 /* Un apartado dentro de una tarjeta (título y su tabla o lista), separado del anterior. */
 .bloque { display: grid; gap: var(--e2); margin-top: var(--e6); }
 .bloque > h3, .bloque > h4 { font-size: var(--t-cuerpo); }
+/* Si el título y la acción no caben juntos, la acción baja: el título no se aprieta palabra a palabra. */
 .tarjeta-cabeza {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
   gap: var(--e3); margin-bottom: var(--e4);
 }
 .tarjeta-cabeza a { font-size: var(--t-menor); font-weight: 700; }
