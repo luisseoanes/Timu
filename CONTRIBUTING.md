@@ -353,3 +353,13 @@ git fetch && node .github/scripts/commits-sin-convencion.mjs origin/main..HEAD
 El script comprueba la forma de la cabecera y el tipo. El scope y la longitud no los
 valida, y como no hay revisión de pull request, nadie más los va a mirar: dependen solo
 de quien escribe el commit.
+
+La longitud se comprueba con un comando que **falle** si una línea pasa de 72 caracteres, y
+el empuje va detrás con `&&`, para que no salga si falla (uno que solo imprime el aviso no
+detiene nada: así llegaron a `main` dos cabeceras de más):
+
+```bash
+git log --format=%B origin/main..HEAD \
+  | python3 -c "import sys; l=[x for x in sys.stdin.read().splitlines() if len(x)>72]; print(*l, sep='\n'); sys.exit(bool(l))" \
+  && git push origin main
+```
