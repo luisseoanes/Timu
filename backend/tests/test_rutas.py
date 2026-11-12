@@ -290,6 +290,21 @@ async def test_no_se_sale_hacia_dos_paradas_a_la_vez(db, dia_con_servicios, tecn
         await db.run_sync(service.en_camino, segunda, tecnico.id)
 
 
+async def test_no_se_llega_a_otra_parada_con_una_abierta(db, dia_con_servicios, tecnico):
+    """Llegar sin avisar que se iba en camino tampoco deja dos paradas abiertas a la vez."""
+    from app.core.errores import ReglaNegocio
+
+    await _planificar(db, [tecnico.id])
+    ruta = await db.scalar(select(Ruta))
+    await db.run_sync(service.iniciar, ruta, tecnico.id)
+    primera, segunda = ruta.paradas[0], ruta.paradas[1]
+    await db.run_sync(service.llegada, primera, tecnico.id)
+
+    with pytest.raises(ReglaNegocio, match="Cierre la parada en curso"):
+        await db.run_sync(service.llegada, segunda, tecnico.id)
+    assert (primera.estado, segunda.estado) == ("en_sitio", "pendiente")
+
+
 # --- F2-RUT-05 Cambios en caliente ------------------------------------------------------------
 
 

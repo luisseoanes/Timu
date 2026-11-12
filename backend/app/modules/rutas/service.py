@@ -274,12 +274,8 @@ def _en_curso(parada: ParadaRuta) -> None:
         raise ReglaNegocio("La ruta no esta en curso")
 
 
-def en_camino(db: Session, parada: ParadaRuta, usuario_id: UUID) -> ParadaRuta:
-    """El tecnico sale hacia la familia: el servicio pasa a en ruta y se le avisa."""
-
-    _en_curso(parada)
-    if parada.estado != "pendiente":
-        raise ReglaNegocio("La parada ya fue atendida o esta en curso")
+def _sin_otra_en_curso(parada: ParadaRuta, que: str) -> None:
+    """Quien sale a campo atiende una parada a la vez."""
     otra = next(
         (
             p
@@ -289,7 +285,16 @@ def en_camino(db: Session, parada: ParadaRuta, usuario_id: UUID) -> ParadaRuta:
         None,
     )
     if otra is not None:
-        raise ReglaNegocio("Cierre la parada en curso antes de salir hacia otra")
+        raise ReglaNegocio(f"Cierre la parada en curso antes de {que}")
+
+
+def en_camino(db: Session, parada: ParadaRuta, usuario_id: UUID) -> ParadaRuta:
+    """El tecnico sale hacia la familia: el servicio pasa a en ruta y se le avisa."""
+
+    _en_curso(parada)
+    if parada.estado != "pendiente":
+        raise ReglaNegocio("La parada ya fue atendida o esta en curso")
+    _sin_otra_en_curso(parada, "salir hacia otra")
     servicios.cambiar_estado(db, _servicio(db, parada), EstadoServicio.EN_RUTA, actor_id=usuario_id)
     parada.estado = "en_camino"
     _aviso(db, parada, PLANTILLA_EN_CAMINO, "aviso_en_camino_en")
@@ -301,6 +306,8 @@ def llegada(db: Session, parada: ParadaRuta, usuario_id: UUID) -> ParadaRuta:
     _en_curso(parada)
     if parada.estado not in ("pendiente", "en_camino"):
         raise ReglaNegocio("La llegada ya se registro")
+    # Llegar sin haber avisado que se iba en camino tampoco deja dos paradas abiertas.
+    _sin_otra_en_curso(parada, "llegar a otra")
     servicios.cambiar_estado(
         db, _servicio(db, parada), EstadoServicio.EN_ATENCION, actor_id=usuario_id
     )
