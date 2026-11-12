@@ -7,10 +7,13 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 
-from app.core.enums import Rol
+from app.core.enums import EstadoServicio, Rol, TipoServicio
 from app.core.tiempo import ahora, hoy
 from app.modules.clinica.models import HistoriaClinica
 from app.modules.comunicaciones.models import ConversacionWhatsApp, Mensaje
+from app.modules.familias.models import Mascota
+from app.modules.servicios import service as servicios
+from app.modules.servicios.models import Servicio, ServicioPaso
 from tests import fabricas
 from tests.conftest import crear_usuario, login
 
@@ -62,6 +65,25 @@ async def _firmada(client, equipo, mascota_id) -> dict:
     )
     assert resp.status_code == 200, resp.text
     return resp.json()
+
+
+async def _visita(db, mascota_id) -> str:
+    """Una consulta a domicilio de la mascota, en atencion: la medica esta en la casa."""
+    mascota = await db.get(Mascota, mascota_id)
+    servicio = Servicio(
+        familia_id=mascota.familia_id,
+        mascota_id=mascota.id,
+        tipo_codigo="consulta_domiciliaria",
+        tipo=TipoServicio.DOMICILIARIO,
+        ciudad="Cali",
+        programado_para=ahora() - timedelta(hours=1),
+        estado=EstadoServicio.EN_ATENCION,
+    )
+    db.add(servicio)
+    await db.flush()
+    servicio_id = str(servicio.id)
+    await db.commit()
+    return servicio_id
 
 
 # --- F2-CLI-01 Historia firmada y versiones ---------------------------------------------------
@@ -348,3 +370,100 @@ def test_vista_por_rol():
     assert vista_para(Rol.COMERCIAL) == "resumen"
     assert vista_para(Rol.FAMILIA) == "familia"
     assert timedelta(0) == timedelta(0)
+
+
+# --- R2-PAN-07 La consulta es el registro de la visita ----------------------------------------
+
+
+async def test_firmar_la_consulta_de_la_visita_registra_los_pasos_del_servicio(
+    client, db, equipo, mascota_id
+):
+    """El medico no escribe dos veces lo mismo: la consulta firmada llena los pasos de la
+    consulta a domicilio y la visita se puede cerrar."""
+    servicio_id = await _visita(db, mascota_id)
+    entrada = await _entrada(
+        client,
+        equipo,
+        mascota_id,
+        servicio_id=servicio_id,
+        examen_fisico="38,9 C, abdomen sensible",
+        diagnostico="Gastritis aguda",
+        tratamiento="Dieta blanda tres dias",
+    )
+    servicio = await db.get(Servicio, entrada["servicio_id"])
+    assert await db.run_sync(servicios.pasos_faltantes, servicio) != []
+
+    firma = await client.post(
+        f"/api/v1/clinica/historias/{entrada['id']}/firma", headers=equipo["medica"]
+    )
+    assert firma.status_code == 200, firma.text
+    pasos = {
+        p.paso_codigo: p.datos
+        for p in await db.scalars(
+            select(ServicioPaso).where(ServicioPaso.servicio_id == servicio.id)
+        )
+    }
+    assert pasos == {
+        "valoracion": {"hallazgos": "38,9 C, abdomen sensible\nDiagnostico: Gastritis aguda"},
+        "plan": {"recomendaciones": "Dieta blanda tres dias"},
+    }
+    assert await db.run_sync(servicios.pasos_faltantes, servicio) == []
+    await db.run_sync(servicios.cambiar_estado, servicio, EstadoServicio.COMPLETADO)
+
+
+async def test_sin_tratamiento_el_plan_del_servicio_sigue_pendiente(client, db, equipo, mascota_id):
+    """Lo que la consulta no dice no se inventa: sin tratamiento, la visita no se cierra."""
+    servicio_id = await _visita(db, mascota_id)
+    entrada = await _entrada(
+        client, equipo, mascota_id, servicio_id=servicio_id, diagnostico="Gastritis aguda"
+    )
+    firma = await client.post(
+        f"/api/v1/clinica/historias/{entrada['id']}/firma", headers=equipo["medica"]
+    )
+    assert firma.status_code == 200, firma.text
+    servicio = await db.get(Servicio, entrada["servicio_id"])
+    assert await db.run_sync(servicios.pasos_faltantes, servicio) == ["Plan y recomendaciones"]
+
+
+async def test_la_firma_no_toca_un_paso_ya_registrado_en_el_servicio(
+    client, db, equipo, mascota_id
+):
+    servicio_id = await _visita(db, mascota_id)
+    servicio = await db.get(Servicio, servicio_id)
+    medica = (await client.get("/api/v1/auth/me", headers=equipo["medica"])).json()["id"]
+    await db.run_sync(
+        servicios.completar_paso, servicio, "valoracion", {"hallazgos": "Lo del servicio"}, medica
+    )
+    await db.commit()
+    entrada = await _entrada(
+        client,
+        equipo,
+        mascota_id,
+        servicio_id=servicio_id,
+        diagnostico="Gastritis aguda",
+        tratamiento="Dieta blanda",
+    )
+    firma = await client.post(
+        f"/api/v1/clinica/historias/{entrada['id']}/firma", headers=equipo["medica"]
+    )
+    assert firma.status_code == 200, firma.text
+    pasos = {
+        p.paso_codigo: p.datos
+        for p in await db.scalars(
+            select(ServicioPaso).where(ServicioPaso.servicio_id == servicio.id)
+        )
+    }
+    assert pasos["valoracion"] == {"hallazgos": "Lo del servicio"}
+    assert pasos["plan"] == {"recomendaciones": "Dieta blanda"}
+
+
+async def test_la_consulta_no_se_enlaza_al_servicio_de_otra_mascota(client, db, equipo, mascota_id):
+    otra_familia, _ = await fabricas.afiliada(db, hoy(), telefono="+573009998877")
+    servicio_ajeno = await _visita(db, otra_familia.mascotas[0].id)
+    resp = await client.post(
+        "/api/v1/clinica/historias",
+        json={"mascota_id": str(mascota_id), **CONSULTA, "servicio_id": servicio_ajeno},
+        headers=equipo["medica"],
+    )
+    assert resp.status_code == 422
+    assert resp.json()["detail"] == "El servicio no es de esta mascota"

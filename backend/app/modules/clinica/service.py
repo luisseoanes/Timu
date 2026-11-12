@@ -8,7 +8,7 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.enums import Rol
+from app.core.enums import EstadoServicio, Rol
 from app.core.errores import NoEncontrado, Prohibido, ReglaNegocio
 from app.core.eventos import declarar_evento
 from app.core.tiempo import ahora, hoy
@@ -27,6 +27,8 @@ from app.modules.clinica.models import (
 )
 from app.modules.comunicaciones import service as comunicaciones
 from app.modules.familias.models import Familia, Mascota
+from app.modules.servicios import service as servicios
+from app.modules.servicios.models import Servicio, ServicioPaso
 
 logger = structlog.get_logger(__name__)
 
@@ -41,6 +43,18 @@ CAMPOS_CLINICOS = ("motivo", "anamnesis", "examen_fisico", "diagnostico", "trata
 Vista = Literal["completa", "resumen", "familia"]
 _CAMPOS_RESUMEN = {"id", "mascota_id", "fecha", "tipo", "motivo", "estado", "profesional_id"}
 _OCULTOS_FAMILIA = {"notas_internas"}
+
+
+# R2-PAN-07 La consulta es el registro de la visita: al firmarla, cada paso del servicio que
+# pide uno de estos campos se registra con lo que dice la consulta, y el medico no escribe dos
+# veces lo mismo. Un paso con un campo que no esta aqui (el lote de una vacuna) sigue pidiendose
+# en el servicio.
+_PASOS_DESDE_LA_CONSULTA = {
+    "hallazgos": lambda e: "\n".join(
+        x for x in (e.examen_fisico, e.diagnostico and f"Diagnostico: {e.diagnostico}") if x
+    ),
+    "recomendaciones": lambda e: e.tratamiento,
+}
 
 
 def vista_para(rol: Rol) -> Vista:
@@ -112,6 +126,8 @@ def crear_entrada(
     valores = {**base, **{k: v for k, v in datos.items() if v is not None}}
     if not valores.get("motivo"):
         raise ReglaNegocio("La entrada necesita el motivo de consulta")
+    if servicio_id is not None:
+        _del_servicio(servicios.obtener(db, servicio_id), mascota)
     entrada = HistoriaClinica(
         mascota_id=mascota.id,
         familia_id=mascota.familia_id,
@@ -147,8 +163,37 @@ def editar(
     return entrada
 
 
+def _del_servicio(servicio: Servicio, mascota: Mascota) -> None:
+    """La consulta de una visita es de la mascota que la visita atiende."""
+    if servicio.familia_id != mascota.familia_id or servicio.mascota_id not in (None, mascota.id):
+        raise ReglaNegocio("El servicio no es de esta mascota")
+
+
+def _registrar_pasos_del_servicio(db: Session, entrada: HistoriaClinica, usuario_id: UUID) -> None:
+    """Registra los pasos del servicio que la consulta ya dice, si el servicio se esta
+    atendiendo. Los que ya estan registrados no se tocan: los escribio alguien en el servicio."""
+    if entrada.servicio_id is None:
+        return
+    servicio = servicios.obtener(db, entrada.servicio_id)
+    if servicio.estado != EstadoServicio.EN_ATENCION:
+        return
+    hechos = set(
+        db.scalars(select(ServicioPaso.paso_codigo).where(ServicioPaso.servicio_id == servicio.id))
+    )
+    for paso in servicios.tipo_servicio(db, servicio.tipo_codigo).pasos:
+        campos = paso.get("campos", [])
+        if paso["codigo"] in hechos or not campos:
+            continue
+        if not all(c in _PASOS_DESDE_LA_CONSULTA for c in campos):
+            continue
+        datos = {c: _PASOS_DESDE_LA_CONSULTA[c](entrada) for c in campos}
+        if all(datos.values()):
+            servicios.completar_paso(db, servicio, paso["codigo"], datos, usuario_id)
+
+
 def firmar(db: Session, entrada: HistoriaClinica, usuario_id: UUID) -> HistoriaClinica:
-    """Cierra la entrada. Si era la correccion de otra, esa queda como `corregida`."""
+    """Cierra la entrada. Si era la correccion de otra, esa queda como `corregida`. Si es la
+    consulta de una visita en curso, registra los pasos del servicio que ya dice."""
     _editable(entrada, usuario_id)
     if not entrada.diagnostico:
         raise ReglaNegocio("Para firmar se requiere el diagnostico")
@@ -159,6 +204,7 @@ def firmar(db: Session, entrada: HistoriaClinica, usuario_id: UUID) -> HistoriaC
         anterior = obtener(db, entrada.reemplaza_id)
         anterior.estado = "corregida"
     db.flush()
+    _registrar_pasos_del_servicio(db, entrada, usuario_id)
     return entrada
 
 
