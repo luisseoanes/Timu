@@ -117,7 +117,7 @@ const RUTAS: Ruta[] = [
   },
   { app: 'tareas', perfil: 'equipo', url: '/tareas' },
   { app: 'preventivos', perfil: 'equipo', url: '/preventivos' },
-  { app: 'clinica', perfil: 'medico', url: '/clinica' },
+  { app: 'clinica', perfil: 'medico', url: '/clinica', pestanas: true },
   { app: 'clinica/mascotas/:mascotaId', perfil: 'medico', url: async (page) => `/clinica/mascotas/${(await entradaClinica(page)).mascota}` },
   { app: 'clinica/historias/:id', perfil: 'medico', url: async (page) => `/clinica/historias/${(await entradaClinica(page)).entrada}` },
   {

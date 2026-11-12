@@ -656,6 +656,103 @@
 .linea-ruta-mini-punto[data-estado="hecha"] { border-color: var(--ruta-recorrida); background: var(--ruta-recorrida); }
 .linea-ruta-mini-punto[data-estado="actual"] { border-color: var(--ruta-recorrida); }
 
+/* ================= Clínica (R2-PAN-07) =================
+   La historia de la mascota en la plantilla de listado con ficha, y la consulta como una línea
+   de cinco estaciones que se recorre una por pantalla (contrato de la superficie). */
+.historia-mascota { display: grid; gap: var(--e2); }
+.historia-mascota h2 { font-size: var(--t-cifra); }
+.historia-mascota-datos { display: flex; flex-wrap: wrap; gap: var(--e1) var(--e3); font-size: var(--t-menor); color: var(--texto); }
+.historia-mascota-ficha { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e2); margin: 0; }
+.historia-mascota-ficha dt { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--texto-suave); }
+.historia-mascota-ficha dd { margin: 0; color: var(--texto-titulo); font-weight: 600; }
+.historia-corregidas { font-size: var(--t-menor); }
+.historia-fila-motivo { font-size: var(--t-menor); color: var(--texto); }
+.historia-fila-diagnostico, .clinica-fila-detalle { font-size: var(--t-menor); color: var(--texto-suave); }
+/* La entrada de Clínica: el trabajo del médico y el buscador, uno sobre otro; en escritorio, lado a lado. */
+.clinica-inicio { display: grid; gap: var(--e4); align-items: start; }
+.clinica-inicio > * { min-width: 0; }
+@media (min-width: 1180px) {
+  .clinica-inicio[data-con-pendiente] { grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr); }
+}
+
+/* La consulta: dos paneles sobre el lienzo, la guía y el apartado, en vez de la ficha blanca. */
+.ficha-abierta.consulta { background: none; padding: 0; gap: var(--e3); }
+.consulta-cabeza { display: flex; align-items: center; gap: var(--e2); }
+/* Quién se atiende: en el celular el listado de la historia no está, y la consulta tiene que decirlo. */
+.consulta-identidad { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px var(--e3); margin: 0; }
+.consulta-identidad strong { color: var(--texto-titulo); font-weight: 600; font-size: var(--t-seccion); }
+.consulta-identidad span { color: var(--texto-suave); font-size: var(--t-menor); }
+.consulta-cabeza-textos { display: grid; gap: 2px; flex: 1 1 auto; min-width: 0; }
+@media (min-width: 900px) {
+  .consulta-identidad { display: none; }
+}
+.consulta-quien { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--e1) var(--e3); }
+.consulta-quien strong { color: var(--texto-titulo); font-weight: 600; font-size: var(--t-seccion); }
+.consulta-quien span { color: var(--texto-suave); font-size: var(--t-menor); }
+
+/* La guía: cinco columnas iguales, para que lo recorrido llegue justo a la estación actual. La
+   línea va del centro de la primera al de la última (10 % y 90 % del ancho útil). */
+.consulta-guia {
+  --avance: 0;
+  position: relative;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  list-style: none; margin: 0; padding: var(--e2);
+  background: var(--superficie); border-radius: var(--r-panel);
+}
+.consulta-guia::before, .consulta-guia::after {
+  content: ""; position: absolute; top: calc(var(--e2) + var(--e1) + 8px); height: 8px;
+  left: calc(var(--e2) + (100% - 2 * var(--e2)) / 10);
+  border-radius: var(--r-pastilla);
+}
+.consulta-guia::before { width: calc((100% - 2 * var(--e2)) * .8); background: var(--ruta-pendiente); }
+.consulta-guia::after {
+  width: calc((100% - 2 * var(--e2)) * .8 * var(--avance)); background: var(--ruta-recorrida);
+  transition: width var(--duracion) var(--curva);
+}
+.consulta-guia li { position: relative; z-index: var(--capa-elevada); min-width: 0; }
+.consulta-guia button {
+  display: grid; justify-items: center; gap: 6px; width: 100%; min-height: 48px; padding: var(--e1) 0;
+  border: 0; border-radius: var(--r-campo); background: none; cursor: pointer;
+  font: inherit; color: var(--texto-suave);
+}
+.consulta-guia button:hover .consulta-estacion-nombre { color: var(--texto-titulo); }
+.consulta-guia button:disabled { cursor: progress; }
+.consulta-estacion {
+  width: 24px; height: 24px; border-radius: var(--r-pastilla);
+  border: 4px solid var(--ruta-pendiente); background: var(--superficie);
+  transition: background-color var(--duracion) var(--curva), border-color var(--duracion) var(--curva), box-shadow var(--duracion) var(--curva);
+}
+.consulta-estacion-nombre { font-size: var(--t-etiqueta); font-weight: 600; letter-spacing: -.01em; white-space: nowrap; }
+.consulta-guia li[data-estado="hecha"] .consulta-estacion { border-color: var(--ruta-recorrida); background: var(--ruta-recorrida); }
+.consulta-guia li[data-estado="actual"] .consulta-estacion { border-color: var(--ruta-recorrida); box-shadow: 0 0 0 3px var(--indicador-seleccion); }
+.consulta-guia li[data-estado="actual"] .consulta-estacion-nombre { color: var(--texto-titulo); font-weight: 700; }
+/* Lo que falta para firmar, marcado en su estación además del aviso en texto. */
+.consulta-guia li[data-falta] .consulta-estacion { border-color: var(--peligro-accion-fondo); }
+.consulta-guia li[data-falta] .consulta-estacion-nombre { color: var(--texto-error); }
+
+.consulta-apartado, .consulta-adjuntos { display: grid; gap: var(--e3); padding: var(--e5); background: var(--superficie); border-radius: var(--r-panel); }
+/* También en la cabecera de la lectura, donde un h2 va a 34 px: la consulta no es el nombre de nada. */
+.consulta-titulo, .ficha-cabeza h2.consulta-titulo { font-size: var(--t-cifra); }
+.consulta-ayuda { font-size: var(--t-menor); font-weight: 600; color: var(--texto-titulo); }
+.consulta-campo { min-height: 180px; resize: vertical; line-height: 1.5; }
+.consulta-antes { display: grid; gap: 2px; padding-top: var(--e3); border-top: 1px solid var(--borde); font-size: var(--t-menor); color: var(--texto-suave); white-space: pre-wrap; }
+.consulta-pie { display: flex; gap: var(--e2); }
+.consulta-pie > .btn-primario { flex: 1 1 auto; }
+.consulta-adjuntos > .bloque { margin-top: 0; }
+@media (max-width: 600px) {
+  .consulta-pie > .btn { min-height: 48px; font-size: var(--t-seccion); }
+}
+/* En escritorio el botón no se estira a todo el ancho de la ficha: va a la derecha, a su tamaño. */
+@media (min-width: 900px) {
+  .consulta-pie { justify-content: flex-end; }
+  .consulta-pie > .btn-primario { flex: 0 0 auto; }
+}
+
+/* La consulta que se lee: cada apartado con su etiqueta, como una ficha de datos en columna. */
+.consulta-lectura { display: grid; gap: var(--e4); margin: 0; }
+.consulta-lectura dt { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--texto-suave); }
+.consulta-lectura dd { margin: 2px 0 0; color: var(--texto-titulo); white-space: pre-wrap; }
+
 @media (max-width: 899px) {
   .con-ficha { grid-template-columns: minmax(0, 1fr); }
   .con-ficha[data-abierta="true"] .listado { display: none; }

@@ -7,9 +7,11 @@ import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { Pestanas } from '@/components/Pestanas'
 import { useAuth } from '@/features/auth'
+import { useNombreTipoServicio } from '@/features/catalogos'
 import { SelectorFamilia, useMascotas } from '@/features/familias'
+import { useRutas } from '@/features/rutas'
 import { mensajeError } from '@/lib/errores'
-import { fechaHora } from '@/lib/formato'
+import { fecha, fechaHora, hora, hoyISO } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
 import type { FamiliaRead, RespuestaRead, SolicitudVirtualRead } from '@/types'
 
@@ -20,6 +22,7 @@ import {
   useCrearPlantilla,
   useCrearRespuesta,
   useCrearSolicitudVirtual,
+  useBorradores,
   usePedirBorrador,
   usePlantillas,
   useRespuestas,
@@ -31,7 +34,13 @@ import {
 
 export function ClinicaPage() {
   const { usuario } = useAuth()
-  const pestanas = [{ valor: 'historia', titulo: 'Historia clínica', contenido: <BuscarHistoria /> }]
+  const historia = (
+    <div className="clinica-inicio" data-con-pendiente={puede(usuario, 'medico') || undefined}>
+      {puede(usuario, 'medico') && <TrabajoPendiente />}
+      <BuscarHistoria />
+    </div>
+  )
+  const pestanas = [{ valor: 'historia', titulo: 'Historia clínica', contenido: historia }]
   if (puede(usuario, 'clinico')) {
     pestanas.push(
       { valor: 'virtual', titulo: 'Atención virtual', contenido: <AtencionVirtual /> },
@@ -40,6 +49,82 @@ export function ClinicaPage() {
     )
   }
   return <Pestanas etiqueta="Secciones de clínica" pestanas={pestanas} />
+}
+
+/**
+ * Lo que el médico tiene entre manos al abrir Clínica: las mascotas de su ruta de hoy, que abren
+ * la consulta de esa visita, y sus consultas sin firmar.
+ */
+function TrabajoPendiente() {
+  const { usuario } = useAuth()
+  const nombreTipo = useNombreTipoServicio()
+  const rutas = useRutas(hoyISO(), { responsable: usuario?.id })
+  const borradores = useBorradores()
+  const mascotas = useMascotas(borradores.data?.map((e) => e.mascota_id) ?? [])
+  const visitas = (rutas.data ?? [])
+    .filter((r) => r.estado === 'planificada' || r.estado === 'en_curso')
+    .flatMap((r) => r.paradas)
+    .filter((p) => p.mascota && p.estado !== 'omitida')
+
+  return (
+    <section className="tarjeta" aria-labelledby="pendiente-titulo">
+      <div className="tarjeta-cabeza">
+        <h3 id="pendiente-titulo">Tu trabajo de hoy</h3>
+      </div>
+      <section className="bloque clinica-bloque" aria-labelledby="visitas-titulo">
+        <h4 id="visitas-titulo">En tu ruta</h4>
+        <Consulta
+          consulta={rutas}
+          cargando="Cargando tu ruta…"
+          error="No fue posible cargar tu ruta."
+          vacio="No tienes visitas en la ruta de hoy."
+          estaVacio={() => visitas.length === 0}
+        >
+          {() => (
+            <ul className="listado-filas">
+              {visitas.map((p) => (
+                <li key={p.id} className="listado-fila">
+                  <span className="listado-fila-cabeza">
+                    <Link className="listado-fila-enlace" to={`/clinica/mascotas/${p.mascota!.id}?servicio=${p.servicio_id}`}>
+                      {p.mascota!.nombre} · {p.familia.titular_nombre}
+                    </Link>
+                    <span className="apagado numero">{p.estado === 'completada' ? 'Atendida' : hora(p.llegada_estimada)}</span>
+                  </span>
+                  <span className="clinica-fila-detalle">{nombreTipo(p.tipo_codigo)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Consulta>
+      </section>
+      <section className="bloque clinica-bloque" aria-labelledby="borradores-titulo">
+        <h4 id="borradores-titulo">Consultas sin firmar</h4>
+        <Consulta
+          consulta={borradores}
+          cargando="Cargando tus borradores…"
+          error="No fue posible cargar tus borradores."
+          vacio="No tienes consultas sin firmar."
+          estaVacio={(d) => d.length === 0}
+        >
+          {(d) => (
+            <ul className="listado-filas">
+              {d.map((e) => (
+                <li key={e.id} className="listado-fila">
+                  <span className="listado-fila-cabeza">
+                    <Link className="listado-fila-enlace" to={`/clinica/historias/${e.id}`}>
+                      {mascotas.get(e.mascota_id)?.nombre ?? 'Mascota'} · {fecha(e.fecha)}
+                    </Link>
+                    <Distintivo dominio="historia" valor={e.estado} />
+                  </span>
+                  <span className="clinica-fila-detalle">{e.motivo}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Consulta>
+      </section>
+    </section>
+  )
 }
 
 function BuscarHistoria() {
@@ -96,11 +181,11 @@ function AtencionVirtual() {
       >
         {(d) => (
           <div className="scroll-x">
-            <table className="tabla">
+            <table className="tabla tabla-apilable">
               <thead>
                 <tr>
-                  <th>Llegó</th>
                   <th>Mascota</th>
+                  <th>Llegó</th>
                   <th>Motivo</th>
                   <th>Prioridad</th>
                   <th>Estado</th>
@@ -112,24 +197,27 @@ function AtencionVirtual() {
                   const mia = s.asignada_a_id === usuario?.id
                   return (
                     <tr key={s.id}>
-                      <td className="numero">{fechaHora(s.created_at)}</td>
-                      <td className="principal">{mascotas.get(s.mascota_id)?.nombre ?? '…'}</td>
-                      <td>{s.motivo}</td>
-                      <td>
+                      <td className="principal" data-etiqueta="Mascota">{mascotas.get(s.mascota_id)?.nombre ?? '…'}</td>
+                      <td className="numero" data-etiqueta="Llegó">{fechaHora(s.created_at)}</td>
+                      <td data-etiqueta="Motivo">{s.motivo}</td>
+                      <td data-etiqueta="Prioridad">
                         <Distintivo dominio="prioridad" valor={s.prioridad} />
                       </td>
-                      <td>
-                        <Distintivo dominio="virtual" valor={s.estado} />
-                        {s.borrador_ia && <Insignia tono="info">Borrador IA</Insignia>}
+                      <td data-etiqueta="Estado">
+                        <span className="acciones">
+                          <Distintivo dominio="virtual" valor={s.estado} />
+                          {s.borrador_ia && <Insignia tono="info">Borrador IA</Insignia>}
+                        </span>
                       </td>
-                      <td>
+                      <td className="tabla-acciones">
                         {esMedico && !s.asignada_a_id && (
                           <button className="btn btn-suave" type="button" disabled={tomar.isPending} onClick={() => tomar.mutate(s.id)}>
                             Tomar
                           </button>
                         )}
+                        {/* Una por fila: ninguna es verde llena, la cola no tiene una acción principal. */}
                         {(mia || puede(usuario, 'administrar')) && (
-                          <button className="btn btn-primario" type="button" onClick={() => setAbierta(s)}>
+                          <button className="btn btn-suave" type="button" onClick={() => setAbierta(s)}>
                             Atender
                           </button>
                         )}

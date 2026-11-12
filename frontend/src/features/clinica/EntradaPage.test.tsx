@@ -39,6 +39,9 @@ function abrir(entrada: Partial<EntradaHistoria> = {}, { adjuntos = [] as unknow
   server.use(
     http.get(`${API}/clinica/historias/h1`, () => HttpResponse.json({ ...ENTRADA, ...entrada })),
     http.get(`${API}/clinica/historias/h1/adjuntos`, () => HttpResponse.json(adjuntos)),
+    // La consulta se abre junto a la historia de su mascota.
+    http.get(`${API}/mascotas/:id`, () => HttpResponse.json(LUNA)),
+    http.get(`${API}/clinica/mascotas/:id/historia`, () => HttpResponse.json([{ ...ENTRADA, ...entrada }])),
   )
   if (medico) server.use(comoMedico)
   renderizar(
@@ -53,7 +56,7 @@ function abrir(entrada: Partial<EntradaHistoria> = {}, { adjuntos = [] as unknow
 afterEach(() => vi.restoreAllMocks())
 
 describe('consulta en borrador', () => {
-  it('el médico la edita y guarda solo los campos clínicos, sin espacios sobrantes', async () => {
+  it('el médico va al apartado que quiere y al seguir guarda solo lo que cambió, sin espacios sobrantes', async () => {
     let enviado: unknown = null
     server.use(
       http.patch(`${API}/clinica/historias/h1`, async ({ request }) => {
@@ -62,51 +65,71 @@ describe('consulta en borrador', () => {
       }),
     )
     const user = abrir()
-    await user.click(await screen.findByRole('button', { name: /editar/i }))
-    const diagnostico = screen.getByLabelText('Diagnóstico')
+    // Abre en el primer apartado vacío: la anamnesis.
+    expect(await screen.findByRole('heading', { name: 'Anamnesis' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Diagnóstico, escrito' }))
+    const diagnostico = screen.getByRole('textbox', { name: 'Diagnóstico' })
     await user.clear(diagnostico)
     await user.type(diagnostico, '  Otitis bilateral ')
-    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
-    await waitFor(() =>
-      expect(enviado).toEqual({
-        motivo: 'Rasca el oído',
-        anamnesis: '',
-        examen_fisico: '',
-        diagnostico: 'Otitis bilateral',
-        tratamiento: 'Gotas cada 12 horas',
-        notas_internas: '',
+    await user.click(screen.getByRole('button', { name: 'Siguiente: tratamiento' }))
+    await waitFor(() => expect(enviado).toEqual({ diagnostico: 'Otitis bilateral' }))
+    expect(await screen.findByRole('heading', { name: 'Tratamiento' })).toBeInTheDocument()
+  })
+
+  it('cambiar de apartado sin escribir no guarda nada', async () => {
+    let guardado = false
+    server.use(
+      http.patch(`${API}/clinica/historias/h1`, () => {
+        guardado = true
+        return HttpResponse.json(ENTRADA)
       }),
     )
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Guardar cambios' })).not.toBeInTheDocument())
-  })
-
-  it('cancelar la edición vuelve a la lectura sin guardar', async () => {
     const user = abrir()
-    await user.click(await screen.findByRole('button', { name: /editar/i }))
-    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
-    expect(screen.getByText('Gotas cada 12 horas')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Firmar consulta' })).toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: 'Siguiente: examen físico' }))
+    expect(await screen.findByRole('heading', { name: 'Examen físico' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Anterior' }))
+    expect(await screen.findByRole('heading', { name: 'Anamnesis' })).toBeInTheDocument()
+    expect(guardado).toBe(false)
   })
 
-  it('explica por qué no se pudo guardar', async () => {
+  it('explica por qué no se pudo guardar y se queda en el apartado', async () => {
     server.use(http.patch(`${API}/clinica/historias/h1`, () => HttpResponse.json({ detail: 'Solo edita quien la abrió' }, { status: 403 })))
     const user = abrir()
-    await user.click(await screen.findByRole('button', { name: /editar/i }))
-    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await user.type(await screen.findByRole('textbox', { name: 'Anamnesis' }), 'Rasca hace una semana')
+    await user.click(screen.getByRole('button', { name: 'Siguiente: examen físico' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Solo edita quien la abrió')
+    expect(screen.getByRole('heading', { name: 'Anamnesis' })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Anamnesis' })).toHaveValue('Rasca hace una semana')
+  })
+
+  it('firmar sin diagnóstico dice qué falta y lleva a su apartado, sin pedirlo al servidor', async () => {
+    let pedida = false
+    server.use(
+      http.post(`${API}/clinica/historias/h1/firma`, () => {
+        pedida = true
+        return HttpResponse.json({})
+      }),
+    )
+    const user = abrir({ diagnostico: null, anamnesis: 'a', examen_fisico: 'b' })
+    expect(await screen.findByRole('heading', { name: 'Diagnóstico' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Tratamiento, escrito' }))
+    await user.click(screen.getByRole('button', { name: 'Firmar consulta' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Para firmar falta: Diagnóstico.')
+    expect(screen.getByRole('heading', { name: 'Diagnóstico' })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Diagnóstico' })).toHaveAttribute('aria-invalid', 'true')
+    expect(pedida).toBe(false)
   })
 
   it('explica por qué no se pudo firmar', async () => {
     server.use(http.post(`${API}/clinica/historias/h1/firma`, () => HttpResponse.json({ detail: 'Falta el diagnóstico' }, { status: 422 })))
-    const user = abrir()
+    const user = abrir({ anamnesis: 'a', examen_fisico: 'b' })
     await user.click(await screen.findByRole('button', { name: 'Firmar consulta' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Falta el diagnóstico')
   })
 
-  it('el resto del equipo la lee pero no la edita, firma ni adjunta', async () => {
+  it('el resto del equipo la lee pero no la escribe, firma ni adjunta', async () => {
     abrir({}, { medico: false })
     expect(await screen.findByText('Otitis externa')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Firmar consulta' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /adjuntar/i })).not.toBeInTheDocument()
   })
@@ -132,14 +155,18 @@ describe('consulta firmada', () => {
     expect(screen.getByText(/Ya no se edita: los cambios van como corrección/)).toBeInTheDocument()
   })
 
-  it('la corrección crea una versión nueva y lleva a ella', async () => {
+  it('la corrección crea una versión nueva en borrador y la abre para firmarla', async () => {
     let enviado: unknown = null
+    let abierta = false
     server.use(
       http.post(`${API}/clinica/historias/h1/correccion`, async ({ request }) => {
         enviado = await request.json()
         return HttpResponse.json({ ...ENTRADA, id: 'h2', version: 3 }, { status: 201 })
       }),
-      http.get(`${API}/clinica/historias/h2`, () => HttpResponse.json({ ...ENTRADA, id: 'h2', motivo: 'Versión corregida' })),
+      http.get(`${API}/clinica/historias/h2`, () => {
+        abierta = true
+        return HttpResponse.json({ ...ENTRADA, id: 'h2', motivo: 'Versión corregida' })
+      }),
       http.get(`${API}/clinica/historias/h2/adjuntos`, () => HttpResponse.json([])),
     )
     const user = abrir(FIRMADA)
@@ -150,7 +177,9 @@ describe('consulta firmada', () => {
     await user.type(tratamiento, 'Gotas cada 8 horas')
     await user.click(within(modal).getByRole('button', { name: 'Guardar corrección' }))
     await waitFor(() => expect(enviado).toMatchObject({ tratamiento: 'Gotas cada 8 horas', motivo: 'Rasca el oído' }))
-    expect(await screen.findByText('Versión corregida')).toBeInTheDocument()
+    await waitFor(() => expect(abierta).toBe(true))
+    // La versión nueva es un borrador de quien corrige: se abre en la consulta guiada.
+    expect(await screen.findByRole('button', { name: 'Motivo de consulta, escrito' })).toBeInTheDocument()
   })
 
   it('explica por qué no se pudo corregir', async () => {

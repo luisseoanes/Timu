@@ -69,6 +69,15 @@ export function useHistoria(mascotaId: string, incluirCorregidas = false) {
   })
 }
 
+/** R2-PAN-07 Las consultas que quien pregunta abrió y aún no firma: su trabajo pendiente. */
+export function useBorradores(activo = true) {
+  return useQuery({
+    queryKey: ['clinica', 'borradores'],
+    enabled: activo,
+    queryFn: async () => (await api.get<EntradaHistoria[]>('/clinica/borradores')).data,
+  })
+}
+
 export function useEntrada(id: string) {
   return useQuery({
     queryKey: ['clinica', 'entrada', id],
@@ -122,12 +131,16 @@ export function useCrearEntrada() {
   )
 }
 
-export function useEditarEntrada(id: string) {
-  return useMutacion(async (datos: DatosEntrada) => (await api.patch<EntradaHistoria>(`/clinica/historias/${id}`, datos)).data)
+/** Guarda lo escrito en un borrador. La consulta guiada guarda al cambiar de apartado. */
+export function useGuardarConsulta() {
+  return useMutacion(
+    async ({ id, datos }: { id: string; datos: DatosEntrada }) =>
+      (await api.patch<EntradaHistoria>(`/clinica/historias/${id}`, datos)).data,
+  )
 }
 
-export function useFirmarEntrada(id: string) {
-  return useMutacion(async () => (await api.post<EntradaHistoria>(`/clinica/historias/${id}/firma`)).data)
+export function useFirmarConsulta() {
+  return useMutacion(async (id: string) => (await api.post<EntradaHistoria>(`/clinica/historias/${id}/firma`)).data)
 }
 
 export function useCorregirEntrada(id: string) {

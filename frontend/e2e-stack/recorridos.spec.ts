@@ -161,6 +161,25 @@ test.describe('médico en ruta', () => {
   })
 })
 
+test.describe('médico en clínica', () => {
+  test.use({ storageState: sesion('medico') })
+
+  // Solo lectura, como en Rutas: firmar gastaría el borrador que deja datos_demo.
+  test('abre en su trabajo pendiente y sigue un borrador en la consulta guiada', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/clinica')
+    const sinFirmar = page.getByRole('region', { name: 'Consultas sin firmar' })
+    await sinFirmar.getByRole('link').first().click()
+    const guia = page.getByRole('list', { name: 'Apartados de la consulta' })
+    await expect(guia).toBeVisible()
+    await expect(guia.getByRole('button')).toHaveCount(5)
+    await expect(guia.locator('[aria-current="step"]')).toHaveCount(1)
+    // Una sola acción verde: la de seguir o firmar la consulta.
+    await expect(page.locator('.btn-primario:visible')).toHaveCount(1)
+    await expect(page.getByRole('alert')).toHaveCount(0)
+  })
+})
+
 test.describe('equipo en rutas', () => {
   test.use({ storageState: sesion('equipo') })
 
