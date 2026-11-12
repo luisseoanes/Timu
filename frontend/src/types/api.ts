@@ -459,6 +459,73 @@ export interface PlanificacionRead {
   created_at: string
 }
 
+export type EstadoRuta = 'planificada' | 'en_curso' | 'finalizada' | 'cancelada'
+
+export type EstadoParada = 'pendiente' | 'en_camino' | 'en_sitio' | 'completada' | 'omitida'
+
+export interface FamiliaDeParada {
+  id: string
+  titular_nombre: string
+  telefono: string
+  direccion: string | null
+  complemento: string | null
+  barrio: string | null
+}
+
+export interface MascotaDeParada {
+  id: string
+  nombre: string
+  especie: string
+  fecha_nacimiento: string | null
+  peso_kg: number | null
+}
+
+export interface PorRutearRead {
+  id: string
+  familia_id: string
+  ciudad: string
+  programado_para: string | null
+  tipo_codigo: string
+  observaciones: string | null
+  ventana_desde: string | null
+  ventana_hasta: string | null
+  familia: FamiliaDeParada
+  mascota: MascotaDeParada | null
+}
+
+export interface ParadaRead {
+  id: string
+  servicio_id: string
+  orden: number
+  estado: EstadoParada
+  latitud: number | null
+  longitud: number | null
+  llegada_estimada: string | null
+  llegada_en: string | null
+  salida_en: string | null
+  nota: string | null
+  motivo_omision: string | null
+  tipo_codigo: string
+  observaciones: string | null
+  ventana_desde: string | null
+  ventana_hasta: string | null
+  familia: FamiliaDeParada
+  mascota: MascotaDeParada | null
+}
+
+export interface RutaRead {
+  id: string
+  fecha: string
+  ciudad: string
+  responsable_id: string | null
+  estado: EstadoRuta
+  distancia_km: number | null
+  duracion_min: number | null
+  inicio_real: string | null
+  fin_real: string | null
+  paradas: ParadaRead[]
+}
+
 export interface CampanaRead {
   id: string
   nombre: string

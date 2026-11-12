@@ -13,6 +13,7 @@ from app.core.tiempo import ZONA_NEGOCIO, hoy
 from app.integrations import mapas
 from app.integrations.routing import Visita, insertar_mas_barato, optimizar
 from app.modules.comunicaciones.models import Mensaje, PlantillaWhatsApp
+from app.modules.familias.models import Familia
 from app.modules.rutas import distancias, service
 from app.modules.rutas.models import ConsumoMapas, DistanciaCache, ParadaRuta, Ruta
 from app.modules.servicios import service as servicios
@@ -403,6 +404,66 @@ async def test_listado_de_rutas_por_dia_ciudad_y_responsable(
     assert cancelada.json()["estado"] == "cancelada"
     assert (await listar()).json() == [], "las canceladas no salen por defecto"
     assert [r["id"] for r in (await listar(incluir_canceladas=True)).json()] == [ruta_id]
+
+
+async def test_cada_parada_dice_a_quien_se_atiende_y_donde(
+    client: AsyncClient, db, headers, dia_con_servicios, tecnico
+):
+    """R2-PAN-06 Quien sale a campo lee en la parada la familia, la mascota, la direccion y
+    la ventana acordada, sin abrir el servicio y despues la familia."""
+    con_mascota, sin_mascota = dia_con_servicios[0], dia_con_servicios[1]
+    familia = await db.get(Familia, con_mascota.familia_id)
+    familia.direccion, familia.complemento = "Cra 43A # 7 sur-170", "Apto 902"
+    mascota = familia.mascotas[0]
+    sin_mascota.mascota_id = None
+    # Una familia anterior al campo barrio lo tiene relleno con un valor que no es un barrio.
+    (await db.get(Familia, sin_mascota.familia_id)).barrio = service.BARRIO_SIN_REGISTRAR
+    esperada = {
+        "id": str(familia.id),
+        "titular_nombre": familia.titular_nombre,
+        "telefono": familia.telefono,
+        "direccion": "Cra 43A # 7 sur-170",
+        "complemento": "Apto 902",
+        "barrio": familia.barrio,
+    }
+    ids = (str(con_mascota.id), str(sin_mascota.id), str(mascota.id), mascota.nombre)
+    await db.flush()
+    params = {"fecha": str(DIA), "ciudad": "Cali"}
+
+    por_rutear = (
+        await client.get("/api/v1/rutas/por-rutear", params=params, headers=headers)
+    ).json()
+    pendiente = next(s for s in por_rutear if s["id"] == ids[0])
+    assert pendiente["familia"] == esperada
+    assert (pendiente["tipo_codigo"], pendiente["ciudad"]) == ("consulta_domiciliaria", "Cali")
+    # Sin ciudad, lo de todas: el panel abre sin una ciudad elegida.
+    todas = await client.get(
+        "/api/v1/rutas/por-rutear", params={"fecha": str(DIA)}, headers=headers
+    )
+    assert {s["id"] for s in todas.json()} == {s["id"] for s in por_rutear}
+    otra = {"fecha": str(DIA), "ciudad": "Bogota"}
+    assert (await client.get("/api/v1/rutas/por-rutear", params=otra, headers=headers)).json() == []
+
+    await _planificar(db, [tecnico.id])
+    await db.commit()
+    (ruta,) = (await client.get("/api/v1/rutas", params=params, headers=headers)).json()
+    por_servicio = {p["servicio_id"]: p for p in ruta["paradas"]}
+    parada = por_servicio[ids[0]]
+    assert parada["familia"] == esperada
+    assert (parada["mascota"]["id"], parada["mascota"]["nombre"]) == ids[2:]
+    assert parada["tipo_codigo"] == "consulta_domiciliaria"
+    desde = datetime.fromisoformat(parada["ventana_desde"])
+    hasta = datetime.fromisoformat(parada["ventana_hasta"])
+    assert desde == datetime.combine(DIA, time(9), ZONA_NEGOCIO)
+    assert hasta - desde == timedelta(minutes=settings.RUTA_VENTANA_LLEGADA_MIN)
+    assert por_servicio[ids[1]]["mascota"] is None
+    assert por_servicio[ids[1]]["familia"]["barrio"] is None
+
+    # La misma parada, con sus datos, en la respuesta de cada accion sobre la ruta.
+    una = (await client.get(f"/api/v1/rutas/{ruta['id']}", headers=headers)).json()
+    assert {p["servicio_id"]: p["familia"]["id"] for p in una["paradas"]} == {
+        p["servicio_id"]: p["familia"]["id"] for p in ruta["paradas"]
+    }
 
 
 async def test_en_campo_se_omite_una_parada_y_operaciones_agrega_otra(

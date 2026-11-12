@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
 from app.api.deps import INTERNOS, DbSession, requiere
-from app.core.enums import Rol
+from app.core.enums import EstadoParada, EstadoRuta, Rol
 from app.core.errores import NoEncontrado
 from app.modules.archivos import service as archivos
 from app.modules.auth.models import Usuario
@@ -41,6 +41,75 @@ class PlanificacionRead(BaseModel):
     resultado: dict[str, Any]
     error: str | None
     created_at: datetime
+
+
+class FamiliaDeParada(BaseModel):
+    """A quien se visita y donde. Sin revalidar formatos: es lectura."""
+
+    id: UUID
+    titular_nombre: str
+    telefono: str
+    direccion: str | None
+    complemento: str | None
+    # None cuando la familia no lo tiene registrado (migracion 0028).
+    barrio: str | None
+
+
+class MascotaDeParada(BaseModel):
+    id: UUID
+    nombre: str
+    especie: str
+    fecha_nacimiento: date | None
+    peso_kg: float | None
+
+
+class PorRutearRead(BaseModel):
+    """Un servicio a domicilio del dia que aun no esta en ninguna ruta."""
+
+    id: UUID
+    familia_id: UUID
+    ciudad: str
+    programado_para: datetime | None
+    tipo_codigo: str
+    observaciones: str | None
+    ventana_desde: datetime | None
+    ventana_hasta: datetime | None
+    familia: FamiliaDeParada
+    mascota: MascotaDeParada | None
+
+
+class ParadaRead(BaseModel):
+    id: UUID
+    servicio_id: UUID
+    orden: int
+    estado: EstadoParada
+    latitud: float | None
+    longitud: float | None
+    llegada_estimada: datetime | None
+    llegada_en: datetime | None
+    salida_en: datetime | None
+    nota: str | None
+    motivo_omision: str | None
+    tipo_codigo: str
+    observaciones: str | None
+    # La ventana acordada con la familia: desde la hora agendada (F2-RUT-03).
+    ventana_desde: datetime | None
+    ventana_hasta: datetime | None
+    familia: FamiliaDeParada
+    mascota: MascotaDeParada | None
+
+
+class RutaRead(BaseModel):
+    id: UUID
+    fecha: date
+    ciudad: str
+    responsable_id: UUID | None
+    estado: EstadoRuta
+    distancia_km: float | None
+    duracion_min: int | None
+    inicio_real: datetime | None
+    fin_real: datetime | None
+    paradas: list[ParadaRead]
 
 
 class OmisionIn(BaseModel):
@@ -76,16 +145,14 @@ async def planificacion(db: DbSession, planificacion_id: UUID) -> PlanificacionR
     return p
 
 
-@router.get("/por-rutear", dependencies=[EQUIPO])
-async def por_rutear(db: DbSession, fecha: date, ciudad: str) -> list[dict[str, Any]]:
-    servicios = await db.run_sync(service.por_rutear, fecha, ciudad)
-    return [
-        {"id": s.id, "familia_id": s.familia_id, "programado_para": s.programado_para}
-        for s in servicios
-    ]
+@router.get("/por-rutear", response_model=list[PorRutearRead], dependencies=[EQUIPO])
+async def por_rutear(db: DbSession, fecha: date, ciudad: str | None = None) -> list[dict[str, Any]]:
+    return await db.run_sync(
+        lambda s: service.presentar_por_rutear(s, service.por_rutear(s, fecha, ciudad))
+    )
 
 
-@router.get("", dependencies=[EQUIPO])
+@router.get("", response_model=list[RutaRead], dependencies=[EQUIPO])
 async def listar(
     db: DbSession,
     fecha: date,
@@ -100,51 +167,52 @@ async def listar(
         stmt = stmt.where(Ruta.responsable_id == responsable_id)
     if not incluir_canceladas:
         stmt = stmt.where(Ruta.estado != "cancelada")
-    return [service.presentar(r) for r in await db.scalars(stmt.order_by(Ruta.created_at))]
+    rutas = list(await db.scalars(stmt.order_by(Ruta.created_at)))
+    return await db.run_sync(service.presentar_varias, rutas)
 
 
-@router.get("/{ruta_id}", dependencies=[EQUIPO])
+@router.get("/{ruta_id}", response_model=RutaRead, dependencies=[EQUIPO])
 async def obtener(db: DbSession, ruta_id: UUID) -> dict[str, Any]:
-    return await db.run_sync(lambda s: service.presentar(service.obtener(s, ruta_id)))
+    return await db.run_sync(lambda s: service.presentar(s, service.obtener(s, ruta_id)))
 
 
-@router.post("/{ruta_id}/cancelacion")
+@router.post("/{ruta_id}/cancelacion", response_model=RutaRead)
 async def cancelar(db: DbSession, _: Operaciones, ruta_id: UUID) -> dict[str, Any]:
     return await db.run_sync(
-        lambda s: service.presentar(service.cancelar(s, service.obtener(s, ruta_id)))
+        lambda s: service.presentar(s, service.cancelar(s, service.obtener(s, ruta_id)))
     )
 
 
 # --- F2-RUT-04 Ejecucion ----------------------------------------------------------------------
 
 
-@router.post("/{ruta_id}/inicio")
+@router.post("/{ruta_id}/inicio", response_model=RutaRead)
 async def iniciar(db: DbSession, usuario: Campo, ruta_id: UUID) -> dict[str, Any]:
     return await db.run_sync(
-        lambda s: service.presentar(service.iniciar(s, service.obtener(s, ruta_id), usuario.id))
+        lambda s: service.presentar(s, service.iniciar(s, service.obtener(s, ruta_id), usuario.id))
     )
 
 
-@router.post("/paradas/{parada_id}/en-camino")
+@router.post("/paradas/{parada_id}/en-camino", response_model=RutaRead)
 async def en_camino(db: DbSession, usuario: Campo, parada_id: UUID) -> dict[str, Any]:
     """El servicio pasa a en ruta y la familia recibe el aviso de que el tecnico va."""
     return await db.run_sync(
         lambda s: service.presentar(
-            service.en_camino(s, service.obtener_parada(s, parada_id), usuario.id).ruta
+            s, service.en_camino(s, service.obtener_parada(s, parada_id), usuario.id).ruta
         )
     )
 
 
-@router.post("/paradas/{parada_id}/llegada")
+@router.post("/paradas/{parada_id}/llegada", response_model=RutaRead)
 async def llegada(db: DbSession, usuario: Campo, parada_id: UUID) -> dict[str, Any]:
     return await db.run_sync(
         lambda s: service.presentar(
-            service.llegada(s, service.obtener_parada(s, parada_id), usuario.id).ruta
+            s, service.llegada(s, service.obtener_parada(s, parada_id), usuario.id).ruta
         )
     )
 
 
-@router.post("/paradas/{parada_id}/salida")
+@router.post("/paradas/{parada_id}/salida", response_model=RutaRead)
 async def salida(
     db: DbSession,
     usuario: Campo,
@@ -156,6 +224,7 @@ async def salida(
     nombre = evidencia.filename if evidencia else None
     return await db.run_sync(
         lambda s: service.presentar(
+            s,
             service.salida(
                 s,
                 service.obtener_parada(s, parada_id),
@@ -163,7 +232,7 @@ async def salida(
                 nota=nota,
                 evidencia=contenido,
                 nombre_evidencia=nombre,
-            ).ruta
+            ).ruta,
         )
     )
 
@@ -171,27 +240,28 @@ async def salida(
 # --- F2-RUT-05 Cambios en caliente ------------------------------------------------------------
 
 
-@router.post("/paradas/{parada_id}/omision")
+@router.post("/paradas/{parada_id}/omision", response_model=RutaRead)
 async def omitir(db: DbSession, usuario: Campo, parada_id: UUID, data: OmisionIn) -> dict[str, Any]:
     """Saca la parada; el resto se renumera y se reestima sin rehacer la ruta."""
     return await db.run_sync(
         lambda s: service.presentar(
+            s,
             service.omitir(
                 s,
                 service.obtener_parada(s, parada_id),
                 data.motivo,
                 cancelar_servicio=data.cancelar_servicio,
                 usuario_id=usuario.id,
-            ).ruta
+            ).ruta,
         )
     )
 
 
-@router.post("/{ruta_id}/paradas", status_code=status.HTTP_201_CREATED)
+@router.post("/{ruta_id}/paradas", response_model=RutaRead, status_code=status.HTTP_201_CREATED)
 async def agregar(db: DbSession, _: Operaciones, ruta_id: UUID, data: AgregarIn) -> dict[str, Any]:
     """Inserta el servicio donde menos tiempo agrega."""
     return await db.run_sync(
         lambda s: service.presentar(
-            service.agregar(s, service.obtener(s, ruta_id), data.servicio_id).ruta
+            s, service.agregar(s, service.obtener(s, ruta_id), data.servicio_id).ruta
         )
     )

@@ -31,6 +31,10 @@ EVENTO_PLANIFICACION = declarar_evento("rutas.planificacion_solicitada")
 # Modalidades que se atienden en casa de la familia.
 MODALIDADES_EN_CASA = (TipoServicio.DOMICILIARIO, TipoServicio.PREVENTIVO)
 
+# Lo que la migracion 0028 puso como barrio a las familias anteriores al campo: no es un
+# barrio, y quien sale a campo no debe leerlo como tal.
+BARRIO_SIN_REGISTRAR = "Sin registrar"
+
 PLANTILLA_VENTANA = "ventana_llegada"
 PLANTILLA_EN_CAMINO = "tecnico_en_camino"
 
@@ -76,23 +80,20 @@ def solicitar(
     return planificacion
 
 
-def por_rutear(db: Session, fecha: date, ciudad: str) -> list[Servicio]:
-    """Servicios en casa de la familia, agendados para ese dia y ciudad, sin ruta aun."""
+def por_rutear(db: Session, fecha: date, ciudad: str | None = None) -> list[Servicio]:
+    """Servicios en casa de la familia, agendados para ese dia, sin ruta aun. Sin ciudad,
+    los de todas: el panel abre sin una ciudad elegida."""
     inicio = datetime.combine(fecha, time.min, ZONA_NEGOCIO)
-    return list(
-        db.scalars(
-            select(Servicio)
-            .where(
-                Servicio.ciudad == ciudad,
-                Servicio.tipo.in_(MODALIDADES_EN_CASA),
-                Servicio.estado == EstadoServicio.AGENDADO,
-                Servicio.ruta_id.is_(None),
-                Servicio.programado_para >= inicio,
-                Servicio.programado_para < inicio + timedelta(days=1),
-            )
-            .order_by(Servicio.programado_para)
-        )
+    stmt = select(Servicio).where(
+        Servicio.tipo.in_(MODALIDADES_EN_CASA),
+        Servicio.estado == EstadoServicio.AGENDADO,
+        Servicio.ruta_id.is_(None),
+        Servicio.programado_para >= inicio,
+        Servicio.programado_para < inicio + timedelta(days=1),
     )
+    if ciudad:
+        stmt = stmt.where(Servicio.ciudad == ciudad)
+    return list(db.scalars(stmt.order_by(Servicio.programado_para)))
 
 
 def _base(db: Session, ciudad: str) -> Coordenada:
@@ -536,31 +537,135 @@ def avisar_ventanas(db: Session, ruta: Ruta) -> int:
     return enviados
 
 
-def presentar(ruta: Ruta) -> dict[str, Any]:
-    return {
-        "id": ruta.id,
-        "fecha": ruta.fecha,
-        "ciudad": ruta.ciudad,
-        "responsable_id": ruta.responsable_id,
-        "estado": ruta.estado,
-        "distancia_km": ruta.distancia_km,
-        "duracion_min": ruta.duracion_min,
-        "inicio_real": ruta.inicio_real,
-        "fin_real": ruta.fin_real,
-        "paradas": [
-            {
-                "id": p.id,
-                "servicio_id": p.servicio_id,
-                "orden": p.orden,
-                "estado": p.estado,
-                "latitud": p.latitud,
-                "longitud": p.longitud,
-                "llegada_estimada": p.llegada_estimada,
-                "llegada_en": p.llegada_en,
-                "salida_en": p.salida_en,
-                "nota": p.nota,
-                "motivo_omision": p.motivo_omision,
-            }
-            for p in sorted(ruta.paradas, key=lambda p: p.orden)
-        ],
+def _a_quien_y_donde(db: Session, servicio_ids: set[UUID]) -> dict[UUID, dict[str, Any]]:
+    """Lo que necesita quien sale a campo de cada servicio: a quien atiende, donde y en que
+    ventana lo espera la familia. Tres consultas por lote, no por parada, y solo las columnas
+    que se muestran: cargar la familia entera traeria tambien sus mascotas y contactos."""
+    if not servicio_ids:
+        return {}
+    servicios_ = db.execute(
+        select(
+            Servicio.id,
+            Servicio.familia_id,
+            Servicio.mascota_id,
+            Servicio.tipo_codigo,
+            Servicio.programado_para,
+            Servicio.observaciones,
+        ).where(Servicio.id.in_(servicio_ids))
+    ).all()
+    familias = {
+        f.id: f
+        for f in db.execute(
+            select(
+                Familia.id,
+                Familia.titular_nombre,
+                Familia.telefono,
+                Familia.direccion,
+                Familia.complemento,
+                Familia.barrio,
+            ).where(Familia.id.in_({s.familia_id for s in servicios_}))
+        )
     }
+    mascota_ids = {s.mascota_id for s in servicios_ if s.mascota_id is not None}
+    mascotas = (
+        {
+            m.id: m
+            for m in db.execute(
+                select(
+                    Mascota.id,
+                    Mascota.nombre,
+                    Mascota.especie,
+                    Mascota.fecha_nacimiento,
+                    Mascota.peso_kg,
+                ).where(Mascota.id.in_(mascota_ids))
+            )
+        }
+        if mascota_ids
+        else {}
+    )
+    ventana = timedelta(minutes=settings.RUTA_VENTANA_LLEGADA_MIN)
+    detalle: dict[UUID, dict[str, Any]] = {}
+    for s in servicios_:
+        familia = familias[s.familia_id]
+        mascota = mascotas.get(s.mascota_id)
+        detalle[s.id] = {
+            "tipo_codigo": s.tipo_codigo,
+            "observaciones": s.observaciones,
+            "ventana_desde": s.programado_para,
+            "ventana_hasta": s.programado_para + ventana if s.programado_para else None,
+            "familia": {
+                "id": familia.id,
+                "titular_nombre": familia.titular_nombre,
+                "telefono": familia.telefono,
+                "direccion": familia.direccion,
+                "complemento": familia.complemento,
+                "barrio": None if familia.barrio == BARRIO_SIN_REGISTRAR else familia.barrio,
+            },
+            "mascota": (
+                {
+                    "id": mascota.id,
+                    "nombre": mascota.nombre,
+                    "especie": mascota.especie,
+                    "fecha_nacimiento": mascota.fecha_nacimiento,
+                    "peso_kg": mascota.peso_kg,
+                }
+                if mascota is not None
+                else None
+            ),
+        }
+    return detalle
+
+
+def presentar_por_rutear(db: Session, servicios_: list[Servicio]) -> list[dict[str, Any]]:
+    detalle = _a_quien_y_donde(db, {s.id for s in servicios_})
+    return [
+        {
+            "id": s.id,
+            "familia_id": s.familia_id,
+            "ciudad": s.ciudad,
+            "programado_para": s.programado_para,
+        }
+        | detalle[s.id]
+        for s in servicios_
+    ]
+
+
+def presentar_varias(db: Session, rutas: list[Ruta]) -> list[dict[str, Any]]:
+    """R2-PAN-06 Cada parada lleva a quien se atiende y donde: en campo, una parada que
+    solo dice el tipo de servicio obliga a abrir el servicio y despues la familia."""
+    detalle = _a_quien_y_donde(db, {p.servicio_id for r in rutas for p in r.paradas})
+    return [
+        {
+            "id": ruta.id,
+            "fecha": ruta.fecha,
+            "ciudad": ruta.ciudad,
+            "responsable_id": ruta.responsable_id,
+            "estado": ruta.estado,
+            "distancia_km": ruta.distancia_km,
+            "duracion_min": ruta.duracion_min,
+            "inicio_real": ruta.inicio_real,
+            "fin_real": ruta.fin_real,
+            "paradas": [
+                {
+                    "id": p.id,
+                    "servicio_id": p.servicio_id,
+                    "orden": p.orden,
+                    "estado": p.estado,
+                    "latitud": p.latitud,
+                    "longitud": p.longitud,
+                    "llegada_estimada": p.llegada_estimada,
+                    "llegada_en": p.llegada_en,
+                    "salida_en": p.salida_en,
+                    "nota": p.nota,
+                    "motivo_omision": p.motivo_omision,
+                }
+                | detalle[p.servicio_id]
+                for p in sorted(ruta.paradas, key=lambda p: p.orden)
+            ],
+        }
+        for ruta in rutas
+    ]
+
+
+def presentar(db: Session, ruta: Ruta) -> dict[str, Any]:
+    return presentar_varias(db, [ruta])[0]
