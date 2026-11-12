@@ -66,7 +66,6 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
 - **Sorteos de la skill**: `serve-question --wait --key <k>` sale con 3 cada 60 s sin respuesta:
   repítelo en bucle en segundo plano hasta que salga 0. Las capturas para el revisor final siguen
   «Capturas para el revisor final» de la hoja de ruta.
-
 - **Color, tipografía, logo y voz**: [`docs/manual-de-marca.md`](../docs/manual-de-marca.md).
   Los componentes usan los roles de su sección 10, nunca un color de la paleta.
 - **Decisiones de diseño**: la skill del repositorio, `/impeccable`, con
@@ -89,7 +88,6 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
 ## Trampas conocidas de las pruebas
 
 - La ficha vacía y la abierta de un listado con ficha comparten `aria-label` («Ruta abierta»): espera a un elemento de la ficha (su título), no a la región, o la prueba lee el marcador.
-
 - **MSW usa el primer handler que coincide**: en `server.use(...base, override)` gana `base`. Los comunes van en un `beforeEach` y cada prueba los sustituye con su propio `server.use`.
 - En jsdom el parser multipart de undici no acepta el `File` de jsdom, y el nombre llega como `blob`: una subida se comprueba leyendo `await request.text()`, no con `request.formData()`.
 - Al simular `window.location` con `vi.stubGlobal`, dale el `pathname` de una página pública: si no, el cliente manda a `/login` ante el 401 de `/auth/me` (`PAGINAS_PUBLICAS` en `src/api/client.ts`).

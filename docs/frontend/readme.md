@@ -3,8 +3,8 @@
 > **En rediseño.** La interfaz se está rediseñando con la marca real de TIMU; el orden, el
 > estado de cada unidad y el siguiente paso están en la
 > [hoja de ruta](../hoja-de-ruta-rediseno.md). Ya usan la línea nueva la estructura del panel,
-> Familias, las ventanas y la espera de sesión; el resto de pantallas tiene la paleta, la
-> tipografía y el logo nuevos con su composición anterior, hasta su unidad.
+> Familias, Rutas, Clínica, las ventanas y la espera de sesión; el resto de pantallas tiene la
+> paleta, la tipografía y el logo nuevos con su composición anterior, hasta su unidad.
 
 ## Qué leer antes de escribir una pantalla
 
@@ -30,11 +30,13 @@ frontend/src/
     tokens.css       Única fuente de color, tipografía, medidas, capas: paleta, roles y @pares
     base.css         Reinicio, @font-face de GeosansLight, tipografía base y utilidades
     componentes.css  Botones, campos, tarjetas, insignias, tablas (y la apilable), ventanas…
-    vistas.css       Estructura de página: barra del panel, Familias, ingreso, portal, inicio
+    vistas.css       Estructura de página: barra del panel, ingreso, portal, inicio, Familias,
+                     Rutas y Clínica
     index.css        Índice que impone el orden de la cascada
   assets/            El logo en SVG y GeosansLight, con la receta para regenerarlos
   components/        Piezas compartidas sin lógica de dominio (Modal, Consulta, Pestanas,
-                     Paginacion, Distintivo e Insignia, Icono, MarcaTimu, AnilloProgreso)
+                     Paginacion, Distintivo e Insignia, Icono, MarcaTimu, AnilloProgreso,
+                     FotoEditable)
   features/<dominio>/  Pantallas y consultas por dominio (auth, familias, dashboard, …)
   layouts/           AppLayout: barra marina, barra inferior en el celular y cabecera
   lib/               errores, permisos, formato, estados y descargas
