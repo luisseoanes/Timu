@@ -503,7 +503,7 @@
   cursor: pointer;
 }
 .parada[data-estado="hecha"] .parada-punto { background: var(--color-linea); }
-.parada[data-estado="proxima"] .parada-punto { border-color: var(--texto-titulo); box-shadow: 0 0 0 4px var(--superficie-seleccion); }
+.parada[data-estado="proxima"] .parada-punto { border-color: var(--texto-titulo); box-shadow: 0 0 0 3px var(--indicador-seleccion); }
 .parada[data-estado="vencida"] .parada-punto { border-color: var(--peligro-accion-fondo); background: var(--peligro-accion-fondo); }
 .parada-etiqueta {
   display: grid; gap: 2px; padding-inline: 2px;
@@ -600,7 +600,7 @@
   transition: background-color var(--duracion) var(--curva), border-color var(--duracion) var(--curva), box-shadow var(--duracion) var(--curva);
 }
 .estacion[data-estado="hecha"] .estacion-punto { border-color: var(--ruta-recorrida); background: var(--ruta-recorrida); }
-.estacion[data-estado="actual"] .estacion-punto { border-color: var(--ruta-recorrida); box-shadow: 0 0 0 4px var(--superficie-seleccion); }
+.estacion[data-estado="actual"] .estacion-punto { border-color: var(--ruta-recorrida); box-shadow: 0 0 0 3px var(--indicador-seleccion); }
 
 /* El cuerpo decide por su ancho, no por el de la ventana: junto al listado es estrecho. */
 .estacion-cuerpo { container-type: inline-size; display: grid; gap: 2px; padding-block: var(--e3) var(--e4); }
