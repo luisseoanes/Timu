@@ -391,3 +391,5 @@ Trampas conocidas:
 - Clientes de terceros: se sustituye `httpx.Client` por uno con `httpx.MockTransport` (fixture `red` en `tests/test_integraciones.py`); tareas de Celery con la sesión de la prueba: fixture `en_worker` en `tests/conftest.py`.
 - Tras `await db.commit()` los objetos ORM caducan: leer un atributo en una prueba async da `MissingGreenlet`. Guarda los ids antes del `commit`.
 - asyncpg no acepta dos sentencias en un mismo `text()`: una `db.execute` por sentencia.
+- Un servicio (o cualquier fila con estado) en un estado avanzado se inserta ya en él: el trigger de transiciones solo valida `UPDATE` (ver `_atendido` en `tests/test_encuestas.py`).
+- `mypy` del CI cubre solo `app/`: `scripts/datos_demo.py` arrastra tres errores de tipos previos; no son de tu cambio.
