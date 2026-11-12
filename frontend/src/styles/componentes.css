@@ -536,6 +536,18 @@ a.acceso { text-decoration: none; }
   font-size: var(--t-etiqueta);
 }
 
+/* Campo de archivo: el botón del navegador toma la forma del secundario (la palabra la pone el
+   navegador en el idioma de quien usa el panel). */
+.input[type="file"] { padding: var(--e1); cursor: pointer; }
+.input[type="file"]::file-selector-button {
+  min-height: 32px; margin-right: var(--e3); padding: 0 var(--e3);
+  border: 1px solid var(--borde-control); border-radius: var(--r-campo);
+  background: var(--superficie); color: var(--texto-titulo);
+  font: inherit; font-weight: 600; cursor: pointer;
+  transition: border-color var(--duracion) var(--curva), background-color var(--duracion) var(--curva);
+}
+.input[type="file"]:hover::file-selector-button { border-color: var(--borde-control-hover); background: var(--superficie-hundida); }
+
 /* --- Pantallas táctiles y estrechas --------------------------------
    Zonas de 44 px (WCAG 2.5.8 pide 24; 44 es lo cómodo con el pulgar) y letra de 16 px en los
    campos: por debajo, iOS amplía la página al enfocar. */
