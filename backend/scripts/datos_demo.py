@@ -13,6 +13,7 @@ Nunca contra produccion: se niega si ENVIRONMENT no es local.
 import os
 import re
 import sys
+import time
 from datetime import date, datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -205,6 +206,119 @@ def proximo_habil(desde: date, dias: int) -> date:
     return d
 
 
+# Las visitas de la ruta de prueba: (familia, observaciones). Todas son consultas a domicilio:
+# vacunar y desparasitar piden autorizacion medica antes de poder rutearse. Ana Ruiz, la
+# primera familia, queda fuera: es la que se ve con cuotas vencidas en Familias y en Cartera.
+VISITAS = [
+    (1, "Revisar oido izquierdo. Porteria: anunciarse como TIMU."),
+    (2, "Control de peso"),
+    (3, "Vomito desde ayer; llevar suero"),
+]
+DIAS_DE_RUTA = 7
+# Segundos: el outbox se drena por turnos y la optimizacion busca un par de segundos.
+ESPERA_PLANIFICACION = 90
+
+
+def poner_al_dia(c: Cliente, familia: dict[str, Any]) -> None:
+    """En un stack de varios dias la mora ya congelo a las familias de prueba, y a una familia
+    congelada no se le agenda: se registra el pago de lo vencido, como lo haria cartera."""
+    resp = c.http.get(f"/cartera/familias/{familia['id']}/estado-cuenta")
+    if resp.status_code != 200:
+        return
+    cuenta = resp.json()
+    if cuenta["estado"] == "congelada" and float(cuenta["saldo_vencido"]) > 0:
+        c.post(
+            "/cartera/pagos",
+            {
+                "familia_id": familia["id"],
+                "valor": cuenta["saldo_vencido"],
+                "medio": "transferencia",
+                # La referencia de un pago es unica.
+                "referencia": f"DEMO-{familia['documento']}-{datetime.now(BOGOTA):%Y%m%d%H%M%S}",
+            },
+        )
+
+
+def _inicio(cupo: dict[str, Any]) -> datetime:
+    return datetime.fromisoformat(cupo["inicio"])
+
+
+def ruta_de_prueba(c: Cliente, familias: list[dict[str, Any]], hoy: date) -> None:
+    """La ruta que ve la medica de prueba al abrir Rutas y que recorren las pruebas del panel:
+    varias visitas a domicilio en Bogota, planeadas con el optimizador. Va en el primer dia con
+    cupo para todas, que no siempre es hoy: no se agenda en el pasado ni en domingo. Si ya hay
+    una en la semana que empieza hoy, no hace nada."""
+    usuarios = c.get("/auth/usuarios", limit=200)["items"]
+    medica = next((u["id"] for u in usuarios if u["email"] == "medico@timu.co"), None)
+    if medica is None:
+        return
+    dias = [hoy + timedelta(days=n) for n in range(DIAS_DE_RUTA)]
+    if any(c.get("/rutas", fecha=d.isoformat(), responsable_id=medica) for d in dias):
+        return
+
+    def cupos(dia: date) -> list[dict[str, Any]]:
+        libres = c.get(
+            "/agenda/disponibilidad",
+            fecha=dia.isoformat(),
+            ciudad="Bogota",
+            tipo_codigo="consulta_domiciliaria",
+        )
+        return [x for x in libres if x["disponibles"] > 0]
+
+    def por_rutear(dia: date) -> list[dict[str, Any]]:
+        """Los domicilios del dia sin ruta que caben en la jornada."""
+        pendientes = c.get("/rutas/por-rutear", fecha=dia.isoformat(), ciudad="Bogota")
+        return [
+            s
+            for s in pendientes
+            if 7 <= datetime.fromisoformat(s["programado_para"]).astimezone(BOGOTA).hour < 19
+        ]
+
+    for dia in dias:
+        # Una visita cada hora y media, para que la ruta quepa en la jornada de una persona.
+        horas: list[datetime] = []
+        for cupo in cupos(dia):
+            if not horas or _inicio(cupo) >= horas[-1] + timedelta(minutes=90):
+                horas.append(_inicio(cupo))
+        if len(horas) >= len(VISITAS):
+            break
+    else:
+        print("  ! sin cupo para la ruta de prueba en los proximos dias")
+        return
+
+    # Si una pasada anterior agendo las visitas y no llego a planear, no se agendan otra vez.
+    if len(por_rutear(dia)) < 2:
+        for (i, obs), inicio in zip(VISITAS, horas, strict=False):
+            familia = familias[i]
+            poner_al_dia(c, familia)
+            c.post(
+                "/servicios",
+                {
+                    "familia_id": familia["id"],
+                    "mascota_id": (familia.get("mascotas") or [{}])[0].get("id"),
+                    "tipo_codigo": "consulta_domiciliaria",
+                    "inicio": inicio.isoformat(),
+                    "observaciones": obs,
+                },
+            )
+    if not por_rutear(dia):
+        print("  ! ningun servicio a domicilio quedo agendado: no hay ruta que planear")
+        return
+    plan = c.post(
+        "/rutas/planificaciones",
+        {"fecha": dia.isoformat(), "ciudad": "Bogota", "responsables": [medica]},
+    )
+    # La optimizacion corre en el worker: se espera a que termine para que quien venga
+    # despues (las pruebas del panel) encuentre la ruta ya creada.
+    for _ in range(ESPERA_PLANIFICACION):
+        if plan is None or plan["estado"] != "pendiente":
+            break
+        time.sleep(1)
+        plan = c.get(f"/rutas/planificaciones/{plan['id']}")
+    if plan is None or plan["estado"] != "lista":
+        print(f"  ! la planificacion no termino: {plan and plan.get('error')}")
+
+
 def main() -> None:
     if settings.ENVIRONMENT != "local":
         sys.exit("datos_demo solo corre en ENVIRONMENT=local")
@@ -395,14 +509,8 @@ def main() -> None:
             },
         )
 
-    print("Rutas de hoy")
-    if not c.get("/rutas", fecha=hoy.isoformat(), ciudad="Bogota"):
-        equipo = [m["id"] for m in c.get("/auth/equipo") if m["rol"] in ("medico", "operaciones")]
-        if equipo and c.get("/rutas/por-rutear", fecha=hoy.isoformat(), ciudad="Bogota"):
-            c.post(
-                "/rutas/planificaciones",
-                {"fecha": hoy.isoformat(), "ciudad": "Bogota", "responsables": equipo[:2]},
-            )
+    print("Ruta de la medica")
+    ruta_de_prueba(c, familias, hoy)
 
     print("Comercial")
     if c.get("/comercial/interesados", limit=1)["total"] == 0:
