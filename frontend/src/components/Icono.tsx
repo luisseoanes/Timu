@@ -54,7 +54,8 @@ const TRAZOS: Record<NombreIcono, string> = {
   info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-5v-5M12 8h.01',
   menos: 'M5 12h14',
   abajo: 'M6 9l6 6 6-6',
-  puntos: 'M5 12h.01M12 12h.01M19 12h.01',
+  // Discos: con el trazo de 1.6, un radio de 1.2 queda macizo (3:1 de contraste, WCAG 1.4.11).
+  puntos: 'M3.8 12a1.2 1.2 0 1 0 2.4 0 1.2 1.2 0 1 0-2.4 0ZM10.8 12a1.2 1.2 0 1 0 2.4 0 1.2 1.2 0 1 0-2.4 0ZM17.8 12a1.2 1.2 0 1 0 2.4 0 1.2 1.2 0 1 0-2.4 0Z',
 }
 
 export function Icono({ nombre, size = 20 }: { nombre: NombreIcono; size?: number }) {
