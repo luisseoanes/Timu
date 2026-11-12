@@ -191,7 +191,6 @@
   background: var(--superficie-marca);
 }
 
-/* Marcador de texto de la marca (MarcaTimu): «TIMU» y el lema, sin imitar el logo. */
 /* El logo (MarcaTimu): el SVG fija la proporción y cada sitio, el alto. Completo, 72 px;
    compacto (sin lema), 28 px. Por debajo de unos 60 px el lema no se lee. */
 .marca { display: block; height: 72px; width: auto; max-width: 100%; }

@@ -1,104 +1,128 @@
 # Plantillas de página
 
-La estructura vive en [`vistas.css`](../../frontend/src/styles/vistas.css). Los componentes
-no saben en qué página están: la grilla siempre la pone la plantilla.
+La estructura de cada pantalla vive en [`vistas.css`](../../frontend/src/styles/vistas.css).
+Los componentes no saben en qué página están: la rejilla la pone la plantilla. El porqué de
+cada decisión visual está en [`DESIGN.md`](../../DESIGN.md) y en el contrato de la
+superficie (`.impeccable/surfaces/`).
 
-## Ingreso — `.ingreso` (`AccesoLayout`)
+> En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)). **Rediseñado:** la estructura
+> del panel, el listado con ficha (Familias), las ventanas y la espera de sesión. **Aún con la
+> composición anterior** (aunque ya con la paleta, la tipografía y el logo): el ingreso, el
+> inicio, el detalle de un registro, el portal y las páginas públicas. Cada uno se rehace en
+> su unidad.
 
-La misma plantilla sirve al ingreso, la recuperación y la activación de la cuenta.
-
-```
-┌───────────────────────────────┬────────────────────────────┐
-│ [sello] TIMU                  │                            │
-│                               │  Bienvenido de nuevo       │
-│ (Plataforma clínica)          │  [ Equipo TIMU | Familias ]│
-│ El cuidado de cada mascota…   │  Correo        [✉ ______ ] │
-│  ▢ Historia clínica           │  Contraseña    [🔒 _____ 👁]│
-│  ▢ Visitas a domicilio        │        ¿Olvidaste tu…?     │
-│  ▢ Preventivos al día         │  [        Ingresar       ] │
-│ ┌ vista previa de una visita ┐│  ─────────────────────────  │
-│ └────────────────────────────┘│  🛡 Conexión cifrada        │
-│ 🛡 Datos clínicos protegidos   │                            │
-└───────────────────────────────┴────────────────────────────┘
-```
-
-- **Panel de marca**: degradado de `--verde-700` a `--marca-profunda` con dos halos
-  radiales. Todo lo que va encima usa los tokens `--sobre-marca*`: texto, tarjetas de
-  vidrio (`--sobre-marca-velo`) y bordes (`--sobre-marca-borde`). La vista previa de una
-  visita es decorativa (`aria-hidden`).
-- **Formulario**: selector segmentado (Radix Tabs) entre **Equipo** (correo y contraseña,
-  con botón para ver la clave) y **Familias** (celular y código de un solo uso por
-  WhatsApp). Los campos llevan icono a la izquierda (`.campo-adorno`).
-- Los errores van en `.aviso-error` con `role="alert"`; las confirmaciones en `.aviso-ok`.
-- Bajo 900 px el panel de marca desaparece y la marca sube encima del formulario.
-
-Las páginas públicas sencillas (encuesta, verificación de carnet, afiliación, espacio de
-la clínica aliada) usan `.publica` + `.publica-tarjeta`: marca arriba y una tarjeta
-centrada.
-
-## Shell del panel — `.shell`
+## Estructura del panel — `AppLayout`
 
 ```
-┌────────────┬──────────────────────────────────────────────┐
-│  TIMU      │  Título de la página     [buscador] 🔔 ❓    │
-│  ▸ Panel   ├──────────────────────────────────────────────┤
-│    Familias│                                              │
-│    Cartera │                 contenido                    │
-│    …       │                                              │
-│  ─────────  │                                              │
-│  Usuario   │                                              │
-└────────────┴──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│ TIMU  Panel  Familias  Cartera  …  Más ▾        [🔍 Buscar familia] (VR)│  barra marina, 64 px
+├──────────────────────────────────────────────────────────────────────┤
+│ Título del módulo  (h1)                                               │
+│ Subtítulo                                                            │
+│                                                                      │
+│                         contenido (máx. 1440 px)                     │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-- Dos columnas: barra lateral de 236 px y contenido. Todo con 16 px de aire alrededor,
-  para que el lienzo verde se vea como marco.
-- **Barra lateral**: tarjeta blanca fija con radio de panel. Marca arriba, navegación al
-  centro y ficha del usuario abajo separada por una línea. El elemento activo lleva fondo
-  `--verde-50`, texto `--verde-700` y una barra interna de 3 px en `--verde-500`.
-- **Cabecera**: el título y el subtítulo salen del elemento de navegación activo, así que
-  agregar un módulo es agregar una entrada al arreglo `NAV` de `AppLayout.tsx`. A la
-  derecha, buscador en pastilla y botones circulares de notificaciones y ayuda.
-- Bajo 900 px la barra lateral pasa a ocupar el ancho completo y su navegación se acomoda
-  en dos columnas.
+- **Barra marina** (`.barra-marca`, fija arriba): el logo compacto en blanco, los módulos del
+  perfil que caben y el resto en «Más» (menú), el buscador de familias y el menú de la cuenta
+  (nombre, perfil y «Cerrar sesión»). El módulo activo lleva el subrayado verde
+  (`--indicador-sobre-marca`). Caben 8 módulos desde 1360 px, 6 desde 1180 y 3 desde 900
+  (`CORTES` en `AppLayout.tsx`).
+- **Cabecera** (`.cabecera-pagina`): el `h1` de la pantalla es el título del módulo, en
+  GeosansLight, con su subtítulo. Los títulos de dentro de la pantalla empiezan en `h2`. El
+  título sale de la entrada de navegación activa: un módulo nuevo es una entrada en `NAV`.
+- **Contenido** (`.contenido`): hasta 1440 px, centrado. Sus hijos pueden encoger
+  (`min-width: 0`), así que una tabla ancha se desplaza dentro de su `.scroll-x` en vez de
+  estirar la página. Lo mismo vale para `.pila`, `.con-rail` y `.rail`.
+- **Por debajo de 900 px** la barra se queda con el logo y la cuenta, y los módulos bajan a
+  una **barra inferior fija** (`.barra-inferior`, 56 px) con los cuatro que más usa cada
+  perfil (`PRINCIPALES`: el médico en ruta lleva Rutas, Servicios, Clínica y Familias) y
+  «Más» para el resto.
 
-## Panel de inicio — `.con-rail`
+## Listado con ficha — `.familias` (Familias)
 
-Contenido principal más columna derecha de widgets de 300 px, tal como la referencia.
+El patrón de un módulo cuyo trabajo es abrir un registro y actuar sobre él.
 
-1. **Saludo** (`.bienvenida`) — degradado suave en diagonal, nombre del usuario, una línea
-   de contexto y distintivos con las cifras del día.
-2. **Accesos rápidos** (`.accesos`) — cuatro atajos a las acciones más frecuentes.
-3. **Dos columnas** (`.dos-columnas`) — próximos servicios y estado de cartera, ambas con
-   filas y enlace *Ver todos* en el encabezado.
-4. **Columna derecha** (`.rail`) — cumplimiento del día con anillo y tres métricas, tarjeta
-   de lo que requiere atención, y preventivos por vencer.
+```
+┌─ listado (420 px) ─────┐ ┌─ ficha ───────────────────────────────────┐
+│ Familias 5  [+ Nueva]  │ │ Jorge Ramirez            (h2, 34 px)      │
+│ [Buscar] [Estado ▾]    │ │ ■ Plan Familiar · Congelada · Bogotá      │
+│ Marcela Torres  ⚠ 3    │ │ [Acción de la próxima] [Habilitar] [Gest▾]│
+│ ●──●──●──|──○          │ │ ●───●───●───|HOY───○   (la línea)         │
+│▌Jorge Ramirez (abierta)│ │ MASCOTAS            CARTERA               │
+│ …                      │ │ [Datos|Mascotas|Cartera|Servicios|…]      │
+└────────────────────────┘ └───────────────────────────────────────────┘
+```
 
-Bajo 1180 px la columna derecha baja y se reparte en dos columnas; bajo 900 px queda en una.
+- **Listado** (`.familias-lista`): título con el total, la acción de crear (verde lleno solo si
+  no hay registro abierto: una acción verde por vista), filtros y filas. La búsqueda, el
+  estado y la página viven en la URL, así que abrir un registro y volver no los pierde. La
+  fila entera es el enlace (el `a` del nombre se extiende con `::after`), y la abierta se
+  marca con `data-seleccionada`.
+- **Ficha** (`.familias-detalle`): cabecera (`.ficha-cabeza`, con el nombre, los datos y
+  `.ficha-acciones`), la línea, los resúmenes siempre visibles (`.ficha-resumen`) y las
+  pestañas, que abren en «Datos». Dentro de la ficha, las `.tarjeta` de las pestañas pierden
+  fondo y relleno.
+- **Por debajo de 900 px** se ve el listado o la ficha, no los dos, con un botón de volver.
 
-Los indicadores salen de `GET /dashboard/indicadores` (período y ciudad) y la fórmula de
-cada uno aparece al pasar el cursor. El perfil médico ve su jornada en lugar del panel
-gerencial.
+Rutas, Clínica y los demás módulos que abren un registro deberían partir de aquí.
 
-## Listados — tarjeta única
+## Ventanas — `Modal`
 
-Patrón de `FamiliasPage`: una tarjeta que contiene encabezado con conteo, fila de filtros
-—buscador, selector de estado y acción principal empujada a la derecha— y la tabla dentro
-de `.scroll-x`. Todo módulo de listado se construye así para que no aparezcan tres
-gramáticas distintas de filtro en la aplicación.
+Centradas, de hasta 560 px, con cabecera y pie fijos y solo el cuerpo desplazable. Hasta
+600 px son una hoja que sube desde abajo, a todo el ancho. Quedan por encima de las barras y
+de la línea por la escala de capas (`--capa-velo`, `--capa-ventana`).
 
-## Portal de familias — `.portal`
+## Espera de sesión — `.espera-sesion` (`ProtectedRoute`)
 
-Primero para el celular: cabecera corta con la marca y navegación fija abajo (cinco
-destinos). Desde 900 px la navegación sube a la cabecera como pastillas. El saludo usa el
-degradado de marca (`.portal-hola`) con los accesos rápidos encima.
+Mientras se comprueba la sesión todavía no se sabe a qué espacio va el usuario: el logo a
+color sobre el lienzo y un esqueleto anunciado a los lectores de pantalla, sin la barra de
+ningún espacio. Si el servidor no responde, una tarjeta con su título, la explicación y
+«Reintentar».
+
+## Ingreso — `.ingreso` (`AccesoLayout`), pendiente de `R3-PUB-01`
+
+La misma plantilla sirve al ingreso, la recuperación y la activación de la cuenta. Dos
+columnas: el panel de marca (marino, con el logo completo en blanco, el mensaje, tres
+funciones y una vista previa decorativa) y el formulario. El formulario tiene un selector
+entre **Equipo** (correo y contraseña) y **Familias** (celular y código por WhatsApp). Por
+debajo de 900 px el panel de marca desaparece y el logo a color sube encima del formulario.
+Su vista previa en vidrio y su antetítulo en pastilla contradicen el sistema y se rehacen en
+su unidad (`docs/frontend/conventions.md`, deuda).
+
+Las páginas públicas sencillas (encuesta, verificación del carnet, registro, clínica aliada)
+usan `.publica` + `.publica-tarjeta`: el logo arriba y una tarjeta centrada.
+
+## Inicio — `.con-rail`, pendiente de `R2-PAN-04`
+
+Contenido principal más una columna derecha de 300 px (`--ancho-rail`): saludo
+(`.bienvenida`), accesos rápidos (`.accesos`), dos columnas (`.dos-columnas`) con próximos
+servicios y cartera, y en la columna derecha el cumplimiento del día y lo que requiere
+atención. Bajo 1180 px la columna derecha baja en dos columnas; bajo 900, en una. Los
+indicadores salen de `GET /dashboard/indicadores`; el perfil médico ve su jornada.
+
+## Detalle de un registro — `.detalle-cabeza`
+
+Las fichas que aún no siguen el patrón de Familias (un servicio, una entrada clínica, la
+historia de una mascota): volver, el título en `h2` y sus datos.
+
+## Portal de familias — `.portal`, pendiente de `R3-POR-01` y `R3-POR-02`
+
+Primero para el celular: cabecera corta con el logo compacto y navegación fija abajo con
+cinco destinos. Desde 900 px la navegación sube a la cabecera como pastillas.
 
 ## Reglas de adaptación
 
 | Ancho | Qué cambia |
 | --- | --- |
-| ≥ 1180 px | Distribución completa con columna derecha |
-| 900–1180 px | La columna derecha baja bajo el contenido, en dos columnas |
-| < 900 px | Una sola columna; barra lateral arriba; ingreso apilado |
+| ≥ 1360 px | Barra con 8 módulos |
+| 1180–1359 px | 6 módulos y buscador más estrecho |
+| 900–1179 px | 3 módulos; el inicio baja su columna derecha; Familias sigue con listado y ficha lado a lado |
+| < 900 px | Barra inferior; listado o ficha; ingreso en una columna; formularios en una columna |
+| ≤ 600 px | Ventanas como hoja inferior; la línea siempre vertical; pestañas en una fila desplazable |
 
-El cuerpo de la página nunca se desplaza en horizontal: lo que no cabe —tablas, gráficas—
-se desplaza dentro de su propio contenedor.
+Además de la ventana, hay piezas que deciden por el **ancho de su contenedor**: la tabla
+apilable (menos de 640 px) y la línea de la familia (cuando sus paradas no caben con su
+rótulo). El cuerpo de la página nunca se desplaza en horizontal: lo que no cabe se desplaza
+dentro de su propio contenedor. Toda pantalla se revisa a 1440, 1180, 900 y 390 px.

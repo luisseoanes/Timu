@@ -129,23 +129,47 @@ resultado.
 ## Accesibilidad
 
 - Todo control alcanzable con teclado y con foco visible: el sistema ya define
-  `:focus-visible` en verde; no se elimina el contorno.
+  `:focus-visible` con el color de foco (`--foco`, azul); no se elimina el contorno.
 - Un botón que sólo tenga icono lleva `aria-label`; los iconos son `aria-hidden`.
-- El estado nunca se comunica sólo con color: el distintivo lleva texto además del tono.
+- El estado nunca se comunica sólo con color: la insignia lleva icono y texto además del tono,
+  y lo vencido de una fila se dice en texto («3 vencidas»), no solo con un punto rojo.
 - Los campos siempre tienen etiqueta visible asociada.
 - Con `prefers-reduced-motion` se desactivan transiciones y animaciones (ya está en
   `base.css`).
 
+## Tokens y su guarda
+
+[`tokens.css`](../../frontend/src/styles/tokens.css) es la única fuente de las medidas y los
+colores, en tres capas: la **paleta** (solo se nombra dentro de ese fichero), los **roles**
+(lo único que usan los componentes: `--texto`, `--accion-fondo`, `--estado-alerta-texto`…) y
+el bloque **`@pares`**, con cada combinación de texto o control sobre su fondo y su contraste
+mínimo. Lo que significa cada rol y cada medida está en [`DESIGN.md`](../../DESIGN.md) y en el
+[manual de marca](../manual-de-marca.md) (secciones 9 y 10).
+
+[`src/test/tokens.test.ts`](../../frontend/src/test/tokens.test.ts) hace fallar la suite si un
+componente escribe un color a mano (también en `style={{}}` y en atributos SVG), usa un color
+de la paleta en vez de un rol, usa una variable que no está definida, si un par no llega a su
+mínimo, si un rol de texto o de control no tiene ningún par declarado, o si un `z-index` no
+sale de la escala `--capa-*`. **Un rol nuevo llega con su par.** Los radios y las sombras no los
+vigila la guarda: se revisan en el diff. Los `.svg` tampoco: sus colores son el activo de la
+marca, no colores de la interfaz.
+
 ## Qué revisar antes de empujar
 
-1. ¿La pantalla usa sólo tokens? Los colores escritos a mano y las variables sin definir los
-   rechaza `src/test/tokens.test.ts`. Los radios y las sombras se revisan en el diff.
-2. ¿Reutiliza los componentes existentes en vez de crear una variante casi igual?
+1. ¿La pantalla usa sólo tokens? Lo que no vigila la guarda (radios, sombras) se revisa en el
+   diff.
+2. ¿Reutiliza los componentes existentes ([components.md](components.md)) y la plantilla de
+   su tipo ([layouts.md](layouts.md)) en vez de crear una variante casi igual?
 3. ¿Lo interactivo se apoya en Radix en vez de reimplementarlo a mano?
 4. ¿Tiene los estados de carga, error y vacío, **y pruebas de los tres**?
-5. ¿Se ve bien a 1440, 1180 y 900 px de ancho?
-6. ¿Los textos están en español, en voz activa y sin jerga?
-7. ¿`npm run verificar` pasa? (lint + tipos + cobertura + build, lo mismo que el CI)
+5. ¿Hay **una sola acción verde llena** por vista, y las confirmaciones destructivas van con
+   `btn-peligro`?
+6. ¿Las tablas son `tabla-apilable`, con `data-etiqueta` en cada celda?
+7. ¿Se ve bien a 1440, 1180, 900 y **390** px? Las ventanas, por encima de todo; los títulos,
+   sin pisarse; nada que desborde dentro de una pestaña (si la pantalla tiene pestañas, su
+   ruta lleva `pestanas: true` en el barrido de `e2e-stack/responsive.spec.ts`).
+8. ¿Los textos están en español, en voz activa y sin jerga?
+9. ¿`npm run verificar` pasa? (lint + tipos + cobertura + build, lo mismo que el CI)
 
 ## Deuda conocida
 

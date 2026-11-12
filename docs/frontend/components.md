@@ -1,177 +1,205 @@
 # Componentes
 
-Cada componente es una clase raíz más modificadores, definidos en
-[`componentes.css`](../../frontend/src/styles/componentes.css). Si una pantalla necesita
-algo que no está aquí, se agrega a ese archivo con su documentación, no dentro de la vista.
+Inventario de lo que una pantalla reutiliza: la clase o el componente, cuándo va y qué regla
+no se rompe. El aspecto y sus razones están en [`DESIGN.md`](../../DESIGN.md); aquí, cómo se
+usa en el código. Las clases viven en
+[`componentes.css`](../../frontend/src/styles/componentes.css) (y las de una vista concreta en
+`vistas.css`). Si una pantalla necesita algo que no está aquí, se agrega a ese fichero y a
+este documento, no dentro de la vista.
+
+> En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)): la estructura del panel y
+> Familias ya usan la línea nueva; el resto de pantallas usa estas mismas piezas con la
+> composición anterior hasta su unidad.
 
 ## Botones — `.btn`
 
 | Variante | Clase | Cuándo |
 | --- | --- | --- |
-| Principal | `.btn-primario` | La acción que la pantalla quiere que ocurra. **Una sola por vista.** |
-| Suave | `.btn-suave` | Acciones secundarias: cerrar sesión, gestionar, ver detalle |
-| Plano | `.btn-plano` | Acciones terciarias dentro de una tarjeta |
-| Bloque | `+ .btn-bloque` | Ocupa todo el ancho: ingreso, tarjetas del panel derecho |
-| Icono | `.btn-icono` | Botón circular de 38 px sin texto. **Exige `aria-label`.** |
+| Principal | `.btn-primario` | Verde lleno con texto marino. La acción que la pantalla quiere que ocurra. **Una sola por vista** (manual, sección 11); una ventana abierta es su propia vista. |
+| Secundario | `.btn-secundario` | Blanco con borde. Alternativa de igual peso que no es la principal. |
+| Suave | `.btn-suave` | Verde muy claro. Acciones secundarias: «Gestionar afiliación», «Registrar pago» dentro de una pestaña, «Agregar mascota». |
+| Plano | `.btn-plano` | Sin fondo. Acciones terciarias y de fila (*Ficha*, *Historia*, *Editar*). |
+| Plano de peligro | `+ .btn-plano-peligro` | Acción destructiva dentro de una fila (*Dar de baja*, *Quitar*): rojo, para que no pese como las demás. |
+| Peligro | `.btn-peligro` | Rojo lleno. **Confirmar** algo destructivo en una ventana (*Confirmar baja*, *Quitar contacto*). |
+| Bloque | `+ .btn-bloque` | Ocupa todo el ancho. |
+| Icono | `.boton-icono` | Cuadrado sin texto (cerrar una ventana, volver). **Exige `aria-label`.** |
 
-El texto dice exactamente lo que pasa: *Ingresar*, *Gestionar cartera*, *Nueva familia*.
-Nunca *Aceptar* ni *Enviar*. Deshabilitado baja a 55% de opacidad y el cursor deja de ser
-mano; durante el envío el texto cambia a gerundio (*Ingresando…*).
+El texto dice exactamente lo que pasa: *Registrar pago*, *Abrir consulta de Luna*. Nunca
+*Aceptar* ni *Enviar*. Deshabilitados, todos los llenos usan el mismo gris; durante el envío
+el texto cambia a gerundio (*Registrando…*). En pantallas táctiles miden 44 px de alto.
 
 ## Campos — `.campo` + `.input`
 
-`.campo` es la etiqueta más el control; la etiqueta siempre es visible, nunca sólo un
-marcador de posición.
+`.campo` es la etiqueta más el control; la etiqueta siempre es visible, nunca solo un marcador
+de posición. La ayuda va en `.campo-ayuda`, enlazada con `aria-describedby`. Un `.campo` no se
+estira si su vecino de fila es más alto (`align-content: start`).
 
-- `.input` — caja con borde, radio de campo, foco en verde con halo. Es el estándar.
-- `.input-linea` — sólo subrayado. **Exclusivo del ingreso**, siguiendo la referencia; no
-  se usa dentro del panel.
-- `.buscador` — pastilla hundida con icono de lupa y campo transparente. Va en la cabecera
-  y en los filtros de listado.
-- `.campo-icono` — envoltura que posiciona un icono al final del campo subrayado.
+- `.input` — caja con borde, radio de campo y foco en azul. Es el estándar, también para
+  `select` y `textarea`. En pantallas táctiles, 44 px de alto y letra de 16 px (si no, iOS
+  amplía la página al enfocar).
+- `.buscador` — la misma forma que `.input`, con lupa y campo transparente. En la barra del
+  panel y en los filtros de listado.
+- `.input-linea` — solo subrayado. **Exclusivo del ingreso.**
+- Una casilla entre campos va en `label.acciones`; dentro de un `.formulario` se alinea con la
+  base de los campos.
 
-Los errores se muestran con `.error` bajo el campo, dicen qué pasó y cómo resolverlo, y no
-piden disculpas: *El correo o la contraseña no coinciden. Intenta de nuevo.*
+Los errores van en `.error` bajo el campo, dicen qué pasó y cómo resolverlo, y no piden
+disculpas: *El correo o la contraseña no coinciden. Intenta de nuevo.*
 
 ## Tarjetas — `.tarjeta`
 
-Superficie blanca, radio de panel, sombra 2. Es el contenedor de todo bloque de contenido.
+Superficie blanca y radio de panel, sin sombra (las superficies son planas). Contenedor de un
+bloque de contenido. Dentro de la ficha de familia pierden fondo y relleno: blanco sobre
+blanco solo añadía sangría.
 
-- `.tarjeta-plana` — sin sombra, con borde. Para tarjetas dentro de otra tarjeta.
-- `.tarjeta-cabeza` — título a la izquierda y enlace o dato a la derecha (*Ver todos*,
-  conteo de registros). Es el patrón de encabezado de la referencia.
+- `.tarjeta-cabeza` — título a la izquierda y enlace, dato o acción a la derecha.
+- `.bloque` — un apartado dentro de una tarjeta (título `h4` y su tabla o lista), separado del
+  anterior.
 
-No todo va en tarjeta: los accesos rápidos y los filtros viven sueltos sobre el lienzo.
+## Insignias de estado — `Insignia` y `Distintivo`
 
-## Distintivos — `.distintivo`
+`src/components/Distintivo.tsx`. **Todo estado lleva icono y texto, nunca solo color**
+(manual, regla 4). `<Insignia tono="alerta">En mora</Insignia>` pinta la pastilla con su
+icono; `<Distintivo dominio="servicio" valor="agendado" />` toma etiqueta y tono del mapeo
+único de `src/lib/estados.ts`, para que un estado se vea igual en todos los módulos. Un
+estado que el mapeo no conozca sale en tono neutro en vez de romper la pantalla. Tonos: `ok`,
+`alerta`, `info`, `peligro`, `neutro`.
 
-Pastilla en mayúsculas que comunica estado. Siempre con su modificador semántico:
-`-ok`, `-alerta`, `-info`, `-peligro`, `-neutro`. El mapeo de estados de afiliación a tono
-está en `FamiliasPage.tsx` y es el que se replica en el resto de módulos:
+Un estado derivado se calcula en `lib/estados.ts`, no en la pantalla: `estadoCuota(cuota)`
+devuelve `vencida` para una cuota pendiente o parcial con días de mora, que la API no guarda
+como estado.
 
-| Estado | Tono |
-| --- | --- |
-| Activa | `ok` |
-| Prospecto | `info` |
-| En mora | `alerta` |
-| Congelada | `neutro` |
-| Cancelada | `peligro` |
+## Tablas — `.tabla` y `.tabla-apilable`
 
-`-neutro` también marca lo inactivo o archivado.
+Cabeceras en versalitas apagadas, filas separadas por línea suave. La primera columna lleva
+`.principal`, los números `.numero`, y la tabla va siempre dentro de `.scroll-x` para que se
+desplace ella y no la página.
 
-## Filas — `.fila`
+**Una tabla nueva es `tabla tabla-apilable`.** Cuando su contenedor mide menos de 640 px (no
+la ventana: junto al listado, la ficha es estrecha también en un escritorio), cada fila se
+vuelve un bloque: la primera celda es el título y el resto, pares etiqueta y valor. Para eso
+cada celda lleva `data-etiqueta` con el texto de su cabecera, y la de acciones va en
+`td.tabla-acciones` (sin etiqueta), que se pasa a una fila de botones debajo. Las tablas de
+los módulos aún sin rediseñar la adoptan en su unidad.
 
-El patrón de lista de la referencia: icono cuadrado con fondo verde suave, cuerpo con
-título y subtítulo, y un dato o distintivo a la derecha. Se usa para próximos servicios,
-movimientos de cartera y alertas de preventivos. La última fila no lleva separador.
+## Ventanas — `Modal`
 
-## Accesos rápidos — `.accesos` / `.acceso`
+`src/components/Modal.tsx`, sobre Radix Dialog. Cabecera y pie fijos, y **solo el cuerpo se
+desplaza**: la acción principal se ve siempre. En pantallas de hasta 600 px es una hoja que
+sube desde abajo.
 
-Cuatro botones en fila bajo el saludo, con icono arriba y texto debajo. El activo se
-marca con `aria-current="true"` y se pinta en verde sólido. Nunca más de cuatro: es un
-atajo, no un menú.
+El formulario de una ventana lleva un `id` y el botón de guardar, en el `pie`, lo envía con
+`form="<id>"`. Los campos vacíos no viajan (`undefined`, no `""`). Mientras guarda, el botón
+dice «Guardando…» y queda deshabilitado; el error del servidor aparece con `role="alert"`
+dentro del formulario, y al cerrar se limpia (`mutation.reset()`).
 
-## Tablas — `.tabla`
+## Capas — `--capa-*`
 
-Encabezados en mayúsculas pequeñas y apagadas, filas separadas por línea suave, hover con
-superficie hundida. La primera columna lleva `.principal` (tinta y negrita) porque es la
-que identifica el registro. Los números van con `.numero`. La tabla siempre va dentro de
-`.scroll-x` para que sea ella la que se desplace y no la página.
+Todo `z-index` sale de la escala de `tokens.css`: `--capa-elevada` (algo que pisa a sus
+vecinos, como una estación sobre su línea), `--capa-barra` (barras fijas), `--capa-velo`,
+`--capa-ventana` y `--capa-menu` (un menú abierto desde una ventana). La guarda de tokens
+rechaza un número suelto.
 
-## Anillo de progreso — `AnilloProgreso`
+## Menús — Radix DropdownMenu
 
-SVG de dos círculos: pista en `--verde-100` y valor en `--verde-500` con extremo redondo.
-El porcentaje se centra por posicionamiento absoluto. Acota el valor entre 0 y 100 y expone
-`role="img"` con su etiqueta. Se acompaña de `.metricas` —tres cifras compactas— para dar
-el desglose que el anillo resume.
+`.menu` y `.menu-item` (en `vistas.css`): el «Más» de la barra, la cuenta y «Gestionar
+afiliación». `.menu-item-peligro` para una entrada destructiva, tras un `.menu-separador`.
+Lo raro o destructivo va en un menú, no junto a la acción principal.
 
-## Avisos — `.aviso`
+## Logo — `MarcaTimu`
 
-Bloque en verde suave para información contextual dentro de una tarjeta. Para una condición
-que exige acción, el aviso va acompañado de un botón suave de ancho completo.
+`src/components/MarcaTimu.tsx` pinta el SVG del vector de TIMU: completo (con lema y
+siluetas) o `compacta` (solo el logotipo, donde el lema no se leería, por debajo de unos
+60 px de alto), y a color o `claro` (en blanco) sobre la superficie de marca. Nunca se dibuja
+con texto ni se recolorea. Cómo se regeneran los SVG: `src/assets/marca/README.md`.
 
-## Estados de carga, error y vacío
+## Línea de la familia — `LineaFamilia` y `LineaMini`
 
-Los tres son obligatorios en cualquier pantalla que consulte la API:
+`features/familias/LineaFamilia.tsx`, el componente propio de la dirección «la línea de
+metro». `LineaFamilia` dibuja el año de una familia: estaciones como botones (llena = hecha,
+anillo marino = próxima, roja con icono = vencida), «Hoy» marcado, lo del mismo día en una
+estación y las hechas antiguas plegadas en «N hechas». Mide su propio ancho y pasa a vertical
+cuando las paradas no caben con su rótulo (`orientacion` en `linea.ts`). `LineaMini` es la
+miniatura de una fila del listado, con su resumen en `aria-label`. El color es el del plan
+(`data-color`), gris sin plan.
 
-- **Cargando** — texto apagado, `Cargando familias…`. Sin animaciones de esqueleto.
-- **Error** — `.error` con la causa y qué hacer.
-- **Vacío** — fila de tabla o texto apagado que explica por qué no hay nada:
-  *Ninguna familia coincide con el filtro.* Nunca una tabla en blanco.
+## Estados de carga, error y vacío — `Consulta`
+
+Los tres son obligatorios en cualquier pantalla que consulte la API. `src/components/
+Consulta.tsx` los resuelve: recibe la consulta de React Query y los textos, y entrega los
+datos al contenido.
+
+- **Cargando** — esqueleto (`.esqueleto`) con el texto para lectores de pantalla en
+  `role="status"`.
+- **Error** — la causa que devuelve el servidor (`detail`, ya escrita para quien usa el
+  sistema) y «Reintentar» solo ante un fallo pasajero.
+- **Vacío** — texto que explica por qué no hay nada y qué hacer: *Ninguna familia coincide
+  con el filtro.* Nunca una tabla en blanco.
 
 ## Formularios — `.formulario`
 
-Rejilla de dos columnas para los campos de un modal o una tarjeta; `.ancho` hace que un
-campo ocupe la fila completa (dirección, notas). Bajo 900 px pasa a una columna. Cada
-control va en un `.campo` con su etiqueta visible. El resultado de guardar se dice con
-`.error` o `.exito` bajo el formulario, nunca sólo con color.
+Rejilla de dos columnas; `.ancho` hace que un campo ocupe la fila completa. Bajo 900 px pasa
+a una columna. El resultado de guardar se dice con `.error` o `.exito`, nunca solo con color.
 
 ## Ficha de datos — `.ficha`
 
-Lista de definiciones (`<dl>`) para mostrar un registro: etiqueta en mayúsculas pequeñas
-y valor en tinta. Se acomoda sola en tantas columnas como quepan.
+Lista de definiciones (`<dl>`) para mostrar un registro: etiqueta en versalitas y valor en
+tinta. Se acomoda sola en tantas columnas como quepan.
 
 ## Acciones — `.acciones`
 
-Fila de botones de una tarjeta o una ficha, con su espaciado. Sigue valiendo la regla de
-un solo botón principal por vista.
+Fila de botones de una tarjeta o una ficha. En la cabecera de una ficha, `.ficha-acciones`:
+una sola fila que se pliega en orden, alineada a la izquierda, con la principal primero.
 
 ## Pestañas — `Pestanas`
 
-Sobre Radix Tabs (`src/components/Pestanas.tsx`): flechas, roles `tab`/`tabpanel` y foco
-los pone Radix; el aspecto, `.pestanas-lista` y `.pestana`. La activa lleva texto
-`--verde-700` y subrayado `--verde-500`. Se usan para las secciones de un registro
-(datos, mascotas, cartera, historial), no como navegación entre módulos.
+Sobre Radix Tabs (`src/components/Pestanas.tsx`): flechas, roles `tab`/`tabpanel` y foco los
+pone Radix. Admite modo controlado (`valor`, `onCambio`) para que otra parte de la pantalla
+abra una pestaña. En pantallas estrechas se desplazan en una sola fila. Son secciones de un
+registro, no navegación entre módulos.
+
+## Historial — `.historial`
+
+Lista de cambios de un registro: lo más reciente primero, fecha a la izquierda y qué cambió a
+la derecha, con los campos por su nombre legible.
 
 ## Paginación — `Paginacion`
 
-Para listados que devuelven `Page<T>`: rango visible (*1–50 de 120*) y botones planos
-*Anterior* y *Siguiente*. No aparece cuando todo cabe en una página.
+Para listados que devuelven `Page<T>`: rango visible (*1–50 de 120*) y botones *Anterior* y
+*Siguiente*. No aparece cuando todo cabe en una página.
 
-## Estados de una consulta — `Consulta`
+## Filas — `.fila`
 
-`src/components/Consulta.tsx` resuelve las tres pantallas obligatorias: recibe la consulta
-de React Query y los textos de carga, error y vacío, y entrega los datos al contenido. El
-error agrega la causa que devuelve el servidor (`detail`), que ya viene escrita para quien
-usa el sistema.
+Lista compacta: icono cuadrado, cuerpo con título y subtítulo, y un dato o insignia a la
+derecha (próximos servicios, movimientos de cartera). La fecha de la derecha se parte en dos
+líneas antes de apretar el texto.
 
-## Distintivo de estado — `Distintivo`
+## Accesos rápidos — `.accesos` / `.acceso`
 
-`<Distintivo dominio="servicio" valor="agendado" />` toma etiqueta y tono del mapeo único
-de `src/lib/estados.ts`, para que un estado se vea igual en todos los módulos. Un estado
-que el mapeo no conozca se muestra en tono neutro en vez de romper la pantalla.
+Botones en fila con icono y texto (inicio del panel). Nunca más de cuatro: es un atajo, no un
+menú.
 
-## Acciones según el rol — `puede`
+## Avisos — `.aviso`, `.aviso-error`, `.aviso-ok`
 
-`puede(usuario, 'gestionarAfiliacion')` (de `src/lib/permisos.ts`) decide si se muestra
-un botón. El mapa repite los roles que exige el backend en cada `requiere(...)`: si cambia
-un permiso allá, se cambia aquí en el mismo commit. Ocultar un botón no autoriza nada; el
-servidor sigue respondiendo 403 y `mensajeError` lo dice en palabras.
-
-## Formularios en modal
-
-El formulario lleva un `id` y el botón de guardar, en el `pie` del `Modal`, lo envía con
-`form="<id>"`. Los campos vacíos no viajan (`undefined`, no `""`). Mientras guarda, el
-botón dice «Guardando…» y queda deshabilitado; el error del servidor aparece con
-`role="alert"` dentro del formulario, y al cerrar el modal se limpia (`mutation.reset()`).
+Bloque informativo dentro de una tarjeta, o resultado de una acción en las páginas de acceso.
+Una condición que exige acción va con su botón.
 
 ## Indicadores — `.indicadores` / `.indicador`
 
-Tarjetas de cifra para el panel, la satisfacción y el gasto de IA: título en mayúsculas,
-valor grande y una línea de detalle. La fórmula del indicador va en `title`.
+Tarjetas de cifra: título en versalitas, valor grande (`--t-cifra`, números tabulares) y una
+línea de detalle. La fórmula va en `title`.
 
-## Barras de una serie — `.barras`
+## Anillo de progreso — `AnilloProgreso` y barras — `.barras`
 
-Para comparar magnitudes de una sola serie (servicios por tipo): un único tono
-(`--verde-600`, validado contra la superficie), valor rotulado en cada barra y sin leyenda.
-Es una lista accesible con `aria-label`; cada barra repite su valor en `title`.
+El anillo resume un porcentaje (`role="img"` con su etiqueta) y se acompaña de `.metricas`.
+Las barras comparan magnitudes de una sola serie (`--serie-1`), con el valor rotulado y sin
+leyenda; es una lista accesible con `aria-label`.
 
 ## Selector de familia — `SelectorFamilia`
 
-`features/familias/SelectorFamilia.tsx`, exportado desde `@/features/familias`: es un widget
-del dominio (consulta familias), así que no sube a `src/components/`. Buscar y elegir una familia dentro de un
-formulario (servicios, tareas, remisiones, orientación virtual). Con la familia elegida
-muestra su resumen y un botón *Cambiar*.
+`features/familias/SelectorFamilia.tsx`, exportado desde `@/features/familias`: widget del
+dominio (consulta familias), así que no sube a `src/components/`. Buscar y elegir una familia
+dentro de un formulario (servicios, tareas, remisiones, orientación virtual).
 
 ## Franjas y opciones — `.cupo`
 
@@ -180,20 +208,23 @@ filtro. Los agotados quedan deshabilitados.
 
 ## Línea de tiempo — `.linea-tiempo`
 
-Lista ordenada con un punto por elemento; `li.hecho` lo pinta de verde. La usan los pasos
-de una atención, la historia clínica, las paradas de una ruta y el carnet.
+Lista con un punto por elemento; `li.hecho` lo marca como hecho. Los pasos de una atención,
+la historia clínica, las paradas de una ruta y el carnet del portal.
 
 ## Borrador de IA — `.borrador-ia`
 
 Recuadro punteado en tono informativo para todo lo que sugiere la IA. Siempre dice que el
 profesional lo revisa y nunca se envía solo.
 
-## Descargas — `lib/descargas.ts`
+## Utilidades de `src/lib/`
 
-`descargar(ruta, params, nombrePorDefecto)` baja un CSV, Excel o PDF de la API con la
-sesión del usuario y respeta el nombre de `Content-Disposition`.
-
-## Permisos — `lib/permisos.ts`
-
-`puede(usuario, accion)` decide qué se muestra y `inicioDeRol(rol)` a dónde va cada perfil
-al ingresar (panel, `/portal` o `/aliada`). El mapa repite el del backend.
+- **`formato.ts`**: moneda, fechas (`fecha`, `fechaCorta`, `fechaHora`), `peso` («8,4 kg») y
+  porcentajes, como en Colombia.
+- **`estados.ts`**: el mapeo único de estados a etiqueta y tono, y los estados derivados
+  (`estadoCuota`).
+- **`permisos.ts`**: `puede(usuario, accion)` decide qué se muestra e `inicioDeRol(rol)` a
+  dónde va cada perfil al ingresar. El mapa repite los roles que exige el backend en cada
+  `requiere(...)`: si cambia allá, se cambia aquí en el mismo commit. Ocultar un botón no
+  autoriza nada; el servidor sigue respondiendo 403.
+- **`descargas.ts`**: `descargar(ruta, params, nombrePorDefecto)` baja un CSV, Excel o PDF con
+  la sesión del usuario y respeta el nombre de `Content-Disposition`.
