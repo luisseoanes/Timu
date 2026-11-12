@@ -245,10 +245,21 @@ describe('la ruta de quien sale a campo', () => {
     server.use(http.get(`${API}/servicios/s1/pasos`, () => HttpResponse.json([PASOS_HECHOS[0]])))
     renderizar(<RutasPage />)
     const registrar = await screen.findByRole('link', { name: 'Registrar la atención' })
-    expect(registrar).toHaveAttribute('href', '/servicios/s1')
+    // Los pasos de una consulta se registran al firmar su consulta clínica: abre la de esta visita.
+    expect(registrar).toHaveAttribute('href', '/clinica/mascotas/m1?servicio=s1')
     expect(registrar).toHaveClass('btn-primario')
-    expect(screen.getByText('Antes de terminar la visita falta registrar: Plan y recomendaciones.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Antes de terminar la visita falta registrar: Plan y recomendaciones. Se registran al firmar la consulta.'),
+    ).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Terminar visita' })).not.toBeInTheDocument()
+  })
+
+  it('sin mascota en el servicio, registrar la atención lleva al servicio', async () => {
+    conRutas([ruta([parada(1, 'en_sitio', { mascota: null })])])
+    server.use(http.get(`${API}/servicios/s1/pasos`, () => HttpResponse.json([])))
+    renderizar(<RutasPage />)
+    expect(await screen.findByRole('link', { name: 'Registrar la atención' })).toHaveAttribute('href', '/servicios/s1')
+    expect(screen.getByText('Antes de terminar la visita falta registrar: Valoracion clinica, Plan y recomendaciones.')).toBeInTheDocument()
   })
 
   it('el fallo al avanzar una parada se dice con la causa del servidor', async () => {

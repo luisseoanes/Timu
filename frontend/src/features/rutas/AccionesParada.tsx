@@ -122,8 +122,9 @@ export function AccionesParada({ ruta, parada, actual }: { ruta: RutaRead; parad
 
 /**
  * La acción de una parada en sitio. El servicio no se cierra sin sus pasos obligatorios (la API
- * lo rechaza), y esos pasos se registran en la ficha del servicio: mientras falte alguno, la
- * acción lleva allí y dice qué falta; con todos, termina la visita.
+ * lo rechaza). Los de una consulta se registran al firmar su consulta clínica, así que mientras
+ * falte alguno la acción abre la consulta de esa visita (o el servicio, si no tiene mascota) y
+ * dice qué falta; con todos, termina la visita.
  */
 function Terminar({ parada, clase, onTerminar }: { parada: ParadaRead; clase: string; onTerminar: () => void }) {
   const tipos = useTiposServicio()
@@ -147,11 +148,15 @@ function Terminar({ parada, clase, onTerminar }: { parada: ParadaRead; clase: st
   }
   return (
     <>
-      <Link className={clase} to={`/servicios/${parada.servicio_id}`}>
+      <Link
+        className={clase}
+        to={parada.mascota ? `/clinica/mascotas/${parada.mascota.id}?servicio=${parada.servicio_id}` : `/servicios/${parada.servicio_id}`}
+      >
         Registrar la atención
       </Link>
       <p className="estacion-pendiente">
         Antes de terminar la visita falta registrar: {faltan.map((p) => p.nombre).join(', ')}.
+        {parada.mascota && ' Se registran al firmar la consulta.'}
       </p>
     </>
   )
