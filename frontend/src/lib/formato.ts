@@ -54,6 +54,17 @@ export function hora(valor: string | null | undefined): string {
   return valor ? HORA.format(new Date(valor)) : '—'
 }
 
+/** Edad a partir de la fecha de nacimiento: en meses hasta el año, después en años. */
+export function edad(nacimiento: string | null | undefined, hoy = new Date()): string | null {
+  if (!nacimiento) return null
+  const [a, m, d] = nacimiento.slice(0, 10).split('-').map(Number)
+  let meses = (hoy.getFullYear() - a) * 12 + (hoy.getMonth() + 1 - m) - (hoy.getDate() < d ? 1 : 0)
+  if (meses < 0) meses = 0
+  if (meses < 12) return `${meses} ${meses === 1 ? 'mes' : 'meses'}`
+  const anios = Math.floor(meses / 12)
+  return `${anios} ${anios === 1 ? 'año' : 'años'}`
+}
+
 /** Hoy en Colombia como `YYYY-MM-DD`, para filtros y valores por defecto. */
 export function hoyISO(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(new Date())

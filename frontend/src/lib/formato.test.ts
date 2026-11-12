@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { mensajeError } from './errores'
 import { estado } from './estados'
-import { fecha, fechaCorta, fechaHora, moneda, peso, porcentaje } from './formato'
+import { edad, fecha, fechaCorta, fechaHora, moneda, peso, porcentaje } from './formato'
 
 describe('formato colombiano', () => {
   it('muestra pesos sin decimales y con punto de miles', () => {
@@ -22,6 +22,16 @@ describe('formato colombiano', () => {
   it('muestra los instantes en hora de Colombia', () => {
     // 14:30 UTC son las 9:30 de la mañana en Bogotá.
     expect(fechaHora('2026-10-24T14:30:00Z')).toMatch(/24\/10\/2026.*9:30/)
+  })
+
+  it('da la edad en meses hasta el año y después en años', () => {
+    const hoy = new Date(2026, 10, 12)
+    expect(edad('2020-09-09', hoy)).toBe('6 años')
+    expect(edad('2025-11-12', hoy)).toBe('1 año')
+    expect(edad('2026-03-20', hoy)).toBe('7 meses')
+    expect(edad('2026-10-01', hoy)).toBe('1 mes')
+    expect(edad('2027-01-01', hoy)).toBe('0 meses')
+    expect(edad(null)).toBeNull()
   })
 
   it('redondea los porcentajes', () => {

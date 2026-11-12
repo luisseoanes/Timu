@@ -1,20 +1,9 @@
 import { Insignia } from '@/components/Distintivo'
 import { useEspecies } from '@/features/catalogos'
-import { fecha, moneda } from '@/lib/formato'
+import { edad, fecha, moneda } from '@/lib/formato'
 import type { FamiliaRead, PlanDeFamiliaRead } from '@/types'
 
 import { useEstadoCuenta } from './api'
-
-/** Edad legible a partir de la fecha de nacimiento: «3 años», «7 meses». */
-function edad(nacimiento: string | null | undefined, hoy = new Date()): string | null {
-  if (!nacimiento) return null
-  const [a, m, d] = nacimiento.slice(0, 10).split('-').map(Number)
-  let meses = (hoy.getFullYear() - a) * 12 + (hoy.getMonth() + 1 - m) - (hoy.getDate() < d ? 1 : 0)
-  if (meses < 0) meses = 0
-  if (meses < 12) return `${meses} ${meses === 1 ? 'mes' : 'meses'}`
-  const anios = Math.floor(meses / 12)
-  return `${anios} ${anios === 1 ? 'año' : 'años'}`
-}
 
 /** Los peludos de la familia con su plan, siempre a la vista bajo la línea (contrato del panel). */
 export function ResumenMascotas({ familia, planes }: { familia: FamiliaRead; planes: PlanDeFamiliaRead[] }) {
