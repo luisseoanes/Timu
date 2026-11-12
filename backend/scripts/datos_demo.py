@@ -173,9 +173,28 @@ EQUIPO = [
 CLAVE_EQUIPO = "demo12345"
 
 
+# La API limita las peticiones por minuto y por usuario, y datos_demo las hace casi todas como el
+# administrador: en un stack recien levantado, como el del CI, llega a superar el cupo.
+REINTENTOS_LIMITE = 3
+
+
+class _EsperaAlLimite(httpx.HTTPTransport):
+    """Ante un 429 espera lo que diga Retry-After y repite la peticion, en vez de abortar."""
+
+    def handle_request(self, request: httpx.Request) -> httpx.Response:
+        for _ in range(REINTENTOS_LIMITE):
+            resp = super().handle_request(request)
+            if resp.status_code != 429:
+                return resp
+            resp.read()
+            resp.close()
+            time.sleep(min(float(resp.headers.get("Retry-After", 5)), 60) + 0.5)
+        return super().handle_request(request)
+
+
 class Cliente:
     def __init__(self, email: str = "admin@timu.co", clave: str = "cambiar123") -> None:
-        self.http = httpx.Client(base_url=API, timeout=30)
+        self.http = httpx.Client(base_url=API, timeout=30, transport=_EsperaAlLimite())
         resp = self.http.post("/auth/login", data={"username": email, "password": clave})
         resp.raise_for_status()
 
@@ -215,8 +234,10 @@ VISITAS = [
     (3, "Vomito desde ayer; llevar suero"),
 ]
 DIAS_DE_RUTA = 7
-# Segundos: el outbox se drena por turnos y la optimizacion busca un par de segundos.
-ESPERA_PLANIFICACION = 90
+# El outbox se drena una vez por minuto y la optimizacion busca un par de segundos: se pregunta
+# cada INTERVALO_PLANIFICACION segundos, hasta dos minutos, sin gastar el cupo de la API.
+ESPERA_PLANIFICACION = 40
+INTERVALO_PLANIFICACION = 3
 
 
 def poner_al_dia(c: Cliente, familia: dict[str, Any]) -> None:
@@ -313,7 +334,7 @@ def ruta_de_prueba(c: Cliente, familias: list[dict[str, Any]], hoy: date) -> Non
     for _ in range(ESPERA_PLANIFICACION):
         if plan is None or plan["estado"] != "pendiente":
             break
-        time.sleep(1)
+        time.sleep(INTERVALO_PLANIFICACION)
         plan = c.get(f"/rutas/planificaciones/{plan['id']}")
     if plan is None or plan["estado"] != "lista":
         print(f"  ! la planificacion no termino: {plan and plan.get('error')}")
