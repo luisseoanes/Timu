@@ -8,7 +8,7 @@ usa en el código. Las clases viven en
 este documento, no dentro de la vista.
 
 > En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)): la estructura del panel,
-> Familias y Rutas ya usan la línea nueva; el resto de pantallas usa estas mismas piezas con la
+> Familias, Rutas y Clínica ya usan la línea nueva; el resto de pantallas usa estas mismas piezas con la
 > composición anterior hasta su unidad.
 
 ## Botones — `.btn`
@@ -36,7 +36,8 @@ de posición. La ayuda va en `.campo-ayuda`, enlazada con `aria-describedby`. Un
 estira si su vecino de fila es más alto (`align-content: start`).
 
 - `.input` — caja con borde, radio de campo y foco en azul. Es el estándar, también para
-  `select` y `textarea`. En pantallas táctiles, 44 px de alto y letra de 16 px (si no, iOS
+  `select`, `textarea` y el campo de archivo, cuyo botón toma la forma del secundario
+  (`::file-selector-button`). En pantallas táctiles, 44 px de alto y letra de 16 px (si no, iOS
   amplía la página al enfocar).
 - `.buscador` — la misma forma que `.input`, con lupa y campo transparente. En la barra del
   panel y en los filtros de listado.
@@ -135,6 +136,16 @@ los enlaces de navegación y WhatsApp salen de `ruta.ts`, sin React, con sus pru
 `LineaRutaMini` es la miniatura de una fila del listado de rutas, con su resumen en
 `aria-label`. La línea es marina (`--ruta-recorrida` y `--ruta-pendiente`), nunca del color de un
 plan.
+
+## Consulta guiada — `ConsultaGuiada`
+
+`features/clinica/ConsultaGuiada.tsx`. La consulta clínica como una línea de cinco estaciones
+(`ol` con `aria-label="Apartados de la consulta"`, cada estación un botón con su estado en el
+nombre accesible y `aria-current="step"` en la actual), un apartado por pantalla con su título
+como etiqueta del campo y su ayuda como descripción, y el pie con «Anterior» y «Siguiente:
+<apartado>» o «Firmar consulta». La lógica (qué falta para firmar, qué cambió, dónde abrir, la
+consulta anterior de referencia) está en `consulta.ts`, sin React, con sus pruebas. La lectura
+de una consulta firmada y sus adjuntos están en `LecturaConsulta.tsx`.
 
 ## Estados de carga, error y vacío — `Consulta`
 

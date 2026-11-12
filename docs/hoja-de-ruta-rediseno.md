@@ -27,10 +27,10 @@ actualiza aquí, igual que en el backlog.
 | --- | ---: | ---: | ---: | ---: |
 | R0 — Preparación | 4 | 4 | 0 | 0 |
 | R1 — Fundaciones | 7 | 5 | 2 | 0 |
-| R2 — Panel del equipo | 10 | 4 | 1 | 5 |
+| R2 — Panel del equipo | 10 | 5 | 1 | 4 |
 | R3 — Familias, aliada y páginas públicas | 6 | 0 | 0 | 6 |
 | R4 — Cierre | 4 | 0 | 0 | 4 |
-| **Total** | **31** | **13** | **3** | **15** |
+| **Total** | **31** | **14** | **3** | **14** |
 
 ## Alcance medido
 
@@ -127,7 +127,7 @@ el móvil.
 | `R2-PAN-04` | Inicio | Sorteo de superficie para el tablero de inicio. Indicadores con su evolución, y series de gráfico según el manual. | Pendiente |
 | `R2-PAN-05` | Servicios y tareas | Listado de servicios, detalle (pensado primero para el móvil), nuevo servicio y tareas. | Pendiente |
 | `R2-PAN-06` | Rutas | Sorteo de superficie. Pensada primero para el móvil: la ruta del día de un médico en la calle. | Hecho (2026-11-12): sorteo de superficie, elegida «La línea del día» (contrato en `.impeccable/surfaces/frontend-src-features-rutas-rutaspage-tsx.md`, boceto en `docs/rediseno/boceto-rutas-linea-del-dia.html`). El médico abre en su ruta del día como una línea vertical: hechas plegadas, la que toca abierta con dirección, familia, mascota, franja y su acción, y las que faltan debajo. Quien coordina ve las rutas del día en la plantilla de listado con ficha (generalizada desde Familias a `.con-ficha`), lo que falta por rutear, y planea, agrega y cancela. La API da en cada parada a quién se atiende y dónde. También: «Registrar la atención» cuando al servicio le faltan pasos obligatorios, la llegada ya no deja dos paradas abiertas (fallo del backend), y `datos_demo` deja una ruta de la médica que recorren el barrido y dos recorridos nuevos. Cerrado con el veredicto `ship` del revisor final tras cuatro pasadas. |
-| `R2-PAN-07` | Clínica | Sorteo de superficie para la entrada clínica. Listado, historia de la mascota y registro de la atención en casa de la familia, desde el celular. | Pendiente |
+| `R2-PAN-07` | Clínica | Sorteo de superficie para la entrada clínica. Listado, historia de la mascota y registro de la atención en casa de la familia, desde el celular. | Hecho (2026-11-12): sorteo de superficie, elegida «Pasos guiados» (contrato en `.impeccable/surfaces/frontend-src-features-clinica-clinicapage-tsx.md`, boceto en `docs/rediseno/boceto-clinica-pasos-guiados.html`). La consulta se recorre como una línea de cinco estaciones, un apartado por pantalla, con lo anotado en la última consulta como referencia; el borrador se guarda al cambiar de apartado y la firma dice qué falta. **La consulta es el registro de la visita**, decidido con el usuario: al firmar la de una visita en atención se registran los pasos del servicio y la visita se puede terminar en Rutas, cuyo «Registrar la atención» abre esa consulta. El médico abre Clínica en su trabajo pendiente (su ruta de hoy y sus consultas sin firmar); la historia usa la plantilla de listado con ficha, y la cola virtual, las respuestas y las plantillas pasan a los patrones del sistema. También: la identidad de la mascota en la consulta en el celular, el halo de la estación actual visible en las tres líneas (Familias, Rutas y Clínica) y el campo de archivo con la forma del botón secundario. Cerrado con el veredicto `ship` del revisor final tras tres pasadas. |
 | `R2-PAN-08` | Cartera y preventivos | Cuotas, mora, renovaciones, calendario, autorizaciones y carnet. **El carnet en PDF lleva la marca**, como el carnet impreso de TIMU: el logo, los colores, GeosansLight en el título e Inter en el resto, con fuentes que no estropeen las tildes, y el peso de cada desparasitación (`F2-PRE-07`, pedido por el usuario el 2026-11-11). Hecho por adelantado el 2026-11-11, con `app/core/marca_pdf.py` para el resto de documentos. **Incluye, decidido con el usuario (2026-11-11):** agendar un preventivo desde su estación en la línea de la ficha de Familias, como ya se registra el pago de una cuota. La acción se inyecta desde fuera (`App.tsx` o el espacio de entrada) para que `familias` no importe `preventivos`. Hasta entonces, tocar un preventivo solo lleva a la pestaña de mascotas. | Parcial: el carnet en PDF con la marca, el peso de cada desparasitación y quién aplicó (adelantado el 2026-11-11). Falta el resto de la unidad y agendar un preventivo desde su estación. |
 | `R2-PAN-09` | Comercial y campañas | Bandeja de interesados y conversaciones; segmentos, envíos y encuestas. `CampanasPage` (931 líneas) se divide si su tamaño lo exige. | Pendiente |
 | `R2-PAN-10` | Aliadas y administración | Convenios, remisiones y liquidación; usuarios, planes, reglas, catálogos, IA y reportes. | Pendiente |
@@ -187,6 +187,14 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 - **Sugerencias del revisor, opcionales**: etiquetar la hora de «Por rutear» («programado 4:19 a.
   m.»), centrar la columna del médico en escritorio y capturar una ruta con una parada omitida.
   Se deciden con el usuario antes de `R4-CIE-02`.
+
+### Lo que quedó de Clínica tras su cierre
+
+- **Sugerencias del revisor, opcionales**: limitar el área de texto de la consulta a unos 75
+  caracteres en escritorio, unificar la cabecera del borrador y la de la lectura, alinear a la
+  izquierda los valores largos de la tabla apilable en el celular (es del componente común) y
+  sembrar una plantilla de consulta en `datos_demo`. Se deciden con el usuario antes de
+  `R4-CIE-02`.
 
 ### Orden de lo que sigue
 

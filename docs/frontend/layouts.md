@@ -6,8 +6,8 @@ cada decisión visual está en [`DESIGN.md`](../../DESIGN.md) y en el contrato d
 superficie (`.impeccable/surfaces/`).
 
 > En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)). **Rediseñado:** la estructura
-> del panel, el listado con ficha (Familias y Rutas), la ruta propia del médico, las ventanas y
-> la espera de sesión. **Aún con la
+> del panel, el listado con ficha (Familias, Rutas y Clínica), la ruta propia del médico, la
+> consulta guiada, las ventanas y la espera de sesión. **Aún con la
 > composición anterior** (aunque ya con la paleta, la tipografía y el logo): el ingreso, el
 > inicio, el detalle de un registro, el portal y las páginas públicas. Cada uno se rehace en
 > su unidad.
@@ -41,7 +41,7 @@ superficie (`.impeccable/surfaces/`).
   perfil (`PRINCIPALES`: el médico en ruta lleva Rutas, Servicios, Clínica y Familias) y
   «Más» para el resto.
 
-## Listado con ficha — `.con-ficha` (Familias, Rutas)
+## Listado con ficha — `.con-ficha` (Familias, Rutas, Clínica)
 
 El patrón de un módulo cuyo trabajo es abrir un registro y actuar sobre él.
 
@@ -70,8 +70,34 @@ El patrón de un módulo cuyo trabajo es abrir un registro y actuar sobre él.
 En Familias la acción de crear es «Nueva familia» y la ficha lleva pestañas. En Rutas el listado
 son las rutas del día, cada una con su línea en miniatura, y debajo lo que falta por rutear; la
 ficha es la ruta abierta con su línea (`LineaRuta`). En los dos, el registro abierto vive en la
-URL (`/familias/:id`, `/rutas?ruta=`), igual que los filtros. Clínica y los demás módulos que
-abren un registro deberían partir de aquí.
+URL (`/familias/:id`, `/rutas?ruta=`), igual que los filtros. En Clínica el listado es la
+historia de la mascota (su ficha y sus consultas) y la ficha, la consulta abierta: guiada si es
+un borrador propio, leída si no (`/clinica/mascotas/:id`, `?nueva=1`, `?servicio=` y
+`/clinica/historias/:id`). Los demás módulos que abren un registro deberían partir de aquí.
+
+## La consulta guiada — `.consulta` (Clínica)
+
+```
+┌─ consulta (sobre el lienzo) ──────────────┐
+│ ← Rocky · Jorge Ramirez      canino · 32 kg│  identidad (solo < 900 px)
+│   Consulta nueva  De la visita de hoy      │
+│ ┌───────────────────────────────────────┐ │
+│ │ ●━━━━◉────○────○────○                 │ │  la guía: cinco estaciones
+│ │ Motivo Anam. Examen Diagn. Plan        │ │
+│ └───────────────────────────────────────┘ │
+│ ┌───────────────────────────────────────┐ │
+│ │ Examen físico          (24 px)        │ │  el apartado actual
+│ │ Lo que encuentras al examinar a Rocky │ │
+│ │ [                                   ] │ │
+│ │ ─ EN LA ÚLTIMA CONSULTA · 12 ago      │ │
+│ └───────────────────────────────────────┘ │
+│ [Anterior] [   Siguiente: diagnóstico   ] │  al pulgar; en escritorio, a la derecha
+│ ┌ Adjuntos ─────────────────────────────┐ │
+└───────────────────────────────────────────┘
+```
+
+La guía y el apartado son dos paneles sobre el lienzo, no una ficha blanca. Por debajo de
+900 px la cabecera dice a quién se atiende, porque la historia de la izquierda no está.
 
 ## La ruta propia — `.rutas-propia` (Rutas)
 

@@ -226,7 +226,8 @@ components:
 
 Este fichero describe lo construido, no lo planeado. La primera superficie del sistema es la
 estructura del panel del equipo (`AppLayout`) y Familias (listado, detalle, pestañas y
-ventanas); la segunda, Rutas (la ruta del día del médico y su coordinación). El resto de módulos del panel, el portal y las páginas públicas todavía usan la
+ventanas); después, Rutas (la ruta del día del médico y su coordinación) y Clínica (la historia de
+cada mascota y la consulta guiada). El resto de módulos del panel, el portal y las páginas públicas todavía usan la
 maqueta anterior y adoptan este sistema en sus unidades de
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md): lo que se ve hoy en ellos no
 es el sistema. El color, la tipografía, el logo y la voz los fija el
@@ -383,7 +384,7 @@ lema de la marca y el buscador encoge a 220 px. Por debajo de 900 px la navegaci
 barra inferior fija (56 px, al alcance del pulgar) con los cuatro módulos que más usa cada
 perfil y «Más» con el resto; el contenido reserva su alto más el área segura.
 
-**Listado y ficha (`.con-ficha`: Familias, Rutas).** Dos columnas: listado de 320–420 px
+**Listado y ficha (`.con-ficha`: Familias, Rutas, Clínica).** Dos columnas: listado de 320–420 px
 (`.listado`) y el registro abierto en el resto (`.ficha-abierta`), separadas 20 px. Por debajo
 de 900 px se ve uno u otro: el listado sin registro abierto, la ficha (con botón de volver) con
 él.
@@ -432,7 +433,7 @@ una ventana quede por encima de ella.
 - **Subrayado de módulo** (`box-shadow: inset 0 -4px 0 var(--indicador-sobre-marca)`): módulo
   activo en la barra marina; en la barra inferior, `inset 0 3px 0 var(--indicador-seleccion)`
   arriba.
-- **Halo de la próxima** (`box-shadow: 0 0 0 4px var(--superficie-seleccion)`): la estación
+- **Halo de la próxima** (`box-shadow: 0 0 0 3px var(--indicador-seleccion)`): la estación
   próxima de la línea.
 
 ### Named Rules
@@ -555,7 +556,7 @@ de metro: espaciado esquemático, no proporcional al tiempo.
 - **Línea:** 8 px, pastilla, del color del plan (`data-color` del catálogo) o gris
   (`plan-ninguno`) sin plan.
 - **Estaciones:** botones circulares de 24 px con borde de 4 px. Hecha: llena del color de la
-  línea. Próxima: anillo marino con halo verde tenue de 4 px. Vencida: roja con el icono de
+  línea. Próxima: anillo marino con halo verde hondo de 3 px (3:1 sobre blanco). Vencida: roja con el icono de
   alerta en blanco. Programada: contorno del color de la línea sobre blanco. Los eventos del
   mismo día comparten estación.
 - **Rótulos:** título en 13 px (rojo de error si está vencida) y fecha en 12 px suave. Siempre
@@ -579,7 +580,7 @@ vertical siempre: es una lista que se recorre de arriba abajo.
 - **Línea:** 8 px marina, nunca del color de un plan (una ruta no es un plan). Recorrida en
   `ruta-recorrida` hasta la parada que toca; por recorrer, en `ruta-pendiente`.
 - **Estaciones:** 24 px con borde de 4 px. Hecha: llena de marino. La que toca: anillo marino con
-  halo verde tenue de 4 px. Pendiente: contorno gris.
+  halo verde hondo de 3 px. Pendiente: contorno gris.
 - **Estados:** los del camino normal (en curso, en camino, en sitio, próxima) van en tono
   informativo; la alerta queda para lo que la merece, como lo que falta por rutear.
 - **La que toca, abierta:** hora (o «Llegó …») y franja acordada, estado, la dirección en Inter
@@ -604,6 +605,28 @@ entero. Leído a pleno sol, «100-» arriba y «12» abajo parecen dos cifras.
 **La regla de la acción de quien recorre.** La acción de estado de una parada es verde solo para
 quien hace la ruta. Quien coordina también puede avanzarla, pero como secundaria: en su vista la
 acción principal es planear.
+
+### La guía de la consulta (componente propio)
+`ConsultaGuiada` recorre la consulta clínica como una línea de cinco estaciones (motivo,
+anamnesis, examen físico, diagnóstico, tratamiento): un apartado por pantalla.
+- **Guía:** horizontal, en un panel blanco. Cinco columnas iguales para que lo recorrido (marino)
+  llegue justo a la estación actual; lo que falta, en `ruta-pendiente`. Cada estación es un botón
+  de 48 px de alto con su punto de 24 px y su nombre corto en 12 px («Plan» por el tratamiento:
+  el título completo no cabe a 390 px). Escrita: llena. Actual: anillo marino con halo verde y
+  `aria-current="step"`. Lo que falta para firmar: anillo y nombre en rojo de error.
+- **Apartado:** título en GeosansLight de 24 px, la ayuda de 13 px en 600 como descripción del
+  campo, un área de texto de al menos 180 px y, bajo un hilo, «En la última consulta» con su
+  fecha y lo que se anotó. En el primero, la plantilla y la modalidad antes de crearla.
+- **Pie:** «Anterior» (secundario) y «Siguiente: <apartado>» o «Firmar consulta» (verde); en el
+  celular, de 48 px y a todo el ancho; desde 900 px, a la derecha y a su tamaño.
+- **Guardado:** el borrador nace al dejar el motivo (la historia lo exige) y se guarda al cambiar
+  de apartado, solo con lo que cambió. Firmar dice qué falta y lleva a su apartado antes de
+  pedirlo al servidor. La consulta de una visita exige además el tratamiento.
+- **Identidad:** por debajo de 900 px, donde la historia de la izquierda no está, la cabecera de
+  la consulta (guiada o leída) dice la mascota, su familia, la especie y el peso.
+- **Lectura:** la consulta firmada se lee como una ficha en columna (etiqueta y texto por
+  apartado), con «Emitir fórmula» y «Corregir»; el título va a 24 px, no a 34: no es el nombre
+  de nada.
 
 ## Do's and Don'ts
 
