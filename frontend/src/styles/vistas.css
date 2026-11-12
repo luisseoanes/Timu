@@ -408,41 +408,41 @@
 /* ================= Familias (R2-PAN-02) =================
    Listado a la izquierda y familia abierta a la derecha (contrato «la línea de metro»). En
    pantallas estrechas se ve uno u otro: el listado sin familia abierta, la ficha con ella. */
-.familias { display: grid; grid-template-columns: minmax(320px, 420px) minmax(0, 1fr); gap: var(--e5); align-items: start; }
-.familias > * { min-width: 0; }
+.con-ficha { display: grid; grid-template-columns: minmax(320px, 420px) minmax(0, 1fr); gap: var(--e5); align-items: start; }
+.con-ficha > * { min-width: 0; }
 
-.familias-lista { display: grid; gap: var(--e3); padding: var(--e4); background: var(--superficie); border-radius: var(--r-panel); }
-.familias-lista-cabeza { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); }
-.familias-lista-cabeza h2 { display: flex; align-items: baseline; gap: var(--e2); font-family: var(--fuente); font-weight: 600; font-size: var(--t-seccion); }
-.familias-lista .filtros > .buscador { flex: 1 1 200px; min-width: 0; }
-.familias-lista .filtros > .input { flex: 0 1 auto; width: auto; }
+.listado { display: grid; gap: var(--e3); padding: var(--e4); background: var(--superficie); border-radius: var(--r-panel); }
+.listado-cabeza { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); }
+.listado-cabeza h2 { display: flex; align-items: baseline; gap: var(--e2); font-family: var(--fuente); font-weight: 600; font-size: var(--t-seccion); }
+.listado .filtros > .buscador { flex: 1 1 200px; min-width: 0; }
+.listado .filtros > .input { flex: 0 1 auto; width: auto; }
 
-.familias-filas { list-style: none; margin: 0 calc(var(--e4) * -1); padding: 0; }
-.familia-fila {
+.listado-filas { list-style: none; margin: 0 calc(var(--e4) * -1); padding: 0; }
+.listado-fila {
   position: relative;
   display: grid; gap: 6px;
   padding: var(--e3) var(--e4);
   border-top: 1px solid var(--borde);
   transition: background-color var(--duracion) var(--curva);
 }
-.familia-fila:hover { background: var(--superficie-hundida); }
-.familia-fila[data-seleccionada="true"] { background: var(--superficie-seleccion); box-shadow: inset 0 0 0 1px var(--indicador-seleccion); }
-.familia-fila:has(.familia-fila-enlace:focus-visible) { outline: 2px solid var(--foco); outline-offset: -2px; }
-.familia-fila-cabeza { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); }
-.familia-fila-enlace { color: var(--texto-titulo); font-weight: 600; }
-.familia-fila-enlace:hover { color: var(--texto-titulo); }
-.familia-fila-enlace:focus-visible { outline: none; }
+.listado-fila:hover { background: var(--superficie-hundida); }
+.listado-fila[data-seleccionada="true"] { background: var(--superficie-seleccion); box-shadow: inset 0 0 0 1px var(--indicador-seleccion); }
+.listado-fila:has(.listado-fila-enlace:focus-visible) { outline: 2px solid var(--foco); outline-offset: -2px; }
+.listado-fila-cabeza { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); }
+.listado-fila-enlace { color: var(--texto-titulo); font-weight: 600; }
+.listado-fila-enlace:hover { color: var(--texto-titulo); }
+.listado-fila-enlace:focus-visible { outline: none; }
 /* El enlace es solo el nombre; esto lo extiende a toda la fila. */
-.familia-fila-enlace::after { content: ""; position: absolute; inset: 0; }
+.listado-fila-enlace::after { content: ""; position: absolute; inset: 0; }
 .familia-fila-plan { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e1) var(--e3); font-size: var(--t-menor); color: var(--texto); }
 .familia-fila-marcador { display: inline-flex; align-items: center; gap: 6px; }
 /* Lo vencido en texto junto a la miniatura: el punto rojo no basta (WCAG 1.4.1). */
 .familia-fila-vencidas { display: inline-flex; align-items: center; gap: var(--e1); font-size: var(--t-menor); font-weight: 600; color: var(--texto-error); }
 
-.familias-detalle { display: grid; gap: var(--e5); padding: var(--e6); background: var(--superficie); border-radius: var(--r-panel); }
-.familias-detalle > * { min-width: 0; }
-.familias-sin-seleccion { min-height: 240px; place-items: center; text-align: center; color: var(--texto-suave); }
-.familias-sin-seleccion p { max-width: 40ch; }
+.ficha-abierta { display: grid; gap: var(--e5); padding: var(--e6); background: var(--superficie); border-radius: var(--r-panel); }
+.ficha-abierta > * { min-width: 0; }
+.ficha-vacia { min-height: 240px; place-items: center; text-align: center; color: var(--texto-suave); }
+.ficha-vacia p { max-width: 40ch; }
 
 .ficha-cabeza { display: grid; gap: var(--e3); justify-items: start; }
 .ficha-cabeza h2 { font-size: var(--t-display); letter-spacing: -0.01em; overflow-wrap: anywhere; }
@@ -458,9 +458,9 @@
 .ficha-linea { padding-block: var(--e4); border-block: 1px solid var(--borde); }
 /* Las secciones de las pestañas son tarjetas también fuera de la ficha; dentro de ella no:
    blanco sobre blanco solo añadía sangría. Se separan por espacio. */
-.familias-detalle .tarjeta { padding: 0; background: none; border-radius: 0; box-shadow: none; }
-.familias-detalle [role="tabpanel"] .pila { gap: var(--e7); }
-.familias-detalle [role="tabpanel"] .tarjeta + .tarjeta { margin-top: var(--e7); }
+.ficha-abierta .tarjeta { padding: 0; background: none; border-radius: 0; box-shadow: none; }
+.ficha-abierta [role="tabpanel"] .pila { gap: var(--e7); }
+.ficha-abierta [role="tabpanel"] .tarjeta + .tarjeta { margin-top: var(--e7); }
 
 /* Mascotas y cartera siempre a la vista bajo la línea; el detalle va en las pestañas. */
 .ficha-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: var(--e5); }
@@ -540,11 +540,11 @@
 .linea-mini-hoy { position: relative; width: 2px; height: 12px; background: var(--texto-titulo); }
 
 @media (max-width: 899px) {
-  .familias { grid-template-columns: minmax(0, 1fr); }
-  .familias[data-abierta="true"] .familias-lista { display: none; }
-  .familias:not([data-abierta]) .familias-sin-seleccion { display: none; }
+  .con-ficha { grid-template-columns: minmax(0, 1fr); }
+  .con-ficha[data-abierta="true"] .listado { display: none; }
+  .con-ficha:not([data-abierta]) .ficha-vacia { display: none; }
   .ficha-volver { display: inline-flex; }
-  .familias-detalle { padding: var(--e4); }
+  .ficha-abierta { padding: var(--e4); }
 }
 
 /* Vertical cuando cada parada no tiene sitio para su rótulo (LineaFamilia mide el ancho real

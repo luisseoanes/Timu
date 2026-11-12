@@ -35,7 +35,7 @@ const SECCION: Record<EstacionRead['tipo'], string> = {
 export function FamiliaDetallePage() {
   const { id = '' } = useParams()
   return (
-    <div className="familias" data-abierta="true">
+    <div className="con-ficha" data-abierta="true">
       <FamiliasLista seleccionada={id} />
       {/* La clave reinicia la ficha al cambiar de familia: pestaña y línea plegada vuelven al principio. */}
       <FichaFamilia key={id} id={id} />
@@ -47,7 +47,7 @@ function FichaFamilia({ id }: { id: string }) {
   const familia = useFamilia(id)
   const linea = useLinea(id)
   return (
-    <section className="familias-detalle" aria-label="Familia abierta">
+    <section className="ficha-abierta" aria-label="Familia abierta">
       <Consulta consulta={familia} cargando="Cargando la familia…" error="No fue posible cargar la familia.">
         {(f) => <Ficha familia={f} linea={linea.data} lineaCargando={linea.isPending} lineaError={linea.isError} />}
       </Consulta>

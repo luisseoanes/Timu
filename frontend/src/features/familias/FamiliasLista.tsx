@@ -49,8 +49,8 @@ export function FamiliasLista({ seleccionada }: { seleccionada?: string }) {
   }
 
   return (
-    <section className="familias-lista" aria-labelledby="familias-titulo">
-      <div className="familias-lista-cabeza">
+    <section className="listado" aria-labelledby="familias-titulo">
+      <div className="listado-cabeza">
         <h2 id="familias-titulo">
           Familias <span className="apagado numero">{familias.data?.total ?? 0}</span>
         </h2>
@@ -99,18 +99,18 @@ export function FamiliasLista({ seleccionada }: { seleccionada?: string }) {
       >
         {(datos) => (
           <>
-            <ul className="familias-filas">
+            <ul className="listado-filas">
               {datos.items.map((f) => {
                 const linea = porFamilia.get(f.id)
                 const planes = linea?.planes ?? []
                 const activas = f.mascotas?.filter((m) => m.activa).map((m) => m.nombre) ?? []
                 const vencidas = linea?.estaciones.filter((e) => e.estado === 'vencida').length ?? 0
                 return (
-                  <li key={f.id} className="familia-fila" data-seleccionada={f.id === seleccionada}>
-                    <span className="familia-fila-cabeza">
+                  <li key={f.id} className="listado-fila" data-seleccionada={f.id === seleccionada}>
+                    <span className="listado-fila-cabeza">
                       {/* El enlace es solo el nombre; ::after lo extiende a toda la fila. */}
                       <Link
-                        className="familia-fila-enlace"
+                        className="listado-fila-enlace"
                         to={`/familias/${f.id}${sufijo}`}
                         aria-current={f.id === seleccionada ? 'page' : undefined}
                       >
