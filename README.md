@@ -16,6 +16,7 @@ verificación de carnets.
 |---|---|
 | Backend | Python 3.12 + FastAPI (async, OpenAPI autogenerado) |
 | Frontend | React 18 + TypeScript + Vite + React Query |
+| Interfaz | CSS propio sobre tokens ([DESIGN.md](DESIGN.md)), Radix para lo interactivo, Inter y GeosansLight servidas desde el proyecto |
 | Base de datos | PostgreSQL 18 (RLS, triggers de integridad y auditoría) + PgBouncer + SQLAlchemy 2 + Alembic |
 | Tareas programadas | Celery + Redis (`worker` ejecuta, `beat` programa) |
 | Adjuntos | S3 compatible (SeaweedFS en desarrollo), siempre con URL firmada |
@@ -117,7 +118,8 @@ del umbral.
 backend/
   app/
     core/          configuración, base de datos y permisos de la base (RLS), transiciones,
-                   auditoría, seguridad, alcance, outbox, límites, salud
+                   auditoría, seguridad, alcance, outbox, límites, salud, marca de los PDF
+    recursos/marca/  logo y fuentes de los PDF
     modules/<dominio>/   models.py · schemas.py · service.py · router.py
     api/v1/        router agregador y webhooks (WhatsApp, pagos)
     integrations/  WhatsApp, Wompi, correo, Maps, OR-Tools, S3, Claude
@@ -135,6 +137,7 @@ frontend/
     lib/           errores, permisos, formato, estados y descargas
     routes/        ProtectedRoute (guard por perfil)
     styles/        tokens, base, componentes y vistas del sistema visual
+    assets/        logo en SVG y GeosansLight (con la receta para regenerarlos)
     types/         api.ts, generado desde el OpenAPI del backend
     test/          MSW, utilidades y guardas de la suite
   e2e/             Playwright con la API interceptada
@@ -150,7 +153,7 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Cómo se escriben los commits, cómo se trabaja sobre `main` y cómo salen las versiones |
 | [docs/documento-requerimientos-funcionales.md](docs/documento-requerimientos-funcionales.md) | Lo que TIMU pidió, transcrito literal: los requisitos que citan el código y el backlog (6.10, Sección 8…) |
 | [docs/propuesta-timu-puntos-15-19.md](docs/propuesta-timu-puntos-15-19.md) | Contrato funcional: la propuesta que responde a ese documento (secciones A a E) |
-| [docs/backlog.md](docs/backlog.md) | Backlog del backend: 105 unidades con criterio de aceptación y estado, por fase |
+| [docs/backlog.md](docs/backlog.md) | Backlog funcional: 106 unidades con criterio de aceptación y estado, por fase |
 | [docs/pendientes-externos.md](docs/pendientes-externos.md) | Lo que falta fuera del código para cerrar un requisito: sandbox de Wompi, plantillas de Meta, decisiones de TIMU |
 | [docs/estandares-calidad.md](docs/estandares-calidad.md) | Cada estándar de calidad pedido (Secciones 3 y 4) traducido a reglas, con la prueba que las hace cumplir y la deuda que queda |
 | [docs/integraciones.md](docs/integraciones.md) | Cada servicio externo: qué hace, variables, dónde vive en el código y estado de validación |
@@ -159,6 +162,10 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [docs/indicadores.md](docs/indicadores.md) | Definición de cada indicador del dashboard y de los exportables |
 | [docs/plan-persistencia.md](docs/plan-persistencia.md) | Registro (cerrado): por qué la base garantiza integridad y permisos, decisiones y verificación de cada fase |
 | [docs/deuda-ciclos-dominios.md](docs/deuda-ciclos-dominios.md) | Registro (cerrado): cómo se eliminaron los ciclos entre dominios del backend |
-| [docs/frontend/](docs/frontend/) | Sistema visual del panel: tokens, componentes, plantillas y convenciones |
+| [DESIGN.md](DESIGN.md) | Sistema de diseño de la interfaz, escrito desde lo construido: roles de color, tipografía, medidas, componentes y sus reglas |
+| [PRODUCT.md](PRODUCT.md) | Contexto de producto para diseñar: quién usa cada espacio, desde qué dispositivo y para qué |
+| [docs/manual-de-marca.md](docs/manual-de-marca.md) | Identidad de TIMU (color, tipografía, logo y voz) y su ampliación para la plataforma: roles, contrastes, reglas de uso |
+| [docs/hoja-de-ruta-rediseno.md](docs/hoja-de-ruta-rediseno.md) | Rediseño de la interfaz con la marca: unidades, estado, decisiones y siguiente paso |
+| [docs/frontend/](docs/frontend/) | Cómo se construye el panel: componentes, plantillas de página y convenciones |
 | [infra/respaldos/README.md](infra/respaldos/README.md) | Respaldo y restauración de la base |
 | `CLAUDE.md`, `backend/CLAUDE.md`, `frontend/CLAUDE.md` | Reglas de arquitectura para Claude Code; también sirven de guía técnica |
