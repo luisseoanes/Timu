@@ -467,3 +467,20 @@ async def test_la_consulta_no_se_enlaza_al_servicio_de_otra_mascota(client, db, 
     )
     assert resp.status_code == 422
     assert resp.json()["detail"] == "El servicio no es de esta mascota"
+
+
+async def test_cada_profesional_ve_sus_borradores(client, equipo, mascota_id):
+    """El trabajo pendiente de quien abre Clinica: sus consultas sin firmar, no las de otros."""
+    propia = await _entrada(client, equipo, mascota_id)
+    await _firmada(client, equipo, mascota_id)
+    ajena = await client.post(
+        "/api/v1/clinica/historias",
+        json={"mascota_id": str(mascota_id), **CONSULTA},
+        headers=equipo["otro"],
+    )
+    assert ajena.status_code == 201
+
+    mias = (await client.get("/api/v1/clinica/borradores", headers=equipo["medica"])).json()
+    assert [e["id"] for e in mias] == [propia["id"]]
+    assert (await client.get("/api/v1/clinica/borradores", headers=equipo["admin"])).json() == []
+    assert (await client.get("/api/v1/clinica/borradores", headers=equipo["op"])).status_code == 403

@@ -208,6 +208,20 @@ def firmar(db: Session, entrada: HistoriaClinica, usuario_id: UUID) -> HistoriaC
     return entrada
 
 
+def borradores(db: Session, profesional_id: UUID) -> list[HistoriaClinica]:
+    """R2-PAN-07 Las consultas que el profesional abrio y aun no firma: su trabajo pendiente."""
+    return list(
+        db.scalars(
+            select(HistoriaClinica)
+            .where(
+                HistoriaClinica.profesional_id == profesional_id,
+                HistoriaClinica.estado == "borrador",
+            )
+            .order_by(HistoriaClinica.fecha.desc(), HistoriaClinica.created_at.desc())
+        )
+    )
+
+
 def corregir(
     db: Session, entrada: HistoriaClinica, datos: dict[str, Any], usuario_id: UUID
 ) -> HistoriaClinica:

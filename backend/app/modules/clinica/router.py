@@ -33,6 +33,7 @@ router = APIRouter(prefix="/clinica", tags=["clinica"])
 Equipo = Annotated[Usuario, Depends(requiere(*INTERNOS))]
 Medico = Annotated[Usuario, Depends(requiere(Rol.MEDICO))]
 GESTION = Depends(requiere(Rol.MEDICO, Rol.ADMIN))
+Gestion = Annotated[Usuario, GESTION]
 ADMIN = Depends(requiere(Rol.ADMIN))
 EQUIPO = Depends(requiere(*INTERNOS))
 
@@ -170,6 +171,14 @@ async def historia(
             service.presentar(e, vista)
             for e in service.historia(s, mascota_id, incluir_corregidas=incluir_corregidas)
         ]
+    )
+
+
+@router.get("/borradores")
+async def borradores(db: DbSession, usuario: Gestion) -> list[dict[str, Any]]:
+    """R2-PAN-07 Las consultas que quien pregunta abrio y aun no firma."""
+    return await db.run_sync(
+        lambda s: [service.presentar(e, "completa") for e in service.borradores(s, usuario.id)]
     )
 
 
