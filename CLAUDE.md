@@ -48,6 +48,8 @@ docker compose exec api python -m scripts.datos_demo   # familias, servicios, ru
 docker compose run --rm inicializar   # tras traer una migración nueva, sin reiniciar el stack
 docker compose up -d --build -V       # tras traer dependencias nuevas: el código va montado, las librerías
                                       # van en la imagen, y -V renueva el node_modules anónimo de `web`
+                                      # `exec api` trabaja en /app, que es backend/ montado: un script de prueba
+                                      # copiado ahí aparece en el repositorio; cópialo al /tmp del contenedor
 
 # Backend sin Docker
 cd backend && pip install -r requirements-dev.txt
@@ -68,6 +70,9 @@ npm run verificar                   # lint + typecheck + cobertura + build (lo m
 npm run test:watch                  # pruebas de componentes en vigilancia
 npm run test:e2e                    # Playwright con la API interceptada (requiere: npx playwright install chromium)
 npm run test:e2e:stack              # recorridos contra el stack real: docker compose up + datos_demo antes
+
+# CI: log de un job (`gh run view --log-failed` a veces sale vacío)
+gh api --allow-escape-sequences repos/{owner}/{repo}/actions/jobs/<id>/logs | sed 's/\x1b\[[0-9;]*m//g'
 ```
 
 ### Prueba de carga
@@ -189,6 +194,8 @@ Reglas que mantienen esto vivo:
   `gerencia@timu.co`, un administrador que `datos_demo` crea solo para los recorridos.
   Además, la API limita a 120 peticiones por minuto por usuario: no lances scripts propios
   con `comercial@timu.co` justo antes del barrido, o sus pantallas cargarán un 429.
+  La ruta de prueba de la médica no siempre es de hoy (va en el primer día con cupo): los
+  recorridos la buscan con `rutaDemo` (`e2e-stack/datos.ts`).
 - **Una prueba que no puede pasar se arregla o se borra**, con la razón en el cuerpo del
   commit. No se salta, no se marca `xfail` y no se comenta.
 - **Un tipo de prueba nuevo llega cableado al CI en el mismo cambio**: un runner, una
@@ -205,7 +212,9 @@ Umbrales de cobertura: backend **91%** combinando líneas y ramas (`--cov-fail-u
 de líneas, sentencias y funciones y **80%** de ramas (`vitest.config.ts`).
 Están justo por debajo de lo medido para que no se degraden solos, no como objetivo.
 Cuando la cobertura sube, se suben en el mismo commit; bajarlos requiere una razón
-escrita en el cuerpo del commit. La cobertura del backend se mide con
+escrita en el cuerpo del commit. La del backend varía unos 0,5 puntos entre ejecuciones del
+mismo código: una subida menor no obliga a subir su umbral (subirlo a ras de lo medido haría
+fallar el CI por azar). La cobertura del backend se mide con
 `concurrency = greenlet` porque los servicios corren dentro de `db.run_sync`. Sin eso,
 coverage deja de contar las líneas posteriores a la primera consulta y el informe miente.
 
@@ -225,7 +234,8 @@ caracteres: compruébalo con un comando que falle (exit ≠ 0) encadenado con `&
 
 En el worktree de commits, Vitest necesita `ln -s <repo>/frontend/node_modules`. Ese enlace
 aparece como no rastreado: añade rutas explícitas (nunca `git add -A`) y bórralo antes de
-`git worktree remove --force`.
+`git worktree remove --force`. El backend se prueba en el worktree con el entorno del
+repositorio principal (`<repo>/backend/.venv/bin/pytest`): la base de pruebas no necesita `.env`.
 
 ## Convenciones de escritura
 
