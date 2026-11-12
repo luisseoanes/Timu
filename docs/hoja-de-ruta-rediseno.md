@@ -161,6 +161,29 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 - **Nada vuelve a la paleta menta.** La guarda lo impide desde `R1-TOK-01`.
 - Cada fase se entrega por separado y deja la aplicación usable. Durante R2 y R3 conviven
   pantallas con la línea nueva y con la antigua; es lo esperado.
+- **Una pantalla con pestañas que se cierra activa `pestanas: true`** en su ruta del barrido
+  (`e2e-stack/responsive.spec.ts`), como la ficha de familia: si no, el barrido solo mide la
+  pestaña inicial.
+- **Cada superficie se cierra con el revisor final de la skill** hasta su `ship`, como
+  `R2-PAN-03`, con capturas a 1440, 1180, 900 y 390 px.
+
+### Lo que quedó de Familias tras su cierre
+
+- **En el celular, la línea no se abre en «hoy».** El contrato de la superficie lo pide («la
+  vista abierta en hoy»): con muchas estaciones vencidas, «hoy» y la próxima quedan abajo.
+  Pendiente; el revisor lo señaló.
+- **Sugerencias del revisor, opcionales** (el «techo» de la dirección, no defectos): estaciones
+  de 34 px con anillo de 6 px como en el boceto (hoy 24 y 4), etiquetas de estado cuadradas en
+  lugar de píldoras, y el listado y el detalle como paneles planos a ras en lugar de tarjetas
+  con radio de 12 px. Se deciden con el usuario antes de `R4-CIE-02`.
+
+### Siguiente paso propuesto
+
+Sin confirmar con el usuario. Primero lo que más se usa desde el celular (`PRODUCT.md`): Rutas
+(`R2-PAN-06`) y Clínica (`R2-PAN-07`) para los médicos, y el portal (`R3-POR-01`, `R3-POR-02`)
+para las familias. Después el resto del panel (`R2-PAN-04`, `05`, `08`, `09`, `10`), el
+ingreso, el registro en línea, la encuesta y la aliada (`R3-PUB-01` a `03`, `R3-ALI-01`), y el
+cierre (R4).
 
 ## Decisiones tomadas
 
@@ -175,6 +198,21 @@ Confirmadas por el usuario el 2026-11-10:
 4. **Inter se sirve desde el proyecto** con un paquete de npm de versión fija, no desde Google
    Fonts.
 5. **El color de plan es un campo del catálogo** (`R1-PLA-01`), con su cambio de backend.
+
+Confirmadas por el usuario el 2026-11-10 y el 2026-11-11, cada una escrita donde se aplica:
+
+- **Dirección «la línea de metro»**, navegación inferior en el celular, línea del año completo
+  y línea servida por un endpoint: decisiones del contrato de la superficie
+  (`.impeccable/surfaces/`).
+- **Agendar un preventivo desde su estación va en `R2-PAN-08`**: fila de esa unidad, contrato
+  de la superficie y comentario en `FamiliaDetallePage.tsx`.
+- **Valen los colores del logo** (naranja ajustado a `#D48200`); **GeosansLight en los títulos
+  de 20 px o más** e Inter en el resto; **el logo en SVG**, completo o compacto: manual de
+  marca (secciones 2, 12 y 13).
+- **La plataforma no gestiona los servicios fúnebres**, **las fotos son de TIMU** y **los
+  precios quedan aplazados**: pendientes externos.
+- **El carnet lleva el peso de cada desparasitación, quién aplicó y la marca en el PDF**, y el
+  peso pasa a la ficha si es el más reciente: `F2-PRE-07` en el backlog y `R2-PAN-08`.
 
 ## Riesgos
 

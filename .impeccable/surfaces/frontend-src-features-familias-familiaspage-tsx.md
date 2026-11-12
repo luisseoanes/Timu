@@ -77,3 +77,11 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   inyectarla sin que `familias` importe `preventivos`. Se hace cuando `R2-PAN-08` rediseñe esa
   acción. Hasta entonces la STORY se cumple a medias para los preventivos, a sabiendas, y
   `R2-PAN-08` no se cierra sin esto. Decidido con el usuario.
+
+## Pendiente tras el cierre (2026-11-11)
+
+- **«La vista abierta en hoy» en el celular no está hecha**: con muchas vencidas, «hoy» y la
+  próxima quedan por debajo. El revisor final lo señaló.
+- **Techo de la dirección, opcional**: estaciones de 34 px con anillo de 6 px como en el boceto
+  (hoy 24 y 4), etiquetas de estado cuadradas y paneles planos a ras en vez de tarjetas
+  redondeadas. Se deciden con el usuario antes de `R4-CIE-02`.

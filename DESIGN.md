@@ -584,6 +584,9 @@ de metro: espaciado esquemático, no proporcional al tiempo.
   barra marina solo blanco, marino-200, verde-500 y naranja-500 (regla 6).
 - **Don't** recolorees el logo ni lo dibujes con texto: va el SVG de `MarcaTimu`, a color o en
   blanco (sección 13 del manual).
+- **Don't** uses los patrones de siluetas de la marca como decoración en las pantallas de
+  trabajo (panel, portal, clínica aliada): son para las páginas públicas y de venta, donde la
+  marca se presenta. En una pantalla de trabajo compiten con los datos.
 - **Don't** resuelvas la línea con scroll horizontal ni con una ventana de «Anteriores» y
   «Siguientes»: escondían una cuota vencida.
 - **Don't** añadas un tema oscuro ni uses GeosansLight por debajo de 20 px, en texto corrido,

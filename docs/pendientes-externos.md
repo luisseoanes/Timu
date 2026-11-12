@@ -108,7 +108,23 @@ nueva.
 El 2026-11-11 llegó el material gráfico de la marca: el manual original de la diseñadora
 (2021, con su fuente de 40 páginas en Illustrator), el logo en vector, las tipografías,
 los patrones y las piezas impresas (carnet de vacunación, plegable 2026, pendón y piezas de
-mostrador). Lo que resuelve y lo que deja abierto:
+mostrador). **Ese material no vive en el repositorio** (pesa casi 400 MB): está en la carpeta
+de marca que compartió TIMU. En el repositorio solo está lo que ya se usa, con la receta para
+regenerarlo (`frontend/src/assets/marca/README.md`, `backend/app/recursos/marca/README.md`).
+Lo que queda en la carpeta y servirá más adelante:
+
+- **Patrones** de siluetas de animales y cruces, en cada color de la marca: en vector en el
+  manual fuente (`Manual de marca TIMU.ai`, las últimas láminas) y en PNG pequeños en
+  `Aplicativos TIMU/`. Para las páginas públicas y de venta (`R3-PUB-02`, la portada).
+- **Variantes del logo** con perro y gato y con animales grandes, y las versiones en blanco y
+  en negro: en el manual fuente y en PNG en `Aplicativos TIMU/`.
+- **Plegable 2026**: el contenido de los tres planes (beneficios y descuentos) y los datos de
+  contacto y sedes, para el registro en línea y la portada.
+- **Carnet de vacunación impreso**: la referencia del carnet en PDF (ya aplicada) y del
+  carnet en pantalla (`R2-PAN-08`, `R3-POR-01`).
+- **Fotos** de perros y gatos recortados (en los PDF de las piezas).
+
+Lo que resuelve y lo que deja abierto:
 
 - **Logo en vector: recibido e integrado.** `Marca TIMU.ai` trae el logo a color en sus tres
   versiones (con las siluetas bajo el lema, con perro y gato, y con animales grandes). La
