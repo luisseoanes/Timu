@@ -10,6 +10,7 @@ import {
   donde,
   duracion,
   enlaceWhatsApp,
+  laConsultaLosRegistra,
   enRuta,
   estadoEstacion,
   paradaActual,
@@ -140,6 +141,17 @@ describe('a quién y dónde', () => {
     expect(partirDireccion('Avenida 19 # 100-12, Chapinero')).toEqual(['Avenida 19 ', '# 100-12', ', Chapinero'])
     expect(partirDireccion('Cra 43A # 7 sur-170')).toEqual(['Cra 43A ', '# 7 sur-170', ''])
     expect(partirDireccion('Chapinero')).toEqual(['Chapinero', '', ''])
+  })
+
+  it('la consulta registra los pasos de una consulta, no los de una vacuna', () => {
+    const valoracion = { codigo: 'valoracion', nombre: 'Valoración clínica', obligatorio: true, campos: ['hallazgos'] }
+    const plan = { codigo: 'plan', nombre: 'Plan y recomendaciones', obligatorio: true, campos: ['recomendaciones'] }
+    const aplicacion = { codigo: 'aplicacion', nombre: 'Aplicación', obligatorio: true, campos: ['producto', 'lote'] }
+    expect(laConsultaLosRegistra([valoracion, plan])).toBe(true)
+    expect(laConsultaLosRegistra([aplicacion])).toBe(false)
+    expect(laConsultaLosRegistra([plan, aplicacion])).toBe(false)
+    // Un paso sin campos no lo llena nada: se registra en el servicio.
+    expect(laConsultaLosRegistra([{ codigo: 'evidencia', nombre: 'Evidencia', obligatorio: true }])).toBe(false)
   })
 
   it('escribe a WhatsApp sin el «+» del teléfono', () => {

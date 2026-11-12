@@ -12,7 +12,7 @@ import { puede } from '@/lib/permisos'
 import type { ParadaRead, RutaRead } from '@/types'
 
 import { useAccionParada, useAccionRuta, useOmitirParada, useSalidaParada } from './api'
-import { comoLlegar, enlaceWhatsApp } from './ruta'
+import { comoLlegar, enlaceWhatsApp, laConsultaLosRegistra } from './ruta'
 
 /**
  * Lo que se hace con una parada. La de estado es una sola, la que toca (iniciar la ruta, salir
@@ -132,6 +132,9 @@ function Terminar({ parada, clase, onTerminar }: { parada: ParadaRead; clase: st
   const definicion = tipos.data?.find((t) => t.codigo === parada.tipo_codigo)?.pasos ?? []
   const hechos = new Set((pasos.data ?? []).map((p) => p.paso_codigo))
   const faltan = definicion.filter((p) => p.obligatorio && !hechos.has(p.codigo))
+  // La consulta clínica registra los pasos de una consulta, no los de una vacuna: a ella solo se
+  // va si es la que los llena; si no, al servicio, donde se registran todos.
+  const porLaConsulta = Boolean(parada.mascota) && laConsultaLosRegistra(faltan)
   if (tipos.isPending || pasos.isPending) {
     return (
       <button className={clase} type="button" disabled>
@@ -150,13 +153,13 @@ function Terminar({ parada, clase, onTerminar }: { parada: ParadaRead; clase: st
     <>
       <Link
         className={clase}
-        to={parada.mascota ? `/clinica/mascotas/${parada.mascota.id}?servicio=${parada.servicio_id}` : `/servicios/${parada.servicio_id}`}
+        to={porLaConsulta ? `/clinica/mascotas/${parada.mascota!.id}?servicio=${parada.servicio_id}` : `/servicios/${parada.servicio_id}`}
       >
         Registrar la atención
       </Link>
       <p className="estacion-pendiente">
         Antes de terminar la visita falta registrar: {faltan.map((p) => p.nombre).join(', ')}.
-        {parada.mascota && ' Se registran al firmar la consulta.'}
+        {porLaConsulta && ' Se registran al firmar la consulta.'}
       </p>
     </>
   )

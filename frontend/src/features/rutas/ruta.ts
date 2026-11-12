@@ -1,5 +1,5 @@
 import { hora } from '@/lib/formato'
-import type { FamiliaDeParada, ParadaRead, RutaRead } from '@/types'
+import type { FamiliaDeParada, ParadaRead, PasoTipoRead, RutaRead } from '@/types'
 
 /** Lo que distingue la línea: la parada que toca, las que ya se hicieron y las que faltan. */
 export type EstadoEstacion = 'hecha' | 'actual' | 'pendiente'
@@ -76,6 +76,16 @@ export function partirDireccion(texto: string): [string, string, string] {
   const numero = /#\s*[^\s,]+(?:\s+(?:sur|norte|este|oeste)[^\s,]*)?/i.exec(texto)
   if (!numero) return [texto, '', '']
   return [texto.slice(0, numero.index), numero[0], texto.slice(numero.index + numero[0].length)]
+}
+
+/** Los campos de un paso del servicio que la consulta clínica llena al firmarse (backend:
+ * `_PASOS_DESDE_LA_CONSULTA` en clinica/service.py). */
+const CAMPOS_DE_LA_CONSULTA = ['hallazgos', 'recomendaciones']
+
+/** Si firmar la consulta registra todos los pasos que faltan. El de una vacuna (producto y lote)
+ * no lo llena: ese se registra en el servicio. */
+export function laConsultaLosRegistra(faltan: PasoTipoRead[]): boolean {
+  return faltan.every((p) => (p.campos ?? []).length > 0 && (p.campos ?? []).every((c) => CAMPOS_DE_LA_CONSULTA.includes(c)))
 }
 
 /** La navegación del celular hacia la parada: sus coordenadas, que son las que usó el

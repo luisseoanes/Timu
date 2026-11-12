@@ -254,6 +254,29 @@ describe('la ruta de quien sale a campo', () => {
     expect(screen.queryByRole('button', { name: 'Terminar visita' })).not.toBeInTheDocument()
   })
 
+  it('en una vacunación, registrar la atención lleva al servicio: la consulta no llena su aplicación', async () => {
+    conRutas([ruta([parada(1, 'en_sitio', { tipo_codigo: 'vacunacion' })])])
+    server.use(
+      http.get(`${API}/servicios/s1/pasos`, () => HttpResponse.json([])),
+      http.get(`${API}/catalogos/tipos-servicio`, () =>
+        HttpResponse.json([
+          {
+            codigo: 'vacunacion',
+            nombre: 'Vacunación',
+            modalidad: 'preventivo',
+            duracion_min: 20,
+            requiere_autorizacion: true,
+            activo: true,
+            pasos: [{ codigo: 'aplicacion', nombre: 'Aplicación', obligatorio: true, campos: ['producto', 'lote'] }],
+          },
+        ]),
+      ),
+    )
+    renderizar(<RutasPage />)
+    expect(await screen.findByRole('link', { name: 'Registrar la atención' })).toHaveAttribute('href', '/servicios/s1')
+    expect(screen.getByText('Antes de terminar la visita falta registrar: Aplicación.')).toBeInTheDocument()
+  })
+
   it('sin mascota en el servicio, registrar la atención lleva al servicio', async () => {
     conRutas([ruta([parada(1, 'en_sitio', { mascota: null })])])
     server.use(http.get(`${API}/servicios/s1/pasos`, () => HttpResponse.json([])))
