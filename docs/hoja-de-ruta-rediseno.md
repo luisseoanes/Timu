@@ -28,9 +28,9 @@ actualiza aquí, igual que en el backlog.
 | R0 — Preparación | 4 | 4 | 0 | 0 |
 | R1 — Fundaciones | 7 | 5 | 2 | 0 |
 | R2 — Panel del equipo | 10 | 5 | 1 | 4 |
-| R3 — Familias, aliada y páginas públicas | 6 | 0 | 0 | 6 |
+| R3 — Familias, aliada y páginas públicas | 6 | 1 | 0 | 5 |
 | R4 — Cierre | 4 | 0 | 0 | 4 |
-| **Total** | **31** | **14** | **3** | **14** |
+| **Total** | **31** | **15** | **3** | **13** |
 
 ## Alcance medido
 
@@ -157,7 +157,7 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 | ID | Trabajo | Criterio de aceptación | Estado |
 | --- | --- | --- | --- |
 | `R3-PUB-01` | Ingreso | Ingreso, recuperación, restablecimiento y activación de la cuenta (`AccesoLayout`). El panel de marca pasa a marino, con los colores permitidos sobre marino (regla 6 del manual). | Pendiente |
-| `R3-POR-01` | Portal: estructura y mascotas | Navegación del portal en el móvil, inicio, mascotas, carnet y «Agregar un peludo». | Pendiente |
+| `R3-POR-01` | Portal: estructura y mascotas | Navegación del portal en el móvil, inicio, mascotas, carnet y «Agregar un peludo». | Hecho (2026-11-12): sorteo de superficie en modo Operate, elegida «Hoy, estás aquí» (contrato en `.impeccable/surfaces/frontend-src-features-portal-portalpages-tsx.md`, boceto en `docs/rediseno/boceto-portal-hoy-estas-aqui.html`). El portal toma la estructura del panel (barra marina y, en el celular, barra inferior de cinco destinos). El inicio es la línea de la familia abierta en «hoy», servida por `GET /portal/linea`: lo hecho plegado, lo vencido agrupado (cuotas y preventivos, con el reparto por peludo), una sola acción verde (pagar lo vencido, agendar los preventivos o pagar la próxima cuota), el próximo cobro aunque su cuota no exista y un cierre que dice qué viene. El plan se dice en una frase («En pausa» para la familia) y solo ofrece agendar si el backend lo permitiría. Cada peludo tiene su ficha con su propia línea, su carnet sin contradicciones, su historia y su plan con los cupos de frente (desaparece «ilimitado»). También: las listas y los campos de fecha de todo el sistema dejan de mostrar el control del navegador, decidido con el usuario. Cerrado con el veredicto `ship` del revisor final tras tres pasadas. |
 | `R3-POR-02` | Portal: citas, pagos y datos | Citas, pagos, datos y documentos. Se aplica la voz del manual: desaparece «ilimitado» (`PortalPages.tsx`), sustituido por lo que sí aplica, como «sin tope de usos al mes». | Pendiente |
 | `R3-PUB-02` | Registro en línea | Sorteo de superficie en modo persuasivo para `/afiliacion`, el resultado y el formulario posterior. El plan es protagonista, con su color y con sus condiciones y carencias dichas de frente. Precios y coberturas salen del catálogo. | Pendiente |
 | `R3-PUB-03` | Encuesta y carnet | Encuesta de satisfacción y verificación pública del carnet. | Pendiente |
@@ -213,6 +213,19 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
   izquierda los valores largos de la tabla apilable en el celular (es del componente común) y
   sembrar una plantilla de consulta en `datos_demo`. Se deciden con el usuario antes de
   `R4-CIE-02`.
+
+### Lo que quedó del portal tras cerrar `R3-POR-01`
+
+- **Citas, pagos y datos** siguen con su composición anterior dentro de la estructura nueva;
+  son `R3-POR-02`. Pagos tiene hoy una acción verde por cuota.
+- **Datos de demostración**: la única familia con portal (Ana) tiene el plan congelado. Los
+  estados «al día» se capturaron para el revisor interceptando la API. Una segunda familia con
+  portal en `datos_demo` daría al barrido y a los recorridos el estado sano.
+- **La prueba de la foto** (`e2e-stack/recorridos.spec.ts`) sube un PNG de 1×1 a la primera
+  mascota de Ana, que el portal enseña después como su foto. No rompe nada, pero ensucia las
+  capturas: hay que quitarla antes de capturar.
+- **Sugerencias del revisor, opcionales**: la flecha de las listas es un triángulo relleno,
+  y el resto del sistema usa chevrones de trazo. Se decide antes de `R4-CIE-02`.
 
 ### Orden de lo que sigue
 

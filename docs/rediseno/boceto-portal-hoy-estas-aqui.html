@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Portal · Hoy, estás aquí</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap">
+<style>
+:root{--marino:#111537;--texto:#41445F;--suave:#5F6275;--borde:#E2E3E7;--control:#85889D;--gris:#A0A1AF;--verde:#98B833;--verde-h:#769116;--verde-t:#F3F6E7;--verde-tx:#415800;--lienzo:#F5F6F1;--rojo:#C0392B;--peligro-f:#FFF2EF;--peligro-t:#892319;--alerta-f:#FAF0E0;--alerta-t:#813E00;--azul:#477095}
+*{box-sizing:border-box;margin:0}
+body{width:390px;height:844px;overflow:hidden;font:14px/1.5 Inter,system-ui,sans-serif;color:var(--texto);background:var(--lienzo);display:grid;grid-template-rows:64px 1fr 56px}
+.barra{background:var(--marino);display:flex;align-items:center;justify-content:space-between;padding:0 16px;color:#fff}
+.barra b{font-size:24px;letter-spacing:.04em}
+.barra i{width:40px;height:40px;border-radius:50%;border:1px solid rgb(255 255 255/22%);background:rgb(255 255 255/8%);display:grid;place-items:center;font:600 13px Inter;font-style:normal}
+main{padding:16px 16px 0;display:grid;grid-template-rows:auto auto 1fr;gap:12px;min-height:0}
+h1{font:300 34px/1.2 Inter;letter-spacing:-.01em;color:var(--marino)}
+.plan{display:flex;align-items:center;gap:8px;margin-top:2px;font:600 14px Inter;color:var(--marino)}
+.plan u{width:12px;height:12px;border-radius:3px;background:var(--verde);text-decoration:none}
+.ins{display:inline-flex;align-items:center;gap:4px;font:700 12px/1.5 Inter;padding:3px 10px;border-radius:999px;background:var(--alerta-f);color:var(--alerta-t)}
+.frase{margin-top:6px;font-size:13px;color:var(--texto)}
+.peludos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.peludos a{display:flex;align-items:center;gap:10px;background:#fff;border-radius:8px;padding:8px 10px;color:var(--marino);font-weight:600}
+.peludos a i{width:36px;height:36px;border-radius:50%;background:var(--lienzo);border:1px solid var(--borde)}
+.peludos small{display:block;font:400 12px Inter;color:var(--peligro-t)}
+/* La línea vertical, abierta en hoy */
+.linea{background:#fff;border-radius:12px 12px 0 0;padding:16px 16px 0 0;position:relative;overflow:hidden}
+.linea::before{content:"";position:absolute;left:24px;top:28px;bottom:0;width:8px;background:var(--verde)}
+.est{position:relative;display:grid;grid-template-columns:56px 1fr;padding-bottom:14px}
+.est>i{position:relative;z-index:1;justify-self:center;margin-top:2px;width:24px;height:24px;border-radius:50%;background:#fff;border:4px solid var(--verde)}
+.est.v>i{background:var(--rojo);border-color:var(--rojo)}
+.est.p>i{border-color:var(--marino);box-shadow:0 0 0 3px var(--verde-h)}
+.est h3{font:600 14px/1.4 Inter;color:var(--peligro-t)}
+.est.p h3{color:var(--marino)}
+.est p{font-size:13px;color:var(--suave)}
+.btn{margin-top:8px;height:44px;border-radius:6px;border:0;background:var(--verde);color:var(--marino);font:600 14px Inter;display:flex;align-items:center;justify-content:center}
+.hoy{position:relative;z-index:1;display:grid;grid-template-columns:56px 1fr;align-items:center;padding-bottom:14px}
+.hoy i{justify-self:center;width:24px;height:4px;background:var(--marino)}
+.hoy span{font:700 12px Inter;letter-spacing:.09em;text-transform:uppercase;color:var(--marino)}
+nav{background:#fff;border-top:1px solid var(--borde);display:grid;grid-template-columns:repeat(5,1fr)}
+nav a{display:grid;justify-items:center;align-content:center;gap:2px;font:600 12px Inter;color:var(--suave)}
+nav a.on{color:var(--marino);box-shadow:inset 0 3px 0 var(--verde-h)}
+</style></head><body>
+<header class="barra"><b>TIMU</b><i>AR</i></header>
+<main>
+  <section>
+    <h1>Hola, Ana</h1>
+    <div class="plan"><u></u>Plan Familiar <span class="ins">❙❙ En pausa</span></div>
+    <p class="frase">Tus 3 cuotas vencidas pausaron el plan. Al pagar, Luna y Michi recuperan sus beneficios.</p>
+  </section>
+  <div class="peludos"><a><i></i><span>Luna<small>4 vencidos</small></span></a><a><i></i><span>Michi<small>3 vencidos</small></span></a></div>
+  <section class="linea">
+    <div class="est v"><i></i><div><h3>3 cuotas vencidas · $ 225.000</h3><p>Agosto, septiembre y octubre</p><span class="btn">Pagar $ 225.000</span></div></div>
+    <div class="est v"><i></i><div><h3>7 preventivos vencidos desde el 4 nov</h3><p>Luna 4 · Michi 3. Se agendan al ponerte al día.</p></div></div>
+    <div class="hoy"><i></i><span>Hoy · jue 12 nov</span></div>
+    <div class="est p"><i></i><div><h3>21 nov · Cuota de noviembre</h3><p>$ 75.000</p></div></div>
+    <div class="est"><i></i><div><h3 style="color:var(--marino)">21 dic · Cuota de diciembre</h3><p>$ 75.000</p></div></div>
+  </section>
+</main>
+<nav><a class="on">⌂<span>Inicio</span></a><a>◍<span>Peludos</span></a><a>▦<span>Citas</span></a><a>▭<span>Pagos</span></a><a>☺<span>Mis datos</span></a></nav>
+</body></html>

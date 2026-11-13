@@ -227,8 +227,10 @@ components:
 Este fichero describe lo construido, no lo planeado. La primera superficie del sistema es la
 estructura del panel del equipo (`AppLayout`) y Familias (listado, detalle, pestañas y
 ventanas); después, Rutas (la ruta del día del médico y su coordinación) y Clínica (la historia de
-cada mascota y la consulta guiada). El resto de módulos del panel, el portal y las páginas públicas todavía usan la
-maqueta anterior y adoptan este sistema en sus unidades de
+cada mascota y la consulta guiada). En el portal de familias están rediseñados la estructura, el
+inicio y los peludos (lista y ficha de cada uno, R3-POR-01); sus citas, pagos y datos siguen
+pendientes (R3-POR-02). El resto de módulos del panel, esas pantallas del portal y las páginas
+públicas todavía usan la maqueta anterior y adoptan este sistema en sus unidades de
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md): lo que se ve hoy en ellos no
 es el sistema. El color, la tipografía, el logo y la voz los fija el
 [manual de marca](docs/manual-de-marca.md); aquí se dice cómo se aplican en la interfaz y se
@@ -244,7 +246,8 @@ la señalética del Metro de Medellín con la paleta de TIMU: una barra superior
 módulos y el activo subrayado en verde, superficies blancas planas sobre un lienzo cálido, y
 símbolos geométricos simples (líneas, círculos, cuadrados) que se leen de un vistazo. La
 interfaz es de trabajo: densa, sin decoración, pensada para quien la usa ocho horas al día en
-escritorio y para el médico en ruta con el celular.
+escritorio y para el médico en ruta con el celular. En el portal, la misma línea es el inicio de
+la familia: abierta en «Hoy», como el «usted está aquí» de un plano de metro.
 
 La densidad viene de la información, no del adorno. No hay sombras en lo que está quieto, ni
 bordes de adorno, ni degradados; la jerarquía la dan el tamaño del tipo, el peso, el marino del
@@ -345,7 +348,8 @@ Las cifras siguen en Inter por sus números tabulares (sección 12 del manual).
 
 ### Hierarchy
 - **Display** (GeosansLight 400, `--t-display` 2.125rem / 34 px, 1.2, −0.01em en la ficha): el
-  nombre de la familia abierta, el saludo y el ingreso. Uno por pantalla.
+  nombre de la familia abierta, el saludo y el ingreso. Uno por pantalla. En el portal todo `h1`
+  va a este tamaño: «Hola, Ana», «Tus peludos» y el nombre de cada peludo.
 - **Cifra** (600, `--t-cifra` 1.5rem / 24 px): cifras destacadas de indicadores.
 - **Headline** (GeosansLight 400, `--t-titulo` 1.25rem / 20 px, 1.2): título de página
   (`cabecera-pagina`).
@@ -394,6 +398,22 @@ columna de hasta 760 px, que se lee igual en el escritorio que en el celular. En
 con el avance («1 de 3 paradas · 22,3 km · hasta las 1:15 p. m.») y el día, un botón compacto
 que dice «Hoy» con el campo de fecha nativo superpuesto; fuera de hoy, el día y «Volver a hoy»
 bajan a su fila.
+
+**El portal de familias.** La misma estructura que el panel (`.shell`, barra de marca y, por
+debajo de 900 px, barra inferior) con un contenido más estrecho: hasta 1120 px. Las pantallas se
+apilan como paneles blancos separados 16 px (`portal-panel`: 16 px arriba, 20 px a los lados y
+abajo, esquina de panel).
+- **Inicio:** en el celular, en este orden, el saludo, el plan (cuadrado y nombre, estado y la
+  frase que lo explica, y las acciones secundarias, a todo el ancho), los accesos a los peludos y
+  la línea en su panel. Desde 900 px, dos columnas separadas 24 px: la línea en la columna de
+  lectura y el plan y los peludos en una de 340 px al lado; el saludo, encima de las dos. Lo
+  vencido se agrupa, así que «Hoy» queda en la primera pantalla del celular.
+- **Peludos:** cabecera con el título y «Agregar un peludo» (el verde de la vista); los accesos
+  en una rejilla de `minmax(240px, 1fr)` (150 px en el inicio).
+- **Ficha de un peludo:** tres bloques apilados. La identidad en un panel (volver con un botón de
+  icono, el nombre, «Felino · 4 años · 4,2 kg» con el plan como cuadrado y nombre, y la foto);
+  su propia línea, sin cuotas, que son de la familia; y un panel con las pestañas Carnet,
+  Historia clínica y Su plan.
 
 **Ritmo.** Escala de 4 px (`--e1` a `--e8`). Entre bloques de página 16 px; entre columnas 20
 px; dentro de un panel 20–24 px; entre filas de un listado 12 px de relleno con un hilo
@@ -501,6 +521,13 @@ Firmes y planos; el color dice la jerarquía, no la forma.
 - **Focus:** borde azul y anillo de 1 px azul, sin contorno extra.
 - **Error / Disabled:** `aria-invalid` pone el borde (y el anillo al enfocar) en rojo de error;
   deshabilitado, fondo de lienzo y texto suave.
+- **Listas y fechas:** con la forma del sistema, no la del navegador. Una lista (`select`) no
+  muestra el control nativo: su flecha son dos `linear-gradient` de 5 px que dibujan una «v» en
+  el rol de texto suave (`--flecha-lista`), a 13–18 px del borde derecho, y el relleno derecho
+  crece para dejarle sitio. El calendario de un campo de fecha es una máscara de 18 px pintada
+  con el mismo rol. Deshabilitados, flecha y calendario pasan a `texto-deshabilitado`. Los
+  degradados dibujan un glifo, no rellenan una superficie: no contradicen la regla de los
+  paneles sin degradado.
 - **Formulario:** rejilla de dos columnas con 16 px; una a 900 px o menos. Casillas y radios de
   18 px con `accent-color` verde hondo.
 
@@ -514,6 +541,10 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   en la barra inferior, tres puntos (nunca «+», que se lee como crear).
 - **Barra inferior (celular):** blanca con hilo arriba, 56 px por elemento, icono de 22 px y
   rótulo de 12 px; activo en marino con una marca verde de 3 px en el borde superior.
+- **Portal:** la misma barra de marca y la misma barra inferior, con la marca compacta y cinco
+  destinos (Inicio, Peludos, Citas, Pagos, Mis datos) que caben siempre: no hay «Más». A la
+  derecha, el avatar de la cuenta con su menú (cerrar sesión). Por debajo de 900 px los destinos
+  bajan a la barra inferior.
 
 ### Tabs
 - Sobre Radix Tabs (`Pestanas`): 13 px en 700, texto suave, subrayado de 3 px verde hondo en la
@@ -573,6 +604,54 @@ de metro: espaciado esquemático, no proporcional al tiempo.
 - **Miniatura (`LineaMini`):** en cada fila del listado, línea de 2 px con puntos de 10 px y la
   marca de hoy de 2 × 12 px; es dibujo (`role="img"`) con el resumen en `aria-label`, y la fila
   repite las vencidas en texto.
+
+### La línea del portal (componente propio)
+`LineaPortal` es la línea de la familia contada a la familia: vertical siempre, abierta en «Hoy»
+y en un panel blanco. Las estaciones no son botones: cada una dice en palabras qué es y, si
+toca, lleva su acción debajo. La familia no tiene por qué leer un diagrama.
+- **Línea:** 8 px del color del plan (`data-color`), o gris sin plan; cada parada dibuja su
+  tramo y la primera y la última lo cierran en pastilla. Columna de 24 px para la estación y el
+  texto a 16 px; entre una parada y la siguiente, un hilo sobre el texto.
+- **Estaciones:** las mismas formas de 24 px con borde de 4 px que la línea de la familia (hecha
+  llena, vencida roja con el icono de alerta, próxima con anillo marino y halo verde hondo de
+  3 px, futura en contorno). Título en 14 px marino (rojo de error si está vencida), con la
+  fecha delante en cifras tabulares; detalle en 13 px suave.
+- **Hecho, plegado:** todo lo anterior a hoy que ya se hizo va en una sola estación llena con
+  la pastilla «N hechas» (la del tramo plegado), que despliega la lista con fecha y qué.
+- **Vencido, agrupado:** las cuotas vencidas en una estación («3 cuotas vencidas · $ 225.000»,
+  los meses y «Pagar …»); los preventivos vencidos en otra («7 preventivos vencidos desde el 4
+  nov», cuántos por peludo con enlace a cada uno, y «Agendar» o el motivo por el que aún no se
+  puede). Una visita vencida va suelta. Los grupos se ordenan por lo más antiguo.
+- **Hoy:** una marca marina de 24 × 4 px que cruza la línea y «Hoy · jue 12 nov» en etiqueta.
+- **Lo que viene:** cada estación con su fecha y su título («· Michi» en la del inicio; en la
+  ficha del peludo sobra). Una cuota muestra su valor; un servicio, su distintivo y el enlace a
+  las citas.
+- **Próximo cobro:** si el estado de cuenta anuncia un cobro cuya cuota aún no existe (el plan
+  en pausa no las genera), entra como estación «Próximo cobro» con su valor y sin botón de pago.
+- **Cierre:** si no hay nada después de hoy, la línea no muere en «Hoy»: cierra con una
+  estación en contorno y una frase que dice qué aparecerá ahí.
+- **Una sola acción verde:** `accionPrincipal` la elige por urgencia (pagar lo vencido, si no
+  agendar los preventivos vencidos, si no pagar la próxima cuota); las demás acciones de la
+  línea son secundarias y, sin ninguna de esas tres, la línea no lleva verde. En el celular las
+  acciones ocupan su fila y la principal sube a 48 px y 16 px.
+
+### Acceso a un peludo
+- Tarjeta blanca (esquina de tarjeta, mínimo 56 px de alto) que abre la ficha: foto o huella en
+  un círculo de 40 px con hilo y fondo de lienzo, el nombre en marino y debajo «N vencidos» en
+  rojo de error y 600, o «Al día» en suave. Mientras la línea no ha llegado no dice ninguna de
+  las dos. Hover en verde tenue.
+- En la ficha, sin foto, la huella va en el mismo círculo a 56 px, no en un hueco vacío.
+
+**La regla del estado dicho.** El estado del plan se le dice a la familia con sus palabras: una
+pastilla (Activo, Cuotas vencidas, «En pausa» con tono de aviso, Cancelado) y al lado una frase
+que explica por qué y qué hacer («Tus 3 cuotas vencidas pausaron el plan. Al pagar, Luna y Michi
+recuperan sus beneficios.»). La pastilla y la frase usan la misma palabra; el panel conserva la
+del equipo («congelada»). Los cupos del plan se dicen de frente («le quedan 4 de 6 este año»,
+«sin tope de usos este mes»), nunca «ilimitado». Si se puede agendar o no lo decide el plan, y
+la línea dice por qué antes de ofrecerlo.
+
+**La regla de hoy a la vista.** En el portal, «Hoy» está en la primera pantalla del celular: lo
+hecho se pliega y lo vencido se agrupa en vez de crecer una estación por cuota o por vacuna.
 
 ### La línea de la ruta (componente propio)
 `LineaRuta` dibuja la ruta del día con la misma gramática que la línea de la familia, en
@@ -644,6 +723,9 @@ anamnesis, examen físico, diagnóstico, tratamiento): un apartado por pantalla.
   no por el de la ventana.
 - **Do** saca todo `z-index` de `--capa-*` y toda sombra de `--sombra-3`, solo en lo que flota.
 - **Do** mantén los controles en 40 px y 44 px en táctil, con foco azul visible de 2 px.
+- **Do** en el portal, abre la línea en «Hoy», pliega lo hecho y agrupa lo vencido, y deja que
+  `accionPrincipal` elija la única acción verde de la línea.
+- **Do** acompaña el estado del plan, para la familia, de una frase que diga por qué y qué hacer.
 
 ### Don't:
 - **Don't** escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.

@@ -7,10 +7,11 @@ superficie (`.impeccable/surfaces/`).
 
 > En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)). **Rediseñado:** la estructura
 > del panel, el listado con ficha (Familias, Rutas y Clínica), la ruta propia del médico, la
-> consulta guiada, las ventanas y la espera de sesión. **Aún con la
-> composición anterior** (aunque ya con la paleta, la tipografía y el logo): el ingreso, el
-> inicio, el detalle de un registro, el portal y las páginas públicas. Cada uno se rehace en
-> su unidad.
+> consulta guiada, las ventanas, la espera de sesión y, en el portal, su estructura, el
+> inicio y los peludos. **Aún con la composición anterior** (aunque ya con la paleta, la
+> tipografía y el logo): el ingreso, el inicio del panel, el detalle de un registro, las
+> citas, los pagos y los datos del portal, y las páginas públicas. Cada uno se rehace en su
+> unidad.
 
 ## Estructura del panel — `AppLayout`
 
@@ -163,10 +164,48 @@ indicadores salen de `GET /dashboard/indicadores`; el perfil médico ve su jorna
 Las fichas que aún no siguen el patrón de Familias (un servicio, una entrada clínica, la
 historia de una mascota): volver, el título en `h2` y sus datos.
 
-## Portal de familias — `.portal`, pendiente de `R3-POR-01` y `R3-POR-02`
+## Portal de familias — `PortalLayout` (R3-POR-01)
 
-Primero para el celular: cabecera corta con el logo compacto y navegación fija abajo con
-cinco destinos. Desde 900 px la navegación sube a la cabecera como pastillas.
+La estructura del panel con los destinos de la familia: barra marina con el logo, Inicio,
+Peludos, Citas, Pagos y Mis datos, y el menú de la cuenta; por debajo de 900 px, la barra
+inferior con los cinco (caben siempre: no hay «Más»). Reutiliza `.shell`, `.barra-marca`,
+`.modulos`, `.cuenta` y `.barra-inferior`; el contenido va en `.contenido.portal-contenido`,
+hasta 1120 px. Cada pantalla abre con su `h1` en GeosansLight de 34 px.
+
+### El inicio — `.portal-inicio` («Hoy, estás aquí»)
+
+```
+┌─ 390 px ───────────────────────┐   ┌─ desde 900 px ─────────────────────────────┐
+│ Hola, Ana            (h1, 34)  │   │ Hola, Ana                                   │
+│ ■ Plan Familiar  [Congelada]   │   │ ┌─ la línea ──────────────┐  ■ Plan · estado│
+│ Tus 3 cuotas vencidas pausaron │   │ │ ⚠ 3 cuotas vencidas     │  frase          │
+│ el plan. Al pagar, …           │   │ │   [Pagar $ 225.000]     │  [Agendar] [Vet]│
+│ [Agendar] [Hablar con un vet]  │   │ │ ⚠ 7 preventivos …       │  [Michi][Luna]  │
+│ [Michi 3 venc.] [Luna 4 venc.] │   │ │ ━ HOY · JUE 12 NOV      │                 │
+│ ┌─ la línea ────────────────┐  │   │ │ ○ 21 nov · Cuota …      │                 │
+│ │ ⚠ 3 cuotas vencidas       │  │   │ └─────────────────────────┘                 │
+│ │ ━ HOY · JUE 12 NOV        │  │   └─────────────────────────────────────────────┘
+└────────────────────────────────┘
+```
+
+- **El plan**: el marcador y el nombre de cada plan (de la línea, con el color del
+  catálogo), su estado y una frase que dice por qué está así y qué hacer (`frase` en
+  `features/portal/plan.ts`). «Agendar una visita» solo aparece si el plan deja agendar
+  (`motivoSinAgendar`, la misma regla que la elegibilidad del backend).
+- **Los peludos** (`AccesoPeludo`): foto o huella, nombre y lo que tiene vencido; abren su ficha.
+- **La línea** (`LineaPortal`, `.linea-portal`): la de la familia en vertical, del color del
+  plan, abierta en «hoy». Lo hecho se pliega en una pastilla; lo vencido se agrupa (las
+  cuotas en una estación, los preventivos en otra, con cuántos por peludo) para que «hoy»
+  quede en la primera pantalla; debajo, lo que viene. Una sola acción verde, la más
+  urgente (`accionPrincipal` en `features/portal/linea.ts`): pagar lo vencido, si no
+  agendar los preventivos vencidos, si no pagar la próxima cuota.
+
+### La ficha de un peludo
+
+Un panel con la identidad (volver, nombre, especie, edad, peso y plan) y la foto; su propia
+línea (sus preventivos y sus visitas, por `mascota_id`), y las pestañas Carnet, Historia
+clínica y Su plan, con el cupo de cada beneficio dicho de frente («le quedan 5 de 6 este
+año», «sin tope de usos este mes»; nunca «ilimitado»).
 
 ## Reglas de adaptación
 
