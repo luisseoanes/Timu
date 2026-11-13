@@ -7,10 +7,9 @@ superficie (`.impeccable/surfaces/`).
 
 > En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)). **Rediseñado:** la estructura
 > del panel, el listado con ficha (Familias, Rutas y Clínica), la ruta propia del médico, la
-> consulta guiada, las ventanas, la espera de sesión y, en el portal, su estructura, el
-> inicio y los peludos. **Aún con la composición anterior** (aunque ya con la paleta, la
-> tipografía y el logo): el ingreso, el inicio del panel, el detalle de un registro, las
-> citas, los pagos y los datos del portal, y las páginas públicas. Cada uno se rehace en su
+> consulta guiada, las ventanas, la espera de sesión y el portal de familias entero. **Aún con la composición anterior** (aunque ya con la paleta, la
+> tipografía y el logo): el ingreso, el inicio del panel, el detalle de un registro y las
+> páginas públicas. Cada uno se rehace en su
 > unidad.
 
 ## Estructura del panel — `AppLayout`
@@ -206,6 +205,24 @@ Un panel con la identidad (volver, nombre, especie, edad, peso y plan) y la foto
 línea (sus preventivos y sus visitas, por `mascota_id`), y las pestañas Carnet, Historia
 clínica y Su plan, con el cupo de cada beneficio dicho de frente («le quedan 5 de 6 este
 año», «sin tope de usos este mes»; nunca «ilimitado»).
+
+### Citas, pagos y datos (R3-POR-02)
+
+La misma cabecera (`.portal-cabecera`: `h1` y la acción de la vista) y paneles blancos
+(`.portal-panel`, con `.portal-panel-titulo`) con filas (`.portal-lista`, `.citas`): qué a la
+izquierda, su estado y su acción a la derecha; en un contenedor de 480 px o menos la acción
+baja a su fila, alineada a la derecha. Las acciones de fila que no son la principal son planas
+con el color de enlace (`.btn-plano.btn-accion`).
+
+- **Citas**: «Agendar una visita» es el verde solo si el plan lo permite; si no, un aviso
+  dice por qué y lleva a pagos. Pestañas Próximas y Pasadas; cada cita con su día y hora
+  (`.cita-cuando`), qué y para quién, su estado dicho a la familia (`citas.ts`) y sus acciones.
+- **Pagos**: el saldo (`.portal-saldo`) con el único verde por todo lo pendiente y, si el
+  plan está en pausa, qué cambia al pagar; las cuotas por pagar por su mes (`pagos.ts`), y el
+  historial. Al volver de la pasarela, un aviso tintado (`.portal-aviso-<tono>`) con el
+  estado de ese pago.
+- **Datos**: titular y documento como ficha de lectura, el formulario de contacto con su
+  verde («Guardar»), el contrato como acción secundaria si hay uno vigente, y los documentos.
 
 ## Reglas de adaptación
 

@@ -227,10 +227,9 @@ components:
 Este fichero describe lo construido, no lo planeado. La primera superficie del sistema es la
 estructura del panel del equipo (`AppLayout`) y Familias (listado, detalle, pestañas y
 ventanas); después, Rutas (la ruta del día del médico y su coordinación) y Clínica (la historia de
-cada mascota y la consulta guiada). En el portal de familias están rediseñados la estructura, el
-inicio y los peludos (lista y ficha de cada uno, R3-POR-01); sus citas, pagos y datos siguen
-pendientes (R3-POR-02). El resto de módulos del panel, esas pantallas del portal y las páginas
-públicas todavía usan la maqueta anterior y adoptan este sistema en sus unidades de
+cada mascota y la consulta guiada). El portal de familias está rediseñado entero: la
+estructura, el inicio y los peludos (R3-POR-01) y las citas, los pagos y los datos (R3-POR-02).
+El resto de módulos del panel y las páginas públicas todavía usan la maqueta anterior y adoptan este sistema en sus unidades de
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md): lo que se ve hoy en ellos no
 es el sistema. El color, la tipografía, el logo y la voz los fija el
 [manual de marca](docs/manual-de-marca.md); aquí se dice cómo se aplican en la interfaz y se
@@ -488,7 +487,9 @@ Firmes y planos; el color dice la jerarquía, no la forma.
 - **Secundario:** blanco con borde de control y texto marino; hover con borde más oscuro y
   fondo de lienzo.
 - **Plano:** sin fondo, texto suave; hover a marino sobre lienzo. **Plano peligro** para lo
-  destructivo dentro de una fila.
+  destructivo dentro de una fila. **Plano de acción** (`btn-accion`) para la acción de una fila
+  que no es la principal, en el color de enlace: «Pagar esta» o «Comprobante» en los pagos del
+  portal. En gris parecería deshabilitada.
 - **Peligro:** rojo lleno con texto blanco, solo en la confirmación de algo que no se deshace.
 - **De icono** (`btn-icono`, junto a la variante): cuadrado de 40 px (44 en táctil) con solo un
   icono y su `aria-label`, como llamar o «Más acciones» en una parada.
