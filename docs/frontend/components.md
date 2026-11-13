@@ -37,7 +37,9 @@ estira si su vecino de fila es más alto (`align-content: start`).
 
 - `.input` — caja con borde, radio de campo y foco en azul. Es el estándar, también para
   `select`, `textarea` y el campo de archivo, cuyo botón toma la forma del secundario
-  (`::file-selector-button`). En pantallas táctiles, 44 px de alto y letra de 16 px (si no, iOS
+  (`::file-selector-button`). La lista (`select`) lleva su propia flecha, dos degradados del
+  rol de texto suave, y el calendario de los campos de fecha es una máscara pintada con el
+  mismo rol: ninguno enseña el control del navegador. En pantallas táctiles, 44 px de alto y letra de 16 px (si no, iOS
   amplía la página al enfocar).
 - `.buscador` — la misma forma que `.input`, con lupa y campo transparente. En la barra del
   panel y en los filtros de listado.

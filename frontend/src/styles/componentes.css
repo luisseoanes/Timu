@@ -67,6 +67,34 @@
 .input[aria-invalid="true"] { border-color: var(--texto-error); }
 .input[aria-invalid="true"]:focus { box-shadow: 0 0 0 1px var(--texto-error); }
 .input:disabled { background: var(--superficie-hundida); color: var(--texto-suave); cursor: not-allowed; }
+
+/* Listas y fechas con la forma del sistema, no la del navegador. La flecha de la lista son dos
+   degradados del rol de texto suave (sin imagen ni color escrito); el calendario es una máscara
+   (solo cuenta su transparencia) pintada con el mismo rol. Lo señaló el revisor del portal. */
+select.input:not([multiple]) {
+  appearance: none;
+  padding-right: calc(var(--e3) + 20px);
+  cursor: pointer;
+}
+select.input:not([multiple]),
+select.input:not([multiple]):disabled {
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--flecha-lista) 50%),
+    linear-gradient(135deg, var(--flecha-lista) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+select.input { --flecha-lista: var(--texto-suave); }
+select.input:disabled { --flecha-lista: var(--texto-deshabilitado); cursor: not-allowed; }
+.input::-webkit-calendar-picker-indicator {
+  width: 18px; height: 18px;
+  cursor: pointer;
+  background: var(--texto-suave);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M7 2h2v2h6V2h2v2h2a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V2Zm-2 8v9h14v-9H5Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M7 2h2v2h6V2h2v2h2a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2V2Zm-2 8v9h14v-9H5Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.input:disabled::-webkit-calendar-picker-indicator { background: var(--texto-deshabilitado); cursor: not-allowed; }
 textarea.input { min-height: 0; padding-block: var(--e2); }
 
 /* Variante subrayada: sólo en el ingreso */
