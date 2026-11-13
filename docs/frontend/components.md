@@ -19,6 +19,7 @@ este documento, no dentro de la vista.
 | Secundario | `.btn-secundario` | Blanco con borde. Alternativa de igual peso que no es la principal. |
 | Suave | `.btn-suave` | Verde muy claro. Acciones secundarias: «Gestionar afiliación», «Registrar pago» dentro de una pestaña, «Agregar mascota». |
 | Plano | `.btn-plano` | Sin fondo. Acciones terciarias y de fila (*Ficha*, *Historia*, *Editar*). |
+| Plano de acción | `+ .btn-accion` | Acción de una fila que no es la principal, en el color de enlace para que no parezca deshabilitada: «Pagar esta», «Comprobante» en el portal. |
 | Plano de peligro | `+ .btn-plano-peligro` | Acción destructiva dentro de una fila (*Dar de baja*, *Quitar*): rojo, para que no pese como las demás. |
 | Peligro | `.btn-peligro` | Rojo lleno. **Confirmar** algo destructivo en una ventana (*Confirmar baja*, *Quitar contacto*). |
 | Bloque | `+ .btn-bloque` | Ocupa todo el ancho. |
@@ -138,6 +139,24 @@ los enlaces de navegación y WhatsApp salen de `ruta.ts`, sin React, con sus pru
 `LineaRutaMini` es la miniatura de una fila del listado de rutas, con su resumen en
 `aria-label`. La línea es marina (`--ruta-recorrida` y `--ruta-pendiente`), nunca del color de un
 plan.
+
+## Línea del portal — `LineaPortal`
+
+La línea de la familia contada a la familia (`features/portal`): vertical, abierta en «Hoy», lo
+hecho plegado y lo vencido agrupado con su acción. Qué estaciones salen y qué acción es la
+verde lo decide `linea.ts` (`recorrido`, `accionPrincipal`), que se prueba aparte; la ficha de
+un peludo usa la misma con sus estaciones (`delPeludo`). Detalle en `DESIGN.md`.
+
+## Acceso a un peludo — `AccesoPeludo`
+
+Tarjeta enlace con la foto (o la huella), el nombre y lo que tiene vencido. Sin la línea
+cargada (`vencidos: null`) no dice «Al día»: no lo sabe.
+
+## Filas del portal — `.portal-lista` y `.citas`
+
+Qué a la izquierda, su estado y su acción a la derecha; en un contenedor de 480 px o menos la
+acción baja a su fila, alineada a la derecha. Las de citas llevan delante el día y la hora
+(`.cita-cuando`).
 
 ## Consulta guiada — `ConsultaGuiada`
 

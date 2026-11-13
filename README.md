@@ -64,8 +64,8 @@ docker compose run --rm inicializar
 `datos_demo` crea familias, servicios, rutas y campañas, y estos usuarios con la clave
 `demo12345`: `medico@timu.co`, `operaciones@timu.co`, `comercial@timu.co`,
 `gerencia@timu.co` (administrador para los recorridos e2e), `aliada@timu.co` (clínica
-aliada) y `ana@example.com` (portal de familias). Solo crea lo que falta: no actualiza lo ya
-sembrado.
+aliada) y `ana@example.com` (portal de familias, con el plan en pausa por cuotas vencidas).
+Solo crea lo que falta: no actualiza lo ya sembrado.
 
 `db-test` (perfil `test`) y `respaldos` (perfil `respaldos`) no arrancan con el `up`
 general.
@@ -162,6 +162,7 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [docs/costos-infraestructura.md](docs/costos-infraestructura.md) | Estimación de costos de tres nubes, integraciones e IA (10 de noviembre de 2026) |
 | [docs/prueba-de-carga.md](docs/prueba-de-carga.md) | Cómo correr la prueba de carga con el volumen a 12 meses |
 | [docs/flujo-de-la-visita.md](docs/flujo-de-la-visita.md) | Cómo se atiende una visita en casa: estados de la parada y del servicio, pasos de cada tipo y la consulta como registro |
+| [docs/portal-familias.md](docs/portal-familias.md) | Qué ve y qué hace la familia en el portal, de dónde sale cada dato y las reglas del backend que el panel copia |
 | [docs/indicadores.md](docs/indicadores.md) | Definición de cada indicador del dashboard y de los exportables |
 | [docs/plan-persistencia.md](docs/plan-persistencia.md) | Registro (cerrado): por qué la base garantiza integridad y permisos, decisiones y verificación de cada fase |
 | [docs/deuda-ciclos-dominios.md](docs/deuda-ciclos-dominios.md) | Registro (cerrado): cómo se eliminaron los ciclos entre dominios del backend |

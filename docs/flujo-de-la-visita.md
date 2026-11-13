@@ -70,7 +70,8 @@ del backend. Esa copia es deuda: ver «Deuda conocida» en
 - **`R2-PAN-08`** (Cartera y preventivos) rediseña el registro de la aplicación de una vacuna
   y agenda un preventivo desde la línea de Familias. Es la unidad que debería cerrar la deuda
   anterior.
-- **R3, el portal**, enseña a la familia sus visitas y su historia. Desde `R3-POR-01` cada
-  visita es una estación de la línea del inicio (`GET /portal/linea`) con el estado del
-  servicio («En ruta», «En atención»), que sale de `/portal/servicios`; las citas, con sus
-  estados, se rehacen en `R3-POR-02`.
+- **El portal** enseña a la familia sus visitas y su historia: cada visita es una estación de
+  la línea del inicio (`GET /portal/linea`) y una cita en «Tus citas», con el estado de esta
+  tabla dicho con sus palabras («En camino», «En atención»; `estadoDeCita` en
+  `frontend/src/features/portal/citas.ts`). El portal entero, en
+  [`portal-familias.md`](portal-familias.md).

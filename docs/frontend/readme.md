@@ -3,8 +3,9 @@
 > **En rediseño.** La interfaz se está rediseñando con la marca real de TIMU; el orden, el
 > estado de cada unidad y el siguiente paso están en la
 > [hoja de ruta](../hoja-de-ruta-rediseno.md). Ya usan la línea nueva la estructura del panel,
-> Familias, Rutas, Clínica, las ventanas y la espera de sesión; el resto de pantallas tiene la
-> paleta, la tipografía y el logo nuevos con su composición anterior, hasta su unidad.
+> Familias, Rutas, Clínica, las ventanas, la espera de sesión y el portal de familias entero; el
+> resto de pantallas tiene la paleta, la tipografía y el logo nuevos con su composición
+> anterior, hasta su unidad.
 
 ## Qué leer antes de escribir una pantalla
 

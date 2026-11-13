@@ -187,9 +187,14 @@ Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñ
   pasan a una columna mientras `.con-ficha` sigue a dos.
 - **`--sombra-1` y `--sombra-2` valen `none`** y siguen referenciados. Es coherente con el
   diseño plano, pero son tokens muertos: o se retiran o se les da uso.
-- **El ingreso, el portal y los módulos sin rediseñar** contradicen el sistema en puntos que
-  sus unidades de la hoja de ruta corrigen: el antetítulo en pastilla y el vidrio de
-  `.ingreso-vista`, la sombra de `.portal-nav` y la opacidad de `.cupo:disabled`.
+- **El ingreso y los módulos sin rediseñar** contradicen el sistema en puntos que sus unidades
+  de la hoja de ruta corrigen: el antetítulo en pastilla y el vidrio de `.ingreso-vista`, y la
+  opacidad de `.cupo:disabled` (la usa el selector de horarios del portal y del panel).
+- **El portal copia cuatro reglas del backend** para no ofrecer lo que la API rechazaría:
+  cuándo se agenda (`motivoSinAgendar`), qué cita cambia de fecha o se cancela (`puedeCambiar`,
+  `puedeCancelar`) y qué tipos se agendan. La última ya no coincide: el backend deja agendar una
+  consulta en la clínica y el portal no la ofrece. Se cierra cuando la API diga qué puede hacer
+  la familia. El detalle, en [`portal-familias.md`](../portal-familias.md).
 - **El contrato, la fórmula médica y el comprobante de pago siguen en PDF sin marca**, con las
   fuentes base del PDF (latin-1), que estropean las tildes. El carnet ya usa
   `app/core/marca_pdf.py` (logo, paleta, GeosansLight e Inter); los demás lo adoptan en su

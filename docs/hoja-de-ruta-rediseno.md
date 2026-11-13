@@ -233,6 +233,10 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 - **Datos de demostración**: la única familia con portal (Ana) tiene el plan congelado. Los
   estados «al día» se capturaron para el revisor interceptando la API. Una segunda familia con
   portal en `datos_demo` daría al barrido y a los recorridos el estado sano.
+- **La consulta en la clínica no se agenda desde el portal**, aunque el backend la permite
+  (`MODALIDADES_AUTOGESTION`): la ventana de agendar solo ofrece las visitas en casa y las
+  preventivas. Hay que decidir con el usuario si el portal la ofrece
+  ([`portal-familias.md`](portal-familias.md)).
 - **La prueba de la foto** (`e2e-stack/recorridos.spec.ts`) sube un PNG de 1×1 a la primera
   mascota de Ana, que el portal enseña después como su foto. No rompe nada, pero ensucia las
   capturas: hay que quitarla antes de capturar.
@@ -283,7 +287,8 @@ Confirmadas por el usuario el 2026-11-10 y el 2026-11-11, cada una escrita donde
 ## Riesgos
 
 - **Volumen.** El alcance de arriba se toca entero. Las pantallas más grandes (Campañas con 931
-  líneas, el portal con 821, Servicios con 562) concentran el riesgo.
+  líneas, Servicios con 562) concentran el riesgo. El portal (821 líneas en un fichero) ya se
+  repartió por pantalla.
 - **Pruebas que buscan textos.** Las pruebas consultan por rol y etiqueta, pero cambiar un
   texto rompe las que lo buscan literalmente. Se ajustan en la misma unidad.
 - **El sorteo necesita red.** La telemetría está apagada, pero los sorteos consultan el
