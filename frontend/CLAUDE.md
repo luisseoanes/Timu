@@ -50,6 +50,9 @@ perfil), el portal de familias (`/portal`) y el de la clínica aliada (`/aliada`
   los revisa quien empuja (`docs/frontend/conventions.md`, «Qué revisar antes de empujar»).
 - Toda lectura va por React Query con clave que incluya los filtros (`['familias', filtros]`)
   y toda pantalla cubre carga, error y vacío.
+- **El día de un instante (`2026-11-13T00:30:00Z`) sale de `diaISO` (`lib/formato.ts`)**, en la
+  zona de Colombia; `.slice(0, 10)` da el día de UTC. Una fecha de calendario va directa a
+  `fecha`/`fechaCorta`.
 - **Toda pantalla nueva llega con sus pruebas.** Vitest + Testing Library para
   componentes, con la API simulada por MSW en `src/test/handlers.ts` — nunca con mock
   de axios, para que se pruebe también cómo se arma la petición. Playwright en `e2e/`
@@ -66,6 +69,8 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
 - **Sorteos de la skill**: `serve-question --wait --key <k>` sale con 3 cada 60 s sin respuesta:
   repítelo en bucle en segundo plano hasta que salga 0. Las capturas para el revisor final siguen
   «Capturas para el revisor final» de la hoja de ruta.
+  `concept-seed --help` no imprime ayuda: ejecuta una tirada. La forma del payload la da
+  `serve-question --schema`.
 - **Color, tipografía, logo y voz**: [`docs/manual-de-marca.md`](../docs/manual-de-marca.md).
   Los componentes usan los roles de su sección 10, nunca un color de la paleta.
 - **Decisiones de diseño**: la skill del repositorio, `/impeccable`, con
@@ -80,7 +85,10 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   vuelve a Inter. El logo es `MarcaTimu` (completo o `compacta`), con la receta de sus SVG en
   `src/assets/marca/README.md`.
 - **Para mirar una pantalla**: un script de Playwright desde `frontend/` contra :5173, con el
-  ingreso por `request.post('/api/v1/auth/login')`.
+  ingreso por `request.post('/api/v1/auth/login', { form: { username, password } })` (en JSON da
+  422). La renovación rota el token: tras cada contexto, guarda otra vez su `storageState`, o el
+  siguiente reusa uno rotado y el backend cierra la sesión. El script vive en el scratchpad y se
+  copia a `frontend/` solo para ejecutarlo: `eslint .` lo recoge y `verificar` falla.
 - [`docs/frontend/`](../docs/frontend/) (components, layouts, conventions) describe lo
   construido: qué pieza y qué plantilla reutilizar. `conventions.md` incluye la checklist de revisión y la deuda
   conocida (tema oscuro, PDF sin marca, medidas escritas a mano, tildes del catálogo).
@@ -94,3 +102,9 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
 - El proyecto no usa Prettier: no corras `npx prettier`, que descarga uno y reformatea el fichero entero. El formato lo revisa ESLint.
 - Vite incrusta como `data:` los recursos de menos de 4 KB: compara el `src` con el import del fichero, no con su nombre.
 - Con una ventana de Radix abierta, el `body` lleva `pointer-events: none` y `elementFromPoint` se lo salta: quítalo mientras mides qué hay pintado encima.
+- Una regla con `display:` le gana al atributo `hidden`, y jsdom no aplica el CSS: un pliegue que
+  no pliega pasa en Vitest. Se prueba en Playwright (`e2e/`) con `toBeHidden()`.
+- `moneda()` separa con espacio duro (`$ 225.000`): búscalo con `\s` en la expresión, no con un
+  espacio. Si el nombre accesible de un título no casa, compara su `toHaveTextContent`.
+- En `e2e/`, `page.route` da prioridad al último registrado: el comodín (`**/api/v1/**`) primero
+  y las rutas de la prueba después.

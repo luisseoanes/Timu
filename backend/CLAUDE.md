@@ -88,6 +88,9 @@ Reglas que atraviesan todo el backend:
   `cartera/contratos.py`; `planes` es solo el catálogo. Un caso de uso nuevo que cruce
   dominios se orquesta en el de arriba; si el router del de abajo lo llamara, la guarda de
   ciclos fallaría.
+- **Un schema que leen dos routers va en `<dominio>/schemas.py`**, no en el router (otro dominio
+  no puede importarlo). Si el servicio también usa sus `Literal`, se declaran en el schema y el
+  servicio los importa de ahí: al revés se cierra un import circular (`afiliaciones/schemas.py`).
 - **`comunicaciones` no depende de ningún dominio**: casi todos encolan en él. Quién es la
   familia de un número y quién contesta un mensaje entrante (encuesta, conversación
   comercial) se lo conecta `app/workers/tasks/comunicaciones.py` con
