@@ -148,7 +148,7 @@ const RUTAS: Ruta[] = [
     },
     pestanas: true,
   },
-  { app: 'citas', perfil: 'familia', url: '/portal/citas' },
+  { app: 'citas', perfil: 'familia', url: '/portal/citas', pestanas: true },
   { app: 'pagos', perfil: 'familia', url: '/portal/pagos' },
   {
     // Regreso desde la pasarela. Sin pagos en datos_demo se mide con un pago inexistente.

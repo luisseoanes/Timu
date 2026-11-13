@@ -207,6 +207,11 @@ test.describe('familia', () => {
     await page.getByRole('navigation', { name: 'Portal' }).getByRole('link', { name: 'Peludos' }).click()
     await expect(page.getByRole('heading', { level: 1, name: 'Tus peludos' })).toBeVisible()
     await expect(page.getByRole('link', { name: /luna/i })).toBeVisible()
+    // R3-POR-02: Ana debe cuotas, así que sus pagos ofrecen un solo verde por lo pendiente.
+    await page.getByRole('navigation', { name: 'Portal' }).getByRole('link', { name: 'Pagos' }).click()
+    await expect(page.getByRole('heading', { level: 1, name: 'Tus pagos' })).toBeVisible()
+    await expect(page.locator('.btn-primario')).toHaveCount(1)
+    await expect(page.getByRole('button', { name: /^Pagar \$/ }).first()).toHaveClass(/btn-primario/)
     await page.goto('/familias')
     await expect(page).toHaveURL(/\/portal/)
   })

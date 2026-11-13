@@ -6,7 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PortalInicio } from './InicioPortal'
 import { PortalMascota, PortalMascotas } from './PeludosPortal'
-import { PortalCitas, PortalDatos, PortalPagos } from './PortalPages'
+import { PortalCitas } from './CitasPortal'
+import { PortalDatos } from './DatosPortal'
+import { PortalPagos } from './PagosPortal'
 import { FAMILIA, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
@@ -296,20 +298,43 @@ describe('mascotas', () => {
 })
 
 describe('citas', () => {
-  it('las abiertas se cambian o cancelan; las pasadas se ven a pedido', async () => {
+  // Con el plan activo: agendar solo se ofrece si el plan lo permite.
+  beforeEach(() => server.use(http.get(`${API}/portal/plan`, () => HttpResponse.json(PLAN))))
+
+  it('cada próxima ofrece lo que el backend acepta; las pasadas están en su pestaña', async () => {
     const pedidas: (string | null)[] = []
     server.use(
       http.get(`${API}/portal/servicios`, ({ request }) => {
-        pedidas.push(new URL(request.url).searchParams.get('incluir_pasados'))
-        return HttpResponse.json([cita({ id: 'a' }), cita({ id: 'b', estado: 'completado', mascota_id: null })])
+        const pasados = new URL(request.url).searchParams.get('incluir_pasados')
+        pedidas.push(pasados)
+        return HttpResponse.json(
+          pasados
+            ? [cita({ id: 'a' }), cita({ id: 'b', estado: 'completado', mascota_id: null, programado_para: '2026-01-10T14:00:00Z' })]
+            : [cita({ id: 'a' }), cita({ id: 'c', estado: 'pendiente_autorizacion' })],
+        )
       }),
     )
     const user = userEvent.setup()
     renderizar(<PortalCitas />)
-    expect(await screen.findByText('Consulta domiciliaria · Luna')).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Cambiar fecha' })).toHaveLength(1)
-    await user.click(screen.getByLabelText('Ver también las pasadas'))
-    await waitFor(() => expect(pedidas).toEqual([null, 'true']))
+    const proximas = await screen.findByRole('list', { name: 'Citas próximas' })
+    expect(await within(proximas).findAllByText('· Luna')).toHaveLength(2)
+    // Solo la confirmada cambia de fecha; las dos se pueden cancelar.
+    expect(within(proximas).getAllByRole('button', { name: 'Cambiar la fecha' })).toHaveLength(1)
+    expect(within(proximas).getAllByRole('button', { name: 'Cancelar' })).toHaveLength(2)
+    expect(within(proximas).getByText('TIMU la autoriza antes de confirmarla.')).toBeInTheDocument()
+    await user.click(screen.getByRole('tab', { name: 'Pasadas' }))
+    const anteriores = await screen.findByRole('list', { name: 'Citas pasadas' })
+    expect(within(anteriores).getByText('Atendida')).toBeInTheDocument()
+    expect(within(anteriores).queryByRole('button')).not.toBeInTheDocument()
+    expect(pedidas).toEqual([null, 'true'])
+  })
+
+  it('con el plan en pausa no ofrece agendar y lleva a pagar', async () => {
+    server.use(http.get(`${API}/portal/plan`, () => HttpResponse.json({ ...PLAN, estado: 'congelada' })))
+    renderizar(<PortalCitas />)
+    expect(await screen.findByText(/Tu plan está en pausa por cuotas vencidas/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ir a tus pagos' })).toHaveAttribute('href', '/portal/pagos')
+    expect(screen.queryByRole('button', { name: /agendar/i })).not.toBeInTheDocument()
   })
 
   it('cambia la fecha a un horario con cupo y explica un rechazo', async () => {
@@ -323,18 +348,18 @@ describe('citas', () => {
     )
     const user = userEvent.setup()
     renderizar(<PortalCitas />)
-    await user.click(await screen.findByRole('button', { name: 'Cambiar fecha' }))
+    await user.click(await screen.findByRole('button', { name: 'Cambiar la fecha' }))
     const modal = await screen.findByRole('dialog')
     const horarios = await within(modal).findByRole('group', { name: 'Horarios disponibles' })
     expect(within(horarios).getAllByRole('button')).toHaveLength(1)
     await user.click(within(horarios).getByRole('button'))
-    await user.type(within(modal).getByLabelText('Motivo'), ' Viaje ')
-    await user.click(within(modal).getByRole('button', { name: 'Cambiar fecha' }))
+    await user.type(within(modal).getByLabelText('¿Por qué la cambias?'), ' Viaje ')
+    await user.click(within(modal).getByRole('button', { name: 'Cambiar la fecha' }))
     expect(await within(modal).findByRole('alert')).toHaveTextContent('Ese horario ya se ocupó')
     expect(enviado).toEqual({ inicio: '2099-01-10T15:00:00Z', motivo: 'Viaje' })
   })
 
-  it('cancela una cita con su motivo y explica un rechazo', async () => {
+  it('cancela una cita con su motivo, confirmando en rojo, y explica un rechazo', async () => {
     const motivos: unknown[] = []
     server.use(
       http.get(`${API}/portal/servicios`, () => HttpResponse.json([cita({})])),
@@ -349,10 +374,12 @@ describe('citas', () => {
     renderizar(<PortalCitas />)
     await user.click(await screen.findByRole('button', { name: 'Cancelar' }))
     const modal = await screen.findByRole('dialog')
-    await user.type(within(modal).getByLabelText('Motivo'), 'Viaje')
-    await user.click(within(modal).getByRole('button', { name: 'Cancelar cita' }))
+    await user.type(within(modal).getByLabelText('¿Por qué la cancelas?'), 'Viaje')
+    const confirmar = within(modal).getByRole('button', { name: 'Cancelar la cita' })
+    expect(confirmar).toHaveClass('btn-peligro')
+    await user.click(confirmar)
     expect(await within(modal).findByRole('alert')).toHaveTextContent('Faltan menos de 12 horas')
-    await user.click(within(modal).getByRole('button', { name: 'Cancelar cita' }))
+    await user.click(within(modal).getByRole('button', { name: 'Cancelar la cita' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(motivos).toEqual([{ motivo: 'Viaje' }, { motivo: 'Viaje' }])
   })
@@ -361,7 +388,7 @@ describe('citas', () => {
     server.use(http.get(`${API}/portal/disponibilidad`, () => HttpResponse.json([{ inicio: '2099-01-10T13:00:00Z', fin: '', disponibles: 0 }])))
     const user = userEvent.setup()
     renderizar(<PortalCitas />)
-    await user.click(await screen.findByRole('button', { name: /agendar/i }))
+    await user.click(await screen.findByRole('button', { name: /agendar una visita/i }))
     const modal = await screen.findByRole('dialog')
     expect(within(modal).getByText('Elige el tipo de visita para ver los horarios.')).toBeInTheDocument()
     await waitFor(() => expect(within(modal).getByRole('option', { name: 'Vacunación' })).toBeInTheDocument())
@@ -382,7 +409,7 @@ describe('citas', () => {
     )
     const user = userEvent.setup()
     renderizar(<PortalCitas />)
-    await user.click(await screen.findByRole('button', { name: /agendar/i }))
+    await user.click(await screen.findByRole('button', { name: /agendar una visita/i }))
     const modal = await screen.findByRole('dialog')
     await waitFor(() => expect(within(modal).getByRole('option', { name: 'Consulta domiciliaria' })).toBeInTheDocument())
     await user.selectOptions(within(modal).getByLabelText('Tipo de visita'), 'consulta_domiciliaria')
@@ -397,25 +424,81 @@ describe('pagos', () => {
   it('sin contrato no ofrece pagar', async () => {
     server.use(http.get(`${API}/portal/estado-cuenta`, () => HttpResponse.json({ detail: 'Sin contrato' }, { status: 404 })))
     renderizar(<PortalPagos />)
-    expect(await screen.findByText('Aún no tienes un contrato activo.')).toBeInTheDocument()
+    expect(await screen.findByText(/Aún no tienes un plan con cuotas/)).toBeInTheDocument()
     expect(await screen.findByText('Aún no tienes pagos.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Pagar/ })).not.toBeInTheDocument()
   })
 
-  it('solo cobra lo pendiente y lleva a la pasarela', async () => {
+  it('con una sola cuota, un solo verde que la paga y lleva a la pasarela', async () => {
     const asignar = vi.fn()
+    let cuerpo: unknown = null
     vi.stubGlobal('location', { ...window.location, assign: asignar })
     server.use(
-      http.post(`${API}/portal/pagos`, () =>
-        HttpResponse.json({ pago: { id: 'p1' }, enlace_pago: 'https://checkout.wompi.co/p/?reference=X' }, { status: 201 }),
-      ),
+      http.post(`${API}/portal/pagos`, async ({ request }) => {
+        cuerpo = await request.json()
+        return HttpResponse.json({ pago: { id: 'p1' }, enlace_pago: 'https://checkout.wompi.co/p/?reference=X' }, { status: 201 })
+      }),
     )
     const user = userEvent.setup()
     renderizar(<PortalPagos />)
-    expect(await screen.findByText(/el 05/)).toBeInTheDocument()
-    const pagar = screen.getAllByRole('button', { name: 'Pagar' })
+    expect(await screen.findByText(/vence el jue 5 nov/)).toBeInTheDocument()
+    const pagar = screen.getAllByRole('button', { name: /^Pagar/ })
     expect(pagar).toHaveLength(1)
+    expect(pagar[0]).toHaveClass('btn-primario')
     await user.click(pagar[0]!)
     await waitFor(() => expect(asignar).toHaveBeenCalledWith('https://checkout.wompi.co/p/?reference=X'))
+    expect(cuerpo).toEqual({})
+  })
+
+  it('con varias cuotas, el verde paga todo y cada una se paga sola', async () => {
+    let cuerpo: unknown = null
+    const dos = [CUENTA.cuotas[0]!, { ...CUENTA.cuotas[0]!, id: 'q2', periodo: '2026-12', fecha_vencimiento: '2026-12-05' }]
+    server.use(
+      http.get(`${API}/portal/estado-cuenta`, () => HttpResponse.json({ ...CUENTA, saldo_pendiente: '150000.00', cuotas: dos })),
+      http.post(`${API}/portal/pagos`, async ({ request }) => {
+        cuerpo = await request.json()
+        return HttpResponse.json({ detail: 'Pasarela no disponible' }, { status: 503 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<PortalPagos />)
+    expect(await screen.findByRole('button', { name: /^Pagar \$\s150\.000$/ })).toHaveClass('btn-primario')
+    const unaPorUna = screen.getAllByRole('button', { name: 'Pagar esta' })
+    expect(unaPorUna).toHaveLength(2)
+    expect(document.querySelectorAll('.btn-primario')).toHaveLength(1)
+    await user.click(unaPorUna[1]!)
+    expect(await screen.findByRole('alert')).toHaveTextContent('Pasarela no disponible')
+    expect(cuerpo).toEqual({ cuota_id: 'q2' })
+  })
+
+  it('con todo vencido lo dice una vez, sin una pastilla por fila, y dice qué cambia al pagar', async () => {
+    const vencidas = [
+      { ...CUENTA.cuotas[0]!, dias_mora: 6 },
+      { ...CUENTA.cuotas[0]!, id: 'q2', periodo: '2026-10', dias_mora: 36 },
+    ]
+    server.use(
+      http.get(`${API}/portal/plan`, () => HttpResponse.json({ ...PLAN, estado: 'congelada' })),
+      http.get(`${API}/portal/estado-cuenta`, () =>
+        HttpResponse.json({ ...CUENTA, saldo_pendiente: '150000.00', saldo_vencido: '150000.00', cuotas: vencidas }),
+      ),
+    )
+    renderizar(<PortalPagos />)
+    expect(await screen.findByText(/todo vencido/)).toBeInTheDocument()
+    expect(await screen.findByText(/tu plan sale de la pausa/)).toBeInTheDocument()
+    expect(screen.queryByText('Vencida')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Pagar esta' })[0]).toHaveClass('btn-plano')
+  })
+
+  it('un pago rechazado está en el historial diciendo que no se cobró', async () => {
+    server.use(
+      http.get(`${API}/portal/pagos`, () =>
+        HttpResponse.json([{ id: 'p2', referencia_externa: 'R2', valor: '75000.00', estado: 'rechazado', fecha_pago: null, created_at: '2026-11-01T14:00:00Z' }]),
+      ),
+    )
+    renderizar(<PortalPagos />)
+    const historial = await screen.findByRole('heading', { name: 'Tu historial de pagos' })
+    expect(await screen.findByText(/No se cobró/)).toBeInTheDocument()
+    expect(historial.closest('section')).toHaveTextContent('No se cobró')
   })
 
   it('una cuota pendiente con mora se ve vencida', async () => {
@@ -424,6 +507,21 @@ describe('pagos', () => {
     renderizar(<PortalPagos />)
     expect(await screen.findByText('Vencida')).toBeInTheDocument()
     expect(screen.queryByText('Pendiente')).not.toBeInTheDocument()
+  })
+
+  it('al volver de la pasarela dice qué pasó con ese pago', async () => {
+    server.use(
+      http.get(`${API}/portal/pagos`, () =>
+        HttpResponse.json([{ id: 'p2', referencia_externa: 'R2', valor: '75000.00', estado: 'rechazado', fecha_pago: null, created_at: '2026-11-01T14:00:00Z' }]),
+      ),
+    )
+    renderizar(
+      <Routes>
+        <Route path="/portal/pagos/:pagoId" element={<PortalPagos />} />
+      </Routes>,
+      { ruta: '/portal/pagos/p2' },
+    )
+    expect(await screen.findByRole('status')).toHaveTextContent('no se hizo ningún cobro')
   })
 
   it('el comprobante solo existe para pagos aprobados y explica si falla', async () => {
@@ -479,37 +577,56 @@ describe('mis datos', () => {
       ),
     )
     renderizar(<PortalDatos />)
-    const lista = await screen.findByRole('list', { name: 'Mis documentos' })
+    const lista = await screen.findByRole('list', { name: 'Tus documentos' })
     expect(within(lista).getByRole('link', { name: 'Ecografía de Luna' })).toHaveAttribute('href', 'https://s3/eco.pdf')
-    expect(within(lista).getByText(/Documento · Luna · 02\/11\/2026/)).toBeInTheDocument()
+    expect(within(lista).getByText(/Documento · Luna · lun 2 nov/)).toBeInTheDocument()
     expect(within(lista).getByRole('link', { name: 'Contrato TM-0001' })).toBeInTheDocument()
   })
 
   it('dice que todavía no tiene documentos', async () => {
     renderizar(<PortalDatos />)
-    expect(await screen.findByText('Todavía no tienes documentos.')).toBeInTheDocument()
+    expect(await screen.findByText(/Todavía no tienes documentos/)).toBeInTheDocument()
   })
 
   it('explica si no pudo cargar sus documentos', async () => {
     server.use(http.get(`${API}/portal/documentos`, () => HttpResponse.json({ detail: 'Fallo' }, { status: 500 })))
     renderizar(<PortalDatos />)
-    expect(await screen.findByText(/No fue posible cargar tus documentos/)).toBeInTheDocument()
+    expect(await screen.findByText(/No pudimos cargar tus documentos/)).toBeInTheDocument()
+  })
+
+  it('el titular y el documento se leen pero no se editan', async () => {
+    renderizar(<PortalDatos />)
+    expect(await screen.findByText(FAMILIA.titular_nombre)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Titular')).not.toBeInTheDocument()
+    expect(screen.getByText(/escríbenos por WhatsApp/)).toBeInTheDocument()
+  })
+
+  it('sin contrato vigente no ofrece abrirlo, y el vacío no lo promete', async () => {
+    renderizar(<PortalDatos />)
+    expect(await screen.findByText(/Todavía no tienes documentos/)).not.toHaveTextContent(/contrato/i)
+    expect(screen.queryByRole('button', { name: /tu contrato/i })).not.toBeInTheDocument()
   })
 
   it('abre el contrato en otra pestaña', async () => {
     const abrir = vi.spyOn(window, 'open').mockReturnValue(null)
-    server.use(http.get(`${API}/portal/contrato`, () => HttpResponse.json({ url: 'https://s3/contrato.pdf' })))
+    server.use(
+      http.get(`${API}/portal/plan`, () => HttpResponse.json(PLAN)),
+      http.get(`${API}/portal/contrato`, () => HttpResponse.json({ url: 'https://s3/contrato.pdf' })),
+    )
     const user = userEvent.setup()
     renderizar(<PortalDatos />)
-    await user.click(await screen.findByRole('button', { name: /mi contrato/i }))
+    await user.click(await screen.findByRole('button', { name: /tu contrato/i }))
     await waitFor(() => expect(abrir).toHaveBeenCalledWith('https://s3/contrato.pdf', '_blank', 'noopener'))
   })
 
   it('explica por qué no se pudo abrir el contrato', async () => {
-    server.use(http.get(`${API}/portal/contrato`, () => HttpResponse.json({ detail: 'Contrato no generado' }, { status: 404 })))
+    server.use(
+      http.get(`${API}/portal/plan`, () => HttpResponse.json(PLAN)),
+      http.get(`${API}/portal/contrato`, () => HttpResponse.json({ detail: 'Contrato no generado' }, { status: 404 })),
+    )
     const user = userEvent.setup()
     renderizar(<PortalDatos />)
-    await user.click(await screen.findByRole('button', { name: /mi contrato/i }))
+    await user.click(await screen.findByRole('button', { name: /tu contrato/i }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Contrato no generado')
   })
 

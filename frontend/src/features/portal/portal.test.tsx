@@ -4,7 +4,9 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 
 import { PortalInicio } from './InicioPortal'
-import { PortalCitas, PortalDatos, PortalPagos } from './PortalPages'
+import { PortalCitas } from './CitasPortal'
+import { PortalDatos } from './DatosPortal'
+import { PortalPagos } from './PagosPortal'
 import { FAMILIA, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
@@ -87,7 +89,7 @@ describe('Portal de la familia', () => {
     expect(within(lista).getByText('Las de agosto, septiembre y octubre.')).toBeInTheDocument()
     expect(within(lista).getByRole('heading', { name: /2 preventivos vencidos desde el/ })).toBeInTheDocument()
     // Con el plan congelado no se agenda: lo dice en vez de ofrecer algo que el backend rechaza.
-    expect(within(lista).getByText('Se agendan al ponerte al día.')).toBeInTheDocument()
+    expect(within(lista).getByText('Tu plan está en pausa por cuotas vencidas: al pagarlas, podrás agendar.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /agendar/i })).not.toBeInTheDocument()
     // Una sola acción verde: pagar todo lo pendiente.
     const pagar = within(lista).getByRole('button', { name: /^Pagar \$\s225\.000$/ })
@@ -225,10 +227,11 @@ describe('Portal de la familia', () => {
         return HttpResponse.json({ id: 's1', mascota_id: 'm', tipo_codigo: 'consulta_domiciliaria', estado: 'agendado', programado_para: '2099-01-10T14:00:00Z', termina_en: null }, { status: 201 })
       }),
     )
+    server.use(http.get(`${API}/portal/plan`, () => HttpResponse.json(plan('activa'))))
     const user = userEvent.setup()
     renderizar(<PortalCitas />)
-    expect(await screen.findByText('No tienes citas.')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /agendar/i }))
+    expect(await screen.findByText('No tienes citas próximas.')).toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: /agendar una visita/i }))
     const modal = await screen.findByRole('dialog')
     await waitFor(() => expect(within(modal).getByRole('option', { name: 'Consulta domiciliaria' })).toBeInTheDocument())
     await user.selectOptions(within(modal).getByLabelText('Tipo de visita'), 'consulta_domiciliaria')
@@ -259,9 +262,10 @@ describe('Portal de la familia', () => {
     )
     const user = userEvent.setup()
     renderizar(<PortalPagos />)
-    await user.click(await screen.findByRole('button', { name: 'Pagar' }))
+    await user.click(await screen.findByRole('button', { name: /^Pagar \$\s75\.000$/ }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Pasarela no disponible')
-    expect(pagada).toEqual({ cuota_id: 'q1' })
+    // Con una sola cuota, el verde paga todo lo pendiente.
+    expect(pagada).toEqual({})
   })
 
   it('actualiza sólo los datos que cambiaron', async () => {

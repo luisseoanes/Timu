@@ -50,7 +50,9 @@ export function motivoSinAgendar(p: PlanPortal | null | undefined): string | nul
   if (p === undefined) return 'Cargando tu plan…'
   if (p === null) return 'Necesitas un plan activo para agendar.'
   if (p.estado === 'activa') return null
-  if (p.estado === 'congelada' || p.estado === 'en_mora') return 'Se agendan al ponerte al día.'
+  // Dice la causa con la palabra de la pastilla del inicio y qué hacer.
+  if (p.estado === 'congelada') return 'Tu plan está en pausa por cuotas vencidas: al pagarlas, podrás agendar.'
+  if (p.estado === 'en_mora') return 'Tienes cuotas vencidas: al pagarlas, podrás agendar.'
   return 'Escríbenos por WhatsApp para agendar.'
 }
 
@@ -98,4 +100,11 @@ export function finDeLinea(p: PlanPortal | null | undefined, peludo?: string): s
   return pausado
     ? 'Al ponerte al día, aquí aparecen tus próximas cuotas y las visitas que agendes para tus peludos.'
     : 'Nada más programado. Cuando agendes una visita para tus peludos, aparece aquí.'
+}
+
+/** Junto al saldo: qué cambia al pagar lo vencido. */
+export function alPagar(p: PlanPortal | null | undefined): string | null {
+  if (p?.estado === 'congelada') return 'Al pagar lo vencido, tu plan sale de la pausa y puedes volver a agendar.'
+  if (p?.estado === 'en_mora') return 'Al pagar lo vencido, puedes volver a agendar.'
+  return null
 }

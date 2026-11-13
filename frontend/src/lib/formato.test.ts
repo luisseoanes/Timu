@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { mensajeError } from './errores'
 import { estado } from './estados'
-import { edad, fecha, fechaCorta, fechaCortaConDia, fechaHora, fechaLarga, moneda, peso, porcentaje, rangoHoras } from './formato'
+import { diaISO, edad, fecha, fechaCorta, fechaCortaConDia, fechaHora, fechaLarga, moneda, peso, porcentaje, rangoHoras } from './formato'
 
 describe('formato colombiano', () => {
   it('muestra pesos sin decimales y con punto de miles', () => {
@@ -71,5 +71,10 @@ describe('mensajeError', () => {
     expect(peso(8.4)).toBe('8,4 kg')
     expect(peso(12)).toBe('12 kg')
     expect(peso(null)).toBe('—')
+  })
+
+  it('el día de un instante es el de Colombia, no el de UTC', () => {
+    expect(diaISO('2026-11-13T00:30:00Z')).toBe('2026-11-12')
+    expect(diaISO('2026-11-12T15:00:00Z')).toBe('2026-11-12')
   })
 })

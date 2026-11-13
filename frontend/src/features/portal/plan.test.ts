@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { PlanPortal } from './api'
-import { cupo, estadoDelPlan, finDeLinea, frase, motivoSinAgendar, planesDe } from './plan'
+import { alPagar, cupo, estadoDelPlan, finDeLinea, frase, motivoSinAgendar, planesDe } from './plan'
 
 const plan = (estado: string, mascotas = ['Luna', 'Michi']): PlanPortal => ({
   estado,
@@ -29,8 +29,8 @@ describe('el plan dicho a la familia', () => {
 
   it('solo deja agendar con el plan activo, como la elegibilidad del backend', () => {
     expect(motivoSinAgendar(plan('activa'))).toBeNull()
-    expect(motivoSinAgendar(plan('congelada'))).toBe('Se agendan al ponerte al día.')
-    expect(motivoSinAgendar(plan('en_mora'))).toBe('Se agendan al ponerte al día.')
+    expect(motivoSinAgendar(plan('congelada'))).toBe('Tu plan está en pausa por cuotas vencidas: al pagarlas, podrás agendar.')
+    expect(motivoSinAgendar(plan('en_mora'))).toBe('Tienes cuotas vencidas: al pagarlas, podrás agendar.')
     expect(motivoSinAgendar(null)).toMatch(/plan activo/)
     expect(motivoSinAgendar(plan('cancelada'))).toMatch(/WhatsApp/)
     expect(motivoSinAgendar(undefined)).not.toBeNull()
@@ -63,5 +63,11 @@ describe('el plan dicho a la familia', () => {
     expect(finDeLinea(plan('activa'), 'Luna')).toBe('Nada más programado. Cuando agendes una visita para Luna, aparece aquí.')
     // La línea de un peludo no lleva cuotas: su cierre no las promete.
     expect(finDeLinea(plan('congelada'), 'Michi')).toBe('Al ponerte al día, aquí aparecen las vacunas, desparasitaciones y visitas que agendes para Michi.')
+  })
+
+  it('junto al saldo dice qué cambia al pagar', () => {
+    expect(alPagar(plan('congelada'))).toMatch(/sale de la pausa/)
+    expect(alPagar(plan('en_mora'))).toMatch(/volver a agendar/)
+    expect(alPagar(plan('activa'))).toBeNull()
   })
 })

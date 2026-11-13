@@ -148,9 +148,13 @@ export function useFotoMascotaPortal(mascotaId: string) {
   return { subir, quitar }
 }
 
-export function useMisPagos() {
+/** `esperando`: el pago con el que la familia vuelve de la pasarela. Mientras siga pendiente,
+ * se vuelve a preguntar cada pocos segundos (el estado real llega por webhook). */
+export function useMisPagos(esperando?: string) {
   return useQuery({
     queryKey: ['portal', 'pagos'],
+    refetchInterval: (consulta) =>
+      esperando && consulta.state.data?.find((p) => p.id === esperando)?.estado === 'pendiente' ? 5000 : false,
     queryFn: async () => (await api.get<PagoPortalRead[]>('/portal/pagos')).data,
   })
 }

@@ -102,6 +102,12 @@ export function hoyISO(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(new Date())
 }
 
+/** El día de un instante en Colombia, como `YYYY-MM-DD`: una cita a las 7:30 p. m. ya es el día
+ * siguiente en UTC, así que no basta con cortar la cadena. */
+export function diaISO(instante: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(new Date(instante))
+}
+
 /** Peso de una mascota como en Colombia: «8,4 kg», sin decimales si no los tiene. */
 export function peso(kg: number | null | undefined): string {
   if (kg === null || kg === undefined) return '—'

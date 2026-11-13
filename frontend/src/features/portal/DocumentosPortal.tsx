@@ -1,5 +1,6 @@
 import { Consulta } from '@/components/Consulta'
-import { fecha } from '@/lib/formato'
+import { Icono } from '@/components/Icono'
+import { diaISO, fechaCortaConDia } from '@/lib/formato'
 import type { DocumentoRead } from '@/types'
 
 import { useMiFamilia, useMisDocumentos } from './api'
@@ -20,31 +21,32 @@ export function DocumentosPortal() {
     id ? (familia.data?.mascotas?.find((m) => m.id === id)?.nombre ?? '') : ''
 
   return (
-    <section className="tarjeta">
-      <div className="tarjeta-cabeza">
-        <h3>Mis documentos</h3>
-      </div>
+    <section className="portal-panel" aria-labelledby="documentos-titulo">
+      <h2 id="documentos-titulo" className="portal-panel-titulo">
+        Tus documentos
+      </h2>
       <Consulta
         consulta={documentos}
         cargando="Cargando tus documentos…"
-        error="No fue posible cargar tus documentos."
-        vacio="Todavía no tienes documentos."
+        error="No pudimos cargar tus documentos."
+        vacio="Todavía no tienes documentos. Aquí aparecen los carnets en PDF y lo que el equipo comparte contigo."
         estaVacio={(d) => d.length === 0}
       >
         {(d) => (
-          <ul className="pila" aria-label="Mis documentos">
+          <ul className="portal-lista" aria-label="Tus documentos">
             {d.map((doc) => (
               <li key={doc.archivo_id}>
-                {doc.url ? (
-                  <a href={doc.url} target="_blank" rel="noreferrer">
-                    {doc.descripcion ?? doc.nombre}
-                  </a>
-                ) : (
-                  <span>{doc.descripcion ?? doc.nombre}</span>
-                )}
-                <span className="apagado">
-                  {' · '}
-                  {[TIPOS[doc.origen], mascota(doc.mascota_id), fecha(doc.creado_en.slice(0, 10))].filter(Boolean).join(' · ')}
+                <span>
+                  {doc.url ? (
+                    <a href={doc.url} target="_blank" rel="noreferrer">
+                      <Icono nombre="descargar" size={16} /> {doc.descripcion ?? doc.nombre}
+                    </a>
+                  ) : (
+                    <strong>{doc.descripcion ?? doc.nombre}</strong>
+                  )}
+                  <span className="apagado">
+                    {[TIPOS[doc.origen], mascota(doc.mascota_id), fechaCortaConDia(diaISO(doc.creado_en))].filter(Boolean).join(' · ')}
+                  </span>
                 </span>
               </li>
             ))}

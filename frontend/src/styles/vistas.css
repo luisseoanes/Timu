@@ -458,6 +458,47 @@
   .parada-portal-acciones > .btn-primario { min-height: 48px; font-size: var(--t-seccion); }
 }
 
+/* Citas, pagos y datos (R3-POR-02): paneles con su título y listas de filas. */
+.portal-panel-titulo { margin-bottom: var(--e2); font-family: var(--fuente); font-size: var(--t-seccion); font-weight: 600; color: var(--texto-titulo); }
+.portal-aviso { max-width: 70ch; font-size: var(--t-menor); color: var(--texto); }
+.portal-aviso[class*="portal-aviso-"] { padding: var(--e3) var(--e4); border-radius: var(--r-tarjeta); }
+.portal-aviso-ok { background: var(--estado-ok-fondo); color: var(--estado-ok-texto); }
+.portal-aviso-info { background: var(--estado-info-fondo); color: var(--estado-info-texto); }
+.portal-aviso-alerta { background: var(--estado-alerta-fondo); color: var(--estado-alerta-texto); }
+.portal-aviso-peligro { background: var(--estado-peligro-fondo); color: var(--estado-peligro-texto); }
+.portal-saldo { display: grid; gap: var(--e3); justify-items: start; }
+.portal-saldo > p { color: var(--texto); }
+.portal-saldo-cifra { font-size: var(--t-cifra); font-weight: 600; color: var(--texto-titulo); }
+.portal-saldo-vencido { color: var(--texto-error); font-weight: 600; }
+
+/* Una fila por cosa: qué a la izquierda, su estado y su acción a la derecha; en un contenedor
+   estrecho la acción baja a su fila. */
+.portal-lista, .citas { list-style: none; margin: 0; padding: 0; container-type: inline-size; }
+.portal-lista > li, .cita { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e2) var(--e3); padding-block: var(--e3); }
+.portal-lista > li + li, .cita + .cita { border-top: 1px solid var(--borde); }
+.portal-lista > li > span:first-child { flex: 1 1 14rem; display: grid; gap: 2px; min-width: 0; }
+.portal-lista strong { color: var(--texto-titulo); font-weight: 600; }
+.portal-lista .apagado { font-size: var(--t-menor); }
+.portal-lista a { display: inline-flex; align-items: center; gap: var(--e2); font-weight: 600; }
+/* La acción de la fila, a la derecha también cuando baja a su propia fila. */
+.portal-lista > li > .btn:last-child { margin-left: auto; }
+.cita { align-items: flex-start; }
+.cita-cuando { flex: 0 0 7.5rem; display: grid; gap: 2px; color: var(--texto-titulo); }
+.cita-cuando strong { font-weight: 600; }
+.cita-cuando span { font-size: var(--t-menor); color: var(--texto-suave); }
+.cita-que { flex: 1 1 14rem; display: grid; gap: var(--e1); justify-items: start; min-width: 0; }
+.cita-que h3 { font-size: var(--t-cuerpo); color: var(--texto-titulo); }
+.cita-que p { font-size: var(--t-menor); color: var(--texto-suave); }
+/* Las acciones de una fila van siempre a la derecha, también cuando bajan a su propia fila. */
+.cita-acciones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--e2); margin-left: auto; }
+@container (max-width: 480px) {
+  .cita-cuando { flex-basis: 100%; grid-auto-flow: column; justify-content: start; gap: var(--e2); }
+  .cita-acciones { flex-basis: 100%; }
+}
+/* Una acción de fila que no es la principal: plana, pero con el color de lo que se toca. */
+.btn-plano.btn-accion { color: var(--texto-enlace); }
+.btn-plano.btn-accion:hover:not(:disabled) { color: var(--texto-enlace-hover); }
+
 /* La ficha de un peludo. */
 .portal-peludo-identidad { display: grid; gap: var(--e4); }
 .portal-peludo-identidad .foto-editable { padding-left: calc(40px + var(--e2)); gap: var(--e3); }
