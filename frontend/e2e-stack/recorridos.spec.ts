@@ -198,11 +198,14 @@ test.describe('equipo en rutas', () => {
 test.describe('familia', () => {
   test.use({ storageState: sesion('familia') })
 
-  test('entra a su portal, ve sus mascotas y no llega al panel del equipo', async ({ page }) => {
+  test('entra a su portal, ve su línea abierta en hoy y sus peludos, y no llega al panel del equipo', async ({ page }) => {
     await page.goto('/')
     await expect(page).toHaveURL(/\/portal/)
     await expect(page.getByRole('heading', { level: 1, name: 'Hola, Ana' })).toBeVisible()
-    await page.getByRole('navigation', { name: 'Portal' }).getByRole('link', { name: /mascotas/i }).click()
+    // R3-POR-01: la línea de la familia, servida por /portal/linea, abre en «hoy».
+    await expect(page.getByRole('list', { name: /tu línea/i }).getByText(/^Hoy · /)).toBeVisible()
+    await page.getByRole('navigation', { name: 'Portal' }).getByRole('link', { name: 'Peludos' }).click()
+    await expect(page.getByRole('heading', { level: 1, name: 'Tus peludos' })).toBeVisible()
     await expect(page.getByRole('link', { name: /luna/i })).toBeVisible()
     await page.goto('/familias')
     await expect(page).toHaveURL(/\/portal/)

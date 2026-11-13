@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 
 /** Igual que el backend: JPG, PNG o WEBP de hasta 5 MB. */
 const FORMATOS = 'image/jpeg,image/png,image/webp'
@@ -16,9 +16,12 @@ export function FotoEditable({
   error,
   onSubir,
   onQuitar,
+  marcador = 'Sin foto',
 }: {
   url: string | null | undefined
   alt: string
+  /** Lo que ocupa el sitio de la foto mientras no hay. */
+  marcador?: ReactNode
   editable: boolean
   ocupada: boolean
   error: string | null
@@ -45,7 +48,7 @@ export function FotoEditable({
         <img className="foto-editable-imagen" src={url} alt={alt} />
       ) : (
         <div className="foto-editable-imagen" aria-hidden="true">
-          Sin foto
+          {marcador}
         </div>
       )}
       {editable && (

@@ -4,12 +4,14 @@ import { api } from '@/api/client'
 import type {
   AltaIniciada,
   AltaPeludoRead,
+  ColorPlan,
   CotizacionAltaRead,
   CupoRead,
   DocumentoRead,
   EstadoCuenta,
   FamiliaRead,
   InicioPago,
+  LineaFamiliaRead,
   MascotaRead,
   PagoPortalRead,
   PeludoNuevoIn,
@@ -37,7 +39,7 @@ export interface PlanPortal {
   valor_mensual: string
   fecha_inicio: string
   fecha_renovacion: string
-  mascotas: { mascota_id: string; mascota: string; plan: string; valor_mensual: string; beneficios: BeneficioPortal[] }[]
+  mascotas: { mascota_id: string; mascota: string; plan: string; color: ColorPlan; valor_mensual: string; beneficios: BeneficioPortal[] }[]
 }
 
 /** Historia en la vista de la familia: todo lo clínico menos las notas internas. */
@@ -77,6 +79,14 @@ export function useMiCuenta() {
       const r = await api.get<EstadoCuenta>('/portal/estado-cuenta', { validateStatus: (s) => s === 200 || s === 404 })
       return r.status === 404 ? null : r.data
     },
+  })
+}
+
+/** R3-POR-01 La línea de la familia (cuotas, preventivos y visitas): el inicio la abre en «hoy». */
+export function useMiLinea() {
+  return useQuery({
+    queryKey: ['portal', 'linea'],
+    queryFn: async () => (await api.get<LineaFamiliaRead>('/portal/linea')).data,
   })
 }
 

@@ -4,7 +4,9 @@ import { http, HttpResponse } from 'msw'
 import { Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { PortalCitas, PortalDatos, PortalInicio, PortalMascota, PortalMascotas, PortalPagos } from './PortalPages'
+import { PortalInicio } from './InicioPortal'
+import { PortalMascota, PortalMascotas } from './PeludosPortal'
+import { PortalCitas, PortalDatos, PortalPagos } from './PortalPages'
 import { FAMILIA, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
@@ -26,6 +28,29 @@ const cita = (cambios: Partial<ServicioPortalRead>): ServicioPortalRead => ({
   termina_en: null,
   ...cambios,
 })
+
+const PLAN = {
+  estado: 'activa',
+  periodicidad: 'trimestral',
+  valor_periodo: '103800.00',
+  valor_mensual: '35500.00',
+  fecha_inicio: '2026-01-01',
+  fecha_renovacion: '2027-01-01',
+  mascotas: [
+    {
+      mascota_id: LUNA.id,
+      mascota: 'Luna',
+      plan: 'Colita Feliz',
+      color: 'naranja',
+      valor_mensual: '35500.00',
+      beneficios: [
+        { tipo_servicio: 'orientacion_virtual', cupo: null, periodo: 'anual', usados: 3, disponibles: null, cobertura_pct: 100 },
+        { tipo_servicio: 'vacunacion', cupo: 2, periodo: 'mensual', usados: 1, disponibles: 1, cobertura_pct: 100 },
+        { tipo_servicio: 'consulta_domiciliaria', cupo: 6, periodo: 'anual', usados: 0, disponibles: 6, cobertura_pct: 70 },
+      ],
+    },
+  ],
+}
 
 const CUENTA = {
   saldo_pendiente: '75000.00',
@@ -61,40 +86,19 @@ afterEach(() => {
 })
 
 describe('inicio del portal', () => {
-  it('muestra las tres próximas citas, los beneficios sin tope y no avisa mora si no la hay', async () => {
+  it('al día no avisa nada vencido ni pinta acción verde sin nada que pagar', async () => {
     server.use(
-      http.get(`${API}/portal/servicios`, () =>
-        HttpResponse.json([cita({ id: 'a' }), cita({ id: 'b' }), cita({ id: 'c' }), cita({ id: 'd' })]),
-      ),
-      http.get(`${API}/portal/plan`, () =>
-        HttpResponse.json({
-          estado: 'activa',
-          periodicidad: 'trimestral',
-          valor_periodo: '103800.00',
-          valor_mensual: '35500.00',
-          fecha_inicio: '2026-01-01',
-          fecha_renovacion: '2027-01-01',
-          mascotas: [
-            {
-              mascota_id: LUNA.id,
-              mascota: 'Luna',
-              plan: 'Colita Feliz',
-              valor_mensual: '35500.00',
-              beneficios: [
-                { tipo_servicio: 'orientacion_virtual', cupo: null, periodo: 'anual', usados: 3, disponibles: null, cobertura_pct: 100 },
-                { tipo_servicio: 'vacunacion', cupo: 2, periodo: 'mensual', usados: 1, disponibles: 1, cobertura_pct: 100 },
-              ],
-            },
-          ],
-        }),
-      ),
+      http.get(`${API}/portal/plan`, () => HttpResponse.json(PLAN)),
+      http.get(`${API}/portal/estado-cuenta`, () => HttpResponse.json({ ...CUENTA, proximo_cobro: null })),
     )
     renderizar(<PortalInicio />)
-    expect(await screen.findByText(/ilimitado/)).toBeInTheDocument()
-    expect(screen.getByText(/le quedan 1 de 2 este mes/)).toBeInTheDocument()
-    expect(screen.getByText(/Pago trimestral/)).toBeInTheDocument()
-    await waitFor(() => expect(screen.getAllByText('Consulta domiciliaria')).toHaveLength(3))
+    expect(await screen.findByText('Tu plan está al día. Se renueva el 1 de enero de 2027.')).toBeInTheDocument()
+    expect(await screen.findByText(/Nada pendiente/)).toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(document.querySelectorAll('.btn-primario')).toHaveLength(0)
+    // Solo los peludos activos, cada uno al día.
+    expect(screen.getByRole('link', { name: /luna/i })).toHaveTextContent('Al día')
+    expect(screen.queryByRole('link', { name: /tom/i })).not.toBeInTheDocument()
   })
 
   it('pide orientación virtual solo sobre las mascotas activas', async () => {
@@ -107,7 +111,7 @@ describe('inicio del portal', () => {
     )
     const user = userEvent.setup()
     renderizar(<PortalInicio />)
-    await user.click(await screen.findByRole('button', { name: /orientación virtual/i }))
+    await user.click(await screen.findByRole('button', { name: /hablar con un veterinario/i }))
     const modal = await screen.findByRole('dialog')
     await waitFor(() => expect(within(modal).getByRole('option', { name: 'Luna' })).toBeInTheDocument())
     expect(within(modal).queryByRole('option', { name: 'Tom' })).not.toBeInTheDocument()
@@ -126,7 +130,7 @@ describe('inicio del portal', () => {
     )
     const user = userEvent.setup()
     renderizar(<PortalInicio />)
-    await user.click(await screen.findByRole('button', { name: /orientación virtual/i }))
+    await user.click(await screen.findByRole('button', { name: /hablar con un veterinario/i }))
     const modal = await screen.findByRole('dialog')
     await waitFor(() => expect(within(modal).getByRole('option', { name: 'Luna' })).toBeInTheDocument())
     await user.type(within(modal).getByLabelText('Cuéntanos qué pasa'), 'No quiere comer')
@@ -180,7 +184,7 @@ describe('mascotas', () => {
     await user.upload(await screen.findByLabelText('Subir foto'), new File(['png'], 'luna.png', { type: 'image/png' }))
     expect(await screen.findByRole('img', { name: 'Foto de Luna' })).toHaveAttribute('src', 'https://s3/luna.png')
     await user.click(screen.getByRole('button', { name: 'Quitar foto' }))
-    expect(await screen.findByText('Sin foto')).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('img', { name: 'Foto de Luna' })).not.toBeInTheDocument())
     expect(pedidos).toEqual([`PUT ${LUNA.id} true`, `DELETE ${LUNA.id}`])
   })
 
@@ -214,10 +218,10 @@ describe('mascotas', () => {
     )
     abrirMascota()
     expect(await screen.findByRole('heading', { name: 'Luna' })).toBeInTheDocument()
-    expect((await screen.findAllByText(/Aplicado el/)).length).toBe(2)
+    expect((await screen.findAllByText('Aplicada')).length).toBe(2)
     expect(screen.getByText(/por Dra\. Paula Gómez · pesaba 8,4 kg/)).toBeInTheDocument()
-    expect(screen.getByText(/Programado para el/)).toBeInTheDocument()
-    expect(screen.queryByText('Aún no hay preventivos registrados.')).not.toBeInTheDocument()
+    expect(screen.getByText('Polivalente').closest('li')).toHaveTextContent('el 01/12/2026')
+    expect(screen.queryByText(/no tiene vacunas/)).not.toBeInTheDocument()
   })
 
   it('sin preventivos lo dice y explica si el PDF falla', async () => {
@@ -226,7 +230,7 @@ describe('mascotas', () => {
       http.post(`${API}/portal/mascotas/:id/carnet/pdf`, () => HttpResponse.json({ detail: 'Generador caído' }, { status: 503 })),
     )
     const user = abrirMascota()
-    expect(await screen.findByText('Aún no hay preventivos registrados.')).toBeInTheDocument()
+    expect(await screen.findByText('Aún no tiene vacunas ni desparasitaciones en su calendario.')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /descargar pdf/i }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Generador caído')
   })
@@ -246,11 +250,48 @@ describe('mascotas', () => {
     expect(screen.queryByText(/Diagnóstico:/)).not.toBeInTheDocument()
   })
 
+  it('su plan dice el cupo de frente, sin «ilimitado», y lo que no cubre entero', async () => {
+    server.use(carnet(), http.get(`${API}/portal/plan`, () => HttpResponse.json(PLAN)))
+    const user = abrirMascota()
+    await user.click(await screen.findByRole('tab', { name: 'Su plan' }))
+    expect(await screen.findByText(/sin tope de usos este año/)).toBeInTheDocument()
+    expect(screen.getByText(/le queda 1 de 2 este mes/)).toBeInTheDocument()
+    expect(screen.getByText(/le quedan 6 de 6 este año · cubre el 70 %/)).toBeInTheDocument()
+    expect(screen.queryByText(/ilimitado/)).not.toBeInTheDocument()
+  })
+
+  it('su línea solo trae lo suyo y deja agendar lo vencido con el plan al día', async () => {
+    server.use(
+      carnet(),
+      http.get(`${API}/portal/plan`, () => HttpResponse.json(PLAN)),
+      http.get(`${API}/portal/linea`, () =>
+        HttpResponse.json({
+          familia_id: FAMILIA.id,
+          planes: [{ plan_id: 'p1', nombre: 'Colita Feliz', color: 'naranja', mascotas: ['Luna'] }],
+          estaciones: [
+            { tipo: 'cuota', referencia_id: 'q1', fecha: '2026-01-05', estado: 'vencida', titulo: 'Cuota de enero', mascota: null, mascota_id: null },
+            { tipo: 'preventivo', referencia_id: 'v1', fecha: '2026-01-04', estado: 'vencida', titulo: 'Vacuna', mascota: 'Luna', mascota_id: LUNA.id },
+            { tipo: 'preventivo', referencia_id: 'v2', fecha: '2026-01-04', estado: 'vencida', titulo: 'Vacuna', mascota: 'Tom', mascota_id: 'm2' },
+          ],
+        }),
+      ),
+    )
+    const user = abrirMascota()
+    const lista = await screen.findByRole('list', { name: 'La línea de Luna' })
+    expect(lista).toHaveAttribute('data-color', 'naranja')
+    expect(within(lista).getByRole('heading', { name: /1 preventivo vencido desde el/ })).toBeInTheDocument()
+    expect(within(lista).queryByText(/cuota/i)).not.toBeInTheDocument()
+    expect(screen.getByText('Colita Feliz')).toBeInTheDocument()
+    await user.click(within(lista).getByRole('button', { name: 'Agendar' }))
+    const modal = await screen.findByRole('dialog', { name: 'Agendar una visita' })
+    await waitFor(() => expect(within(modal).getByLabelText('Mascota')).toHaveValue(LUNA.id))
+  })
+
   it('una mascota sin consultas lo dice', async () => {
     server.use(carnet(), http.get(`${API}/portal/mascotas/:id/historia`, () => HttpResponse.json([])))
     const user = abrirMascota()
     await user.click(await screen.findByRole('tab', { name: 'Historia clínica' }))
-    expect(await screen.findByText('Aún no hay consultas registradas.')).toBeInTheDocument()
+    expect(await screen.findByText('Aún no tiene consultas registradas.')).toBeInTheDocument()
   })
 })
 

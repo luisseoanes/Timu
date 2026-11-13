@@ -1,11 +1,11 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { Route, Routes } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
 import { PortalLayout } from './PortalLayout'
-import { PortalMascota, PortalMascotas } from './PortalPages'
+import { PortalMascota, PortalMascotas } from './PeludosPortal'
 import { FAMILIA, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
@@ -39,6 +39,7 @@ describe('Portal: navegación y mascotas', () => {
     abrir('/portal/mascotas')
     const nav = screen.getByRole('navigation', { name: 'Portal' })
     expect(nav).toHaveTextContent('Citas')
+    expect(within(nav).getByRole('link', { name: 'Peludos' })).toHaveAttribute('aria-current', 'page')
     await user.click(await screen.findByRole('link', { name: /luna/i }))
     expect(await screen.findByRole('heading', { name: 'Luna' })).toBeInTheDocument()
   })
@@ -62,7 +63,10 @@ describe('Portal: navegación y mascotas', () => {
     )
     const user = userEvent.setup()
     abrir(`/portal/mascotas/${LUNA.id}`)
-    expect(await screen.findByText(/1 preventivo\(s\) vencido\(s\): Polivalente/)).toBeInTheDocument()
+    // Lo vencido no se contradice con un «no hay preventivos»: cada vacuna con su estado.
+    const polivalente = (await screen.findByText('Polivalente')).closest('li')!
+    expect(polivalente).toHaveTextContent('Vencida')
+    expect(screen.queryByText(/no tiene vacunas/)).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /descargar pdf/i }))
     expect(await screen.findByRole('link', { name: 'abrir el carnet' })).toHaveAttribute('href', 'https://s3/c.pdf')
     await user.click(screen.getByRole('tab', { name: 'Historia clínica' }))

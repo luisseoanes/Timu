@@ -168,7 +168,7 @@ describe('Agregar un peludo desde el portal', () => {
     portal([alta('completada', 'aprobado')])
     renderizar(<PortalAgregarPeludo />)
     expect(await screen.findByText(/Kira ya está afiliado/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Ver mis mascotas' })).toHaveAttribute('href', '/portal/mascotas')
+    expect(screen.getByRole('link', { name: 'Ver tus peludos' })).toHaveAttribute('href', '/portal/mascotas')
   })
 
   it('si el pago entró pero el equipo debe terminarlo, lo dice', async () => {

@@ -156,6 +156,12 @@ export const handlers = [
   }),
   http.get(`${API}/comunicaciones/mensajes`, () => HttpResponse.json(vacia)),
   http.get(`${API}/portal/documentos`, () => HttpResponse.json([])),
+  // El portal por defecto: sin plan ni contrato, sin citas y con la línea vacía. Las pruebas
+  // del inicio y de cada peludo los reemplazan.
+  http.get(`${API}/portal/linea`, () => HttpResponse.json({ familia_id: FAMILIA.id, planes: [], estaciones: [] })),
+  http.get(`${API}/portal/plan`, () => HttpResponse.json({ detail: 'Sin plan' }, { status: 404 })),
+  http.get(`${API}/portal/estado-cuenta`, () => HttpResponse.json({ detail: 'Sin contrato' }, { status: 404 })),
+  http.get(`${API}/portal/servicios`, () => HttpResponse.json([])),
   http.get(`${API}/tareas`, () => HttpResponse.json(vacia)),
   http.get(`${API}/preventivos`, () => HttpResponse.json(vacia)),
   http.get(`${API}/cartera/contratos`, () => HttpResponse.json(vacia)),

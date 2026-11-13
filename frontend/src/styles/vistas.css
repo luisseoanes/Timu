@@ -357,53 +357,126 @@
 .tres-columnas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e5); }
 @media (max-width: 900px) { .tres-columnas { grid-template-columns: 1fr; } }
 
-/* ================= Portal de familias ================= */
-.portal { min-height: 100vh; background: var(--superficie-lienzo); padding-bottom: 84px; }
-.portal-cabeza {
-  position: sticky; top: 0; z-index: var(--capa-barra);
-  display: flex; align-items: center; justify-content: space-between; gap: var(--e4);
-  padding: var(--e3) var(--e5);
-  background: var(--superficie);
-  box-shadow: var(--sombra-1);
-}
-.portal-nav {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--capa-barra);
-  display: grid; grid-template-columns: repeat(5, 1fr);
-  background: var(--superficie);
-  border-top: 1px solid var(--borde);
-  box-shadow: var(--sombra-3);
-}
-.portal-nav a {
-  display: grid; justify-items: center; gap: 2px;
-  padding: var(--e2) 0 var(--e3);
-  font-size: var(--t-etiqueta); font-weight: 700; color: var(--texto-suave);
-}
-.portal-nav a.active { color: var(--accion-suave-texto); }
-.portal-contenido { width: min(960px, 100%); margin: 0 auto; padding: var(--e5) var(--e4); }
-.portal-hola {
-  display: grid; gap: var(--e3);
-  padding: var(--e6);
-  border-radius: var(--r-panel);
-  color: var(--texto-sobre-marca);
-  background: var(--superficie-marca);
-}
-.portal-hola h1 { color: var(--texto-sobre-marca); }
-.portal-hola p { color: var(--texto-sobre-marca-suave); }
-.portal-hola .acceso { color: var(--texto); }
+/* ================= Portal de familias (R3-POR-01) =================
+   Contrato «Hoy, estás aquí» (.impeccable/surfaces): la estructura del panel (barra marina y,
+   en el celular, barra inferior) y la línea de la familia abierta en «hoy». */
+.portal-contenido { max-width: 1120px; }
+.portal-contenido h1 { font-size: var(--t-display); letter-spacing: -0.01em; }
+.portal-cabecera { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--e3); }
+.portal-panel { padding: var(--e4) var(--e5) var(--e5); border-radius: var(--r-panel); background: var(--superficie); }
+.portal-panel .bloque { margin-top: var(--e4); }
 
-@media (min-width: 900px) {
-  .portal { padding-bottom: 0; }
-  .portal-nav {
-    position: static; display: flex; gap: var(--e1);
-    background: transparent; border: 0; box-shadow: none;
-  }
-  .portal-nav a {
-    display: flex; align-items: center; gap: var(--e2);
-    padding: var(--e2) var(--e3); border-radius: var(--r-pastilla);
-    font-size: var(--t-menor);
-  }
-  .portal-nav a.active { background: var(--superficie-seleccion); }
+/* El inicio: en el celular, el saludo, el plan, los peludos y la línea, en ese orden; desde
+   900 px la línea ocupa la columna de lectura y el plan y los peludos van al lado. */
+.portal-inicio {
+  display: grid; gap: var(--e4); align-items: start;
+  grid-template-areas: "hola" "plan" "peludos" "linea";
 }
+.portal-inicio > * { min-width: 0; }
+.portal-inicio-hola { grid-area: hola; }
+.portal-plan { grid-area: plan; display: grid; gap: var(--e2); }
+.portal-plan > .acciones { margin-top: var(--e2); }
+@media (max-width: 899px) { .portal-plan > .acciones > .btn { flex: 1 1 100%; } }
+.portal-plan-nombre { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e2) var(--e3); color: var(--texto-titulo); font-weight: 600; }
+.portal-plan-marca { display: inline-flex; align-items: center; gap: var(--e2); }
+.portal-plan-frase { max-width: 60ch; color: var(--texto); }
+.portal-peludos { grid-area: peludos; }
+.portal-inicio > .portal-linea { grid-area: linea; }
+@media (min-width: 900px) {
+  .portal-inicio {
+    grid-template-columns: minmax(0, 1fr) 340px; column-gap: var(--e6);
+    grid-template-areas: "hola hola" "linea plan" "linea peludos" "linea .";
+    grid-template-rows: auto auto auto 1fr;
+  }
+}
+
+/* Los peludos: cada uno abre su ficha y dice lo que tiene vencido. */
+.portal-peludos-lista { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--e2); }
+.portal-peludos-lista-completa { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.acceso-peludo {
+  display: flex; align-items: center; gap: var(--e3);
+  min-height: 56px; padding: var(--e2) var(--e3);
+  border-radius: var(--r-tarjeta); background: var(--superficie);
+  color: var(--texto-titulo); text-decoration: none;
+  transition: background-color var(--duracion) var(--curva);
+}
+.acceso-peludo:hover { background: var(--superficie-seleccion); }
+.acceso-peludo-foto {
+  flex: none; width: 40px; height: 40px; overflow: hidden;
+  display: grid; place-items: center;
+  border: 1px solid var(--borde); border-radius: var(--r-pastilla);
+  background: var(--superficie-lienzo); color: var(--texto-suave);
+}
+.acceso-peludo-foto img { width: 100%; height: 100%; object-fit: cover; }
+.acceso-peludo-texto { display: grid; min-width: 0; }
+.acceso-peludo-texto strong { overflow-wrap: anywhere; }
+.acceso-peludo-texto > span { font-size: var(--t-menor); color: var(--texto-suave); }
+.acceso-peludo-texto > .acceso-peludo-vencidos { color: var(--texto-error); font-weight: 600; }
+
+/* La línea de la familia en vertical, del color del plan. Cada parada dibuja su tramo; juntas
+   son la línea. Lo vencido va agrupado encima de «hoy» y cada parada dice qué hacer. */
+.portal-linea { padding: var(--e2) var(--e5) var(--e2) var(--e4); border-radius: var(--r-panel); background: var(--superficie); }
+.linea-portal { list-style: none; margin: 0; padding: 0; --color-linea: var(--plan-ninguno); }
+.linea-portal[data-color="verde"] { --color-linea: var(--plan-verde); }
+.linea-portal[data-color="naranja"] { --color-linea: var(--plan-naranja); }
+.linea-portal[data-color="azul"] { --color-linea: var(--plan-azul); }
+.parada-portal, .linea-portal-hoy { position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: var(--e4); }
+.parada-portal::before, .linea-portal-hoy::before {
+  content: ""; position: absolute; left: 8px; top: 0; bottom: 0; width: 8px;
+  background: var(--color-linea);
+}
+.linea-portal > :first-child::before { top: 24px; border-radius: var(--r-pastilla) var(--r-pastilla) 0 0; }
+.linea-portal > :last-child::before { bottom: auto; height: 24px; border-radius: 0 0 var(--r-pastilla) var(--r-pastilla); }
+.linea-portal > :only-child::before { display: none; }
+.parada-portal-punto {
+  position: relative; z-index: var(--capa-elevada);
+  width: 24px; height: 24px; margin-top: var(--e3);
+  display: grid; place-items: center;
+  border: 4px solid var(--color-linea); border-radius: var(--r-pastilla);
+  background: var(--superficie); color: var(--peligro-accion-texto);
+}
+.parada-portal[data-estado="hecha"] .parada-portal-punto { background: var(--color-linea); }
+.parada-portal[data-estado="vencida"] .parada-portal-punto { border-color: var(--peligro-accion-fondo); background: var(--peligro-accion-fondo); }
+.parada-portal[data-estado="proxima"] .parada-portal-punto { border-color: var(--texto-titulo); box-shadow: 0 0 0 3px var(--indicador-seleccion); }
+.parada-portal-cuerpo { display: grid; gap: 2px; min-width: 0; padding-block: var(--e3) var(--e4); }
+.parada-portal + .parada-portal .parada-portal-cuerpo { border-top: 1px solid var(--borde); }
+.parada-portal-cuerpo h3 { min-height: 24px; padding-top: 2px; font-size: var(--t-cuerpo); line-height: 1.4; color: var(--texto-titulo); }
+.parada-portal[data-estado="vencida"] h3 { color: var(--texto-error); }
+.parada-portal-cuerpo p { font-size: var(--t-menor); color: var(--texto-suave); }
+.parada-portal-cuerpo > .distintivo { justify-self: start; margin-top: var(--e1); }
+.parada-portal-cuerpo > .linea-tramo-boton { justify-self: start; display: inline-flex; align-items: center; gap: var(--e1); min-height: 32px; margin-top: var(--e1); }
+.parada-portal-acciones { display: flex; flex-wrap: wrap; gap: var(--e2); margin-top: var(--e3); }
+.parada-portal-hechas { list-style: none; margin: var(--e2) 0 0; padding: 0; display: grid; gap: var(--e1); font-size: var(--t-menor); color: var(--texto); }
+/* `display: grid` le gana al atributo: sin esto, las hechas no se pliegan. */
+.parada-portal-hechas[hidden] { display: none; }
+.linea-portal-hoy { align-items: center; padding-block: var(--e3); }
+.linea-portal-hoy-marca { position: relative; z-index: var(--capa-elevada); width: 24px; height: 4px; border-radius: 2px; background: var(--texto-titulo); }
+.linea-portal-hoy > span:last-child { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--texto-titulo); }
+/* Al pulgar: en el celular la acción ocupa su fila y la principal sube a 48 px. */
+@media (max-width: 899px) {
+  .parada-portal-acciones > .btn { flex: 1 0 100%; }
+  .parada-portal-acciones > .btn-primario { min-height: 48px; font-size: var(--t-seccion); }
+}
+
+/* La ficha de un peludo. */
+.portal-peludo-identidad { display: grid; gap: var(--e4); }
+.portal-peludo-identidad .foto-editable { padding-left: calc(40px + var(--e2)); gap: var(--e3); }
+/* Sin foto, la huella en un círculo como la de los accesos, no un hueco de 96 px. */
+.portal-peludo-identidad div.foto-editable-imagen {
+  width: 56px; height: 56px;
+  border: 1px solid var(--borde); border-radius: var(--r-pastilla);
+  background: var(--superficie-lienzo);
+}
+.portal-peludo-cabeza { display: flex; align-items: flex-start; gap: var(--e2); }
+.portal-peludo-cabeza > .btn-icono { margin-top: var(--e1); }
+.portal-peludo-datos { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e1) var(--e3); font-size: var(--t-menor); color: var(--texto-suave); }
+.portal-peludo-datos .portal-plan-marca { color: var(--texto-titulo); font-weight: 600; }
+.carnet-lista { list-style: none; margin: 0; padding: 0; }
+.carnet-lista li { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); padding-block: var(--e3); }
+.carnet-lista li + li { border-top: 1px solid var(--borde); }
+.carnet-lista li > span:first-child { display: grid; gap: 2px; min-width: 0; }
+.carnet-lista strong { color: var(--texto-titulo); font-weight: 600; }
+.carnet-lista .apagado { font-size: var(--t-menor); }
 
 /* ================= Familias (R2-PAN-02) =================
    Listado a la izquierda y familia abierta a la derecha (contrato «la línea de metro»). En

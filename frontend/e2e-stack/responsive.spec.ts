@@ -146,6 +146,7 @@ const RUTAS: Ruta[] = [
       expect(familia.mascotas?.length, 'la familia de datos_demo tiene mascotas').toBeTruthy()
       return `/portal/mascotas/${familia.mascotas![0].id}`
     },
+    pestanas: true,
   },
   { app: 'citas', perfil: 'familia', url: '/portal/citas' },
   { app: 'pagos', perfil: 'familia', url: '/portal/pagos' },

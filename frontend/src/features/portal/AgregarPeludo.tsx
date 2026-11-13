@@ -30,12 +30,12 @@ export function PortalAgregarPeludo() {
   const esperando = ultima?.estado === 'pendiente_pago' && ultima.estado_pago === 'pendiente'
   return (
     <div className="pila">
-      <div className="detalle-cabeza">
-        <Link to="/portal/mascotas" className="btn btn-plano" aria-label="Volver a mis mascotas">
-          <Icono nombre="volver" size={16} />
+      <header className="portal-peludo-cabeza">
+        <Link to="/portal/mascotas" className="btn btn-plano btn-icono" aria-label="Volver a tus peludos">
+          <Icono nombre="volver" size={18} />
         </Link>
         <h1>Agregar un peludo</h1>
-      </div>
+      </header>
       {ultima && <EstadoAlta alta={ultima} />}
       {!esperando && <FormularioAlta />}
     </div>
@@ -61,7 +61,7 @@ function EstadoAlta({ alta }: { alta: AltaPeludoRead }) {
   if (alta.estado === 'completada') {
     return (
       <p className="aviso-ok" role="status">
-        <Icono nombre="check" size={16} /> {alta.nombre} ya está afiliado. <Link to="/portal/mascotas">Ver mis mascotas</Link>
+        <Icono nombre="check" size={16} /> {alta.nombre} ya está afiliado. <Link to="/portal/mascotas">Ver tus peludos</Link>
       </p>
     )
   }
@@ -100,7 +100,7 @@ function FormularioAlta() {
   }
 
   return (
-    <section className="tarjeta">
+    <section className="portal-panel">
       <form className="formulario" onSubmit={enviar}>
         <label className="campo">
           <span>Nombre</span>
