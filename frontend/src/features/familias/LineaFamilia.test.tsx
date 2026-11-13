@@ -21,7 +21,7 @@ function dentroDe(dias: number): string {
 let n = 0
 function estacion(dias: number, estado: EstacionRead['estado'], titulo: string, extra: Partial<EstacionRead> = {}): EstacionRead {
   n += 1
-  return { tipo: 'cuota', referencia_id: `e${n}`, fecha: dentroDe(dias), estado, titulo, mascota: null, ...extra }
+  return { tipo: 'cuota', referencia_id: `e${n}`, fecha: dentroDe(dias), estado, titulo, mascota: null, mascota_id: null, ...extra }
 }
 
 const LINEA: LineaFamiliaRead = {

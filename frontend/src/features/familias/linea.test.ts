@@ -7,7 +7,7 @@ import { esHoy, esTramo, orientacion, paradas, recorrido, resumen } from './line
 let n = 0
 function estacion(fecha: string, estado: EstacionRead['estado'], titulo = 'Cuota'): EstacionRead {
   n += 1
-  return { tipo: 'cuota', referencia_id: `e${n}`, fecha, estado, titulo, mascota: null }
+  return { tipo: 'cuota', referencia_id: `e${n}`, fecha, estado, titulo, mascota: null, mascota_id: null }
 }
 
 const HOY = '2026-11-10'

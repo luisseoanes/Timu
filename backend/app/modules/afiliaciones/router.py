@@ -19,11 +19,12 @@ from app.api.deps import (
     requiere,
 )
 from app.core.database import ContextoDb, fijar_contexto
-from app.core.enums import ColorPlan, EstadoPago, Periodicidad, Rol
+from app.core.enums import EstadoPago, Periodicidad, Rol
 from app.core.errores import ReglaNegocio
 from app.core.validaciones import DocumentoCO, TelefonoCO, TipoDocumento
 from app.modules.afiliaciones import ciclo, linea, registro, service
 from app.modules.afiliaciones.models import SolicitudAfiliacion
+from app.modules.afiliaciones.schemas import LineaFamiliaRead
 from app.modules.auth import sesiones
 from app.modules.auth.models import Usuario
 from app.modules.catalogos import service as catalogos
@@ -138,49 +139,6 @@ async def afiliacion_asistida(
     )
 
 
-class EstacionRead(BaseModel):
-    """Una estacion de la linea de la familia: una cuota, un preventivo o un servicio."""
-
-    model_config = ConfigDict(from_attributes=True)
-
-    tipo: linea.TipoEstacion
-    referencia_id: UUID
-    fecha: date
-    estado: linea.EstadoEstacion
-    titulo: str
-    mascota: str | None
-
-
-class PlanDeFamiliaRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    plan_id: UUID
-    nombre: str
-    color: ColorPlan
-    mascotas: list[str]
-
-
-class LineaFamiliaRead(BaseModel):
-    """La linea de la familia y sus planes vigentes: lo que el listado muestra en cada fila."""
-
-    familia_id: UUID
-    planes: list[PlanDeFamiliaRead]
-    estaciones: list[EstacionRead]
-
-
-async def _lineas(db: DbSession, familias: list[UUID]) -> list[LineaFamiliaRead]:
-    por_familia = await db.run_sync(linea.lineas, familias)
-    planes = await db.run_sync(linea.planes, familias)
-    return [
-        LineaFamiliaRead(
-            familia_id=f,
-            planes=[PlanDeFamiliaRead.model_validate(p) for p in planes.get(f, [])],
-            estaciones=[EstacionRead.model_validate(e) for e in estaciones],
-        )
-        for f, estaciones in por_familia.items()
-    ]
-
-
 # Antes de GET /{solicitud_id}: si no, /lineas se leeria como un id de solicitud.
 @router.get("/lineas", response_model=list[LineaFamiliaRead], dependencies=[EQUIPO])
 async def lineas_de_familias(
@@ -189,7 +147,7 @@ async def lineas_de_familias(
 ) -> list[LineaFamiliaRead]:
     """R2-PAN-02 La linea de varias familias a la vez, para el listado del panel: una sola
     peticion por pagina, no una por fila. Una familia que no existe vuelve con la linea vacia."""
-    return await _lineas(db, list(dict.fromkeys(familia_id)))
+    return await db.run_sync(linea.leer, list(dict.fromkeys(familia_id)))
 
 
 @router.get("", response_model=list[SolicitudRead], dependencies=[EQUIPO])
@@ -232,7 +190,7 @@ async def linea_de_familia(db: DbSession, familia_id: UUID) -> LineaFamiliaRead:
     """R2-PAN-02 Cuotas, preventivos y servicios de la familia en una sola linea por fecha:
     seis meses atras y seis adelante, mas todo lo vencido."""
     await db.run_sync(familias.obtener, familia_id)
-    return (await _lineas(db, [familia_id]))[0]
+    return (await db.run_sync(linea.leer, [familia_id]))[0]
 
 
 @familias_router.post(

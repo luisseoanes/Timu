@@ -13,7 +13,8 @@ from app.api.deps import CurrentUser, DbSession, FamiliaActual
 from app.core.enums import EstadoAltaPeludo, EstadoPago, Periodicidad
 from app.core.errores import NoEncontrado
 from app.core.validaciones import TelefonoCO
-from app.modules.afiliaciones import altas, registro
+from app.modules.afiliaciones import altas, linea, registro
+from app.modules.afiliaciones.schemas import LineaFamiliaRead
 from app.modules.archivos import service as archivos
 from app.modules.archivos.models import Archivo
 from app.modules.cartera import contratos
@@ -113,6 +114,13 @@ async def actualizar_datos(db: DbSession, familia: FamiliaActual, data: DatosFam
 @router.get("/plan")
 async def plan(db: DbSession, familia: FamiliaActual) -> dict[str, Any]:
     return await db.run_sync(service.plan, familia)
+
+
+@router.get("/linea", response_model=LineaFamiliaRead)
+async def linea_propia(db: DbSession, familia: FamiliaActual) -> LineaFamiliaRead:
+    """R3-POR-01 La linea de la familia, la misma que ve el equipo: el inicio del portal la
+    abre en hoy."""
+    return (await db.run_sync(linea.leer, [familia.id]))[0]
 
 
 @router.get("/contrato")

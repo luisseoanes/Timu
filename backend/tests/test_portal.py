@@ -11,7 +11,7 @@ from sqlalchemy import select, text
 from app.core.auditoria import RegistroAuditoria
 from app.core.config import settings
 from app.core.database import ContextoDb, fijar_contexto
-from app.core.enums import Rol
+from app.core.enums import EstadoEventoPreventivo, Rol, TipoPreventivo
 from app.core.security import hash_password
 from app.core.tiempo import ZONA_NEGOCIO, hoy
 from app.modules.auth.models import Usuario
@@ -20,6 +20,7 @@ from app.modules.cartera.models import Pago
 from app.modules.clinica import service as clinica
 from app.modules.comunicaciones.models import Mensaje, PlantillaWhatsApp
 from app.modules.familias.models import Mascota
+from app.modules.preventivos.models import EventoPreventivo
 from app.modules.servicios.models import Franja
 from tests import fabricas
 from tests.conftest import PASSWORD, crear_usuario, login
@@ -80,8 +81,36 @@ async def test_ve_su_plan_y_estado_de_cuenta(client, portal):
     h = portal["headers"]
     plan = (await client.get("/api/v1/portal/plan", headers=h)).json()
     assert plan["estado"] == "activa"
+    assert [m["color"] for m in plan["mascotas"]] == ["verde"]
     cuenta = (await client.get("/api/v1/portal/estado-cuenta", headers=h)).json()
     assert cuenta["contrato"]["familia_id"] == str(portal["familia_id"])
+
+
+async def test_ve_su_linea_y_no_la_de_otra_familia(client, db, portal):
+    """R3-POR-01 El inicio del portal es la linea de la familia: la misma que ve el equipo,
+    con cada estacion ligada a su peludo, y sin nada de otra familia."""
+    propio, ajeno = (
+        EventoPreventivo(
+            mascota_id=mascota_id,
+            tipo=TipoPreventivo.VACUNA,
+            fecha_programada=hoy() + timedelta(days=10),
+            estado=EstadoEventoPreventivo.PROGRAMADO,
+        )
+        for mascota_id in (portal["mascota_id"], portal["mascota_ajena_id"])
+    )
+    db.add_all([propio, ajeno])
+    await db.commit()
+
+    resp = await client.get("/api/v1/portal/linea", headers=portal["headers"])
+    assert resp.status_code == 200, resp.text
+    cuerpo = resp.json()
+    assert cuerpo["familia_id"] == str(portal["familia_id"])
+    assert [p["color"] for p in cuerpo["planes"]] == ["verde"]
+    preventivos = [e for e in cuerpo["estaciones"] if e["tipo"] == "preventivo"]
+    assert [(e["referencia_id"], e["mascota_id"]) for e in preventivos] == [
+        (str(propio.id), str(portal["mascota_id"]))
+    ]
+    assert any(e["tipo"] == "cuota" for e in cuerpo["estaciones"])
 
 
 async def test_actualiza_contacto_auditado_pero_no_su_documento(client, db, portal):

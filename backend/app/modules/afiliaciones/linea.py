@@ -13,9 +13,8 @@ en `familias`, que no conoce ningun dominio de negocio.
 """
 
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime, time
-from typing import Literal
 from uuid import UUID
 
 from sqlalchemy import and_, or_, select
@@ -23,6 +22,13 @@ from sqlalchemy.orm import Session
 
 from app.core.enums import ColorPlan, EstadoEventoPreventivo, EstadoServicio, TipoPreventivo
 from app.core.tiempo import ZONA_NEGOCIO, con_zona, hoy
+from app.modules.afiliaciones.schemas import (
+    EstacionRead,
+    EstadoEstacion,
+    LineaFamiliaRead,
+    PlanDeFamiliaRead,
+    TipoEstacion,
+)
 from app.modules.cartera.models import AfiliacionMascota, Contrato, Cuota, EstadoCuota
 from app.modules.cartera.periodos import sumar_meses
 from app.modules.catalogos.models import TipoServicioCatalogo
@@ -34,8 +40,6 @@ from app.modules.servicios.models import Servicio
 MESES_VENTANA = 6
 MAX_FAMILIAS = 50
 
-TipoEstacion = Literal["cuota", "preventivo", "servicio"]
-EstadoEstacion = Literal["hecha", "vencida", "proxima", "futura"]
 
 _MESES = (
     "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -56,6 +60,7 @@ class Estacion:
     estado: EstadoEstacion
     titulo: str
     mascota: str | None = None
+    mascota_id: UUID | None = None
 
 
 @dataclass(frozen=True)
@@ -172,6 +177,7 @@ def _preventivos(db: Session, familias: list[UUID], dia: date) -> list[tuple[UUI
             estado=_estado(hecha, fecha, dia),
             titulo=_PREVENTIVOS.get(TipoPreventivo(evento.tipo), "Preventivo"),
             mascota=mascota,
+            mascota_id=evento.mascota_id,
         )
         resultado.append((familia_id, estacion))
     return resultado
@@ -209,6 +215,7 @@ def _servicios(db: Session, familias: list[UUID], dia: date) -> list[tuple[UUID,
             estado=_estado(servicio.estado == EstadoServicio.COMPLETADO, fecha, dia),
             titulo=tipo,
             mascota=mascota,
+            mascota_id=servicio.mascota_id,
         )
         resultado.append((servicio.familia_id, estacion))
     return resultado
@@ -235,8 +242,20 @@ def lineas(
         proxima = next((i for i, e in enumerate(orden) if e.estado == "futura"), None)
         if proxima is not None:
             e = orden[proxima]
-            orden[proxima] = Estacion(
-                e.tipo, e.referencia_id, e.fecha, "proxima", e.titulo, e.mascota
-            )
+            orden[proxima] = replace(e, estado="proxima")
         resultado[familia_id] = orden
     return dict(resultado)
+
+
+def leer(db: Session, familias: list[UUID]) -> list[LineaFamiliaRead]:
+    """La linea y los planes de cada familia, como los leen el panel y el portal."""
+    por_familia = lineas(db, familias)
+    de_cada = planes(db, familias)
+    return [
+        LineaFamiliaRead(
+            familia_id=f,
+            planes=[PlanDeFamiliaRead.model_validate(p) for p in de_cada.get(f, [])],
+            estaciones=[EstacionRead.model_validate(e) for e in estaciones],
+        )
+        for f, estaciones in por_familia.items()
+    ]

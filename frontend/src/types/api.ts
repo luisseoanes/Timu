@@ -154,6 +154,7 @@ export interface EstacionRead {
   estado: 'hecha' | 'vencida' | 'proxima' | 'futura'
   titulo: string
   mascota: string | null
+  mascota_id: string | null
 }
 
 export interface PlanDeFamiliaRead {

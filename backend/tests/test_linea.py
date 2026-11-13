@@ -113,6 +113,9 @@ async def test_la_linea_ordena_por_fecha_y_marca_cada_estacion(db):
         (date(2027, 1, 5), "cuota", "futura", "Cuota de enero de 2027"),
     ]
     assert {e.mascota for e in estaciones if e.tipo != "cuota"} == {familia.mascotas[0].nombre}
+    # El portal arma la linea de cada peludo con su id: dos peludos pueden llamarse igual.
+    assert {e.mascota_id for e in estaciones if e.tipo == "preventivo"} == {familia.mascotas[0].id}
+    assert {e.mascota_id for e in estaciones if e.tipo == "cuota"} == {None}
 
 
 async def test_lo_vencido_entra_aunque_quede_fuera_de_la_ventana(db):

@@ -81,6 +81,8 @@ def plan(db: Session, familia: Familia) -> dict[str, Any]:
                 "mascota_id": linea.mascota_id,
                 "mascota": mascota.nombre,
                 "plan": p.nombre,
+                # El color del catalogo (manual de marca, regla 5): el portal no lo deduce.
+                "color": p.color,
                 "valor_mensual": dinero(linea.valor_mensual),
                 "beneficios": beneficios,
             }
