@@ -1,17 +1,18 @@
 ---
 version: 1
-slug: "frontend-src-features-portal-portalpages-tsx"
-primary_target: "frontend/src/features/portal/PortalPages.tsx"
-related_targets: ["frontend/src/features/portal/PortalLayout.tsx"]
+slug: "frontend-src-features-portal-inicioportal-tsx"
+primary_target: "frontend/src/features/portal/InicioPortal.tsx"
+related_targets: ["frontend/src/features/portal/PortalLayout.tsx","frontend/src/features/portal/PeludosPortal.tsx","frontend/src/features/portal/LineaPortal.tsx","frontend/src/features/portal/CitasPortal.tsx","frontend/src/features/portal/PagosPortal.tsx","frontend/src/features/portal/DatosPortal.tsx"]
 ---
 
 # Portal de familias · Inicio, cada peludo y navegación (R3-POR-01)
 
 ## Alcance y modo
 
-Estructura del portal (`PortalLayout`), el inicio y la ficha de cada peludo. Mascotas, citas,
-pagos, datos y «Agregar un peludo» heredan estos patrones (R3-POR-02 incluido), sin sorteo
-propio. Modo: Operate. Construcción en código: el boceto elegido es
+Estructura del portal (`PortalLayout`), el inicio (`InicioPortal`) y la ficha de cada peludo
+(`PeludosPortal`). Mascotas, citas, pagos, datos y «Agregar un peludo» heredan estos patrones
+(R3-POR-02 incluido, en `CitasPortal`, `PagosPortal` y `DatosPortal`), sin sorteo propio.
+`PortalPages.tsx`, el fichero original de la superficie, se repartió por pantalla en R3-POR-02. Modo: Operate. Construcción en código: el boceto elegido es
 `docs/rediseno/boceto-portal-hoy-estas-aqui.html` (copia versionada del de la página de
 decisión).
 
