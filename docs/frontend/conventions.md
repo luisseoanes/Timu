@@ -201,5 +201,9 @@ Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñ
   equivocado y ninguna prueba lo ve. Se cierra cuando la API diga en el catálogo de tipos de
   servicio qué pasos llena la consulta, mejor en `R2-PAN-08`. El flujo completo, en
   [`flujo-de-la-visita.md`](../flujo-de-la-visita.md).
+- **`.impeccable/design.json` va por detrás de `DESIGN.md`.** Le faltan «La regla del número
+  de casa» y «La regla de la acción de quien recorre» en `narrative.rules`, y el «don't» de las
+  siluetas de la marca. Lo vio el documentador al fusionar el portal (2026-11-13) y no lo tocó
+  porque no se le pidió. Se repara con `/impeccable document` o en `R4-CIE-03`.
 - **Nombres de catálogo sin tildes** («Atencion en clinica aliada», «Vacunacion»): vienen de
   `backend/app/modules/catalogos/datos.py` y se ven en la línea y en los botones.

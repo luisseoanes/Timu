@@ -84,6 +84,20 @@ ronda entera, porque responde `recapture` y no puntúa nada hasta tenerla.
 - Un estado que gasta datos (una parada que se cierra, una consulta que se firma) se captura
   en el orden en que los datos lo permiten: primero lo que exige el estado anterior.
 
+Aprendido al cerrar el portal (2026-11-13):
+
+- El ingreso por script es un formulario: `request.post('/api/v1/auth/login', { form: {
+  username, password } })`. Con `data` (JSON) responde 422.
+- La renovación rota el token de renovación: tras cada contexto del navegador hay que volver a
+  guardar su `storageState` en el fichero de sesión. Si el siguiente contexto carga uno ya
+  rotado, el backend lo trata como robo y cierra todas las sesiones del usuario.
+- Un estado que `datos_demo` no tiene (una familia al día, citas en camino, un pago rechazado)
+  se captura interceptando la API con `page.route` en el script, y se le dice al revisor qué
+  capturas son simuladas. La respuesta simulada tiene que ser realista: un 503 sin cuerpo,
+  no uno con un `detail` inventado, que el revisor toma por texto del servidor.
+- `impeccable concept-seed --help` no imprime la ayuda: ejecuta una tirada sin modo. La forma
+  del payload de la página de decisión la da `serve-question --schema`.
+
 ### Definición de terminado de cada unidad
 
 Una unidad está **Hecha** cuando:
@@ -223,7 +237,11 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
   mascota de Ana, que el portal enseña después como su foto. No rompe nada, pero ensucia las
   capturas: hay que quitarla antes de capturar.
 - **Sugerencias del revisor, opcionales**: la flecha de las listas es un triángulo relleno,
-  y el resto del sistema usa chevrones de trazo. Se decide antes de `R4-CIE-02`.
+  y el resto del sistema usa chevrones de trazo. En citas y pagos, el «techo» de la dirección:
+  usar las estaciones de la línea (la vencida en las cuotas vencidas, la próxima con halo en la
+  próxima cita), la marca de «Hoy» en la cita en camino y el color del plan en Pagos. Y
+  «Confirmada» y «Atendida» comparten tono (en pestañas distintas). Se deciden con el usuario
+  antes de `R4-CIE-02`.
 
 ### Orden de lo que sigue
 
