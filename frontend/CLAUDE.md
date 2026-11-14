@@ -71,6 +71,8 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   «Capturas para el revisor final» de la hoja de ruta.
   `concept-seed --help` no imprime ayuda: ejecuta una tirada. La forma del payload la da
   `serve-question --schema`.
+  Una superficie sin sorteo (hereda patrones) escribe igual su contrato, con
+  `seed: none (pinned)` y las palabras del usuario que fijan la composición.
 - **Color, tipografía, logo y voz**: [`docs/manual-de-marca.md`](../docs/manual-de-marca.md).
   Los componentes usan los roles de su sección 10, nunca un color de la paleta.
 - **Decisiones de diseño**: la skill del repositorio, `/impeccable`, con
@@ -89,6 +91,9 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   422). La renovación rota el token: tras cada contexto, guarda otra vez su `storageState`, o el
   siguiente reusa uno rotado y el backend cierra la sesión. El script vive en el scratchpad y se
   copia a `frontend/` solo para ejecutarlo: `eslint .` lo recoge y `verificar` falla.
+  Con una sesión guardada hace más de 30 min, `page.request` da 401: carga antes una pantalla y
+  espera a `networkidle` para que se renueve. Un estado que depende de la hora se captura con
+  `page.clock.setFixedTime`.
 - [`docs/frontend/`](../docs/frontend/) (components, layouts, conventions) describe lo
   construido: qué pieza y qué plantilla reutilizar. `conventions.md` incluye la checklist de revisión y la deuda
   conocida (tema oscuro, PDF sin marca, medidas escritas a mano, tildes del catálogo).
@@ -108,3 +113,11 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   espacio. Si el nombre accesible de un título no casa, compara su `toHaveTextContent`.
 - En `e2e/`, `page.route` da prioridad al último registrado: el comodín (`**/api/v1/**`) primero
   y las rutas de la prueba después.
+- Un handler de MSW que ignora los parámetros contesta igual a dos consultas de la misma ruta: si
+  la pantalla pide dos veces `/servicios` (agenda y `abiertos=true`), las filas salen duplicadas.
+- Para congelar la hora sin romper MSW ni userEvent: `vi.useFakeTimers({ toFake: ['Date'] })` y
+  `vi.useRealTimers()` en un `finally`.
+- `useNombreTipoServicio` devuelve el código («consulta domiciliaria») hasta que llega el
+  catálogo: un nombre que lo incluye se busca con `findBy`, no con `getBy`.
+- Un bloque nuevo de `vistas.css` insertado antes de `.filtros` o `.listado .filtros > .input`
+  pierde contra ellos: sube la especificidad (`.listado .filtros.mi-clase`) o ponlo detrás.

@@ -95,6 +95,12 @@ Reglas que atraviesan todo el backend:
   familia de un número y quién contesta un mensaje entrante (encuesta, conversación
   comercial) se lo conecta `app/workers/tasks/comunicaciones.py` con
   `conectar_entrantes`; sin conectar, un entrante falla en lugar de quedar sin respuesta.
+- **`tareas` no importa `servicios`** (que crea tareas): `servicios/service.py` le conecta al
+  importarse cómo describir sus servicios (`tareas.conectar_servicios`) para nombrar cada tarea
+  de la bandeja; sin conectar, el listado falla.
+- **Las cadenas que la API devuelve para mostrarse tal cual llevan tildes** (nombres y fórmulas
+  de `dashboard/definiciones`); la regla de evitarlas es para docstrings y comentarios. Los
+  mensajes de error aún no las llevan: es deuda, no la norma.
 - **Una tarea que llama a un tercero con efectos (cobrar, enviar) no lo hace dentro de
   la transacción del lote.** Se registra el intento y se confirma, se llama al tercero
   fuera de cualquier transacción y se anota el resultado en otra

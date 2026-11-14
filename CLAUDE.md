@@ -164,7 +164,7 @@ parte de las propias suites; ninguno se desactiva:
 | `backend/tests/test_permisos.py` (`test_la_guarda_recorre_todas_las_rutas_de_la_api`) | Que la guarda de permisos deje de ver rutas que publica el OpenAPI (pasó al subir a FastAPI 0.162: `app.routes` ya no las lista). |
 | Job **Vulnerabilidades conocidas** de `ci.yml` | Una dependencia de la API, el worker o el panel con una vulnerabilidad publicada. |
 | `frontend/src/test/tokens.test.ts` | Un color escrito a mano en `frontend/src` fuera de `styles/tokens.css` (`#hex`, `rgb()`, `oklch()`, un nombre de color, también en `style={{}}` y en atributos SVG), un `var(--…)` que no está definido, o un `z-index` que no sale de la escala `--capa-*`. |
-| `frontend/e2e-stack/responsive.spec.ts` | Una ruta que, a 375, 768 o 1280 px, desborda en horizontal o tiene texto con contraste insuficiente según axe-core, sin estar en `PENDIENTES`; una entrada de `PENDIENTES` que ya no falla (la lista solo encoge); o una pantalla de `App.tsx` que el recorrido no abre. Con `pestanas: true` mide cada pestaña; ante un 429 espera a `Retry-After` y vuelve a cargar, y si persiste falla en vez de medir una pantalla de error. |
+| `frontend/e2e-stack/responsive.spec.ts` | Una ruta que, a 375, 768 o 1280 px, desborda en horizontal o tiene texto con contraste insuficiente según axe-core, sin estar en `PENDIENTES`; una entrada de `PENDIENTES` que ya no falla (la lista solo encoge); o una pantalla de `App.tsx` que el recorrido no abre. Con `pestanas: true` mide cada pestaña; ante un 429 espera a `Retry-After` y vuelve a cargar, y si persiste falla en vez de medir una pantalla de error. Un ancho nuevo sumaría a `PENDIENTES` fallos de módulos sin rediseñar: espera a que la lista quede vacía (`R4-CIE-01`). |
 | `frontend/e2e-stack/recorridos.spec.ts` (ficha de familia) | Barras o línea pintadas sobre una ventana abierta, un control que se estira junto a un campo con ayuda, el pie de una ventana recortado, o más de una acción verde llena por pestaña. |
 | `frontend/src/test/arquitectura.test.ts` y `no-restricted-imports` de ESLint | Un import a un fichero interno de otro dominio del panel (por alias o por ruta relativa), un `index.ts` que reexporta algo ajeno, la base o `auth`/`catalogos` dependiendo de un dominio, un espacio de entrada importado fuera de `App.tsx`, o un ciclo entre dominios. |
 | `frontend/src/test/suite.test.ts` | Una prueba del panel fuera de los patrones de Vitest (`src/**/*.{test,spec}.ts(x)`) o de Playwright (`e2e/`, `e2e-stack/`), o desactivada con `.only`, `.skip`, `.todo` o `.fixme`. |
@@ -183,21 +183,24 @@ Reglas que mantienen esto vivo:
 - **Hay dos e2e y no se sustituyen**: `e2e/` intercepta la API y prueba el panel aislado,
   rápido y determinista; `e2e-stack/` recorre panel, portal y clínica aliada contra el stack
   real con los usuarios de `scripts.datos_demo`, en el job «Stack con un solo comando». Un
-  recorrido nuevo que dependa de datos los crea `datos_demo`, no la prueba. Ingresan una vez
-  por perfil (`e2e-stack/sesiones.setup.ts`, cinco perfiles): login y renovación comparten un
-  límite de 10 por minuto y por IP, y una suite que ingresa en cada prueba se bloquea a sí
-  misma. Solo el perfil de equipo ingresa por el formulario, que gasta dos (renovación y
-  ingreso); el resto, por la API. Con el ingreso previo del job suman 7: un perfil nuevo por el
-  formulario cuesta dos. En local, dos ejecuciones seguidas ya lo agotan: espera un minuto.
-  El perfil de equipo es `comercial@timu.co`, no el admin: `datos_demo` gasta el cupo de
-  120 por minuto del admin justo antes. Por eso Administración se recorre con
-  `gerencia@timu.co`, un administrador que `datos_demo` crea solo para los recorridos.
-  Además, la API limita a 120 peticiones por minuto por usuario: no lances scripts propios
-  con `comercial@timu.co` justo antes del barrido, o sus pantallas cargarán un 429. La suite
-  ya deja a ese perfil al borde del cupo: un recorrido nuevo del panel que no necesite el
-  perfil de equipo va con el de administración (`sesion('admin')`), como el del Inicio.
-  La ruta de prueba de la médica no siempre es de hoy (va en el primer día con cupo): los
-  recorridos la buscan con `rutaDemo` (`e2e-stack/datos.ts`).
+  recorrido nuevo que dependa de datos los crea `datos_demo`, no la prueba.
+  - **Ingresos** (login y renovación comparten un límite de 10 por minuto y por IP): la suite
+    ingresa una vez por perfil (`e2e-stack/sesiones.setup.ts`, cinco perfiles), porque una que
+    ingresa en cada prueba se bloquea a sí misma. Solo el perfil de equipo ingresa por el
+    formulario, que gasta dos (renovación y ingreso); el resto, por la API. Con el ingreso previo
+    del job suman 7: un perfil nuevo por el formulario cuesta dos. En local, dos ejecuciones
+    seguidas ya lo agotan: espera un minuto.
+  - **Cupo de la API** (120 peticiones por minuto y por usuario): el perfil de equipo es
+    `comercial@timu.co`, no el admin, porque `datos_demo` gasta el cupo del admin justo antes; por
+    eso Administración se recorre con `gerencia@timu.co`, un administrador que `datos_demo` crea
+    solo para los recorridos. No lances scripts propios con `comercial@timu.co` justo antes del
+    barrido, o sus pantallas cargarán un 429. La suite ya deja a ese perfil al borde del cupo: un
+    recorrido nuevo del panel que no necesite el perfil de equipo va con el de administración
+    (`sesion('admin')`), como el del Inicio.
+  - **Datos del día**: la ruta de prueba de la médica no siempre es de hoy (va en el primer día
+    con cupo): los recorridos la buscan con `rutaDemo` (`e2e-stack/datos.ts`). Si `datos_demo` se
+    sembró otro día, en local fallan con «datos_demo no dejó ninguna ruta en la próxima semana»:
+    vuelve a correr `docker compose exec -T api python -m scripts.datos_demo`.
 - **Una prueba que no puede pasar se arregla o se borra**, con la razón en el cuerpo del
   commit. No se salta, no se marca `xfail` y no se comenta.
 - **Un tipo de prueba nuevo llega cableado al CI en el mismo cambio**: un runner, una
@@ -238,6 +241,8 @@ En el worktree de commits, Vitest necesita `ln -s <repo>/frontend/node_modules`.
 aparece como no rastreado: añade rutas explícitas (nunca `git add -A`) y bórralo antes de
 `git worktree remove --force`. El backend se prueba en el worktree con el entorno del
 repositorio principal (`<repo>/backend/.venv/bin/pytest`): la base de pruebas no necesita `.env`.
+Un fichero con cambios de dos commits se copia al worktree en su versión intermedia (sin el
+bloque del segundo, generada con un script), y cada commit se verifica sobre su propio estado.
 
 ## Convenciones de escritura
 
