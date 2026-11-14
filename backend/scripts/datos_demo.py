@@ -20,7 +20,12 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
+# app.workers.tasks.comunicaciones conecta los mensajes entrantes con quien los contesta (el bot
+# comercial), como en el worker.
+import app.workers.tasks.comunicaciones  # noqa: F401
 from app.core.config import settings
+from app.core.database import sesion_worker
+from app.modules.comunicaciones import service as comunicaciones
 
 API = os.environ.get("DEMO_API", "http://localhost:8000/api/v1")
 BOGOTA = ZoneInfo("America/Bogota")
@@ -216,6 +221,41 @@ class Cliente:
         resp = self.http.put(ruta, json=cuerpo)
         resp.raise_for_status()
         return resp.json()
+
+
+# Una persona escribe por WhatsApp, el bot la atiende y pide un asesor (F3-COM-02/04): la ficha de
+# un interesado enseña su conversación (R2-PAN-09). Cada mensaje recorre el mismo camino que uno
+# de Meta en el worker (`procesar_evento_whatsapp`), en orden y en su propia transacción: por el
+# webhook esperaría al drenado del outbox, de minuto en minuto, y podría responderse desordenado.
+NUMERO_CONVERSACION = "573004445588"
+CONVERSACION = ("Hola", "1", "Bogota", "quiero hablar con un asesor")
+
+
+def conversacion_de_prueba(c: Cliente) -> None:
+    if c.get("/comercial/interesados", q=NUMERO_CONVERSACION[-7:])["total"]:
+        return
+    for n, texto in enumerate(CONVERSACION):
+        evento = {
+            "from": NUMERO_CONVERSACION,
+            "id": f"wamid.demo.{NUMERO_CONVERSACION}.{n}",
+            "type": "text",
+        }
+        with sesion_worker() as db:
+            comunicaciones.procesar_evento_whatsapp(
+                db,
+                {
+                    "entry": [
+                        {
+                            "changes": [
+                                {"value": {"messages": [{**evento, "text": {"body": texto}}]}}
+                            ]
+                        }
+                    ]
+                },
+            )
+    [interesado] = c.get("/comercial/interesados", q=NUMERO_CONVERSACION[-7:])["items"]
+    # El bot no pregunta el nombre: lo anota quien la atiende.
+    c.http.patch(f"/comercial/interesados/{interesado['id']}", json={"nombre": "Natalia Gomez"})
 
 
 def proximo_habil(desde: date, dias: int) -> date:
@@ -543,6 +583,9 @@ def main() -> None:
         for i, interesado in enumerate(c.get("/comercial/interesados", limit=10)["items"]):
             etapa = ("contactado", "cotizado", "en_afiliacion")[i % 3]
             c.http.patch(f"/comercial/interesados/{interesado['id']}", json={"etapa": etapa})
+
+    print("Conversación de WhatsApp")
+    conversacion_de_prueba(c)
 
     print("Campanas")
     plantillas = {p["nombre"]: p for p in c.get("/comunicaciones/plantillas")}
