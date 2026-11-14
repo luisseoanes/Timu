@@ -111,6 +111,32 @@ describe('Distintivo', () => {
     })
     expect(new Set(trazos).size).toBe(tonos.length)
   })
+
+  it('los estados del camino normal comparten tono pero no icono', () => {
+    const estados = ['agendado', 'en_ruta', 'en_atencion'] as const
+    renderizar(
+      <>
+        {estados.map((e) => (
+          <Distintivo key={e} dominio="servicio" valor={e} />
+        ))}
+      </>,
+    )
+    const insignias = ['Agendado', 'En ruta', 'En atención'].map((t) => screen.getByText(t))
+    for (const i of insignias) expect(i).toHaveClass('distintivo-info')
+    expect(new Set(insignias.map((i) => i.querySelector('svg')?.innerHTML)).size).toBe(3)
+  })
+
+  it('una prioridad alta no lleva la × de lo cancelado', () => {
+    renderizar(
+      <>
+        <Distintivo dominio="prioridad" valor="alta" />
+        <Distintivo dominio="servicio" valor="cancelado" />
+      </>,
+    )
+    const [alta, cancelado] = [screen.getByText('Alta'), screen.getByText('Cancelado')]
+    expect(alta).toHaveClass('distintivo-peligro')
+    expect(alta.querySelector('svg')?.innerHTML).not.toBe(cancelado.querySelector('svg')?.innerHTML)
+  })
 })
 
 describe('Pestanas', () => {

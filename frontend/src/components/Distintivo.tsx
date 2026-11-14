@@ -14,10 +14,21 @@ const ICONO: Record<Tono, NombreIcono> = {
 }
 
 /** Pastilla de estado: fondo tintado, icono y texto. */
-export function Insignia({ tono, title, children }: { tono: Tono; title?: string; children: ReactNode }) {
+export function Insignia({
+  tono,
+  icono,
+  title,
+  children,
+}: {
+  tono: Tono
+  /** Sustituye al icono del tono cuando el estado necesita distinguirse de otros del mismo tono. */
+  icono?: NombreIcono
+  title?: string
+  children: ReactNode
+}) {
   return (
     <span className={`distintivo distintivo-${tono}`} title={title}>
-      <Icono nombre={ICONO[tono]} size={12} />
+      <Icono nombre={icono ?? ICONO[tono]} size={12} />
       {children}
     </span>
   )
@@ -25,6 +36,10 @@ export function Insignia({ tono, title, children }: { tono: Tono; title?: string
 
 /** Distintivo de estado: el tono y el texto salen del mapeo único de `lib/estados.ts`. */
 export function Distintivo({ dominio, valor }: { dominio: Dominio; valor: string }) {
-  const { label, tono } = estado(dominio, valor)
-  return <Insignia tono={tono}>{label}</Insignia>
+  const { label, tono, icono } = estado(dominio, valor)
+  return (
+    <Insignia tono={tono} icono={icono}>
+      {label}
+    </Insignia>
+  )
 }

@@ -8,6 +8,9 @@ export type Tono = 'ok' | 'alerta' | 'info' | 'peligro' | 'neutro'
 export interface Estado {
   label: string
   tono: Tono
+  /** Icono propio cuando varios estados comparten tono y hay que distinguirlos sin leer:
+   * agendado, en ruta y en atención son todos del camino normal (tono informativo). */
+  icono?: 'rutas' | 'pulso' | 'arriba'
 }
 
 const AFILIACION: Record<string, Estado> = {
@@ -23,8 +26,8 @@ const SERVICIO: Record<string, Estado> = {
   pendiente_autorizacion: { label: 'Por autorizar', tono: 'alerta' },
   agendado: { label: 'Agendado', tono: 'info' },
   reprogramado: { label: 'Reprogramado', tono: 'alerta' },
-  en_ruta: { label: 'En ruta', tono: 'info' },
-  en_atencion: { label: 'En atención', tono: 'info' },
+  en_ruta: { label: 'En ruta', tono: 'info', icono: 'rutas' },
+  en_atencion: { label: 'En atención', tono: 'info', icono: 'pulso' },
   completado: { label: 'Completado', tono: 'ok' },
   cancelado: { label: 'Cancelado', tono: 'peligro' },
 }
@@ -52,7 +55,8 @@ const TAREA: Record<string, Estado> = {
 }
 
 const PRIORIDAD: Record<string, Estado> = {
-  alta: { label: 'Alta', tono: 'peligro' },
+  // La × del tono peligro se lee como anulado: una prioridad alta sube.
+  alta: { label: 'Alta', tono: 'peligro', icono: 'arriba' },
   media: { label: 'Media', tono: 'alerta' },
   baja: { label: 'Baja', tono: 'neutro' },
 }
