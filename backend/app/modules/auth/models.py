@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.auditoria import Auditable
@@ -24,6 +24,9 @@ class Usuario(Base, UUIDMixin, TimestampMixin, Auditable):
     }
     __table_args__ = (
         CheckConstraint("email IS NOT NULL OR telefono IS NOT NULL", name="con_identificador"),
+        # Las vistas de Administracion (equipo, aliadas, familias, inactivos) y sus recuentos:
+        # la tabla crece con cada familia que entra al portal.
+        Index("ix_usuarios_rol_activo", "rol", "activo"),
     )
 
     email: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)

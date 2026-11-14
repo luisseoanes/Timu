@@ -29,6 +29,15 @@ class UsuarioUpdate(BaseModel):
     activo: bool | None = None
 
 
+class RecuentosUsuarios(BaseModel):
+    """Cuantos usuarios hay en cada vista de Administracion."""
+
+    equipo: int
+    aliadas: int
+    familias: int
+    inactivos: int
+
+
 class UsuarioRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

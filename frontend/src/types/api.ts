@@ -736,6 +736,13 @@ export interface RecuentosRemisiones {
   todas: number
 }
 
+export interface RecuentosUsuarios {
+  equipo: number
+  aliadas: number
+  familias: number
+  inactivos: number
+}
+
 export interface EncuestaRead {
   id: string
   servicio_id: string

@@ -4,13 +4,13 @@ Los tokens nunca viajan en el cuerpo: el access token va en una cookie httpOnly 
 refresh token en otra, limitada a las rutas de /auth. El navegador no puede leerlos.
 """
 
-from typing import Annotated
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 
 from app.api.deps import (
     INTERNOS,
@@ -28,6 +28,7 @@ from app.modules.auth.models import Usuario
 from app.modules.auth.schemas import (
     CodigoIn,
     MiembroEquipo,
+    RecuentosUsuarios,
     RecuperarIn,
     RestablecerIn,
     Sesion,
@@ -172,13 +173,63 @@ async def equipo(db: DbSession, rol: str | None = None) -> list[Usuario]:
     return list((await db.scalars(stmt.order_by(Usuario.nombre))).all())
 
 
+# Las vistas de la pestana Usuarios: quien entra al panel, la clinica aliada, la familia al
+# portal, y quien ya no entra (desactivado, de cualquier perfil).
+Grupo = Literal["equipo", "aliadas", "familias", "inactivos"]
+_GRUPOS: dict[str, tuple[tuple[Rol, ...] | None, bool]] = {
+    "equipo": (INTERNOS, True),
+    "aliadas": ((Rol.ALIADA,), True),
+    "familias": ((Rol.FAMILIA,), True),
+    "inactivos": (None, False),
+}
+
+
+def _buscar(stmt: Any, q: str | None) -> Any:
+    if not q:
+        return stmt
+    patron = f"%{q}%"
+    return stmt.where(
+        or_(
+            Usuario.nombre.ilike(patron),
+            Usuario.email.ilike(patron),
+            Usuario.telefono.ilike(patron),
+        )
+    )
+
+
+@router.get("/usuarios/recuentos", response_model=RecuentosUsuarios)
+async def recuentos_usuarios(db: DbSession, _: Admin, q: str | None = None) -> dict[str, int]:
+    """Cuantos usuarios hay en cada vista, con la misma busqueda que el listado."""
+    stmt = _buscar(select(Usuario.rol, Usuario.activo, func.count()), q)
+    filas = (await db.execute(stmt.group_by(Usuario.rol, Usuario.activo))).tuples().all()
+    conteo = dict.fromkeys(_GRUPOS, 0)
+    for rol, activo, n in filas:
+        grupo = next(
+            g
+            for g, (roles, act) in _GRUPOS.items()
+            if act == activo and (roles is None or rol in roles)
+        )
+        conteo[grupo] += n
+    return conteo
+
+
 @router.get("/usuarios", response_model=Page[UsuarioRead])
 async def listar_usuarios(
-    db: DbSession, _: Admin, params: ParamsListado, rol: str | None = None
+    db: DbSession,
+    _: Admin,
+    params: ParamsListado,
+    rol: str | None = None,
+    grupo: Grupo | None = None,
+    q: str | None = None,
 ) -> Page[UsuarioRead]:
-    stmt = select(Usuario)
+    stmt = _buscar(select(Usuario), q)
     if rol:
         stmt = stmt.where(Usuario.rol == rol)
+    if grupo:
+        roles, activo = _GRUPOS[grupo]
+        stmt = stmt.where(Usuario.activo.is_(activo))
+        if roles is not None:
+            stmt = stmt.where(Usuario.rol.in_(roles))
     return await paginar(
         db,
         stmt,

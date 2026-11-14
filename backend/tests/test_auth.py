@@ -320,6 +320,31 @@ async def test_la_administracion_da_de_alta_usuarios_sin_duplicar(client: AsyncC
     assert (await client.post(url, json=aliada_sin_clinica, headers=headers)).status_code == 422
 
 
+async def test_los_usuarios_se_ven_por_grupo_con_su_recuento(client: AsyncClient, db, headers):
+    await crear_usuario(db, "medica@timu.co", Rol.MEDICO)
+    await crear_usuario(db, "familia@correo.co", Rol.FAMILIA)
+    await crear_usuario(db, "baja@timu.co", Rol.COMERCIAL, activo=False)
+    await db.commit()
+
+    recuentos = (await client.get("/api/v1/auth/usuarios/recuentos", headers=headers)).json()
+    # El administrador de la prueba tambien es del equipo.
+    assert recuentos == {"equipo": 2, "aliadas": 0, "familias": 1, "inactivos": 1}
+
+    async def correos(**params) -> set[str]:
+        resp = await client.get("/api/v1/auth/usuarios", params=params, headers=headers)
+        return {u["email"] for u in resp.json()["items"]}
+
+    assert "medica@timu.co" in await correos(grupo="equipo")
+    assert "baja@timu.co" not in await correos(grupo="equipo")
+    assert await correos(grupo="familias") == {"familia@correo.co"}
+    assert await correos(grupo="inactivos") == {"baja@timu.co"}
+    assert await correos(grupo="equipo", q="MEDICA") == {"medica@timu.co"}
+    buscados = await client.get(
+        "/api/v1/auth/usuarios/recuentos", params={"q": "medica"}, headers=headers
+    )
+    assert buscados.json()["equipo"] == 1
+
+
 async def test_solo_la_administracion_da_de_alta_usuarios(client: AsyncClient, db):
     await crear_usuario(db, "ops@timu.co", Rol.OPERACIONES)
     ops = await login(client, "ops@timu.co")

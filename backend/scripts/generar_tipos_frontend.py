@@ -98,6 +98,7 @@ ESQUEMAS = [
     "ConversacionDelInteresado",
     "RecuentosEmbudo",
     "RecuentosRemisiones",
+    "RecuentosUsuarios",
     "EncuestaRead",
     "ClinicaRead",
     "ConvenioRead",
