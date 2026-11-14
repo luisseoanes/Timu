@@ -235,7 +235,7 @@
 .cartera-renovable { font-size: var(--t-menor); color: var(--texto-suave); }
 /* Apilada, la acción de la fila a todo el ancho y al pulgar, como «Registrar autorización». */
 @container (max-width: 639px) {
-  :is(.cartera-tabla, .preventivos-tabla, .conversaciones-tabla) .tabla-acciones > .btn:first-child { flex: 1 1 100%; }
+  :is(.cartera-tabla, .preventivos-tabla, .conversaciones-tabla, .remisiones-tabla) .tabla-acciones > .btn:first-child { flex: 1 1 100%; }
 }
 /* Por debajo de lo que cabe en una fila, las vistas ocupan la suya y el buscador y las listas
    bajan juntos a la siguiente: antes la ciudad bajaba sola y el buscador cortaba su texto. */
@@ -1256,3 +1256,27 @@
 .campana-baja { margin-block: var(--e3); }
 .campana-baja .input { flex: 1; min-width: 0; }
 .plantilla-cuerpo, .mensaje-contenido { display: block; max-width: 60ch; white-space: pre-line; overflow-wrap: anywhere; }
+
+/* ===== Aliadas (R2-PAN-10): remisiones en bandeja, clínicas en listado con ficha ===== */
+.aliada-quien { color: var(--texto); font-size: var(--t-cuerpo); }
+.aliada-nota { max-width: 65ch; font-size: var(--t-menor); color: var(--texto-suave); }
+/* Las remisiones por usar de la clínica: a quién y cuándo vence, sin tabla. */
+.aliada-remisiones { list-style: none; margin: 0; padding: 0; }
+.aliada-remisiones > li { display: grid; gap: 2px; padding: var(--e3) 0; border-top: 1px solid var(--borde); }
+.aliada-remisiones > li:first-child { border-top: 0; padding-top: 0; }
+.aliada-remisiones a { font-weight: 700; }
+/* El período en una fila con sus etiquetas encima; en el celular, uno junto al otro. */
+.liquidacion-periodo { display: grid; grid-template-columns: repeat(2, minmax(0, 180px)); gap: var(--e3); margin-bottom: var(--e4); }
+/* Un campo de fecha no encoge por debajo de su ancho natural: en el celular no cabían dos. */
+.liquidacion-periodo .input { min-width: 0; width: 100%; }
+.liquidacion-tabla :is(th, td):not(:first-child) { text-align: right; }
+.liquidacion-tabla tfoot :is(th, td) { border-top: 2px solid var(--borde); font-weight: 700; color: var(--texto-titulo); }
+@media (max-width: 599px) {
+  .liquidacion-periodo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* Apilada, el total es un bloque más, como las filas. */
+@container (max-width: 639px) {
+  .liquidacion-tabla tfoot, .liquidacion-tabla tfoot tr { display: block; }
+  .liquidacion-tabla tfoot tr { padding-block: var(--e3); border-top: 2px solid var(--borde); }
+  .liquidacion-tabla tfoot td { border-top: 0; }
+}

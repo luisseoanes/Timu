@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { ClinicaRead, ConvenioRead, RemisionRead } from '@/types'
+import type { ClinicaRead, ConvenioRead, RecuentosRemisiones, RemisionRead } from '@/types'
 
 export interface FilaLiquidacion {
   clinica_id: string
@@ -50,6 +50,14 @@ export function useRemisiones(filtros: { clinica_id?: string; familia_id?: strin
   return useQuery({
     queryKey: ['aliadas', 'remisiones', filtros],
     queryFn: async () => (await api.get<RemisionRead[]>('/aliadas/remisiones', { params: filtros })).data,
+  })
+}
+
+export function useRecuentosRemisiones(clinicaId?: string) {
+  return useQuery({
+    queryKey: ['aliadas', 'remisiones', 'recuentos', clinicaId ?? null],
+    queryFn: async () =>
+      (await api.get<RecuentosRemisiones>('/aliadas/remisiones/recuentos', { params: { clinica_id: clinicaId } })).data,
   })
 }
 

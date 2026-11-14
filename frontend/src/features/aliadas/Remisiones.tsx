@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
 import { Distintivo } from '@/components/Distintivo'
@@ -7,81 +7,131 @@ import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { SelectorFamilia } from '@/features/familias'
 import { mensajeError } from '@/lib/errores'
-import { fecha, moneda } from '@/lib/formato'
-import type { FamiliaRead, RemisionRead } from '@/types'
+import { fechaCompacta, moneda } from '@/lib/formato'
+import type { FamiliaRead, RecuentosRemisiones, RemisionRead } from '@/types'
 
-import {
-  useAnularRemision,
-  useClinicas,
-  useConvenios,
-  useEmitirRemision,
-  useRemisiones,
-} from './api'
+import { useAnularRemision, useClinicas, useConvenios, useEmitirRemision, useRecuentosRemisiones, useRemisiones } from './api'
+import { cobertura } from './remision'
 
+// Los valores son los del backend (core/enums.py, EstadoRemision); «todas» no filtra.
+type Vista = keyof RecuentosRemisiones
+
+const VISTAS: { valor: Vista; label: string; vacio: string }[] = [
+  { valor: 'emitida', label: 'Por usar', vacio: 'No hay remisiones por usar. Al emitir una, aparece aquí hasta que la clínica reporte la atención.' },
+  { valor: 'utilizada', label: 'Utilizadas', vacio: 'Ninguna clínica ha reportado todavía una atención.' },
+  { valor: 'anulada', label: 'Anuladas', vacio: 'No se ha anulado ninguna remisión.' },
+  { valor: 'todas', label: 'Todas', vacio: 'Aún no se ha emitido ninguna remisión.' },
+]
+
+/** Remisiones como bandeja (R2-PAN-10): las que están por usar, primero la que vence antes, con lo
+ * que toca hacer en cada fila. La clínica valida el código y reporta la atención desde su portal. */
 export function Remisiones() {
-  const [estado, setEstado] = useState('emitida')
-  const remisiones = useRemisiones({ estado: estado || undefined })
-  const clinicas = useClinicas(undefined, true)
+  const [params, setParams] = useSearchParams()
+  const vista: Vista = VISTAS.find((v) => v.valor === params.get('vista'))?.valor ?? 'emitida'
+  const recuentos = useRecuentosRemisiones()
+  const remisiones = useRemisiones({ estado: vista === 'todas' ? undefined : vista })
   const [nueva, setNueva] = useState(false)
   const [anulando, setAnulando] = useState<RemisionRead | null>(null)
-  const nombreClinica = (id: string) => clinicas.data?.find((c) => c.id === id)?.nombre ?? '…'
+
+  function cambiarVista(valor: Vista) {
+    const siguiente = new URLSearchParams(params)
+    siguiente.set('vista', valor)
+    setParams(siguiente, { replace: true })
+  }
 
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
         <h3>Remisiones a clínicas aliadas</h3>
-        <div className="acciones">
-          <select className="input" style={{ width: 'auto' }} value={estado} onChange={(e) => setEstado(e.target.value)} aria-label="Estado de la remisión">
-            <option value="emitida">Emitidas</option>
-            <option value="utilizada">Utilizadas</option>
-            <option value="anulada">Anuladas</option>
-            <option value="">Todas</option>
-          </select>
-          <button className="btn btn-primario" type="button" onClick={() => setNueva(true)}>
-            <Icono nombre="mas" size={16} /> Emitir remisión
-          </button>
+        <button className="btn btn-primario" type="button" onClick={() => setNueva(true)}>
+          <Icono nombre="mas" size={16} /> Emitir remisión
+        </button>
+      </div>
+      <div className="filtros bandeja-filtros">
+        <div className="segmento bandeja-vistas" role="group" aria-label="Vista de las remisiones">
+          {VISTAS.map((v) => (
+            <button
+              key={v.valor}
+              type="button"
+              className="segmento-opcion"
+              data-state={vista === v.valor ? 'active' : 'inactive'}
+              aria-pressed={vista === v.valor}
+              onClick={() => cambiarVista(v.valor)}
+            >
+              {v.label}
+              {recuentos.data && (
+                <>
+                  {' '}
+                  <span className="segmento-recuento numero">{recuentos.data[v.valor]}</span>
+                </>
+              )}
+            </button>
+          ))}
         </div>
       </div>
       <Consulta
         consulta={remisiones}
-        cargando="Cargando remisiones…"
+        cargando="Cargando las remisiones…"
         error="No fue posible cargar las remisiones."
-        vacio="No hay remisiones en este estado."
+        vacio={VISTAS.find((v) => v.valor === vista)!.vacio}
         estaVacio={(d) => d.length === 0}
       >
         {(d) => (
           <div className="scroll-x">
-            <table className="tabla">
+            <table className="tabla tabla-apilable bandeja-tabla remisiones-tabla">
               <thead>
                 <tr>
-                  <th>Código</th>
+                  <th>Remisión</th>
                   <th>Clínica</th>
-                  <th>Motivo</th>
                   <th>Cobertura</th>
-                  <th>Vence</th>
-                  <th>Estado</th>
+                  <th>{vista === 'utilizada' ? 'Atendida' : 'Vence'}</th>
+                  {vista === 'todas' && <th>Estado</th>}
                   <th><span className="sr-only">Acciones</span></th>
                 </tr>
               </thead>
               <tbody>
                 {d.map((r) => (
                   <tr key={r.id}>
-                    <td className="principal numero">
-                      <Link to={`/familias/${r.familia_id}`}>{r.codigo}</Link>
+                    <td className="principal" data-etiqueta="Remisión">
+                      <Link to={`/familias/${r.familia_id}`}>
+                        {r.titular}
+                        {r.mascota && ` · ${r.mascota}`}
+                      </Link>
+                      <div className="bandeja-detalle">
+                        <span className="numero">{r.codigo}</span>
+                        <span>{r.motivo}</span>
+                      </div>
                     </td>
-                    <td>{nombreClinica(r.clinica_id)}</td>
-                    <td>{r.motivo}</td>
-                    <td className="numero">
-                      {r.cobertura_pct}%{r.tope_cubierto ? ` hasta ${moneda(r.tope_cubierto)}` : ''}
+                    <td data-etiqueta="Clínica">{r.clinica}</td>
+                    <td data-etiqueta="Cobertura">
+                      {r.valor_cubierto ? (
+                        <span className="numero sin-cortes">Cubrió {moneda(r.valor_cubierto)}</span>
+                      ) : (
+                        <span className="numero sin-cortes">{cobertura(r)}</span>
+                      )}
                     </td>
-                    <td className="numero">{fecha(r.vence_en)}</td>
-                    <td>
-                      <Distintivo dominio="remision" valor={r.estado} />
-                      {r.valor_cubierto && <div className="apagado numero">Cubierto {moneda(r.valor_cubierto)}</div>}
+                    <td data-etiqueta={vista === 'utilizada' ? 'Atendida' : 'Vence'}>
+                      {r.estado === 'utilizada' && r.fecha_atencion ? (
+                        <span className="numero sin-cortes">{fechaCompacta(r.fecha_atencion)}</span>
+                      ) : r.vencida ? (
+                        // Lo vencido se dice con icono y palabra, no solo en rojo.
+                        <span className="bandeja-vencida">
+                          <Icono nombre="alerta" size={14} />
+                          <span>Venció el</span>
+                          <span className="numero">{fechaCompacta(r.vence_en)}</span>
+                        </span>
+                      ) : (
+                        <span className="numero sin-cortes">{fechaCompacta(r.vence_en)}</span>
+                      )}
                     </td>
-                    <td>
+                    {vista === 'todas' && (
+                      <td data-etiqueta="Estado">
+                        <Distintivo dominio="remision" valor={r.estado} />
+                      </td>
+                    )}
+                    <td className="tabla-acciones">
                       {r.estado === 'emitida' && (
-                        <button className="btn btn-plano" type="button" onClick={() => setAnulando(r)}>
+                        <button className="btn btn-plano btn-plano-peligro" type="button" onClick={() => setAnulando(r)} aria-label={`Anular la remisión ${r.codigo}`}>
                           Anular
                         </button>
                       )}
@@ -105,6 +155,7 @@ function NuevaRemision({ abierto, onCerrar }: { abierto: boolean; onCerrar: () =
   const [clinicaId, setClinicaId] = useState('')
   const clinicas = useClinicas(familia?.ciudad)
   const convenios = useConvenios(clinicaId || null)
+  const activas = (familia?.mascotas ?? []).filter((m) => m.activa)
 
   function cerrar() {
     emitir.reset()
@@ -151,12 +202,14 @@ function NuevaRemision({ abierto, onCerrar }: { abierto: boolean; onCerrar: () =
           </div>
           <label className="campo">
             <span>Mascota</span>
-            <select className="input" name="mascota_id" required disabled={!familia}>
-              {(familia?.mascotas ?? [])
-                .filter((m) => m.activa)
-                .map((m) => (
-                  <option key={m.id} value={m.id}>{m.nombre}</option>
-                ))}
+            {/* Como la clínica: dice qué falta en vez de quedarse en blanco, y no elige por nadie. */}
+            <select className="input" name="mascota_id" required disabled={!familia} defaultValue="" key={familia?.id ?? 'sin-familia'}>
+              <option value="" disabled>
+                {!familia ? 'Elige primero la familia' : activas.length === 0 ? 'La familia no tiene mascotas activas' : 'Elige la mascota'}
+              </option>
+              {activas.map((m) => (
+                <option key={m.id} value={m.id}>{m.nombre}</option>
+              ))}
             </select>
           </label>
           <label className="campo">
@@ -185,7 +238,7 @@ function NuevaRemision({ abierto, onCerrar }: { abierto: boolean; onCerrar: () =
           </label>
           <label className="campo ancho">
             <span>Motivo de la remisión</span>
-            <textarea className="input" name="motivo" rows={2} required minLength={3} />
+            <textarea className="input" name="motivo" rows={2} required minLength={5} />
           </label>
           {emitir.isError && (
             <p className="error ancho" role="alert">
@@ -200,20 +253,26 @@ function NuevaRemision({ abierto, onCerrar }: { abierto: boolean; onCerrar: () =
 
 function AnularRemision({ remision, onCerrar }: { remision: RemisionRead | null; onCerrar: () => void }) {
   const anular = useAnularRemision()
+  // Cerrar por cualquier camino olvida el intento: el error no pasa a la ventana de otra remisión.
+  function cerrar() {
+    anular.reset()
+    onCerrar()
+  }
   return (
     <Modal
       abierto={remision !== null}
-      onCambio={(v) => {
-        if (!v) {
-          anular.reset()
-          onCerrar()
-        }
-      }}
-      titulo={`Anular remisión ${remision?.codigo ?? ''}`}
+      onCambio={(v) => !v && cerrar()}
+      titulo={`Anular la remisión ${remision?.codigo ?? ''}`}
+      descripcion="La clínica ya no la acepta y el cupo del beneficio vuelve a la familia. No se deshace."
       pie={
-        <button className="btn btn-primario" type="submit" form="anular-remision" disabled={anular.isPending}>
-          Anular
-        </button>
+        <>
+          <button className="btn btn-secundario" type="button" onClick={cerrar}>
+            Mantenerla
+          </button>
+          <button className="btn btn-peligro" type="submit" form="anular-remision" disabled={anular.isPending}>
+            {anular.isPending ? 'Anulando…' : 'Anular remisión'}
+          </button>
+        </>
       }
     >
       <form
@@ -222,7 +281,7 @@ function AnularRemision({ remision, onCerrar }: { remision: RemisionRead | null;
         onSubmit={(e) => {
           e.preventDefault()
           const motivo = String(new FormData(e.currentTarget).get('motivo')).trim()
-          if (remision) anular.mutate({ id: remision.id, motivo }, { onSuccess: onCerrar })
+          if (remision) anular.mutate({ id: remision.id, motivo }, { onSuccess: cerrar })
         }}
       >
         <label className="campo ancho">

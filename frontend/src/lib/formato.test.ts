@@ -33,6 +33,7 @@ describe('formato colombiano', () => {
 
   it('parte un celular de Colombia como se dicta y deja los demás como vienen', () => {
     expect(telefono('+573004445588')).toBe('+57 300 444 5588')
+    expect(telefono('6017654321')).toBe('601 765 4321')
     expect(telefono('+12025550123')).toBe('+12025550123')
     expect(telefono(null)).toBe('—')
   })

@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { AliadasPage } from './AliadasPage'
 import { MiClinicaPage } from './MiClinicaPage'
@@ -32,7 +32,14 @@ const REMISION: RemisionRead = {
   valor_cubierto: null,
   created_at: '2026-10-24T10:00:00Z',
   vencida: false,
+  titular: 'Ana Ruiz',
+  mascota: 'Luna',
+  clinica: 'Clínica Norte',
 }
+
+beforeEach(() => {
+  server.use(http.get(`${API}/aliadas/remisiones/recuentos`, () => HttpResponse.json({ emitida: 1, utilizada: 0, anulada: 0, todas: 1 })))
+})
 
 describe('AliadasPage', () => {
   it('lista las remisiones con su clínica y cobertura y permite anular', async () => {
@@ -47,13 +54,13 @@ describe('AliadasPage', () => {
     )
     const user = userEvent.setup()
     renderizar(<AliadasPage />)
-    const fila = (await screen.findByRole('link', { name: 'REM7K2Q' })).closest('tr')!
-    expect(within(fila).getByText(/80% hasta/)).toBeInTheDocument()
-    expect(await within(fila).findByText('Clínica Norte')).toBeInTheDocument()
-    await user.click(within(fila).getByRole('button', { name: 'Anular' }))
+    const fila = (await screen.findByRole('link', { name: 'Ana Ruiz · Luna' })).closest('tr')!
+    expect(within(fila).getByText(/^80 %\shasta/)).toBeInTheDocument()
+    expect(within(fila).getByText('Clínica Norte')).toBeInTheDocument()
+    await user.click(within(fila).getByRole('button', { name: 'Anular la remisión REM7K2Q' }))
     const modal = await screen.findByRole('dialog')
     await user.type(within(modal).getByLabelText('Motivo'), 'Se atenderá a domicilio')
-    await user.click(within(modal).getByRole('button', { name: 'Anular' }))
+    await user.click(within(modal).getByRole('button', { name: 'Anular remisión' }))
     await waitFor(() => expect(motivo).toEqual({ motivo: 'Se atenderá a domicilio' }))
   })
 
@@ -68,7 +75,7 @@ describe('AliadasPage', () => {
     const user = userEvent.setup()
     renderizar(<AliadasPage />)
     await user.click(await screen.findByRole('tab', { name: 'Clínicas y convenios' }))
-    await user.click(await screen.findByRole('button', { name: /clínica norte/i }))
+    await user.click(await screen.findByRole('link', { name: 'Clínica Norte' }))
     expect(await screen.findByText('Hospitalización')).toBeInTheDocument()
   })
 

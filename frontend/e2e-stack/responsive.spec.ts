@@ -34,11 +34,9 @@ const ALTO = 900
 
 type Fallo = 'desborde' | 'contraste'
 
-// Medido el 2026-11-10. Con la paleta de la marca (R1-TOK-01) ya no queda ningún fallo de
-// contraste; quedan los desbordes del responsive anterior al rediseño.
-const PENDIENTES: ReadonlySet<string> = new Set([
-  'aliadas@375:desborde',
-])
+// Vacía desde el 2026-11-14 (R2-PAN-10): ninguna ruta desborda ni falla en contraste a estos
+// anchos. Un fallo nuevo se arregla; no vuelve a entrar aquí.
+const PENDIENTES: ReadonlySet<string> = new Set([])
 
 interface Ruta {
   /** La ruta tal como la declara App.tsx: el `path` o `index` dentro de su espacio. */
@@ -129,7 +127,8 @@ const RUTAS: Ruta[] = [
   },
   // Con sus pestañas (R2-PAN-09), y con administración: el perfil de equipo va al borde del cupo.
   { app: 'campanas', perfil: 'admin', url: '/campanas', pestanas: true },
-  { app: 'aliadas', perfil: 'equipo', url: '/aliadas' },
+  // Con sus pestañas (R2-PAN-10), y con administración, que también ve la liquidación.
+  { app: 'aliadas', perfil: 'admin', url: '/aliadas', pestanas: true },
   // Con sus pestañas (R2-PAN-09), y con administración: el perfil de equipo va al borde del cupo.
   { app: 'comercial', perfil: 'admin', url: '/comercial', pestanas: true },
   { app: 'admin', perfil: 'admin', url: '/admin' },
