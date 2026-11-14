@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { mensajeError } from './errores'
 import { estado } from './estados'
-import { diaISO, edad, fecha, fechaCompacta, fechaCorta, fechaCortaConDia, fechaHora, fechaLarga, moneda, peso, porcentaje, rangoHoras } from './formato'
+import { diaISO, edad, fecha, fechaCompacta, telefono, fechaCorta, fechaCortaConDia, fechaHora, fechaLarga, moneda, peso, porcentaje, rangoHoras } from './formato'
 
 describe('formato colombiano', () => {
   it('muestra pesos sin decimales y con punto de miles', () => {
@@ -29,6 +29,12 @@ describe('formato colombiano', () => {
     expect(rangoHoras('2026-11-12T15:00:00Z', '2026-11-12T16:00:00Z')).toMatch(/^10:00 – 11:00 a\.\sm\.$/)
     expect(rangoHoras('2026-11-12T16:30:00Z', '2026-11-12T17:30:00Z')).toMatch(/^11:30 a\.\sm\. – 12:30 p\.\sm\.$/)
     expect(rangoHoras('2026-11-12T15:00:00Z', null)).toBeNull()
+  })
+
+  it('parte un celular de Colombia como se dicta y deja los demás como vienen', () => {
+    expect(telefono('+573004445588')).toBe('+57 300 444 5588')
+    expect(telefono('+12025550123')).toBe('+12025550123')
+    expect(telefono(null)).toBe('—')
   })
 
   it('da el año solo cuando no es el actual', () => {

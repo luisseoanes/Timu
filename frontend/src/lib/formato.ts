@@ -93,6 +93,13 @@ export function fechaCortaConDia(valor: string): string {
   return `${DIA_SEMANA.format(new Date(anio, mes - 1, dia)).replace('.', '')} ${fechaCorta(valor)}`
 }
 
+/** «+57 300 444 5588»: un celular de Colombia en E.164, partido como se dicta. Otro, tal cual. */
+export function telefono(valor: string | null | undefined): string {
+  if (!valor) return '—'
+  const co = /^\+57(\d{3})(\d{3})(\d{4})$/.exec(valor)
+  return co ? `+57 ${co[1]} ${co[2]} ${co[3]}` : valor
+}
+
 /** Edad a partir de la fecha de nacimiento: en meses hasta el año, después en años. */
 export function edad(nacimiento: string | null | undefined, hoy = new Date()): string | null {
   if (!nacimiento) return null

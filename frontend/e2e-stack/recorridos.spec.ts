@@ -213,6 +213,23 @@ test.describe('gerencia en cartera y preventivos', () => {
   })
 })
 
+test.describe('gerencia en comercial', () => {
+  // Con el perfil de administración: el de equipo no tiene cupo de peticiones para uno más.
+  test.use({ storageState: sesion('admin') })
+
+  test('la conversación que espera a un asesor lleva a la ficha del interesado, con sus mensajes', async ({ page }) => {
+    await page.goto('/comercial')
+    await page.getByRole('tab', { name: 'Conversaciones' }).click()
+    // datos_demo deja a Natalia Gomez pidiendo un asesor por WhatsApp.
+    await page.getByRole('link', { name: 'Abrir conversación' }).first().click()
+    const ficha = page.getByRole('region', { name: 'Interesado abierto' })
+    await expect(ficha.getByRole('list', { name: /^Mensajes con / })).toBeVisible()
+    await expect(ficha.getByText('Espera a un asesor')).toBeVisible()
+    await expect(ficha.getByRole('list', { name: 'Etapas del embudo' })).toBeVisible()
+    await expect(page.getByRole('alert')).toHaveCount(0)
+  })
+})
+
 test.describe('médico en el inicio', () => {
   test.use({ storageState: sesion('medico') })
 

@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { ConversacionRead, InteresadoRead, Page } from '@/types'
+import type { ConversacionDelInteresado, ConversacionRead, InteresadoRead, Page, RecuentosEmbudo } from '@/types'
 
+/** Las etapas del embudo, en su orden. Qué etapa sigue a cada una lo dice la API (`siguiente_etapa`). */
 export const ETAPAS = [
   { valor: 'nuevo', label: 'Nuevo' },
   { valor: 'contactado', label: 'Contactado' },
@@ -11,7 +12,15 @@ export const ETAPAS = [
   { valor: 'afiliado', label: 'Afiliado' },
 ] as const
 
-export const ORIGENES = ['panel', 'referido', 'evento', 'campana', 'whatsapp', 'formulario'] as const
+/** Los orígenes que acepta la API al registrar un interesado, dichos para una persona. */
+export const ORIGENES = [
+  { valor: 'panel', label: 'Registrado en el panel' },
+  { valor: 'referido', label: 'Referido' },
+  { valor: 'evento', label: 'Evento' },
+  { valor: 'campana', label: 'Campaña' },
+  { valor: 'whatsapp', label: 'WhatsApp' },
+  { valor: 'formulario', label: 'Formulario web' },
+] as const
 
 export interface Embudo {
   total: number
@@ -24,6 +33,8 @@ export interface FiltrosInteresados {
   etapa?: string
   origen?: string
   q?: string
+  /** Los que siguen en el embudo, en su orden. */
+  abiertos?: boolean
   limit?: number
   offset?: number
 }
@@ -32,7 +43,37 @@ export function useInteresados(filtros: FiltrosInteresados) {
   return useQuery({
     queryKey: ['comercial', 'interesados', filtros],
     queryFn: async () =>
-      (await api.get<Page<InteresadoRead>>('/comercial/interesados', { params: { ...filtros, orden: '-created_at' } })).data,
+      (
+        await api.get<Page<InteresadoRead>>('/comercial/interesados', {
+          params: { ...filtros, orden: filtros.abiertos ? 'etapa' : '-created_at' },
+        })
+      ).data,
+  })
+}
+
+export function useInteresado(id: string | null) {
+  return useQuery({
+    queryKey: ['comercial', 'interesado', id],
+    enabled: Boolean(id),
+    queryFn: async () => (await api.get<InteresadoRead>(`/comercial/interesados/${id}`)).data,
+  })
+}
+
+/** Cuántos hay en cada etapa del embudo, con la misma búsqueda. */
+export function useRecuentosEmbudo(q?: string) {
+  return useQuery({
+    queryKey: ['comercial', 'recuentos', q ?? null],
+    queryFn: async () => (await api.get<RecuentosEmbudo>('/comercial/interesados/recuentos', { params: { q } })).data,
+  })
+}
+
+/** La conversación de WhatsApp de un interesado; se refresca mientras está abierta. */
+export function useConversacionDelInteresado(id: string | null) {
+  return useQuery({
+    queryKey: ['comercial', 'conversacion', id],
+    enabled: Boolean(id),
+    refetchInterval: 15000,
+    queryFn: async () => (await api.get<ConversacionDelInteresado>(`/comercial/interesados/${id}/conversacion`)).data,
   })
 }
 

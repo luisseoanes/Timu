@@ -235,7 +235,7 @@
 .cartera-renovable { font-size: var(--t-menor); color: var(--texto-suave); }
 /* Apilada, la acción de la fila a todo el ancho y al pulgar, como «Registrar autorización». */
 @container (max-width: 639px) {
-  :is(.cartera-tabla, .preventivos-tabla) .tabla-acciones > .btn:first-child { flex: 1 1 100%; }
+  :is(.cartera-tabla, .preventivos-tabla, .conversaciones-tabla) .tabla-acciones > .btn:first-child { flex: 1 1 100%; }
 }
 /* Por debajo de lo que cabe en una fila, las vistas ocupan la suya y el buscador y las listas
    bajan juntos a la siguiente: antes la ciudad bajaba sola y el buscador cortaba su texto. */
@@ -1186,3 +1186,53 @@
 .linea[data-orientacion="vertical"] .linea-hoy { grid-template-columns: 24px auto; justify-items: center; align-items: center; justify-content: start; padding: 0; gap: var(--e3); }
 .linea[data-orientacion="vertical"] .linea-hoy-marca { width: 24px; height: 4px; }
 .linea[data-orientacion="vertical"] .linea-tramo { padding: 0 0 0 32px; }
+
+/* ===== Comercial (R2-PAN-09): los interesados en listado con ficha ===== */
+.comercial-mes { font-size: var(--t-menor); color: var(--texto-suave); }
+.comercial-filtros { display: grid; gap: var(--e2); }
+.comercial-filtros .buscador { width: 100%; }
+.segmento.comercial-vistas { width: 100%; }
+.segmento.comercial-vistas .segmento-opcion { padding-inline: var(--e2); white-space: nowrap; }
+.comercial-nota { max-width: 65ch; font-size: var(--t-menor); color: var(--texto-suave); }
+.comercial-quien { color: var(--texto); font-size: var(--t-cuerpo); }
+/* Las etapas: la geometría de la guía de la consulta, sin botones (no se salta de etapa). */
+.comercial-etapas {
+  --avance: 0;
+  position: relative;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  list-style: none; margin: 0; padding: var(--e2) 0;
+}
+.comercial-etapas::before, .comercial-etapas::after {
+  content: ""; position: absolute; top: calc(var(--e2) + 8px); height: 8px; left: 10%;
+  border-radius: var(--r-pastilla);
+}
+.comercial-etapas::before { width: 80%; background: var(--ruta-pendiente); }
+.comercial-etapas::after { width: calc(80% * var(--avance)); background: var(--ruta-recorrida); }
+.comercial-etapas li {
+  position: relative; z-index: var(--capa-elevada); min-width: 0;
+  display: grid; justify-items: center; gap: 6px; text-align: center; color: var(--texto-suave);
+}
+/* «En afiliación» puede bajar de línea; una palabra sola no se parte por dentro. */
+.comercial-etapas .consulta-estacion-nombre { white-space: normal; overflow-wrap: normal; }
+.comercial-etapas li[data-estado="hecha"] .consulta-estacion { border-color: var(--ruta-recorrida); background: var(--ruta-recorrida); }
+.comercial-etapas li[data-estado="actual"] .consulta-estacion { border-color: var(--ruta-recorrida); box-shadow: 0 0 0 3px var(--indicador-seleccion); }
+.comercial-etapas li[data-estado="actual"] .consulta-estacion-nombre { color: var(--texto-titulo); font-weight: 700; }
+/* En el celular, la línea usa también el relleno de la ficha: «Contactado» en negrita pide 66 px. */
+@media (max-width: 600px) { .comercial-etapas { margin-inline: calc(-1 * var(--e4)); } }
+.comercial-ficha dd .input { min-width: 0; width: 100%; }
+
+/* La conversación: lo que escribió la persona a la izquierda, lo que respondimos a la derecha. */
+.comercial-conversacion { display: grid; gap: var(--e3); }
+.comercial-conversacion-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e2) var(--e3); }
+.comercial-conversacion-cabeza h3 { font-size: var(--t-seccion); }
+.comercial-mensajes {
+  list-style: none; margin: 0; padding: var(--e3);
+  display: grid; gap: var(--e2); max-height: 420px; overflow-y: auto;
+  background: var(--superficie-hundida); border-radius: var(--r-tarjeta);
+}
+.comercial-mensaje { justify-self: start; max-width: min(48ch, 85%); padding: var(--e2) var(--e3); border-radius: var(--r-tarjeta); background: var(--superficie); }
+.comercial-mensaje[data-direccion="saliente"] { justify-self: end; background: var(--accion-suave-fondo); }
+.comercial-mensaje p { white-space: pre-line; overflow-wrap: anywhere; color: var(--texto-titulo); }
+.comercial-mensaje-hora { display: block; margin-top: 2px; font-size: var(--t-etiqueta); color: var(--texto-suave); }
+.comercial-responder { display: grid; gap: var(--e2); }
+.comercial-responder .acciones { justify-content: flex-end; }

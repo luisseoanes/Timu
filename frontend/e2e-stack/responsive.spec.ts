@@ -130,7 +130,8 @@ const RUTAS: Ruta[] = [
   },
   { app: 'campanas', perfil: 'equipo', url: '/campanas' },
   { app: 'aliadas', perfil: 'equipo', url: '/aliadas' },
-  { app: 'comercial', perfil: 'equipo', url: '/comercial' },
+  // Con sus pestañas (R2-PAN-09), y con administración: el perfil de equipo va al borde del cupo.
+  { app: 'comercial', perfil: 'admin', url: '/comercial', pestanas: true },
   { app: 'admin', perfil: 'admin', url: '/admin' },
 
   // Portal de familias.
