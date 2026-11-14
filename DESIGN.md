@@ -227,7 +227,8 @@ components:
 Este fichero describe lo construido, no lo planeado. La primera superficie del sistema es la
 estructura del panel del equipo (`AppLayout`) y Familias (listado, detalle, pestañas y
 ventanas); después, Rutas (la ruta del día del médico y su coordinación) y Clínica (la historia de
-cada mascota y la consulta guiada) y el Inicio (las cifras del período y la línea del día). El portal de familias está rediseñado entero: la
+cada mascota y la consulta guiada), el Inicio (las cifras del período y la línea del día) y Servicios y Tareas (el listado con
+ficha de los servicios y la bandeja). El portal de familias está rediseñado entero: la
 estructura, el inicio y los peludos (R3-POR-01) y las citas, los pagos y los datos (R3-POR-02).
 El resto de módulos del panel y las páginas públicas todavía usan la maqueta anterior y adoptan este sistema en sus unidades de
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md): lo que se ve hoy en ellos no
@@ -502,7 +503,10 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   700, 3 × 10 px de relleno, icono de 12 px delante.
 - **State:** cinco tonos (`ok`, `alerta`, `info`, `peligro`, `neutro`), cada uno con su icono.
   El tono y el texto salen del mapeo único de `lib/estados.ts` a través de `Distintivo`;
-  `Insignia` es la pastilla sin dominio.
+  `Insignia` es la pastilla sin dominio. Un estado que comparte tono con otros lleva icono propio
+  para distinguirse sin leer (R2-PAN-05): En ruta el pin de Rutas, En atención el pulso (los dos
+  del camino normal, en tono informativo como Agendado), y la prioridad Alta una flecha hacia
+  arriba, porque la × del tono peligro se lee como anulado.
 
 ### Cards / Containers
 - **Corner Style:** panel (12 px) para las columnas del listado y la ficha; tarjeta (8 px) para
@@ -707,6 +711,24 @@ anamnesis, examen físico, diagnóstico, tratamiento): un apartado por pantalla.
 - **Lectura:** la consulta firmada se lee como una ficha en columna (etiqueta y texto por
   apartado), con «Emitir fórmula» y «Corregir»; el título va a 24 px, no a 34: no es el nombre
   de nada.
+
+### Servicios y Tareas (R2-PAN-05)
+Servicios hereda el listado con ficha; Tareas, la tabla apilable.
+- **Listado agrupado por día:** rótulo en etiqueta («HOY · SÁB 14 NOV · 4», con su recuento) y
+  filas con «Mascota · Tipo» en el título, la hora tabular, el titular y la ciudad debajo, y
+  «Por autorizar» con icono si espera la autorización y el estado no lo dice ya. En la vista de
+  la agenda, encima de Hoy, el grupo «Atrasados · N» en tono de aviso, cada fila con su fecha.
+- **Ficha del servicio:** título de 24 px, la identidad («Rocky (canino) · Jorge Ramirez») en
+  14 px y color de texto para leerla de pie, y una fila de acciones con una sola verde: salir en
+  ruta si es a domicilio, iniciar o completar la atención. Completar se bloquea mientras falten
+  pasos obligatorios, o mientras no se sepa cuáles faltan, y dice cuáles. Cancelar va en rojo
+  plano y se confirma con `btn-peligro`. En el celular, la principal ocupa su fila a 48 px.
+- **Pasos de la atención como estaciones:** línea de 4 px en `ruta-pendiente`, estación hecha
+  llena de marino con el check, el obligatorio que falta en contorno marino con «Obligatorio» en
+  tono de aviso, el opcional en contorno gris. En atención abre en el primero que falta y, al
+  guardarlo, pasa al siguiente; con un paso abierto, el único verde es «Guardar paso».
+- **Tareas:** la tarea con su estado al lado y debajo su área y a quién afecta, con enlaces; lo
+  vencido con icono y la palabra («jue 5 nov · vencida»), nunca solo en rojo.
 
 ### El Inicio del panel (componentes propios, R2-PAN-04)
 «La línea de hoy»: el día del equipo como una línea de metro, con las cifras del período encima.

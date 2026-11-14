@@ -38,10 +38,10 @@ superficie (`.impeccable/surfaces/`).
   estirar la página. Lo mismo vale para `.pila`, `.con-rail` y `.rail`.
 - **Por debajo de 900 px** la barra se queda con el logo y la cuenta, y los módulos bajan a
   una **barra inferior fija** (`.barra-inferior`, 56 px) con los cuatro que más usa cada
-  perfil (`PRINCIPALES`: el médico en ruta lleva Rutas, Servicios, Clínica y Familias) y
+  perfil (`PRINCIPALES`: el médico lleva Inicio, Rutas, Servicios y Clínica) y
   «Más» para el resto.
 
-## Listado con ficha — `.con-ficha` (Familias, Rutas, Clínica)
+## Listado con ficha — `.con-ficha` (Familias, Rutas, Clínica, Servicios)
 
 El patrón de un módulo cuyo trabajo es abrir un registro y actuar sobre él.
 
@@ -73,7 +73,24 @@ ficha es la ruta abierta con su línea (`LineaRuta`). En los dos, el registro ab
 URL (`/familias/:id`, `/rutas?ruta=`), igual que los filtros. En Clínica el listado es la
 historia de la mascota (su ficha y sus consultas) y la ficha, la consulta abierta: guiada si es
 un borrador propio, leída si no (`/clinica/mascotas/:id`, `?nueva=1`, `?servicio=` y
-`/clinica/historias/:id`). Los demás módulos que abren un registro deberían partir de aquí.
+`/clinica/historias/:id`). En Servicios (R2-PAN-05) el listado agrupa los servicios por día
+(«Hoy · sáb 14 nov», «Mañana · …») y cada fila dice a quién se atiende: la mascota y el tipo en
+el título, la hora, el titular y la ciudad debajo, y «Por autorizar» si espera la autorización.
+Los filtros (estado, ciudad, desde y hasta, en dos columnas) viven en la URL; sin `desde` la
+agenda empieza hoy y `desde=` vacío la abre a todo lo anterior. En esa vista (desde hoy, sin estado
+ni «hasta»), encima de Hoy va el grupo «Atrasados · N»: lo anterior que sigue abierto
+(`abiertos=true`), cada fila con su fecha. El recuento de la cabecera los incluye, y cada día dice
+cuántos servicios tiene. La ficha (`/servicios/:id`) es
+el servicio: título de 24 px, «Mascota (especie) · Titular», el estado, la fecha y la
+autorización, y las acciones con una sola verde (salir en ruta si es a domicilio, iniciar o
+completar la atención); completar se bloquea mientras falten pasos obligatorios y dice cuáles.
+Debajo, los pasos de la atención como estaciones (en atención abre en el primero que falta y,
+al guardarlo, pasa al siguiente) y los pendientes derivados. Con `?origen=ruta` (llega desde
+«Registrar la atención» de Rutas) ofrece «Volver a mi ruta». Las pestañas (Servicios, Pendientes y
+Franjas) siguen a la vista con un servicio abierto: `/servicios/:id` es la pestaña Servicios con
+la ficha dentro (`FichaServicio`), así que el listado no salta al abrir uno. Al abrir una fila del
+final del listado, la ficha se trae a la vista. Los demás módulos que
+abren un registro deberían partir de aquí.
 
 ## La consulta guiada — `.consulta` (Clínica)
 
@@ -197,10 +214,18 @@ GeosansLight de 34 px) con el día. `AppLayout` no pinta la cabecera del módulo
   lado sus tareas abiertas. En el celular su barra inferior empieza por Inicio.
 - Desde 1000 px de contenido, la línea y su columna de 400 px lado a lado; por debajo, apiladas.
 
+## Bandeja de trabajo — `.tabla-apilable` (Tareas)
+
+Lo que hay por resolver, en una tabla a todo el ancho que se apila en el celular: la tarea con su
+estado al lado, su área y a quién afecta (la familia y, si es de un servicio, cuál y de quién, con
+enlace a cada uno), cuándo vence (lo vencido con icono y la palabra, no solo en rojo),
+la prioridad y el responsable (una lista para reasignar), con «Tomar», «Iniciar» y «Cerrar» en la
+fila. Las vistas (mías, sin asignar, vencidas, todas) son un selector segmentado que en el celular
+pasa a dos filas de dos. «Nueva tarea» es la verde.
+
 ## Detalle de un registro — `.detalle-cabeza`
 
-Las fichas que aún no siguen el patrón de Familias (un servicio, una entrada clínica, la
-historia de una mascota): volver, el título en `h2` y sus datos.
+Las fichas que aún no siguen el patrón de Familias: volver, el título en `h2` y sus datos.
 
 ## Portal de familias — `PortalLayout` (R3-POR-01)
 

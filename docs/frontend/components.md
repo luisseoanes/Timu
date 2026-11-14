@@ -68,7 +68,9 @@ blanco solo añadía sangría.
 icono; `<Distintivo dominio="servicio" valor="agendado" />` toma etiqueta y tono del mapeo
 único de `src/lib/estados.ts`, para que un estado se vea igual en todos los módulos. Un
 estado que el mapeo no conozca sale en tono neutro en vez de romper la pantalla. Tonos: `ok`,
-`alerta`, `info`, `peligro`, `neutro`.
+`alerta`, `info`, `peligro`, `neutro`. Cada tono trae su icono; un estado que comparte tono con
+otros declara el suyo en el mapeo (`icono`: En ruta, En atención, la prioridad Alta), y
+`<Insignia icono="…">` lo admite también fuera de un dominio.
 
 Un estado derivado se calcula en `lib/estados.ts`, no en la pantalla: `estadoCuota(cuota)`
 devuelve `vencida` para una cuota pendiente o parcial con días de mora, que la API no guarda
