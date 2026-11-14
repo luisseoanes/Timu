@@ -38,11 +38,13 @@ La parada y su servicio avanzan juntos. Los grafos los hace cumplir la base
 | Consulta domiciliaria y clínica | Valoración clínica, Plan y recomendaciones (obligatorios) | `hallazgos`, `recomendaciones` | Al firmar la consulta clínica de la visita. También en el servicio. |
 | Vacunación y desparasitación | Aplicación (obligatorio), Evidencia fotográfica | `producto`, `lote`; la evidencia no tiene campos | En la ficha del servicio (`/servicios/:id`, `FichaServicio`), pensada primero para el celular. |
 
-Un paso registrado no se modifica: ningún perfil del equipo tiene `UPDATE` sobre `servicio_pasos`
-en la matriz de `backend/app/core/permisos_db.py`, solo leerlos e insertarlos. **Fallo abierto**:
-la ficha del servicio ofrece «Editar» en un paso registrado y el backend intenta actualizarlo, así
-que la base lo rechaza con un 500. Falta decidir si los pasos son inmutables o editables (ver «Lo
-que quedó de Servicios y Tareas» en la [hoja de ruta](hoja-de-ruta-rediseno.md)).
+Un paso registrado se corrige mientras el servicio está en atención: la ficha ofrece «Editar» y
+`completar_paso` (`servicios/service.py`) lo actualiza, con `U` sobre `servicio_pasos` en la
+matriz de `backend/app/core/permisos_db.py` para los perfiles que lo insertan (migración `0041`,
+decidido con el usuario el 2026-11-14). Al completarse el servicio el paso queda fijo, porque
+`completar_paso` solo admite registrar en atención, y la bitácora guarda cada versión. Si se
+corrige a mano un paso que llenó la consulta firmada, la consulta no cambia: la corrección queda
+en el paso y en la bitácora.
 
 ## La consulta es el registro de la visita
 

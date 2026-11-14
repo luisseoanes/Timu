@@ -8,11 +8,14 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 
+from app.core.auditoria import Accion, RegistroAuditoria
+from app.core.enums import Rol
 from app.core.tiempo import ZONA_NEGOCIO, hoy
 from app.modules.familias.models import Familia, Mascota
-from app.modules.servicios.models import Franja, Pendiente, Servicio
+from app.modules.servicios.models import Franja, Pendiente, Servicio, ServicioPaso
 from app.modules.tareas.models import Tarea
 from tests import fabricas
+from tests.conftest import crear_usuario, login
 
 DIA = hoy() + timedelta(days=7)
 
@@ -188,6 +191,43 @@ async def test_ciclo_de_vacunacion(client: AsyncClient, db, headers, afiliada, t
     completado = await client.post(f"{url}/estado", json={"estado": "completado"}, headers=headers)
     assert completado.json()["estado"] == "completado"
     assert await tareas.de("encuestas.enviar_encuesta") == [(servicio["id"],)]
+
+
+async def test_un_paso_se_corrige_en_atencion_y_queda_fijo_al_completar(
+    client: AsyncClient, db, headers, afiliada
+):
+    # Antes la matriz de RLS no daba UPDATE sobre servicio_pasos: corregir un paso daba 500.
+    servicio = (await _agendar(client, headers, afiliada, tipo="vacunacion")).json()
+    url = f"/api/v1/servicios/{servicio['id']}"
+    await client.post(f"{url}/autorizar", headers=headers)
+    await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    medico = await login(client, "vet@timu.co")
+    await client.post(f"{url}/estado", json={"estado": "en_atencion"}, headers=medico)
+
+    lote = {"producto": "Nobivac", "lote": "A12"}
+    primero = await client.put(f"{url}/pasos/aplicacion", json={"datos": lote}, headers=medico)
+    assert primero.status_code == 200
+    corregido = await client.put(
+        f"{url}/pasos/aplicacion", json={"datos": {**lote, "lote": "A21"}}, headers=medico
+    )
+    assert corregido.status_code == 200, corregido.text
+    assert corregido.json()["datos"]["lote"] == "A21"
+    # La bitacora guarda la version anterior.
+    paso = await db.scalar(
+        select(ServicioPaso).where(ServicioPaso.servicio_id == UUID(servicio["id"]))
+    )
+    edicion = await db.scalar(
+        select(RegistroAuditoria).where(
+            RegistroAuditoria.entidad_id == str(paso.id),
+            RegistroAuditoria.accion == Accion.EDITAR,
+        )
+    )
+    assert edicion is not None
+
+    await client.post(f"{url}/estado", json={"estado": "completado"}, headers=medico)
+    despues = await client.put(f"{url}/pasos/aplicacion", json={"datos": lote}, headers=medico)
+    assert despues.status_code == 422
+    assert "durante la atencion" in despues.json()["detail"]
 
 
 async def test_transicion_invalida(client: AsyncClient, headers, afiliada):
@@ -377,9 +417,6 @@ async def test_bandeja_desempata_por_vencimiento_con_las_sin_fecha_al_final(
 
 
 async def test_operaciones_crea_franjas_con_la_ciudad_del_catalogo(client: AsyncClient, db):
-    from app.core.enums import Rol
-    from tests.conftest import crear_usuario, login
-
     await crear_usuario(db, "ops@timu.co", Rol.OPERACIONES)
     cabecera = await login(client, "ops@timu.co")
     franja = {
@@ -408,9 +445,6 @@ async def test_operaciones_crea_franjas_con_la_ciudad_del_catalogo(client: Async
 
 
 async def test_un_medico_consulta_franjas_pero_no_las_administra(client: AsyncClient, db, agenda):
-    from app.core.enums import Rol
-    from tests.conftest import crear_usuario, login
-
     await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
     cabecera = await login(client, "vet@timu.co")
     assert len((await client.get("/api/v1/agenda/franjas", headers=cabecera)).json()) == 2
