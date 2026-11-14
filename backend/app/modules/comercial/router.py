@@ -5,7 +5,7 @@ from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field
 from sqlalchemy import func, or_, select
 
 from app.api.deps import DbSession, requiere
@@ -15,6 +15,7 @@ from app.modules.auth.models import Usuario
 from app.modules.comercial import conversacion, service
 from app.modules.comercial.models import ArbolConversacion, ConversacionComercial, Interesado
 from app.modules.comunicaciones import service as comunicaciones
+from app.modules.comunicaciones.schemas import MensajeRead
 from app.schemas.common import Page, ParamsListado, paginar
 
 router = APIRouter(prefix="/comercial", tags=["comercial"])
@@ -57,6 +58,24 @@ class InteresadoRead(BaseModel):
     ultimo_contacto: datetime | None
     created_at: datetime
 
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def siguiente_etapa(self) -> Literal["contactado", "cotizado", "en_afiliacion"] | None:
+        """La etapa a la que el equipo lo pasa ahora: el panel no copia el orden del embudo."""
+        return service.SIGUIENTE.get(self.etapa)  # type: ignore[return-value]
+
+
+class RecuentosEmbudo(BaseModel):
+    """Cuantos interesados hay en cada etapa, y abiertos en total."""
+
+    nuevo: int
+    contactado: int
+    cotizado: int
+    en_afiliacion: int
+    afiliado: int
+    perdido: int
+    abiertos: int
+
 
 class PerdidaIn(BaseModel):
     motivo: str = Field(min_length=3, max_length=255)
@@ -77,6 +96,14 @@ class ConversacionRead(BaseModel):
     asesor_id: UUID | None
     tarea_id: UUID | None
     updated_at: datetime
+    interesado_nombre: str | None = Field(
+        default=None, description="El nombre del interesado, si lo tiene: la bandeja lo nombra"
+    )
+
+
+class ConversacionDelInteresado(BaseModel):
+    conversacion: ConversacionRead | None
+    mensajes: list[MensajeRead]
 
 
 class MensajeAsesorIn(BaseModel):
@@ -88,7 +115,12 @@ class ArbolIn(BaseModel):
     nota: str | None = None
 
 
-ORDEN = {"created_at": Interesado.created_at, "ultimo_contacto": Interesado.ultimo_contacto}
+ORDEN = {
+    "created_at": Interesado.created_at,
+    "ultimo_contacto": Interesado.ultimo_contacto,
+    # El enum se declara en el orden del embudo.
+    "etapa": Interesado.etapa,
+}
 
 
 # --- F3-COM-01 Embudo -------------------------------------------------------------------------
@@ -102,10 +134,14 @@ async def listar(
     origen: str | None = None,
     responsable_id: UUID | None = None,
     q: str | None = None,
+    abiertos: bool = False,
 ) -> Page[InteresadoRead]:
+    """Con `abiertos`, los que siguen en el embudo; con `orden=etapa`, en el orden del embudo."""
     stmt = select(Interesado)
     if etapa:
         stmt = stmt.where(Interesado.etapa == etapa)
+    if abiertos:
+        stmt = stmt.where(Interesado.etapa.in_(service.ABIERTAS))
     if origen:
         stmt = stmt.where(Interesado.origen == origen)
     if responsable_id:
@@ -122,6 +158,40 @@ async def listar(
         orden_por_defecto="-created_at",
         desempate=Interesado.id,
     )
+
+
+@router.get(
+    "/interesados/recuentos", response_model=RecuentosEmbudo, dependencies=[EQUIPO_COMERCIAL]
+)
+async def recuentos(db: DbSession, q: str | None = None) -> dict[str, int]:
+    return await db.run_sync(service.recuentos, q)
+
+
+@router.get(
+    "/interesados/{interesado_id}", response_model=InteresadoRead, dependencies=[EQUIPO_COMERCIAL]
+)
+async def obtener(db: DbSession, interesado_id: UUID) -> Interesado:
+    return await db.run_sync(service.obtener, interesado_id)
+
+
+@router.get(
+    "/interesados/{interesado_id}/conversacion",
+    response_model=ConversacionDelInteresado,
+    dependencies=[EQUIPO_COMERCIAL],
+)
+async def conversacion_del_interesado(
+    db: DbSession, interesado_id: UUID
+) -> ConversacionDelInteresado:
+    """La conversacion de WhatsApp del interesado y sus ultimos mensajes, para su ficha."""
+
+    def leer(s: Any) -> ConversacionDelInteresado:
+        conv, mensajes = service.conversacion_de(s, service.obtener(s, interesado_id))
+        return ConversacionDelInteresado(
+            conversacion=ConversacionRead.model_validate(conv) if conv else None,
+            mensajes=[MensajeRead.model_validate(m) for m in mensajes],
+        )
+
+    return await db.run_sync(leer)
 
 
 @router.post(
@@ -191,11 +261,32 @@ async def embudo(db: DbSession, desde: date, hasta: date) -> dict[str, Any]:
 )
 async def conversaciones(
     db: DbSession, estado: EstadoConversacion | None = "con_asesor"
-) -> list[ConversacionComercial]:
+) -> list[ConversacionRead]:
     stmt = select(ConversacionComercial).order_by(ConversacionComercial.updated_at.desc())
     if estado:
         stmt = stmt.where(ConversacionComercial.estado == estado)
-    return list(await db.scalars(stmt.limit(200)))
+    convs = list(await db.scalars(stmt.limit(200)))
+    # A quien se atiende, en lote: una consulta por pagina, no por fila.
+    ids = {c.interesado_id for c in convs if c.interesado_id}
+    nombres = (
+        dict(
+            (
+                await db.execute(
+                    select(Interesado.id, Interesado.nombre).where(Interesado.id.in_(ids))
+                )
+            )
+            .tuples()
+            .all()
+        )
+        if ids
+        else {}
+    )
+    return [
+        ConversacionRead.model_validate(c).model_copy(
+            update={"interesado_nombre": nombres.get(c.interesado_id) if c.interesado_id else None}
+        )
+        for c in convs
+    ]
 
 
 @router.post("/conversaciones/{conversacion_id}/mensajes", status_code=status.HTTP_201_CREATED)

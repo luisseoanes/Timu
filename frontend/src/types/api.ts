@@ -698,6 +698,7 @@ export interface InteresadoRead {
   motivo_perdida: string | null
   ultimo_contacto: string | null
   created_at: string
+  siguiente_etapa: 'contactado' | 'cotizado' | 'en_afiliacion' | null
 }
 
 export interface ConversacionRead {
@@ -710,6 +711,22 @@ export interface ConversacionRead {
   asesor_id: string | null
   tarea_id: string | null
   updated_at: string
+  interesado_nombre?: string | null
+}
+
+export interface ConversacionDelInteresado {
+  conversacion: ConversacionRead | null
+  mensajes: MensajeRead[]
+}
+
+export interface RecuentosEmbudo {
+  nuevo: number
+  contactado: number
+  cotizado: number
+  en_afiliacion: number
+  afiliado: number
+  perdido: number
+  abiertos: number
 }
 
 export interface EncuestaRead {

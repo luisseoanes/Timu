@@ -95,6 +95,8 @@ ESQUEMAS = [
     "EjecucionRead",
     "InteresadoRead",
     "ConversacionRead",
+    "ConversacionDelInteresado",
+    "RecuentosEmbudo",
     "EncuestaRead",
     "ClinicaRead",
     "ConvenioRead",

@@ -351,3 +351,99 @@ async def test_publicar_un_arbol_nuevo_retira_el_anterior(client: AsyncClient, d
     )
     assert [a.version for a in activos] == [segunda["version"]]
     assert actual, "sin version publicada se sirve el arbol por defecto"
+
+
+# --- R2-PAN-09 La ficha del interesado ----------------------------------------------------------
+
+
+async def test_la_ficha_del_interesado_trae_su_conversacion_en_orden(
+    client: AsyncClient, db, comerciales, planes, headers
+):
+    chat = Chat(db)
+    await chat.escribir("Hola")
+    await chat.escribir("quiero hablar con un asesor")
+    interesado_id = (await db.scalar(select(Interesado).where(Interesado.telefono == TEL))).id
+    await db.commit()
+
+    url = f"/api/v1/comercial/interesados/{interesado_id}"
+    ficha = (await client.get(url, headers=headers)).json()
+    # Entra contactado por WhatsApp: lo siguiente es cotizarle.
+    assert (ficha["etapa"], ficha["siguiente_etapa"]) == ("contactado", "cotizado")
+
+    leida = (await client.get(f"{url}/conversacion", headers=headers)).json()
+    assert leida["conversacion"]["estado"] == "con_asesor"
+    direcciones = [m["direccion"] for m in leida["mensajes"]]
+    # Lo que escribio la persona y lo que respondio el bot, de lo mas antiguo a lo mas reciente.
+    assert direcciones[0] == "entrante" and "saliente" in direcciones
+    assert leida["mensajes"][0]["contenido"] == "Hola"
+
+
+async def test_sin_telefono_la_ficha_no_tiene_conversacion(client: AsyncClient, db, headers):
+    creado = await client.post(
+        "/api/v1/comercial/interesados",
+        json={"nombre": "Sin celular", "email": "sin.celular@example.com"},
+        headers=headers,
+    )
+    assert creado.status_code == 201, creado.text
+    url = f"/api/v1/comercial/interesados/{creado.json()['id']}/conversacion"
+    assert (await client.get(url, headers=headers)).json() == {"conversacion": None, "mensajes": []}
+
+
+async def test_los_recuentos_siguen_el_embudo(client: AsyncClient, db, comerciales, headers):
+    for n, etapa in enumerate(("contactado", "cotizado", "en_afiliacion")):
+        creado = await client.post(
+            "/api/v1/comercial/interesados",
+            json={"nombre": f"Persona {n}", "telefono": f"30000000{n}0"},
+            headers=headers,
+        )
+        await client.patch(
+            f"/api/v1/comercial/interesados/{creado.json()['id']}",
+            json={"etapa": etapa},
+            headers=headers,
+        )
+    perdido = await client.post(
+        "/api/v1/comercial/interesados",
+        json={"nombre": "Ya no", "email": "ya.no@example.com"},
+        headers=headers,
+    )
+    await client.post(
+        f"/api/v1/comercial/interesados/{perdido.json()['id']}/perdida",
+        json={"motivo": "Compro otro plan"},
+        headers=headers,
+    )
+    recuentos = (
+        await client.get("/api/v1/comercial/interesados/recuentos", headers=headers)
+    ).json()
+    assert recuentos == {
+        "nuevo": 0,
+        "contactado": 1,
+        "cotizado": 1,
+        "en_afiliacion": 1,
+        "afiliado": 0,
+        "perdido": 1,
+        "abiertos": 3,
+    }
+    abiertos = (
+        await client.get(
+            "/api/v1/comercial/interesados",
+            params={"abiertos": True, "orden": "etapa"},
+            headers=headers,
+        )
+    ).json()["items"]
+    # En el orden del embudo, y el que ya esta en afiliacion no tiene siguiente etapa: la pone la
+    # afiliacion.
+    assert [i["etapa"] for i in abiertos] == ["contactado", "cotizado", "en_afiliacion"]
+    assert [i["siguiente_etapa"] for i in abiertos] == ["cotizado", "en_afiliacion", None]
+
+
+async def test_la_bandeja_de_conversaciones_nombra_al_interesado(
+    client: AsyncClient, db, comerciales, planes, headers
+):
+    chat = Chat(db)
+    await chat.escribir("Hola")
+    await chat.escribir("quiero hablar con un asesor")
+    interesado = await db.scalar(select(Interesado).where(Interesado.telefono == TEL))
+    interesado.nombre = "Natalia Gomez"
+    await db.commit()
+    [conv] = (await client.get("/api/v1/comercial/conversaciones", headers=headers)).json()
+    assert (conv["telefono"], conv["interesado_nombre"]) == (TEL, "Natalia Gomez")

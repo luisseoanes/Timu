@@ -19,6 +19,7 @@ const interesado = (cambios: Partial<InteresadoRead>): InteresadoRead => ({
   ciudad: 'Bogota',
   origen: 'whatsapp',
   etapa: 'contactado',
+  siguiente_etapa: 'cotizado',
   responsable_id: null,
   familia_id: null,
   plan_sugerido: null,

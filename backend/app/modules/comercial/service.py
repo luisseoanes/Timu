@@ -12,10 +12,13 @@ from app.core.database import acotar_publico
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ZONA_NEGOCIO, ahora
 from app.core.validaciones import normalizar_telefono
-from app.modules.comercial.models import Interesado
+from app.modules.comercial.models import ConversacionComercial, Interesado
+from app.modules.comunicaciones.models import Mensaje
 
 ETAPAS = ("nuevo", "contactado", "cotizado", "en_afiliacion", "afiliado")
 ABIERTAS = ("nuevo", "contactado", "cotizado", "en_afiliacion")
+# La etapa a la que el equipo pasa a un interesado abierto. «afiliado» no: la pone la afiliacion.
+SIGUIENTE = dict(zip(ABIERTAS[:-1], ABIERTAS[1:], strict=True))
 
 
 def _telefono(valor: str | None) -> str | None:
@@ -148,3 +151,41 @@ def embudo(db: Session, desde: date, hasta: date) -> dict[str, Any]:
         "por_origen": por_origen,
         "conversion": round(por_etapa.get("afiliado", 0) / total, 3) if total else None,
     }
+
+
+# --- R2-PAN-08/09 Listado con ficha: recuentos por etapa y la conversacion de cada interesado ---
+
+
+def recuentos(db: Session, q: str | None = None) -> dict[str, int]:
+    """Cuantos interesados hay en cada etapa, y abiertos en total, con la misma busqueda."""
+    stmt = select(Interesado.etapa, func.count()).group_by(Interesado.etapa)
+    if q:
+        patron = f"%{q}%"
+        stmt = stmt.where(or_(Interesado.nombre.ilike(patron), Interesado.telefono.ilike(patron)))
+    por_etapa = {str(e): n for e, n in db.execute(stmt).tuples()}
+    salida = {e: por_etapa.get(e, 0) for e in (*ETAPAS, "perdido")}
+    salida["abiertos"] = sum(salida[e] for e in ABIERTAS)
+    return salida
+
+
+MENSAJES_DE_LA_CONVERSACION = 100
+
+
+def conversacion_de(
+    db: Session, interesado: Interesado
+) -> tuple[ConversacionComercial | None, list[Mensaje]]:
+    """La conversacion de WhatsApp de un interesado y sus ultimos mensajes, en orden."""
+    if not interesado.telefono:
+        return None, []
+    conversacion = db.scalar(
+        select(ConversacionComercial).where(ConversacionComercial.telefono == interesado.telefono)
+    )
+    recientes = list(
+        db.scalars(
+            select(Mensaje)
+            .where(Mensaje.destino == interesado.telefono, Mensaje.canal == "whatsapp")
+            .order_by(Mensaje.created_at.desc(), Mensaje.id.desc())
+            .limit(MENSAJES_DE_LA_CONVERSACION)
+        )
+    )
+    return conversacion, recientes[::-1]

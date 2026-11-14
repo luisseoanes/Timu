@@ -1210,6 +1210,8 @@ _LISTADOS = (
     "/api/v1/cartera/contratos/recuentos",
     "/api/v1/encuestas",
     "/api/v1/comercial/interesados",
+    "/api/v1/comercial/interesados?abiertos=true&orden=etapa",
+    "/api/v1/comercial/interesados/recuentos",
     "/api/v1/rutas?fecha=2026-11-05",
     "/api/v1/dashboard/indicadores?desde=2026-10-01&hasta=2026-10-31",
     "/api/v1/dashboard/evolucion?desde=2026-10-01&hasta=2026-10-31",
