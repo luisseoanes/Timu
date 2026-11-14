@@ -7,7 +7,7 @@ from typing import Any
 from uuid import UUID
 
 import structlog
-from sqlalchemy import Select, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -127,6 +127,157 @@ def consulta(
             EventoPreventivo.autorizado.is_(False),
         )
     return stmt
+
+
+# --- R2-PAN-08 Bandeja: lo que falta por autorizar, por agendar y lo ya agendado ---------------
+
+# Lo que vence en el proximo mes: tiempo para pedir la autorizacion y agendar la visita.
+VENTANA_BANDEJA_DIAS = 30
+
+VISTAS_BANDEJA = ("por_autorizar", "por_agendar", "agendados", "todos")
+
+
+def _condicion_vista(vista: str, dia: date) -> Any:
+    programado = EventoPreventivo.estado == "programado"
+    cerca = EventoPreventivo.fecha_programada <= dia + timedelta(days=VENTANA_BANDEJA_DIAS)
+    sin_autorizar = EventoPreventivo.requiere_autorizacion.is_(
+        True
+    ) & EventoPreventivo.autorizado.is_(False)
+    if vista == "por_autorizar":
+        return programado & sin_autorizar & cerca
+    if vista == "por_agendar":
+        return programado & ~sin_autorizar & EventoPreventivo.servicio_id.is_(None) & cerca
+    if vista == "agendados":
+        return programado & EventoPreventivo.servicio_id.is_not(None)
+    return programado
+
+
+def _de_la_bandeja(
+    condicion: Any, ciudad: str | None, q: str | None, familia_id: UUID | None = None
+) -> Select[Any]:
+    stmt = (
+        select(EventoPreventivo, Mascota, Familia)
+        .join(Mascota, Mascota.id == EventoPreventivo.mascota_id)
+        .join(Familia, Familia.id == Mascota.familia_id)
+        .where(condicion)
+    )
+    if ciudad:
+        stmt = stmt.where(Familia.ciudad == ciudad)
+    if familia_id:
+        stmt = stmt.where(Familia.id == familia_id)
+    if q:
+        patron = f"%{q}%"
+        stmt = stmt.where(Familia.titular_nombre.ilike(patron) | Mascota.nombre.ilike(patron))
+    return stmt
+
+
+def siguiente_paso(evento: EventoPreventivo) -> str:
+    """Lo que toca hacer con un preventivo programado: el panel no copia la regla."""
+    if evento.requiere_autorizacion and not evento.autorizado:
+        return "autorizar"
+    return "agendar" if evento.servicio_id is None else "visita"
+
+
+def recuentos_bandeja(
+    db: Session, *, ciudad: str | None = None, q: str | None = None
+) -> dict[str, int]:
+    """Cuantos preventivos hay en cada vista de la bandeja."""
+    dia = hoy()
+    return {
+        vista: db.scalar(
+            select(func.count()).select_from(
+                _de_la_bandeja(_condicion_vista(vista, dia), ciudad, q).subquery()
+            )
+        )
+        or 0
+        for vista in VISTAS_BANDEJA
+    }
+
+
+def bandeja(
+    db: Session,
+    vista: str,
+    *,
+    ciudad: str | None = None,
+    q: str | None = None,
+    familia_id: UUID | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> tuple[list[dict[str, Any]], int]:
+    """Los preventivos de la vista agrupados por familia (la familia autoriza de una vez), las
+    familias con lo mas antiguo primero. Pagina por familias, no por preventivos: una familia
+    nunca queda partida entre dos paginas."""
+    condicion = _condicion_vista(vista, hoy())
+    por_familia = (
+        _de_la_bandeja(condicion, ciudad, q, familia_id)
+        .with_only_columns(Familia.id, func.min(EventoPreventivo.fecha_programada).label("primera"))
+        .group_by(Familia.id)
+    )
+    total = db.scalar(select(func.count()).select_from(por_familia.subquery())) or 0
+    pagina = db.execute(
+        por_familia.order_by(func.min(EventoPreventivo.fecha_programada), Familia.id)
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    ids = [fila[0] for fila in pagina]
+    if not ids:
+        return [], int(total)
+    filas = db.execute(
+        _de_la_bandeja(condicion, None, None)
+        .where(Familia.id.in_(ids))
+        .order_by(EventoPreventivo.fecha_programada, Mascota.nombre, EventoPreventivo.id)
+    ).all()
+    esquemas = dict(
+        db.execute(select(EsquemaPreventivo.codigo, EsquemaPreventivo.nombre)).tuples().all()
+    )
+    visitas = {
+        s.id: s
+        for s in db.scalars(
+            select(Servicio).where(
+                Servicio.id.in_({e.servicio_id for e, _, _ in filas if e.servicio_id})
+            )
+        )
+    }
+    grupos: dict[UUID, dict[str, Any]] = {}
+    for evento, mascota, familia in filas:
+        grupo = grupos.setdefault(
+            familia.id,
+            {
+                "familia_id": familia.id,
+                "titular_nombre": familia.titular_nombre,
+                "ciudad": familia.ciudad,
+                "telefono": familia.telefono,
+                "eventos": [],
+            },
+        )
+        visita = visitas.get(evento.servicio_id) if evento.servicio_id else None
+        grupo["eventos"].append(
+            {
+                "evento": evento,
+                "nombre": esquemas.get(evento.esquema_codigo or "", evento.tipo),
+                "mascota_nombre": mascota.nombre,
+                "especie": mascota.especie,
+                "siguiente": siguiente_paso(evento),
+                "visita": (
+                    {
+                        "id": visita.id,
+                        "programado_para": visita.programado_para,
+                        "estado": visita.estado,
+                    }
+                    if visita
+                    else None
+                ),
+            }
+        )
+    return [grupos[i] for i in ids], int(total)
+
+
+def autorizar_varios(
+    db: Session, evento_ids: list[UUID], usuario_id: UUID, medio: str, aprobado: bool
+) -> list[EventoPreventivo]:
+    """La familia autoriza (o no) de una vez lo que se le pidio. Si uno no se puede autorizar,
+    no se autoriza ninguno: la transaccion se revierte entera."""
+    return [autorizar(db, obtener(db, i), usuario_id, medio, aprobado) for i in evento_ids]
 
 
 def obtener(db: Session, evento_id: UUID) -> EventoPreventivo:

@@ -506,6 +506,55 @@ export interface EventoRead {
   servicio_id: string | null
 }
 
+export interface EventoBandeja {
+  id: string
+  mascota_id: string
+  esquema_codigo: string | null
+  tipo: string
+  dosis_numero: number
+  es_refuerzo: boolean
+  estado: string
+  fecha_programada: string
+  fecha_aplicacion: string | null
+  proxima_fecha: string | null
+  producto: string | null
+  lote: string | null
+  peso_kg: number | null
+  aplicado_por_nombre: string | null
+  requiere_autorizacion: boolean
+  autorizado: boolean
+  medio_autorizacion: string | null
+  autorizado_en: string | null
+  notificado_en: string | null
+  servicio_id: string | null
+  nombre: string
+  mascota_nombre: string
+  especie: string
+  siguiente: 'autorizar' | 'agendar' | 'visita'
+  visita: VisitaPreventivo | null
+}
+
+export interface FamiliaBandeja {
+  familia_id: string
+  titular_nombre: string
+  ciudad: string
+  telefono: string
+  eventos: EventoBandeja[]
+}
+
+export interface RecuentosBandeja {
+  por_autorizar: number
+  por_agendar: number
+  agendados: number
+  todos: number
+}
+
+export interface VisitaPreventivo {
+  id: string
+  programado_para: string
+  estado: string
+}
+
 export interface CarnetEmitidoRead {
   codigo: string
   url: string

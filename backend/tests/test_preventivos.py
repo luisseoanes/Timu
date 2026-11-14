@@ -20,9 +20,9 @@ pytestmark = pytest.mark.integration
 HOY = hoy()
 
 
-async def _cachorro(db, semanas: int = 10):
+async def _cachorro(db, semanas: int = 10, **familia_extra):
     """Familia afiliada con un cachorro de `semanas` y su calendario programado."""
-    familia, contrato = await fabricas.afiliada(db, HOY)
+    familia, contrato = await fabricas.afiliada(db, HOY, **familia_extra)
     mascota = familia.mascotas[0]
     mascota.fecha_nacimiento = HOY - timedelta(weeks=semanas)
     await db.flush()
@@ -354,6 +354,76 @@ async def test_cancelar_la_visita_deja_el_preventivo_por_agendar(client: AsyncCl
         headers=headers,
     )
     assert otra.status_code == 200, otra.text
+
+
+async def test_la_bandeja_agrupa_por_familia_con_el_siguiente_paso(
+    client: AsyncClient, db, headers
+):
+    _franja_preventiva(db)
+    familia, mascota = await _cachorro(db)
+    otra, _ = await _cachorro(db, telefono="+573009998877")
+    limite = HOY + timedelta(days=service.VENTANA_BANDEJA_DIAS)
+    cerca = [
+        e
+        for e in await db.scalars(
+            select(EventoPreventivo).where(EventoPreventivo.mascota_id == mascota.id)
+        )
+        if e.fecha_programada <= limite
+    ]
+    ids_cerca = [str(e.id) for e in cerca]
+    familia_id, otra_id = str(familia.id), str(otra.id)
+    await db.commit()
+    url = "/api/v1/preventivos/bandeja"
+
+    pagina = (await client.get(url, headers=headers)).json()
+    assert {g["familia_id"] for g in pagina["items"]} == {familia_id, otra_id}
+    # La de una familia, como la pide su linea en la ficha.
+    una = (await client.get(url, params={"familia_id": otra_id}, headers=headers)).json()
+    assert [g["familia_id"] for g in una["items"]] == [otra_id]
+    grupo = next(g for g in pagina["items"] if g["familia_id"] == familia_id)
+    assert {e["id"] for e in grupo["eventos"]} == set(ids_cerca)
+    assert {e["siguiente"] for e in grupo["eventos"]} == {"autorizar"}
+    assert grupo["eventos"][0]["mascota_nombre"] == mascota.nombre
+    # El nombre del esquema, no el tipo: «Rabia», no «vacuna».
+    assert all(e["nombre"] != e["tipo"] for e in grupo["eventos"])
+
+    # La familia autoriza de una vez lo que se le pidio.
+    autorizados = await client.post(
+        "/api/v1/preventivos/autorizaciones",
+        json={"eventos": ids_cerca, "medio": "whatsapp"},
+        headers=headers,
+    )
+    assert autorizados.status_code == 200, autorizados.text
+    recuentos = (await client.get(f"{url}/recuentos", headers=headers)).json()
+    assert recuentos["por_agendar"] == len(ids_cerca)
+    por_agendar = (await client.get(url, params={"vista": "por_agendar"}, headers=headers)).json()
+    assert [g["familia_id"] for g in por_agendar["items"]] == [familia_id]
+
+    await client.post(
+        f"/api/v1/preventivos/{ids_cerca[0]}/agendar",
+        json={"inicio": f"{DIA_VISITA}T09:00:00"},
+        headers=headers,
+    )
+    agendados = (await client.get(url, params={"vista": "agendados"}, headers=headers)).json()
+    [evento] = agendados["items"][0]["eventos"]
+    assert evento["siguiente"] == "visita"
+    assert evento["visita"]["estado"] == "agendado"
+
+
+async def test_autorizar_varios_es_todo_o_nada(client: AsyncClient, db, headers, admin):
+    _, mascota = await _cachorro(db)
+    primero, segundo = (await _eventos(db, mascota, "can_polivalente"))[:2]
+    await db.run_sync(service.cancelar, segundo, "La familia lo aplico en otra clinica")
+    ids = [str(primero.id), str(segundo.id)]
+    primero_id = primero.id
+    await db.commit()
+    resp = await client.post(
+        "/api/v1/preventivos/autorizaciones",
+        json={"eventos": ids, "medio": "telefono"},
+        headers=headers,
+    )
+    assert resp.status_code == 422
+    assert (await db.get(EventoPreventivo, primero_id, populate_existing=True)).autorizado is False
 
 
 # --- F2-PRE-05 / 06 Carnet --------------------------------------------------------------------

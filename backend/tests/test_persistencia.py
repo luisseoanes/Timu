@@ -1214,6 +1214,9 @@ _LISTADOS = (
     "/api/v1/dashboard/indicadores?desde=2026-10-01&hasta=2026-10-31",
     "/api/v1/dashboard/evolucion?desde=2026-10-01&hasta=2026-10-31",
     "/api/v1/preventivos",
+    "/api/v1/preventivos/bandeja",
+    "/api/v1/preventivos/bandeja?vista=agendados",
+    "/api/v1/preventivos/bandeja/recuentos",
     "/api/v1/clinica/borradores",
 )
 # Los que necesitan una familia que exista: se completan con la que crea la prueba.

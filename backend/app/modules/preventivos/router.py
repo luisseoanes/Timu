@@ -4,7 +4,7 @@ from datetime import date, datetime
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.deps import INTERNOS, DbSession, publico, requiere
@@ -56,9 +56,44 @@ class EventoRead(BaseModel):
     servicio_id: UUID | None
 
 
+class VisitaPreventivo(BaseModel):
+    id: UUID
+    programado_para: datetime
+    estado: str
+
+
+class EventoBandeja(EventoRead):
+    """Un preventivo en la bandeja: a quien se aplica, que es y que toca hacer con el."""
+
+    nombre: str = Field(description="El nombre del esquema, p. ej. Rabia")
+    mascota_nombre: str
+    especie: str
+    siguiente: Literal["autorizar", "agendar", "visita"]
+    visita: VisitaPreventivo | None
+
+
+class FamiliaBandeja(BaseModel):
+    familia_id: UUID
+    titular_nombre: str
+    ciudad: str
+    telefono: str
+    eventos: list[EventoBandeja]
+
+
+class RecuentosBandeja(BaseModel):
+    por_autorizar: int
+    por_agendar: int
+    agendados: int
+    todos: int
+
+
 class AutorizacionIn(BaseModel):
     medio: Literal["whatsapp", "telefono", "presencial", "portal", "formulario"]
     aprobado: bool = True
+
+
+class AutorizacionesIn(AutorizacionIn):
+    eventos: list[UUID] = Field(min_length=1, max_length=50)
 
 
 class AplicacionIn(BaseModel):
@@ -108,6 +143,60 @@ async def listar(
         campos_orden=ORDEN,
         orden_por_defecto="fecha_programada",
         desempate=EventoPreventivo.id,
+    )
+
+
+@router.get("/bandeja", response_model=Page[FamiliaBandeja], dependencies=[EQUIPO])
+async def bandeja(
+    db: DbSession,
+    vista: Literal["por_autorizar", "por_agendar", "agendados", "todos"] = "por_autorizar",
+    ciudad: str | None = None,
+    q: str | None = None,
+    familia_id: UUID | None = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+) -> Page[FamiliaBandeja]:
+    """R2-PAN-08 Lo que falta por autorizar, por agendar o lo ya agendado, por familia y con el
+    siguiente paso de cada preventivo. Con `familia_id`, los de una familia (su linea)."""
+    grupos, total = await db.run_sync(
+        lambda s: service.bandeja(
+            s, vista, ciudad=ciudad, q=q, familia_id=familia_id, limit=limit, offset=offset
+        )
+    )
+    return Page(
+        items=[
+            FamiliaBandeja(
+                **{k: v for k, v in g.items() if k != "eventos"},
+                eventos=[
+                    EventoBandeja(
+                        **EventoRead.model_validate(e["evento"]).model_dump(),
+                        **{k: v for k, v in e.items() if k != "evento"},
+                    )
+                    for e in g["eventos"]
+                ],
+            )
+            for g in grupos
+        ],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get("/bandeja/recuentos", response_model=RecuentosBandeja, dependencies=[EQUIPO])
+async def recuentos_bandeja(
+    db: DbSession, ciudad: str | None = None, q: str | None = None
+) -> dict[str, int]:
+    return await db.run_sync(lambda s: service.recuentos_bandeja(s, ciudad=ciudad, q=q))
+
+
+@router.post("/autorizaciones", response_model=list[EventoRead])
+async def autorizar_varios(
+    db: DbSession, usuario: Equipo, data: AutorizacionesIn
+) -> list[EventoPreventivo]:
+    """F2-PRE-03 La familia autoriza (o no) de una vez varios preventivos."""
+    return await db.run_sync(
+        service.autorizar_varios, data.eventos, usuario.id, data.medio, data.aprobado
     )
 
 
