@@ -7,13 +7,9 @@ import { useAuth } from '@/features/auth'
 import { mensajeError } from '@/lib/errores'
 import { puede } from '@/lib/permisos'
 
-import {
-  useCrearSegmento,
-  useSegmentos,
-  type FiltrosSegmento,
-} from './api'
-import { resumenFiltros } from './segmento'
+import { useCrearSegmento, useSegmentos, type FiltrosSegmento } from './api'
 import { FormFiltros } from './FormFiltros'
+import { resumenFiltros } from './segmento'
 
 export function Segmentos() {
   const { usuario } = useAuth()

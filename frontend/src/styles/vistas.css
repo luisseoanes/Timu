@@ -1236,3 +1236,23 @@
 .comercial-mensaje-hora { display: block; margin-top: 2px; font-size: var(--t-etiqueta); color: var(--texto-suave); }
 .comercial-responder { display: grid; gap: var(--e2); }
 .comercial-responder .acciones { justify-content: flex-end; }
+
+/* ===== Campañas (R2-PAN-09): listado con ficha ===== */
+.campana-quien { color: var(--texto); font-size: var(--t-cuerpo); }
+.campana-plantilla { overflow-wrap: anywhere; }
+.campana-audiencia { color: var(--texto); }
+.campana-audiencia strong { color: var(--texto-titulo); }
+/* El mensaje como le llega a la familia: la burbuja de lo que respondemos en una conversación. */
+.campana-ejemplo { margin: 0; display: grid; gap: var(--e1); max-width: 56ch; }
+.campana-ejemplo figcaption { font-size: var(--t-menor); color: var(--texto-suave); }
+.campana-ejemplo p { padding: var(--e2) var(--e3); border-radius: var(--r-tarjeta); background: var(--accion-suave-fondo); color: var(--texto-titulo); white-space: pre-line; overflow-wrap: anywhere; }
+.campana-resultados { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1px; margin: 0; background: var(--borde); border-radius: var(--r-tarjeta); overflow: hidden; }
+.campana-resultados > div { padding: var(--e3); background: var(--superficie); }
+.campana-resultados dt { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--texto-suave); }
+.campana-resultados dd { margin: var(--e1) 0 0; font-size: var(--t-cifra); font-weight: 600; color: var(--texto-titulo); }
+.campana-nota { font-size: var(--t-menor); color: var(--texto-suave); }
+.filtros-segmento { border: 0; margin: 0; padding: 0; min-width: 0; }
+.campana-intro { margin-bottom: var(--e4); }
+.campana-baja { margin-block: var(--e3); }
+.campana-baja .input { flex: 1; min-width: 0; }
+.plantilla-cuerpo, .mensaje-contenido { display: block; max-width: 60ch; white-space: pre-line; overflow-wrap: anywhere; }

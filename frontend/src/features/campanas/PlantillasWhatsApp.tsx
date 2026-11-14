@@ -5,11 +5,17 @@ import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { mensajeError } from '@/lib/errores'
 
-import {
-  useCrearPlantillaWhatsApp,
-  useEstadoPlantilla,
-  usePlantillasWhatsApp,
-} from './api'
+import { useCrearPlantillaWhatsApp, useEstadoPlantilla, usePlantillasWhatsApp } from './api'
+
+// Los valores son los del backend (core/enums.py): CategoriaPlantilla y EstadoAprobacionPlantilla.
+const CATEGORIAS: Record<string, string> = { utility: 'Servicio', marketing: 'Promoción', authentication: 'Verificación' }
+const APROBACION: Record<string, string> = {
+  borrador: 'Borrador',
+  enviada: 'Enviada a Meta',
+  aprobada: 'Aprobada',
+  rechazada: 'Rechazada',
+  pausada: 'Pausada',
+}
 
 export function PlantillasWhatsApp() {
   const plantillas = usePlantillasWhatsApp()
@@ -25,7 +31,7 @@ export function PlantillasWhatsApp() {
           <Icono nombre="mas" size={16} /> Nueva plantilla
         </button>
       </div>
-      <p className="apagado" style={{ marginBottom: 'var(--e4)' }}>
+      <p className="campana-nota campana-intro">
         Meta aprueba cada plantilla antes de que se pueda usar. Registra aquí el estado que muestra el administrador de WhatsApp.
       </p>
       {estado.isError && (
@@ -36,37 +42,41 @@ export function PlantillasWhatsApp() {
       <Consulta consulta={plantillas} cargando="Cargando…" error="No fue posible cargar las plantillas." vacio="No hay plantillas." estaVacio={(p) => p.length === 0}>
         {(p) => (
           <div className="scroll-x">
-            <table className="tabla">
+            <table className="tabla tabla-apilable bandeja-tabla">
               <thead>
                 <tr>
                   <th>Plantilla</th>
-                  <th>Categoría</th>
                   <th>Texto</th>
-                  <th>Aprobación</th>
+                  <th>Aprobación de Meta</th>
                   <th>Activa</th>
                 </tr>
               </thead>
               <tbody>
                 {p.map((pl) => (
                   <tr key={pl.id}>
-                    <td className="principal numero">
-                      {pl.nombre} <span className="apagado">v{pl.version}</span>
+                    <td className="principal" data-etiqueta="Plantilla">
+                      <span className="campana-plantilla">{pl.nombre}</span>
+                      <div className="bandeja-detalle">
+                        <span>{CATEGORIAS[pl.categoria] ?? pl.categoria}</span>
+                        <span className="numero">versión {pl.version}</span>
+                      </div>
                     </td>
-                    <td>{pl.categoria}</td>
-                    <td>{pl.cuerpo}</td>
-                    <td>
+                    <td data-etiqueta="Texto">
+                      <span className="plantilla-cuerpo">{pl.cuerpo}</span>
+                    </td>
+                    <td data-etiqueta="Aprobación de Meta">
                       <select
                         className="input"
                         value={pl.estado_aprobacion}
                         aria-label={`Aprobación de ${pl.nombre}`}
                         onChange={(e) => estado.mutate({ id: pl.id, estado_aprobacion: e.target.value })}
                       >
-                        {['borrador', 'enviada', 'aprobada', 'rechazada', 'pausada'].map((s) => (
-                          <option key={s} value={s}>{s}</option>
+                        {Object.entries(APROBACION).map(([valor, label]) => (
+                          <option key={valor} value={valor}>{label}</option>
                         ))}
                       </select>
                     </td>
-                    <td>
+                    <td data-etiqueta="Activa">
                       <input
                         type="checkbox"
                         checked={pl.activa}
@@ -117,9 +127,9 @@ export function PlantillasWhatsApp() {
           <label className="campo">
             <span>Categoría</span>
             <select className="input" name="categoria" defaultValue="utility">
-              <option value="utility">Utilidad</option>
-              <option value="marketing">Marketing</option>
-              <option value="authentication">Autenticación</option>
+              {Object.entries(CATEGORIAS).map(([valor, label]) => (
+                <option key={valor} value={valor}>{label}</option>
+              ))}
             </select>
           </label>
           <label className="campo ancho">

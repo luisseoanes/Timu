@@ -38,7 +38,6 @@ type Fallo = 'desborde' | 'contraste'
 // contraste; quedan los desbordes del responsive anterior al rediseño.
 const PENDIENTES: ReadonlySet<string> = new Set([
   'aliadas@375:desborde',
-  'campanas@375:desborde',
 ])
 
 interface Ruta {
@@ -128,7 +127,8 @@ const RUTAS: Ruta[] = [
       return (await rutaDemo(page.request, yo.id)).url
     },
   },
-  { app: 'campanas', perfil: 'equipo', url: '/campanas' },
+  // Con sus pestañas (R2-PAN-09), y con administración: el perfil de equipo va al borde del cupo.
+  { app: 'campanas', perfil: 'admin', url: '/campanas', pestanas: true },
   { app: 'aliadas', perfil: 'equipo', url: '/aliadas' },
   // Con sus pestañas (R2-PAN-09), y con administración: el perfil de equipo va al borde del cupo.
   { app: 'comercial', perfil: 'admin', url: '/comercial', pestanas: true },

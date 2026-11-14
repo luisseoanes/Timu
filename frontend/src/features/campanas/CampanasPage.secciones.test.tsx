@@ -65,11 +65,13 @@ function detalle(
   )
 }
 
+/** La campaña abierta vive en la URL: se lee en su ficha, junto al listado. */
 async function abrirDetalle() {
   const user = userEvent.setup()
-  renderizar(<CampanasPage />)
-  await user.click(await screen.findByRole('button', { name: 'Ver' }))
-  return { user, modal: await screen.findByRole('dialog') }
+  renderizar(<CampanasPage />, { ruta: '/campanas?campana=c1' })
+  const ficha = await screen.findByRole('region', { name: 'Campaña abierta' })
+  await within(ficha).findByRole('heading', { level: 2 })
+  return { user, modal: ficha }
 }
 
 async function abrirPestana(nombre: string) {
@@ -80,19 +82,19 @@ async function abrirPestana(nombre: string) {
 }
 
 describe('campañas', () => {
-  it('muestra la recurrencia y la próxima ejecución', async () => {
+  it('dice cuándo sale y cada cuánto se repite', async () => {
     server.use(http.get(`${API}/campanas`, () =>
         HttpResponse.json([{ ...CAMPANA, recurrencia: 'semanal', proxima_ejecucion: '2026-11-10T14:00:00Z', estado: 'programada' }]),
       ),
     )
     renderizar(<CampanasPage />)
-    expect(await screen.findByText(/· semanal/)).toBeInTheDocument()
+    expect(await screen.findByText(/9:00 a\. m\. · cada semana/)).toBeInTheDocument()
   })
 
-  it('sin campañas lo dice, y si no carga explica por qué', async () => {
+  it('sin campañas dice qué hacer, y si no carga explica por qué', async () => {
     server.use(http.get(`${API}/campanas`, () => HttpResponse.json([])))
     const { unmount } = renderizar(<CampanasPage />)
-    expect(await screen.findByText('Aún no hay campañas.')).toBeInTheDocument()
+    expect(await screen.findByText('Aún no hay campañas. Crea una con «Nueva campaña».')).toBeInTheDocument()
     unmount()
     server.use(http.get(`${API}/campanas`, () => HttpResponse.json({ detail: 'Sin conexión' }, { status: 503 })))
     renderizar(<CampanasPage />)
@@ -105,26 +107,33 @@ describe('campañas', () => {
     const { modal } = await abrirDetalle()
     expect(screen.queryByRole('button', { name: /nueva campaña/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Plantillas de WhatsApp' })).not.toBeInTheDocument()
-    expect(await within(modal).findByText('4')).toBeInTheDocument()
+    expect(await within(modal).findByText(/Le llega a/)).toHaveTextContent('Le llega a 4 de 5 familias · 1 se dieron de baja de los mensajes.')
     expect(within(modal).queryByRole('button', { name: 'Enviar ahora' })).not.toBeInTheDocument()
   })
 
-  it('muestra los resultados y las ejecuciones de una campaña enviada', async () => {
+  it('muestra los resultados y las veces que salió una campaña enviada', async () => {
     detalle(
-      { estado: 'completada' },
+      { estado: 'finalizada' },
       {
         resultados: { audiencia: 40, excluidos: 2, encolados: 0, enviados: 38, entregados: 36, leidos: 30, respondidos: 7, fallidos: 2 },
         ejecuciones: [{ id: 'e1', iniciada_en: '2026-11-01T14:00:00Z' }, { id: 'e2', iniciada_en: '2026-10-01T14:00:00Z' }],
       },
     )
     const { modal } = await abrirDetalle()
-    expect(await within(modal).findByText('respondidos')).toBeInTheDocument()
+    expect(await within(modal).findByText('Respondidos')).toBeInTheDocument()
     expect(within(modal).getByText('36')).toBeInTheDocument()
-    expect(within(modal).getByText(/2 ejecuciones · última/)).toBeInTheDocument()
+    expect(within(modal).getByText('No se enviaron')).toBeInTheDocument()
+    expect(within(modal).getByText(/Ha salido/)).toHaveTextContent('Ha salido 2 veces; la última, el 1 nov a las 9:00 a. m.')
     expect(within(modal).queryByRole('button', { name: 'Enviar ahora' })).not.toBeInTheDocument()
   })
 
-  it('programa el envío en hora de Colombia con su recurrencia', async () => {
+  it('sin enviar dice qué aparecerá en sus resultados', async () => {
+    detalle()
+    const { modal } = await abrirDetalle()
+    expect(await within(modal).findByText(/Todavía no ha salido/)).toBeInTheDocument()
+  })
+
+  it('programa el envío en hora de Colombia con su recurrencia, con un solo verde', async () => {
     let enviado: unknown = null
     detalle()
     server.use(
@@ -134,14 +143,16 @@ describe('campañas', () => {
       }),
     )
     const { user, modal } = await abrirDetalle()
-    await user.type(within(modal).getByLabelText('Enviar el (vacío = ahora)'), '2026-11-15T09:30')
+    // Con la ficha abierta, «Nueva campaña» deja el verde a la ficha.
+    expect(screen.getByRole('button', { name: /nueva campaña/i })).toHaveClass('btn-suave')
+    await user.type(within(modal).getByLabelText('Enviar el'), '2026-11-15T09:30')
     await user.selectOptions(within(modal).getByLabelText('Repetir'), 'mensual')
     await user.click(within(modal).getByRole('button', { name: 'Programar envío' }))
     await waitFor(() => expect(enviado).toEqual({ cuando: '2026-11-15T09:30:00-05:00', recurrencia: 'mensual' }))
     expect(await within(modal).findByRole('status')).toHaveTextContent('Campaña programada.')
   })
 
-  it('cancela una campaña programada', async () => {
+  it('cancela una campaña programada tras confirmarlo en rojo', async () => {
     let cancelada = false
     detalle({ estado: 'programada' })
     server.use(
@@ -152,6 +163,10 @@ describe('campañas', () => {
     )
     const { user, modal } = await abrirDetalle()
     await user.click(within(modal).getByRole('button', { name: 'Cancelar campaña' }))
+    const ventana = await screen.findByRole('dialog', { name: `Cancelar «${CAMPANA.nombre}»` })
+    const confirmar = within(ventana).getByRole('button', { name: 'Cancelar campaña' })
+    expect(confirmar).toHaveClass('btn-peligro')
+    await user.click(confirmar)
     await waitFor(() => expect(cancelada).toBe(true))
   })
 
@@ -164,6 +179,7 @@ describe('campañas', () => {
     )
     const { user, modal } = await abrirDetalle()
     await user.click(within(modal).getByRole('button', { name: 'Enviar ahora' }))
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Enviar ahora' }))
     expect(await within(modal).findByRole('alert')).toHaveTextContent('La plantilla dejó de estar aprobada')
   })
 
@@ -178,7 +194,7 @@ describe('campañas', () => {
       ),
     )
     await user.click(within(modal).getByRole('button', { name: /destinatarios en csv/i }))
-    expect(await within(modal).findByRole('alert')).toHaveTextContent('No fue posible descargar.')
+    expect(await within(modal).findByRole('alert')).toHaveTextContent('No fue posible descargar los destinatarios.')
   })
 
   it('explica por qué no se pudo calcular la audiencia', async () => {
@@ -187,7 +203,7 @@ describe('campañas', () => {
       http.get(`${API}/campanas/c1/previsualizacion`, () => HttpResponse.json({ detail: 'Segmento inválido' }, { status: 422 })),
     )
     const { modal } = await abrirDetalle()
-    expect(await within(modal).findByRole('alert')).toHaveTextContent('No fue posible previsualizar. Segmento inválido')
+    expect(await within(modal).findByRole('alert')).toHaveTextContent('No fue posible calcular la audiencia. Segmento inválido')
   })
 })
 
@@ -215,6 +231,7 @@ describe('nueva campaña', () => {
 
   it('con un segmento guardado no envía filtros y la variable puede ser un texto fijo', async () => {
     let enviado: unknown = null
+    detalle()
     server.use(http.get(`${API}/segmentos`, () => HttpResponse.json([{ id: 'sg1', nombre: 'Morosos', descripcion: null, filtros: {} }])),
       http.post(`${API}/campanas`, async ({ request }) => {
         enviado = await request.json()
@@ -237,6 +254,7 @@ describe('nueva campaña', () => {
   })
 
   it('arma los filtros con ciudades, planes y umbrales, y se pueden quitar', async () => {
+    detalle()
     let enviado: Record<string, unknown> | null = null
     let contado: unknown = null
     server.use(http.post(`${API}/segmentos/previsualizacion`, async ({ request }) => {
@@ -314,7 +332,7 @@ describe('segmentos', () => {
     await abrirPestana('Segmentos')
     expect(await screen.findByText('Familias VIP')).toBeInTheDocument()
     expect(screen.getByText('Todas las familias')).toBeInTheDocument()
-    expect(screen.getByText('en_mora · Bogota · mora ≥ 30 días · renuevan en 15 días')).toBeInTheDocument()
+    expect(screen.getByText('En mora · Bogota · mora de 30 días o más · renuevan en 15 días o menos')).toBeInTheDocument()
   })
 
   it('guarda un segmento con sus filtros', async () => {
@@ -369,7 +387,9 @@ describe('encuestas', () => {
     const user = userEvent.setup()
     await user.click(await screen.findByRole('tab', { name: 'Encuestas' }))
     expect(await screen.findByText('—')).toBeInTheDocument()
-    expect(await screen.findByText('No hay respuestas con este filtro.')).toBeInTheDocument()
+    expect(await screen.findByText('Aún nadie ha respondido la encuesta.')).toBeInTheDocument()
+    await user.click(screen.getByLabelText('Sólo calificaciones de 3 o menos'))
+    expect(await screen.findByText('Nadie ha calificado con 3 o menos.')).toBeInTheDocument()
     unmount()
     server.use(resumen({ promedio: 4.2, respondidas: 5, enviadas: 6, por_tipo_servicio: [{ tipo_servicio: 'consulta_domiciliaria', promedio: 4.5, respuestas: 4 }] }))
     await abrirPestana('Encuestas')
@@ -479,9 +499,10 @@ describe('mensajes y bajas', () => {
     conMensajes([MENSAJE, { ...MENSAJE, id: 'm2', direccion: 'entrante', destino: null, plantilla: null, contenido: 'Gracias', estado: 'recibido', error: null }])
     await abrirPestana('Mensajes')
     expect(await screen.findByText('Número inválido')).toBeInTheDocument()
-    expect(screen.getByText('recordatorio_cuota')).toBeInTheDocument()
-    expect(screen.getByText('→ 573001112233')).toBeInTheDocument()
-    expect(screen.getByText('← —')).toBeInTheDocument()
+    expect(screen.getByText('Plantilla «recordatorio_cuota»')).toBeInTheDocument()
+    // La dirección en palabras, no con flechas.
+    expect(screen.getByText('Le escribimos a')).toBeInTheDocument()
+    expect(screen.getByText('Escribió')).toBeInTheDocument()
   })
 
   it('filtra por estado y muestra el vacío', async () => {
@@ -519,7 +540,7 @@ describe('mensajes y bajas', () => {
     await user.click(screen.getByRole('button', { name: 'Agregar' }))
     await waitFor(() => expect(alta).toEqual({ telefono: '573001112233' }))
     await waitFor(() => expect(celular).toHaveValue(''))
-    await user.click(await screen.findByRole('button', { name: 'Quitar la baja de +573009998877' }))
+    await user.click(await screen.findByRole('button', { name: 'Quitar la baja de +57 300 999 8877' }))
     await waitFor(() => expect(quitado).toBe('+573009998877'))
   })
 

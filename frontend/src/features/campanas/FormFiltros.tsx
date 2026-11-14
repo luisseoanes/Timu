@@ -1,8 +1,16 @@
 import { useCiudades, usePlanes } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
+import type { EstadoAfiliacion } from '@/types'
 
 import { usePrevisualizarSegmento, type FiltrosSegmento } from './api'
-import { ESTADOS_AFILIACION } from './segmento'
+
+const ESTADOS_AFILIACION: { valor: EstadoAfiliacion; label: string }[] = [
+  { valor: 'activa', label: 'Activa' },
+  { valor: 'en_mora', label: 'En mora' },
+  { valor: 'congelada', label: 'Congelada' },
+  { valor: 'prospecto', label: 'Prospecto' },
+  { valor: 'cancelada', label: 'Cancelada' },
+]
 
 /** Filtros de segmento con conteo en vivo de la audiencia. */
 export function FormFiltros({ valor, onCambio }: { valor: FiltrosSegmento; onCambio: (f: FiltrosSegmento) => void }) {
@@ -19,7 +27,7 @@ export function FormFiltros({ valor, onCambio }: { valor: FiltrosSegmento; onCam
     onCambio({ ...valor, [clave]: e.target.value ? Number(e.target.value) : undefined })
 
   return (
-    <fieldset className="pila" style={{ border: 0, margin: 0, padding: 0 }}>
+    <fieldset className="pila filtros-segmento">
       <legend className="subtitulo">Quiénes reciben</legend>
       <div className="grupo-chips" role="group" aria-label="Estados de afiliación">
         {ESTADOS_AFILIACION.map((e) => (

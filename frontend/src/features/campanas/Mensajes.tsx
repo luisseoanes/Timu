@@ -1,17 +1,12 @@
 import { useState } from 'react'
 
 import { Consulta } from '@/components/Consulta'
-import { Distintivo, Insignia } from '@/components/Distintivo'
+import { Distintivo } from '@/components/Distintivo'
 import { Paginacion } from '@/components/Paginacion'
 import { mensajeError } from '@/lib/errores'
-import { fecha, fechaHora } from '@/lib/formato'
+import { diaISO, fechaCompacta, fechaHora, hora, telefono } from '@/lib/formato'
 
-import {
-  useBajas,
-  useCrearBaja,
-  useMensajes,
-  useQuitarBaja,
-} from './api'
+import { useBajas, useCrearBaja, useMensajes, useQuitarBaja } from './api'
 
 export function Mensajes() {
   const [estado, setEstado] = useState('')
@@ -26,7 +21,7 @@ export function Mensajes() {
       <section className="tarjeta">
         <div className="tarjeta-cabeza">
           <h3>Mensajes de WhatsApp</h3>
-          <select className="input" style={{ width: 'auto' }} value={estado} onChange={(e) => { setEstado(e.target.value); setOffset(0) }} aria-label="Estado del mensaje">
+          <select className="input bandeja-filtro" value={estado} onChange={(e) => { setEstado(e.target.value); setOffset(0) }} aria-label="Estado del mensaje">
             <option value="">Todos</option>
             <option value="fallido">Fallidos</option>
             <option value="encolado">En cola</option>
@@ -44,28 +39,33 @@ export function Mensajes() {
           {(d) => (
             <>
               <div className="scroll-x">
-                <table className="tabla">
+                <table className="tabla tabla-apilable bandeja-tabla">
                   <thead>
                     <tr>
-                      <th>Fecha</th>
-                      <th>Destino</th>
-                      <th>Contenido</th>
+                      <th>Mensaje</th>
+                      <th>Cuándo</th>
                       <th>Estado</th>
                     </tr>
                   </thead>
                   <tbody>
                     {d.items.map((m) => (
                       <tr key={m.id}>
-                        <td className="numero">{fechaHora(m.created_at)}</td>
-                        <td className="numero">
-                          {m.direccion === 'entrante' ? '← ' : '→ '}
-                          {m.destino ?? '—'}
-                        </td>
-                        <td>
-                          {m.plantilla ? <Insignia tono="neutro">{m.plantilla}</Insignia> : null} {m.contenido}
+                        <td className="principal" data-etiqueta="Mensaje">
+                          <span className="mensaje-contenido">{m.contenido ?? (m.plantilla ? `Plantilla «${m.plantilla}»` : '—')}</span>
+                          <div className="bandeja-detalle">
+                            {/* La dirección en palabras: una flecha sola no la lee nadie con lector de pantalla. */}
+                            <span>{m.direccion === 'entrante' ? 'Escribió' : 'Le escribimos a'}</span>
+                            <span className="numero sin-cortes">{telefono(m.destino)}</span>
+                            {m.contenido && m.plantilla && <span>Plantilla «{m.plantilla}»</span>}
+                          </div>
                           {m.error && <div className="error">{m.error}</div>}
                         </td>
-                        <td>
+                        <td data-etiqueta="Cuándo">
+                          <span className="numero sin-cortes" title={fechaHora(m.created_at)}>
+                            {fechaCompacta(diaISO(m.created_at))} · {hora(m.created_at)}
+                          </span>
+                        </td>
+                        <td data-etiqueta="Estado">
                           <Distintivo dominio="mensaje" valor={m.estado} />
                         </td>
                       </tr>
@@ -85,8 +85,7 @@ export function Mensajes() {
           </div>
           <p className="apagado">No reciben campañas masivas; los avisos del servicio sí les llegan.</p>
           <form
-            className="acciones"
-            style={{ marginBlock: 'var(--e3)' }}
+            className="acciones campana-baja"
             onSubmit={(e) => {
               e.preventDefault()
               const fd = new FormData(e.currentTarget)
@@ -94,7 +93,7 @@ export function Mensajes() {
               crearBaja.mutate({ telefono: String(fd.get('telefono')).trim() }, { onSuccess: () => form.reset() })
             }}
           >
-            <input className="input" name="telefono" aria-label="Celular a dar de baja" placeholder="Celular" required style={{ flex: 1 }} />
+            <input className="input" name="telefono" aria-label="Celular a dar de baja" placeholder="Celular" inputMode="tel" required />
             <button className="btn btn-suave" type="submit" disabled={crearBaja.isPending}>
               Agregar
             </button>
@@ -109,10 +108,10 @@ export function Mensajes() {
               b.map((x) => (
                 <div key={x.id} className="fila">
                   <div className="fila-cuerpo">
-                    <strong className="numero">{x.destino}</strong>
-                    <span>{fecha(x.created_at.slice(0, 10))}</span>
+                    <strong className="numero">{telefono(x.destino)}</strong>
+                    <span>Desde el {fechaCompacta(diaISO(x.created_at))}</span>
                   </div>
-                  <button className="btn btn-plano" type="button" onClick={() => quitarBaja.mutate(x.destino)} aria-label={`Quitar la baja de ${x.destino}`}>
+                  <button className="btn btn-plano" type="button" onClick={() => quitarBaja.mutate(x.destino)} aria-label={`Quitar la baja de ${telefono(x.destino)}`}>
                     Quitar
                   </button>
                 </div>

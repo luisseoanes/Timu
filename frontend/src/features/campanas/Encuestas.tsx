@@ -10,12 +10,7 @@ import { mensajeError } from '@/lib/errores'
 import { fechaHora, hoyISO, porcentaje } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
 
-import {
-  useConfiguracionEncuestas,
-  useEncuestas,
-  useGuardarConfiguracion,
-  useResumenEncuestas,
-} from './api'
+import { useConfiguracionEncuestas, useEncuestas, useGuardarConfiguracion, useResumenEncuestas } from './api'
 
 export function Encuestas() {
   const { usuario } = useAuth()
@@ -74,7 +69,7 @@ export function Encuestas() {
           consulta={encuestas}
           cargando="Cargando respuestas…"
           error="No fue posible cargar las respuestas."
-          vacio="No hay respuestas con este filtro."
+          vacio={soloBajas ? 'Nadie ha calificado con 3 o menos.' : 'Aún nadie ha respondido la encuesta.'}
           estaVacio={(d) => d.items.length === 0}
         >
           {(d) => (

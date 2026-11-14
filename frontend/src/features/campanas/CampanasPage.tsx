@@ -3,10 +3,10 @@ import { useAuth } from '@/features/auth'
 import { puede } from '@/lib/permisos'
 
 import { Campanas } from './Campanas'
-import { Segmentos } from './Segmentos'
 import { Encuestas } from './Encuestas'
 import { Mensajes } from './Mensajes'
 import { PlantillasWhatsApp } from './PlantillasWhatsApp'
+import { Segmentos } from './Segmentos'
 
 export function CampanasPage() {
   const { usuario } = useAuth()

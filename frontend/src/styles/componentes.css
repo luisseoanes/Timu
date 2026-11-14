@@ -574,7 +574,7 @@ a.acceso { text-decoration: none; }
    Zonas de 44 px (WCAG 2.5.8 pide 24; 44 es lo cómodo con el pulgar) y letra de 16 px en los
    campos: por debajo, iOS amplía la página al enfocar. */
 @media (max-width: 900px), (pointer: coarse) {
-  .btn, .input, .boton-icono, .buscador { min-height: 44px; }
+  .btn, .input, .boton-icono, .buscador, .cupo { min-height: 44px; }
   .boton-icono, .btn-icono { min-width: 44px; }
   .input, .buscador input { font-size: 1rem; }
 }

@@ -55,11 +55,12 @@ describe('CampanasPage', () => {
     )
     const user = userEvent.setup()
     renderizar(<CampanasPage />)
-    const fila = (await screen.findByText('Renovación noviembre')).closest('tr')!
-    await user.click(within(fila).getByRole('button', { name: 'Ver' }))
-    const modal = await screen.findByRole('dialog')
-    expect(await within(modal).findByText('38')).toBeInTheDocument()
-    expect(within(modal).getByText('Hola Ana Ruiz, tu plan se renueva pronto.')).toBeInTheDocument()
+    await user.click(await screen.findByRole('link', { name: 'Renovación noviembre' }))
+    const ficha = await screen.findByRole('region', { name: 'Campaña abierta' })
+    expect(await within(ficha).findByText(/Le llega a/)).toHaveTextContent('Le llega a 38 de 40 familias')
+    // El mensaje como le llega a la familia.
+    expect(within(ficha).getByText('Así le llega a Ana Ruiz')).toBeInTheDocument()
+    expect(within(ficha).getByText('Hola Ana Ruiz, tu plan se renueva pronto.')).toBeInTheDocument()
   })
 
   it('envía ahora una campaña en borrador', async () => {
@@ -75,16 +76,23 @@ describe('CampanasPage', () => {
       }),
     )
     const user = userEvent.setup()
-    renderizar(<CampanasPage />)
-    await user.click(await screen.findByRole('button', { name: 'Ver' }))
-    await user.click(await within(await screen.findByRole('dialog')).findByRole('button', { name: 'Enviar ahora' }))
+    renderizar(<CampanasPage />, { ruta: '/campanas?campana=c1' })
+    const ficha = await screen.findByRole('region', { name: 'Campaña abierta' })
+    await user.click(await within(ficha).findByRole('button', { name: 'Enviar ahora' }))
+    // El envío inmediato no se deshace: pide confirmarlo, con la audiencia a la vista.
+    const ventana = await screen.findByRole('dialog', { name: 'Enviar ahora a 1 familia' })
+    expect(enviado).toBeNull()
+    await user.click(within(ventana).getByRole('button', { name: 'Enviar ahora' }))
     await waitFor(() => expect(enviado).toEqual({ recurrencia: 'ninguna' }))
   })
 
-  it('crea una campaña con plantilla aprobada, variable del titular y filtros', async () => {
+  it('crea una campaña con plantilla aprobada, variable del titular y filtros, y abre su ficha', async () => {
     let enviado: Record<string, unknown> | null = null
     server.use(
       ...base,
+      http.get(`${API}/campanas/c1/previsualizacion`, () => HttpResponse.json({ audiencia: 12, excluidos_por_baja: 0, se_enviaran: 12, ejemplos: [] })),
+      http.get(`${API}/campanas/c1/resultados`, () => HttpResponse.json({ audiencia: 0 })),
+      http.get(`${API}/campanas/c1/ejecuciones`, () => HttpResponse.json([])),
       http.post(`${API}/segmentos/previsualizacion`, () => HttpResponse.json({ total: 12, muestra: [] })),
       http.post(`${API}/campanas`, async ({ request }) => {
         enviado = (await request.json()) as Record<string, unknown>
@@ -110,6 +118,7 @@ describe('CampanasPage', () => {
         segmento: { estados: ['en_mora'] },
       }),
     )
+    expect(await screen.findByRole('region', { name: 'Campaña abierta' })).toBeInTheDocument()
   })
 
   it('muestra la satisfacción del mes', async () => {
