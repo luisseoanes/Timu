@@ -891,6 +891,12 @@ export interface RespuestaRead {
   estado: string
 }
 
+export interface CampoCondicion {
+  campo: string
+  nombre: string
+  numerico: boolean
+}
+
 export interface ReglaRead {
   id: string
   codigo: string
@@ -905,6 +911,11 @@ export interface ReglaRead {
   vigente_desde: string | null
   vigente_hasta: string | null
   activa: boolean
+  condicion_texto: string
+  accion_texto: string
+  evento_nombre: string
+  retirada: string | null
+  campos_condicion: CampoCondicion[]
 }
 
 export interface BajaRead {

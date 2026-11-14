@@ -110,6 +110,7 @@ ESQUEMAS = [
     "MensajeRead",
     "FranjaRead",
     "RespuestaRead",
+    "CampoCondicion",
     "ReglaRead",
     "BajaRead",
     "ConfiguracionRead",

@@ -174,7 +174,8 @@ EVENTOS: dict[str, tuple[str, TypeAdapter[Any]]] = {
 # Eventos que el motor ya no evalua pero siguen en la base (EventoRegla) por las reglas y los
 # cambios de plan que los citan. Una regla de un evento retirado no se puede crear ni editar.
 EVENTOS_RETIRADOS: dict[str, str] = {
-    "plan.mascota": "Lo sustituyen las tarifas por numero de peludos (migracion 0033)",
+    # Migracion 0033. El motivo se muestra tal cual en Administracion: lleva tildes.
+    "plan.mascota": "Lo sustituyen las tarifas por número de peludos",
 }
 
 
@@ -187,6 +188,178 @@ def validar_accion(evento: str, accion: dict[str, Any]) -> dict[str, Any]:
         tipos = e.errors()[0]
         raise CondicionInvalida(f"Accion invalida para {evento}: {tipos['msg']}") from e
     return dict(modelo.model_dump())
+
+
+# --- Las reglas en palabras -------------------------------------------------------------------
+# La administracion lee cada regla sin descifrar su JSON. Son cadenas que se muestran tal cual:
+# llevan tildes. Un campo que no esta aqui se lee por su ruta.
+
+_CAMPOS = {
+    "dias_mora": "Días de mora",
+    "cuotas_vencidas": "Cuotas vencidas",
+    "saldo_pendiente": "Saldo pendiente",
+    "estado_actual": "Estado del contrato",
+    "estado": "Estado del contrato",
+    "dias_para_renovacion": "Días para la renovación",
+    "ciudad": "Ciudad",
+    "mascotas.total": "Número de mascotas",
+    "mascotas.especies": "Especies",
+    "familia.ciudad": "Ciudad de la familia",
+    "familia.estado": "Estado de la familia",
+    "plan.codigo": "Plan",
+    "servicio.tipo": "Tipo de servicio",
+    "servicio.modalidad": "Modalidad del servicio",
+    "mascota.especie": "Especie",
+    "estado_anterior": "Estado anterior del servicio",
+    "estado_nuevo": "Nuevo estado del servicio",
+    "plan_anterior.codigo": "Plan anterior",
+    "plan_nuevo.codigo": "Plan nuevo",
+    "sube": "Sube de valor",
+}
+
+
+# Los estados de servicio y de afiliacion que citan las reglas, por su nombre en el panel.
+_VALORES = {
+    "solicitado": "solicitado",
+    "agendado": "agendado",
+    "en_ruta": "en camino",
+    "en_atencion": "en atención",
+    "completado": "completado",
+    "pendiente_autorizacion": "por autorizar",
+    "reprogramado": "reprogramado",
+    "cancelado": "cancelado",
+    "prospecto": "prospecto",
+    "activa": "al día",
+    "en_mora": "en mora",
+    "congelada": "congelada",
+    "cancelada": "cancelada",
+    "servicio_cliente": "servicio al cliente",
+}
+
+# El nombre de cada evento, sin la referencia al backlog que lleva su descripcion.
+_NOMBRES_EVENTOS = {
+    "cartera.estado": "Estado de cartera según los días de mora",
+    "cartera.alerta": "Avisos escalonados de mora",
+    "cartera.renovacion": "Tarea comercial por contrato próximo a vencer",
+    "plan.cambio": "Cobro al cambiar de plan",
+    "plan.recomendacion": "Plan sugerido por ciudad y familia",
+    "servicio.transicion": "Al cambiar de estado un servicio",
+    "servicio.elegibilidad": "Restricciones para agendar",
+    "plan.mascota": "Precio por mascota",
+}
+
+
+def nombre_evento(evento: str) -> str:
+    return _NOMBRES_EVENTOS.get(evento, evento)
+
+
+def nombre_campo(campo: str) -> str:
+    return _CAMPOS.get(campo, campo.replace(".", " de ").replace("_", " ").capitalize())
+
+
+def campos(condicion: dict[str, Any]) -> list[dict[str, Any]]:
+    """Los campos que mira una condicion, una vez cada uno, con su nombre y si son numericos: lo
+    que hay que contarle al motor para probar la regla."""
+    vistos: dict[str, dict[str, Any]] = {}
+
+    def recorrer(c: dict[str, Any]) -> None:
+        if "no" in c:
+            recorrer(c["no"])
+        for clave in ("todas", "alguna"):
+            for sub in c.get(clave, []):
+                recorrer(sub)
+        if "campo" in c and c["campo"] not in vistos:
+            valor = c.get("valor")
+            numerico = isinstance(valor, int | float) and not isinstance(valor, bool)
+            vistos[c["campo"]] = {
+                "campo": c["campo"],
+                "nombre": nombre_campo(c["campo"]),
+                "numerico": numerico,
+            }
+
+    recorrer(condicion)
+    return list(vistos.values())
+
+
+def _valor(v: Any) -> str:
+    if isinstance(v, bool):
+        return "sí" if v else "no"
+    if isinstance(v, str):
+        return _VALORES.get(v, v.replace("_", " "))
+    return str(v)
+
+
+def _lista(valores: list[Any], y: str) -> str:
+    textos = [_valor(v) for v in valores]
+    return textos[0] if len(textos) == 1 else f"{', '.join(textos[:-1])} {y} {textos[-1]}"
+
+
+def _simple(c: dict[str, Any]) -> str:
+    nombre = nombre_campo(str(c["campo"]))
+    op = c["op"]
+    valor: Any = c.get("valor")
+    frase = {
+        "eq": lambda: _valor(valor),
+        "ne": lambda: f"distinto de {_valor(valor)}",
+        "gt": lambda: f"más de {_valor(valor)}",
+        "gte": lambda: f"{_valor(valor)} o más",
+        "lt": lambda: f"menos de {_valor(valor)}",
+        "lte": lambda: f"{_valor(valor)} o menos",
+        "in": lambda: _lista(valor, "o"),
+        "nin": lambda: f"ninguno de {_lista(valor, 'y')}",
+        "contiene": lambda: f"incluye {_valor(valor)}",
+        "existe": lambda: "registrado",
+    }[op]()
+    return f"{nombre}: {frase}"
+
+
+def describir_condicion(condicion: dict[str, Any]) -> str:
+    """«Días de mora: 25 o más»; las compuestas, unidas con «y» u «o», entre parentesis dentro de
+    otra."""
+
+    def texto(c: dict[str, Any], dentro: bool) -> str:
+        if not c:
+            return "Siempre"
+        if "no" in c:
+            return f"No se cumple: {texto(c['no'], True)}"
+        for clave, union in (("todas", " y "), ("alguna", " o ")):
+            if clave in c:
+                partes = union.join(texto(sub, True) for sub in c[clave])
+                return f"({partes})" if dentro and len(c[clave]) > 1 else partes
+        return _simple(c)
+
+    return texto(condicion, False)
+
+
+_PRORRATEO = {
+    "diario": "Cobra la diferencia por los días que faltan del periodo",
+    "sin_cargo": "Cambia de plan sin cobrar la diferencia",
+    "proximo_ciclo": "Cobra la diferencia desde el próximo periodo",
+}
+
+
+def describir_accion(accion: dict[str, Any]) -> str:
+    """Lo que hace la regla cuando se cumple, en una frase."""
+    tipo = accion.get("tipo")
+    if tipo == "estado":
+        return f"Pasa el contrato a «{_valor(accion['estado'])}»"
+    if tipo == "notificar":
+        # La plantilla solo tiene el codigo con que se registra en Meta: va como dato secundario.
+        return f"Envía un aviso por WhatsApp (plantilla {accion['plantilla']})"
+    if tipo == "tarea":
+        dias = accion.get("vence_en_dias", 2)
+        plazo = f"{dias} {'día' if dias == 1 else 'días'}"
+        return (
+            f"Crea la tarea «{accion['titulo']}» para {_valor(accion['area'])}, prioridad "
+            f"{accion.get('prioridad', 'media')}, que vence en {plazo}"
+        )
+    if tipo == "prorrateo":
+        return _PRORRATEO.get(accion["modo"], _valor(accion["modo"]))
+    if tipo == "rechazar":
+        return f"No lo permite: {accion['motivo']}"
+    if tipo == "recomendar":
+        return f"Recomienda el plan «{accion['plan_codigo']}»: {accion['motivo']}"
+    return _valor(str(tipo))
 
 
 def vigente(desde: date | None, hasta: date | None, dia: date) -> bool:

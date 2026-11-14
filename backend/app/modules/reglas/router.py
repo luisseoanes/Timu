@@ -5,7 +5,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 from sqlalchemy import String, cast, select
 
 from app.api.deps import INTERNOS, DbSession, requiere
@@ -63,6 +63,12 @@ class ReglaUpdate(BaseModel):
     activa: bool | None = None
 
 
+class CampoCondicion(BaseModel):
+    campo: str
+    nombre: str
+    numerico: bool
+
+
 class ReglaRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -79,6 +85,34 @@ class ReglaRead(BaseModel):
     vigente_desde: date | None
     vigente_hasta: date | None
     activa: bool
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def condicion_texto(self) -> str:
+        """Cuando aplica, en palabras: el panel no descifra el JSON del motor."""
+        return motor.describir_condicion(self.condicion)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def accion_texto(self) -> str:
+        return motor.describir_accion(self.accion)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def evento_nombre(self) -> str:
+        return motor.nombre_evento(self.evento)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def retirada(self) -> str | None:
+        """Por que ya no se evalua, si su evento se retiro: no se puede editar."""
+        return motor.EVENTOS_RETIRADOS.get(self.evento)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def campos_condicion(self) -> list[CampoCondicion]:
+        """Lo que hay que contarle al motor para probar la regla, campo por campo."""
+        return [CampoCondicion(**c) for c in motor.campos(self.condicion)]
 
 
 class Prueba(BaseModel):
@@ -142,4 +176,12 @@ async def probar(db: DbSession, data: Prueba) -> list[dict[str, Any]]:
     resultados = await db.run_sync(
         service.evaluar, data.evento, data.contexto, plan_id=data.plan_id
     )
-    return [{"regla": r.regla, "nombre": r.nombre, "accion": r.accion} for r in resultados]
+    return [
+        {
+            "regla": r.regla,
+            "nombre": r.nombre,
+            "accion": r.accion,
+            "accion_texto": motor.describir_accion(r.accion),
+        }
+        for r in resultados
+    ]
