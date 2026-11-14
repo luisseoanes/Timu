@@ -230,6 +230,7 @@ describe('La línea del día', () => {
 
   it('lo de hoy ya pasado va antes de Hoy; lo que viene lleva su médico y los días siguientes se agrupan', async () => {
     // Solo se congela Date: MSW y los temporizadores de las pruebas siguen funcionando.
+    const familia = { id: 'f1', titular_nombre: 'Ana Ruiz' }
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-11-13T13:00:00Z')) // 8:00 a. m. en Colombia
     server.use(
@@ -237,9 +238,9 @@ describe('La línea del día', () => {
       http.get(`${API}/servicios`, () =>
         HttpResponse.json({
           items: [
-            { id: 's0', tipo_codigo: 'consulta_domiciliaria', ciudad: 'Medellín', programado_para: '2026-11-13T11:00:00Z', profesional_id: null },
-            { id: 's1', tipo_codigo: 'consulta_domiciliaria', ciudad: 'Medellín', programado_para: '2026-11-13T16:00:00Z', profesional_id: 'm1' },
-            { id: 's2', tipo_codigo: 'consulta_domiciliaria', ciudad: 'Envigado', programado_para: '2026-11-14T15:00:00Z', profesional_id: null },
+            { id: 's0', tipo_codigo: 'consulta_domiciliaria', ciudad: 'Medellín', programado_para: '2026-11-13T11:00:00Z', profesional_id: null, familia, mascota: null },
+            { id: 's1', tipo_codigo: 'consulta_domiciliaria', ciudad: 'Medellín', programado_para: '2026-11-13T16:00:00Z', profesional_id: 'm1', familia, mascota: { id: 'x', nombre: 'Max', especie: 'perro' } },
+            { id: 's2', tipo_codigo: 'consulta_domiciliaria', ciudad: 'Envigado', programado_para: '2026-11-14T15:00:00Z', profesional_id: null, familia, mascota: null },
           ],
           total: 4,
           limit: 20,
@@ -254,7 +255,7 @@ describe('La línea del día', () => {
       expect(estaciones.map((e) => e.textContent)).toEqual([
         'Vencido: 1 servicio de hoy sin atenderEl primero estaba para las 6:00 a. m.Ver los servicios',
         expect.stringMatching(/^Hoy/),
-        'Lo siguiente: 11:00 a. m.Consulta domiciliariaMedellín · Sara DíazVer',
+        'Lo siguiente: 11:00 a. m.Consulta domiciliaria · MaxAna Ruiz · Medellín · Sara DíazVer',
         'sáb 14 nov1 servicio agendadoConsulta domiciliariaVer la agenda',
         'Y 1 servicio agendado másVer la agenda',
       ])

@@ -286,8 +286,8 @@ function LineaEquipo({ rol }: { rol: Rol | undefined }) {
             clave: s.id,
             estado: despues.length === 0 ? 'proxima' : 'futura',
             hora: hora(s.programado_para),
-            titulo: nombreTipo(s.tipo_codigo),
-            detalle: `${s.ciudad} · ${medico(s.profesional_id)}`,
+            titulo: s.mascota ? `${nombreTipo(s.tipo_codigo)} · ${s.mascota.nombre}` : nombreTipo(s.tipo_codigo),
+            detalle: `${s.familia.titular_nombre} · ${s.ciudad} · ${medico(s.profesional_id)}`,
             accion: { texto: 'Ver', to: `/servicios/${s.id}`, secundaria: true },
           })
         }

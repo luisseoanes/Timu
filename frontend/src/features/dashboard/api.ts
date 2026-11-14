@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { ContratoListado, EventoRead, Page, ServicioRead, TareaRead } from '@/types'
+import type { ContratoListado, EventoRead, Page, ServicioListado, TareaRead } from '@/types'
 
 /** Respuesta de `GET /dashboard/indicadores` (definiciones en docs/indicadores.md). */
 export interface Indicadores {
@@ -105,7 +105,7 @@ export function useProximosServicios(desde: string) {
     queryKey: ['servicios', { desde, proximos: true }],
     queryFn: async () =>
       (
-        await api.get<Page<ServicioRead>>('/servicios', {
+        await api.get<Page<ServicioListado>>('/servicios', {
           params: { desde, estado: 'agendado', limit: 20, orden: 'programado_para' },
         })
       ).data,
