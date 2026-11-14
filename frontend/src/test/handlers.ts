@@ -166,6 +166,13 @@ export const handlers = [
   http.get(`${API}/preventivos`, () => HttpResponse.json(vacia)),
   http.get(`${API}/cartera/contratos`, () => HttpResponse.json(vacia)),
   http.get(`${API}/dashboard/definiciones`, () => HttpResponse.json([])),
+  // Sin historia: la franja no dice variación ni dibuja series. Las pruebas del Inicio la dan.
+  http.get(`${API}/dashboard/evolucion`, () =>
+    HttpResponse.json({
+      anterior: { periodo: { desde: '2026-09-01', hasta: '2026-09-24', ciudad: null }, indicadores: {} },
+      meses: [],
+    }),
+  ),
   http.get(`${API}/dashboard/indicadores`, () =>
     HttpResponse.json({
       periodo: { desde: '2026-10-01', hasta: '2026-10-24', ciudad: null },

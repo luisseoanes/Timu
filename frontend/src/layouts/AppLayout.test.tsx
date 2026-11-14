@@ -53,7 +53,7 @@ describe('AppLayout en escritorio', () => {
     abrir()
     const nav = await screen.findByRole('navigation', { name: 'Módulos' })
     expect(textos(within(nav).getAllByRole('link'))).toEqual([
-      'Panel', 'Familias', 'Cartera', 'Servicios', 'Tareas', 'Preventivos', 'Clínica', 'Rutas',
+      'Inicio', 'Familias', 'Cartera', 'Servicios', 'Tareas', 'Preventivos', 'Clínica', 'Rutas',
     ])
     const mas = await abrirMenu('Más')
     expect(textos(within(mas).getAllByRole('menuitem'))).toEqual(['Comercial', 'Campañas', 'Aliadas', 'Administración'])
@@ -93,6 +93,12 @@ describe('AppLayout en escritorio', () => {
     expect(await screen.findByRole('heading', { name: 'Rutas' })).toBeInTheDocument()
   })
 
+  it('en el Inicio no repite el título: la pantalla abre con su saludo', async () => {
+    abrir('/')
+    await screen.findByRole('navigation', { name: 'Módulos' })
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument()
+  })
+
   it('el buscador de la cabecera lleva a familias con la búsqueda', async () => {
     const user = userEvent.setup()
     abrir()
@@ -102,17 +108,17 @@ describe('AppLayout en escritorio', () => {
 })
 
 describe('AppLayout en el celular', () => {
-  it('lleva al médico sus cuatro módulos en la barra inferior y el resto en «Más»', async () => {
+  it('lleva al médico su Inicio y sus tres módulos en la barra inferior y el resto en «Más»', async () => {
     enCelular()
     comoMedico()
     abrir('/rutas')
     const barra = await screen.findByRole('navigation', { name: 'Módulos principales' })
     // En el orden del menú, no en el de prioridad: la barra no se reordena según el perfil.
-    expect(textos(within(barra).getAllByRole('link'))).toEqual(['Familias', 'Servicios', 'Clínica', 'Rutas'])
+    expect(textos(within(barra).getAllByRole('link'))).toEqual(['Inicio', 'Servicios', 'Clínica', 'Rutas'])
     expect(within(barra).getByRole('link', { name: 'Rutas' })).toHaveAttribute('aria-current', 'page')
     expect(screen.queryByRole('navigation', { name: 'Módulos' })).not.toBeInTheDocument()
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
     const mas = await abrirMenu('Más')
-    expect(textos(within(mas).getAllByRole('menuitem'))).toEqual(['Panel', 'Cartera', 'Tareas', 'Preventivos', 'Campañas', 'Aliadas'])
+    expect(textos(within(mas).getAllByRole('menuitem'))).toEqual(['Familias', 'Cartera', 'Tareas', 'Preventivos', 'Campañas', 'Aliadas'])
   })
 })

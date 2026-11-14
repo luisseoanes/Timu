@@ -15,8 +15,8 @@ test.describe('equipo', () => {
 
   test('busca una familia en el panel y abre su ficha con sus mascotas', async ({ page }) => {
     await page.goto('/')
-    // El h1 es el título del módulo (AppLayout); el saludo cuelga de él.
-    await expect(page.getByRole('heading', { level: 2, name: /^Hola/ })).toBeVisible()
+    // En el Inicio el h1 es el saludo: la cabecera del módulo no se repite.
+    await expect(page.getByRole('heading', { level: 1, name: /^Hola, / })).toBeVisible()
     await page.getByRole('link', { name: 'Familias' }).first().click()
     await page.getByRole('link', { name: 'Ana Ruiz' }).click()
     await expect(page.getByRole('heading', { name: 'Ana Ruiz' })).toBeVisible()
@@ -131,6 +131,46 @@ test.describe('equipo comercial', () => {
     await page.goto('/comercial')
     await page.getByRole('tab', { name: 'Conversaciones' }).click()
     expect((await respuesta).status()).toBe(200)
+    await expect(page.getByRole('alert')).toHaveCount(0)
+  })
+})
+
+test.describe('gerencia en el inicio', () => {
+  // Con el perfil de administración (gerencia@timu.co), que ve el mismo tablero: el de equipo
+  // ya gasta casi todo su cupo de 120 peticiones por minuto en el barrido y los demás recorridos.
+  test.use({ storageState: sesion('admin') })
+
+  test('una cifra abre su serie de 12 meses servida por la API, con una sola acción verde', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    const serie = page.waitForResponse((r) => r.url().includes('/api/v1/dashboard/evolucion'))
+    await page.goto('/')
+    expect((await serie).status()).toBe(200)
+    const cifras = page.getByRole('list', { name: 'Cifras del período' })
+    await expect(cifras.getByRole('button')).toHaveCount(6)
+    await cifras.getByRole('button', { name: /^Recaudo/ }).click()
+    const abierta = page.getByRole('region', { name: 'Recaudo en los últimos 12 meses' })
+    await expect(abierta.getByRole('group', { name: /mes a mes/ })).toBeVisible()
+    await abierta.getByText('Ver los datos').click()
+    // La cabecera y los 12 meses.
+    await expect(abierta.getByRole('row')).toHaveCount(13)
+    await expect(page.getByRole('list', { name: 'El día de la operación' })).toBeVisible()
+    await expect(page.locator('.btn-primario:visible')).toHaveCount(1)
+    await expect(page.getByRole('alert')).toHaveCount(0)
+  })
+})
+
+test.describe('médico en el inicio', () => {
+  test.use({ storageState: sesion('medico') })
+
+  test('entra a su jornada: lo que tiene sin firmar, Hoy y las paradas de su ruta', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    await expect(page.getByRole('heading', { level: 1, name: /^Hola, / })).toBeVisible()
+    const jornada = page.getByRole('list', { name: 'Tu jornada' })
+    await expect(jornada.getByText(/^Hoy · /)).toBeVisible()
+    // El médico no ve las cifras de la gerencia: la API se las negaría.
+    await expect(page.getByRole('list', { name: 'Cifras del período' })).toHaveCount(0)
+    await expect(page.getByRole('navigation', { name: 'Módulos principales' }).getByRole('link', { name: 'Inicio' })).toHaveAttribute('aria-current', 'page')
     await expect(page.getByRole('alert')).toHaveCount(0)
   })
 })

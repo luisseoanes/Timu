@@ -121,19 +121,156 @@
 .con-rail > *, .rail > * { min-width: 0; }
 .dos-columnas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e4); }
 
-/* Saludo con figura, equivalente al bloque de bienvenida de la referencia */
-.bienvenida {
-  position: relative;
-  display: grid; gap: var(--e3);
-  padding: var(--e6);
-  border-radius: var(--r-panel);
-  background: var(--superficie);
-  box-shadow: var(--sombra-2);
-  overflow: hidden;
+/* ===== Inicio (R2-PAN-04): «La línea de hoy» =====
+   Saludo con los filtros, la franja de cifras (cada una abre su serie) y, debajo, la línea del
+   día con lo vencido, Hoy y lo que viene; al lado, servicios por tipo o las tareas del médico. */
+.inicio { display: grid; gap: var(--e4); container-type: inline-size; }
+.inicio > * { min-width: 0; }
+.inicio-cabeza { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--e3) var(--e4); }
+.inicio-cabeza h1 { font-size: var(--t-display); line-height: 1.2; letter-spacing: -.01em; color: var(--texto-titulo); }
+.inicio-cabeza p { font-size: var(--t-menor); color: var(--texto-suave); }
+.inicio-filtros { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e2); }
+.inicio-filtros .input { width: auto; }
+/* En el celular, las dos listas en una fila y las descargas debajo. */
+@container (max-width: 600px) {
+  .inicio-filtros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+  .inicio-filtros .input { grid-column: 1 / -1; width: 100%; }
+  .inicio-filtros .btn { justify-self: start; }
 }
-.bienvenida h2 { display: flex; align-items: center; gap: var(--e2); font-size: var(--t-display); }
-.bienvenida .apagado { max-width: 46ch; }
-.bienvenida-datos { display: flex; flex-wrap: wrap; gap: var(--e2); margin-top: var(--e2); }
+.inicio-panel { padding: var(--e6); border-radius: var(--r-panel); background: var(--superficie); }
+@container (max-width: 600px) { .inicio-panel { padding: var(--e4); } }
+
+/* La franja: celdas blancas separadas por hilos (el hueco de 1 px deja ver el borde de fondo). */
+.inicio-cifras { display: grid; gap: var(--e3); }
+.inicio-cifras > *, .inicio-serie > *, .grafico > * { min-width: 0; }
+.inicio-franja {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px;
+  border-radius: var(--r-panel); overflow: hidden; background: var(--borde);
+}
+@container (min-width: 600px) { .inicio-franja { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container (min-width: 1100px) { .inicio-franja { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.inicio-cifra {
+  width: 100%; height: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: var(--e4) var(--e5); border: 0; background: var(--superficie);
+  font: inherit; text-align: left; color: var(--texto); cursor: pointer;
+  transition: background-color 160ms var(--curva);
+}
+.inicio-cifra:hover { background: var(--superficie-hundida); }
+.inicio-cifra:focus-visible { outline: 2px solid var(--foco); outline-offset: -4px; }
+.inicio-cifra:active { background: var(--superficie-seleccion); }
+.inicio-cifra[aria-expanded="true"] { background: var(--superficie-seleccion); box-shadow: inset 0 -3px 0 var(--indicador-seleccion); }
+.inicio-cifra-titulo { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--texto-suave); }
+.inicio-cifra-valor { font-size: var(--t-cifra); font-weight: 600; line-height: 1.2; color: var(--texto-titulo); }
+.inicio-cifra-detalle { font-size: var(--t-etiqueta); color: var(--texto-suave); }
+.inicio-variacion { display: inline-flex; align-items: baseline; gap: 2px; font-size: var(--t-etiqueta); font-weight: 600; }
+/* El icono se centra en el renglón; el texto marca la línea base, para alinearse con la frase. */
+.inicio-variacion svg { align-self: center; }
+.inicio-variacion[data-tono="buena"] { color: var(--estado-ok-texto); }
+.inicio-variacion[data-tono="mala"] { color: var(--texto-error); }
+.inicio-variacion[data-tono="neutra"] { color: var(--texto-suave); }
+.inicio-tendencia { display: block; flex: none; width: 100%; height: 36px; margin-top: auto; }
+.inicio-cifra > .inicio-variacion + .inicio-cifra-detalle { margin-bottom: var(--e2); }
+.inicio-tendencia svg { display: block; overflow: visible; }
+.inicio-tendencia path { fill: none; stroke: var(--serie-1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.inicio-tendencia .inicio-tendencia-en-curso { stroke-dasharray: 3 3; }
+.inicio-tendencia circle { fill: var(--superficie); stroke: var(--serie-1); stroke-width: 2; }
+/* Al cambiar el período, las cifras de antes quedan atenuadas hasta que llegan las nuevas. */
+.inicio-cifras-marco[data-cargando] { opacity: .55; transition: opacity 160ms var(--curva); }
+
+/* La serie abierta de una cifra. */
+.inicio-serie { display: grid; gap: var(--e3); }
+.inicio-serie-cabeza { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--e3); }
+.inicio-serie-cabeza h2 { font-size: var(--t-titulo); color: var(--texto-titulo); }
+.inicio-serie-resumen { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--e1); margin-top: var(--e1); font-size: var(--t-menor); color: var(--texto-suave); }
+.inicio-serie-resumen strong { font-size: var(--t-seccion); color: var(--texto-titulo); }
+.inicio-serie-formula { max-width: 75ch; margin-top: var(--e1); font-size: var(--t-menor); color: var(--texto-suave); }
+
+/* El gráfico: un eje, rejilla de hilo, líneas de 2 px y la cruz que sigue al cursor. */
+.grafico { display: grid; gap: var(--e2); }
+.grafico-leyenda { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--e4); font-size: var(--t-menor); color: var(--texto); }
+.grafico-leyenda li { display: inline-flex; align-items: center; gap: var(--e2); }
+.grafico-clave { display: inline-block; width: 16px; height: 3px; border-radius: 2px; }
+.grafico-clave-en-curso { background: linear-gradient(90deg, var(--texto-suave) 50%, transparent 0) 0 0 / 6px 3px; }
+.grafico-lienzo { position: relative; border-radius: var(--r-tarjeta); }
+.grafico-lienzo:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+.grafico-lienzo svg { display: block; max-width: 100%; overflow: visible; }
+.grafico-rejilla { stroke: var(--borde); stroke-width: 1; }
+.grafico-eje { fill: var(--texto-suave); font-size: var(--t-etiqueta); font-variant-numeric: tabular-nums; }
+.grafico-eje-anio { font-weight: 700; }
+.grafico-cruz { stroke: var(--borde-control); stroke-width: 1; }
+.grafico-linea { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.grafico-linea-en-curso { stroke-dasharray: 4 4; }
+.grafico-punto { fill: currentColor; stroke: var(--superficie); stroke-width: 2; }
+.grafico-punto-en-curso { fill: var(--superficie); stroke: currentColor; }
+.grafico-zona { fill: transparent; cursor: crosshair; }
+.grafico-tooltip {
+  position: absolute; top: 0; transform: translateX(-50%); z-index: var(--capa-menu);
+  display: grid; gap: 2px; min-width: 160px; padding: var(--e2) var(--e3);
+  background: var(--superficie); border-radius: var(--r-tarjeta); box-shadow: var(--sombra-3);
+  font-size: var(--t-menor); color: var(--texto-suave); pointer-events: none;
+}
+.grafico-tooltip-mes { font-size: var(--t-etiqueta); font-weight: 700; color: var(--texto-titulo); }
+.grafico-tooltip-fila { display: flex; align-items: center; gap: var(--e2); }
+.grafico-tooltip-fila strong { color: var(--texto-titulo); }
+.grafico-nota { display: flex; align-items: center; gap: var(--e2); font-size: var(--t-etiqueta); color: var(--texto-suave); }
+.grafico-datos summary { width: fit-content; min-height: 32px; display: flex; align-items: center; font-size: var(--t-menor); font-weight: 600; color: var(--texto-enlace); cursor: pointer; }
+.grafico-datos summary:hover { color: var(--texto-enlace-hover); }
+.grafico-datos[open] summary { margin-bottom: var(--e2); }
+
+/* Debajo: la línea y, desde 1000 px de contenido, su columna al lado. */
+.inicio-cuerpo { display: grid; gap: var(--e4); align-items: start; }
+@container (min-width: 1000px) { .inicio-cuerpo { grid-template-columns: minmax(0, 1fr) 400px; gap: var(--e5); } }
+.inicio-cuerpo > * { min-width: 0; }
+.inicio-columna { display: grid; gap: var(--e4); align-content: start; }
+.inicio-columna > * { min-width: 0; }
+.inicio-panel-titulo { margin-bottom: var(--e3); font-family: var(--fuente); font-size: var(--t-seccion); font-weight: 600; color: var(--texto-titulo); }
+.inicio-panel-cabeza { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e3); }
+
+/* La línea del día: marina (no es un plan), con las estaciones del sistema. */
+.inicio-linea { list-style: none; margin: 0; padding: 0; }
+.inicio-parada, .inicio-linea-hoy { position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: var(--e4); }
+.inicio-parada::before, .inicio-linea-hoy::before { content: ""; position: absolute; left: 8px; top: 0; bottom: 0; width: 8px; background: var(--ruta-recorrida); }
+.inicio-linea > :first-child::before { top: 24px; border-radius: var(--r-pastilla) var(--r-pastilla) 0 0; }
+.inicio-linea > :last-child::before { bottom: auto; height: 24px; border-radius: 0 0 var(--r-pastilla) var(--r-pastilla); }
+.inicio-parada-punto {
+  position: relative; z-index: var(--capa-elevada);
+  width: 24px; height: 24px; margin-top: var(--e3);
+  display: grid; place-items: center;
+  border: 4px solid var(--ruta-recorrida); border-radius: var(--r-pastilla);
+  background: var(--superficie); color: var(--peligro-accion-texto);
+}
+.inicio-parada[data-estado="vencida"] .inicio-parada-punto { border-color: var(--peligro-accion-fondo); background: var(--peligro-accion-fondo); }
+.inicio-parada[data-estado="proxima"] .inicio-parada-punto { box-shadow: 0 0 0 3px var(--indicador-seleccion); }
+.inicio-parada-cuerpo { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--e2) var(--e4); min-width: 0; padding-block: var(--e3); }
+.inicio-parada-cuerpo > div { min-width: 0; flex: 1 1 16rem; }
+.inicio-parada + .inicio-parada .inicio-parada-cuerpo { border-top: 1px solid var(--borde); }
+.inicio-parada-cuerpo h3 { min-height: 24px; padding-top: 2px; font-size: var(--t-cuerpo); font-weight: 600; line-height: 1.4; color: var(--texto-titulo); }
+.inicio-parada[data-estado="vencida"] h3 { color: var(--texto-error); }
+.inicio-parada-hora { margin-right: var(--e2); white-space: nowrap; }
+.inicio-parada-cuerpo p { font-size: var(--t-menor); color: var(--texto-suave); }
+.inicio-linea-hoy { align-items: center; padding-block: var(--e3); }
+.inicio-linea-hoy-marca { position: relative; z-index: var(--capa-elevada); width: 24px; height: 4px; border-radius: 2px; background: var(--texto-titulo); }
+.inicio-linea-hoy > span:last-child { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--texto-titulo); }
+@container (max-width: 520px) {
+  .inicio-parada-cuerpo > .btn { flex: 1 0 100%; }
+  .inicio-parada-cuerpo > .btn-primario { min-height: 48px; font-size: var(--t-seccion); }
+}
+
+/* Servicios completados por tipo: barras de 12 px con la cifra en la punta. */
+.inicio-barras { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e3); }
+.inicio-barras li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--e1) var(--e3); align-items: center; font-size: var(--t-menor); }
+.inicio-barra-nombre { grid-column: 1 / -1; color: var(--texto); }
+.inicio-barra-pista { height: 12px; }
+.inicio-barra-valor { display: block; height: 100%; min-width: 2px; border-radius: 0 4px 4px 0; background: var(--serie-1); }
+.inicio-barra-cifra { min-width: 3ch; text-align: right; font-weight: 700; color: var(--texto-titulo); }
+
+/* Las tareas del médico. */
+.inicio-tareas { list-style: none; margin: 0; padding: 0; }
+.inicio-tareas li { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); padding-block: var(--e3); border-top: 1px solid var(--borde); }
+.inicio-tareas li:first-child { border-top: 0; }
+.inicio-tareas strong { display: block; font-size: var(--t-cuerpo); color: var(--texto-titulo); }
+.inicio-tareas span { font-size: var(--t-menor); color: var(--texto-suave); }
 
 .filtros { display: flex; flex-wrap: wrap; gap: var(--e2); align-items: center; }
 

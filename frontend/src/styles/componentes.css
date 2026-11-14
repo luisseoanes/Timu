@@ -457,13 +457,6 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 .subtitulo { font-size: var(--t-cuerpo); margin-bottom: var(--e3); }
 
 /* Barras horizontales de una sola serie: un tono, valor rotulado, sin leyenda. */
-.barras { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e2); }
-.barra { display: grid; grid-template-columns: minmax(120px, 30%) 1fr auto; gap: var(--e3); align-items: center; font-size: var(--t-menor); }
-.barra-etiqueta { color: var(--texto); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.barra-pista { height: 12px; border-radius: 0 4px 4px 0; background: var(--pista); }
-.barra-valor { display: block; height: 100%; min-width: 2px; border-radius: 0 4px 4px 0; background: var(--serie-1); }
-.barra:hover .barra-valor { background: var(--accion-suave-texto); }
-.barra-cifra { color: var(--texto-titulo); font-weight: 700; min-width: 3ch; text-align: right; }
 a.fila { color: inherit; }
 a.fila:hover strong { color: var(--texto-enlace); }
 a.acceso { text-decoration: none; }

@@ -1,32 +1,33 @@
-import { useState } from 'react'
+import * as Menu from '@radix-ui/react-dropdown-menu'
+import type { UseQueryResult } from '@tanstack/react-query'
+import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
-import { Distintivo, Insignia } from '@/components/Distintivo'
-import { Icono, type NombreIcono } from '@/components/Icono'
-import { useAuth } from '@/features/auth'
+import { Distintivo } from '@/components/Distintivo'
+import { Icono } from '@/components/Icono'
+import { useAuth, useEquipo } from '@/features/auth'
 import { useCiudades, useNombreTipoServicio } from '@/features/catalogos'
+import { useRutas } from '@/features/rutas'
 import { descargar } from '@/lib/descargas'
 import { mensajeError } from '@/lib/errores'
-import { fecha, fechaHora, hoyISO, moneda, porcentaje } from '@/lib/formato'
+import { diaISO, fecha, fechaCorta, fechaCortaConDia, fechaLarga, hora, hoyISO } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
+import type { Rol } from '@/types'
 
 import {
-  useAlertas,
-  useDefiniciones,
+  useEvolucion,
   useIndicadores,
-  useMisTareas,
+  useMisPendientes,
   useProximosServicios,
+  useVencidos,
   type FiltrosIndicadores,
-  type Indicadores,
+  type ValoresIndicadores,
 } from './api'
-
-const ACCESOS: { icono: NombreIcono; label: string; to: string }[] = [
-  { icono: 'servicios', label: 'Agendar servicio', to: '/servicios?nuevo=1' },
-  { icono: 'clinica', label: 'Historia clínica', to: '/clinica' },
-  { icono: 'rutas', label: 'Rutas del día', to: '/rutas' },
-  { icono: 'familias', label: 'Familias', to: '/familias' },
-]
+import { CIFRAS, contraQue, ordenCifras, primerNombre, type CodigoCifra } from './cifras'
+import { FranjaCifras } from './FranjaCifras'
+import { GraficoSerie } from './GraficoSerie'
+import { LineaDelDia, type Estacion } from './LineaDelDia'
 
 type Periodo = 'mes' | '30' | 'trimestre' | 'anio'
 
@@ -50,49 +51,62 @@ function rango(periodo: Periodo): { desde: string; hasta: string } {
   return { desde: restarDias(hoy, periodo === '30' ? 29 : 89), hasta: hoy }
 }
 
-export function DashboardPage() {
+function plural(n: number, uno: string, varios: string): string {
+  return `${n} ${n === 1 ? uno : varios}`
+}
+
+/** Espera a varias consultas a la vez: la línea se arma con todas o avisa del fallo. */
+function Todas({ consultas, cargando, error, children }: { consultas: UseQueryResult[]; cargando: string; error: string; children: () => ReactNode }) {
+  const fallida = consultas.find((c) => c.isError)
+  if (fallida) {
+    return (
+      <Consulta consulta={fallida} cargando={cargando} error={error}>
+        {() => null}
+      </Consulta>
+    )
+  }
+  const pendiente = consultas.find((c) => c.isPending)
+  if (pendiente) {
+    return (
+      <Consulta consulta={pendiente} cargando={cargando} error={error}>
+        {() => null}
+      </Consulta>
+    )
+  }
+  return <>{children()}</>
+}
+
+function Saludo({ resumen, children }: { resumen: string; children?: ReactNode }) {
   const { usuario } = useAuth()
-  const nombre = usuario?.nombre?.split(' ')[0] ?? ''
-  const gerencial = puede(usuario, 'verIndicadores')
-
+  const dia = fechaLarga(hoyISO())
   return (
-    <div className="con-rail">
-      <div className="pila">
-        <section className="bienvenida">
-          <h2>Hola {nombre}</h2>
-          <p className="apagado">
-            {gerencial
-              ? 'Así va la operación: afiliaciones, recaudo, rutas y satisfacción del período.'
-              : 'Tu jornada: próximas visitas y las tareas que tienes asignadas.'}
-          </p>
-        </section>
-
-        <nav className="accesos" aria-label="Accesos rápidos">
-          {ACCESOS.map((a) => (
-            <Link className="acceso" to={a.to} key={a.label}>
-              <Icono nombre={a.icono} />
-              {a.label}
-            </Link>
-          ))}
-        </nav>
-
-        {gerencial ? <PanelGerencial /> : <MisTareas />}
+    <header className="inicio-cabeza">
+      <div>
+        <h1>Hola, {primerNombre(usuario?.nombre)}</h1>
+        <p>
+          {dia.charAt(0).toUpperCase() + dia.slice(1)} · {resumen}
+        </p>
       </div>
-
-      <aside className="rail">
-        <ProximosServicios />
-        {gerencial && <RequiereAtencion />}
-      </aside>
-    </div>
+      {children}
+    </header>
   )
 }
 
-function PanelGerencial() {
+export function DashboardPage() {
+  const { usuario } = useAuth()
+  return puede(usuario, 'verIndicadores') ? <InicioEquipo rol={usuario?.rol} /> : <InicioMedico />
+}
+
+// --- Equipo: cifras del período y el día de la operación ---------------------------------------
+
+function InicioEquipo({ rol }: { rol: Rol | undefined }) {
   const [periodo, setPeriodo] = useState<Periodo>('mes')
   const [ciudad, setCiudad] = useState('')
+  const [abierta, setAbierta] = useState<CodigoCifra | null>(null)
   const ciudades = useCiudades()
   const filtros: FiltrosIndicadores = { ...rango(periodo), ciudad: ciudad || undefined }
   const indicadores = useIndicadores(filtros)
+  const evolucion = useEvolucion(filtros)
   const [errorDescarga, setErrorDescarga] = useState<string | null>(null)
 
   async function exportar(formato: 'csv' | 'xlsx') {
@@ -105,231 +119,350 @@ function PanelGerencial() {
   }
 
   return (
-    <section className="tarjeta" aria-labelledby="titulo-indicadores">
-      <div className="tarjeta-cabeza">
-        <h3 id="titulo-indicadores">Indicadores</h3>
-        <span className="apagado numero">
-          {fecha(filtros.desde)} – {fecha(filtros.hasta)}
-        </span>
-      </div>
-      <div className="filtros" style={{ marginBottom: 'var(--e4)' }}>
-        <select
-          className="input"
-          style={{ width: 'auto' }}
-          value={periodo}
-          onChange={(e) => setPeriodo(e.target.value as Periodo)}
-          aria-label="Período"
-        >
-          {PERIODOS.map((p) => (
-            <option key={p.valor} value={p.valor}>{p.label}</option>
-          ))}
-        </select>
-        <select
-          className="input"
-          style={{ width: 'auto' }}
-          value={ciudad}
-          onChange={(e) => setCiudad(e.target.value)}
-          aria-label="Ciudad"
-        >
-          <option value="">Todas las ciudades</option>
-          {ciudades.data?.map((c) => (
-            <option key={c.codigo} value={c.nombre}>{c.nombre}</option>
-          ))}
-        </select>
-        <div className="acciones" style={{ marginLeft: 'auto' }}>
-          <button className="btn btn-suave" type="button" onClick={() => exportar('xlsx')}>
-            <Icono nombre="descargar" size={16} /> Excel
-          </button>
-          <button className="btn btn-plano" type="button" onClick={() => exportar('csv')}>
-            CSV
-          </button>
+    <div className="inicio">
+      <Saludo
+        resumen={`cifras del ${fechaCorta(filtros.desde)} al ${fechaCorta(filtros.hasta)}${contraQue(evolucion.data) ? `, ${contraQue(evolucion.data)}` : ''}`}
+      >
+        <div className="inicio-filtros">
+          <select className="input" value={periodo} onChange={(e) => setPeriodo(e.target.value as Periodo)} aria-label="Período">
+            {PERIODOS.map((p) => (
+              <option key={p.valor} value={p.valor}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+          <select className="input" value={ciudad} onChange={(e) => setCiudad(e.target.value)} aria-label="Ciudad">
+            <option value="">Todas las ciudades</option>
+            {ciudades.data?.map((c) => (
+              <option key={c.codigo} value={c.nombre}>
+                {c.nombre}
+              </option>
+            ))}
+          </select>
+          <Menu.Root>
+            <Menu.Trigger className="btn btn-suave">
+              <Icono nombre="descargar" size={16} /> Descargar
+              <Icono nombre="abajo" size={16} />
+            </Menu.Trigger>
+            <Menu.Portal>
+              <Menu.Content className="menu" align="end" sideOffset={6}>
+                <Menu.Item className="menu-item" onSelect={() => void exportar('xlsx')}>
+                  Excel (.xlsx)
+                </Menu.Item>
+                <Menu.Item className="menu-item" onSelect={() => void exportar('csv')}>
+                  CSV (.csv)
+                </Menu.Item>
+              </Menu.Content>
+            </Menu.Portal>
+          </Menu.Root>
         </div>
-      </div>
+      </Saludo>
       {errorDescarga && (
         <p className="error" role="alert">
           {errorDescarga}
         </p>
       )}
-      <Consulta consulta={indicadores} cargando="Calculando indicadores…" error="No fue posible calcular los indicadores.">
-        {(d) => <TableroIndicadores datos={d} />}
-      </Consulta>
-    </section>
-  )
-}
 
-function TableroIndicadores({ datos }: { datos: Indicadores }) {
-  const i = datos.indicadores
-  const definiciones = useDefiniciones()
-  const formula = (codigo: string) => definiciones.data?.find((d) => d.codigo === codigo)?.formula
-
-  const tiles: { codigo: string; titulo: string; valor: string; detalle?: string }[] = [
-    { codigo: 'afiliaciones', titulo: 'Afiliaciones', valor: String(i.afiliaciones), detalle: `${i.retiros} retiros` },
-    { codigo: 'vigentes', titulo: 'Afiliados vigentes', valor: String(i.vigentes) },
-    {
-      codigo: 'recaudo',
-      titulo: 'Recaudo',
-      valor: moneda(i.recaudo),
-      detalle: `${porcentaje(i.recaudo_del_facturado)} de ${moneda(i.facturado)} facturado`,
-    },
-    {
-      codigo: 'mora',
-      titulo: 'En mora',
-      valor: String(i.mora.contratos_en_mora),
-      detalle: `${porcentaje(i.mora.porcentaje)} · ${moneda(i.mora.saldo_vencido)} vencido`,
-    },
-    {
-      codigo: 'cumplimiento_rutas',
-      titulo: 'Cumplimiento de rutas',
-      valor: porcentaje(i.cumplimiento_rutas.cumplimiento),
-      detalle: `${i.cumplimiento_rutas.paradas_completadas} de ${i.cumplimiento_rutas.paradas_planeadas} paradas · puntualidad ${porcentaje(i.cumplimiento_rutas.puntualidad)}`,
-    },
-    {
-      codigo: 'satisfaccion',
-      titulo: 'Satisfacción',
-      valor: i.satisfaccion.promedio === null ? '—' : `${i.satisfaccion.promedio.toFixed(1)} / 5`,
-      detalle: `${i.satisfaccion.respondidas} de ${i.satisfaccion.enviadas} encuestas · respuesta ${porcentaje(i.satisfaccion.tasa_respuesta)}`,
-    },
-  ]
-
-  const tipos = Object.entries(i.servicios_por_tipo).sort((a, b) => b[1] - a[1])
-  const maximo = Math.max(1, ...tipos.map(([, n]) => n))
-
-  return (
-    <div className="pila">
-      <div className="indicadores">
-        {tiles.map((t) => (
-          <div className="indicador" key={t.codigo} title={formula(t.codigo)}>
-            <span className="indicador-titulo">{t.titulo}</span>
-            <strong className="indicador-valor numero">{t.valor}</strong>
-            {t.detalle && <span className="indicador-detalle">{t.detalle}</span>}
-          </div>
-        ))}
+      <div className="inicio-cifras-marco" data-cargando={indicadores.isPlaceholderData || undefined}>
+        <Consulta consulta={indicadores} cargando="Calculando las cifras del período…" error="No fue posible calcular las cifras.">
+          {(d) => (
+            <FranjaCifras
+              orden={ordenCifras(rol)}
+              indicadores={d.indicadores}
+              evolucion={evolucion}
+              abierta={abierta}
+              onAbrir={setAbierta}
+            />
+          )}
+        </Consulta>
       </div>
 
-      <div>
-        <h4 className="subtitulo">Servicios completados por tipo</h4>
-        {tipos.length === 0 ? (
-          <p className="apagado">No hay servicios completados en el período.</p>
-        ) : (
-          <ul className="barras" aria-label="Servicios completados por tipo">
-            {tipos.map(([tipo, n]) => (
-              <li key={tipo} className="barra" title={`${tipo}: ${n} servicios`}>
-                <span className="barra-etiqueta">{tipo}</span>
-                <span className="barra-pista">
-                  <span className="barra-valor" style={{ width: `${(n / maximo) * 100}%` }} />
-                </span>
-                <span className="barra-cifra numero">{n}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+      <div className="inicio-cuerpo">
+        <section className="inicio-panel" aria-labelledby="inicio-dia-titulo">
+          <h2 id="inicio-dia-titulo" className="inicio-panel-titulo">
+            Hoy en la operación
+          </h2>
+          <LineaEquipo rol={rol} />
+        </section>
+        <div className="inicio-columna">
+          {/* Sale de la misma consulta que la franja: si falla, el aviso ya está arriba. */}
+          {!indicadores.isError && (
+            <section className="inicio-panel" aria-labelledby="inicio-tipos-titulo">
+              <h2 id="inicio-tipos-titulo" className="inicio-panel-titulo">
+                Servicios completados por tipo
+              </h2>
+              <Consulta consulta={indicadores} cargando="Contando los servicios…" error="No fue posible contar los servicios.">
+                {(d) => <ServiciosPorTipo valores={d.indicadores} />}
+              </Consulta>
+            </section>
+          )}
+          {/* Con la serie de Recaudo abierta arriba, este gráfico sería el mismo dos veces. */}
+          {abierta !== 'recaudo' && (
+          <section className="inicio-panel" aria-labelledby="inicio-recaudo-titulo">
+            <h2 id="inicio-recaudo-titulo" className="inicio-panel-titulo">
+              Recaudo contra lo facturado
+            </h2>
+            <Consulta consulta={evolucion} cargando="Calculando la serie…" error="No fue posible calcular la serie.">
+              {(d) => (
+                <GraficoSerie titulo="Recaudo contra lo facturado" meses={d.meses} series={CIFRAS.recaudo.series} escala="moneda" compacto />
+              )}
+            </Consulta>
+          </section>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-function ProximosServicios() {
-  const servicios = useProximosServicios(hoyISO())
+type Vencido = 'mora' | 'preventivos' | 'tareas'
+
+/** Cada perfil ve primero lo vencido de su área. */
+function ordenVencidos(rol: Rol | undefined): Vencido[] {
+  return rol === 'operaciones' ? ['preventivos', 'tareas', 'mora'] : ['mora', 'tareas', 'preventivos']
+}
+
+function LineaEquipo({ rol }: { rol: Rol | undefined }) {
+  const hoy = hoyISO()
+  const vencidos = useVencidos()
+  const servicios = useProximosServicios(hoy)
   const nombreTipo = useNombreTipoServicio()
+  const equipo = useEquipo('medico')
+  const medico = (id: string | null) => (id && equipo.data?.find((m) => m.id === id)?.nombre) || 'sin médico asignado'
+
   return (
-    <section className="tarjeta">
-      <div className="tarjeta-cabeza">
-        <h3>Próximos servicios</h3>
-        <Link to="/servicios">Ver todos</Link>
-      </div>
-      <Consulta
-        consulta={servicios}
-        cargando="Cargando servicios…"
-        error="No fue posible cargar los servicios."
-        vacio="No hay servicios agendados desde hoy."
-        estaVacio={(d) => d.items.length === 0}
-      >
-        {(d) =>
-          d.items.map((s) => (
-            <Link className="fila" key={s.id} to={`/servicios/${s.id}`}>
-              <span className="fila-icono">
-                <Icono nombre="servicios" size={18} />
-              </span>
-              <div className="fila-cuerpo">
-                <strong>{nombreTipo(s.tipo_codigo)}</strong>
-                <span>{s.ciudad}</span>
-              </div>
-              <div className="fila-lado">{fechaHora(s.programado_para)}</div>
-            </Link>
-          ))
+    <Todas consultas={[vencidos, servicios]} cargando="Revisando el día…" error="No fue posible revisar el día.">
+      {() => {
+        const { mora, preventivos, tareas } = vencidos.data!
+        const antes: Estacion[] = []
+        const despues: Estacion[] = []
+        for (const clave of ordenVencidos(rol)) {
+          if (clave === 'mora' && mora.total > 0) {
+            antes.push({
+              clave,
+              estado: 'vencida',
+              titulo: plural(mora.total, 'contrato en mora', 'contratos en mora'),
+              detalle: mora.primero && `El más atrasado: ${mora.primero.titular}, ${plural(mora.primero.dias_mora, 'día', 'días')}`,
+              accion: { texto: 'Ver la mora', to: '/cartera?mora=1' },
+            })
+          }
+          if (clave === 'tareas' && tareas.total > 0) {
+            antes.push({
+              clave,
+              estado: 'vencida',
+              titulo: plural(tareas.total, 'tarea vencida', 'tareas vencidas'),
+              detalle: tareas.primero && `${tareas.primero.titulo}${tareas.primero.vence_el ? ` · venció el ${fechaCorta(tareas.primero.vence_el)}` : ''}`,
+              accion: { texto: 'Ver las tareas', to: '/tareas?vencidas=1' },
+            })
+          }
+          if (clave === 'preventivos' && preventivos.total > 0) {
+            // Por autorizar no es vencido mientras su fecha no haya pasado: entonces va después de hoy.
+            const atrasado = Boolean(preventivos.primero && preventivos.primero.fecha_programada < hoy)
+            ;(atrasado ? antes : despues).push({
+              clave,
+              estado: atrasado ? 'vencida' : 'proxima',
+              titulo: plural(preventivos.total, 'preventivo por autorizar', 'preventivos por autorizar'),
+              detalle: preventivos.primero && `El primero, programado para el ${fechaCorta(preventivos.primero.fecha_programada)}`,
+              accion: { texto: 'Autorizar', to: '/preventivos?autorizacion=1' },
+            })
+          }
         }
-      </Consulta>
-    </section>
+        const { items, total } = servicios.data!
+        const ahora = new Date().toISOString()
+        const deHoy = items.filter((s) => s.programado_para && diaISO(s.programado_para) === hoy)
+        // Lo agendado para hoy cuya hora ya pasó no es «lo siguiente»: va antes de Hoy, sin atender.
+        const sinAtender = deHoy.filter((s) => s.programado_para! < ahora)
+        if (sinAtender.length > 0) {
+          antes.push({
+            clave: 'sin-atender',
+            estado: 'vencida',
+            titulo: plural(sinAtender.length, 'servicio de hoy sin atender', 'servicios de hoy sin atender'),
+            detalle: `El primero estaba para las ${hora(sinAtender[0].programado_para)}`,
+            accion: { texto: 'Ver los servicios', to: '/servicios' },
+          })
+        }
+        for (const s of deHoy.filter((s) => s.programado_para! >= ahora)) {
+          despues.push({
+            clave: s.id,
+            estado: despues.length === 0 ? 'proxima' : 'futura',
+            hora: hora(s.programado_para),
+            titulo: nombreTipo(s.tipo_codigo),
+            detalle: `${s.ciudad} · ${medico(s.profesional_id)}`,
+            accion: { texto: 'Ver', to: `/servicios/${s.id}`, secundaria: true },
+          })
+        }
+        // Los días siguientes, uno por estación: cuántos servicios y de qué.
+        const porDia = new Map<string, typeof items>()
+        for (const s of items) {
+          const dia = s.programado_para ? diaISO(s.programado_para) : null
+          if (dia && dia > hoy) porDia.set(dia, [...(porDia.get(dia) ?? []), s])
+        }
+        for (const [dia, delDia] of porDia) {
+          const tipos = [...new Set(delDia.map((s) => nombreTipo(s.tipo_codigo)))]
+          despues.push({
+            clave: dia,
+            estado: despues.length === 0 ? 'proxima' : 'futura',
+            hora: fechaCortaConDia(dia),
+            titulo: plural(delDia.length, 'servicio agendado', 'servicios agendados'),
+            detalle: tipos.join(' · '),
+            accion: { texto: 'Ver la agenda', to: '/servicios', secundaria: true },
+          })
+        }
+        if (total > items.length) {
+          despues.push({
+            clave: 'mas-servicios',
+            estado: 'futura',
+            titulo: `Y ${plural(total - items.length, 'servicio agendado más', 'servicios agendados más')}`,
+            accion: { texto: 'Ver la agenda', to: '/servicios', secundaria: true },
+          })
+        }
+        return (
+          <LineaDelDia
+            etiqueta="El día de la operación"
+            hoy={hoy}
+            antes={antes}
+            despues={despues}
+            cierre="No hay servicios agendados desde hoy. Los que se agenden aparecerán aquí."
+          />
+        )
+      }}
+    </Todas>
   )
 }
 
-function RequiereAtencion() {
-  const alertas = useAlertas()
+function ServiciosPorTipo({ valores }: { valores: ValoresIndicadores }) {
+  const nombreTipo = useNombreTipoServicio()
+  const tipos = Object.entries(valores.servicios_por_tipo).sort((a, b) => b[1] - a[1])
+  const maximo = Math.max(1, ...tipos.map(([, n]) => n))
+  if (tipos.length === 0) return <p className="apagado">Ningún servicio se completó en el período.</p>
   return (
-    <section className="tarjeta">
-      <div className="tarjeta-cabeza">
-        <h3>Requiere atención</h3>
+    <ul className="inicio-barras">
+      {tipos.map(([tipo, n]) => (
+        <li key={tipo}>
+          <span className="inicio-barra-nombre">{nombreTipo(tipo)}</span>
+          <span className="inicio-barra-pista" aria-hidden="true">
+            <span className="inicio-barra-valor" style={{ width: `${(n / maximo) * 100}%` }} />
+          </span>
+          <span className="inicio-barra-cifra numero">{n}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+// --- Médico: su jornada ------------------------------------------------------------------------
+
+function InicioMedico() {
+  return (
+    <div className="inicio">
+      <Saludo resumen="tu jornada" />
+      <div className="inicio-cuerpo">
+        <section className="inicio-panel" aria-labelledby="inicio-dia-titulo">
+          <h2 id="inicio-dia-titulo" className="inicio-panel-titulo">
+            Tu jornada
+          </h2>
+          <LineaMedico />
+        </section>
+        <MisTareas />
       </div>
-      <Consulta consulta={alertas} cargando="Revisando pendientes…" error="No fue posible revisar los pendientes.">
-        {(a) => (
-          <>
-            <Alerta to="/cartera?mora=1" icono="cartera" titulo="Contratos en mora" cantidad={a.enMora} />
-            <Alerta to="/preventivos?autorizacion=1" icono="preventivos" titulo="Preventivos por autorizar" cantidad={a.preventivosPorAutorizar} />
-            <Alerta to="/tareas?vencidas=1" icono="tareas" titulo="Tareas vencidas" cantidad={a.tareasVencidas} />
-          </>
+    </div>
+  )
+}
+
+function LineaMedico() {
+  const { usuario } = useAuth()
+  const hoy = hoyISO()
+  const pendientes = useMisPendientes()
+  const rutas = useRutas(hoy, { responsable: usuario?.id })
+  const nombreTipo = useNombreTipoServicio()
+
+  return (
+    <Todas consultas={[pendientes, rutas]} cargando="Revisando tu jornada…" error="No fue posible revisar tu jornada.">
+      {() => {
+        const { borradores, vencidas } = pendientes.data!
+        const antes: Estacion[] = []
+        if (borradores.length > 0) {
+          const antigua = borradores.map((b) => b.fecha).sort()[0]
+          antes.push({
+            clave: 'borradores',
+            estado: 'vencida',
+            titulo: plural(borradores.length, 'consulta sin firmar', 'consultas sin firmar'),
+            detalle: `La más antigua es del ${fechaCorta(antigua)}`,
+            accion: { texto: 'Firmar las consultas', to: '/clinica' },
+          })
+        }
+        if (vencidas.total > 0) {
+          antes.push({
+            clave: 'tareas',
+            estado: 'vencida',
+            titulo: plural(vencidas.total, 'tarea vencida', 'tareas vencidas'),
+            detalle: vencidas.primero?.titulo,
+            accion: { texto: 'Ver las tareas', to: '/tareas?vencidas=1' },
+          })
+        }
+        const paradas = (rutas.data ?? [])
+          .filter((r) => r.estado !== 'cancelada')
+          .flatMap((r) => r.paradas)
+          .sort((a, b) => a.orden - b.orden)
+        const faltan = paradas.filter((p) => p.estado !== 'completada' && p.estado !== 'omitida')
+        const despues: Estacion[] = faltan.map((p, i) => ({
+          clave: p.id,
+          estado: i === 0 ? 'proxima' : 'futura',
+          hora: p.llegada_estimada ? hora(p.llegada_estimada) : undefined,
+          titulo: p.mascota ? `${nombreTipo(p.tipo_codigo)} · ${p.mascota.nombre}` : nombreTipo(p.tipo_codigo),
+          detalle: [p.familia.titular_nombre, p.familia.barrio ?? p.familia.direccion].filter(Boolean).join(' · '),
+          accion: i === 0 ? { texto: 'Abrir mi ruta', to: '/rutas' } : undefined,
+        }))
+        const hechas = paradas.length - faltan.length
+        return (
+          <LineaDelDia
+            etiqueta="Tu jornada"
+            hoy={hoy}
+            antes={antes}
+            despues={despues}
+            cierre={
+              paradas.length === 0
+                ? 'No tienes ruta para hoy. Si te asignan una, sus paradas aparecerán aquí.'
+                : `Terminaste tu ruta de hoy: ${plural(hechas, 'parada atendida', 'paradas atendidas')}.`
+            }
+          />
+        )
+      }}
+    </Todas>
+  )
+}
+
+function MisTareas() {
+  const pendientes = useMisPendientes()
+  return (
+    <section className="inicio-panel" aria-labelledby="inicio-tareas-titulo">
+      <div className="inicio-panel-cabeza">
+        <h2 id="inicio-tareas-titulo" className="inicio-panel-titulo">
+          Tus tareas abiertas
+        </h2>
+        <Link to="/tareas">Ver todas</Link>
+      </div>
+      <Consulta
+        consulta={pendientes}
+        cargando="Cargando tus tareas…"
+        error="No fue posible cargar tus tareas."
+        vacio="No tienes tareas abiertas. Las que te asignen aparecerán aquí."
+        estaVacio={(d) => d.abiertas.items.length === 0}
+      >
+        {(d) => (
+          <ul className="inicio-tareas">
+            {d.abiertas.items.map((t) => (
+              <li key={t.id}>
+                <div>
+                  <strong>{t.titulo}</strong>
+                  <span>{t.vence_el ? `Vence el ${fecha(t.vence_el)}` : 'Sin fecha límite'}</span>
+                </div>
+                <Distintivo dominio="prioridad" valor={t.prioridad} />
+              </li>
+            ))}
+          </ul>
         )}
       </Consulta>
     </section>
   )
 }
-
-function Alerta({ to, icono, titulo, cantidad }: { to: string; icono: NombreIcono; titulo: string; cantidad: number }) {
-  return (
-    <Link className="fila" to={to}>
-      <span className="fila-icono">
-        <Icono nombre={icono} size={18} />
-      </span>
-      <div className="fila-cuerpo">
-        <strong>{titulo}</strong>
-      </div>
-      <Insignia tono={cantidad > 0 ? 'alerta' : 'ok'}>
-        {cantidad > 0 ? cantidad : 'Al día'}
-      </Insignia>
-    </Link>
-  )
-}
-
-function MisTareas() {
-  const tareas = useMisTareas()
-  return (
-    <section className="tarjeta">
-      <div className="tarjeta-cabeza">
-        <h3>Mis tareas abiertas</h3>
-        <Link to="/tareas">Ver todas</Link>
-      </div>
-      <Consulta
-        consulta={tareas}
-        cargando="Cargando tareas…"
-        error="No fue posible cargar tus tareas."
-        vacio="No tienes tareas abiertas."
-        estaVacio={(d) => d.items.length === 0}
-      >
-        {(d) =>
-          d.items.map((t) => (
-            <div className="fila" key={t.id}>
-              <span className="fila-icono">
-                <Icono nombre="tareas" size={18} />
-              </span>
-              <div className="fila-cuerpo">
-                <strong>{t.titulo}</strong>
-                <span>{t.vence_el ? `Vence ${fecha(t.vence_el)}` : 'Sin fecha límite'}</span>
-              </div>
-              <Distintivo dominio="prioridad" valor={t.prioridad} />
-            </div>
-          ))
-        }
-      </Consulta>
-    </section>
-  )
-}
-

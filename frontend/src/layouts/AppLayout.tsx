@@ -17,11 +17,13 @@ interface ItemNav {
   end?: boolean
   /** Sin permiso, el módulo no aparece en el menú (el backend respondería 403). */
   permiso?: Accion
+  /** La pantalla escribe su propio h1 (el saludo del Inicio) y la cabecera no se repite. */
+  cabeceraPropia?: boolean
 }
 
 // Un elemento por dominio de la plataforma (sección A de la propuesta).
 const NAV: ItemNav[] = [
-  { to: '/', label: 'Panel', icono: 'panel', end: true, titulo: 'Panel', sub: 'Resumen de la operación' },
+  { to: '/', label: 'Inicio', icono: 'panel', end: true, titulo: 'Inicio', sub: 'Resumen de la operación', cabeceraPropia: true },
   { to: '/familias', label: 'Familias', icono: 'familias', titulo: 'Familias y mascotas', sub: 'Afiliaciones, titulares y mascotas' },
   { to: '/cartera', label: 'Cartera', icono: 'cartera', titulo: 'Cartera', sub: 'Cuotas, mora y renovaciones' },
   { to: '/servicios', label: 'Servicios', icono: 'servicios', titulo: 'Servicios', sub: 'Agenda, autorizaciones y pendientes' },
@@ -37,7 +39,7 @@ const NAV: ItemNav[] = [
 
 /** Los cuatro módulos que cada perfil usa más: van en la barra inferior del celular. */
 const PRINCIPALES: Partial<Record<Rol, string[]>> = {
-  medico: ['/rutas', '/servicios', '/clinica', '/familias'],
+  medico: ['/', '/rutas', '/servicios', '/clinica'],
   operaciones: ['/', '/servicios', '/rutas', '/tareas'],
   comercial: ['/', '/familias', '/comercial', '/tareas'],
   admin: ['/', '/familias', '/cartera', '/servicios'],
@@ -174,10 +176,12 @@ export function AppLayout() {
       </header>
 
       <main className="contenido">
-        <header className="cabecera-pagina">
-          <h1>{actual.titulo}</h1>
-          <p>{actual.sub}</p>
-        </header>
+        {!actual.cabeceraPropia && (
+          <header className="cabecera-pagina">
+            <h1>{actual.titulo}</h1>
+            <p>{actual.sub}</p>
+          </header>
+        )}
         <Outlet />
       </main>
 
