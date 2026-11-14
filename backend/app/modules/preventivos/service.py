@@ -12,9 +12,11 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import acotar_publico
+from app.core.enums import EstadoServicio
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
 from app.modules.archivos import service as archivos
+from app.modules.auth.models import Usuario
 from app.modules.cartera import contratos
 from app.modules.catalogos.models import Especie, EsquemaPreventivo
 from app.modules.comunicaciones import service as comunicaciones
@@ -24,6 +26,7 @@ from app.modules.familias.schemas import MascotaUpdate
 from app.modules.preventivos import documento
 from app.modules.preventivos.models import CarnetEmitido, EventoPreventivo
 from app.modules.servicios import service as servicios
+from app.modules.servicios.models import Servicio, ServicioPaso
 
 logger = structlog.get_logger(__name__)
 
@@ -181,6 +184,11 @@ def autorizar(
     if not aprobado:
         evento.estado = "cancelado"
         evento.motivo_cancelacion = "La familia no autorizo el preventivo"
+    elif evento.servicio_id is not None:
+        # La familia autoriza una vez: su visita ya agendada queda autorizada con el preventivo.
+        servicio = db.get(Servicio, evento.servicio_id)
+        if servicio is not None and servicio.requiere_autorizacion and not servicio.autorizado:
+            servicios.autorizar(db, servicio, usuario_id)
     db.flush()
     return evento
 
@@ -331,9 +339,16 @@ def agenda_diaria(db: Session, dia: date | None = None) -> dict[str, int]:
 
 
 def agendar(
-    db: Session, evento: EventoPreventivo, inicio: datetime, observaciones: str | None = None
+    db: Session,
+    evento: EventoPreventivo,
+    inicio: datetime,
+    observaciones: str | None = None,
+    *,
+    usuario_id: UUID,
 ) -> EventoPreventivo:
-    """Convierte el evento en un servicio agendado contra la disponibilidad real."""
+    """Convierte el evento en un servicio agendado contra la disponibilidad real. Si la familia
+    ya autorizo el preventivo (o no hace falta), la visita nace autorizada: no se le pide dos
+    veces."""
 
     if evento.estado != "programado":
         raise ReglaNegocio("Solo se agenda un preventivo programado")
@@ -352,8 +367,56 @@ def agendar(
         observaciones=observaciones or f"Preventivo: {evento.tipo} dosis {evento.dosis_numero}",
     )
     evento.servicio_id = servicio.id
+    if servicio.requiere_autorizacion and (evento.autorizado or not evento.requiere_autorizacion):
+        servicios.autorizar(db, servicio, evento.autorizado_por_id or usuario_id)
     db.flush()
     return evento
+
+
+def _seguir_servicio(
+    db: Session, servicio: Servicio, anterior: EstadoServicio, destino: EstadoServicio
+) -> None:
+    """El servicio manda (decidido con el usuario en R2-PAN-08): lo que pasa en la visita de un
+    preventivo le pasa al preventivo, sin volver a pedir la autorizacion ni el producto."""
+    evento = db.scalar(
+        select(EventoPreventivo).where(
+            EventoPreventivo.servicio_id == servicio.id, EventoPreventivo.estado == "programado"
+        )
+    )
+    if evento is None:
+        return
+    if destino == EstadoServicio.CANCELADO:
+        # Sin su visita, el preventivo vuelve a estar por agendar.
+        evento.servicio_id = None
+    elif evento.requiere_autorizacion and not evento.autorizado and servicio.autorizado:
+        # Autorizado en la visita: vale para el preventivo.
+        evento.autorizado = True
+        evento.autorizado_por_id = servicio.autorizado_por_id
+        evento.autorizado_en = servicio.autorizado_en
+    if destino == EstadoServicio.COMPLETADO:
+        paso = db.scalar(
+            select(ServicioPaso).where(
+                ServicioPaso.servicio_id == servicio.id, ServicioPaso.paso_codigo == "aplicacion"
+            )
+        )
+        if paso is None or not paso.completado_por_id:
+            return
+        aplicar(
+            db,
+            evento,
+            fecha=hoy(),
+            producto=paso.datos["producto"],
+            lote=paso.datos.get("lote"),
+            usuario_id=paso.completado_por_id,
+            aplicado_por_nombre=db.scalar(
+                select(Usuario.nombre).where(Usuario.id == paso.completado_por_id)
+            ),
+            servicio_id=servicio.id,
+        )
+    db.flush()
+
+
+servicios.conectar_al_cambiar_estado(_seguir_servicio)
 
 
 # --- F2-PRE-05 / 06 Carnet --------------------------------------------------------------------

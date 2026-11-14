@@ -72,11 +72,33 @@ al guardarlo pasa al siguiente, bloquea «Completar» mientras falte alguno obli
 del backend. Esa copia es deuda: ver «Deuda conocida» en
 [`frontend/conventions.md`](frontend/conventions.md).
 
+## La visita de un preventivo es su registro
+
+Decidido con el usuario en `R2-PAN-08`: el servicio manda. La familia autoriza una vez y el
+producto se escribe una vez, en la ficha del servicio.
+
+- **Agendar** un preventivo (`preventivos.agendar`) crea su servicio y lo enlaza
+  (`eventos_preventivos.servicio_id`). Si el preventivo ya está autorizado, o no lo necesita, el
+  servicio nace autorizado.
+- **Autorizar** el preventivo autoriza también su visita, si ya estaba agendada; autorizar la
+  visita (`servicios.autorizar`) autoriza el preventivo.
+- **Completar** la visita aplica el preventivo con el producto y el lote del paso «Aplicación»,
+  la fecha de hoy y quien registró el paso, y programa la dosis siguiente. El carnet lo muestra
+  sin que nadie lo vuelva a escribir.
+- **Cancelar** la visita desenlaza el preventivo, que vuelve a estar por agendar.
+
+Lo hace `_seguir_servicio` (`backend/app/modules/preventivos/service.py`), que servicios llama en
+cada `cambiar_estado`: preventivos importa servicios, así que se lo conecta con
+`servicios.conectar_al_cambiar_estado` al importarse, y sin conectar `cambiar_estado` falla en
+lugar de dejar el preventivo sin aplicar. «Registrar aplicación» en Preventivos queda para lo que
+se aplicó sin visita (en la clínica o fuera).
+
+Dos huecos conocidos: el peso de la desparasitación (`F2-PRE-07`) no está en el paso «Aplicación»,
+así que solo se anota al registrar la aplicación en Preventivos; y una visita preventiva agendada
+desde el portal no se enlaza con ningún preventivo, así que completarla no lo aplica.
+
 ## Lo que queda abierto
 
-- **`R2-PAN-08`** (Cartera y preventivos) rediseña el registro de la aplicación de una vacuna
-  y agenda un preventivo desde la línea de Familias. Es la unidad que debería cerrar la deuda
-  anterior.
 - **El portal** enseña a la familia sus visitas y su historia: cada visita es una estación de
   la línea del inicio (`GET /portal/linea`) y una cita en «Tus citas», con el estado de esta
   tabla dicho con sus palabras («En camino», «En atención»; `estadoDeCita` en

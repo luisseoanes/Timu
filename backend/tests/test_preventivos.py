@@ -232,8 +232,10 @@ async def test_agenda_sin_plantilla_no_marca_como_avisado(db):
     assert pendientes[0].notificado_en is None
 
 
-async def test_agendar_crea_el_servicio(client: AsyncClient, db, headers):
-    dia = HOY + timedelta(days=7)
+DIA_VISITA = HOY + timedelta(days=7)
+
+
+def _franja_preventiva(db, dia: date = DIA_VISITA) -> None:
     db.add(
         Franja(
             ciudad="Cali",
@@ -244,6 +246,11 @@ async def test_agendar_crea_el_servicio(client: AsyncClient, db, headers):
             capacidad=2,
         )
     )
+
+
+async def test_agendar_crea_el_servicio(client: AsyncClient, db, headers):
+    dia = DIA_VISITA
+    _franja_preventiva(db)
     _, mascota = await _cachorro(db)
     evento_id = (await _eventos(db, mascota, "can_rabia"))[0].id
     await db.commit()
@@ -260,6 +267,93 @@ async def test_agendar_crea_el_servicio(client: AsyncClient, db, headers):
         headers=headers,
     )
     assert otra.status_code == 422
+
+
+# --- R2-PAN-08 El servicio manda: la visita de un preventivo es su registro -------------------
+
+
+async def _visita(client: AsyncClient, db, headers, *, autorizado: bool):
+    """Agenda la visita del primer refuerzo de rabia de un cachorro, autorizado o no antes."""
+    _franja_preventiva(db)
+    _, mascota = await _cachorro(db)
+    evento = (await _eventos(db, mascota, "can_rabia"))[0]
+    evento_id = evento.id
+    await db.commit()
+    url = f"/api/v1/preventivos/{evento_id}"
+    if autorizado:
+        await client.post(f"{url}/autorizacion", json={"medio": "whatsapp"}, headers=headers)
+    agendado = await client.post(
+        f"{url}/agendar", json={"inicio": f"{DIA_VISITA}T09:00:00"}, headers=headers
+    )
+    assert agendado.status_code == 200, agendado.text
+    return evento_id, agendado.json()["servicio_id"]
+
+
+async def _evento(client: AsyncClient, headers, evento_id) -> dict:
+    eventos = (await client.get("/api/v1/preventivos", headers=headers)).json()["items"]
+    return next(e for e in eventos if e["id"] == str(evento_id))
+
+
+async def test_la_visita_de_un_preventivo_autorizado_nace_autorizada(
+    client: AsyncClient, db, headers
+):
+    _, servicio_id = await _visita(client, db, headers, autorizado=True)
+    servicio = (await client.get(f"/api/v1/servicios/{servicio_id}", headers=headers)).json()
+    assert (servicio["estado"], servicio["autorizado"]) == ("agendado", True)
+
+
+async def test_autorizar_el_preventivo_autoriza_su_visita(client: AsyncClient, db, headers):
+    evento_id, servicio_id = await _visita(client, db, headers, autorizado=False)
+    url = f"/api/v1/servicios/{servicio_id}"
+    assert (await client.get(url, headers=headers)).json()["estado"] == "pendiente_autorizacion"
+    await client.post(
+        f"/api/v1/preventivos/{evento_id}/autorizacion", json={"medio": "telefono"}, headers=headers
+    )
+    assert (await client.get(url, headers=headers)).json()["estado"] == "agendado"
+
+
+async def test_autorizar_la_visita_autoriza_el_preventivo(client: AsyncClient, db, headers):
+    evento_id, servicio_id = await _visita(client, db, headers, autorizado=False)
+    await client.post(f"/api/v1/servicios/{servicio_id}/autorizar", headers=headers)
+    assert (await _evento(client, headers, evento_id))["autorizado"] is True
+
+
+async def test_completar_la_visita_aplica_el_preventivo(client: AsyncClient, db, headers):
+    evento_id, servicio_id = await _visita(client, db, headers, autorizado=True)
+    await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    medico = await login(client, "vet@timu.co")
+    url = f"/api/v1/servicios/{servicio_id}"
+    await client.post(f"{url}/estado", json={"estado": "en_atencion"}, headers=medico)
+    await client.put(
+        f"{url}/pasos/aplicacion",
+        json={"datos": {"producto": "Rabisin", "lote": "R-77"}},
+        headers=medico,
+    )
+    completado = await client.post(f"{url}/estado", json={"estado": "completado"}, headers=medico)
+    assert completado.status_code == 200, completado.text
+
+    evento = await _evento(client, headers, evento_id)
+    assert evento["estado"] == "aplicado"
+    assert (evento["producto"], evento["lote"]) == ("Rabisin", "R-77")
+    assert (evento["fecha_aplicacion"], evento["aplicado_por_nombre"]) == (str(HOY), "vet")
+    # Y la siguiente dosis queda programada desde hoy, como al aplicarlo en Preventivos.
+    assert evento["proxima_fecha"] == str(HOY + timedelta(days=365))
+
+
+async def test_cancelar_la_visita_deja_el_preventivo_por_agendar(client: AsyncClient, db, headers):
+    evento_id, servicio_id = await _visita(client, db, headers, autorizado=True)
+    await client.post(
+        f"/api/v1/servicios/{servicio_id}/estado",
+        json={"estado": "cancelado", "motivo": "La familia viaja"},
+        headers=headers,
+    )
+    assert (await _evento(client, headers, evento_id))["servicio_id"] is None
+    otra = await client.post(
+        f"/api/v1/preventivos/{evento_id}/agendar",
+        json={"inicio": f"{DIA_VISITA}T10:00:00"},
+        headers=headers,
+    )
+    assert otra.status_code == 200, otra.text
 
 
 # --- F2-PRE-05 / 06 Carnet --------------------------------------------------------------------

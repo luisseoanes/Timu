@@ -98,6 +98,10 @@ Reglas que atraviesan todo el backend:
 - **`tareas` no importa `servicios`** (que crea tareas): `servicios/service.py` le conecta al
   importarse cómo describir sus servicios (`tareas.conectar_servicios`) para nombrar cada tarea
   de la bandeja; sin conectar, el listado falla.
+- **`servicios` no importa `preventivos`** (que agenda sus visitas): `preventivos/service.py` le
+  conecta al importarse qué hacer cuando la visita de un preventivo se autoriza, se completa o se
+  cancela (`servicios.conectar_al_cambiar_estado`, ver `docs/flujo-de-la-visita.md`); sin
+  conectar, `cambiar_estado` falla.
 - **Las cadenas que la API devuelve para mostrarse tal cual llevan tildes** (nombres y fórmulas
   de `dashboard/definiciones`); la regla de evitarlas es para docstrings y comentarios. Los
   mensajes de error aún no las llevan: es deuda, no la norma.

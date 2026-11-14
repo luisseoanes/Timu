@@ -1,5 +1,6 @@
 """6.5 / 6.6 / 6.10 Programacion de servicios, elegibilidad, estados y pendientes."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from typing import Any
@@ -454,8 +455,26 @@ def cambiar_estado(
     aplicar(db, servicio, destino, actor_id=actor_id)
     servicio.motivo_estado = motivo
     db.flush()
+    if _al_cambiar_estado is None:
+        # Sin conectar, completar una vacuna dejaria su preventivo sin aplicar sin avisar.
+        raise RuntimeError("servicios sin conectar: falta conectar_al_cambiar_estado()")
+    _al_cambiar_estado(db, servicio, anterior, destino)
     _disparadores(db, servicio, anterior, destino)
     return servicio
+
+
+# --- Lo que sigue al servicio en otro dominio ---------------------------------------------------
+# preventivos importa servicios (agenda sus visitas), asi que servicios no puede importar
+# preventivos: preventivos le conecta, al importar preventivos/service.py (que la API y el
+# worker cargan siempre), lo que hace cuando su servicio se autoriza, se completa o se cancela.
+AlCambiarEstado = Callable[[Session, Servicio, EstadoServicio, EstadoServicio], None]
+
+_al_cambiar_estado: AlCambiarEstado | None = None
+
+
+def conectar_al_cambiar_estado(seguir: AlCambiarEstado) -> None:
+    global _al_cambiar_estado
+    _al_cambiar_estado = seguir
 
 
 def _disparadores(

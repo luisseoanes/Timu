@@ -153,11 +153,15 @@ async def aplicar(
     )
 
 
-@router.post("/{evento_id}/agendar", response_model=EventoRead, dependencies=[EQUIPO])
-async def agendar(db: DbSession, evento_id: UUID, data: AgendarIn) -> EventoPreventivo:
+@router.post("/{evento_id}/agendar", response_model=EventoRead)
+async def agendar(
+    db: DbSession, usuario: Equipo, evento_id: UUID, data: AgendarIn
+) -> EventoPreventivo:
     """F2-PRE-04 Convierte el evento en un servicio agendado contra la disponibilidad real."""
     evento = await db.run_sync(service.obtener, evento_id)
-    return await db.run_sync(service.agendar, evento, data.inicio, data.observaciones)
+    return await db.run_sync(
+        lambda s: service.agendar(s, evento, data.inicio, data.observaciones, usuario_id=usuario.id)
+    )
 
 
 @router.post("/{evento_id}/cancelacion", response_model=EventoRead, dependencies=[EQUIPO])
