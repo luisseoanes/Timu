@@ -8,7 +8,6 @@ import type {
   ContactoRead,
   DocumentoRead,
   EstadoAfiliacion,
-  EstadoCuenta,
   FamiliaRead,
   LineaFamiliaRead,
   MensajeRead,
@@ -104,19 +103,6 @@ export function useHistorial(id: string) {
   })
 }
 
-/** El estado de cuenta responde 404 cuando la familia aún no tiene contrato: no es un error. */
-export function useEstadoCuenta(familiaId: string) {
-  return useQuery({
-    queryKey: ['cartera', 'estado-cuenta', familiaId],
-    queryFn: async () => {
-      const { data, status } = await api.get<EstadoCuenta>(
-        `/cartera/familias/${familiaId}/estado-cuenta`,
-        { validateStatus: (s) => s === 200 || s === 404 },
-      )
-      return status === 404 ? null : data
-    },
-  })
-}
 
 function useInvalidarFamilias() {
   const qc = useQueryClient()

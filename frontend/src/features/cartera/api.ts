@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { ContratoListado, Page, PagoRead } from '@/types'
+import type { ContratoListado, EstadoCuenta, Page, PagoRead } from '@/types'
 
 export type MedioPago = 'efectivo' | 'transferencia' | 'consignacion' | 'datafono' | 'otro'
 
@@ -29,6 +29,20 @@ export function useContratos(filtros: FiltrosCartera = {}) {
     queryKey: ['cartera', 'contratos', filtros],
     queryFn: async () =>
       (await api.get<Page<ContratoListado>>('/cartera/contratos', { params: filtros })).data,
+  })
+}
+
+/** El estado de cuenta responde 404 cuando la familia aún no tiene contrato: no es un error. */
+export function useEstadoCuenta(familiaId: string) {
+  return useQuery({
+    queryKey: ['cartera', 'estado-cuenta', familiaId],
+    queryFn: async () => {
+      const { data, status } = await api.get<EstadoCuenta>(
+        `/cartera/familias/${familiaId}/estado-cuenta`,
+        { validateStatus: (s) => s === 200 || s === 404 },
+      )
+      return status === 404 ? null : data
+    },
   })
 }
 

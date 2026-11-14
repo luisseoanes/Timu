@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { FotoEditable } from '@/components/FotoEditable'
 import { Modal } from '@/components/Modal'
+import { useEstadoCuenta } from '@/features/cartera'
 import { mensajeError } from '@/lib/errores'
 import { mesEnCurso, moneda } from '@/lib/formato'
 import type { FamiliaRead, MascotaRead } from '@/types'
@@ -10,7 +11,6 @@ import type { FamiliaRead, MascotaRead } from '@/types'
 import {
   useActualizarMascota,
   useCambiarPlanMascota,
-  useEstadoCuenta,
   useQuitarFotoMascota,
   useResumenServicios,
   useSubirFotoMascota,

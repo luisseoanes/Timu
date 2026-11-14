@@ -1,9 +1,9 @@
 import { Insignia } from '@/components/Distintivo'
+import { useEstadoCuenta } from '@/features/cartera'
 import { useEspecies } from '@/features/catalogos'
 import { edad, fecha, moneda } from '@/lib/formato'
 import type { FamiliaRead, PlanDeFamiliaRead } from '@/types'
 
-import { useEstadoCuenta } from './api'
 
 /** Los peludos de la familia con su plan, siempre a la vista bajo la línea (contrato del panel). */
 export function ResumenMascotas({ familia, planes }: { familia: FamiliaRead; planes: PlanDeFamiliaRead[] }) {

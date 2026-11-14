@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom'
 import { Consulta } from '@/components/Consulta'
 import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
+import { nombreCuota, porPagar, saldoDe } from '@/features/cartera'
 import { descargar } from '@/lib/descargas'
 import { mensajeError } from '@/lib/errores'
 import { estadoCuota } from '@/lib/estados'
@@ -12,7 +13,7 @@ import { diaISO, fechaCortaConDia, moneda } from '@/lib/formato'
 
 import { useMiCuenta, useMiPlan, useMisPagos, usePagarPortal } from './api'
 import { alPagar } from './plan'
-import { avisoDelPago, nombreCuota, porPagar, saldoDe } from './pagos'
+import { avisoDelPago } from './pagos'
 
 /**
  * R3-POR-02 Los pagos de la familia: cuánto debe y el único verde para pagarlo todo, cada cuota
