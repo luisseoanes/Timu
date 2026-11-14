@@ -29,7 +29,7 @@ test.describe('equipo', () => {
   test('una ventana abierta queda por encima de la línea y de las barras', async ({ page }) => {
     // En el celular la ficha de una mascota es una hoja que sube desde abajo sobre la línea.
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto('/')
+    // Sin cargar antes el Inicio: la sesión del setup sigue vigente y cada pantalla gasta cupo.
     const familias = await (await page.request.get('/api/v1/familias', { params: { q: 'Ana Ruiz' } })).json()
     await page.goto(`/familias/${familias.items[0].id}`)
     await expect(page.locator('.parada-punto').first()).toBeVisible()
@@ -80,7 +80,6 @@ test.describe('equipo', () => {
   test('la ficha de familia tiene una sola acción verde llena en cada pestaña', async ({ page }) => {
     // Manual de marca, sección 11, regla 2: un solo botón principal por vista.
     await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/')
     // Una familia con próxima estación: su ficha lleva ya la acción verde de la cabecera, y
     // cualquier otra verde en una pestaña sería la segunda.
     const { items } = await (await page.request.get('/api/v1/familias', { params: { limit: 50 } })).json()
@@ -102,8 +101,7 @@ test.describe('equipo', () => {
   })
 
   test('la foto de una mascota se sube y su URL firmada abre desde el navegador', async ({ page }) => {
-    await page.goto('/')
-    // `page.request` comparte las cookies de la sesión del navegador.
+    // `page.request` comparte las cookies de la sesión del navegador, sin cargar ninguna pantalla.
     const familias = await (await page.request.get('/api/v1/familias', { params: { q: 'Ana Ruiz' } })).json()
     const mascota = familias.items[0].mascotas[0]
     // PNG de 1×1: el backend valida el tipo por contenido, no por extensión.
