@@ -198,6 +198,34 @@ async def test_traza_por_familia(client: AsyncClient, db, headers):
     assert traza.json()["total"] == 1
 
 
+async def test_el_equipo_no_lee_los_tokens_de_los_enlaces_de_un_solo_uso(
+    client: AsyncClient, db, headers
+):
+    # El correo de activacion lleva un token vigente: quien lo leyera en la traza de mensajes
+    # podria activar la cuenta de la familia. El enlace de la encuesta lleva el suyo en la ruta.
+    token = "o9Q7QXYNTJeYPgM00-6dYXtBj6c2"
+    db.add(
+        Mensaje(
+            canal="email",
+            direccion="saliente",
+            destino="ana@example.com",
+            asunto="Activa tu cuenta de TIMU",
+            contenido=(
+                f"Usa este enlace: {settings.FRONTEND_URL}/activar?token={token}&x=1 "
+                f"o califica: {settings.FRONTEND_URL}/encuesta/{token}"
+            ),
+            estado="enviado",
+        )
+    )
+    await db.commit()
+    [mensaje] = (await client.get("/api/v1/comunicaciones/mensajes", headers=headers)).json()[
+        "items"
+    ]
+    assert token not in mensaje["contenido"]
+    assert "/activar?token=[oculto]&x=1" in mensaje["contenido"]
+    assert mensaje["contenido"].endswith("/encuesta/[oculto]")
+
+
 # --- F1-WHA-02 Webhook: estados y entrantes ---------------------------------------------------
 
 

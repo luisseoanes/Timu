@@ -1,12 +1,18 @@
+import re
 from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from app.core.validaciones import TelefonoCO
 
 EstadoAprobacion = Literal["borrador", "enviada", "aprobada", "rechazada", "pausada"]
+
+# Los correos de activacion, restablecimiento y afiliacion llevan un token de un solo uso en el
+# enlace, y la encuesta lo lleva en la ruta: quien leyera la traza podria usarlo antes que su
+# destinatario.
+_TOKEN_EN_ENLACE = re.compile(r"([?&]token=|/encuesta/)[^&/?\s]+")
 
 
 class PlantillaCreate(BaseModel):
@@ -76,6 +82,11 @@ class MensajeRead(BaseModel):
     entregado_en: datetime | None
     leido_en: datetime | None
     created_at: datetime
+
+    @field_validator("contenido")
+    @classmethod
+    def _sin_tokens(cls, contenido: str | None) -> str | None:
+        return contenido and _TOKEN_EN_ENLACE.sub(r"\1[oculto]", contenido)
 
 
 class BajaCreate(BaseModel):
