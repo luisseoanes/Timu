@@ -1209,6 +1209,7 @@ _LISTADOS = (
     "/api/v1/comercial/interesados",
     "/api/v1/rutas?fecha=2026-11-05",
     "/api/v1/dashboard/indicadores?desde=2026-10-01&hasta=2026-10-31",
+    "/api/v1/dashboard/evolucion?desde=2026-10-01&hasta=2026-10-31",
     "/api/v1/preventivos",
     "/api/v1/clinica/borradores",
 )

@@ -21,6 +21,20 @@ opcionalmente, una ciudad. Los resultados se cachean cinco minutos.
 | `servicios_por_tipo` | Servicios completados por tipo | Servicios en estado completado, agendados dentro del periodo, por tipo. | servicios |
 | `satisfaccion` | Satisfaccion | Promedio de puntaje (1 a 5) de encuestas de satisfaccion respondidas que se enviaron en el periodo; tasa de respuesta = respondidas / enviadas. | puntaje |
 
+## Evolución
+
+`GET /api/v1/dashboard/evolucion` (mismos filtros que los indicadores) devuelve:
+
+- `meses`: los 12 meses que terminan en el mes de `hasta`, cada uno calculado con las mismas
+  fórmulas y la misma caché. El último llega hasta `hasta`; si el mes aún no termina va con
+  `parcial: true`, y el panel lo marca como en curso.
+- `anterior`: el período con el que se compara el elegido. Si empieza el primer día de un mes
+  (o de un año) y no sale de él, el mismo tramo del mes (o del año) anterior: del 1 al 13 de
+  noviembre se compara con del 1 al 13 de octubre. Si no, los mismos días justo antes.
+
+Por eso la mora es histórica: si contara el estado de hoy, un mes pasado cuya cuota se pagó
+después saldría sin mora en la serie.
+
 ## Exportables y reportes
 
 - `GET /api/v1/dashboard/indicadores?formato=csv|xlsx` descarga cualquier consulta.

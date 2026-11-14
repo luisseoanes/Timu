@@ -95,6 +95,8 @@ const PETICIONES = {
     [1, 'consulta', 'encuestas', () => '/encuestas'],
     [1, 'consulta', 'interesados', () => '/comercial/interesados'],
     [1, 'dashboard', 'dashboard', () => `/dashboard/indicadores?desde=${desde}&hasta=${hasta}`],
+    // El Inicio pide las cifras y su serie de 12 meses a la vez: la serie es 13 calculos.
+    [1, 'dashboard', 'evolucion', () => `/dashboard/evolucion?desde=${desde}&hasta=${hasta}`],
   ],
   portal: [
     [1, 'consulta', 'portal: mi familia', () => '/portal/mi-familia'],

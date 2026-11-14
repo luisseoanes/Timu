@@ -22,6 +22,7 @@ from app.core.enums import EstadoAfiliacion, EstadoServicio
 from app.core.errores import ReglaNegocio
 from app.core.tiempo import ZONA_NEGOCIO
 from app.modules.cartera.models import AplicacionPago, Contrato, Cuota, EstadoCuota, Pago
+from app.modules.cartera.periodos import sumar_meses
 from app.modules.encuestas.models import Encuesta
 from app.modules.familias.models import Familia
 from app.modules.rutas.models import ParadaRuta, Ruta
@@ -351,6 +352,53 @@ def calcular(
     return {
         "periodo": {"desde": desde, "hasta": hasta, "ciudad": ciudad},
         "indicadores": cache.memorizar(clave, CACHE_SEGUNDOS, _todo),
+    }
+
+
+# --- Evolucion: el mismo calculo por tramos, para las series del panel ------------------------
+
+MESES = 12
+
+
+def _fin_de_mes(dia: date) -> date:
+    return sumar_meses(dia.replace(day=1), 1) - timedelta(days=1)
+
+
+def tramos(hasta: date) -> list[tuple[date, date]]:
+    """Los 12 meses que terminan en el mes de `hasta`; el ultimo llega hasta `hasta`."""
+    primero = hasta.replace(day=1)
+    inicios = [sumar_meses(primero, -n) for n in range(MESES - 1, -1, -1)]
+    return [(d, min(_fin_de_mes(d), hasta)) for d in inicios]
+
+
+def periodo_comparable(desde: date, hasta: date) -> tuple[date, date]:
+    """Con que se compara el periodo: el mismo tramo del mes (o del ano) anterior si el periodo
+    empieza el primer dia de un mes (o de un ano) y no sale de el; si no, los mismos dias
+    justo antes."""
+    if desde == date(desde.year, 1, 1) and hasta.year == desde.year:
+        return sumar_meses(desde, -12), sumar_meses(hasta, -12)
+    if desde.day == 1 and (hasta.year, hasta.month) == (desde.year, desde.month):
+        return sumar_meses(desde, -1), sumar_meses(hasta, -1)
+    dias = (hasta - desde).days + 1
+    return desde - timedelta(days=dias), desde - timedelta(days=1)
+
+
+def evolucion(
+    db: Session,
+    desde: date,
+    hasta: date,
+    ciudad: str | None = None,
+    codigos: list[str] | None = None,
+) -> dict[str, Any]:
+    """Los indicadores mes a mes durante 12 meses y en el periodo comparable. Cada tramo pasa
+    por `calcular`, asi que comparte su formula y su cache. Un mes `parcial` aun no termina."""
+    periodo(desde, hasta, ciudad)
+    return {
+        "anterior": calcular(db, *periodo_comparable(desde, hasta), ciudad, codigos),
+        "meses": [
+            {**calcular(db, d, h, ciudad, codigos), "parcial": h < _fin_de_mes(d)}
+            for d, h in tramos(hasta)
+        ],
     }
 
 

@@ -74,6 +74,18 @@ async def indicadores(
     )
 
 
+@router.get("/evolucion", dependencies=[GERENCIA])
+async def evolucion(
+    db: DbSession,
+    desde: date,
+    hasta: date,
+    ciudad: str | None = None,
+    codigos: Annotated[list[str] | None, Query()] = None,
+) -> dict[str, Any]:
+    """Indicadores mes a mes durante 12 meses y en el periodo comparable (series del panel)."""
+    return await db.run_sync(service.evolucion, desde, hasta, ciudad, codigos)
+
+
 @router.get("/reportes", response_model=list[ReporteRead], dependencies=[ADMIN])
 async def reportes(db: DbSession) -> list[ReporteProgramado]:
     return list(await db.scalars(select(ReporteProgramado).order_by(ReporteProgramado.nombre)))

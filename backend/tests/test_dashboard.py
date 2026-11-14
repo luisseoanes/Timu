@@ -222,6 +222,75 @@ async def test_exporta_csv_y_excel(client: AsyncClient, db, operacion, headers):
     assert "Afiliaciones" in valores
 
 
+# --- Evolucion: series del panel ----------------------------------------------------------------
+
+
+def test_doce_meses_que_terminan_en_el_periodo():
+    meses = service.tramos(date(2026, 11, 13))
+    assert len(meses) == 12
+    assert meses[0] == (date(2025, 12, 1), date(2025, 12, 31))
+    assert meses[1] == (date(2026, 1, 1), date(2026, 1, 31))
+    assert meses[-1] == (date(2026, 11, 1), date(2026, 11, 13))
+
+
+def test_periodo_comparable():
+    # Este mes: el mismo tramo del mes anterior.
+    assert service.periodo_comparable(date(2026, 11, 1), date(2026, 11, 13)) == (
+        date(2026, 10, 1),
+        date(2026, 10, 13),
+    )
+    # Un mes de 31 dias contra uno de 30.
+    assert service.periodo_comparable(date(2026, 12, 1), date(2026, 12, 31)) == (
+        date(2026, 11, 1),
+        date(2026, 11, 30),
+    )
+    # Este ano: el mismo tramo del ano anterior.
+    assert service.periodo_comparable(date(2026, 1, 1), date(2026, 11, 13)) == (
+        date(2025, 1, 1),
+        date(2025, 11, 13),
+    )
+    # Ultimos 30 dias: los 30 dias de antes.
+    assert service.periodo_comparable(date(2026, 10, 15), date(2026, 11, 13)) == (
+        date(2026, 9, 15),
+        date(2026, 10, 14),
+    )
+
+
+async def test_evolucion_por_la_api(client: AsyncClient, db, operacion, headers):
+    await db.commit()
+    resp = await client.get(
+        "/api/v1/dashboard/evolucion",
+        params={"desde": str(DESDE), "hasta": str(HASTA), "codigos": ["afiliaciones", "vigentes"]},
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    datos = resp.json()
+    meses = datos["meses"]
+    assert len(meses) == 12
+    assert meses[-1]["periodo"]["hasta"] == str(HOY)
+    assert [m["parcial"] for m in meses[:-1]] == [False] * 11
+    assert sum(m["indicadores"]["afiliaciones"] for m in meses) == 3
+    assert meses[-1]["indicadores"]["vigentes"] == 2  # la de Bogota se retiro
+    assert set(datos["anterior"]["indicadores"]) == {"afiliaciones", "vigentes"}
+
+    invalido = await client.get(
+        "/api/v1/dashboard/evolucion",
+        params={"desde": str(HASTA), "hasta": str(DESDE)},
+        headers=headers,
+    )
+    assert invalido.status_code == 422
+
+
+async def test_el_medico_no_ve_la_evolucion(client: AsyncClient, db):
+    await crear_usuario(db, "vet2@timu.co", Rol.MEDICO)
+    resp = await client.get(
+        "/api/v1/dashboard/evolucion",
+        params={"desde": str(DESDE), "hasta": str(HASTA)},
+        headers=await login(client, "vet2@timu.co"),
+    )
+    assert resp.status_code == 403
+
+
 def test_periodo_anterior():
     lunes = date(2026, 10, 19)
     assert reportes.periodo_anterior("semanal", lunes) == (date(2026, 10, 12), date(2026, 10, 18))
