@@ -249,50 +249,50 @@ INDICADORES: dict[str, Indicador] = {
         Indicador(
             "afiliaciones",
             "Afiliaciones",
-            "Contratos con fecha de inicio dentro del periodo.",
+            "Contratos con fecha de inicio dentro del período.",
             "contratos",
             afiliaciones,
         ),
         Indicador(
             "retiros",
             "Retiros",
-            "Contratos cancelados con fecha de fin dentro del periodo.",
+            "Contratos cancelados con fecha de fin dentro del período.",
             "contratos",
             retiros,
         ),
         Indicador(
             "vigentes",
             "Afiliados vigentes al cierre",
-            "Contratos iniciados hasta el fin del periodo y sin fecha de fin anterior a el.",
+            "Contratos iniciados hasta el fin del período y sin fecha de fin anterior a él.",
             "contratos",
             vigentes,
         ),
         Indicador(
             "recaudo",
             "Recaudo",
-            "Suma de pagos aprobados con fecha de pago dentro del periodo (cualquier medio).",
+            "Suma de pagos aprobados con fecha de pago dentro del período (cualquier medio).",
             "COP",
             recaudo,
         ),
         Indicador(
             "facturado",
             "Facturado",
-            "Suma del valor de las cuotas (no anuladas) que vencen dentro del periodo.",
+            "Suma del valor de las cuotas (no anuladas) que vencen dentro del período.",
             "COP",
             facturado,
         ),
         Indicador(
             "recaudo_del_facturado",
             "Recaudo sobre lo facturado",
-            "Valor pagado de las cuotas que vencen en el periodo / valor de esas cuotas.",
-            "proporcion",
+            "Valor pagado de las cuotas que vencen en el período / valor de esas cuotas.",
+            "proporción",
             recaudo_del_facturado,
         ),
         Indicador(
             "mora",
             "Mora al cierre",
-            "Contratos vigentes con al menos una cuota vencida sin pagar al fin del periodo "
-            "(lo pagado despues del cierre cuenta como pendiente ese dia); porcentaje sobre "
+            "Contratos vigentes con al menos una cuota vencida sin pagar al fin del período "
+            "(lo pagado después del cierre cuenta como pendiente ese día); porcentaje sobre "
             "vigentes y saldo vencido total.",
             "contratos / COP",
             mora,
@@ -300,23 +300,23 @@ INDICADORES: dict[str, Indicador] = {
         Indicador(
             "cumplimiento_rutas",
             "Cumplimiento de rutas",
-            "Paradas completadas / paradas planeadas en rutas no canceladas del periodo; "
-            "puntualidad: completadas con llegada hasta 30 min despues de la estimada.",
-            "proporcion",
+            "Paradas completadas / paradas planeadas en rutas no canceladas del período; "
+            "puntualidad: completadas con llegada hasta 30 min después de la estimada.",
+            "proporción",
             cumplimiento_rutas,
         ),
         Indicador(
             "servicios_por_tipo",
             "Servicios completados por tipo",
-            "Servicios en estado completado, agendados dentro del periodo, por tipo.",
+            "Servicios en estado completado, agendados dentro del período, por tipo.",
             "servicios",
             servicios_por_tipo,
         ),
         Indicador(
             "satisfaccion",
-            "Satisfaccion",
-            "Promedio de puntaje (1 a 5) de encuestas de satisfaccion respondidas que se "
-            "enviaron en el periodo; tasa de respuesta = respondidas / enviadas.",
+            "Satisfacción",
+            "Promedio de puntaje (1 a 5) de encuestas de satisfacción respondidas que se "
+            "enviaron en el período; tasa de respuesta = respondidas / enviadas.",
             "puntaje",
             satisfaccion,
         ),

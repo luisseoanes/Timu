@@ -10,16 +10,16 @@ opcionalmente, una ciudad. Los resultados se cachean cinco minutos.
 
 | Código | Indicador | Fórmula | Unidad |
 | --- | --- | --- | --- |
-| `afiliaciones` | Afiliaciones | Contratos con fecha de inicio dentro del periodo. | contratos |
-| `retiros` | Retiros | Contratos cancelados con fecha de fin dentro del periodo. | contratos |
-| `vigentes` | Afiliados vigentes al cierre | Contratos iniciados hasta el fin del periodo y sin fecha de fin anterior a el. | contratos |
-| `recaudo` | Recaudo | Suma de pagos aprobados con fecha de pago dentro del periodo (cualquier medio). | COP |
-| `facturado` | Facturado | Suma del valor de las cuotas (no anuladas) que vencen dentro del periodo. | COP |
-| `recaudo_del_facturado` | Recaudo sobre lo facturado | Valor pagado de las cuotas que vencen en el periodo / valor de esas cuotas. | proporcion |
-| `mora` | Mora al cierre | Contratos vigentes con al menos una cuota vencida sin pagar al fin del periodo (lo pagado despues del cierre cuenta como pendiente ese dia); porcentaje sobre vigentes y saldo vencido total. | contratos / COP |
-| `cumplimiento_rutas` | Cumplimiento de rutas | Paradas completadas / paradas planeadas en rutas no canceladas del periodo; puntualidad: completadas con llegada hasta 30 min despues de la estimada. | proporcion |
-| `servicios_por_tipo` | Servicios completados por tipo | Servicios en estado completado, agendados dentro del periodo, por tipo. | servicios |
-| `satisfaccion` | Satisfaccion | Promedio de puntaje (1 a 5) de encuestas de satisfaccion respondidas que se enviaron en el periodo; tasa de respuesta = respondidas / enviadas. | puntaje |
+| `afiliaciones` | Afiliaciones | Contratos con fecha de inicio dentro del período. | contratos |
+| `retiros` | Retiros | Contratos cancelados con fecha de fin dentro del período. | contratos |
+| `vigentes` | Afiliados vigentes al cierre | Contratos iniciados hasta el fin del período y sin fecha de fin anterior a él. | contratos |
+| `recaudo` | Recaudo | Suma de pagos aprobados con fecha de pago dentro del período (cualquier medio). | COP |
+| `facturado` | Facturado | Suma del valor de las cuotas (no anuladas) que vencen dentro del período. | COP |
+| `recaudo_del_facturado` | Recaudo sobre lo facturado | Valor pagado de las cuotas que vencen en el período / valor de esas cuotas. | proporción |
+| `mora` | Mora al cierre | Contratos vigentes con al menos una cuota vencida sin pagar al fin del período (lo pagado después del cierre cuenta como pendiente ese día); porcentaje sobre vigentes y saldo vencido total. | contratos / COP |
+| `cumplimiento_rutas` | Cumplimiento de rutas | Paradas completadas / paradas planeadas en rutas no canceladas del período; puntualidad: completadas con llegada hasta 30 min después de la estimada. | proporción |
+| `servicios_por_tipo` | Servicios completados por tipo | Servicios en estado completado, agendados dentro del período, por tipo. | servicios |
+| `satisfaccion` | Satisfacción | Promedio de puntaje (1 a 5) de encuestas de satisfacción respondidas que se enviaron en el período; tasa de respuesta = respondidas / enviadas. | puntaje |
 
 ## Evolución
 
