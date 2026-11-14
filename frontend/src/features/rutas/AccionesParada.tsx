@@ -7,12 +7,13 @@ import { Modal } from '@/components/Modal'
 import { useAuth } from '@/features/auth'
 import { useTiposServicio } from '@/features/catalogos'
 import { usePasos } from '@/features/servicios'
+import { enlaceWhatsApp } from '@/lib/enlaces'
 import { mensajeError } from '@/lib/errores'
 import { puede } from '@/lib/permisos'
 import type { ParadaRead, RutaRead } from '@/types'
 
 import { useAccionParada, useAccionRuta, useOmitirParada, useSalidaParada } from './api'
-import { comoLlegar, enlaceWhatsApp, laConsultaLosRegistra } from './ruta'
+import { comoLlegar, laConsultaLosRegistra } from './ruta'
 
 /**
  * Lo que se hace con una parada. La de estado es una sola, la que toca (iniciar la ruta, salir

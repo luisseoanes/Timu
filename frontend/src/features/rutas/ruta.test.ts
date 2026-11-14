@@ -9,7 +9,6 @@ import {
   descripcion,
   donde,
   duracion,
-  enlaceWhatsApp,
   laConsultaLosRegistra,
   enRuta,
   estadoEstacion,
@@ -153,9 +152,5 @@ describe('a quién y dónde', () => {
     // Lo decide el catálogo, no los nombres de los campos: un campo nuevo que llene la consulta no
     // obliga a tocar el panel.
     expect(laConsultaLosRegistra([{ ...aplicacion, codigo: 'peso', campos: ['peso'], lo_registra_la_consulta: true }])).toBe(true)
-  })
-
-  it('escribe a WhatsApp sin el «+» del teléfono', () => {
-    expect(enlaceWhatsApp('+57 300 111 2233')).toBe('https://wa.me/573001112233')
   })
 })
