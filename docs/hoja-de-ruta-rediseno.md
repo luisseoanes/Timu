@@ -239,6 +239,14 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 
 ### Lo que quedó de Servicios y Tareas tras cerrar `R2-PAN-05`
 
+- **Fallo abierto: «Editar» un paso ya registrado devuelve 500.** La ficha del servicio ofrece
+  editar un paso registrado, el backend intenta actualizarlo (`completar_paso` en
+  `servicios/service.py`), pero la matriz de RLS solo da leer e insertar en `servicio_pasos` al
+  equipo y la base rechaza el `UPDATE` (`StaleDataError`). Reproducido el 2026-11-14 con una
+  prueba provisional: primer guardado 200, segundo 500. Es anterior a `R2-PAN-05`, que conservó el
+  botón. Falta decidir con el usuario si los pasos registrados son inmutables (quitar «Editar» y
+  responder 409 con un mensaje; es lo que dicen `flujo-de-la-visita.md` y la matriz) o editables
+  (dar `U` en la matriz con su migración de RLS).
 - **El barrido responsive no mide 900 px**: el revisor lo propuso, pero medir un ancho más metería
   en `PENDIENTES` fallos de módulos sin rediseñar, y esa lista solo puede encoger. Esta superficie
   se comprobó a 900 en las capturas del revisor. Se puede añadir en `R4-CIE-01`, cuando

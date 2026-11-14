@@ -36,10 +36,13 @@ La parada y su servicio avanzan juntos. Los grafos los hace cumplir la base
 | Tipos | Pasos | Campos | Dónde se registran |
 | --- | --- | --- | --- |
 | Consulta domiciliaria y clínica | Valoración clínica, Plan y recomendaciones (obligatorios) | `hallazgos`, `recomendaciones` | Al firmar la consulta clínica de la visita. También en el servicio. |
-| Vacunación y desparasitación | Aplicación (obligatorio), Evidencia fotográfica | `producto`, `lote`; la evidencia no tiene campos | En el servicio (`/servicios/:id`, `PasosAtencion`). |
+| Vacunación y desparasitación | Aplicación (obligatorio), Evidencia fotográfica | `producto`, `lote`; la evidencia no tiene campos | En la ficha del servicio (`/servicios/:id`, `FichaServicio`), pensada primero para el celular. |
 
 Un paso registrado no se modifica: ningún perfil del equipo tiene `UPDATE` sobre `servicio_pasos`
-en la matriz de `backend/app/core/permisos_db.py`, solo leerlos e insertarlos.
+en la matriz de `backend/app/core/permisos_db.py`, solo leerlos e insertarlos. **Fallo abierto**:
+la ficha del servicio ofrece «Editar» en un paso registrado y el backend intenta actualizarlo, así
+que la base lo rechaza con un 500. Falta decidir si los pasos son inmutables o editables (ver «Lo
+que quedó de Servicios y Tareas» en la [hoja de ruta](hoja-de-ruta-rediseno.md)).
 
 ## La consulta es el registro de la visita
 
@@ -60,8 +63,10 @@ Decidido con el usuario en `R2-PAN-07` (`docs/hoja-de-ruta-rediseno.md`).
 4. La consulta firmada ofrece «Volver a la ruta», y allí ya aparece «Terminar visita».
 
 **Una vacuna no pasa por la consulta**: su aplicación (producto y lote) no la llena la
-consulta, así que en esos servicios «Registrar la atención» lleva al servicio. El panel lo
-decide con `laConsultaLosRegistra` (`frontend/src/features/rutas/ruta.ts`), que copia la tabla
+consulta, así que en esos servicios «Registrar la atención» lleva a la ficha del servicio con
+`?origen=ruta` (decidido con el usuario en `R2-PAN-05`): la ficha abre en el primer paso que falta,
+al guardarlo pasa al siguiente, bloquea «Completar» mientras falte alguno obligatorio y ofrece
+«Volver a mi ruta». El panel decide adónde lleva el botón con `laConsultaLosRegistra` (`frontend/src/features/rutas/ruta.ts`), que copia la tabla
 del backend. Esa copia es deuda: ver «Deuda conocida» en
 [`frontend/conventions.md`](frontend/conventions.md).
 

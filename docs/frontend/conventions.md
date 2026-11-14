@@ -181,8 +181,9 @@ Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñ
   `.tabla th`, `.ficha dt` y la tabla apilada, y `.08em` en `.resumen h3`, `.linea-hoy-texto`
   e `.indicador-titulo`. Hace falta un token y una sola medida.
 - **Radios escritos a mano**: 3 px en `.marcador-plan`, 4 px en `.esqueleto-linea` y en
-  `.barra-pista`/`.barra-valor`, 2 px en `.linea-hoy-marca` y 6 px en `:focus-visible` (el
-  valor de `--r-campo`).
+  `.inicio-barra-valor`, 2 px en las marcas de Hoy (`.linea-hoy-marca`, `.linea-portal-hoy-marca`,
+  `.inicio-linea-hoy-marca`) y en `.grafico-clave`, y 6 px en `:focus-visible` (el valor de
+  `--r-campo`).
 - **Cortes a 899 y a 900 px mezclados.** A 900 px justos, `.formulario` y `.dos-columnas` ya
   pasan a una columna mientras `.con-ficha` sigue a dos.
 - **`--sombra-1` y `--sombra-2` valen `none`** y siguen referenciados. Es coherente con el
@@ -208,7 +209,9 @@ Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñ
   [`flujo-de-la-visita.md`](../flujo-de-la-visita.md).
 - **`.impeccable/design.json` va por detrás de `DESIGN.md`.** Le faltan «La regla del número
   de casa» y «La regla de la acción de quien recorre» en `narrative.rules`, y el «don't» de las
-  siluetas de la marca. Lo vio el documentador al fusionar el portal (2026-11-13) y no lo tocó
-  porque no se le pidió. Se repara con `/impeccable document` o en `R4-CIE-03`.
+  siluetas de la marca (lo vio el documentador al fusionar el portal, 2026-11-13). Desde el
+  2026-11-14 le faltan también los componentes del Inicio y de Servicios y Tareas, el icono propio
+  de los distintivos y «La regla de las series que se distinguen». El hook de la skill lo avisa en
+  cada edición. Se repara con `/impeccable document` o en `R4-CIE-03`.
 - **Nombres de catálogo sin tildes** («Atencion en clinica aliada», «Vacunacion»): vienen de
   `backend/app/modules/catalogos/datos.py` y se ven en la línea y en los botones.
