@@ -313,6 +313,37 @@ async def test_bandeja_asigna_prioriza_y_cierra(client: AsyncClient, admin, head
     assert otra_vez.status_code == 422
 
 
+async def test_la_bandeja_dice_a_quien_afecta_cada_tarea(client: AsyncClient, db, headers):
+    """R2-PAN-05: el titular de la familia y, si es de un servicio, su tipo y su mascota."""
+    familia_id, luna_id, _ = await _familia_con_servicios(db)
+    servicio_id = await db.scalar(
+        select(Servicio.id).where(Servicio.mascota_id == luna_id).limit(1)
+    )
+    titular = (await db.get(Familia, familia_id)).titular_nombre
+    luna = (await db.get(Mascota, luna_id)).nombre
+    db.add(
+        Tarea(
+            titulo="Autorizar servicio",
+            area="medico",
+            familia_id=familia_id,
+            servicio_id=servicio_id,
+        )
+    )
+    db.add(Tarea(titulo="Revisar la auditoria", area="operaciones"))
+    await db.commit()
+
+    items = (await client.get("/api/v1/tareas", headers=headers)).json()["items"]
+    de_servicio = next(t for t in items if t["titulo"] == "Autorizar servicio")
+    assert de_servicio["familia"] == {"id": str(familia_id), "titular_nombre": titular}
+    assert de_servicio["servicio"] == {
+        "id": str(servicio_id),
+        "tipo_codigo": "consulta_domiciliaria",
+        "mascota_nombre": luna,
+    }
+    suelta = next(t for t in items if t["titulo"] == "Revisar la auditoria")
+    assert suelta["familia"] is None and suelta["servicio"] is None
+
+
 async def test_bandeja_desempata_por_vencimiento_con_las_sin_fecha_al_final(
     client: AsyncClient, headers
 ):

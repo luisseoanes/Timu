@@ -643,3 +643,18 @@ def a_quien_atiende(
         else {}
     )
     return familias, mascotas
+
+
+def describir_para_tareas(db: Session, servicio_ids: set[UUID]) -> dict[UUID, dict[str, Any]]:
+    """El tipo y la mascota de cada servicio, para nombrar las tareas de la bandeja."""
+    filas = db.execute(
+        select(Servicio.id, Servicio.tipo_codigo, Mascota.nombre)
+        .outerjoin(Mascota, Mascota.id == Servicio.mascota_id)
+        .where(Servicio.id.in_(servicio_ids))
+    )
+    return {
+        s.id: {"id": s.id, "tipo_codigo": s.tipo_codigo, "mascota_nombre": s.nombre} for s in filas
+    }
+
+
+tareas.conectar_servicios(describir_para_tareas)

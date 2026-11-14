@@ -47,6 +47,24 @@ class TareaRead(BaseModel):
     created_at: datetime
 
 
+class FamiliaDeTarea(BaseModel):
+    id: UUID
+    titular_nombre: str
+
+
+class ServicioDeTarea(BaseModel):
+    id: UUID
+    tipo_codigo: str
+    mascota_nombre: str | None
+
+
+class TareaListado(TareaRead):
+    """Fila de la bandeja: la tarea con a quien afecta (R2-PAN-05)."""
+
+    familia: FamiliaDeTarea | None
+    servicio: ServicioDeTarea | None
+
+
 class Asignacion(BaseModel):
     usuario_id: UUID | None
 
@@ -55,7 +73,7 @@ class Cierre(BaseModel):
     resolucion: str = Field(min_length=3)
 
 
-@router.get("", response_model=Page[TareaRead])
+@router.get("", response_model=Page[TareaListado])
 async def bandeja(
     db: DbSession,
     usuario: Interno,
@@ -66,7 +84,7 @@ async def bandeja(
     sin_asignar: bool = False,
     vencidas: bool = False,
     familia_id: UUID | None = None,
-) -> Page[TareaRead]:
+) -> Page[TareaListado]:
     """Por defecto: prioridad (alta primero) y luego vencimiento mas cercano."""
     stmt = service.consulta(
         area=area,
@@ -78,7 +96,7 @@ async def bandeja(
     )
     if not params.orden:
         stmt = stmt.order_by(service.ORDEN_PRIORIDAD, Tarea.vence_el.asc().nulls_last())
-    return await paginar(
+    pagina = await paginar(
         db,
         stmt,
         params,
@@ -86,6 +104,24 @@ async def bandeja(
         campos_orden={"vence_el": Tarea.vence_el, "created_at": Tarea.created_at},
         orden_por_defecto="created_at",
         desempate=Tarea.id,
+    )
+    familias, servicios = await db.run_sync(
+        service.a_quien_afecta,
+        {t.familia_id for t in pagina.items if t.familia_id},
+        {t.servicio_id for t in pagina.items if t.servicio_id},
+    )
+    return Page[TareaListado](
+        items=[
+            TareaListado(
+                **t.model_dump(),
+                familia=FamiliaDeTarea(**familias[t.familia_id]) if t.familia_id else None,
+                servicio=ServicioDeTarea(**servicios[t.servicio_id]) if t.servicio_id else None,
+            )
+            for t in pagina.items
+        ],
+        total=pagina.total,
+        limit=pagina.limit,
+        offset=pagina.offset,
     )
 
 

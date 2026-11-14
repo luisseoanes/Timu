@@ -339,6 +339,37 @@ export interface TareaRead {
   created_at: string
 }
 
+export interface TareaListado {
+  id: string
+  titulo: string
+  descripcion: string | null
+  area: string
+  prioridad: string
+  estado: string
+  vence_el: string | null
+  asignada_a_id: string | null
+  familia_id: string | null
+  servicio_id: string | null
+  contrato_id: string | null
+  origen: string | null
+  cerrada_en: string | null
+  resolucion: string | null
+  created_at: string
+  familia: FamiliaDeTarea | null
+  servicio: ServicioDeTarea | null
+}
+
+export interface FamiliaDeTarea {
+  id: string
+  titular_nombre: string
+}
+
+export interface ServicioDeTarea {
+  id: string
+  tipo_codigo: string
+  mascota_nombre: string | null
+}
+
 export interface ServicioRead {
   id: string
   familia_id: string
