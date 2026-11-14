@@ -21,7 +21,7 @@ from app.core import cache
 from app.core.enums import EstadoAfiliacion, EstadoServicio
 from app.core.errores import ReglaNegocio
 from app.core.tiempo import ZONA_NEGOCIO
-from app.modules.cartera.models import Contrato, Cuota, EstadoCuota, Pago
+from app.modules.cartera.models import AplicacionPago, Contrato, Cuota, EstadoCuota, Pago
 from app.modules.encuestas.models import Encuesta
 from app.modules.familias.models import Familia
 from app.modules.rutas.models import ParadaRuta, Ruta
@@ -82,12 +82,16 @@ def retiros(db: Session, p: Periodo) -> int:
     return int(db.scalar(_ciudad(stmt, p, Contrato.familia_id)) or 0)
 
 
-def vigentes(db: Session, p: Periodo) -> int:
-    stmt = select(func.count(Contrato.id)).where(
+def _vigente_al_cierre(p: Periodo) -> Any:
+    return and_(
         Contrato.fecha_inicio <= p.hasta,
         or_(Contrato.fecha_fin.is_(None), Contrato.fecha_fin > p.hasta),
         Contrato.estado.in_((*VIGENTES, EstadoAfiliacion.CANCELADA)),
     )
+
+
+def vigentes(db: Session, p: Periodo) -> int:
+    stmt = select(func.count(Contrato.id)).where(_vigente_al_cierre(p))
     return int(db.scalar(_ciudad(stmt, p, Contrato.familia_id)) or 0)
 
 
@@ -126,10 +130,27 @@ def recaudo_del_facturado(db: Session, p: Periodo) -> float | None:
 
 
 def mora(db: Session, p: Periodo) -> dict[str, Any]:
-    """Foto al cierre del periodo: contratos con alguna cuota vencida sin pagar."""
+    """Foto al cierre del periodo: contratos con alguna cuota vencida sin pagar.
+
+    Lo abonado despues del cierre aun no estaba pagado ese dia: se devuelve al saldo, para
+    que un cierre pasado no dependa de lo que se pago despues (la serie de la evolucion)."""
+    abonado_despues = (
+        select(func.coalesce(func.sum(AplicacionPago.valor), 0))
+        .join(Pago, Pago.id == AplicacionPago.pago_id)
+        .where(
+            AplicacionPago.cuota_id == Cuota.id,
+            func.coalesce(Pago.fecha_pago, Pago.created_at) >= p.fin,
+        )
+        .scalar_subquery()
+    )
+    saldo = Cuota.valor - Cuota.valor_pagado + abonado_despues
     vencidas = (
-        select(Cuota.contrato_id, func.sum(Cuota.valor - Cuota.valor_pagado).label("saldo"))
-        .where(Cuota.estado.in_(EstadoCuota.ABIERTAS), Cuota.fecha_vencimiento < p.hasta)
+        select(Cuota.contrato_id, func.sum(saldo).label("saldo"))
+        .where(
+            Cuota.estado != EstadoCuota.ANULADA,
+            Cuota.fecha_vencimiento < p.hasta,
+            saldo > 0,
+        )
         .group_by(Cuota.contrato_id)
         .subquery()
     )
@@ -137,13 +158,13 @@ def mora(db: Session, p: Periodo) -> dict[str, Any]:
         select(func.count(vencidas.c.contrato_id), func.sum(vencidas.c.saldo))
         .select_from(vencidas)
         .join(Contrato, Contrato.id == vencidas.c.contrato_id)
-        .where(Contrato.estado.in_(VIGENTES))
+        .where(_vigente_al_cierre(p))
     )
-    en_mora, saldo = db.execute(_ciudad(stmt, p, Contrato.familia_id)).one()
+    en_mora, saldo_total = db.execute(_ciudad(stmt, p, Contrato.familia_id)).one()
     base = vigentes(db, p)
     return {
         "contratos_en_mora": int(en_mora or 0),
-        "saldo_vencido": _dinero(saldo),
+        "saldo_vencido": _dinero(saldo_total),
         "porcentaje": round((en_mora or 0) / base, 4) if base else None,
     }
 
@@ -269,8 +290,9 @@ INDICADORES: dict[str, Indicador] = {
         Indicador(
             "mora",
             "Mora al cierre",
-            "Contratos vigentes con al menos una cuota vencida sin pagar al fin del periodo; "
-            "porcentaje sobre vigentes y saldo vencido total.",
+            "Contratos vigentes con al menos una cuota vencida sin pagar al fin del periodo "
+            "(lo pagado despues del cierre cuenta como pendiente ese dia); porcentaje sobre "
+            "vigentes y saldo vencido total.",
             "contratos / COP",
             mora,
         ),

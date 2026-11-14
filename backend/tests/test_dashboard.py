@@ -128,6 +128,40 @@ async def test_mora_al_cierre(db):
     assert i["mora"]["contratos_en_mora"] == 1 and i["mora"]["saldo_vencido"] > 0
 
 
+async def test_la_mora_de_un_cierre_pasado_no_cambia_al_pagar_despues(db):
+    """Una cuota vencida al cierre sigue en mora ese dia aunque se pague despues: si no, la
+    serie de la evolucion mostraria los meses pasados sin mora."""
+    familia, contrato = await fabricas.afiliada(
+        db, HOY - timedelta(days=70), telefono="+573001000011"
+    )
+    await db.run_sync(cartera.generar_cuotas, HOY)
+    cuotas = await db.run_sync(lambda s: cartera.cuotas_abiertas(s, contrato.id))
+    primera = min(cuotas, key=lambda c: c.fecha_vencimiento)
+    cierre = primera.fecha_vencimiento + timedelta(days=1)
+    assert cierre < HOY
+    pasado = service.periodo(cierre - timedelta(days=10), cierre, None)
+
+    antes = await db.run_sync(service.mora, pasado)
+    assert antes["contratos_en_mora"] == 1
+    saldo = sum((c.valor - c.valor_pagado for c in cuotas), Decimal(0))
+    await db.run_sync(
+        lambda s: cartera.registrar_pago_manual(
+            s,
+            familia_id=familia.id,
+            valor=saldo,
+            medio="efectivo",
+            referencia="EF-MORA",
+            fecha_pago=None,
+            cuota_id=None,
+            notas=None,
+            usuario_id=None,
+        )
+    )
+    assert await db.run_sync(service.mora, pasado) == antes
+    hoy = await db.run_sync(service.mora, service.periodo(HOY - timedelta(days=10), HOY, None))
+    assert hoy["contratos_en_mora"] == 0
+
+
 async def test_cache_y_rendimiento(db, operacion):
     inicio = time.perf_counter()
     primera = await _calcular(db)
