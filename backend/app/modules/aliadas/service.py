@@ -6,7 +6,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -151,6 +151,41 @@ def obtener_remision(db: Session, remision_id: UUID) -> RemisionAliada:
     if remision is None:
         raise NoEncontrado("Remision no encontrada")
     return remision
+
+
+def quienes(db: Session, remisiones: list[RemisionAliada]) -> dict[UUID, dict[str, str]]:
+    """El titular, la mascota y la clinica de cada remision, en tres consultas: la bandeja dice de
+    quien es cada una sin pedir una familia por fila."""
+
+    def nombres(columna_id: Any, columna: Any, ids: set[UUID]) -> dict[UUID, str]:
+        if not ids:
+            return {}
+        return dict(
+            db.execute(select(columna_id, columna).where(columna_id.in_(ids))).tuples().all()
+        )
+
+    titulares = nombres(Familia.id, Familia.titular_nombre, {r.familia_id for r in remisiones})
+    mascotas = nombres(Mascota.id, Mascota.nombre, {r.mascota_id for r in remisiones})
+    clinicas = nombres(ClinicaAliada.id, ClinicaAliada.nombre, {r.clinica_id for r in remisiones})
+    return {
+        r.id: {
+            "titular": titulares.get(r.familia_id, ""),
+            "mascota": mascotas.get(r.mascota_id, ""),
+            "clinica": clinicas.get(r.clinica_id, ""),
+        }
+        for r in remisiones
+    }
+
+
+def recuentos(db: Session, clinica_id: UUID | None = None) -> dict[str, int]:
+    """Cuantas remisiones hay en cada estado (las vistas de la bandeja) y en total."""
+
+    stmt = select(RemisionAliada.estado, func.count()).group_by(RemisionAliada.estado)
+    if clinica_id:
+        stmt = stmt.where(RemisionAliada.clinica_id == clinica_id)
+    por_estado = dict(db.execute(stmt).tuples().all())
+    conteo = {e: por_estado.get(e, 0) for e in ("emitida", "utilizada", "anulada")}
+    return {**conteo, "todas": sum(conteo.values())}
 
 
 def anular(db: Session, remision: RemisionAliada, motivo: str, usuario_id: UUID) -> RemisionAliada:

@@ -9,12 +9,13 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Response, status
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field
 from sqlalchemy import select
 
 from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import Rol
 from app.core.errores import Prohibido
+from app.core.tiempo import hoy
 from app.modules.aliadas import service
 from app.modules.aliadas.models import ClinicaAliada, ConvenioAliada, RemisionAliada
 from app.modules.auth.models import Usuario
@@ -101,6 +102,23 @@ class RemisionRead(BaseModel):
     valor_atencion: Decimal | None
     valor_cubierto: Decimal | None
     created_at: datetime
+    # De quien es y adonde va, en la bandeja (GET /remisiones); al emitir o anular no se piden.
+    titular: str | None = None
+    mascota: str | None = None
+    clinica: str | None = None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def vencida(self) -> bool:
+        """Emitida y sin usar pasada su fecha: la clinica ya no la acepta."""
+        return self.estado == "emitida" and self.vence_en < hoy()
+
+
+class RecuentosRemisiones(BaseModel):
+    emitida: int
+    utilizada: int
+    anulada: int
+    todas: int
 
 
 class AnulacionIn(BaseModel):
@@ -194,15 +212,29 @@ async def remisiones(
     clinica_id: UUID | None = None,
     familia_id: UUID | None = None,
     estado: str | None = None,
-) -> list[RemisionAliada]:
-    stmt = select(RemisionAliada).order_by(RemisionAliada.created_at.desc()).limit(500)
+) -> list[RemisionRead]:
+    # Las que estan por usar, por la que vence antes; las demas, de la mas reciente a la antigua
+    # (el id es UUIDv7: ordena por creacion con el indice de la clave primaria).
+    orden = (
+        (RemisionAliada.vence_en, RemisionAliada.id)
+        if estado == "emitida"
+        else (RemisionAliada.id.desc(),)
+    )
+    stmt = select(RemisionAliada).order_by(*orden).limit(500)
     if clinica_id:
         stmt = stmt.where(RemisionAliada.clinica_id == clinica_id)
     if familia_id:
         stmt = stmt.where(RemisionAliada.familia_id == familia_id)
     if estado:
         stmt = stmt.where(RemisionAliada.estado == estado)
-    return list(await db.scalars(stmt))
+    lista = list(await db.scalars(stmt))
+    nombres = await db.run_sync(service.quienes, lista)
+    return [RemisionRead.model_validate(r).model_copy(update=nombres[r.id]) for r in lista]
+
+
+@router.get("/remisiones/recuentos", response_model=RecuentosRemisiones, dependencies=[EQUIPO])
+async def recuentos(db: DbSession, clinica_id: UUID | None = None) -> dict[str, int]:
+    return await db.run_sync(service.recuentos, clinica_id)
 
 
 @router.post("/remisiones/{remision_id}/anulacion", response_model=RemisionRead)

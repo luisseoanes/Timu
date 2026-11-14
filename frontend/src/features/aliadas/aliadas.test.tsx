@@ -31,6 +31,7 @@ const REMISION: RemisionRead = {
   valor_atencion: null,
   valor_cubierto: null,
   created_at: '2026-10-24T10:00:00Z',
+  vencida: false,
 }
 
 describe('AliadasPage', () => {

@@ -3,12 +3,15 @@ liquidacion."""
 
 from datetime import timedelta
 from decimal import Decimal
+from uuid import uuid4
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import update
 
 from app.core.enums import Rol
 from app.core.tiempo import hoy
+from app.modules.aliadas.models import RemisionAliada
 from app.modules.servicios.models import Servicio
 from tests import fabricas
 from tests.conftest import crear_usuario, login
@@ -110,6 +113,41 @@ async def test_remision_valida_y_consume_el_cupo(client, db, headers, escenario)
     )
     assert anulada.json()["estado"] == "anulada"
     assert (await _remitir(client, headers, escenario)).status_code == 201
+
+
+async def test_la_bandeja_dice_de_quien_es_cada_remision_y_cuantas_hay(
+    client, db, headers, escenario
+):
+    remision = (await _remitir(client, headers, escenario)).json()
+    bandeja = await client.get(
+        "/api/v1/aliadas/remisiones", params={"estado": "emitida"}, headers=headers
+    )
+    [fila] = bandeja.json()
+    assert (fila["titular"], fila["clinica"]) == (escenario["titular"], "Clinica Norte")
+    assert fila["mascota"] and fila["vencida"] is False
+
+    # Pasada su fecha sigue emitida, pero la clinica ya no la acepta: la API lo dice.
+    await db.execute(
+        update(RemisionAliada)
+        .where(RemisionAliada.id == remision["id"])
+        .values(vence_en=HOY - timedelta(days=1))
+    )
+    await db.commit()
+    [fila] = (
+        await client.get(
+            "/api/v1/aliadas/remisiones", params={"estado": "emitida"}, headers=headers
+        )
+    ).json()
+    assert fila["vencida"] is True
+
+    recuentos = await client.get("/api/v1/aliadas/remisiones/recuentos", headers=headers)
+    assert recuentos.json() == {"emitida": 1, "utilizada": 0, "anulada": 0, "todas": 1}
+    de_otra = await client.get(
+        "/api/v1/aliadas/remisiones/recuentos",
+        params={"clinica_id": str(uuid4())},
+        headers=headers,
+    )
+    assert de_otra.json()["todas"] == 0
 
 
 async def test_no_se_remite_con_cartera_en_mora(client, db, headers, escenario):

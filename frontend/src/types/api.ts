@@ -729,6 +729,13 @@ export interface RecuentosEmbudo {
   abiertos: number
 }
 
+export interface RecuentosRemisiones {
+  emitida: number
+  utilizada: number
+  anulada: number
+  todas: number
+}
+
 export interface EncuestaRead {
   id: string
   servicio_id: string
@@ -787,6 +794,10 @@ export interface RemisionRead {
   valor_atencion: string | null
   valor_cubierto: string | null
   created_at: string
+  titular?: string | null
+  mascota?: string | null
+  clinica?: string | null
+  vencida: boolean
 }
 
 export interface ReporteRead {
