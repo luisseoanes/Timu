@@ -27,6 +27,11 @@ class ContratoRead(BaseModel):
     medio_aceptacion: str | None
 
 
+class PlanDelContrato(BaseModel):
+    nombre: str
+    color: Literal["verde", "naranja", "azul"]
+
+
 class ContratoListado(BaseModel):
     """Fila del listado de cartera: el contrato con lo que hace falta para gestionarlo."""
 
@@ -36,6 +41,7 @@ class ContratoListado(BaseModel):
     titular: str
     ciudad: str
     plan: str = Field(description="Los planes de sus peludos, separados por comas")
+    planes: list[PlanDelContrato] = Field(description="Los planes de sus peludos, sin repetir")
     estado: str
     periodicidad: Periodicidad
     valor_mensual: Decimal
@@ -43,6 +49,15 @@ class ContratoListado(BaseModel):
     saldo_vencido: Decimal
     dias_mora: int
     fecha_renovacion: date
+    renovable: bool = Field(description="Esta en ventana de renovacion y se puede renovar ya")
+
+
+class RecuentosCartera(BaseModel):
+    """Cuantos contratos hay en cada vista de la bandeja, con los mismos filtros."""
+
+    en_mora: int
+    por_renovar: int
+    todos: int
 
 
 class CuotaRead(BaseModel):

@@ -568,6 +568,36 @@ async def test_listado_de_cartera_los_mas_atrasados_primero(client: AsyncClient,
     assert [c["familia_id"] for c in solo["items"]] == [str(moroso.id)]
 
 
+async def test_la_bandeja_separa_la_mora_de_lo_que_esta_por_renovar(
+    client: AsyncClient, db, headers
+):
+    await fabricas.afiliada(db, hoy(), telefono="+573001000001")
+    moroso, _ = await fabricas.afiliada(db, hoy() - timedelta(days=40), telefono="+573001000002")
+    pronto, contrato = await fabricas.afiliada(db, hoy(), telefono="+573001000003")
+    despues, otro = await fabricas.afiliada(db, hoy(), telefono="+573001000004")
+    await db.run_sync(service.generar_cuotas, hoy())
+    # Dentro de la ventana de 90 dias se puede renovar ya; los demas renuevan en un ano.
+    contrato.fecha_renovacion = hoy() + timedelta(days=30)
+    otro.fecha_renovacion = hoy() + timedelta(days=60)
+    await db.commit()
+
+    recuentos = (await client.get("/api/v1/cartera/contratos/recuentos", headers=headers)).json()
+    assert recuentos == {"en_mora": 1, "por_renovar": 2, "todos": 4}
+
+    por_renovar = (
+        await client.get("/api/v1/cartera/contratos", params={"por_renovar": True}, headers=headers)
+    ).json()["items"]
+    # Los que vencen antes, primero; todos se pueden renovar ya.
+    assert [c["familia_id"] for c in por_renovar] == [str(pronto.id), str(despues.id)]
+    assert all(c["renovable"] for c in por_renovar)
+
+    todos = (await client.get("/api/v1/cartera/contratos", headers=headers)).json()["items"]
+    fila = next(c for c in todos if c["familia_id"] == str(moroso.id))
+    assert fila["renovable"] is False
+    # El plan con el color del catalogo, para pintar su marcador sin deducirlo del nombre.
+    assert fila["planes"] == [{"nombre": fila["plan"], "color": "verde"}]
+
+
 # --- Endpoints de contratos, medios de pago y eventos de la pasarela ---------------------------
 
 

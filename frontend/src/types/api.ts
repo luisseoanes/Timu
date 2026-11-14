@@ -230,6 +230,7 @@ export interface ContratoListado {
   titular: string
   ciudad: string
   plan: string
+  planes: PlanDelContrato[]
   estado: string
   periodicidad: Periodicidad
   valor_mensual: string
@@ -237,6 +238,18 @@ export interface ContratoListado {
   saldo_vencido: string
   dias_mora: number
   fecha_renovacion: string
+  renovable: boolean
+}
+
+export interface PlanDelContrato {
+  nombre: string
+  color: 'verde' | 'naranja' | 'azul'
+}
+
+export interface RecuentosCartera {
+  en_mora: number
+  por_renovar: number
+  todos: number
 }
 
 export interface ContratoRead {

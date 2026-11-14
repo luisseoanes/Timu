@@ -16,6 +16,7 @@ const CONTRATO: ContratoListado = {
   titular: FAMILIA.titular_nombre,
   ciudad: 'Bogota',
   plan: 'Plan Esencial',
+  planes: [{ nombre: 'Plan Esencial', color: 'verde' }],
   estado: 'en_mora',
   periodicidad: 'mensual',
   valor_mensual: '89000.00',
@@ -23,6 +24,7 @@ const CONTRATO: ContratoListado = {
   saldo_vencido: '178000.00',
   dias_mora: 40,
   fecha_renovacion: '2027-01-01',
+  renovable: false,
 }
 
 const RUTA = '*/api/v1/cartera/contratos'

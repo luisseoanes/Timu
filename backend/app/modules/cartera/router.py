@@ -25,6 +25,7 @@ from app.modules.cartera.schemas import (
     MedioPagoRead,
     PagoManual,
     PagoRead,
+    RecuentosCartera,
 )
 from app.modules.familias import service as familias
 from app.modules.planes import service as planes
@@ -70,10 +71,12 @@ async def listar_contratos(
     ciudad: str | None = None,
     q: str | None = None,
     solo_mora: bool = False,
+    por_renovar: bool = False,
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ) -> Page[ContratoListado]:
-    """Cartera para gestionar: los contratos mas atrasados primero."""
+    """Cartera para gestionar: los contratos mas atrasados primero, o los que estan por renovar
+    (los que vencen antes primero)."""
     filas, total = await db.run_sync(
         lambda s: service.listar_contratos(
             s,
@@ -81,12 +84,23 @@ async def listar_contratos(
             ciudad=ciudad,
             q=q,
             solo_mora=solo_mora,
+            por_renovar=por_renovar,
             limit=limit,
             offset=offset,
         )
     )
     return Page(
         items=[ContratoListado(**f) for f in filas], total=total, limit=limit, offset=offset
+    )
+
+
+@router.get("/contratos/recuentos", response_model=RecuentosCartera, dependencies=[EQUIPO])
+async def recuentos(
+    db: DbSession, estado: str | None = None, ciudad: str | None = None, q: str | None = None
+) -> dict[str, int]:
+    """Cuantos contratos hay en cada vista de la bandeja (en mora, por renovar y todos)."""
+    return await db.run_sync(
+        lambda s: service.recuentos_cartera(s, estado=estado, ciudad=ciudad, q=q)
     )
 
 

@@ -51,6 +51,8 @@ ESQUEMAS = [
     "PeludoCotizadoRead",
     "BeneficioRead",
     "ContratoListado",
+    "PlanDelContrato",
+    "RecuentosCartera",
     "ContratoRead",
     "CuotaRead",
     "PagoRead",

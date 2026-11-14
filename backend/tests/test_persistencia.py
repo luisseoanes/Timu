@@ -1206,6 +1206,8 @@ _LISTADOS = (
     "/api/v1/servicios?abiertos=true&hasta=2026-11-05",
     "/api/v1/pendientes",
     "/api/v1/cartera/contratos?solo_mora=true",
+    "/api/v1/cartera/contratos?por_renovar=true",
+    "/api/v1/cartera/contratos/recuentos",
     "/api/v1/encuestas",
     "/api/v1/comercial/interesados",
     "/api/v1/rutas?fecha=2026-11-05",

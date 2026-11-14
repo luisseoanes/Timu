@@ -9,7 +9,7 @@ from typing import Any, TypeVar
 from uuid import UUID
 
 import structlog
-from sqlalchemy import func, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -557,26 +557,16 @@ def url_documento(db: Session, contrato: Contrato) -> dict[str, str]:
 # --- Listado de cartera ----------------------------------------------------------------------
 
 
-def listar_contratos(
-    db: Session,
-    *,
-    estado: str | None = None,
-    ciudad: str | None = None,
-    q: str | None = None,
-    solo_mora: bool = False,
-    limit: int = 50,
-    offset: int = 0,
-) -> tuple[list[dict[str, Any]], int]:
-    """Contratos con su saldo vencido y dias de mora (de la cuota abierta mas antigua),
-    los mas atrasados primero."""
-    dia = hoy()
+def _cartera(*, estado: str | None, ciudad: str | None, q: str | None) -> tuple[Select[Any], Any]:
+    """Los contratos con su saldo vencido y la fecha de la cuota abierta mas antigua, con los
+    filtros comunes a las vistas de la bandeja."""
     vencidas = (
         select(
             Cuota.contrato_id,
             func.sum(Cuota.valor - Cuota.valor_pagado).label("saldo"),
             func.min(Cuota.fecha_vencimiento).label("desde"),
         )
-        .where(Cuota.estado.in_(EstadoCuota.ABIERTAS), Cuota.fecha_vencimiento < dia)
+        .where(Cuota.estado.in_(EstadoCuota.ABIERTAS), Cuota.fecha_vencimiento < hoy())
         .group_by(Cuota.contrato_id)
         .subquery()
     )
@@ -602,25 +592,71 @@ def listar_contratos(
             | Familia.documento.ilike(patron)
             | Contrato.numero.ilike(patron)
         )
+    return stmt, vencidas
+
+
+def _por_renovar() -> Any:
+    """La misma ventana que `renovar` y `detectar_renovaciones`: lo que ya se puede renovar."""
+    return Contrato.estado.in_(contratos.VIGENTES) & (
+        Contrato.fecha_renovacion <= hoy() + timedelta(days=VENTANA_RENOVACION_DIAS)
+    )
+
+
+def recuentos_cartera(
+    db: Session, *, estado: str | None = None, ciudad: str | None = None, q: str | None = None
+) -> dict[str, int]:
+    """Cuantos contratos hay en cada vista de la bandeja, con los mismos filtros."""
+    stmt, vencidas = _cartera(estado=estado, ciudad=ciudad, q=q)
+
+    def contar(condicion: Any = None) -> int:
+        consulta = stmt if condicion is None else stmt.where(condicion)
+        return db.scalar(select(func.count()).select_from(consulta.subquery())) or 0
+
+    return {
+        "en_mora": contar(vencidas.c.saldo > 0),
+        "por_renovar": contar(_por_renovar()),
+        "todos": contar(),
+    }
+
+
+def listar_contratos(
+    db: Session,
+    *,
+    estado: str | None = None,
+    ciudad: str | None = None,
+    q: str | None = None,
+    solo_mora: bool = False,
+    por_renovar: bool = False,
+    limit: int = 50,
+    offset: int = 0,
+) -> tuple[list[dict[str, Any]], int]:
+    """Contratos con su saldo vencido y dias de mora (de la cuota abierta mas antigua), los mas
+    atrasados primero; los que estan por renovar, los que vencen antes primero."""
+    dia = hoy()
+    stmt, vencidas = _cartera(estado=estado, ciudad=ciudad, q=q)
     if solo_mora:
         stmt = stmt.where(vencidas.c.saldo > 0)
+    if por_renovar:
+        stmt = stmt.where(_por_renovar())
     total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
-    filas = db.execute(
-        stmt.order_by(vencidas.c.desde.asc().nulls_last(), Contrato.numero)
-        .limit(limit)
-        .offset(offset)
-    ).all()
+    orden = (
+        (Contrato.fecha_renovacion, Contrato.numero)
+        if por_renovar
+        else (vencidas.c.desde.asc().nulls_last(), Contrato.numero)
+    )
+    filas = db.execute(stmt.order_by(*orden).limit(limit).offset(offset)).all()
     # Los planes de cada contrato de la pagina: uno por peludo, sin repetir.
-    nombres: dict[UUID, set[str]] = {}
-    for contrato_id, nombre in db.execute(
-        select(AfiliacionMascota.contrato_id, Plan.nombre)
+    planes_de: dict[UUID, dict[str, str]] = {}
+    for contrato_id, nombre, color in db.execute(
+        select(AfiliacionMascota.contrato_id, Plan.nombre, Plan.color)
         .join(Plan, Plan.id == AfiliacionMascota.plan_id)
         .where(
             AfiliacionMascota.contrato_id.in_([fila[0].id for fila in filas]),
             AfiliacionMascota.activa.is_(True),
         )
     ).tuples():
-        nombres.setdefault(contrato_id, set()).add(nombre)
+        planes_de.setdefault(contrato_id, {})[nombre] = color
+    ventana = dia + timedelta(days=VENTANA_RENOVACION_DIAS)
     return [
         {
             "id": c.id,
@@ -628,7 +664,11 @@ def listar_contratos(
             "familia_id": c.familia_id,
             "titular": titular,
             "ciudad": ciudad_familia,
-            "plan": ", ".join(sorted(nombres.get(c.id, set()))),
+            "plan": ", ".join(sorted(planes_de.get(c.id, {}))),
+            "planes": [
+                {"nombre": n, "color": color}
+                for n, color in sorted(planes_de.get(c.id, {}).items())
+            ],
             "estado": c.estado,
             "periodicidad": c.periodicidad,
             "valor_mensual": dinero(c.valor_mensual),
@@ -636,6 +676,7 @@ def listar_contratos(
             "saldo_vencido": dinero(saldo),
             "dias_mora": (dia - desde).days if desde else 0,
             "fecha_renovacion": c.fecha_renovacion,
+            "renovable": c.estado in contratos.VIGENTES and c.fecha_renovacion <= ventana,
         }
         for c, titular, ciudad_familia, saldo, desde in filas
     ], int(total)
