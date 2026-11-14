@@ -9,6 +9,7 @@ from httpx import AsyncClient
 from sqlalchemy import select
 
 from app.core.tiempo import ZONA_NEGOCIO, hoy
+from app.modules.familias.models import Familia, Mascota
 from app.modules.servicios.models import Franja, Pendiente, Servicio
 from app.modules.tareas.models import Tarea
 from tests import fabricas
@@ -682,6 +683,35 @@ async def test_el_listado_de_servicios_filtra_por_mascota(client: AsyncClient, d
     ).json()
     assert datos["total"] == 3
     assert {s["mascota_id"] for s in datos["items"]} == {str(luna_id)}
+
+
+async def test_el_listado_dice_a_quien_se_atiende(client: AsyncClient, db, headers):
+    """R2-PAN-05: cada servicio trae el titular y la mascota, sin una peticion por fila."""
+    familia_id, luna_id, _ = await _familia_con_servicios(db)
+    sin_mascota = Servicio(
+        familia_id=familia_id,
+        mascota_id=None,
+        tipo_codigo="consulta_domiciliaria",
+        tipo="domiciliario",
+        estado="agendado",
+        ciudad="Cali",
+        programado_para=datetime.combine(MES.replace(day=21), time(10), ZONA_NEGOCIO),
+    )
+    db.add(sin_mascota)
+    await db.flush()
+    # Solo valores: una peticion puede expirar los objetos ORM de la sesion.
+    sin_id = sin_mascota.id
+    titular = (await db.get(Familia, familia_id)).titular_nombre
+    luna = await db.get(Mascota, luna_id)
+    nombre, especie = luna.nombre, luna.especie
+    datos = (await client.get(f"/api/v1/servicios?familia_id={familia_id}", headers=headers)).json()
+
+    assert {s["familia"]["titular_nombre"] for s in datos["items"]} == {titular}
+    assert all(s["familia"]["id"] == str(familia_id) for s in datos["items"])
+    de_luna = next(s for s in datos["items"] if s["mascota_id"] == str(luna_id))
+    assert de_luna["mascota"] == {"id": str(luna_id), "nombre": nombre, "especie": especie}
+    sin = next(s for s in datos["items"] if s["id"] == str(sin_id))
+    assert sin["mascota"] is None
 
 
 # --- 6.3 Beneficios y cupo del plan de cada peludo --------------------------------------------

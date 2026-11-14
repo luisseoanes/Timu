@@ -617,3 +617,29 @@ def avanzar_pendiente(
         pendiente.resuelto_en = ahora()
     db.flush()
     return pendiente
+
+
+def a_quien_atiende(
+    db: Session, familia_ids: set[UUID], mascota_ids: set[UUID]
+) -> tuple[dict[UUID, dict[str, Any]], dict[UUID, dict[str, Any]]]:
+    """El titular y la mascota de una pagina de servicios: dos consultas por lote, no una por
+    fila, y solo las columnas que se muestran."""
+    familias = {
+        f.id: {"id": f.id, "titular_nombre": f.titular_nombre}
+        for f in db.execute(
+            select(Familia.id, Familia.titular_nombre).where(Familia.id.in_(familia_ids))
+        )
+    }
+    mascotas = (
+        {
+            m.id: {"id": m.id, "nombre": m.nombre, "especie": m.especie}
+            for m in db.execute(
+                select(Mascota.id, Mascota.nombre, Mascota.especie).where(
+                    Mascota.id.in_(mascota_ids)
+                )
+            )
+        }
+        if mascota_ids
+        else {}
+    )
+    return familias, mascotas

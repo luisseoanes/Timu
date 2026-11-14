@@ -358,6 +358,38 @@ export interface ServicioRead {
   motivo_estado: string | null
 }
 
+export interface ServicioListado {
+  id: string
+  familia_id: string
+  mascota_id: string | null
+  tipo_codigo: string
+  tipo: string
+  estado: string
+  ciudad: string
+  programado_para: string | null
+  termina_en: string | null
+  requiere_autorizacion: boolean
+  autorizado: boolean
+  autorizado_en: string | null
+  profesional_id: string | null
+  pendiente_origen_id: string | null
+  observaciones: string | null
+  motivo_estado: string | null
+  familia: FamiliaDeServicio
+  mascota: MascotaDeServicio | null
+}
+
+export interface FamiliaDeServicio {
+  id: string
+  titular_nombre: string
+}
+
+export interface MascotaDeServicio {
+  id: string
+  nombre: string
+  especie: string
+}
+
 export interface PendienteRead {
   id: string
   servicio_origen_id: string

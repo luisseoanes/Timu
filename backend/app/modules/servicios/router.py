@@ -66,6 +66,24 @@ class ServicioRead(BaseModel):
     motivo_estado: str | None
 
 
+class FamiliaDeServicio(BaseModel):
+    id: UUID
+    titular_nombre: str
+
+
+class MascotaDeServicio(BaseModel):
+    id: UUID
+    nombre: str
+    especie: str
+
+
+class ServicioListado(ServicioRead):
+    """Fila del listado: el servicio con a quien se atiende (R2-PAN-05)."""
+
+    familia: FamiliaDeServicio
+    mascota: MascotaDeServicio | None
+
+
 class CupoBeneficioRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -255,7 +273,7 @@ async def elegibilidad(
     )
 
 
-@router.get("", response_model=Page[ServicioRead], dependencies=[EQUIPO])
+@router.get("", response_model=Page[ServicioListado], dependencies=[EQUIPO])
 async def listar(
     db: DbSession,
     params: ParamsListado,
@@ -265,7 +283,7 @@ async def listar(
     ciudad: str | None = None,
     desde: date | None = None,
     hasta: date | None = None,
-) -> Page[ServicioRead]:
+) -> Page[ServicioListado]:
     stmt = select(Servicio)
     if familia_id:
         stmt = stmt.where(Servicio.familia_id == familia_id)
@@ -283,7 +301,7 @@ async def listar(
         stmt = stmt.where(
             Servicio.programado_para <= datetime.combine(hasta, time.max, ZONA_NEGOCIO)
         )
-    return await paginar(
+    pagina = await paginar(
         db,
         stmt,
         params,
@@ -291,6 +309,24 @@ async def listar(
         campos_orden={"programado_para": Servicio.programado_para, "estado": Servicio.estado},
         orden_por_defecto="programado_para",
         desempate=Servicio.id,
+    )
+    familias, mascotas = await db.run_sync(
+        service.a_quien_atiende,
+        {s.familia_id for s in pagina.items},
+        {s.mascota_id for s in pagina.items if s.mascota_id is not None},
+    )
+    return Page[ServicioListado](
+        items=[
+            ServicioListado(
+                **s.model_dump(),
+                familia=FamiliaDeServicio(**familias[s.familia_id]),
+                mascota=MascotaDeServicio(**mascotas[s.mascota_id]) if s.mascota_id else None,
+            )
+            for s in pagina.items
+        ],
+        total=pagina.total,
+        limit=pagina.limit,
+        offset=pagina.offset,
     )
 
 
