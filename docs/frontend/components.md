@@ -242,6 +242,29 @@ El anillo resume un porcentaje (`role="img"` con su etiqueta) y se acompaña de 
 Las barras comparan magnitudes de una sola serie (`--serie-1`), con el valor rotulado y sin
 leyenda; es una lista accesible con `aria-label`.
 
+## Bandejas — `.bandeja-*`
+
+La pieza común de Tareas, Cartera y Preventivos: `.bandeja-filtros` con el selector segmentado de
+vistas (`.segmento.bandeja-vistas`; `.bandeja-vistas-tres` si son tres, que caben en una fila del
+celular) y su recuento (`.segmento-recuento`, separado del nombre por un espacio para que el nombre
+accesible sea «En mora 1»), `.bandeja-filtro` para el buscador y las listas, y en la tabla
+`.bandeja-tabla` (la primera celda apilada es un bloque), `.bandeja-titulo`, `.bandeja-detalle` y
+`.bandeja-vencida` (icono, fecha y la palabra, que bajan de línea enteras).
+
+## Acciones de un preventivo — `AccionesPreventivo`
+
+`features/preventivos/AccionesPreventivo.tsx`: las ventanas de autorizar (varios a la vez, todo
+marcado), agendar (contra las franjas de la ciudad de la familia), registrar una aplicación sin
+visita y cancelar. `GestionarPreventivo` abre el paso que toca a los preventivos de una estación de la
+línea de Familias; lo inyecta `App.tsx` en `FamiliaDetallePage` (prop `GestionarPreventivo`, con su
+tipo `GestionarPreventivoProps` exportado por `familias`) para que `familias` no importe `preventivos`.
+
+## Ventana de pago — `RegistrarPagoModal`
+
+`features/cartera/RegistrarPagoModal.tsx`, exportada por `cartera`: pago recibido fuera de la
+pasarela. La usan la ficha de Familias (desde una cuota de la línea o la pestaña Cartera) y la bandeja
+de Cartera, que le pasa el titular para el título y la cuota más antigua.
+
 ## Selector de familia — `SelectorFamilia`
 
 `features/familias/SelectorFamilia.tsx`, exportado desde `@/features/familias`: widget del
@@ -275,5 +298,7 @@ profesional lo revisa y nunca se envía solo.
   dónde va cada perfil al ingresar. El mapa repite los roles que exige el backend en cada
   `requiere(...)`: si cambia allá, se cambia aquí en el mismo commit. Ocultar un botón no
   autoriza nada; el servidor sigue respondiendo 403.
+- **`enlaces.ts`**: `enlaceWhatsApp(telefono)` abre una conversación con un teléfono guardado en
+  E.164 (Rutas y la bandeja de Preventivos).
 - **`descargas.ts`**: `descargar(ruta, params, nombrePorDefecto)` baja un CSV, Excel o PDF con
   la sesión del usuario y respeta el nombre de `Content-Disposition`.

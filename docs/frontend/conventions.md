@@ -200,11 +200,15 @@ Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñ
   fuentes base del PDF (latin-1), que estropean las tildes. El carnet ya usa
   `app/core/marca_pdf.py` (logo, paleta, GeosansLight e Inter); los demás lo adoptan en su
   unidad.
-- **`.impeccable/design.json` va por detrás de `DESIGN.md`.** Le faltan «La regla del número
-  de casa» y «La regla de la acción de quien recorre» en `narrative.rules`, y el «don't» de las
-  siluetas de la marca (lo vio el documentador al fusionar el portal, 2026-11-13). Desde el
-  2026-11-14 le faltan también los componentes del Inicio y de Servicios y Tareas, el icono propio
-  de los distintivos y «La regla de las series que se distinguen». El hook de la skill lo avisa en
-  cada edición. Se repara con `/impeccable document` o en `R4-CIE-03`.
+- **`.impeccable/design.json` va algo por detrás de `DESIGN.md`.** Al cerrar `R2-PAN-08`
+  (2026-11-14) el documentador le añadió las reglas que faltaban (número de casa, acción de quien
+  recorre, series que se distinguen y una sola redacción), el «don't» de las siluetas, los componentes
+  de las bandejas, la franja de cifras del Inicio y los pasos de la atención. Siguen sin estar la
+  línea del día y el gráfico de serie del Inicio. Se completa con `/impeccable document` o en
+  `R4-CIE-03`.
+- **El panel copia qué tipo de servicio agenda cada preventivo** (`TIPO_SERVICIO` en
+  `src/features/preventivos/AccionesPreventivo.tsx`, espejo del de `preventivos/service.py`), para
+  pedir las franjas de la visita. Venía del calendario anterior; se cierra cuando la bandeja diga en
+  cada preventivo el tipo de su visita.
 - **Nombres de catálogo sin tildes** («Atencion en clinica aliada», «Vacunacion»): vienen de
   `backend/app/modules/catalogos/datos.py` y se ven en la línea y en los botones.

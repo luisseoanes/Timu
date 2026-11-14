@@ -227,8 +227,9 @@ components:
 Este fichero describe lo construido, no lo planeado. La primera superficie del sistema es la
 estructura del panel del equipo (`AppLayout`) y Familias (listado, detalle, pestañas y
 ventanas); después, Rutas (la ruta del día del médico y su coordinación) y Clínica (la historia de
-cada mascota y la consulta guiada), el Inicio (las cifras del período y la línea del día) y Servicios y Tareas (el listado con
-ficha de los servicios y la bandeja). El portal de familias está rediseñado entero: la
+cada mascota y la consulta guiada), el Inicio (las cifras del período y la línea del día), Servicios y Tareas (el listado con
+ficha de los servicios y la bandeja) y Cartera y Preventivos (sus bandejas, el carnet y el
+preventivo atendido desde su estación). El portal de familias está rediseñado entero: la
 estructura, el inicio y los peludos (R3-POR-01) y las citas, los pagos y los datos (R3-POR-02).
 El resto de módulos del panel y las páginas públicas todavía usan la maqueta anterior y adoptan este sistema en sus unidades de
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md): lo que se ve hoy en ellos no
@@ -506,7 +507,9 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   `Insignia` es la pastilla sin dominio. Un estado que comparte tono con otros lleva icono propio
   para distinguirse sin leer (R2-PAN-05): En ruta el pin de Rutas, En atención el pulso (los dos
   del camino normal, en tono informativo como Agendado), y la prioridad Alta una flecha hacia
-  arriba, porque la × del tono peligro se lee como anulado.
+  arriba, porque la × del tono peligro se lee como anulado. «Por autorizar» lleva la llave en tono
+  de aviso y «Por agendar» el calendario en tono informativo (R2-PAN-08): el triángulo de alerta
+  es de lo vencido, y dos seguidos en una fila diluían esa señal.
 
 ### Cards / Containers
 - **Corner Style:** panel (12 px) para las columnas del listado y la ficha; tarjeta (8 px) para
@@ -572,8 +575,8 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   marino y 700; el resto, pares etiqueta y valor con la etiqueta (de `data-etiqueta`, que repite
   la cabecera) en la misma voz que la cabecera de columna. Las acciones bajan a una fila propia.
   La cabecera sigue en el DOM para los lectores de pantalla.
-- Hoy la usan las pestañas de Familias; las tablas de los demás módulos la adoptan en su unidad
-  de la hoja de ruta.
+- Hoy la usan las pestañas de Familias y las bandejas (Tareas, Cartera y Preventivos); las tablas
+  de los demás módulos la adoptan en su unidad de la hoja de ruta.
 
 ### Historial
 - Lista de cambios con la fecha (suave, tabular) en una columna de hasta 11 rem a la izquierda y
@@ -604,8 +607,11 @@ de metro: espaciado esquemático, no proporcional al tiempo.
 - **Vertical:** cuando las paradas no caben con su rótulo, y siempre en el celular, la línea
   baja en vertical con todo rotulado.
 - **Activar:** una estación abre donde se atiende (el registro de pago desde una cuota, la ficha
-  de un servicio). Desde un preventivo hoy solo lleva a la pestaña de mascotas; agendarlo desde
-  la estación llega en `R2-PAN-08`.
+  de un servicio). La de un preventivo pendiente abre su siguiente paso para todos los preventivos
+  que reúne: la autorización de una vez si a alguno le falta («Antes de agendar la visita, la
+  familia tiene que autorizarlo»), si no la ventana para agendar el primero sin visita, y si ya la
+  tiene, «Abrir la visita». La acción la inyecta `App.tsx` (`GestionarPreventivo`), para que
+  Familias no dependa de Preventivos; sin ella, la estación lleva a la pestaña de mascotas.
 - **Miniatura (`LineaMini`):** en cada fila del listado, línea de 2 px con puntos de 10 px y la
   marca de hoy de 2 × 12 px; es dibujo (`role="img"`) con el resumen en `aria-label`, y la fila
   repite las vencidas en texto.
@@ -758,6 +764,67 @@ naranja-600) son casi iguales para quien no distingue el rojo del verde (ΔE 2,7
 validador de la skill `dataviz`). Un gráfico de dos series usa la 1 y la 3 (verde y azul,
 ΔE 20,4); uno de una serie, la 1. El rojo nunca es una serie.
 
+### Bandejas (componente común: Tareas, Cartera y Preventivos)
+Lo que hay por resolver, en una `tabla-apilable` a todo el ancho de un panel blanco.
+- **Vistas:** un selector segmentado (pastilla hundida con hilo, 4 px de relleno; la vista activa
+  en blanco y marino, las demás en texto suave, 13 px en 700) con el recuento de cada vista en
+  cifras tabulares a la derecha de su nombre, suave y en texto en la activa: cuánto hay sin
+  entrar. Es un grupo de botones con `aria-pressed`; la vista vive en la URL.
+- **Filtros:** en una fila, las vistas, el buscador y las listas. Por debajo de 1180 px las vistas
+  ocupan su fila y el buscador baja junto con las listas (si no, la ciudad bajaba sola y el
+  buscador cortaba su texto). Por debajo de 600 px, cuatro vistas van en dos filas de dos (al
+  desplazarse, la activa quedaba fuera) y tres en una fila de tres; buscador y listas, a todo el
+  ancho.
+- **Fila:** el título en marino y, debajo, el detalle en 13 px suave separado 12 px por pieza. La
+  acción de la fila es suave, a la derecha; apilada, la primera va a todo el ancho, al pulgar.
+- **Lo vencido:** icono de alerta, fecha (o importe) y la palabra, en rojo de error y 600: «⚠ 4 nov
+  · vencido», «⚠ $ 225.000 · hace 85 días». El separador cierra la primera pieza, así que si
+  bajan de línea ninguna empieza con él, y cada pieza baja entera.
+
+### Cartera y Preventivos (R2-PAN-08)
+Dos bandejas de trabajo: cada fila dice a quién, cuánto o qué, desde cuándo, y lleva la única
+acción que le toca.
+- **Cartera:** vistas «En mora» (la de entrada), «Por renovar» (contratos en su ventana de 90 días)
+  y «Todos», en una fila de tres en el celular. Cada fila: el titular, que lleva a la pestaña
+  Cartera de su familia, con el plan como cuadrado y nombre, el número de contrato y la ciudad
+  debajo; lo que debe, vencido con icono o «Al día» en suave; la cuota con su periodicidad («$
+  75.000 al mes», en una sola pieza); la renovación en fecha compacta y «· ya se puede renovar» si
+  la API lo dice; y el estado de la afiliación. Las acciones son suaves: «Registrar pago» si debe y
+  «Renovar» si se puede; con las dos, renovar pasa a plano de acción. El verde solo aparece en la
+  ventana que se abre.
+- **Registrar pago:** la ventana abre con la cuota más antigua elegida, nombrada por su mes
+  («Cuota de octubre», «Cuota de enero a marzo», el año solo si no es este) y su saldo, el valor
+  puesto en ese saldo y una ayuda debajo del campo: «Le faltan $ 75.000 a esta cuota.». Renovar
+  confirma en una ventana que dice qué pasa («su vigencia se extiende un año con el mismo plan y
+  la misma cuota») con «Ahora no» y «Renovar un año».
+- **Preventivos, por siguiente paso:** pestañas «Por hacer» y «Carnet por mascota». La bandeja
+  tiene las vistas «Por autorizar», «Por agendar», «Agendados» y «Todos», y es una sola tabla con
+  un grupo (`tbody`) por familia: la cabecera de columnas una vez y las columnas alineadas. La
+  cabecera del grupo es el titular (enlace de 16 px en 700) con «Bogota · 7 preventivos» en suave
+  y, si algo espera autorización, «Escribir» (plano de acción, WhatsApp) y «Registrar autorización
+  (7)» (suave). Cada fila: «Luna · Antirrábica canina» con la dosis debajo, la fecha en que toca,
+  el estado y la única acción de su paso («Agendar visita»); el resto («Registrar aplicación sin
+  visita», «Cancelar preventivo» en rojo) va en el menú de tres puntos.
+- **El estado solo donde no lo dice la vista:** la columna Estado aparece en «Agendados» y
+  «Todos»; en «Por autorizar» y «Por agendar» repetirlo en cada fila era ruido. Un agendado
+  muestra el distintivo de su visita y su día y hora, enlazados al servicio.
+- **Apilada:** cada grupo se separa 12 px; la cabecera del grupo pierde su hilo y sus acciones
+  bajan debajo del titular, la autorización estirada. El menú de la fila va arriba a la derecha
+  del bloque, junto a su título, no en una fila propia.
+- **Autorización de una familia:** una ventana con todos los pedidos marcados (quien atiende
+  desmarca lo que la familia no autorizó), cada uno con su casilla a la izquierda y el texto al
+  lado aunque ocupe dos líneas («Qué autorizó»), «Por dónde respondió» y la ayuda «Si no autorizó,
+  lo desmarcado sigue pendiente y lo marcado se cancela». El pie: «No autorizó» en rojo plano y el
+  verde «La familia autorizó los 4».
+- **Carnet por mascota:** la familia y la mascota arriba; el carnet en tres columnas (Aplicados,
+  Vencidos, Próximos), cada una con su recuento en una pastilla del tono. Cada fila lleva el icono
+  de preventivos en un cuadrado de 38 px; en Vencidos, el cuadrado en tono de peligro y «⚠ Tocaba
+  el 4 nov · vencido» con la gramática de la bandeja. El verde de la vista es «Emitir carnet PDF».
+
+**La regla de una sola redacción.** Un preventivo se escribe igual en la bandeja, la estación y la
+autorización: «Luna · Antirrábica canina, refuerzo» (`pedido`). La dosis es «dosis N» en la serie
+inicial y «refuerzo» después, sin número: «dosis 1, refuerzo» se leía como dos cosas a la vez.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -777,6 +844,8 @@ validador de la skill `dataviz`). Un gráfico de dos series usa la 1 y la 3 (ver
 - **Do** en el portal, abre la línea en «Hoy», pliega lo hecho y agrupa lo vencido, y deja que
   `accionPrincipal` elija la única acción verde de la línea.
 - **Do** acompaña el estado del plan, para la familia, de una frase que diga por qué y qué hacer.
+- **Do** escribe lo vencido de una bandeja con icono, fecha o importe y la palabra, y cada
+  preventivo con la misma redacción (`pedido`, `dosis`) en todas partes.
 
 ### Don't:
 - **Don't** escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.
@@ -796,3 +865,5 @@ validador de la skill `dataviz`). Un gráfico de dos series usa la 1 y la 3 (ver
 - **Don't** añadas un tema oscuro ni uses GeosansLight por debajo de 20 px, en texto corrido,
   tablas o botones.
 - **Don't** uses «+» para «Más» en la navegación: se lee como crear.
+- **Don't** uses el triángulo de alerta para un estado que no está vencido: «Por autorizar» lleva
+  la llave.

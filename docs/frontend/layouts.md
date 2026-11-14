@@ -7,7 +7,7 @@ superficie (`.impeccable/surfaces/`).
 
 > En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)). **Rediseñado:** la estructura
 > del panel, el listado con ficha (Familias, Rutas y Clínica), la ruta propia del médico, la
-> consulta guiada, el inicio del panel, las ventanas, la espera de sesión y el portal de familias entero. **Aún con la composición anterior** (aunque ya con la paleta, la
+> consulta guiada, el inicio del panel, las bandejas (Tareas, Cartera y Preventivos), las ventanas, la espera de sesión y el portal de familias entero. **Aún con la composición anterior** (aunque ya con la paleta, la
 > tipografía y el logo): el ingreso, el detalle de un registro y las
 > páginas públicas. Cada uno se rehace en su
 > unidad.
@@ -222,6 +222,31 @@ enlace a cada uno), cuándo vence (lo vencido con icono y la palabra, no solo en
 la prioridad y el responsable (una lista para reasignar), con «Tomar», «Iniciar» y «Cerrar» en la
 fila. Las vistas (mías, sin asignar, vencidas, todas) son un selector segmentado que en el celular
 pasa a dos filas de dos. «Nueva tarea» es la verde.
+
+### Cartera (R2-PAN-08)
+
+La misma bandeja, a todo el ancho, para cobrar y renovar. Las vistas «En mora» (la de entrada, adonde
+lleva «Ver la mora» del Inicio), «Por renovar» (los vigentes en la ventana de 90 días) y «Todos», con
+su recuento (`GET /cartera/contratos/recuentos`); el buscador y la ciudad viven en la URL. Cada fila:
+la familia (el titular enlaza a la pestaña Cartera de su ficha, que tiene el estado de cuenta) con su
+plan (cuadrado y nombre), el contrato y la ciudad; lo que debe con icono y «hace N días» o «Al día»;
+la cuota y su periodicidad; la renovación («21 ago 2027», con «ya se puede renovar» si la API dice
+`renovable`), y el estado. Acciones de fila suaves: «Registrar pago» si debe (la ventana abre con la
+cuota más antigua y su saldo) y «Renovar» si es renovable, que se confirma en una ventana. Sin verde
+lleno en la bandeja: cada ventana tiene el suyo.
+
+### Preventivos (R2-PAN-08)
+
+Dos pestañas: «Por hacer» (la bandeja) y «Carnet por mascota». La bandeja va por siguiente paso:
+«Por autorizar», «Por agendar» (los dos, lo que vence en el próximo mes), «Agendados» y «Todos», con
+su recuento. Una sola tabla con un grupo (`tbody`) por familia, así la cabecera de columnas sale una
+vez y las columnas se alinean: el grupo abre con el titular (enlace a la familia), la ciudad y cuántos
+preventivos tiene y, si falta autorizar, «Escribir» (WhatsApp) y «Registrar autorización (N)», que
+pide de una vez lo de la familia en una ventana con todo marcado. Cada fila: «Mascota · esquema», la
+dosis, cuándo toca (lo vencido con icono y la palabra), el estado solo en «Agendados» y «Todos» (en las
+otras repetiría la vista), «Agendar visita» si toca agendar y un menú con «Registrar aplicación sin
+visita» (médico y administración, si está autorizado) y «Cancelar preventivo». Apilada, el menú va
+arriba a la derecha del bloque. El siguiente paso de cada preventivo lo dice la API (`siguiente`).
 
 ## Detalle de un registro — `.detalle-cabeza`
 
