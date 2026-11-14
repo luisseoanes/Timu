@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { CarnetEmitidoRead, EventoRead, Page } from '@/types'
+import type { CarnetEmitidoRead, EventoRead, FamiliaBandeja, Page, RecuentosBandeja } from '@/types'
 
 export interface FiltrosPreventivos {
   mascota_id?: string
@@ -47,6 +47,33 @@ export function usePreventivos(filtros: FiltrosPreventivos) {
   })
 }
 
+export type VistaBandeja = keyof RecuentosBandeja
+
+export interface FiltrosBandeja {
+  vista: VistaBandeja
+  ciudad?: string
+  q?: string
+  /** Los de una familia: su línea en la ficha de Familias. */
+  familia_id?: string
+  limit?: number
+  offset?: number
+}
+
+/** Lo que falta por autorizar, por agendar o lo ya agendado, por familia (R2-PAN-08). */
+export function useBandejaPreventivos(filtros: FiltrosBandeja) {
+  return useQuery({
+    queryKey: ['preventivos', 'bandeja', filtros],
+    queryFn: async () => (await api.get<Page<FamiliaBandeja>>('/preventivos/bandeja', { params: filtros })).data,
+  })
+}
+
+export function useRecuentosPreventivos(filtros: Pick<FiltrosBandeja, 'ciudad' | 'q'>) {
+  return useQuery({
+    queryKey: ['preventivos', 'recuentos', filtros],
+    queryFn: async () => (await api.get<RecuentosBandeja>('/preventivos/bandeja/recuentos', { params: filtros })).data,
+  })
+}
+
 export function useCarnet(mascotaId: string | null) {
   return useQuery({
     queryKey: ['preventivos', 'carnet', mascotaId],
@@ -81,6 +108,16 @@ export function useAutorizarPreventivo() {
   )
 }
 
+/** La familia autoriza (o no) de una vez lo que se le pidió: todo o nada. */
+export function useAutorizarVarios() {
+  return useMutacion(
+    async ({ eventos, medio, aprobado }: { eventos: string[]; medio: MedioAutorizacion; aprobado: boolean }) =>
+      (await api.post<EventoRead[]>('/preventivos/autorizaciones', { eventos, medio, aprobado })).data,
+    // Autorizar puede autorizar la visita ya agendada, y la línea de la familia cambia.
+    ['familias'],
+  )
+}
+
 export function useAplicarPreventivo() {
   return useMutacion(
     async ({ id, ...datos }: { id: string; fecha: string; producto: string; lote?: string; peso_kg?: number }) =>
@@ -94,6 +131,7 @@ export function useAgendarPreventivo() {
   return useMutacion(
     async ({ id, ...datos }: { id: string; inicio: string; observaciones?: string }) =>
       (await api.post<EventoRead>(`/preventivos/${id}/agendar`, datos)).data,
+    ['familias'],
   )
 }
 
@@ -101,6 +139,7 @@ export function useCancelarPreventivo() {
   return useMutacion(
     async ({ id, motivo }: { id: string; motivo: string }) =>
       (await api.post<EventoRead>(`/preventivos/${id}/cancelacion`, { motivo })).data,
+    ['familias'],
   )
 }
 

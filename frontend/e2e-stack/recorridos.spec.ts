@@ -183,8 +183,8 @@ test.describe('gerencia en servicios', () => {
   })
 })
 
-test.describe('gerencia en cartera', () => {
-  // Con el perfil de administración: el de equipo no tiene cupo de peticiones para uno más.
+test.describe('gerencia en cartera y preventivos', () => {
+  // Con el perfil de administración: el de equipo no tiene cupo de peticiones para dos más.
   test.use({ storageState: sesion('admin') })
 
   test('la cartera abre en lo que se debe y cobra desde la fila con las cuotas de la familia', async ({ page }) => {
@@ -196,6 +196,19 @@ test.describe('gerencia en cartera', () => {
     // Abre con la cuota vencida más antigua puesta.
     await expect(ventana.getByLabel('Cuota')).not.toHaveValue('')
     await page.keyboard.press('Escape')
+    await expect(page.getByRole('alert')).toHaveCount(0)
+  })
+
+  test('los preventivos se piden a cada familia de una vez y en «Todos» dicen su estado', async ({ page }) => {
+    await page.goto('/preventivos')
+    const autorizar = page.getByRole('button', { name: /^Registrar autorización/ }).first()
+    await autorizar.click()
+    const ventana = page.getByRole('dialog', { name: /^Autorización de / })
+    // Llega todo lo pendiente de la familia marcado.
+    await expect(ventana.getByRole('checkbox').first()).toBeChecked()
+    await page.keyboard.press('Escape')
+    await page.getByRole('button', { name: /^Todos \d+$/ }).click()
+    await expect(page.getByRole('columnheader', { name: 'Estado' })).toBeVisible()
     await expect(page.getByRole('alert')).toHaveCount(0)
   })
 })

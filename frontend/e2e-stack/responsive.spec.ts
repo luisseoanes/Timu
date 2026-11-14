@@ -39,7 +39,6 @@ type Fallo = 'desborde' | 'contraste'
 const PENDIENTES: ReadonlySet<string> = new Set([
   'aliadas@375:desborde',
   'campanas@375:desborde',
-  'preventivos@375:desborde',
 ])
 
 interface Ruta {
@@ -115,7 +114,8 @@ const RUTAS: Ruta[] = [
     },
   },
   { app: 'tareas', perfil: 'equipo', url: '/tareas' },
-  { app: 'preventivos', perfil: 'equipo', url: '/preventivos' },
+  // Con sus dos pestañas (R2-PAN-08), y con administración: el perfil de equipo va al borde del cupo.
+  { app: 'preventivos', perfil: 'admin', url: '/preventivos', pestanas: true },
   { app: 'clinica', perfil: 'medico', url: '/clinica', pestanas: true },
   { app: 'clinica/mascotas/:mascotaId', perfil: 'medico', url: async (page) => `/clinica/mascotas/${(await entradaClinica(page)).mascota}` },
   { app: 'clinica/historias/:id', perfil: 'medico', url: async (page) => `/clinica/historias/${(await entradaClinica(page)).entrada}` },

@@ -2,46 +2,18 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
-import { Distintivo, Insignia } from '@/components/Distintivo'
+import { Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
-import { Modal } from '@/components/Modal'
-import { Paginacion } from '@/components/Paginacion'
 import { Pestanas } from '@/components/Pestanas'
-import { useAuth } from '@/features/auth'
 import { SelectorFamilia, useFamilia, useMascotas } from '@/features/familias'
-import { useDisponibilidad } from '@/features/servicios'
 import { mensajeError } from '@/lib/errores'
 import type { Tono } from '@/lib/estados'
-import { fecha, hora, hoyISO, peso } from '@/lib/formato'
-import { puede } from '@/lib/permisos'
-import type { EventoRead, FamiliaRead } from '@/types'
+import { fechaCompacta, peso } from '@/lib/formato'
+import type { FamiliaRead } from '@/types'
 
-
-import {
-  useAgendarPreventivo,
-  useAplicarPreventivo,
-  useAutorizarPreventivo,
-  useCancelarPreventivo,
-  useCarnet,
-  useEmitirCarnet,
-  useGenerarCalendario,
-  usePreventivos,
-  type FilaCarnet,
-  type FiltrosPreventivos,
-  type MedioAutorizacion,
-} from './api'
-
-const TIPOS: Record<string, string> = {
-  vacuna: 'Vacuna',
-  desparasitacion_interna: 'Desparasitación interna',
-  desparasitacion_externa: 'Desparasitación externa',
-}
-// Mismo mapa que preventivos/service.py: TIPO_SERVICIO.
-const TIPO_SERVICIO: Record<string, string> = {
-  vacuna: 'vacunacion',
-  desparasitacion_interna: 'desparasitacion',
-  desparasitacion_externa: 'desparasitacion',
-}
+import { useCarnet, useEmitirCarnet, useGenerarCalendario, type FilaCarnet } from './api'
+import { BandejaPreventivos } from './BandejaPreventivos'
+import { dosis } from './preventivo'
 
 export function PreventivosPage() {
   const [params] = useSearchParams()
@@ -52,335 +24,10 @@ export function PreventivosPage() {
       etiqueta="Secciones de preventivos"
       inicial={mascota ? 'carnet' : undefined}
       pestanas={[
-        { valor: 'agenda', titulo: 'Calendario preventivo', contenido: <Calendario porAutorizar={params.get('autorizacion') === '1'} /> },
+        { valor: 'bandeja', titulo: 'Por hacer', contenido: <BandejaPreventivos /> },
         { valor: 'carnet', titulo: 'Carnet por mascota', contenido: <CarnetMascota mascotaInicial={mascota} /> },
       ]}
     />
-  )
-}
-
-const POR_PAGINA = 25
-
-function Calendario({ porAutorizar }: { porAutorizar: boolean }) {
-  const [estado, setEstado] = useState<FiltrosPreventivos['estado'] | ''>('programado')
-  const [soloAutorizacion, setSoloAutorizacion] = useState(porAutorizar)
-  const [desde, setDesde] = useState('')
-  const [hasta, setHasta] = useState('')
-  const [offset, setOffset] = useState(0)
-  const [gestionando, setGestionando] = useState<EventoRead | null>(null)
-  const eventos = usePreventivos({
-    estado: estado || undefined,
-    pendientes_autorizacion: soloAutorizacion || undefined,
-    desde: desde || undefined,
-    hasta: hasta || undefined,
-    limit: POR_PAGINA,
-    offset,
-  })
-  const mascotas = useMascotas(eventos.data?.items.map((e) => e.mascota_id) ?? [])
-  const hoy = hoyISO()
-
-  return (
-    <section className="tarjeta">
-      <div className="tarjeta-cabeza">
-        <h3>Calendario preventivo</h3>
-        <span className="apagado numero">{eventos.data?.total ?? 0} eventos</span>
-      </div>
-      <div className="filtros" style={{ marginBottom: 'var(--e4)' }}>
-        <select className="input" style={{ width: 'auto' }} value={estado} onChange={(e) => { setEstado(e.target.value as FiltrosPreventivos['estado'] | ''); setOffset(0) }} aria-label="Estado">
-          <option value="programado">Programados</option>
-          <option value="aplicado">Aplicados</option>
-          <option value="cancelado">Cancelados</option>
-          <option value="">Todos</option>
-        </select>
-        <label className="acciones">
-          Desde
-          <input className="input" style={{ width: 'auto' }} type="date" value={desde} onChange={(e) => { setDesde(e.target.value); setOffset(0) }} />
-        </label>
-        <label className="acciones">
-          Hasta
-          <input className="input" style={{ width: 'auto' }} type="date" value={hasta} onChange={(e) => { setHasta(e.target.value); setOffset(0) }} />
-        </label>
-        <label className="acciones">
-          <input type="checkbox" checked={soloAutorizacion} onChange={(e) => { setSoloAutorizacion(e.target.checked); setOffset(0) }} />
-          Sólo por autorizar
-        </label>
-      </div>
-      <Consulta
-        consulta={eventos}
-        cargando="Cargando el calendario…"
-        error="No fue posible cargar el calendario."
-        vacio="No hay eventos preventivos con estos filtros."
-        estaVacio={(d) => d.items.length === 0}
-      >
-        {(d) => (
-          <>
-            <div className="scroll-x">
-              <table className="tabla">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Mascota</th>
-                    <th>Preventivo</th>
-                    <th>Autorización</th>
-                    <th>Estado</th>
-                    <th><span className="sr-only">Acciones</span></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {d.items.map((e) => {
-                    const m = mascotas.get(e.mascota_id)
-                    const vencido = e.estado === 'programado' && e.fecha_programada < hoy
-                    return (
-                      <tr key={e.id}>
-                        <td className={`numero${vencido ? ' error' : ''}`}>{fecha(e.fecha_programada)}</td>
-                        <td className="principal">
-                          {m ? <Link to={`/familias/${m.familia_id}`}>{m.nombre}</Link> : '…'}
-                        </td>
-                        <td>
-                          {TIPOS[e.tipo] ?? e.tipo} · dosis {e.dosis_numero}
-                          {e.es_refuerzo && ' (refuerzo)'}
-                        </td>
-                        <td>
-                          {!e.requiere_autorizacion ? (
-                            <span className="apagado">No requiere</span>
-                          ) : e.autorizado ? (
-                            <Insignia tono="ok">Autorizado</Insignia>
-                          ) : (
-                            <Insignia tono="alerta">Por autorizar</Insignia>
-                          )}
-                        </td>
-                        <td>
-                          <Distintivo dominio="preventivo" valor={vencido ? 'vencido' : e.estado} />
-                          {e.servicio_id && (
-                            <div>
-                              <Link to={`/servicios/${e.servicio_id}`}>Servicio agendado</Link>
-                            </div>
-                          )}
-                        </td>
-                        <td>
-                          {e.estado === 'programado' && (
-                            <button className="btn btn-suave" type="button" onClick={() => setGestionando(e)}>
-                              Gestionar
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <Paginacion total={d.total} limit={d.limit} offset={d.offset} onCambio={setOffset} />
-          </>
-        )}
-      </Consulta>
-      <GestionPreventivo evento={gestionando} onCerrar={() => setGestionando(null)} />
-    </section>
-  )
-}
-
-type Accion = 'autorizar' | 'agendar' | 'aplicar' | 'cancelar'
-
-function GestionPreventivo({ evento, onCerrar }: { evento: EventoRead | null; onCerrar: () => void }) {
-  const { usuario } = useAuth()
-  const [accion, setAccion] = useState<Accion | null>(null)
-  const autorizar = useAutorizarPreventivo()
-  const agendar = useAgendarPreventivo()
-  const aplicar = useAplicarPreventivo()
-  const cancelar = useCancelarPreventivo()
-  const error = autorizar.error ?? agendar.error ?? aplicar.error ?? cancelar.error
-  const pendiente = autorizar.isPending || agendar.isPending || aplicar.isPending || cancelar.isPending
-
-  function cerrar() {
-    for (const m of [autorizar, agendar, aplicar, cancelar]) m.reset()
-    setAccion(null)
-    onCerrar()
-  }
-
-  if (!evento) return null
-  const porAutorizar = evento.requiere_autorizacion && !evento.autorizado
-  const disponibles: { valor: Accion; label: string }[] = [
-    ...(porAutorizar ? [{ valor: 'autorizar' as const, label: 'Registrar autorización' }] : []),
-    ...(!evento.servicio_id && !porAutorizar ? [{ valor: 'agendar' as const, label: 'Agendar visita' }] : []),
-    ...(puede(usuario, 'clinico') && !porAutorizar ? [{ valor: 'aplicar' as const, label: 'Registrar aplicación' }] : []),
-    { valor: 'cancelar', label: 'Cancelar' },
-  ]
-
-  return (
-    <Modal
-      abierto
-      onCambio={(v) => !v && cerrar()}
-      titulo={`${TIPOS[evento.tipo] ?? evento.tipo} · dosis ${evento.dosis_numero}`}
-      descripcion={`Programado para el ${fecha(evento.fecha_programada)}.`}
-    >
-      <div className="pila">
-        <div className="acciones" role="group" aria-label="Acción">
-          {disponibles.map((a) => (
-            <button
-              key={a.valor}
-              type="button"
-              className={`btn ${accion === a.valor ? 'btn-primario' : 'btn-suave'}`}
-              aria-pressed={accion === a.valor}
-              onClick={() => setAccion(a.valor)}
-            >
-              {a.label}
-            </button>
-          ))}
-        </div>
-
-        {accion === 'autorizar' && (
-          <FormAutorizacion
-            pendiente={pendiente}
-            onEnviar={(medio, aprobado) => autorizar.mutate({ id: evento.id, medio, aprobado }, { onSuccess: cerrar })}
-          />
-        )}
-        {accion === 'agendar' && (
-          <FormAgendar
-            evento={evento}
-            pendiente={pendiente}
-            onEnviar={(inicio) => agendar.mutate({ id: evento.id, inicio }, { onSuccess: cerrar })}
-          />
-        )}
-        {accion === 'aplicar' && (
-          <form
-            className="formulario"
-            onSubmit={(e) => {
-              e.preventDefault()
-              const d = new FormData(e.currentTarget)
-              aplicar.mutate(
-                {
-                  id: evento.id,
-                  fecha: String(d.get('fecha')),
-                  producto: String(d.get('producto')).trim(),
-                  lote: String(d.get('lote') ?? '').trim() || undefined,
-                  peso_kg: d.get('peso_kg') ? Number(d.get('peso_kg')) : undefined,
-                },
-                { onSuccess: cerrar },
-              )
-            }}
-          >
-            <label className="campo">
-              <span>Fecha de aplicación</span>
-              <input className="input" name="fecha" type="date" max={hoyISO()} defaultValue={hoyISO()} required />
-            </label>
-            <label className="campo">
-              <span>Producto</span>
-              <input className="input" name="producto" required />
-            </label>
-            <label className="campo">
-              <span>Lote</span>
-              <input className="input" name="lote" />
-            </label>
-            {/* 6.8 «Registrar peso cuando sea pertinente»: el de hoy, que va al carnet. */}
-            <label className="campo">
-              <span>Peso de la mascota (kg, opcional)</span>
-              <input className="input" name="peso_kg" type="number" min={0.1} max={149} step={0.1} inputMode="decimal" />
-            </label>
-            <div className="acciones ancho">
-              <button className="btn btn-primario" type="submit" disabled={pendiente}>
-                Registrar aplicación
-              </button>
-            </div>
-          </form>
-        )}
-        {accion === 'cancelar' && (
-          <form
-            className="formulario"
-            onSubmit={(e) => {
-              e.preventDefault()
-              const motivo = String(new FormData(e.currentTarget).get('motivo')).trim()
-              cancelar.mutate({ id: evento.id, motivo }, { onSuccess: cerrar })
-            }}
-          >
-            <label className="campo ancho">
-              <span>Motivo de la cancelación</span>
-              <textarea className="input" name="motivo" rows={2} required minLength={3} />
-            </label>
-            <div className="acciones ancho">
-              <button className="btn btn-primario" type="submit" disabled={pendiente}>
-                Cancelar preventivo
-              </button>
-            </div>
-          </form>
-        )}
-        {error && (
-          <p className="error" role="alert">
-            {mensajeError(error, 'No fue posible completar la acción.')}
-          </p>
-        )}
-      </div>
-    </Modal>
-  )
-}
-
-function FormAutorizacion({ pendiente, onEnviar }: { pendiente: boolean; onEnviar: (m: MedioAutorizacion, ok: boolean) => void }) {
-  const [medio, setMedio] = useState<MedioAutorizacion>('whatsapp')
-  return (
-    <div className="formulario">
-      <label className="campo ancho">
-        <span>Medio por el que respondió la familia</span>
-        <select className="input" value={medio} onChange={(e) => setMedio(e.target.value as MedioAutorizacion)}>
-          <option value="whatsapp">WhatsApp</option>
-          <option value="telefono">Teléfono</option>
-          <option value="presencial">Presencial</option>
-          <option value="portal">Portal</option>
-          <option value="formulario">Formulario</option>
-        </select>
-      </label>
-      <div className="acciones ancho">
-        <button className="btn btn-primario" type="button" disabled={pendiente} onClick={() => onEnviar(medio, true)}>
-          La familia autorizó
-        </button>
-        <button className="btn btn-plano" type="button" disabled={pendiente} onClick={() => onEnviar(medio, false)}>
-          No autorizó
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function FormAgendar({ evento, pendiente, onEnviar }: { evento: EventoRead; pendiente: boolean; onEnviar: (inicio: string) => void }) {
-  const mascota = useMascotas([evento.mascota_id]).get(evento.mascota_id)
-  const familia = useFamilia(mascota?.familia_id)
-  const [dia, setDia] = useState(evento.fecha_programada < hoyISO() ? hoyISO() : evento.fecha_programada)
-  const [inicio, setInicio] = useState('')
-  const cupos = useDisponibilidad(
-    familia.data ? { fecha: dia, ciudad: familia.data.ciudad, tipo_codigo: TIPO_SERVICIO[evento.tipo] ?? 'vacunacion' } : null,
-  )
-  return (
-    <div className="formulario">
-      <label className="campo">
-        <span>Día de la visita</span>
-        <input className="input" type="date" min={hoyISO()} value={dia} onChange={(e) => { setDia(e.target.value); setInicio('') }} />
-      </label>
-      <div className="ancho">
-        {cupos.isPending ? (
-          <p className="apagado">Buscando cupos…</p>
-        ) : cupos.data?.length === 0 ? (
-          <p className="apagado">No hay franjas ese día.</p>
-        ) : (
-          <div className="cupos" role="group" aria-label="Franjas disponibles">
-            {cupos.data?.map((c) => (
-              <button
-                key={c.inicio}
-                type="button"
-                className="cupo"
-                aria-pressed={inicio === c.inicio}
-                disabled={c.disponibles === 0}
-                onClick={() => setInicio(c.inicio)}
-              >
-                {hora(c.inicio)}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="acciones ancho">
-        <button className="btn btn-primario" type="button" disabled={!inicio || pendiente} onClick={() => onEnviar(inicio)}>
-          Agendar visita
-        </button>
-      </div>
-    </div>
   )
 }
 
@@ -458,7 +105,7 @@ function CarnetMascota({ mascotaInicial }: { mascotaInicial: string | null }) {
             {(c) => (
               <div className="tres-columnas">
                 <ListaCarnet titulo="Aplicados" filas={c.aplicados} vacio="Aún no hay aplicaciones registradas." tono="ok" />
-                <ListaCarnet titulo="Vencidos" filas={c.vencidos} vacio="Nada vencido." tono="peligro" />
+                <ListaCarnet titulo="Vencidos" filas={c.vencidos} vacio="Nada vencido." tono="peligro" pasado />
                 <ListaCarnet titulo="Próximos" filas={c.proximos} vacio="Sin programación. Genera el calendario." tono="info" />
               </div>
             )}
@@ -469,7 +116,7 @@ function CarnetMascota({ mascotaInicial }: { mascotaInicial: string | null }) {
   )
 }
 
-function ListaCarnet({ titulo, filas, vacio, tono }: { titulo: string; filas: FilaCarnet[]; vacio: string; tono: Tono }) {
+function ListaCarnet({ titulo, filas, vacio, tono, pasado = false }: { titulo: string; filas: FilaCarnet[]; vacio: string; tono: Tono; pasado?: boolean }) {
   return (
     <div>
       <h4 className="subtitulo">
@@ -478,18 +125,29 @@ function ListaCarnet({ titulo, filas, vacio, tono }: { titulo: string; filas: Fi
       {filas.length === 0 ? (
         <p className="apagado">{vacio}</p>
       ) : (
-        <ul className="pila" style={{ listStyle: 'none', margin: 0, padding: 0, gap: 'var(--e2)' }}>
+        <ul className="preventivos-carnet">
           {filas.map((f) => (
             <li key={f.id} className="fila">
-              <span className="fila-icono">
+              <span className="fila-icono" data-tono={pasado ? 'peligro' : undefined}>
                 <Icono nombre="preventivos" size={16} />
               </span>
               <span className="fila-cuerpo">
                 <strong>
-                  {f.nombre} · dosis {f.dosis}
+                  {f.nombre} · {dosis(f.dosis, f.refuerzo)}
                 </strong>
                 <span>
-                  {f.fecha_aplicacion ? `Aplicado ${fecha(f.fecha_aplicacion)}` : `Programado ${fecha(f.fecha_programada)}`}
+                  {f.fecha_aplicacion ? (
+                    `Aplicado el ${fechaCompacta(f.fecha_aplicacion)}`
+                  ) : pasado ? (
+                    // Lo vencido con icono y palabra, como en la bandeja.
+                    <span className="bandeja-vencida">
+                      <Icono nombre="alerta" size={14} />
+                      <span>Tocaba el {fechaCompacta(f.fecha_programada)} ·</span>
+                      <span>vencido</span>
+                    </span>
+                  ) : (
+                    `Toca el ${fechaCompacta(f.fecha_programada)}`
+                  )}
                   {f.producto ? ` · ${f.producto}` : ''}
                   {f.lote ? ` · lote ${f.lote}` : ''}
                   {f.peso_kg ? ` · ${peso(f.peso_kg)}` : ''}

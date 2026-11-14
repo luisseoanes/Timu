@@ -233,9 +233,9 @@
   .segmento.bandeja-vistas-tres .segmento-opcion { padding-inline: var(--e2); white-space: nowrap; }
 }
 .cartera-renovable { font-size: var(--t-menor); color: var(--texto-suave); }
-/* Apilada, la acción de la fila a todo el ancho y al pulgar. */
+/* Apilada, la acción de la fila a todo el ancho y al pulgar, como «Registrar autorización». */
 @container (max-width: 639px) {
-  .cartera-tabla .tabla-acciones > .btn:first-child { flex: 1 1 100%; }
+  :is(.cartera-tabla, .preventivos-tabla) .tabla-acciones > .btn:first-child { flex: 1 1 100%; }
 }
 /* Por debajo de lo que cabe en una fila, las vistas ocupan la suya y el buscador y las listas
    bajan juntos a la siguiente: antes la ciudad bajaba sola y el buscador cortaba su texto. */
@@ -243,6 +243,46 @@
   .bandeja-filtros > .segmento { flex: 1 1 100%; }
   .bandeja-filtros > .buscador { flex: 1 1 240px; }
 }
+
+/* ===== Preventivos (R2-PAN-08): la bandeja agrupada por familia ===== */
+/* Una tabla y un grupo (tbody) por familia: la cabecera de columnas una vez y las columnas alineadas. */
+.preventivos-familia-cabeza th {
+  padding: var(--e5) var(--e3) var(--e2); border-bottom: 1px solid var(--borde);
+  font-size: var(--t-cuerpo); font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--texto);
+}
+.preventivos-familia:first-of-type .preventivos-familia-cabeza th { padding-top: var(--e3); }
+.preventivos-familia-cabeza th { display: table-cell; }
+.preventivos-familia-cabeza th > span { vertical-align: middle; }
+.preventivos-familia-titulo { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: var(--e1) var(--e3); }
+.preventivos-familia-titulo a { font-size: var(--t-seccion); font-weight: 700; }
+.preventivos-familia-acciones { display: flex; flex-wrap: wrap; gap: var(--e2); float: right; }
+@container (min-width: 640px) {
+  .preventivos-tabla :is(th, td):nth-child(1) { width: 46%; }
+}
+.preventivos-tabla td.preventivo-menu { width: 56px; text-align: right; }
+@container (max-width: 639px) {
+  .preventivos-tabla tbody + tbody { margin-top: var(--e3); }
+  /* Apilado, el menú va arriba a la derecha del bloque, junto a su título, no en una fila propia. */
+  .preventivos-tabla tbody tr { position: relative; }
+  .preventivos-tabla td:first-child { padding-right: 48px; }
+  .preventivos-tabla td.preventivo-menu { position: absolute; top: var(--e2); right: 0; width: auto; padding: 0; }
+  .preventivos-tabla td.preventivo-menu::before { content: none; }
+  .preventivos-familia-cabeza th { border-bottom: 0; }
+  .preventivos-familia-cabeza th { display: block; padding: var(--e4) 0 var(--e2); }
+  .preventivos-familia-acciones { float: none; margin-top: var(--e2); }
+  .preventivos-familia-acciones > .btn-suave { flex: 1 1 auto; }
+}
+.preventivo-visita { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--e1) var(--e2); }
+.preventivo-pedidos { border: 0; margin: 0; padding: 0; display: grid; gap: var(--e2); }
+.preventivo-pedidos legend { padding: 0; margin-bottom: var(--e2); }
+/* La casilla a la izquierda y el texto al lado, aunque ocupe dos líneas: nunca la casilla sola. */
+.preventivo-pedido { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: var(--e2) var(--e3); align-items: start; font-weight: 600; color: var(--texto-titulo); }
+.preventivo-pedido input { margin: 2px 0 0; }
+.preventivos-carnet { list-style: none; margin: 0; padding: 0; }
+/* `.fila-cuerpo span` es bloque: lo vencido va en una sola pieza, con icono y palabra juntos. */
+.preventivos-carnet .fila-cuerpo .bandeja-vencida { display: inline-flex; flex-wrap: wrap; color: var(--texto-error); }
+.preventivos-carnet .fila-cuerpo .bandeja-vencida span { display: inline; color: inherit; white-space: nowrap; }
+.preventivos-carnet .fila-icono[data-tono="peligro"] { background: var(--estado-peligro-fondo); color: var(--estado-peligro-texto); }
 .tarea-responsable { min-width: 150px; }
 
 /* ===== Inicio (R2-PAN-04): «La línea de hoy» =====
