@@ -118,7 +118,10 @@ describe('CampanasPage', () => {
         segmento: { estados: ['en_mora'] },
       }),
     )
-    expect(await screen.findByRole('region', { name: 'Campaña abierta' })).toBeInTheDocument()
+    // Se abre su ficha: la ficha vacía tiene el mismo nombre, así que se espera a su título. Encadena
+    // el cierre de la ventana, el listado y la ficha: con la máquina cargada pasa del segundo.
+    const titulo = await screen.findByRole('heading', { level: 2, name: 'Renovación noviembre' }, { timeout: 5000 })
+    expect(titulo.closest('section')).toHaveAccessibleName('Campaña abierta')
   })
 
   it('muestra la satisfacción del mes', async () => {
