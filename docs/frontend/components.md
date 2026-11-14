@@ -244,12 +244,20 @@ leyenda; es una lista accesible con `aria-label`.
 
 ## Bandejas — `.bandeja-*`
 
-La pieza común de Tareas, Cartera y Preventivos: `.bandeja-filtros` con el selector segmentado de
+La pieza común de Tareas, Cartera, Preventivos y Conversaciones (Comercial): `.bandeja-filtros` con el selector segmentado de
 vistas (`.segmento.bandeja-vistas`; `.bandeja-vistas-tres` si son tres, que caben en una fila del
 celular) y su recuento (`.segmento-recuento`, separado del nombre por un espacio para que el nombre
 accesible sea «En mora 1»), `.bandeja-filtro` para el buscador y las listas, y en la tabla
 `.bandeja-tabla` (la primera celda apilada es un bloque), `.bandeja-titulo`, `.bandeja-detalle` y
 `.bandeja-vencida` (icono, fecha y la palabra, que bajan de línea enteras).
+
+## Línea de etapas y conversación — `FichaInteresado`
+
+`features/comercial/FichaInteresado.tsx`: `LineaEtapas` (`ol.comercial-etapas`) pinta el embudo
+con la geometría de la guía de la consulta (`consulta-estacion`), sin botones; la actual lleva
+`aria-current="step"`. La conversación (`.comercial-conversacion`, `.comercial-mensaje` con
+`data-direccion`) se abre en lo último y se refresca cada 15 s mientras la ficha está abierta.
+Los teléfonos se escriben con `telefono()` de `lib/formato.ts` («+57 300 444 5588»).
 
 ## Acciones de un preventivo — `AccionesPreventivo`
 

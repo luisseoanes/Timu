@@ -228,8 +228,9 @@ Este fichero describe lo construido, no lo planeado. La primera superficie del s
 estructura del panel del equipo (`AppLayout`) y Familias (listado, detalle, pestañas y
 ventanas); después, Rutas (la ruta del día del médico y su coordinación) y Clínica (la historia de
 cada mascota y la consulta guiada), el Inicio (las cifras del período y la línea del día), Servicios y Tareas (el listado con
-ficha de los servicios y la bandeja) y Cartera y Preventivos (sus bandejas, el carnet y el
-preventivo atendido desde su estación). El portal de familias está rediseñado entero: la
+ficha de los servicios y la bandeja), Cartera y Preventivos (sus bandejas, el carnet y el
+preventivo atendido desde su estación) y Comercial y Campañas (los interesados del embudo con su
+conversación, la bandeja de conversaciones y las campañas en listado con ficha). El portal de familias está rediseñado entero: la
 estructura, el inicio y los peludos (R3-POR-01) y las citas, los pagos y los datos (R3-POR-02).
 El resto de módulos del panel y las páginas públicas todavía usan la maqueta anterior y adoptan este sistema en sus unidades de
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md): lo que se ve hoy en ellos no
@@ -389,7 +390,7 @@ lema de la marca y el buscador encoge a 220 px. Por debajo de 900 px la navegaci
 barra inferior fija (56 px, al alcance del pulgar) con los cuatro módulos que más usa cada
 perfil y «Más» con el resto; el contenido reserva su alto más el área segura.
 
-**Listado y ficha (`.con-ficha`: Familias, Rutas, Clínica).** Dos columnas: listado de 320–420 px
+**Listado y ficha (`.con-ficha`: Familias, Rutas, Clínica, Comercial, Campañas).** Dos columnas: listado de 320–420 px
 (`.listado`) y el registro abierto en el resto (`.ficha-abierta`), separadas 20 px. Por debajo
 de 900 px se ve uno u otro: el listado sin registro abierto, la ficha (con botón de volver) con
 él.
@@ -421,7 +422,8 @@ px; dentro de un panel 20–24 px; entre filas de un listado 12 px de relleno co
 (`borde`) entre ellas. Los pares etiqueta/valor se separan 2 px; las fichas de datos van en
 `repeat(auto-fill, minmax(180px, 1fr))`.
 
-**Zonas táctiles.** Botones, campos, buscadores y botones de icono miden 40 px y suben a 44 px
+**Zonas táctiles.** Botones, campos, buscadores, botones de icono y cupos (`.cupo`, también los
+filtros de una campaña) miden 40 px y suben a 44 px
 en pantallas de 900 px o menos o con puntero grueso.
 
 ### Named Rules
@@ -575,8 +577,9 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   marino y 700; el resto, pares etiqueta y valor con la etiqueta (de `data-etiqueta`, que repite
   la cabecera) en la misma voz que la cabecera de columna. Las acciones bajan a una fila propia.
   La cabecera sigue en el DOM para los lectores de pantalla.
-- Hoy la usan las pestañas de Familias y las bandejas (Tareas, Cartera y Preventivos); las tablas
-  de los demás módulos la adoptan en su unidad de la hoja de ruta.
+- Hoy la usan las pestañas de Familias, las bandejas (Tareas, Cartera, Preventivos y
+  Conversaciones) y los mensajes de Campañas; las tablas de los demás módulos la adoptan en su
+  unidad de la hoja de ruta.
 
 ### Historial
 - Lista de cambios con la fecha (suave, tabular) en una columna de hasta 11 rem a la izquierda y
@@ -764,7 +767,7 @@ naranja-600) son casi iguales para quien no distingue el rojo del verde (ΔE 2,7
 validador de la skill `dataviz`). Un gráfico de dos series usa la 1 y la 3 (verde y azul,
 ΔE 20,4); uno de una serie, la 1. El rojo nunca es una serie.
 
-### Bandejas (componente común: Tareas, Cartera y Preventivos)
+### Bandejas (componente común: Tareas, Cartera, Preventivos y Conversaciones)
 Lo que hay por resolver, en una `tabla-apilable` a todo el ancho de un panel blanco.
 - **Vistas:** un selector segmentado (pastilla hundida con hilo, 4 px de relleno; la vista activa
   en blanco y marino, las demás en texto suave, 13 px en 700) con el recuento de cada vista en
@@ -825,6 +828,65 @@ acción que le toca.
 autorización: «Luna · Antirrábica canina, refuerzo» (`pedido`). La dosis es «dosis N» en la serie
 inicial y «refuerzo» después, sin número: «dosis 1, refuerzo» se leía como dos cosas a la vez.
 
+### Comercial y Campañas (R2-PAN-09)
+Los dos en listado con ficha, con el registro abierto en la URL (`?interesado=`, `?campana=`).
+«Nuevo interesado» y «Nueva campaña» son verdes solo sin ficha abierta; con ella pasan a suaves,
+porque el verde es de la ficha.
+- **Interesados:** vistas «Abiertos», «Afiliados» y «Perdidos» con su recuento en el selector
+  segmentado (`comercial-vistas`, a todo el ancho del listado), el buscador debajo y una línea
+  suave con el mes («Este mes: 8 interesados · conversión 0%»). En «Abiertos», agrupados por
+  etapa en el orden del embudo con el rótulo de los días de Servicios («CONTACTADO · 3», el
+  recuento de la API); en las otras dos, una lista con el distintivo de la etapa. Cada fila: el
+  nombre y, debajo, cómo llegó, la ciudad y el último contacto en fecha compacta.
+- **La línea de etapas** (`ol.comercial-etapas`): las cinco etapas (Nuevo, Contactado, Cotizado,
+  En afiliación, Afiliado) con la geometría de la guía de la consulta, pero sin botones: no se
+  salta de etapa. Línea de 8 px en `ruta-pendiente` con lo recorrido en marino (`--avance`), punto
+  de 24 px lleno en lo hecho y anillo marino con halo verde de 3 px en la actual, con su nombre en
+  700 y `aria-current="step"`. Un perdido la deja toda pendiente y dice su motivo debajo. Por
+  debajo de 600 px la línea usa también el relleno de la ficha (margen negativo de 16 px):
+  «Contactado» en negrita no cabía en su columna.
+- **Ficha del interesado:** el nombre a 34 px, el distintivo de la etapa con el celular (con
+  `telefono()`), el correo y la ciudad; las acciones; la línea; los datos (responsable como lista
+  que se cambia ahí, cómo llegó, plan sugerido, mascotas, primer contacto y, si ya es familia,
+  «Abrir su ficha»); y la conversación. «En afiliación» no tiene «Pasar a»: lo dice una nota («Se
+  afilia desde Familias…»). «Marcar como perdido» va en el menú de tres puntos y abre una ventana
+  con el motivo en una lista y el `btn-peligro`; un perdido tiene «Reactivar» como verde.
+- **La conversación como burbujas:** un fondo hundido con esquina de tarjeta, hasta 420 px de alto
+  y abierto en lo último. Lo que escribió la persona, en blanco a la izquierda; lo que le
+  respondimos, en `accion-suave-fondo` a la derecha; cada burbuja ajustada a su texto (hasta
+  `min(48ch, 85%)`) con la fecha y la hora en 12 px suave debajo, y «· no se envió» si falló. La
+  dirección se dice también para lectores de pantalla («Escribió:», «Respondimos:»). Encima, la
+  insignia del estado: «Espera a un asesor» en aviso con el icono de mensaje, o «Atiende el
+  asistente» en informativo. Debajo, el campo para responder y, a la derecha, «Devolver al
+  asistente» (plano) y «Enviar».
+- **Bandeja de conversaciones:** la gramática de las bandejas, con tres vistas en una fila
+  (`bandeja-vistas-tres`, etiquetas cortas: «Por atender», «Con el asistente», «Todas»). Cada
+  fila: el interesado (o el celular con `telefono()`) y si es interesado o familia afiliada; lo
+  que contó al asistente con cada dato por su nombre en palabras («Ciudad», «Plan sugerido»,
+  nunca la clave del guion); el último mensaje; el estado; y una acción suave: «Abrir
+  conversación» lleva a la ficha del interesado, «Responder» abre una ventana para una familia.
+- **Ficha de la campaña:** el nombre, su estado y cuándo sale (fecha con el día, hora y, si se
+  repite, «cada mes»); a quién le llega y la plantilla en Meta como datos; la audiencia en una frase («Le llega
+  a **3** de 3 familias», y cuántos se dieron de baja de los mensajes) y ejemplos del mensaje como le llega a cada familia,
+  con la burbuja saliente de la conversación (`campana-ejemplo`, hasta 56ch); el envío; y «Cómo le
+  fue», con las cifras (enviados, entregados, leídos, respondidos, no se enviaron) en celdas
+  blancas separadas por hilos como la franja del Inicio, y «Destinatarios en CSV» en plano de
+  acción.
+- **Envío con un solo verde:** el botón dice lo que hará: «Enviar ahora» con el campo de fecha
+  vacío, «Programar envío» con él. Programar sale sin confirmar (se cancela antes de salir);
+  enviar ahora confirma en una ventana que dice a cuántas («Enviar ahora a 3 familias», que los
+  mensajes no se retiran, la plantilla y el segmento) con «Volver» y el verde. «Cancelar campaña»
+  va en rojo plano y confirma con `btn-peligro` y «Mantenerla».
+- **Mensajes:** una tabla apilable con el mensaje, la dirección en palabras («Escribió» o «Le
+  escribimos a») y el celular con `telefono()` debajo, cuándo y el estado; nunca una flecha sola.
+  Los enlaces de un solo uso llegan ya tapados de la API (`token=[oculto]`): el panel no muestra
+  credenciales en un registro. Las bajas, en el rail.
+
+**La regla del verde de quien espera.** En la ficha de un interesado, si su conversación espera a
+un asesor, el verde es «Enviar» (contestarle) y «Pasar a <etapa>» queda suave; si no, el verde es
+pasar a la etapa siguiente que dice la API (`siguiente_etapa`; el panel no copia el embudo) y
+«Enviar» queda secundario.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -846,6 +908,10 @@ inicial y «refuerzo» después, sin número: «dosis 1, refuerzo» se leía com
 - **Do** acompaña el estado del plan, para la familia, de una frase que diga por qué y qué hacer.
 - **Do** escribe lo vencido de una bandeja con icono, fecha o importe y la palabra, y cada
   preventivo con la misma redacción (`pedido`, `dosis`) en todas partes.
+- **Do** confirma lo que no se deshace diciendo su alcance («Enviar ahora a 3 familias»): en verde
+  si es el camino normal, con `btn-peligro` si anula (cancelar, marcar como perdido).
+- **Do** di la dirección de un mensaje en palabras («Escribió», «Le escribimos a») y los
+  teléfonos con `telefono()`.
 
 ### Don't:
 - **Don't** escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.

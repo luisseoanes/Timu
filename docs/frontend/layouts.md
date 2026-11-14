@@ -7,7 +7,7 @@ superficie (`.impeccable/surfaces/`).
 
 > En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)). **Rediseñado:** la estructura
 > del panel, el listado con ficha (Familias, Rutas y Clínica), la ruta propia del médico, la
-> consulta guiada, el inicio del panel, las bandejas (Tareas, Cartera y Preventivos), las ventanas, la espera de sesión y el portal de familias entero. **Aún con la composición anterior** (aunque ya con la paleta, la
+> consulta guiada, el inicio del panel, las bandejas (Tareas, Cartera y Preventivos), Comercial y Campañas, las ventanas, la espera de sesión y el portal de familias entero. **Aún con la composición anterior** (aunque ya con la paleta, la
 > tipografía y el logo): el ingreso, el detalle de un registro y las
 > páginas públicas. Cada uno se rehace en su
 > unidad.
@@ -41,7 +41,7 @@ superficie (`.impeccable/surfaces/`).
   perfil (`PRINCIPALES`: el médico lleva Inicio, Rutas, Servicios y Clínica) y
   «Más» para el resto.
 
-## Listado con ficha — `.con-ficha` (Familias, Rutas, Clínica, Servicios)
+## Listado con ficha — `.con-ficha` (Familias, Rutas, Clínica, Servicios, Comercial, Campañas)
 
 El patrón de un módulo cuyo trabajo es abrir un registro y actuar sobre él.
 
@@ -91,6 +91,20 @@ Franjas) siguen a la vista con un servicio abierto: `/servicios/:id` es la pesta
 la ficha dentro (`FichaServicio`), así que el listado no salta al abrir uno. Al abrir una fila del
 final del listado, la ficha se trae a la vista. Los demás módulos que
 abren un registro deberían partir de aquí.
+
+En Comercial (R2-PAN-09) el listado son los interesados, con las vistas «Abiertos», «Afiliados» y
+«Perdidos» (con su recuento, de `/comercial/interesados/recuentos`), el buscador y, en «Abiertos»,
+los grupos por etapa con el rótulo de los días de Servicios. La ficha (`/comercial?interesado=`)
+lleva la línea de etapas, los datos (el responsable se cambia ahí), y la conversación de WhatsApp
+como burbujas con el campo para responder. La verde es contestar si la persona espera a un asesor;
+si no, pasar a la etapa siguiente que dice la API (`siguiente_etapa`). «Marcar como perdido» va en el
+menú, con el motivo y `btn-peligro`. Las pestañas son Interesados, Conversaciones (la bandeja de las
+que esperan a un asesor, con «Abrir conversación» hacia la ficha) y Guion del asistente (solo
+administración). En Campañas (`/campanas?campana=`) el listado son las campañas con su estado y
+cuándo salen; la ficha dice a quién le llega, la plantilla, la audiencia con ejemplos del mensaje, el
+envío y «Cómo le fue». Enviar ahora confirma con la audiencia («Enviar ahora a 3 familias»);
+programar no, porque se cancela antes de salir. Segmentos, Encuestas, Mensajes y Plantillas de
+WhatsApp siguen en sus pestañas, cada una en su fichero (`CampanasPage.tsx` solo arma las pestañas).
 
 ## La consulta guiada — `.consulta` (Clínica)
 

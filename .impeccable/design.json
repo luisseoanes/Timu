@@ -922,7 +922,7 @@
       "name": "Vistas de una bandeja",
       "kind": "nav",
       "refersTo": "pestana-activa",
-      "description": "Selector segmentado de las bandejas (Tareas, Cartera, Preventivos) con el recuento de cada vista.",
+      "description": "Selector segmentado de las bandejas (Tareas, Cartera, Preventivos, Conversaciones) con el recuento de cada vista; con tres vistas van en una fila con etiquetas cortas.",
       "html": "<div class=\"ds-segmento\" role=\"group\" aria-label=\"Vista de la cartera\"><button class=\"ds-seg\" aria-pressed=\"true\">En mora <span class=\"ds-rec\">1</span></button><button class=\"ds-seg\" aria-pressed=\"false\">Por renovar <span class=\"ds-rec\">0</span></button><button class=\"ds-seg\" aria-pressed=\"false\">Todos <span class=\"ds-rec\">4</span></button></div>",
       "css": ".ds-segmento { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 4px; gap: 4px; border-radius: var(--r-pastilla); background: var(--superficie-hundida); border: 1px solid var(--borde); font-family: var(--fuente); } .ds-seg { font: inherit; font-weight: 700; font-size: var(--t-menor); display: inline-flex; align-items: center; justify-content: center; gap: var(--e2); padding: 9px var(--e3); border: 0; border-radius: var(--r-pastilla); background: transparent; color: var(--texto-suave); cursor: pointer; transition: background var(--duracion) var(--curva), color var(--duracion) var(--curva); } .ds-seg:hover { color: var(--texto-titulo); } .ds-seg:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; } .ds-seg[aria-pressed=\"true\"] { background: var(--superficie); color: var(--texto-titulo); } .ds-rec { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--texto-suave); } .ds-seg[aria-pressed=\"true\"] .ds-rec { color: var(--texto); }"
     },
@@ -957,6 +957,22 @@
       "description": "Los pasos de un servicio como estaciones: línea de 4 px, hecho lleno de marino con el check, el obligatorio que falta en contorno marino con «Obligatorio» en tono de aviso, el opcional en contorno gris.",
       "html": "<ol class=\"ds-pasos\"><li class=\"ds-paso\" data-e=\"hecho\"><span class=\"ds-pp\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m5 12 5 5 9-10\"/></svg></span><div class=\"ds-pc\"><strong>Peso</strong><span>4,2 kg</span></div></li><li class=\"ds-paso\" data-e=\"falta\"><span class=\"ds-pp\"></span><div class=\"ds-pc\"><strong>Vacuna aplicada <span class=\"ds-ob\">Obligatorio</span></strong><span>Producto y lote</span></div></li><li class=\"ds-paso\"><span class=\"ds-pp\"></span><div class=\"ds-pc\"><strong>Fotos</strong><span>Opcional</span></div></li></ol>",
       "css": ".ds-pasos { list-style: none; margin: 0; padding: 0; font-family: var(--fuente); background: var(--superficie); } .ds-paso { position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: var(--e4); } .ds-paso::before { content: \"\"; position: absolute; left: 10px; top: 0; bottom: 0; width: 4px; background: var(--ruta-pendiente); } .ds-pasos > :first-child::before { top: 24px; } .ds-pasos > :last-child::before { bottom: auto; height: 24px; } .ds-pp { position: relative; z-index: 1; width: 24px; height: 24px; margin-top: var(--e3); display: grid; place-items: center; box-sizing: border-box; border: 4px solid var(--ruta-pendiente); border-radius: var(--r-pastilla); background: var(--superficie); color: var(--texto-sobre-marca); } .ds-paso[data-e=\"hecho\"] .ds-pp { border-color: var(--ruta-recorrida); background: var(--ruta-recorrida); } .ds-paso[data-e=\"falta\"] .ds-pp { border-color: var(--ruta-recorrida); } .ds-pc { display: grid; gap: 2px; padding-block: var(--e3); } .ds-pc + .ds-pc, .ds-paso + .ds-paso .ds-pc { border-top: 1px solid var(--borde); } .ds-pc strong { display: inline-flex; flex-wrap: wrap; gap: var(--e2); align-items: center; color: var(--texto-titulo); font-size: var(--t-cuerpo); } .ds-pc > span { font-size: var(--t-menor); color: var(--texto-suave); } .ds-ob { padding: 3px 10px; border-radius: var(--r-pastilla); background: var(--estado-alerta-fondo); color: var(--estado-alerta-texto); font-size: var(--t-etiqueta); font-weight: 700; }"
+    },
+    {
+      "name": "Línea de etapas del interesado",
+      "kind": "custom",
+      "refersTo": "parada-punto",
+      "description": "Las cinco etapas del embudo con la geometría de la guía de la consulta, sin botones: línea de 8 px en ruta-pendiente con lo recorrido en marino, punto lleno en lo hecho y anillo marino con halo verde de 3 px en la actual, con su nombre en 700.",
+      "html": "<ol class=\"ds-etapas\" style=\"--avance:.25\"><li data-e=\"hecha\"><span class=\"ds-ep\"></span><span class=\"ds-en\">Nuevo</span></li><li data-e=\"actual\" aria-current=\"step\"><span class=\"ds-ep\"></span><span class=\"ds-en\">Contactado</span></li><li><span class=\"ds-ep\"></span><span class=\"ds-en\">Cotizado</span></li><li><span class=\"ds-ep\"></span><span class=\"ds-en\">En afiliación</span></li><li><span class=\"ds-ep\"></span><span class=\"ds-en\">Afiliado</span></li></ol>",
+      "css": ".ds-etapas { --avance: 0; position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); list-style: none; margin: 0; padding: var(--e2) 0; font-family: var(--fuente); background: var(--superficie); } .ds-etapas::before, .ds-etapas::after { content: \"\"; position: absolute; top: calc(var(--e2) + 8px); height: 8px; left: 10%; border-radius: var(--r-pastilla); } .ds-etapas::before { width: 80%; background: var(--ruta-pendiente); } .ds-etapas::after { width: calc(80% * var(--avance)); background: var(--ruta-recorrida); } .ds-etapas li { position: relative; z-index: 1; min-width: 0; display: grid; justify-items: center; gap: 6px; text-align: center; color: var(--texto-suave); } .ds-ep { width: 24px; height: 24px; box-sizing: border-box; border: 4px solid var(--ruta-pendiente); border-radius: var(--r-pastilla); background: var(--superficie); } .ds-etapas li[data-e=\"hecha\"] .ds-ep { border-color: var(--ruta-recorrida); background: var(--ruta-recorrida); } .ds-etapas li[data-e=\"actual\"] .ds-ep { border-color: var(--ruta-recorrida); box-shadow: 0 0 0 3px var(--indicador-seleccion); } .ds-en { font-size: var(--t-etiqueta); font-weight: 600; letter-spacing: -.01em; } .ds-etapas li[data-e=\"actual\"] .ds-en { color: var(--texto-titulo); font-weight: 700; }"
+    },
+    {
+      "name": "Conversación de WhatsApp",
+      "kind": "custom",
+      "refersTo": "superficie-hundida",
+      "description": "Burbujas sobre fondo hundido: lo que escribió la persona en blanco a la izquierda, lo que respondimos en verde tenue a la derecha, cada una ajustada a su texto (hasta min(48ch, 85%)) con la hora en 12 px suave.",
+      "html": "<div class=\"ds-conv\"><div class=\"ds-msj\"><span class=\"ds-sr\">Escribió:</span><p>quiero hablar con un asesor</p><span class=\"ds-h\">14 nov · 12:18 p. m.</span></div><div class=\"ds-msj\" data-d=\"saliente\"><span class=\"ds-sr\">Respondimos:</span><p>Te comunico con un asesor de TIMU; te escribirá en breve.</p><span class=\"ds-h\">14 nov · 12:18 p. m.</span></div></div>",
+      "css": ".ds-conv { display: grid; gap: var(--e3); padding: var(--e3); border-radius: var(--r-tarjeta); background: var(--superficie-hundida); font-family: var(--fuente); } .ds-msj { justify-self: start; max-width: min(48ch, 85%); padding: var(--e2) var(--e3); border-radius: var(--r-tarjeta); background: var(--superficie); } .ds-msj[data-d=\"saliente\"] { justify-self: end; background: var(--accion-suave-fondo); } .ds-msj p { margin: 0; white-space: pre-line; overflow-wrap: anywhere; color: var(--texto-titulo); font-size: var(--t-cuerpo); } .ds-h { display: block; margin-top: 2px; font-size: var(--t-etiqueta); color: var(--texto-suave); } .ds-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }"
     }
   ],
   "narrative": {
@@ -1055,6 +1071,11 @@
         "name": "La regla de una sola redacción",
         "body": "Un preventivo se escribe igual en la bandeja, la estación y la autorización: «Luna · Antirrábica canina, refuerzo» (`pedido`). La dosis es «dosis N» en la serie inicial y «refuerzo» después, sin número: «dosis 1, refuerzo» se leía como dos cosas a la vez.",
         "section": "components"
+      },
+      {
+        "name": "La regla del verde de quien espera",
+        "body": "En la ficha de un interesado, si su conversación espera a un asesor, el verde es «Enviar» (contestarle) y «Pasar a <etapa>» queda suave; si no, el verde es pasar a la etapa siguiente que dice la API (`siguiente_etapa`; el panel no copia el embudo) y «Enviar» queda secundario.",
+        "section": "components"
       }
     ],
     "dos": [
@@ -1068,7 +1089,9 @@
       "Do mantén los controles en 40 px y 44 px en táctil, con foco azul visible de 2 px.",
       "Do en el portal, abre la línea en «Hoy», pliega lo hecho y agrupa lo vencido, y deja que `accionPrincipal` elija la única acción verde de la línea.",
       "Do acompaña el estado del plan, para la familia, de una frase que diga por qué y qué hacer.",
-      "Do escribe lo vencido de una bandeja con icono, fecha o importe y la palabra, y cada preventivo con la misma redacción (`pedido`, `dosis`) en todas partes."
+      "Do escribe lo vencido de una bandeja con icono, fecha o importe y la palabra, y cada preventivo con la misma redacción (`pedido`, `dosis`) en todas partes.",
+      "Do confirma lo que no se deshace diciendo su alcance («Enviar ahora a 3 familias»): en verde si es el camino normal, con `btn-peligro` si anula (cancelar, marcar como perdido).",
+      "Do di la dirección de un mensaje en palabras («Escribió», «Le escribimos a») y los teléfonos con `telefono()`."
     ],
     "donts": [
       "Don't escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.",
