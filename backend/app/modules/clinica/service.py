@@ -16,6 +16,7 @@ from app.modules.archivos import service as archivos
 from app.modules.archivos.models import Archivo
 from app.modules.auth.models import Usuario
 from app.modules.cartera import contratos
+from app.modules.catalogos import service as catalogos
 from app.modules.clinica import documento
 from app.modules.clinica.models import (
     AdjuntoClinico,
@@ -55,6 +56,9 @@ _PASOS_DESDE_LA_CONSULTA = {
     ),
     "recomendaciones": lambda e: e.tratamiento,
 }
+
+
+catalogos.conectar_campos_de_la_consulta(frozenset(_PASOS_DESDE_LA_CONSULTA))
 
 
 def vista_para(rol: Rol) -> Vista:

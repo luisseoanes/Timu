@@ -84,8 +84,8 @@ export const TIPOS_SERVICIO: TipoServicioRead[] = [
     requiere_autorizacion: false,
     activo: true,
     pasos: [
-      { codigo: 'valoracion', nombre: 'Valoracion clinica', obligatorio: true, campos: ['hallazgos'] },
-      { codigo: 'plan', nombre: 'Plan y recomendaciones', obligatorio: true, campos: ['recomendaciones'] },
+      { codigo: 'valoracion', nombre: 'Valoracion clinica', obligatorio: true, campos: ['hallazgos'], lo_registra_la_consulta: true },
+      { codigo: 'plan', nombre: 'Plan y recomendaciones', obligatorio: true, campos: ['recomendaciones'], lo_registra_la_consulta: true },
     ],
   },
   {

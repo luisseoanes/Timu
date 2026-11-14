@@ -531,7 +531,13 @@ async def test_tipos_de_servicio_exponen_sus_pasos(client: AsyncClient, headers)
         "nombre": "Valoracion clinica",
         "obligatorio": True,
         "campos": ["hallazgos"],
+        # La consulta firmada lo registra: el panel no copia que campos llena (R2-PAN-08).
+        "lo_registra_la_consulta": True,
     }
+    vacuna = next(t for t in resp.json() if t["codigo"] == "vacunacion")
+    pasos = {p["codigo"]: p["lo_registra_la_consulta"] for p in vacuna["pasos"]}
+    # Producto y lote no los llena la consulta, y un paso sin campos no lo llena nada.
+    assert pasos == {"aplicacion": False, "evidencia": False}
 
 
 # --- Sesion por cookie (pruebas que trajo el remoto) ------------------------------------------

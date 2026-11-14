@@ -196,7 +196,7 @@ describe('pasos de la atención', () => {
     server.use(
       http.get(`${API}/catalogos/tipos-servicio`, () =>
         HttpResponse.json([
-          { ...TIPOS_SERVICIO[0]!, pasos: [{ codigo: 'foto', nombre: 'Foto de la mascota', obligatorio: false, campos: [] }] },
+          { ...TIPOS_SERVICIO[0]!, pasos: [{ codigo: 'foto', nombre: 'Foto de la mascota', obligatorio: false, campos: [], lo_registra_la_consulta: false }] },
         ]),
       ),
       http.put(`${API}/servicios/s1/pasos/foto`, () => HttpResponse.json({ detail: 'El servicio ya cerró' }, { status: 409 })),

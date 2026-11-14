@@ -267,7 +267,7 @@ describe('la ruta de quien sale a campo', () => {
             duracion_min: 20,
             requiere_autorizacion: true,
             activo: true,
-            pasos: [{ codigo: 'aplicacion', nombre: 'Aplicación', obligatorio: true, campos: ['producto', 'lote'] }],
+            pasos: [{ codigo: 'aplicacion', nombre: 'Aplicación', obligatorio: true, campos: ['producto', 'lote'], lo_registra_la_consulta: false }],
           },
         ]),
       ),

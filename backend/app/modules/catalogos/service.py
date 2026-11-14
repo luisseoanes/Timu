@@ -63,3 +63,24 @@ def especie_valida(db: Session, codigo: str) -> str:
     if not db.scalar(select(Especie.id).where(Especie.codigo == codigo, Especie.activa.is_(True))):
         raise ReglaNegocio(f"La especie '{codigo}' no esta en el catalogo")
     return codigo
+
+
+# --- Que pasos registra la consulta clinica ---------------------------------------------------
+# clinica importa catalogos, asi que catalogos no puede importar clinica: clinica le conecta, al
+# importar clinica/service.py (que la API carga siempre), los campos de un paso que la consulta
+# firmada sabe llenar. Asi el catalogo dice a quien lo lee (el panel, para decidir adonde lleva
+# «Registrar la atencion») que pasos registra la consulta, sin que nadie copie la tabla.
+_campos_de_la_consulta: frozenset[str] | None = None
+
+
+def conectar_campos_de_la_consulta(campos: frozenset[str]) -> None:
+    global _campos_de_la_consulta
+    _campos_de_la_consulta = campos
+
+
+def lo_registra_la_consulta(campos: list[str]) -> bool:
+    """Un paso lo registra la consulta si tiene campos y la consulta los llena todos."""
+    if _campos_de_la_consulta is None:
+        # Sin conectar, el panel mandaria a registrar en el servicio lo que llena la consulta.
+        raise RuntimeError("catalogos sin conectar: falta conectar_campos_de_la_consulta()")
+    return bool(campos) and set(campos) <= _campos_de_la_consulta

@@ -144,14 +144,14 @@ describe('a quién y dónde', () => {
   })
 
   it('la consulta registra los pasos de una consulta, no los de una vacuna', () => {
-    const valoracion = { codigo: 'valoracion', nombre: 'Valoración clínica', obligatorio: true, campos: ['hallazgos'] }
-    const plan = { codigo: 'plan', nombre: 'Plan y recomendaciones', obligatorio: true, campos: ['recomendaciones'] }
-    const aplicacion = { codigo: 'aplicacion', nombre: 'Aplicación', obligatorio: true, campos: ['producto', 'lote'] }
+    const valoracion = { codigo: 'valoracion', nombre: 'Valoración clínica', obligatorio: true, campos: ['hallazgos'], lo_registra_la_consulta: true }
+    const plan = { codigo: 'plan', nombre: 'Plan y recomendaciones', obligatorio: true, campos: ['recomendaciones'], lo_registra_la_consulta: true }
+    const aplicacion = { codigo: 'aplicacion', nombre: 'Aplicación', obligatorio: true, campos: ['producto', 'lote'], lo_registra_la_consulta: false }
     expect(laConsultaLosRegistra([valoracion, plan])).toBe(true)
     expect(laConsultaLosRegistra([aplicacion])).toBe(false)
     expect(laConsultaLosRegistra([plan, aplicacion])).toBe(false)
     // Un paso sin campos no lo llena nada: se registra en el servicio.
-    expect(laConsultaLosRegistra([{ codigo: 'evidencia', nombre: 'Evidencia', obligatorio: true }])).toBe(false)
+    expect(laConsultaLosRegistra([{ codigo: 'evidencia', nombre: 'Evidencia', obligatorio: true, lo_registra_la_consulta: false }])).toBe(false)
   })
 
   it('escribe a WhatsApp sin el «+» del teléfono', () => {

@@ -118,6 +118,7 @@ export interface PasoTipoRead {
   nombre: string
   obligatorio?: boolean
   campos?: string[]
+  lo_registra_la_consulta: boolean
 }
 
 export interface TipoServicioRead {

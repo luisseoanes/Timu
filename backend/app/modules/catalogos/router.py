@@ -42,6 +42,18 @@ class PasoTipoRead(BaseModel):
     nombre: str
     obligatorio: bool = True
     campos: list[str] = []
+    lo_registra_la_consulta: bool = Field(description="La consulta clinica firmada lo registra")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _segun_la_consulta(cls, paso: Any) -> Any:
+        # El paso del catalogo no lo guarda: lo dice clinica, que es quien lo llena.
+        if isinstance(paso, dict):
+            paso = {
+                **paso,
+                "lo_registra_la_consulta": service.lo_registra_la_consulta(paso.get("campos", [])),
+            }
+        return paso
 
 
 class TipoServicioRead(BaseModel):

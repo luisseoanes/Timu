@@ -102,6 +102,10 @@ Reglas que atraviesan todo el backend:
   conecta al importarse qué hacer cuando la visita de un preventivo se autoriza, se completa o se
   cancela (`servicios.conectar_al_cambiar_estado`, ver `docs/flujo-de-la-visita.md`); sin
   conectar, `cambiar_estado` falla.
+- **`catalogos` no importa `clinica`** (que lee el catálogo): `clinica/service.py` le conecta al
+  importarse qué campos llena la consulta firmada (`catalogos.conectar_campos_de_la_consulta`), y el
+  catálogo de tipos dice en cada paso si lo registra la consulta (`lo_registra_la_consulta`), para
+  que el panel no copie la tabla; sin conectar, el catálogo de tipos falla.
 - **Las cadenas que la API devuelve para mostrarse tal cual llevan tildes** (nombres y fórmulas
   de `dashboard/definiciones`); la regla de evitarlas es para docstrings y comentarios. Los
   mensajes de error aún no las llevan: es deuda, no la norma.
