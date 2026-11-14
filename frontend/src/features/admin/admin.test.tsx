@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { AdminPage } from './AdminPage'
 import { PLAN, USUARIO_ADMIN } from '@/test/handlers'
@@ -11,12 +11,20 @@ import { renderizar } from '@/test/utils'
 const API = '*/api/v1'
 
 const OPERADOR = { id: 'u2', email: 'op@timu.co', telefono: null, nombre: 'Carlos Peña', rol: 'operaciones', activo: true }
+const RECUENTOS = { equipo: 2, aliadas: 0, familias: 5, inactivos: 1 }
+
+beforeEach(() => {
+  server.use(
+    http.get(`${API}/auth/usuarios/recuentos`, () => HttpResponse.json(RECUENTOS)),
+    http.get(`${API}/auth/usuarios`, () => HttpResponse.json({ items: [], total: 0, limit: 25, offset: 0 })),
+  )
+})
 
 describe('AdminPage', () => {
-  it('cambia el perfil de un usuario y no deja desactivarse a sí mismo', async () => {
+  it('cambia el perfil de un usuario, y no deja cambiarse ni desactivarse a sí mismo', async () => {
     let cambio: unknown = null
     server.use(
-      http.get(`${API}/auth/usuarios`, () => HttpResponse.json({ items: [{ ...USUARIO_ADMIN, telefono: null }, OPERADOR], total: 2, limit: 200, offset: 0 })),
+      http.get(`${API}/auth/usuarios`, () => HttpResponse.json({ items: [{ ...USUARIO_ADMIN, telefono: null }, OPERADOR], total: 2, limit: 25, offset: 0 })),
       http.patch(`${API}/auth/usuarios/u2`, async ({ request }) => {
         cambio = await request.json()
         return HttpResponse.json({ ...OPERADOR, rol: 'medico' })
@@ -24,9 +32,68 @@ describe('AdminPage', () => {
     )
     const user = userEvent.setup()
     renderizar(<AdminPage />)
-    await user.selectOptions(await screen.findByLabelText('Perfil de Carlos Peña'), 'medico')
+    const perfil = await screen.findByLabelText('Perfil de Carlos Peña')
+    // Una cuenta de clínica aliada necesita su clínica: no se ofrece en la fila.
+    expect(within(perfil).queryByRole('option', { name: 'Clínica aliada' })).not.toBeInTheDocument()
+    await user.selectOptions(perfil, 'medico')
+    // Cambiarlo cierra sus sesiones: nada se envía hasta confirmarlo.
+    const ventana = await screen.findByRole('dialog', { name: '¿Carlos Peña pasa a Médico veterinario?' })
+    expect(cambio).toBeNull()
+    await user.click(within(ventana).getByRole('button', { name: 'Cambiar el perfil' }))
     await waitFor(() => expect(cambio).toEqual({ rol: 'medico' }))
-    expect(screen.getByLabelText('Admin activo')).toBeDisabled()
+    const yo = screen.getByText('Tú').closest('tr')!
+    expect(within(yo).queryByRole('combobox')).not.toBeInTheDocument()
+    expect(within(yo).queryByRole('button', { name: /desactivar/i })).not.toBeInTheDocument()
+  })
+
+  it('las vistas llevan su recuento y piden su grupo, con la búsqueda', async () => {
+    const pedidas: string[] = []
+    server.use(
+      http.get(`${API}/auth/usuarios`, ({ request }) => {
+        const p = new URL(request.url).searchParams
+        pedidas.push(`${p.get('grupo')}|${p.get('q') ?? ''}`)
+        return HttpResponse.json({ items: [], total: 0, limit: 25, offset: 0 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<AdminPage />)
+    expect(await screen.findByText('No hay nadie activo en el equipo.')).toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: 'Familias 5' }))
+    expect(await screen.findByText('Ninguna familia tiene acceso al portal todavía.')).toBeInTheDocument()
+    await user.type(screen.getByLabelText('Buscar usuarios'), 'ana')
+    await waitFor(() => expect(pedidas).toContain('familias|ana'))
+    expect(pedidas[0]).toBe('equipo|')
+    expect(await screen.findByText('Nadie de esta vista coincide con la búsqueda.')).toBeInTheDocument()
+  })
+
+  it('desactiva tras confirmarlo en rojo y reactiva desde inactivos', async () => {
+    const cambios: unknown[] = []
+    server.use(
+      http.get(`${API}/auth/usuarios`, ({ request }) =>
+        HttpResponse.json({
+          items: [new URL(request.url).searchParams.get('grupo') === 'inactivos' ? { ...OPERADOR, activo: false } : OPERADOR],
+          total: 1,
+          limit: 25,
+          offset: 0,
+        }),
+      ),
+      http.patch(`${API}/auth/usuarios/u2`, async ({ request }) => {
+        cambios.push(await request.json())
+        return HttpResponse.json(OPERADOR)
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<AdminPage />)
+    await user.click(await screen.findByRole('button', { name: 'Desactivar a Carlos Peña' }))
+    const ventana = await screen.findByRole('dialog', { name: 'Desactivar a Carlos Peña' })
+    expect(cambios).toEqual([])
+    const confirmar = within(ventana).getByRole('button', { name: 'Desactivar' })
+    expect(confirmar).toHaveClass('btn-peligro')
+    await user.click(confirmar)
+    await waitFor(() => expect(cambios).toEqual([{ activo: false }]))
+    await user.click(screen.getByRole('button', { name: 'Inactivos 1' }))
+    await user.click(await screen.findByRole('button', { name: 'Activar a Carlos Peña' }))
+    await waitFor(() => expect(cambios).toEqual([{ activo: false }, { activo: true }]))
   })
 
   it('crea un usuario de clínica aliada con su clínica', async () => {
@@ -70,8 +137,10 @@ describe('AdminPage', () => {
     const user = userEvent.setup()
     renderizar(<AdminPage />)
     await user.click(await screen.findByRole('tab', { name: 'Planes' }))
-    const plan = await screen.findByRole('article', { name: 'Colita Feliz' })
-    expect(within(plan).getByText(/consulta domiciliaria · 6 al año/)).toBeInTheDocument()
+    await user.click(await screen.findByRole('link', { name: 'Colita Feliz' }))
+    const ficha = screen.getByRole('region', { name: 'Plan abierto' })
+    const beneficio = (await within(ficha).findByText('6 al año')).closest('tr')!
+    expect(within(beneficio).getByRole('cell', { name: /consulta/i })).toBeInTheDocument()
   })
 
   it('una versión de prompt sólo se activa si pasa todos sus casos', async () => {
@@ -90,7 +159,7 @@ describe('AdminPage', () => {
     const user = userEvent.setup()
     renderizar(<AdminPage />)
     await user.click(await screen.findByRole('tab', { name: 'Inteligencia artificial' }))
-    expect(await screen.findByText('US$ 12.50')).toBeInTheDocument()
+    expect(await screen.findByText(/^US\$\s12,50$/)).toBeInTheDocument()
     const activar = await screen.findByRole('button', { name: 'Activar' })
     expect(activar).toBeDisabled()
     await user.click(screen.getByRole('button', { name: 'Correr casos' }))

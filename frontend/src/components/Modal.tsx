@@ -22,7 +22,8 @@ export function Modal({
   onCambio: (abierto: boolean) => void
   titulo: string
   descripcion?: string
-  children: ReactNode
+  /** Sin cuerpo, la ventana es solo su título, su descripción y su pie (una confirmación). */
+  children?: ReactNode
   pie?: ReactNode
 }) {
   return (
@@ -37,7 +38,7 @@ export function Modal({
             </Dialog.Close>
           </div>
           {descripcion && <Dialog.Description className="modal-descripcion">{descripcion}</Dialog.Description>}
-          <div className="modal-cuerpo">{children}</div>
+          {children !== undefined && <div className="modal-cuerpo">{children}</div>}
           {pie && <div className="modal-pie">{pie}</div>}
         </Dialog.Content>
       </Dialog.Portal>

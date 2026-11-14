@@ -43,7 +43,8 @@ function abrir() {
 describe('gasto del mes', () => {
   it('mide el presupuesto usado', async () => {
     abrir()
-    expect(await screen.findByText('US$ 37.50')).toBeInTheDocument()
+    // Dólares con la coma decimal de Colombia, como los pesos.
+    expect(await screen.findByText(/^US\$\s37,50$/)).toBeInTheDocument()
     expect(screen.getByRole('meter', { name: 'Presupuesto de IA usado' })).toHaveAttribute('aria-valuenow', '25')
   })
 
@@ -71,8 +72,12 @@ describe('prompts', () => {
       }),
     )
     const user = abrir()
-    expect(await screen.findByText('No hay prompts. Carga las versiones iniciales.')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Cargar versiones iniciales' }))
+    expect(await screen.findByText('No hay prompts todavía. Carga las versiones iniciales para empezar.')).toBeInTheDocument()
+    // Sin prompts, cargar las versiones iniciales es el verde, y «Nueva versión» queda suave.
+    expect(screen.getByRole('button', { name: /nueva versión/i })).toHaveClass('btn-suave')
+    const cargar = screen.getByRole('button', { name: 'Cargar versiones iniciales' })
+    expect(cargar).toHaveClass('btn-primario')
+    await user.click(cargar)
     await waitFor(() => expect(sembrado).toBe(true))
   })
 
@@ -252,16 +257,19 @@ describe('últimas consultas', () => {
         HttpResponse.json([
           consulta({}),
           consulta({ id: 'q2', estado: 'error', error: 'Tiempo agotado', prompt_version: null }),
-          consulta({ id: 'q3', estado: 'sin_presupuesto', prompt_codigo: 'otro_uso' }),
+          consulta({ id: 'q3', estado: 'presupuesto_agotado', prompt_codigo: 'otro_uso' }),
         ]),
       ),
     )
     abrir()
     expect(await screen.findByText('Tiempo agotado')).toBeInTheDocument()
     expect(screen.getAllByText('1200 / 300')).toHaveLength(3)
-    expect(screen.getAllByText('US$ 0.0123')).toHaveLength(3)
+    expect(screen.getAllByText(/^US\$\s0,0123$/)).toHaveLength(3)
     expect(screen.getByText('otro_uso')).toBeInTheDocument()
-    expect(screen.getByText('sin_presupuesto')).toBeInTheDocument()
+    // El resultado en palabras, no el código del backend.
+    expect(screen.getByText('Respondió')).toBeInTheDocument()
+    expect(screen.getByText('Falló')).toBeInTheDocument()
+    expect(screen.getByText('Sin presupuesto')).toBeInTheDocument()
   })
 
   it('sin consultas lo dice', async () => {

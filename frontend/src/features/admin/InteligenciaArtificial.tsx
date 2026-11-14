@@ -1,11 +1,11 @@
 import { useState } from 'react'
 
 import { Consulta } from '@/components/Consulta'
-import { Insignia } from '@/components/Distintivo'
+import { Distintivo } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { mensajeError } from '@/lib/errores'
-import { fechaHora, porcentaje } from '@/lib/formato'
+import { dolares, fechaHora, porcentaje } from '@/lib/formato'
 import type { PromptRead } from '@/types'
 
 import {
@@ -50,12 +50,12 @@ export function InteligenciaArtificial() {
                 <div className="indicadores">
                   <div className="indicador">
                     <span className="indicador-titulo">Gastado</span>
-                    <strong className="indicador-valor numero">US$ {c.gasto_usd.toFixed(2)}</strong>
-                    <span className="indicador-detalle">de US$ {c.presupuesto_usd.toFixed(2)} · {porcentaje(uso)}</span>
+                    <strong className="indicador-valor numero">{dolares(c.gasto_usd)}</strong>
+                    <span className="indicador-detalle">de {dolares(c.presupuesto_usd)} · {porcentaje(uso)}</span>
                   </div>
                   <div className="indicador">
                     <span className="indicador-titulo">Disponible</span>
-                    <strong className="indicador-valor numero">US$ {c.disponible_usd.toFixed(2)}</strong>
+                    <strong className="indicador-valor numero">{dolares(c.disponible_usd)}</strong>
                     <span className="indicador-detalle">Al agotarse, la IA se apaga sola hasta el mes siguiente</span>
                   </div>
                 </div>
@@ -71,19 +71,29 @@ export function InteligenciaArtificial() {
       <section className="tarjeta">
         <div className="tarjeta-cabeza">
           <h3>Prompts</h3>
-          <div className="acciones">
-            <button className="btn btn-plano" type="button" disabled={sembrar.isPending} onClick={() => sembrar.mutate()}>
-              Cargar versiones iniciales
-            </button>
+          {/* Sin prompts, lo que toca es cargar las versiones iniciales: ese es el verde. */}
+          {prompts.data?.length === 0 ? (
+            <div className="acciones">
+              <button className="btn btn-suave" type="button" onClick={() => setNuevo(true)}>
+                <Icono nombre="mas" size={16} /> Nueva versión
+              </button>
+              <button className="btn btn-primario" type="button" disabled={sembrar.isPending} onClick={() => sembrar.mutate()}>
+                {sembrar.isPending ? 'Cargando…' : 'Cargar versiones iniciales'}
+              </button>
+            </div>
+          ) : (
             <button className="btn btn-primario" type="button" onClick={() => setNuevo(true)}>
               <Icono nombre="mas" size={16} /> Nueva versión
             </button>
-          </div>
+          )}
         </div>
-        <p className="apagado" style={{ marginBottom: 'var(--e4)' }}>
-          Una versión nueva queda en borrador. Sólo se activa después de pasar sus casos de prueba.
-        </p>
-        <Consulta consulta={prompts} cargando="Cargando…" error="No fue posible cargar los prompts." vacio="No hay prompts. Carga las versiones iniciales." estaVacio={(d) => d.length === 0}>
+        <p className="admin-nota">Una versión nueva queda en borrador. Solo se activa después de pasar sus casos de prueba.</p>
+        {sembrar.isError && (
+          <p className="error" role="alert">
+            {mensajeError(sembrar.error, 'No fue posible cargar las versiones iniciales.')}
+          </p>
+        )}
+        <Consulta consulta={prompts} cargando="Cargando…" error="No fue posible cargar los prompts." vacio="No hay prompts todavía. Carga las versiones iniciales para empezar." estaVacio={(d) => d.length === 0}>
           {(d) => d.map((p) => <FilaPrompt key={p.id} prompt={p} />)}
         </Consulta>
       </section>
@@ -118,32 +128,42 @@ export function InteligenciaArtificial() {
         <Consulta consulta={consultas} cargando="Cargando…" error="No fue posible cargar las consultas." vacio="Aún no se ha consultado la IA." estaVacio={(d) => d.length === 0}>
           {(d) => (
             <div className="scroll-x">
-              <table className="tabla">
+              <table className="tabla tabla-apilable bandeja-tabla">
                 <thead>
                   <tr>
-                    <th>Fecha</th>
                     <th>Uso</th>
-                    <th>Estado</th>
-                    <th>Tokens</th>
+                    <th>Cuándo</th>
+                    <th>Resultado</th>
+                    <th>Tokens (entrada / salida)</th>
                     <th>Costo</th>
                   </tr>
                 </thead>
                 <tbody>
                   {d.slice(0, 30).map((q) => (
                     <tr key={q.id}>
-                      <td className="numero">{fechaHora(q.created_at)}</td>
-                      <td>
+                      <td className="principal" data-etiqueta="Uso">
                         {USOS[q.prompt_codigo] ?? q.prompt_codigo}
-                        {q.prompt_version && <span className="apagado"> v{q.prompt_version}</span>}
+                        {q.prompt_version && (
+                          <div className="bandeja-detalle">
+                            <span className="numero">Versión {q.prompt_version}</span>
+                          </div>
+                        )}
+                        {q.error && <div className="error">{q.error}</div>}
                       </td>
-                      <td>
-                        <Insignia tono={q.estado === 'ok' ? 'ok' : q.estado === 'error' ? 'peligro' : 'neutro'}>{q.estado}</Insignia>
-                        {q.error && <div className="apagado">{q.error}</div>}
+                      <td data-etiqueta="Cuándo">
+                        <span className="numero sin-cortes">{fechaHora(q.created_at)}</span>
                       </td>
-                      <td className="numero">
-                        {q.tokens_entrada} / {q.tokens_salida}
+                      <td data-etiqueta="Resultado">
+                        <Distintivo dominio="consulta_ia" valor={q.estado} />
                       </td>
-                      <td className="numero">US$ {q.costo_usd.toFixed(4)}</td>
+                      <td data-etiqueta="Tokens (entrada / salida)">
+                        <span className="numero sin-cortes">
+                          {q.tokens_entrada} / {q.tokens_salida}
+                        </span>
+                      </td>
+                      <td data-etiqueta="Costo">
+                        <span className="numero sin-cortes">{dolares(q.costo_usd, 4)}</span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -165,19 +185,20 @@ function FilaPrompt({ prompt: p }: { prompt: PromptRead }) {
   const aprobado = evaluacion !== null && evaluacion.total > 0 && evaluacion.aprobados === evaluacion.total
 
   return (
-    <div className="pila" style={{ gap: 'var(--e2)', paddingBlock: 'var(--e3)', borderBottom: '1px solid var(--borde)' }}>
-      <div className="acciones">
+    <div className="ia-prompt">
+      <div className="ia-prompt-cabeza">
         <strong>
-          {USOS[p.codigo] ?? p.codigo} · v{p.version}
+          {USOS[p.codigo] ?? p.codigo} · <span className="numero">versión {p.version}</span>
         </strong>
-        <Insignia tono={p.estado === 'activo' ? 'ok' : p.estado === 'borrador' ? 'alerta' : 'neutro'}>{p.estado}</Insignia>
+        <Distintivo dominio="prompt" valor={p.estado} />
         {p.nota && <span className="apagado">{p.nota}</span>}
         {p.estado === 'borrador' && (
-          <div className="acciones" style={{ marginLeft: 'auto' }}>
-            <button className="btn btn-suave" type="button" disabled={evaluar.isPending} onClick={() => evaluar.mutate(p.id)}>
+          // El verde de la pestaña es «Nueva versión»: activar una se hace con un botón suave.
+          <div className="acciones ia-prompt-acciones">
+            <button className="btn btn-plano btn-accion" type="button" disabled={evaluar.isPending} onClick={() => evaluar.mutate(p.id)}>
               {evaluar.isPending ? 'Evaluando…' : 'Correr casos'}
             </button>
-            <button className="btn btn-primario" type="button" disabled={!aprobado || activar.isPending} onClick={() => activar.mutate(p.id)}>
+            <button className="btn btn-suave" type="button" disabled={!aprobado || activar.isPending} onClick={() => activar.mutate(p.id)}>
               Activar
             </button>
           </div>

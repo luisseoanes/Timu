@@ -126,6 +126,30 @@ const PENDIENTE: Record<string, Estado> = {
   rechazado: { label: 'Rechazado', tono: 'neutro' },
 }
 
+// core/enums.py, EstadoEventoPasarela.
+const EVENTO_PASARELA: Record<string, Estado> = {
+  recibido: { label: 'Recibido', tono: 'info' },
+  procesado: { label: 'Procesado', tono: 'ok' },
+  ignorado: { label: 'Ignorado', tono: 'neutro' },
+  error: { label: 'Con error', tono: 'peligro' },
+}
+
+// core/enums.py, EstadoPrompt.
+const PROMPT: Record<string, Estado> = {
+  borrador: { label: 'Borrador', tono: 'alerta' },
+  activo: { label: 'Activa', tono: 'ok' },
+  retirado: { label: 'Retirada', tono: 'neutro' },
+}
+
+// core/enums.py, EstadoConsultaIa.
+const CONSULTA_IA: Record<string, Estado> = {
+  ok: { label: 'Respondió', tono: 'ok' },
+  rechazo: { label: 'Se negó', tono: 'alerta' },
+  error: { label: 'Falló', tono: 'peligro' },
+  presupuesto_agotado: { label: 'Sin presupuesto', tono: 'alerta' },
+  desactivada: { label: 'IA apagada', tono: 'neutro' },
+}
+
 const MENSAJE: Record<string, Estado> = {
   encolado: { label: 'En cola', tono: 'neutro' },
   enviado: { label: 'Enviado', tono: 'info' },
@@ -137,6 +161,9 @@ const MENSAJE: Record<string, Estado> = {
 }
 
 export const ESTADOS = {
+  evento_pasarela: EVENTO_PASARELA,
+  prompt: PROMPT,
+  consulta_ia: CONSULTA_IA,
   afiliacion: AFILIACION,
   servicio: SERVICIO,
   cuota: CUOTA,

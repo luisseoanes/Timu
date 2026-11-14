@@ -93,6 +93,16 @@ export function fechaCortaConDia(valor: string): string {
   return `${DIA_SEMANA.format(new Date(anio, mes - 1, dia)).replace('.', '')} ${fechaCorta(valor)}`
 }
 
+const DOLARES = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })
+
+/** «US$ 50,00»: el gasto en la IA se paga en dólares; con la coma decimal de Colombia, como los
+ * pesos. `decimales` sube para los costos por consulta, que son de centavos. */
+export function dolares(valor: number, decimales = 2): string {
+  return decimales === 2
+    ? DOLARES.format(valor)
+    : new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD', minimumFractionDigits: decimales }).format(valor)
+}
+
 /** «+57 300 444 5588»: un celular de Colombia en E.164, partido como se dicta; «601 765 4321», un
  * fijo nacional (60 y el indicativo de la ciudad). Otro, tal cual. */
 export function telefono(valor: string | null | undefined): string {

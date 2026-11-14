@@ -235,7 +235,7 @@
 .cartera-renovable { font-size: var(--t-menor); color: var(--texto-suave); }
 /* Apilada, la acción de la fila a todo el ancho y al pulgar, como «Registrar autorización». */
 @container (max-width: 639px) {
-  :is(.cartera-tabla, .preventivos-tabla, .conversaciones-tabla, .remisiones-tabla) .tabla-acciones > .btn:first-child { flex: 1 1 100%; }
+  :is(.cartera-tabla, .preventivos-tabla, .conversaciones-tabla, .remisiones-tabla, .usuarios-tabla, .eventos-tabla) .tabla-acciones > .btn:first-child { flex: 1 1 100%; }
 }
 /* Por debajo de lo que cabe en una fila, las vistas ocupan la suya y el buscador y las listas
    bajan juntos a la siguiente: antes la ciudad bajaba sola y el buscador cortaba su texto. */
@@ -1280,3 +1280,19 @@
   .liquidacion-tabla tfoot tr { padding-block: var(--e3); border-top: 2px solid var(--borde); }
   .liquidacion-tabla tfoot td { border-top: 0; }
 }
+
+/* ===== Administración (R2-PAN-10): usuarios en bandeja; planes y reglas en listado con ficha ===== */
+.admin-nota { max-width: 65ch; margin-bottom: var(--e3); font-size: var(--t-menor); color: var(--texto-suave); }
+.admin-quien { color: var(--texto); font-size: var(--t-cuerpo); }
+.admin-ciudades { max-width: 70ch; color: var(--texto); line-height: 1.6; }
+/* Cada versión de un prompt: qué es y su estado arriba, las acciones a la derecha, el texto plegado. */
+.ia-prompt { display: grid; gap: var(--e2); padding-block: var(--e3); border-bottom: 1px solid var(--borde); }
+.ia-prompt-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e2) var(--e3); }
+.ia-prompt-acciones { margin-left: auto; }
+/* Lo que aplicaría al probar una regla: cada una con lo que hace, en palabras. */
+.regla-resultado { display: grid; gap: var(--e2); padding: var(--e3) var(--e4); border-radius: var(--r-tarjeta); background: var(--superficie-hundida); }
+.regla-aplican { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e2); }
+.regla-aplican li { display: grid; gap: 2px; }
+.regla-aplican span { font-size: var(--t-menor); color: var(--texto); }
+.usuarios-perfil { max-width: 16rem; }
+.catalogo-estado { display: inline-flex; align-items: center; gap: var(--e2); flex-shrink: 0; }

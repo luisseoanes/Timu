@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
 import type {
@@ -10,6 +10,7 @@ import type {
   Page,
   PlanRead,
   PromptRead,
+  RecuentosUsuarios,
   ReglaRead,
   ReporteRead,
   Rol,
@@ -41,11 +42,25 @@ export interface Beneficio {
 
 // --- Lecturas ---------------------------------------------------------------------------------
 
-export function useUsuarios(rol?: string) {
+export interface FiltrosUsuarios {
+  grupo: keyof RecuentosUsuarios
+  q?: string
+  limit: number
+  offset: number
+}
+
+export function useUsuarios(filtros: FiltrosUsuarios) {
   return useQuery({
-    queryKey: ['usuarios', rol ?? null],
-    queryFn: async () =>
-      (await api.get<Page<UsuarioRead>>('/auth/usuarios', { params: { rol, limit: 200 } })).data,
+    queryKey: ['usuarios', filtros],
+    placeholderData: keepPreviousData,
+    queryFn: async () => (await api.get<Page<UsuarioRead>>('/auth/usuarios', { params: filtros })).data,
+  })
+}
+
+export function useRecuentosUsuarios(q?: string) {
+  return useQuery({
+    queryKey: ['usuarios', 'recuentos', q ?? null],
+    queryFn: async () => (await api.get<RecuentosUsuarios>('/auth/usuarios/recuentos', { params: { q } })).data,
   })
 }
 
@@ -60,14 +75,6 @@ export function useReglas(evento?: string) {
   return useQuery({
     queryKey: ['reglas', evento ?? null],
     queryFn: async () => (await api.get<ReglaRead[]>('/reglas', { params: { evento } })).data,
-  })
-}
-
-export function useEventosReglas() {
-  return useQuery({
-    queryKey: ['reglas', 'eventos'],
-    staleTime: Infinity,
-    queryFn: async () => (await api.get<Record<string, string>>('/reglas/eventos')).data,
   })
 }
 
@@ -219,10 +226,17 @@ export function useActualizarRegla() {
   )
 }
 
+/** Lo que aplicaría a un contexto (reglas/router.py: `probar`), sin ejecutar nada. */
+export interface ReglaQueAplica {
+  regla: string
+  nombre: string
+  accion_texto: string
+}
+
 export function useProbarReglas() {
   return useMutation({
     mutationFn: async (datos: { evento: string; contexto: Record<string, unknown> }) =>
-      (await api.post<unknown[]>('/reglas/probar', datos)).data,
+      (await api.post<ReglaQueAplica[]>('/reglas/probar', datos)).data,
   })
 }
 

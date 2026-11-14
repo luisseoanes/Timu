@@ -1,94 +1,198 @@
+import * as Menu from '@radix-ui/react-dropdown-menu'
 import { useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
+import { Insignia } from '@/components/Distintivo'
+import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { mensajeError } from '@/lib/errores'
+import { fechaCompacta } from '@/lib/formato'
 import type { ReglaRead } from '@/types'
 
-import { useActualizarRegla, useEventosReglas, useProbarReglas, useReglas } from './api'
+import { useActualizarRegla, useProbarReglas, useReglas } from './api'
 
-/** Reglas de negocio configurables (F0-12): mora, avisos, renovaciones, elegibilidad. */
+/** Reglas de negocio configurables (F0-12) en listado con ficha (R2-PAN-10): agrupadas por el
+ * evento que las evalúa, y la abierta (`?regla=`) dice en palabras cuándo aplica y qué hace. */
 export function Reglas() {
-  const eventos = useEventosReglas()
-  const [evento, setEvento] = useState('')
-  const reglas = useReglas(evento || undefined)
-  const actualizar = useActualizarRegla()
-  const [editando, setEditando] = useState<ReglaRead | null>(null)
-  const [probando, setProbando] = useState(false)
+  const [params] = useSearchParams()
+  const abierta = params.get('regla')
+  return (
+    <div className="con-ficha" data-abierta={abierta ? 'true' : undefined}>
+      <ReglasLista seleccionada={abierta} />
+      {abierta ? (
+        <FichaRegla key={abierta} id={abierta} />
+      ) : (
+        <section className="ficha-abierta ficha-vacia" aria-label="Regla abierta">
+          <p>Abre una regla para ver cuándo aplica y qué hace.</p>
+        </section>
+      )}
+    </div>
+  )
+}
+
+function ReglasLista({ seleccionada }: { seleccionada: string | null }) {
+  const [params] = useSearchParams()
+  const reglas = useReglas()
+  const enlace = (id: string) => {
+    const siguiente = new URLSearchParams(params)
+    siguiente.set('regla', id)
+    return `?${siguiente}`
+  }
 
   return (
-    <section className="tarjeta">
-      <div className="tarjeta-cabeza">
-        <h3>Reglas de negocio</h3>
-        <div className="acciones">
-          <select className="input" style={{ width: 'auto' }} value={evento} onChange={(e) => setEvento(e.target.value)} aria-label="Evento">
-            <option value="">Todos los eventos</option>
-            {Object.entries(eventos.data ?? {}).map(([codigo, descripcion]) => (
-              <option key={codigo} value={codigo}>{descripcion}</option>
-            ))}
-          </select>
-          <button className="btn btn-suave" type="button" onClick={() => setProbando(true)}>
-            Probar reglas
-          </button>
-        </div>
+    <section className="listado" aria-labelledby="reglas-titulo">
+      <div className="listado-cabeza">
+        <h2 id="reglas-titulo">
+          Reglas {reglas.data && <span className="apagado numero">{reglas.data.length}</span>}
+        </h2>
       </div>
-      {actualizar.isError && (
-        <p className="error" role="alert">
-          {mensajeError(actualizar.error, 'No fue posible actualizar la regla.')}
-        </p>
-      )}
-      <Consulta consulta={reglas} cargando="Cargando reglas…" error="No fue posible cargar las reglas." vacio="No hay reglas para este evento." estaVacio={(d) => d.length === 0}>
+      <Consulta consulta={reglas} cargando="Cargando las reglas…" error="No fue posible cargar las reglas." vacio="No hay reglas configuradas." estaVacio={(d) => d.length === 0}>
         {(d) => (
-          <div className="scroll-x">
-            <table className="tabla">
-              <thead>
-                <tr>
-                  <th>Regla</th>
-                  <th>Evento</th>
-                  <th>Prioridad</th>
-                  <th>Activa</th>
-                  <th><span className="sr-only">Acciones</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {d.map((r) => (
-                  <tr key={r.id}>
-                    <td className="principal">
-                      {r.nombre}
-                      <div className="apagado codigo">{resumenCondicion(r.condicion)}</div>
-                    </td>
-                    <td>{eventos.data?.[r.evento] ?? r.evento}</td>
-                    <td className="numero">{r.prioridad}</td>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={r.activa}
-                        aria-label={`${r.nombre} activa`}
-                        onChange={(e) => actualizar.mutate({ id: r.id, activa: e.target.checked })}
-                      />
-                    </td>
-                    <td>
-                      <button className="btn btn-plano" type="button" onClick={() => setEditando(r)}>
-                        Editar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ul className="listado-filas" aria-label="Reglas por evento">
+            {porEvento(d).map(([evento, del]) => (
+              <li key={evento} className="servicios-dia">
+                <span className="servicios-dia-rotulo">
+                  {del[0]!.evento_nombre}
+                  {del[0]!.retirada && ' (retirado)'}
+                  {/* El recuento va pegado al nombre: solo, en otra línea, no se sabe de qué es. */}
+                  <span className="sin-cortes">
+                    {' '}
+                    · <span className="numero">{del.length}</span>
+                  </span>
+                </span>
+                <ul className="servicios-dia-filas">
+                  {del.map((r) => (
+                    <li key={r.id} className="listado-fila" data-seleccionada={r.id === seleccionada}>
+                      <span className="listado-fila-cabeza">
+                        {/* El enlace es solo el nombre; ::after lo extiende a toda la fila. */}
+                        <Link className="listado-fila-enlace" to={enlace(r.id)} aria-current={r.id === seleccionada ? 'page' : undefined}>
+                          {r.nombre}
+                        </Link>
+                        {r.retirada ? <Insignia tono="neutro">Retirada</Insignia> : !r.activa && <Insignia tono="neutro">Inactiva</Insignia>}
+                      </span>
+                      <span className="servicio-fila-datos">
+                        <span>{r.condicion_texto}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
         )}
       </Consulta>
-      {editando && <EditarRegla regla={editando} onCerrar={() => setEditando(null)} />}
-      <ProbarReglas abierto={probando} onCerrar={() => setProbando(false)} eventos={eventos.data ?? {}} />
     </section>
   )
 }
 
-function resumenCondicion(c: Record<string, unknown>): string {
-  if (!c || Object.keys(c).length === 0) return 'siempre'
-  if (typeof c.campo === 'string') return `${c.campo} ${String(c.op)} ${JSON.stringify(c.valor)}`
-  return JSON.stringify(c)
+/** Agrupa por evento en el orden en que llegan (la API ordena por evento y prioridad). */
+function porEvento(reglas: ReglaRead[]): [string, ReglaRead[]][] {
+  const grupos = new Map<string, ReglaRead[]>()
+  for (const r of reglas) grupos.set(r.evento, [...(grupos.get(r.evento) ?? []), r])
+  return [...grupos]
+}
+
+function FichaRegla({ id }: { id: string }) {
+  const reglas = useReglas()
+  const r = reglas.data?.find((x) => x.id === id)
+  return (
+    <section className="ficha-abierta" aria-label="Regla abierta">
+      <Consulta consulta={reglas} cargando="Cargando la regla…" error="No fue posible cargar la regla.">
+        {() => (r ? <Ficha regla={r} /> : <p className="apagado">Esta regla ya no existe.</p>)}
+      </Consulta>
+    </section>
+  )
+}
+
+function Ficha({ regla: r }: { regla: ReglaRead }) {
+  const [params] = useSearchParams()
+  const actualizar = useActualizarRegla()
+  const [editando, setEditando] = useState(false)
+  const volver = new URLSearchParams(params)
+  volver.delete('regla')
+
+  return (
+    <>
+      <header className="ficha-cabeza">
+        <Link to={`?${volver}`} className="btn btn-plano ficha-volver" aria-label="Volver a las reglas">
+          <Icono nombre="volver" size={16} />
+        </Link>
+        <h2>{r.nombre}</h2>
+        <div className="ficha-datos admin-quien">
+          {r.retirada ? <Insignia tono="neutro">Retirada</Insignia> : !r.activa && <Insignia tono="neutro">Inactiva</Insignia>}
+          <span>{r.evento_nombre}</span>
+        </div>
+        {/* Una regla de un evento retirado ya no se evalúa ni se puede editar: solo se lee. */}
+        {r.retirada ? (
+          <p className="admin-nota">Evento retirado: {r.retirada.charAt(0).toLowerCase() + r.retirada.slice(1)}. Esta regla ya no se evalúa ni se puede editar.</p>
+        ) : (
+        <div className="ficha-acciones">
+          <button className="btn btn-primario" type="button" onClick={() => setEditando(true)}>
+            Editar regla
+          </button>
+          <Menu.Root modal={false}>
+            <Menu.Trigger className="btn btn-secundario btn-icono" aria-label={`Más acciones con ${r.nombre}`}>
+              <Icono nombre="puntos" size={18} />
+            </Menu.Trigger>
+            <Menu.Portal>
+              <Menu.Content className="menu" align="end" sideOffset={6}>
+                {/* Desactivar es reversible: la regla deja de evaluarse y conserva su configuración. */}
+                <Menu.Item className="menu-item" onSelect={() => actualizar.mutate({ id: r.id, activa: !r.activa })}>
+                  {r.activa ? 'Desactivar regla' : 'Activar regla'}
+                </Menu.Item>
+              </Menu.Content>
+            </Menu.Portal>
+          </Menu.Root>
+        </div>
+        )}
+        {!r.retirada && !r.activa && <p className="admin-nota">Inactiva: el sistema no la evalúa.</p>}
+        {actualizar.isError && (
+          <p className="error" role="alert">
+            {mensajeError(actualizar.error, 'No fue posible actualizar la regla.')}
+          </p>
+        )}
+      </header>
+
+      <dl className="ficha">
+        <div className="ancho">
+          <dt>Cuándo aplica</dt>
+          <dd>{r.condicion_texto}</dd>
+        </div>
+        <div className="ancho">
+          <dt>Qué hace</dt>
+          <dd>{r.accion_texto}</dd>
+        </div>
+        <div>
+          <dt>Prioridad</dt>
+          <dd className="numero">{r.prioridad}</dd>
+        </div>
+        <div>
+          <dt>Si aplica</dt>
+          <dd>{r.detener ? 'No evalúa las siguientes' : 'Sigue con las siguientes'}</dd>
+        </div>
+        {(r.vigente_desde || r.vigente_hasta) && (
+          <div>
+            <dt>Vigencia</dt>
+            <dd className="numero">
+              {r.vigente_desde && `Desde el ${fechaCompacta(r.vigente_desde)}`}
+              {r.vigente_desde && r.vigente_hasta && ' '}
+              {r.vigente_hasta && `hasta el ${fechaCompacta(r.vigente_hasta)}`}
+            </dd>
+          </div>
+        )}
+        {r.descripcion && (
+          <div className="ancho">
+            <dt>Para qué sirve</dt>
+            <dd>{r.descripcion}</dd>
+          </div>
+        )}
+      </dl>
+      <p className="admin-nota">Las reglas de un mismo evento se evalúan de menor a mayor prioridad.</p>
+      {!r.retirada && <ProbarRegla regla={r} />}
+      {editando && <EditarRegla regla={r} onCerrar={() => setEditando(false)} />}
+    </>
+  )
 }
 
 function EditarRegla({ regla, onCerrar }: { regla: ReglaRead; onCerrar: () => void }) {
@@ -151,68 +255,75 @@ function EditarRegla({ regla, onCerrar }: { regla: ReglaRead; onCerrar: () => vo
   )
 }
 
-function ProbarReglas({ abierto, onCerrar, eventos }: { abierto: boolean; onCerrar: () => void; eventos: Record<string, string> }) {
-  const probar = useProbarReglas()
-  const [errorJson, setErrorJson] = useState<string | null>(null)
+/** Pone un valor en su ruta con puntos («familia.estado»), como lo lee el motor. */
+function conValor(contexto: Record<string, unknown>, ruta: string, valor: unknown): void {
+  const partes = ruta.split('.')
+  let actual = contexto
+  for (const parte of partes.slice(0, -1)) {
+    actual[parte] = (actual[parte] as Record<string, unknown> | undefined) ?? {}
+    actual = actual[parte] as Record<string, unknown>
+  }
+  actual[partes.at(-1)!] = valor
+}
 
+/** Probar la regla abierta: los datos que mira su condición, cada uno con su nombre, y lo que
+ * aplicaría en palabras. Evalúa sin ejecutar nada. */
+function ProbarRegla({ regla: r }: { regla: ReglaRead }) {
+  const probar = useProbarReglas()
   return (
-    <Modal
-      abierto={abierto}
-      onCambio={(v) => {
-        if (!v) {
-          probar.reset()
-          onCerrar()
-        }
-      }}
-      titulo="Probar reglas"
-      descripcion="Evalúa sin ejecutar nada: muestra qué reglas aplicarían a un contexto."
-      pie={
-        <button className="btn btn-primario" type="submit" form="probar-reglas" disabled={probar.isPending}>
-          Evaluar
-        </button>
-      }
-    >
+    <section className="bloque" aria-labelledby="regla-probar">
+      <h3 id="regla-probar">Probar esta regla</h3>
+      <p className="admin-nota">Escribe los datos de un caso y mira qué reglas de este evento aplicarían. No se ejecuta nada.</p>
       <form
-        id="probar-reglas"
-        className="pila"
+        className="formulario"
         onSubmit={(e) => {
           e.preventDefault()
-          setErrorJson(null)
           const d = new FormData(e.currentTarget)
-          try {
-            probar.mutate({ evento: String(d.get('evento')), contexto: JSON.parse(String(d.get('contexto'))) as Record<string, unknown> })
-          } catch {
-            setErrorJson('El contexto no es un JSON válido.')
+          const contexto: Record<string, unknown> = {}
+          for (const c of r.campos_condicion) {
+            const texto = String(d.get(c.campo) ?? '').trim()
+            if (texto !== '') conValor(contexto, c.campo, c.numerico ? Number(texto) : texto)
           }
+          probar.mutate({ evento: r.evento, contexto })
         }}
       >
-        <label className="campo">
-          <span>Evento</span>
-          <select className="input" name="evento">
-            {Object.entries(eventos).map(([codigo, descripcion]) => (
-              <option key={codigo} value={codigo}>{descripcion}</option>
-            ))}
-          </select>
-        </label>
-        <label className="campo">
-          <span>Contexto</span>
-          <textarea className="input codigo" name="contexto" rows={4} spellCheck={false} defaultValue={'{\n  "dias_mora": 30\n}'} />
-        </label>
-        {(errorJson || probar.isError) && (
-          <p className="error" role="alert">
-            {errorJson ?? mensajeError(probar.error, 'No fue posible evaluar.')}
-          </p>
-        )}
-        {probar.data && (
-          <div role="status">
-            {probar.data.length === 0 ? (
-              <p className="apagado">Ninguna regla aplica a este contexto.</p>
-            ) : (
-              <pre className="codigo bloque-codigo">{JSON.stringify(probar.data, null, 2)}</pre>
-            )}
-          </div>
-        )}
+        {r.campos_condicion.map((c) => (
+          <label key={c.campo} className="campo">
+            <span>{c.nombre}</span>
+            <input className="input" name={c.campo} type={c.numerico ? 'number' : 'text'} />
+          </label>
+        ))}
+        {r.campos_condicion.length === 0 && <p className="admin-nota ancho">Esta regla aplica siempre: no mira ningún dato.</p>}
+        <div className="acciones ancho">
+          <button className="btn btn-suave" type="submit" disabled={probar.isPending}>
+            {probar.isPending ? 'Probando…' : 'Probar'}
+          </button>
+        </div>
       </form>
-    </Modal>
+      {probar.isError && (
+        <p className="error" role="alert">
+          {mensajeError(probar.error, 'No fue posible probar la regla.')}
+        </p>
+      )}
+      {probar.data && (
+        <div role="status" className="regla-resultado">
+          <p>
+            <strong>{probar.data.some((x) => x.regla === r.codigo) ? 'Esta regla aplica.' : 'Esta regla no aplica con estos datos.'}</strong>
+          </p>
+          {probar.data.length === 0 ? (
+            <p className="admin-nota">Ninguna regla de este evento aplicaría.</p>
+          ) : (
+            <ul className="regla-aplican" aria-label="Reglas que aplicarían">
+              {probar.data.map((x) => (
+                <li key={x.regla}>
+                  <strong>{x.nombre}</strong>
+                  <span>{x.accion_texto}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </section>
   )
 }
