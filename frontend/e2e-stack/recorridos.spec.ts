@@ -249,7 +249,10 @@ test.describe('equipo en rutas', () => {
     const { url } = await rutaDemo(page.request)
     await page.goto(url)
     const listado = page.getByRole('region', { name: /Rutas del día/ })
-    await listado.getByRole('link').first().click()
+    // La fila de una ruta con paradas, no el primer enlace: «Por rutear» va en la misma región y
+    // sus servicios pueden pintarse antes que las rutas.
+    const conParadas = listado.getByRole('listitem').filter({ has: page.getByRole('img', { name: /de [1-9]\d* paradas? hechas?/ }) })
+    await conParadas.first().getByRole('link').click()
     const abierta = page.getByRole('region', { name: 'Ruta abierta' })
     await expect(abierta.getByRole('list', { name: 'Paradas de la ruta' })).toBeVisible()
     await expect(abierta.getByRole('heading', { level: 2 })).not.toHaveText('Sin responsable')
