@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { Link, Route, Routes } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
-import { FamiliaDetallePage } from './FamiliaDetallePage'
+import { FamiliaDetallePage, type GestionarPreventivoProps } from './FamiliaDetallePage'
 import { FAMILIA, PLAN, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
@@ -266,6 +266,42 @@ describe('FamiliaDetallePage', () => {
     abrirFicha()
     await user.click(await screen.findByRole('button', { name: 'Ver cuota septiembre' }))
     expect(screen.getByRole('tab', { name: 'Cartera' })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('los preventivos de una estación se agendan desde ella con la acción que inyecta App', async () => {
+    const vacuna = { tipo: 'preventivo' as const, referencia_id: 'e1', fecha: '2099-01-05', estado: 'proxima' as const, titulo: 'Vacuna rabia', mascota: 'Luna', mascota_id: FAMILIA.mascotas![0]!.id }
+    // El mismo día: la línea los junta en una estación, y la acción recibe los dos.
+    const otra = { ...vacuna, referencia_id: 'e2', titulo: 'Desparasitación interna', mascota: 'Michi', mascota_id: 'm2' }
+    const recibido: Omit<GestionarPreventivoProps, 'onCerrar'>[] = []
+    function Gestionar({ familiaId, eventoIds, onCerrar }: GestionarPreventivoProps) {
+      recibido.push({ familiaId, eventoIds })
+      return (
+        <button type="button" onClick={onCerrar}>
+          Gestionando {eventoIds.length}
+        </button>
+      )
+    }
+    server.use(http.get(`${API}/familias/:id/linea`, () => HttpResponse.json({ familia_id: FAMILIA.id, planes: [], estaciones: [vacuna, otra] })))
+    const user = userEvent.setup()
+    renderizar(
+      <Routes>
+        <Route path="/familias/:id" element={<FamiliaDetallePage GestionarPreventivo={Gestionar} />} />
+      </Routes>,
+      { ruta: `/familias/${FAMILIA.id}` },
+    )
+    await user.click(await screen.findByRole('button', { name: /^Vacuna rabia de Luna y Desparasitación interna de Michi/ }))
+    expect(recibido.at(-1)).toEqual({ familiaId: FAMILIA.id, eventoIds: ['e1', 'e2'] })
+    await user.click(screen.getByRole('button', { name: 'Gestionando 2' }))
+    expect(screen.queryByRole('button', { name: 'Gestionando 2' })).not.toBeInTheDocument()
+  })
+
+  it('sin la acción inyectada, un preventivo de la línea lleva a las mascotas', async () => {
+    const vacuna = { tipo: 'preventivo' as const, referencia_id: 'e1', fecha: '2099-01-05', estado: 'proxima' as const, titulo: 'Vacuna rabia', mascota: 'Luna', mascota_id: FAMILIA.mascotas![0]!.id }
+    server.use(http.get(`${API}/familias/:id/linea`, () => HttpResponse.json({ familia_id: FAMILIA.id, planes: [], estaciones: [vacuna] })))
+    const user = userEvent.setup()
+    abrirFicha()
+    await user.click(await screen.findByRole('button', { name: 'Ver vacuna rabia de Luna' }))
+    expect(screen.getByRole('tab', { name: 'Mascotas' })).toHaveAttribute('aria-selected', 'true')
   })
 
   it('abre en la pestaña que pide el enlace (Cartera, desde la bandeja de cartera)', async () => {

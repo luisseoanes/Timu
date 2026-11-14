@@ -20,7 +20,7 @@ import {
   PortalMascotas,
   PortalPagos,
 } from '@/features/portal'
-import { PreventivosPage } from '@/features/preventivos'
+import { GestionarPreventivo, PreventivosPage } from '@/features/preventivos'
 import {
   CompletarRegistroPage,
   EncuestaPage,
@@ -63,7 +63,7 @@ export default function App() {
               <Route element={<AppLayout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="familias" element={<FamiliasPage />} />
-                <Route path="familias/:id" element={<FamiliaDetallePage />} />
+                <Route path="familias/:id" element={<FamiliaDetallePage GestionarPreventivo={GestionarPreventivo} />} />
                 <Route path="cartera" element={<CarteraPage />} />
                 <Route path="servicios" element={<ServiciosPage />} />
                 <Route path="servicios/:id" element={<ServicioDetallePage />} />

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ComponentType } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
@@ -32,25 +32,37 @@ const SECCION: Record<EstacionRead['tipo'], string> = {
   servicio: 'servicios',
 }
 
-/** Una familia abierta: el listado a la izquierda y su ficha con la línea a la derecha. */
-export function FamiliaDetallePage() {
+/** Lo que recibe quien gestiona un preventivo desde su estación. */
+export interface GestionarPreventivoProps {
+  familiaId: string
+  /** Los preventivos pendientes de la estación: una estación junta lo del mismo día. */
+  eventoIds: string[]
+  onCerrar: () => void
+}
+
+/** Una familia abierta: el listado a la izquierda y su ficha con la línea a la derecha.
+ * `GestionarPreventivo` lo inyecta `App.tsx` (R2-PAN-08, decidido con el usuario): agendar un
+ * preventivo desde su estación sin que `familias` importe `preventivos`. */
+export function FamiliaDetallePage({ GestionarPreventivo }: { GestionarPreventivo?: ComponentType<GestionarPreventivoProps> }) {
   const { id = '' } = useParams()
   return (
     <div className="con-ficha" data-abierta="true">
       <FamiliasLista seleccionada={id} />
       {/* La clave reinicia la ficha al cambiar de familia: pestaña y línea plegada vuelven al principio. */}
-      <FichaFamilia key={id} id={id} />
+      <FichaFamilia key={id} id={id} GestionarPreventivo={GestionarPreventivo} />
     </div>
   )
 }
 
-function FichaFamilia({ id }: { id: string }) {
+function FichaFamilia({ id, GestionarPreventivo }: { id: string; GestionarPreventivo?: ComponentType<GestionarPreventivoProps> }) {
   const familia = useFamilia(id)
   const linea = useLinea(id)
   return (
     <section className="ficha-abierta" aria-label="Familia abierta">
       <Consulta consulta={familia} cargando="Cargando la familia…" error="No fue posible cargar la familia.">
-        {(f) => <Ficha familia={f} linea={linea.data} lineaCargando={linea.isPending} lineaError={linea.isError} />}
+        {(f) => (
+          <Ficha familia={f} linea={linea.data} lineaCargando={linea.isPending} lineaError={linea.isError} GestionarPreventivo={GestionarPreventivo} />
+        )}
       </Consulta>
     </section>
   )
@@ -61,11 +73,13 @@ function Ficha({
   linea,
   lineaCargando,
   lineaError,
+  GestionarPreventivo,
 }: {
   familia: FamiliaRead
   linea: LineaFamiliaRead | undefined
   lineaCargando: boolean
   lineaError: boolean
+  GestionarPreventivo?: ComponentType<GestionarPreventivoProps>
 }) {
   const { usuario } = useAuth()
   const [params] = useSearchParams()
@@ -74,29 +88,33 @@ function Ficha({
   const pedida = (useLocation().state as { seccion?: string } | null)?.seccion
   const [seccion, setSeccion] = useState(pedida ?? 'datos')
   const [pagando, setPagando] = useState<string | null>(null)
+  const [preventivo, setPreventivo] = useState<Omit<GestionarPreventivoProps, 'onCerrar'> | null>(null)
   const cuenta = useEstadoCuenta(f.id)
   const abiertas = cuenta.data?.cuotas.filter((q) => q.estado !== 'pagada' && q.estado !== 'anulada') ?? []
   const planes = linea?.planes ?? []
   const proxima = linea?.estaciones.find((e) => e.estado === 'proxima')
 
-  /** Cómo se atiende una estación: una cuota pendiente se paga ahí mismo (si el perfil puede),
-   * un servicio se abre en su ficha y el resto lleva a su sección de la familia.
-   * Pendiente en R2-PAN-08 (decidido con el usuario): un preventivo debe agendarse aquí mismo,
-   * con la acción inyectada desde fuera para no importar `preventivos`. */
-  const accion = (e: EstacionRead): 'pagar' | 'abrir' | 'ver' =>
+  /** Cómo se atiende una estación: una cuota pendiente se paga ahí mismo (si el perfil puede), un
+   * preventivo pendiente se agenda ahí mismo (o se autoriza antes, si le falta), un servicio se
+   * abre en su ficha y el resto lleva a su sección de la familia. */
+  const accion = (e: EstacionRead): 'pagar' | 'agendar' | 'abrir' | 'ver' =>
     e.tipo === 'servicio'
       ? 'abrir'
       : e.tipo === 'cuota' && puede(usuario, 'gestionarAfiliacion') && abiertas.some((q) => q.id === e.referencia_id)
         ? 'pagar'
-        : 'ver'
+        : e.tipo === 'preventivo' && GestionarPreventivo && e.estado !== 'hecha'
+          ? 'agendar'
+          : 'ver'
   const atender = (parada: Pick<Parada, 'estaciones'>) => {
     const [primera] = parada.estaciones
     const a = accion(primera)
     if (a === 'abrir') navegar(`/servicios/${primera.referencia_id}`)
     else if (a === 'pagar') setPagando(primera.referencia_id)
+    else if (a === 'agendar')
+      setPreventivo({ familiaId: f.id, eventoIds: parada.estaciones.filter((e) => accion(e) === 'agendar').map((e) => e.referencia_id) })
     else setSeccion(SECCION[primera.tipo])
   }
-  const VERBO = { pagar: 'Registrar pago de', abrir: 'Abrir', ver: 'Ver' }
+  const VERBO = { pagar: 'Registrar pago de', agendar: 'Agendar', abrir: 'Abrir', ver: 'Ver' }
 
   return (
     <>
@@ -159,6 +177,8 @@ function Ficha({
         abierto={pagando !== null}
         onCerrar={() => setPagando(null)}
       />
+
+      {preventivo && GestionarPreventivo && <GestionarPreventivo {...preventivo} onCerrar={() => setPreventivo(null)} />}
 
       <Pestanas
         etiqueta="Secciones de la familia"

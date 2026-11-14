@@ -1,18 +1,22 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { Modal } from '@/components/Modal'
+import type { GestionarPreventivoProps } from '@/features/familias'
 import { useDisponibilidad } from '@/features/servicios'
 import { mensajeError } from '@/lib/errores'
 import { fechaCompacta, fechaCortaConDia, hora, hoyISO } from '@/lib/formato'
-import type { EventoRead } from '@/types'
+import type { EventoBandeja, EventoRead } from '@/types'
 
 import {
   useAgendarPreventivo,
   useAplicarPreventivo,
   useAutorizarVarios,
   useCancelarPreventivo,
+  useBandejaPreventivos,
   type MedioAutorizacion,
 } from './api'
+import { pedido } from './preventivo'
 
 // Mismo mapa que preventivos/service.py: TIPO_SERVICIO.
 const TIPO_SERVICIO: Record<string, string> = {
@@ -258,6 +262,58 @@ export function CancelarModal({ evento, titulo, onCerrar }: { evento: EventoRead
           </p>
         )}
       </form>
+    </Modal>
+  )
+}
+
+/** Gestionar los preventivos de una estación desde fuera de Preventivos (la línea de una familia):
+ * abre el paso que les toca. Lo que falte por autorizar se pide de una vez, como en la bandeja; si
+ * todo está autorizado, se agenda el primero que no tenga visita. Lee la bandeja de esa familia, que
+ * trae el nombre de cada esquema («Antirrábica», no «Vacuna»). Lo monta `App.tsx` en la ficha de
+ * Familias, que no importa este dominio. */
+export function GestionarPreventivo({ familiaId, eventoIds, onCerrar }: GestionarPreventivoProps) {
+  const bandeja = useBandejaPreventivos({ vista: 'todos', familia_id: familiaId })
+  const grupo = bandeja.data?.items[0]
+  const deLaEstacion = (grupo?.eventos ?? []).filter((e) => eventoIds.includes(e.id))
+
+  if (bandeja.isPending || bandeja.isError) {
+    return (
+      <Modal abierto onCambio={(v) => !v && onCerrar()} titulo="Preventivos">
+        {bandeja.isError ? (
+          <p className="error" role="alert">No fue posible cargar los preventivos.</p>
+        ) : (
+          <p className="apagado" role="status">Cargando los preventivos…</p>
+        )}
+      </Modal>
+    )
+  }
+  if (!grupo || deLaEstacion.length === 0) {
+    return (
+      <Modal abierto onCambio={(v) => !v && onCerrar()} titulo="Preventivos">
+        <p>{eventoIds.length === 1 ? 'Este preventivo ya no está pendiente: se aplicó o se canceló.' : 'Estos preventivos ya no están pendientes: se aplicaron o se cancelaron.'}</p>
+      </Modal>
+    )
+  }
+  const titulo = (e: EventoBandeja) => `${e.nombre} de ${e.mascota_nombre}`
+  const porAutorizar = deLaEstacion.filter((e) => e.siguiente === 'autorizar')
+  if (porAutorizar.length > 0) {
+    return (
+      <AutorizarModal
+        titular={grupo.titular_nombre}
+        pedidos={porAutorizar.map((e) => ({ id: e.id, titulo: pedido(e), fecha: e.fecha_programada }))}
+        descripcion="Antes de agendar la visita, la familia tiene que autorizarlo. Después, se agenda desde la misma estación."
+        onCerrar={onCerrar}
+      />
+    )
+  }
+  const sinVisita = deLaEstacion.find((e) => e.siguiente === 'agendar')
+  if (sinVisita) return <AgendarModal evento={sinVisita} titulo={titulo(sinVisita)} ciudad={grupo.ciudad} onCerrar={onCerrar} />
+  const [conVisita] = deLaEstacion
+  return (
+    <Modal abierto onCambio={(v) => !v && onCerrar()} titulo={titulo(conVisita)} descripcion="Ya tiene su visita agendada. Al completarla, el preventivo queda aplicado.">
+      <Link className="btn btn-secundario" to={`/servicios/${conVisita.servicio_id}`}>
+        Abrir la visita
+      </Link>
     </Modal>
   )
 }
