@@ -7,9 +7,10 @@ import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { Paginacion } from '@/components/Paginacion'
 import { useAuth, useEquipo } from '@/features/auth'
+import { useNombreTipoServicio } from '@/features/catalogos'
 import { SelectorFamilia } from '@/features/familias'
 import { mensajeError } from '@/lib/errores'
-import { fecha, hoyISO } from '@/lib/formato'
+import { fechaCortaConDia, hoyISO } from '@/lib/formato'
 import type { FamiliaRead, TareaRead } from '@/types'
 
 
@@ -46,6 +47,7 @@ export function TareasPage() {
   const [nueva, setNueva] = useState(false)
   const [cerrando, setCerrando] = useState<TareaRead | null>(null)
   const usuarios = useEquipo()
+  const nombreTipo = useNombreTipoServicio()
 
   const filtros: FiltrosTareas = {
     area: area || undefined,
@@ -71,8 +73,8 @@ export function TareasPage() {
           <Icono nombre="mas" size={16} /> Nueva tarea
         </button>
       </div>
-      <div className="filtros" style={{ marginBottom: 'var(--e4)' }}>
-        <div className="segmento" role="group" aria-label="Vista de tareas" style={{ width: 'auto' }}>
+      <div className="filtros tareas-filtros">
+        <div className="segmento tareas-vistas" role="group" aria-label="Vista de tareas">
           {VISTAS.map((v) => (
             <button
               key={v.valor}
@@ -89,13 +91,13 @@ export function TareasPage() {
             </button>
           ))}
         </div>
-        <select className="input" style={{ width: 'auto' }} value={area} onChange={(e) => { setArea(e.target.value as Area | ''); setOffset(0) }} aria-label="Área">
+        <select className="input tareas-filtro" value={area} onChange={(e) => { setArea(e.target.value as Area | ''); setOffset(0) }} aria-label="Área">
           <option value="">Todas las áreas</option>
           {AREAS.map((a) => (
             <option key={a.valor} value={a.valor}>{a.label}</option>
           ))}
         </select>
-        <select className="input" style={{ width: 'auto' }} value={estado} onChange={(e) => { setEstado(e.target.value); setOffset(0) }} aria-label="Estado de la tarea">
+        <select className="input tareas-filtro" value={estado} onChange={(e) => { setEstado(e.target.value); setOffset(0) }} aria-label="Estado de la tarea">
           <option value="abierta">Abiertas</option>
           <option value="en_progreso">En progreso</option>
           <option value="cerrada">Cerradas</option>
@@ -117,41 +119,59 @@ export function TareasPage() {
         {(d) => (
           <>
             <div className="scroll-x">
-              <table className="tabla">
+              <table className="tabla tabla-apilable tareas-tabla">
                 <thead>
                   <tr>
                     <th>Tarea</th>
-                    <th>Área</th>
-                    <th>Prioridad</th>
                     <th>Vence</th>
+                    <th>Prioridad</th>
                     <th>Responsable</th>
-                    <th>Estado</th>
                     <th><span className="sr-only">Acciones</span></th>
                   </tr>
                 </thead>
                 <tbody>
                   {d.items.map((t) => {
                     const vencida = t.estado !== 'cerrada' && t.vence_el !== null && t.vence_el < hoyISO()
+                    const area = AREAS.find((a) => a.valor === t.area)?.label ?? t.area
                     return (
                       <tr key={t.id}>
-                        <td className="principal">
-                          {t.titulo}
-                          {t.descripcion && <div className="apagado">{t.descripcion}</div>}
-                          {t.familia_id && (
-                            <div>
-                              <Link to={`/familias/${t.familia_id}`}>Ver familia</Link>
-                            </div>
+                        <td className="principal" data-etiqueta="Tarea">
+                          <span className="tarea-titulo">
+                            {t.titulo}
+                            <Distintivo dominio="tarea" valor={t.estado} />
+                          </span>
+                          {/* A quién afecta: la familia y, si es de un servicio, cuál y de quién. */}
+                          <div className="tarea-detalle">
+                            <span>{area}</span>
+                            {t.familia && <Link to={`/familias/${t.familia.id}`}>{t.familia.titular_nombre}</Link>}
+                            {t.servicio && (
+                              <Link to={`/servicios/${t.servicio.id}`}>
+                                {nombreTipo(t.servicio.tipo_codigo)}
+                                {t.servicio.mascota_nombre && ` de ${t.servicio.mascota_nombre}`}
+                              </Link>
+                            )}
+                          </div>
+                          {t.descripcion && <div className="tarea-descripcion">{t.descripcion}</div>}
+                        </td>
+                        <td data-etiqueta="Vence">
+                          {/* Lo vencido se dice en texto e icono, no solo en rojo. */}
+                          {vencida ? (
+                            <span className="tarea-vencida">
+                              <Icono nombre="alerta" size={14} />
+                              <span className="numero">{fechaCortaConDia(t.vence_el!)} ·</span>
+                              <span>vencida</span>
+                            </span>
+                          ) : (
+                            <span className="numero">{t.vence_el ? fechaCortaConDia(t.vence_el) : 'Sin fecha'}</span>
                           )}
                         </td>
-                        <td>{AREAS.find((a) => a.valor === t.area)?.label ?? t.area}</td>
-                        <td>
+                        <td data-etiqueta="Prioridad">
                           <Distintivo dominio="prioridad" valor={t.prioridad} />
                         </td>
-                        <td className={`numero${vencida ? ' error' : ''}`}>{fecha(t.vence_el)}</td>
-                        <td>
+                        <td data-etiqueta="Responsable">
                           {t.estado !== 'cerrada' ? (
                             <select
-                              className="input"
+                              className="input tarea-responsable"
                               value={t.asignada_a_id ?? ''}
                               aria-label={`Responsable de ${t.titulo}`}
                               onChange={(e) => asignar.mutate({ id: t.id, usuario_id: e.target.value || null })}
@@ -165,27 +185,22 @@ export function TareasPage() {
                             nombreDe(t.asignada_a_id)
                           )}
                         </td>
-                        <td>
-                          <Distintivo dominio="tarea" valor={t.estado} />
-                        </td>
-                        <td>
-                          <div className="acciones">
-                            {!t.asignada_a_id && t.estado !== 'cerrada' && usuario && (
-                              <button className="btn btn-suave" type="button" onClick={() => asignar.mutate({ id: t.id, usuario_id: usuario.id })}>
-                                Tomar
-                              </button>
-                            )}
-                            {t.estado === 'abierta' && t.asignada_a_id && (
-                              <button className="btn btn-plano" type="button" onClick={() => iniciar.mutate(t.id)}>
-                                Iniciar
-                              </button>
-                            )}
-                            {t.estado !== 'cerrada' && (
-                              <button className="btn btn-plano" type="button" onClick={() => setCerrando(t)}>
-                                Cerrar
-                              </button>
-                            )}
-                          </div>
+                        <td className="tabla-acciones">
+                          {!t.asignada_a_id && t.estado !== 'cerrada' && usuario && (
+                            <button className="btn btn-suave" type="button" onClick={() => asignar.mutate({ id: t.id, usuario_id: usuario.id })}>
+                              Tomar
+                            </button>
+                          )}
+                          {t.estado === 'abierta' && t.asignada_a_id && (
+                            <button className="btn btn-plano" type="button" onClick={() => iniciar.mutate(t.id)}>
+                              Iniciar
+                            </button>
+                          )}
+                          {t.estado !== 'cerrada' && (
+                            <button className="btn btn-plano" type="button" onClick={() => setCerrando(t)}>
+                              Cerrar
+                            </button>
+                          )}
                         </td>
                       </tr>
                     )

@@ -203,6 +203,29 @@
   .servicio-paso-cabeza > .btn { flex: 1 0 100%; margin-left: 0; }
 }
 
+/* ===== Tareas (R2-PAN-05): la bandeja del equipo en tabla apilable ===== */
+.tareas-filtros { margin-bottom: var(--e4); }
+.tareas-filtro { width: auto; }
+/* Como las pestañas: por debajo del ancho en que caben, las vistas se desplazan en su fila. */
+/* En el celular, las cuatro vistas en dos filas de dos: desplazándose, la activa quedaba fuera. */
+@media (max-width: 599px) {
+  .segmento.tareas-vistas { width: 100%; grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: var(--r-tarjeta); }
+  .tareas-filtro { flex: 1 1 100%; width: 100%; }
+  .segmento.tareas-vistas .segmento-opcion { border-radius: var(--r-campo); }
+}
+/* Apilada, la celda de la tarea es un bloque: como flexible, ponía título, área y descripción en
+   una sola fila estrecha y partía las palabras («Operacion/es»). */
+@container (max-width: 639px) {
+  .tareas-tabla td:first-child { display: block; }
+}
+.tarea-titulo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e1) var(--e2); }
+.tarea-detalle { display: flex; flex-wrap: wrap; gap: 0 var(--e3); margin-top: 2px; font-size: var(--t-menor); font-weight: 400; color: var(--texto-suave); }
+.tarea-descripcion { margin-top: var(--e1); max-width: 60ch; font-size: var(--t-menor); font-weight: 400; color: var(--texto); }
+/* La fecha y «· vencida» bajan de línea enteras, nunca partidas por dentro. */
+.tarea-vencida { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 var(--e1); font-weight: 600; color: var(--texto-error); }
+.tarea-vencida > span { white-space: nowrap; }
+.tarea-responsable { min-width: 150px; }
+
 /* ===== Inicio (R2-PAN-04): «La línea de hoy» =====
    Saludo con los filtros, la franja de cifras (cada una abre su serie) y, debajo, la línea del
    día con lo vencido, Hoy y lo que viene; al lado, servicios por tipo o las tareas del médico. */

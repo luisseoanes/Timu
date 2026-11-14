@@ -7,11 +7,11 @@ import { TareasPage } from './TareasPage'
 import { USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
-import type { TareaRead } from '@/types'
+import type { TareaListado } from '@/types'
 
 const API = '*/api/v1'
 
-const TAREA: TareaRead = {
+const TAREA: TareaListado = {
   id: 't1',
   titulo: 'Llamar por cuota vencida',
   descripcion: null,
@@ -27,11 +27,41 @@ const TAREA: TareaRead = {
   cerrada_en: null,
   resolucion: null,
   created_at: '2026-10-18T10:00:00Z',
+  familia: null,
+  servicio: null,
 }
 
 const pagina = (items: unknown[]) => ({ items, total: items.length, limit: 25, offset: 0 })
 
 describe('TareasPage', () => {
+  it('dice en texto que una tarea está vencida y a quién afecta', async () => {
+    server.use(
+      http.get(`${API}/tareas`, () =>
+        HttpResponse.json(
+          pagina([
+            {
+              ...TAREA,
+              familia_id: 'f1',
+              servicio_id: 's1',
+              familia: { id: 'f1', titular_nombre: 'Carlos Pérez' },
+              servicio: { id: 's1', tipo_codigo: 'consulta_domiciliaria', mascota_nombre: 'Toby' },
+            },
+            { ...TAREA, id: 't2', titulo: 'Revisar contrato', vence_el: '2999-01-10' },
+          ]),
+        ),
+      ),
+    )
+    renderizar(<TareasPage />)
+    const vencida = (await screen.findByText('Llamar por cuota vencida')).closest('tr')!
+    // Lo vencido no se dice solo en rojo: lleva la palabra y el icono.
+    expect(vencida.querySelector('[data-etiqueta="Vence"]')).toHaveTextContent(/mar 20 oct ·\s*vencida$/)
+    expect(within(vencida).getByText('Cartera')).toBeInTheDocument()
+    expect(within(vencida).getByRole('link', { name: 'Carlos Pérez' })).toHaveAttribute('href', '/familias/f1')
+    expect(await within(vencida).findByRole('link', { name: 'Consulta domiciliaria de Toby' })).toHaveAttribute('href', '/servicios/s1')
+    const futura = screen.getByText('Revisar contrato').closest('tr')!
+    expect(futura.querySelector('[data-etiqueta="Vence"]')).toHaveTextContent('jue 10 ene')
+  })
+
   it('lista las tareas y se toma una sin asignar', async () => {
     let asignacion: unknown = null
     server.use(

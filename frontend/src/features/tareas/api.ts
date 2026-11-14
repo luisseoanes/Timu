@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { Page, TareaRead } from '@/types'
+import type { Page, TareaListado, TareaRead } from '@/types'
 
 export type Area = 'comercial' | 'operaciones' | 'medico' | 'cartera' | 'servicio_cliente'
 
@@ -37,7 +37,7 @@ export interface NuevaTarea {
 export function useTareas(filtros: FiltrosTareas) {
   return useQuery({
     queryKey: ['tareas', filtros],
-    queryFn: async () => (await api.get<Page<TareaRead>>('/tareas', { params: filtros })).data,
+    queryFn: async () => (await api.get<Page<TareaListado>>('/tareas', { params: filtros })).data,
   })
 }
 

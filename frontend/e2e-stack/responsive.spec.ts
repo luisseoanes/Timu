@@ -40,7 +40,6 @@ const PENDIENTES: ReadonlySet<string> = new Set([
   'aliadas@375:desborde',
   'campanas@375:desborde',
   'preventivos@375:desborde',
-  'tareas@375:desborde',
 ])
 
 interface Ruta {
