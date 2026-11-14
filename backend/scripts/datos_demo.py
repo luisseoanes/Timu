@@ -19,6 +19,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import httpx
+from sqlalchemy import select
 
 # app.workers.tasks.comunicaciones conecta los mensajes entrantes con quien los contesta (el bot
 # comercial), como en el worker.
@@ -26,6 +27,7 @@ import app.workers.tasks.comunicaciones  # noqa: F401
 from app.core.config import settings
 from app.core.database import sesion_worker
 from app.modules.comunicaciones import service as comunicaciones
+from app.modules.comunicaciones.models import Mensaje
 
 API = os.environ.get("DEMO_API", "http://localhost:8000/api/v1")
 BOGOTA = ZoneInfo("America/Bogota")
@@ -668,14 +670,20 @@ def main() -> None:
     if not puede_entrar:
         if not ana.get("usuario_portal_id"):
             c.post(f"/familias/{ana['id']}/acceso-portal")
-        # Sin WhatsApp ni correo configurados el enlace queda en el mensaje: se toma de ahi.
-        # El aviso de activacion va al usuario, no a la familia: se busca entre los recientes.
-        recientes = c.get("/comunicaciones/mensajes", limit=50, orden="-created_at")["items"]
-        for mensaje in recientes:
-            token = re.search(r"activar\?token=([\w-]+)", mensaje.get("contenido") or "")
-            if token:
-                c.post("/auth/restablecer", {"token": token.group(1), "password": CLAVE_EQUIPO})
-                break
+        # Sin WhatsApp ni correo configurados el enlace queda en el mensaje: se toma de ahi, de
+        # la base, porque la traza de la API tapa los tokens de un solo uso.
+        with sesion_worker() as db:
+            contenido = db.scalar(
+                select(Mensaje.contenido)
+                .where(
+                    Mensaje.destino == ana["email"], Mensaje.contenido.contains("activar?token=")
+                )
+                .order_by(Mensaje.created_at.desc())
+                .limit(1)
+            )
+        token = re.search(r"activar\?token=([\w-]+)", contenido or "")
+        if token:
+            c.post("/auth/restablecer", {"token": token.group(1), "password": CLAVE_EQUIPO})
 
     print("Listo. Ingresa a http://localhost:5173 con admin@timu.co / cambiar123")
     print(f"Equipo de prueba (clave {CLAVE_EQUIPO}): " + ", ".join(e for e, _, _ in EQUIPO))
