@@ -7,8 +7,8 @@ superficie (`.impeccable/surfaces/`).
 
 > En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)). **Rediseñado:** la estructura
 > del panel, el listado con ficha (Familias, Rutas y Clínica), la ruta propia del médico, la
-> consulta guiada, las ventanas, la espera de sesión y el portal de familias entero. **Aún con la composición anterior** (aunque ya con la paleta, la
-> tipografía y el logo): el ingreso, el inicio del panel, el detalle de un registro y las
+> consulta guiada, el inicio del panel, las ventanas, la espera de sesión y el portal de familias entero. **Aún con la composición anterior** (aunque ya con la paleta, la
+> tipografía y el logo): el ingreso, el detalle de un registro y las
 > páginas públicas. Cada uno se rehace en su
 > unidad.
 
@@ -150,13 +150,52 @@ su unidad (`docs/frontend/conventions.md`, deuda).
 Las páginas públicas sencillas (encuesta, verificación del carnet, registro, clínica aliada)
 usan `.publica` + `.publica-tarjeta`: el logo arriba y una tarjeta centrada.
 
-## Inicio — `.con-rail`, pendiente de `R2-PAN-04`
+## Inicio — `.inicio` («La línea de hoy», R2-PAN-04)
 
-Contenido principal más una columna derecha de 300 px (`--ancho-rail`): saludo
-(`.bienvenida`), accesos rápidos (`.accesos`), dos columnas (`.dos-columnas`) con próximos
-servicios y cartera, y en la columna derecha el cumplimiento del día y lo que requiere
-atención. Bajo 1180 px la columna derecha baja en dos columnas; bajo 900, en una. Los
-indicadores salen de `GET /dashboard/indicadores`; el perfil médico ve su jornada.
+El módulo se llama «Inicio» y su pantalla escribe su propio `h1`: el saludo («Hola, Valentina»,
+GeosansLight de 34 px) con el día. `AppLayout` no pinta la cabecera del módulo (`cabeceraPropia`).
+
+```
+┌─ 1440 px ──────────────────────────────────────────────────────────────────┐
+│ Hola, Valentina                        [Este mes ▾] [Todas las ciudades ▾] │
+│ Viernes, 13 de noviembre · cifras del 1 nov al 13 nov        [Excel] CSV   │
+│ Variación contra 1 oct – 13 oct                                            │
+│ ┌VIGENTES─┬AFILIACIONES┬RECAUDO──┬EN MORA──┬RUTAS────┬SATISFACCIÓN┐        │
+│ │ 412 ▲10 │ 18  6 ret. │ $ 30,9 M│ 21  ▲3  │ 94 %    │ 4,6 / 5    │ ← cada │
+│ │ ╱╲__╱   │            │         │         │         │            │  cifra │
+│ └─────────┴────────────┴─────────┴─────────┴─────────┴────────────┘  abre  │
+│ ┌ Recaudo en los últimos 12 meses ─────────────────────────────── × ┐ su   │
+│ │ eje, rejilla, Recaudo y Facturado, nov punteado (en curso)        │ serie│
+│ └───────────────────────────────────────────────────────────────────┘      │
+│ ┌ Hoy en la operación ─────────────────┐ ┌ Servicios completados ──┐       │
+│ │ ▲ 21 contratos en mora   [Ver la mora]│ │ Consulta ████████ 64    │       │
+│ │ ▲ 2 tareas vencidas      [Ver tareas] │ └─────────────────────────┘       │
+│ │ ━ HOY · VIE 13 NOV                    │                                   │
+│ │ ◎ 11:00 a. m. Consulta domiciliaria   │                                   │
+│ └───────────────────────────────────────┘                                   │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+- **La franja** (`FranjaCifras`): seis cifras del período, en celdas blancas separadas por hilos;
+  2 columnas en el celular, 3 desde 600 px de contenido y 6 desde 1100 (container queries sobre
+  `.inicio`). Cada cifra dice su variación contra el período comparable (flecha, texto y tono:
+  verde oscuro si es buena noticia, rojo si es mala, según `subeEsBueno`) y su serie de 12 meses
+  en miniatura. El orden depende del perfil (`ordenCifras`).
+- **La serie abierta** (`GraficoSerie`): una cifra es un botón (`aria-expanded`) que abre debajo
+  su serie de 12 meses (`GET /dashboard/evolucion`), con la fórmula del indicador, eje y rejilla de
+  hilo, una o dos líneas (series 1 y 3 del manual, nunca la 1 con la 2), el mes en curso
+  punteado y con el punto hueco, la cruz con el valor de cada mes (cursor o flechas, con anuncio
+  para lectores de pantalla) y «Ver los datos», la tabla apilable con los mismos valores. Escape
+  la cierra y devuelve el foco a la cifra.
+- **La línea del día** (`LineaDelDia`): vertical, marina (no es un plan). Arriba lo vencido
+  agrupado y con un ejemplo (el contrato más atrasado, la tarea más antigua); la marca de Hoy; lo
+  que viene (servicios agendados, o un preventivo por autorizar que aún no llega). La primera
+  acción lleva el único verde de la vista; «Ver la agenda» nunca. Sin nada después de hoy, cierra
+  con una frase que dice qué aparecerá.
+- **El médico** (sin permiso de indicadores): sin franja. «Tu jornada» con sus consultas sin
+  firmar y sus tareas vencidas, Hoy y las paradas que le faltan de su ruta («Abrir mi ruta»), y al
+  lado sus tareas abiertas. En el celular su barra inferior empieza por Inicio.
+- Desde 1000 px de contenido, la línea y su columna de 400 px lado a lado; por debajo, apiladas.
 
 ## Detalle de un registro — `.detalle-cabeza`
 
@@ -230,7 +269,7 @@ con el color de enlace (`.btn-plano.btn-accion`).
 | --- | --- |
 | ≥ 1360 px | Barra con 8 módulos |
 | 1180–1359 px | 6 módulos y buscador más estrecho |
-| 900–1179 px | 3 módulos; el inicio baja su columna derecha; Familias y Rutas siguen con listado y ficha lado a lado |
+| 900–1179 px | 3 módulos; el inicio apila la línea y su columna; Familias y Rutas siguen con listado y ficha lado a lado |
 | < 900 px | Barra inferior; listado o ficha; ingreso en una columna; formularios en una columna |
 | ≤ 600 px | Ventanas como hoja inferior; la línea siempre vertical; pestañas en una fila desplazable |
 

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Inicio · La línea de hoy</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap">
+<style>
+:root{--marino:#111537;--texto:#41445F;--suave:#5F6275;--borde:#E2E3E7;--control:#85889D;--gris:#A0A1AF;--verde:#98B833;--verde-h:#769116;--verde-t:#F3F6E7;--verde-tx:#415800;--lienzo:#F5F6F1;--rojo:#C0392B;--rojo-tx:#A92115;--s1:#769116;--s2:#BE7700;--s3:#477095;--al-f:#FAF0E0;--al-t:#813E00}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;font:14px/1.5 Inter,system-ui,sans-serif;color:var(--texto);background:var(--lienzo)}
+svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.barra{height:64px;background:var(--marino);display:flex;align-items:center;gap:28px;padding:0 24px;color:#C4C4CD;font:600 13px Inter}
+.barra b{color:#fff;font-size:28px;letter-spacing:.02em;margin-right:12px}
+.barra span.on{color:#fff;box-shadow:inset 0 -4px 0 var(--verde);height:64px;display:flex;align-items:center}
+.barra .bus{margin-left:auto;width:280px;height:40px;border-radius:6px;background:#fff}
+.barra i{width:40px;height:40px;border-radius:50%;border:1px solid rgb(255 255 255/22%);display:grid;place-items:center;color:#fff;font-style:normal}
+main{max-width:1440px;padding:20px 24px;display:grid;gap:16px}
+.cab{display:flex;align-items:flex-end;gap:12px}
+.cab h1{font:300 34px/1.2 Inter;color:var(--marino);letter-spacing:-.01em}
+.cab p{color:var(--suave);font-size:13px;margin-bottom:6px}
+.cab .ctl{margin-left:auto;display:flex;gap:8px}
+.sel{height:40px;padding:0 36px 0 12px;border:1px solid var(--control);border-radius:6px;background:#fff;color:var(--marino);display:flex;align-items:center}
+.btn{height:40px;padding:0 16px;border-radius:6px;background:var(--verde-t);color:var(--verde-tx);font-weight:600;display:flex;align-items:center;gap:8px;border:0}
+.cifras{display:grid;grid-template-columns:repeat(6,1fr);background:#fff;border-radius:12px}
+.cifra{padding:16px 20px;display:grid;gap:2px}
+.cifra+.cifra{border-left:1px solid var(--borde)}
+.et{font:700 12px Inter;letter-spacing:.09em;text-transform:uppercase;color:var(--suave)}
+.val{font:600 24px/1.2 Inter;color:var(--marino);font-variant-numeric:tabular-nums}
+.var{font-size:12px;color:var(--suave)}
+.var b{color:var(--verde-tx)}
+.var b.baja{color:var(--rojo-tx)}
+.cifra svg{width:100%;height:32px;margin-top:6px}
+.cuerpo{display:grid;grid-template-columns:1fr 420px;gap:20px}
+.panel{background:#fff;border-radius:12px;padding:24px}
+.panel h2{font:600 16px Inter;color:var(--marino);margin-bottom:16px}
+.linea{position:relative}
+.linea::before{content:"";position:absolute;left:11px;top:12px;bottom:12px;width:8px;border-radius:999px;background:var(--marino)}
+.est{position:relative;display:grid;grid-template-columns:30px 1fr auto;gap:16px;align-items:start;padding:12px 0}
+.est+.est{border-top:1px solid var(--borde)}
+.est>i{position:relative;width:30px;height:30px;border-radius:50%;background:#fff;border:4px solid var(--marino)}
+.est.venc>i{background:var(--rojo);border-color:var(--rojo)}
+.est.prox>i{box-shadow:0 0 0 3px var(--verde-h)}
+.est h3{font:600 14px Inter;color:var(--marino)}
+.est.venc h3{color:var(--rojo-tx)}
+.est p{font-size:13px;color:var(--suave)}
+.acc{height:36px;padding:0 14px;border:1px solid var(--control);border-radius:6px;background:#fff;color:var(--marino);font:600 13px Inter;display:flex;align-items:center}
+.acc.pri{background:var(--verde);border:0}
+.hoy{position:relative;display:flex;align-items:center;gap:12px;padding:10px 0}
+.hoy::before{content:"";width:30px;height:4px;background:var(--marino);position:relative;z-index:1}
+.hoy span{font:700 12px Inter;letter-spacing:.09em;color:var(--marino)}
+.barras{display:grid;gap:10px}
+.fila{display:grid;grid-template-columns:150px 1fr 32px;gap:12px;align-items:center;font-size:13px}
+.pista{height:10px;border-radius:999px;background:var(--lienzo)}
+.pista u{display:block;height:10px;border-radius:999px;background:var(--s1)}
+.fila b{text-align:right;color:var(--marino);font-variant-numeric:tabular-nums}
+.duo{display:grid;gap:4px;margin-top:20px;padding-top:20px;border-top:1px solid var(--borde)}
+.duo svg{height:110px;width:100%}
+</style></head>
+<body>
+<header class="barra"><b>TIMU</b><span class="on">Inicio</span><span>Familias</span><span>Cartera</span><span>Servicios</span><span>Tareas</span><span>Preventivos</span><span>Comercial</span><span>Rutas</span><span>Más</span><div class="bus"></div><i>VR</i></header>
+<main>
+  <div class="cab"><h1>Hola, Valentina</h1><p>Jueves 13 de noviembre · así va el mes</p>
+    <div class="ctl"><div class="sel">Este mes</div><div class="sel">Todas las ciudades</div><button class="btn">Descargar</button></div></div>
+  <section class="cifras">
+    <div class="cifra"><span class="et">Vigentes</span><span class="val">412</span><span class="var"><b>▲ 3,0 %</b> contra octubre</span><svg viewBox="0 0 200 32" style="color:var(--s1)"><polyline points="0,26 18,25 36,24 54,22 72,22 90,20 108,18 126,17 144,15 162,12 180,10 200,8"/></svg></div>
+    <div class="cifra"><span class="et">Afiliaciones</span><span class="val">18</span><span class="var">6 retiros</span><svg viewBox="0 0 200 32" style="color:var(--s1)"><polyline points="0,20 18,16 36,22 54,14 72,18 90,12 108,15 126,10 144,16 162,9 180,13 200,11"/></svg></div>
+    <div class="cifra"><span class="et">Recaudo</span><span class="val">$ 30,9 M</span><span class="var">92 % de lo facturado</span><svg viewBox="0 0 200 32" style="color:var(--s1)"><polyline points="0,22 18,21 36,20 54,20 72,18 90,17 108,17 126,15 144,14 162,13 180,12 200,12"/></svg></div>
+    <div class="cifra"><span class="et">En mora</span><span class="val">21</span><span class="var"><b class="baja">▲ 4</b> · 5,1 % de vigentes</span><svg viewBox="0 0 200 32" style="color:var(--s2)"><polyline points="0,24 18,24 36,23 54,22 72,24 90,21 108,20 126,22 144,19 162,18 180,15 200,12"/></svg></div>
+    <div class="cifra"><span class="et">Rutas</span><span class="val">94 %</span><span class="var">puntualidad 81 %</span><svg viewBox="0 0 200 32" style="color:var(--s3)"><polyline points="0,14 18,12 36,13 54,10 72,11 90,9 108,10 126,8 144,9 162,8 180,7 200,8"/></svg></div>
+    <div class="cifra"><span class="et">Satisfacción</span><span class="val">4,6 / 5</span><span class="var">38 % respondidas</span><svg viewBox="0 0 200 32" style="color:var(--s3)"><polyline points="0,12 18,11 36,12 54,10 72,10 90,11 108,9 126,9 144,10 162,8 180,8 200,8"/></svg></div>
+  </section>
+  <div class="cuerpo">
+    <section class="panel"><h2>Hoy en la operación</h2>
+      <div class="linea">
+        <div class="est venc"><i></i><div><h3>21 contratos en mora · $ 3.150.000 vencidos</h3><p>El más antiguo, desde el 4 de septiembre</p></div><span class="acc pri">Ver la mora</span></div>
+        <div class="est venc"><i></i><div><h3>25 preventivos por autorizar</h3><p>El más antiguo espera desde hace 9 días</p></div><span class="acc">Autorizar</span></div>
+        <div class="est venc"><i></i><div><h3>2 tareas vencidas</h3><p>Llamar a Jorge Ramírez por la renovación · y 1 más</p></div><span class="acc">Ver tareas</span></div>
+        <div class="hoy"><span>HOY · JUE 13 NOV</span></div>
+        <div class="est prox"><i></i><div><h3>11:00 · Consulta domiciliaria · Max</h3><p>Familia Ramírez · El Poblado · ruta de la Dra. Soto</p></div><span class="acc">Ver</span></div>
+        <div class="est"><i></i><div><h3>15:30 · Vacunación · Michi</h3><p>Familia Gómez · Laureles · por rutear</p></div><span class="acc">Ver</span></div>
+        <div class="est"><i></i><div><h3>Mañana · 4 servicios agendados</h3><p>3 domiciliarios y 1 en clínica aliada</p></div><span class="acc">Servicios</span></div>
+      </div>
+    </section>
+    <section class="panel"><h2>Servicios completados por tipo</h2>
+      <div class="barras">
+        <div class="fila"><span>Consulta domiciliaria</span><span class="pista"><u style="width:100%"></u></span><b>64</b></div>
+        <div class="fila"><span>Vacunación</span><span class="pista"><u style="width:58%"></u></span><b>37</b></div>
+        <div class="fila"><span>Desparasitación</span><span class="pista"><u style="width:41%"></u></span><b>26</b></div>
+        <div class="fila"><span>Clínica aliada</span><span class="pista"><u style="width:19%"></u></span><b>12</b></div>
+      </div>
+      <div class="duo"><span class="et">Recaudo y facturado · 12 meses</span>
+        <svg viewBox="0 0 370 110"><polyline style="color:var(--s3)" points="0,60 34,58 68,56 102,55 136,52 170,50 204,48 238,46 272,44 306,40 340,38 370,36"/><polyline style="color:var(--s1)" points="0,66 34,64 68,63 102,60 136,58 170,58 204,55 238,52 272,50 306,47 340,44 370,42"/></svg></div>
+    </section>
+  </div>
+</main>
+</body></html>

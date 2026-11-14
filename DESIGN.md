@@ -227,7 +227,7 @@ components:
 Este fichero describe lo construido, no lo planeado. La primera superficie del sistema es la
 estructura del panel del equipo (`AppLayout`) y Familias (listado, detalle, pestañas y
 ventanas); después, Rutas (la ruta del día del médico y su coordinación) y Clínica (la historia de
-cada mascota y la consulta guiada). El portal de familias está rediseñado entero: la
+cada mascota y la consulta guiada) y el Inicio (las cifras del período y la línea del día). El portal de familias está rediseñado entero: la
 estructura, el inicio y los peludos (R3-POR-01) y las citas, los pagos y los datos (R3-POR-02).
 El resto de módulos del panel y las páginas públicas todavía usan la maqueta anterior y adoptan este sistema en sus unidades de
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md): lo que se ve hoy en ellos no
@@ -707,6 +707,34 @@ anamnesis, examen físico, diagnóstico, tratamiento): un apartado por pantalla.
 - **Lectura:** la consulta firmada se lee como una ficha en columna (etiqueta y texto por
   apartado), con «Emitir fórmula» y «Corregir»; el título va a 24 px, no a 34: no es el nombre
   de nada.
+
+### El Inicio del panel (componentes propios, R2-PAN-04)
+«La línea de hoy»: el día del equipo como una línea de metro, con las cifras del período encima.
+- **Franja de cifras** (`FranjaCifras`): seis celdas blancas separadas por hilos (un hueco de 1 px
+  sobre fondo `borde`), en 2, 3 o 6 columnas según el contenedor. Cada celda: etiqueta de 12 px,
+  cifra de 24 px en 600, la variación contra el período comparable con flecha y palabra («3 más»,
+  «12%», «4 puntos»; verde oscuro si es buena noticia, rojo de error si es mala, suave si no
+  cambia) y su serie en miniatura de 2 px en `--serie-1`, cortada donde no hay dato y punteada en
+  el mes en curso, con punto hueco. Con qué se compara se dice una vez, en la línea del saludo.
+- **La cifra abre su serie**: la celda es un botón (`aria-expanded`); abierta, fondo de selección
+  y subrayado verde hondo de 3 px abajo. Debajo se abre un panel con el título («Recaudo en los
+  últimos 12 meses»), la cifra con su variación, la fórmula del indicador y el gráfico. Escape lo
+  cierra y devuelve el foco a la cifra.
+- **Gráfico de serie** (`GraficoSerie`): un solo eje, rejilla de hilo sólida, líneas de 2 px,
+  puntos de 8 px con anillo de 2 px del color de superficie, el año bajo el primer mes rotulado y
+  donde cambia, y el mes en curso punteado con el punto hueco y una nota que lo dice. La cruz da el
+  valor de cada mes con el cursor o con las flechas (con anuncio para lectores de pantalla), y
+  «Ver los datos» abre la misma serie como tabla apilable. Versión `compacto` (180 px) en la
+  columna del Inicio.
+- **Línea del día** (`LineaDelDia`): la gramática de la línea de la ruta, marina, en un panel. Lo
+  vencido agrupado arriba con un ejemplo («El más atrasado: Ana Ruiz, 84 días»), la marca de Hoy y
+  lo que viene; cada estación lleva su acción. La primera acción es el único verde de la vista;
+  las de consulta («Ver», «Ver la agenda») nunca lo llevan.
+
+**La regla de las series que se distinguen.** Las series 1 y 2 del manual (verde-600 y
+naranja-600) son casi iguales para quien no distingue el rojo del verde (ΔE 2,7, medido con el
+validador de la skill `dataviz`). Un gráfico de dos series usa la 1 y la 3 (verde y azul,
+ΔE 20,4); uno de una serie, la 1. El rojo nunca es una serie.
 
 ## Do's and Don'ts
 

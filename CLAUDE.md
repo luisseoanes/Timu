@@ -193,7 +193,9 @@ Reglas que mantienen esto vivo:
   120 por minuto del admin justo antes. Por eso Administración se recorre con
   `gerencia@timu.co`, un administrador que `datos_demo` crea solo para los recorridos.
   Además, la API limita a 120 peticiones por minuto por usuario: no lances scripts propios
-  con `comercial@timu.co` justo antes del barrido, o sus pantallas cargarán un 429.
+  con `comercial@timu.co` justo antes del barrido, o sus pantallas cargarán un 429. La suite
+  ya deja a ese perfil al borde del cupo: un recorrido nuevo del panel que no necesite el
+  perfil de equipo va con el de administración (`sesion('admin')`), como el del Inicio.
   La ruta de prueba de la médica no siempre es de hoy (va en el primer día con cupo): los
   recorridos la buscan con `rutaDemo` (`e2e-stack/datos.ts`).
 - **Una prueba que no puede pasar se arregla o se borra**, con la razón en el cuerpo del

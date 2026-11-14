@@ -9,6 +9,15 @@
         "value": "inter",
         "createdAt": "2026-11-10T19:40:19.719Z",
         "reason": "user confirmed: Inter es la fuente de la interfaz por el manual de marca (docs/manual-de-marca.md, seccion 12), decidido el 2026-11-10"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/inicio-cuadro.html"
+        ],
+        "createdAt": "2026-11-14T00:02:43.074Z",
+        "reason": "Claude: boceto no elegido de la ronda de decisión del Inicio (el usuario eligió la línea de hoy); no se publica ni se construye"
       }
     ]
   }

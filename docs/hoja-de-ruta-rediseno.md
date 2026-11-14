@@ -27,10 +27,10 @@ actualiza aquí, igual que en el backlog.
 | --- | ---: | ---: | ---: | ---: |
 | R0 — Preparación | 4 | 4 | 0 | 0 |
 | R1 — Fundaciones | 7 | 5 | 2 | 0 |
-| R2 — Panel del equipo | 10 | 5 | 1 | 4 |
+| R2 — Panel del equipo | 10 | 6 | 1 | 3 |
 | R3 — Familias, aliada y páginas públicas | 6 | 2 | 0 | 4 |
 | R4 — Cierre | 4 | 0 | 0 | 4 |
-| **Total** | **31** | **16** | **3** | **12** |
+| **Total** | **31** | **17** | **3** | **11** |
 
 ## Alcance medido
 
@@ -156,7 +156,7 @@ el móvil.
 | `R2-PAN-01` | Estructura del panel | `AppLayout` con la navegación de escritorio y una navegación de móvil que llegue a todo el menú del perfil, más la cabecera. Los estados de `ProtectedRoute` (cargando y «Reintentar»). | Hecho. Hecho: barra marina con los módulos que caben y el resto en «Más», menú de la cuenta, cabecera con el h1 del módulo, y en el móvil barra inferior con los cuatro módulos de cada perfil más «Más». Los estados de `ProtectedRoute` muestran la marca sobre el lienzo, sin la barra de ningún espacio, con un esqueleto mientras se comprueba la sesión o un aviso con «Reintentar» si el servidor no responde. Cerrado con el veredicto `ship` de `R2-PAN-03`. |
 | `R2-PAN-02` | Familias | Listado, detalle con sus siete pestañas y las ventanas de nueva familia, afiliar y ficha de mascota, según el contrato de dirección. La API expone la línea de cada familia (cuotas, preventivos y servicios) en un endpoint propio, y el listado la muestra en miniatura sin pedir tres recursos por fila. La tabla tiene su versión para el móvil (pendiente de `R1-CMP-02`). | Hecho. Hecho: endpoint de la línea, listado con la miniatura, ficha sobre la línea (orientación medida, pliegue de hechas, mismo día en una estación), mascotas y cartera bajo la línea, pago de una cuota desde su estación y acciones de estado en un menú. También: las tablas de las pestañas se apilan en el celular, servicios separa el cupo de cada mascota y sus apartados, el historial va de lo más reciente a lo más antiguo, las cuotas con mora se ven vencidas, y las ventanas quedan por encima de las barras con los campos a su altura. El barrido responsive mide cada pestaña de la ficha. Cerrado con el veredicto `ship` de `R2-PAN-03`. Agendar un preventivo desde su estación se dejó, decidido con el usuario, para `R2-PAN-08`. |
 | `R2-PAN-03` | Cierre de la línea visual | Revisor final sobre la estructura y Familias con veredicto `ship`. Después, la skill escribe `DESIGN.md` y `.impeccable/design.json` desde lo construido, y `docs/frontend/design-system.md` remite a `DESIGN.md` (el 2026-11-12 se fusionó en `DESIGN.md` y `conventions.md` y se eliminó). | Hecho: `ship` del revisor final tras cuatro pasadas (fallos corregidos: rótulos de la línea que se pisaban, pestañas en lugar del resumen, lo vencido solo con color, cupos duplicados, ventanas bajo las barras, pie de ventana cortado y dos acciones verdes a la vez). `DESIGN.md` y `.impeccable/design.json` escritos desde lo construido; `docs/frontend/design-system.md` remite a `DESIGN.md` (el 2026-11-12 se fusionó en `DESIGN.md` y `conventions.md` y se eliminó), y la deuda que encontró la skill está en `docs/frontend/conventions.md`. |
-| `R2-PAN-04` | Inicio | Sorteo de superficie para el tablero de inicio. Indicadores con su evolución, y series de gráfico según el manual. | Pendiente |
+| `R2-PAN-04` | Inicio | Sorteo de superficie para el tablero de inicio. Indicadores con su evolución, y series de gráfico según el manual. | Hecho (2026-11-13): sorteo de superficie en modo Operate, elegida «La línea de hoy» con el gesto del «Cuadro», a petición del usuario (contrato en `.impeccable/surfaces/frontend-src-features-dashboard-dashboardpage-tsx.md`, boceto en `docs/rediseno/boceto-inicio-linea-de-hoy.html`). El saludo es el `h1` (el módulo pasa a llamarse «Inicio»). Encima, una franja de seis cifras del período, ordenada por perfil, cada una con su variación contra el período comparable y su serie en miniatura; pulsar una cifra abre su serie de 12 meses en grande, con eje, el mes en curso punteado, teclado y la tabla de los datos. Debajo, la línea del día: lo vencido agrupado con un ejemplo, Hoy y lo que viene, cada estación con su acción y una sola verde; al lado, servicios por tipo y recaudo contra facturado. **El médico tiene su Inicio de jornada**, decidido con el usuario: sus consultas sin firmar, sus tareas, Hoy y las paradas de su ruta; el Inicio entra en su barra inferior y Familias pasa a «Más». **Backend**: `GET /dashboard/evolucion` (12 meses y el período comparable, con la misma fórmula y caché); «Mora al cierre» pasa a ser histórica (lo pagado después del cierre cuenta como pendiente ese día; antes, la serie habría mostrado meses pasados sin mora), y las fórmulas llevan tildes. La serie entra en la prueba de carga. Cerrado con el veredicto `ship` del revisor final tras dos pasadas de arreglos. |
 | `R2-PAN-05` | Servicios y tareas | Listado de servicios, detalle (pensado primero para el móvil), nuevo servicio y tareas. | Pendiente |
 | `R2-PAN-06` | Rutas | Sorteo de superficie. Pensada primero para el móvil: la ruta del día de un médico en la calle. | Hecho (2026-11-12): sorteo de superficie, elegida «La línea del día» (contrato en `.impeccable/surfaces/frontend-src-features-rutas-rutaspage-tsx.md`, boceto en `docs/rediseno/boceto-rutas-linea-del-dia.html`). El médico abre en su ruta del día como una línea vertical: hechas plegadas, la que toca abierta con dirección, familia, mascota, franja y su acción, y las que faltan debajo. Quien coordina ve las rutas del día en la plantilla de listado con ficha (generalizada desde Familias a `.con-ficha`), lo que falta por rutear, y planea, agrega y cancela. La API da en cada parada a quién se atiende y dónde. También: «Registrar la atención» cuando al servicio le faltan pasos obligatorios, la llegada ya no deja dos paradas abiertas (fallo del backend), y `datos_demo` deja una ruta de la médica que recorren el barrido y dos recorridos nuevos. Cerrado con el veredicto `ship` del revisor final tras cuatro pasadas. |
 | `R2-PAN-07` | Clínica | Sorteo de superficie para la entrada clínica. Listado, historia de la mascota y registro de la atención en casa de la familia, desde el celular. | Hecho (2026-11-12): sorteo de superficie, elegida «Pasos guiados» (contrato en `.impeccable/surfaces/frontend-src-features-clinica-clinicapage-tsx.md`, boceto en `docs/rediseno/boceto-clinica-pasos-guiados.html`). La consulta se recorre como una línea de cinco estaciones, un apartado por pantalla, con lo anotado en la última consulta como referencia; el borrador se guarda al cambiar de apartado y la firma dice qué falta. **La consulta es el registro de la visita**, decidido con el usuario: al firmar la de una visita en atención se registran los pasos del servicio y la visita se puede terminar en Rutas, cuyo «Registrar la atención» abre esa consulta. El médico abre Clínica en su trabajo pendiente (su ruta de hoy y sus consultas sin firmar); la historia usa la plantilla de listado con ficha, y la cola virtual, las respuestas y las plantillas pasan a los patrones del sistema. También: la identidad de la mascota en la consulta en el celular, el halo de la estación actual visible en las tres líneas (Familias, Rutas y Clínica) y el campo de archivo con la forma del botón secundario. Cerrado con el veredicto `ship` del revisor final tras tres pasadas. |
@@ -246,6 +246,22 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
   próxima cita), la marca de «Hoy» en la cita en camino y el color del plan en Pagos. Y
   «Confirmada» y «Atendida» comparten tono (en pestañas distintas). Se deciden con el usuario
   antes de `R4-CIE-02`.
+
+### Lo que quedó del Inicio tras cerrar `R2-PAN-04`
+
+- **Las series 1 y 2 del manual no se distinguen** para quien no ve el rojo y el verde (ΔE 2,7
+  con el validador de la skill `dataviz`). El Inicio usa la 1 y la 3 (regla escrita en
+  `DESIGN.md`), pero la sección 10 del manual dice «siempre en este orden». Hay que decidir con el
+  usuario si el manual cambia el orden o anota la excepción.
+- **Rendimiento de la serie con volumen real**: son 13 cálculos por carga. Sobre los datos de
+  demostración tarda 190–335 ms sin caché; contra el umbral de 2 s de F4-DAS-02 lo dirá la prueba
+  de carga, que ya la incluye.
+- **Las estaciones de servicio no nombran familia ni mascota**: `ServicioRead` no las trae, y
+  pedirlas costaría una petición por fila. Dicen la ciudad y el médico.
+- **«Ver los servicios» y «Ver la agenda» llevan a Servicios sin filtro**: Servicios no lee
+  filtros de la URL. Se resuelve con el listado en `R2-PAN-05`.
+- **Los datos de demostración tienen poca historia**: las series son planas antes de agosto y
+  Rutas tiene un solo mes con dato. El revisor juzgó con esa limitación.
 
 ### Orden de lo que sigue
 
