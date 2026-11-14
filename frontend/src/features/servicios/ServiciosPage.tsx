@@ -5,15 +5,14 @@ import { Consulta } from '@/components/Consulta'
 import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
-import { Paginacion } from '@/components/Paginacion'
 import { Pestanas } from '@/components/Pestanas'
 import { useAuth } from '@/features/auth'
-import { useCiudades, useNombreTipoServicio } from '@/features/catalogos'
+import { useCiudades } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
 import { estado as etiquetaEstado } from '@/lib/estados'
-import { fechaHora, hoyISO } from '@/lib/formato'
+import { hoyISO } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
-import type { EstadoServicio, FranjaRead, PendienteRead } from '@/types'
+import type { FranjaRead, PendienteRead } from '@/types'
 
 import {
   useActualizarFranja,
@@ -23,26 +22,16 @@ import {
   useCrearFranja,
   useFranjas,
   usePendientes,
-  useServicios,
 } from './api'
-import { NuevoServicioModal } from './NuevoServicioModal'
+import { FichaServicio } from './FichaServicio'
+import { ServiciosLista } from './ServiciosLista'
 
-const ESTADOS: EstadoServicio[] = [
-  'solicitado',
-  'pendiente_autorizacion',
-  'agendado',
-  'reprogramado',
-  'en_ruta',
-  'en_atencion',
-  'completado',
-  'cancelado',
-]
 
-export function ServiciosPage() {
+export function ServiciosPage({ abierto }: { abierto?: string }) {
   const { usuario } = useAuth()
   const [params] = useSearchParams()
   const pestanas = [
-    { valor: 'agenda', titulo: 'Servicios', contenido: <ListadoServicios nuevoInicial={params.get('nuevo') === '1'} /> },
+    { valor: 'agenda', titulo: 'Servicios', contenido: <Agenda abierto={abierto} nuevoInicial={params.get('nuevo') === '1'} /> },
     { valor: 'pendientes', titulo: 'Pendientes', contenido: <Pendientes /> },
   ]
   if (puede(usuario, 'gestionarAgenda')) {
@@ -51,119 +40,32 @@ export function ServiciosPage() {
   return <Pestanas etiqueta="Secciones de servicios" pestanas={pestanas} />
 }
 
-const POR_PAGINA = 25
-
-function ListadoServicios({ nuevoInicial }: { nuevoInicial: boolean }) {
-  const [estado, setEstado] = useState<EstadoServicio | ''>('')
-  const [ciudad, setCiudad] = useState('')
-  const [desde, setDesde] = useState(hoyISO())
-  const [hasta, setHasta] = useState('')
-  const [offset, setOffset] = useState(0)
-  const [nuevo, setNuevo] = useState(nuevoInicial)
-  const ciudades = useCiudades()
-  const nombreTipo = useNombreTipoServicio()
-  const servicios = useServicios({
-    estado: estado || undefined,
-    ciudad: ciudad || undefined,
-    desde: desde || undefined,
-    hasta: hasta || undefined,
-    limit: POR_PAGINA,
-    offset,
-    orden: 'programado_para',
-  })
-  const filtro = <T,>(set: (v: T) => void) => (v: T) => {
-    set(v)
-    setOffset(0)
-  }
-
+/** La agenda: el listado y, al lado, el servicio abierto o qué aparecerá al elegir uno. */
+function Agenda({ abierto, nuevoInicial }: { abierto?: string; nuevoInicial: boolean }) {
   return (
-    <section className="tarjeta">
-      <div className="tarjeta-cabeza">
-        <h3>Servicios</h3>
-        <span className="apagado numero">{servicios.data?.total ?? 0} servicios</span>
-      </div>
-      <div className="filtros" style={{ marginBottom: 'var(--e4)' }}>
-        <select className="input" style={{ width: 'auto' }} value={estado} onChange={(e) => filtro(setEstado)(e.target.value as EstadoServicio | '')} aria-label="Estado">
-          <option value="">Todos los estados</option>
-          {ESTADOS.map((e) => (
-            <option key={e} value={e}>{etiquetaEstado('servicio', e).label}</option>
-          ))}
-        </select>
-        <select className="input" style={{ width: 'auto' }} value={ciudad} onChange={(e) => filtro(setCiudad)(e.target.value)} aria-label="Ciudad">
-          <option value="">Todas las ciudades</option>
-          {ciudades.data?.map((c) => (
-            <option key={c.codigo} value={c.nombre}>{c.nombre}</option>
-          ))}
-        </select>
-        <label className="acciones">
-          Desde
-          <input className="input" style={{ width: 'auto' }} type="date" value={desde} onChange={(e) => filtro(setDesde)(e.target.value)} />
-        </label>
-        <label className="acciones">
-          Hasta
-          <input className="input" style={{ width: 'auto' }} type="date" value={hasta} onChange={(e) => filtro(setHasta)(e.target.value)} />
-        </label>
-        <button className="btn btn-primario" type="button" style={{ marginLeft: 'auto' }} onClick={() => setNuevo(true)}>
-          <Icono nombre="mas" size={16} /> Agendar servicio
-        </button>
-      </div>
-      <Consulta
-        consulta={servicios}
-        cargando="Cargando servicios…"
-        error="No fue posible cargar los servicios."
-        vacio="No hay servicios con estos filtros."
-        estaVacio={(d) => d.items.length === 0}
-      >
-        {(d) => (
-          <>
-            <div className="scroll-x">
-              <table className="tabla">
-                <thead>
-                  <tr>
-                    <th>Programado</th>
-                    <th>Servicio</th>
-                    <th>Ciudad</th>
-                    <th>Autorización</th>
-                    <th>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {d.items.map((s) => (
-                    <tr key={s.id}>
-                      <td className="numero">{fechaHora(s.programado_para)}</td>
-                      <td className="principal">
-                        <Link to={`/servicios/${s.id}`}>{nombreTipo(s.tipo_codigo)}</Link>
-                      </td>
-                      <td>{s.ciudad}</td>
-                      <td>
-                        {s.requiere_autorizacion ? (
-                          s.autorizado ? (
-                            <Insignia tono="ok">Autorizado</Insignia>
-                          ) : (
-                            <Insignia tono="alerta">Por autorizar</Insignia>
-                          )
-                        ) : (
-                          <span className="apagado">No requiere</span>
-                        )}
-                      </td>
-                      <td>
-                        <Distintivo dominio="servicio" valor={s.estado} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <Paginacion total={d.total} limit={d.limit} offset={d.offset} onCambio={setOffset} />
-          </>
-        )}
-      </Consulta>
-      <NuevoServicioModal abierto={nuevo} onCambio={setNuevo} />
-    </section>
+    <div className="con-ficha" data-abierta={abierto ? 'true' : undefined}>
+      <ServiciosLista seleccionado={abierto} nuevoInicial={nuevoInicial} />
+      {abierto ? (
+        // La clave reinicia la ficha al cambiar de servicio: el paso abierto vuelve a decidirse.
+        <FichaServicio key={abierto} id={abierto} />
+      ) : (
+        <section className="ficha-abierta ficha-vacia" aria-label="Servicio abierto">
+          <p>Elige un servicio para ver a quién se atiende, su estado y su acción, y los pasos de la atención.</p>
+        </section>
+      )}
+    </div>
   )
 }
 
 const MEDIOS = ['whatsapp', 'llamada', 'presencial', 'portal', 'correo'] as const
+
+const NOMBRE_MEDIO: Record<(typeof MEDIOS)[number], string> = {
+  whatsapp: 'WhatsApp',
+  llamada: 'Llamada',
+  presencial: 'En persona',
+  portal: 'Portal de la familia',
+  correo: 'Correo',
+}
 
 function Pendientes() {
   const [estado, setEstado] = useState('pendiente_autorizacion')
@@ -174,7 +76,7 @@ function Pendientes() {
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
         <h3>Pendientes derivados de atenciones</h3>
-        <select className="input" style={{ width: 'auto' }} value={estado} onChange={(e) => setEstado(e.target.value)} aria-label="Estado del pendiente">
+        <select className="input servicios-filtro" value={estado} onChange={(e) => setEstado(e.target.value)} aria-label="Estado del pendiente">
           <option value="">Todos</option>
           {['pendiente_autorizacion', 'autorizado', 'en_gestion', 'resuelto', 'rechazado'].map((e) => (
             <option key={e} value={e}>{etiquetaEstado('pendiente', e).label}</option>
@@ -190,7 +92,7 @@ function Pendientes() {
       >
         {(d) => (
           <div className="scroll-x">
-            <table className="tabla">
+            <table className="tabla tabla-apilable">
               <thead>
                 <tr>
                   <th>Pendiente</th>
@@ -202,14 +104,14 @@ function Pendientes() {
               <tbody>
                 {d.map((p) => (
                   <tr key={p.id}>
-                    <td className="principal">{p.descripcion}</td>
-                    <td>
-                      <Link to={`/servicios/${p.servicio_origen_id}`}>Ver servicio</Link>
+                    <td className="principal" data-etiqueta="Pendiente">{p.descripcion}</td>
+                    <td data-etiqueta="Servicio de origen">
+                      <Link to={`/servicios/${p.servicio_origen_id}`}>Ver el servicio</Link>
                     </td>
-                    <td>
+                    <td data-etiqueta="Estado">
                       <Distintivo dominio="pendiente" valor={p.estado} />
                     </td>
-                    <td>
+                    <td className="tabla-acciones">
                       {p.estado !== 'resuelto' && p.estado !== 'rechazado' && (
                         <button className="btn btn-suave" type="button" onClick={() => setGestionando(p)}>
                           Gestionar
@@ -256,7 +158,7 @@ function GestionPendiente({ pendiente, onCerrar }: { pendiente: PendienteRead | 
             <span>Medio por el que la familia autorizó</span>
             <select className="input" value={medio} onChange={(e) => setMedio(e.target.value as (typeof MEDIOS)[number])}>
               {MEDIOS.map((m) => (
-                <option key={m} value={m}>{m}</option>
+                <option key={m} value={m}>{NOMBRE_MEDIO[m]}</option>
               ))}
             </select>
           </label>
@@ -322,6 +224,14 @@ function GestionPendiente({ pendiente, onCerrar }: { pendiente: PendienteRead | 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 const MODALIDADES: FranjaRead['modalidad'][] = ['domiciliario', 'preventivo', 'clinico', 'virtual', 'aliada']
 
+const NOMBRE_MODALIDAD: Record<FranjaRead['modalidad'], string> = {
+  domiciliario: 'A domicilio',
+  preventivo: 'Preventiva',
+  clinico: 'En la clínica',
+  virtual: 'Virtual',
+  aliada: 'Clínica aliada',
+}
+
 function Franjas() {
   const [ciudad, setCiudad] = useState('')
   const ciudades = useCiudades()
@@ -343,8 +253,8 @@ function Franjas() {
           </button>
         </div>
       </div>
-      <div className="filtros" style={{ marginBottom: 'var(--e4)' }}>
-        <select className="input" style={{ width: 'auto' }} value={ciudad} onChange={(e) => setCiudad(e.target.value)} aria-label="Ciudad de las franjas">
+      <div className="filtros servicios-tabla-filtros">
+        <select className="input servicios-filtro" value={ciudad} onChange={(e) => setCiudad(e.target.value)} aria-label="Ciudad de las franjas">
           <option value="">Todas las ciudades</option>
           {ciudades.data?.map((c) => (
             <option key={c.codigo} value={c.nombre}>{c.nombre}</option>
@@ -360,35 +270,39 @@ function Franjas() {
       >
         {(d) => (
           <div className="scroll-x">
-            <table className="tabla">
+            <table className="tabla tabla-apilable">
               <thead>
                 <tr>
+                  <th>Día y horario</th>
                   <th>Ciudad</th>
-                  <th>Día</th>
-                  <th>Horario</th>
                   <th>Modalidad</th>
                   <th>Capacidad</th>
                   <th>Estado</th>
+                  <th><span className="sr-only">Acciones</span></th>
                 </tr>
               </thead>
               <tbody>
                 {d.map((f) => (
                   <tr key={f.id}>
-                    <td>{f.ciudad}</td>
-                    <td>{DIAS[f.dia_semana] ?? f.dia_semana}</td>
-                    <td className="numero">
-                      {f.hora_inicio.slice(0, 5)} – {f.hora_fin.slice(0, 5)}
+                    <td className="principal" data-etiqueta="Día y horario">
+                      {DIAS[f.dia_semana] ?? f.dia_semana} <span className="numero">{f.hora_inicio.slice(0, 5)} – {f.hora_fin.slice(0, 5)}</span>
                     </td>
-                    <td>{f.modalidad}</td>
-                    <td className="numero">{f.capacidad}</td>
-                    <td>
+                    <td data-etiqueta="Ciudad">{f.ciudad}</td>
+                    <td data-etiqueta="Modalidad">{NOMBRE_MODALIDAD[f.modalidad]}</td>
+                    <td className="numero" data-etiqueta="Capacidad">
+                      {f.capacidad === 1 ? '1 servicio' : `${f.capacidad} servicios`}
+                    </td>
+                    <td data-etiqueta="Estado">
+                      <Insignia tono={f.activa ? 'ok' : 'neutro'}>{f.activa ? 'Activa' : 'Inactiva'}</Insignia>
+                    </td>
+                    <td className="tabla-acciones">
                       <button
-                        className={`btn ${f.activa ? 'btn-suave' : 'btn-plano'}`}
+                        className="btn btn-plano"
                         type="button"
                         onClick={() => actualizar.mutate({ id: f.id, activa: !f.activa })}
                         aria-label={`${f.activa ? 'Desactivar' : 'Activar'} franja ${DIAS[f.dia_semana]} ${f.hora_inicio.slice(0, 5)}`}
                       >
-                        {f.activa ? 'Activa' : 'Inactiva'}
+                        {f.activa ? 'Desactivar' : 'Activar'}
                       </button>
                     </td>
                   </tr>
@@ -455,7 +369,7 @@ function NuevaFranjaModal({ abierto, onCerrar }: { abierto: boolean; onCerrar: (
           <span>Modalidad</span>
           <select className="input" name="modalidad" defaultValue="domiciliario">
             {MODALIDADES.map((m) => (
-              <option key={m} value={m}>{m}</option>
+              <option key={m} value={m}>{NOMBRE_MODALIDAD[m]}</option>
             ))}
           </select>
         </label>
@@ -543,7 +457,7 @@ function BloqueoModal({ abierto, onCerrar }: { abierto: boolean; onCerrar: () =>
           <select className="input" name="modalidad" defaultValue="">
             <option value="">Todas</option>
             {MODALIDADES.map((m) => (
-              <option key={m} value={m}>{m}</option>
+              <option key={m} value={m}>{NOMBRE_MODALIDAD[m]}</option>
             ))}
           </select>
         </label>

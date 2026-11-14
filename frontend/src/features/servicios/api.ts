@@ -9,12 +9,15 @@ import type {
   Page,
   PasoRead,
   PendienteRead,
+  ServicioListado,
   ServicioRead,
 } from '@/types'
 
 export interface FiltrosServicios {
   familia_id?: string
   estado?: EstadoServicio
+  /** Solo los que no se completaron ni cancelaron. */
+  abiertos?: boolean
   ciudad?: string
   desde?: string
   hasta?: string
@@ -45,10 +48,12 @@ export const TRANSICIONES: Record<EstadoServicio, EstadoServicio[]> = {
   cancelado: [],
 }
 
-export function useServicios(filtros: FiltrosServicios) {
+/** Con `activa` en false no se pide: el listado solo pide los atrasados en la vista de la agenda. */
+export function useServicios(filtros: FiltrosServicios, activa = true) {
   return useQuery({
     queryKey: ['servicios', filtros],
-    queryFn: async () => (await api.get<Page<ServicioRead>>('/servicios', { params: filtros })).data,
+    enabled: activa,
+    queryFn: async () => (await api.get<Page<ServicioListado>>('/servicios', { params: filtros })).data,
   })
 }
 

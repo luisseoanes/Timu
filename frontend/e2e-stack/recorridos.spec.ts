@@ -159,6 +159,30 @@ test.describe('gerencia en el inicio', () => {
   })
 })
 
+test.describe('gerencia en servicios', () => {
+  // Con el perfil de administración: el de equipo no tiene cupo de peticiones para uno más.
+  test.use({ storageState: sesion('admin') })
+
+  test('el listado dice a quién se atiende y abre la ficha sin perder el listado', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    // Sin el filtro de fecha: los datos de demostración se siembran en otro día.
+    await page.goto('/servicios?desde=')
+    const listado = page.getByRole('list', { name: 'Servicios' })
+    // El último del listado: abrirlo no puede dejar la ficha arriba, fuera de la pantalla.
+    const ultimo = listado.getByRole('link').last()
+    await expect(ultimo).toBeVisible()
+    await ultimo.click()
+    const ficha = page.getByRole('region', { name: 'Servicio abierto' })
+    await expect(ficha.getByRole('heading', { level: 2 })).toBeInViewport()
+    // El listado sigue al lado, con la fila abierta marcada y el filtro de la URL intacto.
+    await expect(listado.locator('[aria-current="page"]')).toHaveCount(1)
+    expect(new URL(page.url()).searchParams.has('desde')).toBe(true)
+    // Como mucho una verde: un servicio cerrado no tiene acción que tocar.
+    expect(await page.locator('.btn-primario:visible').count()).toBeLessThanOrEqual(1)
+    await expect(page.getByRole('alert')).toHaveCount(0)
+  })
+})
+
 test.describe('médico en el inicio', () => {
   test.use({ storageState: sesion('medico') })
 

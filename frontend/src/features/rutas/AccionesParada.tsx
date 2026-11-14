@@ -153,7 +153,7 @@ function Terminar({ parada, clase, onTerminar }: { parada: ParadaRead; clase: st
     <>
       <Link
         className={clase}
-        to={porLaConsulta ? `/clinica/mascotas/${parada.mascota!.id}?servicio=${parada.servicio_id}` : `/servicios/${parada.servicio_id}`}
+        to={porLaConsulta ? `/clinica/mascotas/${parada.mascota!.id}?servicio=${parada.servicio_id}` : `/servicios/${parada.servicio_id}?origen=ruta`}
       >
         Registrar la atención
       </Link>

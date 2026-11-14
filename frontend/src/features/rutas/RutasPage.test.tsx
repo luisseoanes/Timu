@@ -273,7 +273,8 @@ describe('la ruta de quien sale a campo', () => {
       ),
     )
     renderizar(<RutasPage />)
-    expect(await screen.findByRole('link', { name: 'Registrar la atención' })).toHaveAttribute('href', '/servicios/s1')
+    // La ficha del servicio ofrece volver a la ruta.
+    expect(await screen.findByRole('link', { name: 'Registrar la atención' })).toHaveAttribute('href', '/servicios/s1?origen=ruta')
     expect(screen.getByText('Antes de terminar la visita falta registrar: Aplicación.')).toBeInTheDocument()
   })
 
@@ -281,7 +282,8 @@ describe('la ruta de quien sale a campo', () => {
     conRutas([ruta([parada(1, 'en_sitio', { mascota: null })])])
     server.use(http.get(`${API}/servicios/s1/pasos`, () => HttpResponse.json([])))
     renderizar(<RutasPage />)
-    expect(await screen.findByRole('link', { name: 'Registrar la atención' })).toHaveAttribute('href', '/servicios/s1')
+    // La ficha del servicio ofrece volver a la ruta.
+    expect(await screen.findByRole('link', { name: 'Registrar la atención' })).toHaveAttribute('href', '/servicios/s1?origen=ruta')
     expect(screen.getByText('Antes de terminar la visita falta registrar: Valoracion clinica, Plan y recomendaciones.')).toBeInTheDocument()
   })
 

@@ -121,6 +121,88 @@
 .con-rail > *, .rail > * { min-width: 0; }
 .dos-columnas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e4); }
 
+/* ===== Servicios (R2-PAN-05): listado con ficha =====
+   El listado agrupa por día y cada fila dice a quién se atiende; la ficha lleva la acción de
+   estado arriba y los pasos de la atención como estaciones. */
+/* Dos columnas: estado y ciudad, desde y hasta. Un campo de fecha tiene ancho mínimo propio:
+   sin «min-width: 0» se sale del panel en el celular. */
+.listado .filtros.servicios-filtros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e2); }
+.listado .servicios-filtros > .input, .listado .servicios-filtros .campo .input { width: 100%; min-width: 0; }
+.listado .servicios-filtros > .campo { min-width: 0; }
+.listado .servicios-filtros > .campo > span { font-size: var(--t-etiqueta); }
+@media (max-width: 599px) {
+  .listado .servicios-filtros > .input { grid-column: 1 / -1; }
+}
+/* Pendientes y franjas: el filtro a su tamaño y separado de la tabla. */
+.servicios-filtro { width: auto; }
+.servicios-tabla-filtros { margin-bottom: var(--e4); }
+.servicios-dia { list-style: none; }
+.servicios-dia + .servicios-dia { margin-top: var(--e3); }
+.servicios-dia-rotulo {
+  display: block; padding: var(--e2) var(--e4);
+  font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--texto-suave);
+}
+.servicios-dia-filas { list-style: none; margin: 0; padding: 0; }
+.servicios-mas { padding: var(--e2) var(--e4); font-size: var(--t-menor); color: var(--texto-suave); }
+.servicios-dia[data-atrasados] .servicios-dia-rotulo { display: flex; align-items: center; gap: var(--e1); color: var(--estado-alerta-texto); }
+.servicio-fila-datos { display: flex; flex-wrap: wrap; gap: 0 var(--e2); font-size: var(--t-menor); color: var(--texto-suave); }
+.servicio-fila-datos > * + *::before { content: "·"; margin-right: var(--e2); }
+.servicio-fila-datos .numero { color: var(--texto-titulo); font-weight: 600; }
+.servicio-fila-alerta { display: inline-flex; align-items: center; gap: var(--e1); font-size: var(--t-menor); font-weight: 600; color: var(--estado-alerta-texto); }
+
+/* Al traer la ficha a la vista, que no quede bajo la barra marina fija. */
+.servicio-ficha { scroll-margin-top: calc(64px + var(--e4)); }
+.servicio-quien { font-size: var(--t-cuerpo); color: var(--texto); }
+.servicio-acciones > .servicio-falta, .servicio-acciones > .apagado { flex-basis: 100%; }
+.servicio-falta { display: flex; align-items: center; gap: var(--e2); font-size: var(--t-menor); font-weight: 600; color: var(--estado-alerta-texto); }
+.servicio-notas { display: grid; gap: var(--e1); padding-block: var(--e3); border-block: 1px solid var(--borde); }
+.servicio-notas p { max-width: 75ch; }
+
+.servicio-bloque { display: grid; gap: var(--e3); }
+.servicio-bloque-cabeza { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--e3); }
+.servicio-bloque-titulo { font-family: var(--fuente); font-size: var(--t-seccion); font-weight: 600; color: var(--texto-titulo); }
+
+/* Los pasos como estaciones de una línea corta: hecho lleno, el obligatorio que falta en
+   contorno marino, el opcional en contorno gris. */
+.servicio-pasos { list-style: none; margin: 0; padding: 0; }
+.servicio-paso { position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: var(--e4); }
+.servicio-paso::before { content: ""; position: absolute; left: 10px; top: 0; bottom: 0; width: 4px; background: var(--ruta-pendiente); }
+.servicio-pasos > :first-child::before { top: 24px; }
+.servicio-pasos > :last-child::before { bottom: auto; height: 24px; }
+.servicio-pasos > :only-child::before { display: none; }
+.servicio-paso-punto {
+  position: relative; z-index: var(--capa-elevada);
+  width: 24px; height: 24px; margin-top: var(--e3);
+  display: grid; place-items: center;
+  border: 4px solid var(--ruta-pendiente); border-radius: var(--r-pastilla);
+  background: var(--superficie); color: var(--texto-sobre-marca);
+}
+.servicio-paso[data-estado="hecho"] .servicio-paso-punto { border-color: var(--ruta-recorrida); background: var(--ruta-recorrida); }
+.servicio-paso[data-estado="falta"] .servicio-paso-punto { border-color: var(--ruta-recorrida); }
+.servicio-paso-cuerpo { display: grid; gap: var(--e3); min-width: 0; padding-block: var(--e3); }
+.servicio-paso + .servicio-paso .servicio-paso-cuerpo { border-top: 1px solid var(--borde); }
+.servicio-paso-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e2) var(--e3); min-height: 24px; }
+.servicio-paso-cabeza > strong { color: var(--texto-titulo); }
+.servicio-paso-estado { font-size: var(--t-menor); color: var(--texto-suave); }
+.servicio-paso[data-estado="falta"] .servicio-paso-estado { color: var(--estado-alerta-texto); font-weight: 600; }
+.servicio-paso-cabeza > .btn { margin-left: auto; }
+.servicio-paso-datos { display: grid; gap: var(--e2); margin: 0; }
+.servicio-paso-datos dt { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--texto-suave); }
+.servicio-paso-datos dd { margin: 2px 0 0; color: var(--texto-titulo); white-space: pre-wrap; overflow-wrap: anywhere; }
+.servicio-paso-formulario { grid-template-columns: minmax(0, 1fr); }
+
+.servicio-pendientes { list-style: none; margin: 0; padding: 0; }
+.servicio-pendientes li { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); padding-block: var(--e3); border-top: 1px solid var(--borde); }
+.servicio-pendientes li:first-child { border-top: 0; }
+
+/* En el celular, la acción de estado al alcance del pulgar: a todo el ancho y de 48 px. */
+@media (max-width: 899px) {
+  .servicio-acciones > .btn { flex: 1 1 auto; }
+  .servicio-acciones > .btn:first-child { flex-basis: 100%; }
+  .servicio-acciones > .btn-primario { flex-basis: 100%; min-height: 48px; font-size: var(--t-seccion); }
+  .servicio-paso-cabeza > .btn { flex: 1 0 100%; margin-left: 0; }
+}
+
 /* ===== Inicio (R2-PAN-04): «La línea de hoy» =====
    Saludo con los filtros, la franja de cifras (cada una abre su serie) y, debajo, la línea del
    día con lo vencido, Hoy y lo que viene; al lado, servicios por tipo o las tareas del médico. */

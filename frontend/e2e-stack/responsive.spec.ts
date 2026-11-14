@@ -105,7 +105,7 @@ const RUTAS: Ruta[] = [
     pestanas: true,
   },
   { app: 'cartera', perfil: 'equipo', url: '/cartera' },
-  { app: 'servicios', perfil: 'equipo', url: '/servicios' },
+  { app: 'servicios', perfil: 'equipo', url: '/servicios', pestanas: true },
   {
     app: 'servicios/:id',
     perfil: 'medico',

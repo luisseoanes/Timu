@@ -9,7 +9,7 @@ import { ServiciosPage } from './ServiciosPage'
 import { FAMILIA, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
-import type { ServicioRead } from '@/types'
+import type { ServicioListado, ServicioRead } from '@/types'
 
 const API = '*/api/v1'
 
@@ -32,15 +32,29 @@ const SERVICIO: ServicioRead = {
   motivo_estado: null,
 }
 
+/** La fila del listado: el servicio con a quién se atiende. */
+const FILA: ServicioListado = {
+  ...SERVICIO,
+  familia: { id: FAMILIA.id, titular_nombre: 'Ana Ruiz' },
+  mascota: { id: SERVICIO.mascota_id!, nombre: 'Luna', especie: 'Canino' },
+}
+
 const pagina = (items: unknown[]) => ({ items, total: items.length, limit: 25, offset: 0 })
 
 describe('ServiciosPage', () => {
   it('lista los servicios con el nombre del tipo y su estado', async () => {
-    server.use(http.get(`${API}/servicios`, () => HttpResponse.json(pagina([SERVICIO]))))
+    server.use(
+      http.get(`${API}/servicios`, ({ request }) =>
+        HttpResponse.json(pagina(new URL(request.url).searchParams.has('abiertos') ? [] : [FILA])),
+      ),
+    )
     renderizar(<ServiciosPage />)
-    const enlace = await screen.findByRole('link', { name: 'Consulta domiciliaria' })
+    // La fila dice a quién se atiende: la mascota en el título y la familia debajo.
+    const enlace = await screen.findByRole('link', { name: 'Luna · Consulta domiciliaria' })
     expect(enlace).toHaveAttribute('href', '/servicios/s1')
-    expect(within(enlace.closest('tr')!).getByText('Agendado')).toBeInTheDocument()
+    const fila = enlace.closest('li')!
+    expect(within(fila).getByText('Agendado')).toBeInTheDocument()
+    expect(within(fila).getByText('Ana Ruiz')).toBeInTheDocument()
   })
 
   it('filtra por estado', async () => {
@@ -53,9 +67,10 @@ describe('ServiciosPage', () => {
     )
     const user = userEvent.setup()
     renderizar(<ServiciosPage />)
-    expect(await screen.findByText('No hay servicios con estos filtros.')).toBeInTheDocument()
+    expect(await screen.findByText(/No hay servicios agendados desde hoy/)).toBeInTheDocument()
     await user.selectOptions(screen.getByLabelText('Estado'), 'completado')
     await waitFor(() => expect(estados).toContain('completado'))
+    expect(await screen.findByText(/Ningún servicio coincide con estos filtros/)).toBeInTheDocument()
   })
 
   it('agenda un servicio eligiendo familia, tipo y una franja con cupo', async () => {
@@ -167,8 +182,8 @@ describe('ServicioDetallePage', () => {
     abrir()
     const pasos = await screen.findByRole('heading', { name: 'Pasos de la atención' })
     const tarjeta = pasos.closest('section')!
-    await user.click((await within(tarjeta).findAllByRole('button', { name: 'Registrar' }))[0]!)
-    await user.type(within(tarjeta).getByLabelText('Hallazgos'), 'Otitis leve')
+    // En atención, la ficha abre en el primer paso que falta: no hay que buscarlo.
+    await user.type(await within(tarjeta).findByLabelText('Hallazgos'), 'Otitis leve')
     await user.click(within(tarjeta).getByRole('button', { name: 'Guardar paso' }))
     await waitFor(() => expect(enviado).toEqual({ datos: { hallazgos: 'Otitis leve' } }))
   })
@@ -215,8 +230,9 @@ describe('ServicioDetallePage', () => {
     )
     const user = userEvent.setup()
     abrir()
-    await user.type(await screen.findByLabelText('Nuevo pendiente'), 'Examen de sangre')
-    await user.click(screen.getByRole('button', { name: 'Agregar pendiente' }))
+    await user.click(await screen.findByRole('button', { name: 'Agregar pendiente' }))
+    await user.type(screen.getByLabelText('Qué queda pendiente'), 'Examen de sangre')
+    await user.click(screen.getByRole('button', { name: 'Guardar pendiente' }))
     await waitFor(() => expect(enviado).toEqual({ descripcion: 'Examen de sangre', requiere_autorizacion: true }))
   })
 })

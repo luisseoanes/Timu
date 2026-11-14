@@ -6,13 +6,19 @@ import { describe, expect, it } from 'vitest'
 import { ServiciosPage } from './ServiciosPage'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
-import type { FranjaRead, PendienteRead, ServicioRead } from '@/types'
+import type { FranjaRead, PendienteRead, ServicioListado } from '@/types'
 
 const API = '*/api/v1'
 
 const pagina = (items: unknown[]) => ({ items, total: items.length, limit: 25, offset: 0 })
 
-const servicio = (cambios: Partial<ServicioRead>): ServicioRead => ({
+/** La agenda: esos servicios, y ninguno atrasado (la consulta con `abiertos=true`). */
+const agenda = (items: unknown[]) =>
+  http.get(`${API}/servicios`, ({ request }) =>
+    HttpResponse.json(pagina(new URL(request.url).searchParams.has('abiertos') ? [] : items)),
+  )
+
+const servicio = (cambios: Partial<ServicioListado>): ServicioListado => ({
   id: 's1',
   familia_id: 'f1',
   mascota_id: null,
@@ -29,6 +35,8 @@ const servicio = (cambios: Partial<ServicioRead>): ServicioRead => ({
   pendiente_origen_id: null,
   observaciones: null,
   motivo_estado: null,
+  familia: { id: 'f1', titular_nombre: 'Jorge Ramírez' },
+  mascota: null,
   ...cambios,
 })
 
@@ -59,21 +67,28 @@ const FRANJA: FranjaRead = {
 describe('listado de servicios', () => {
   it('distingue los que no requieren autorización, los autorizados y los que esperan', async () => {
     server.use(
-      http.get(`${API}/servicios`, () =>
-        HttpResponse.json(
-          pagina([
+      agenda([
             servicio({ id: 'a' }),
             servicio({ id: 'b', requiere_autorizacion: true, autorizado: true }),
             servicio({ id: 'c', requiere_autorizacion: true, autorizado: false }),
           ]),
-        ),
-      ),
     )
     renderizar(<ServiciosPage />)
-    expect(await screen.findByText('No requiere')).toBeInTheDocument()
-    expect(screen.getByText('Autorizado')).toBeInTheDocument()
-    expect(screen.getAllByText('Por autorizar').length).toBeGreaterThan(0)
-    expect(screen.getByText('3 servicios')).toBeInTheDocument()
+    // Solo el que espera la autorización lo dice: los demás no tienen nada que avisar.
+    const filas = within(await screen.findByRole('list', { name: 'Servicios' })).getAllByRole('link')
+    expect(filas).toHaveLength(3)
+    const avisos = filas.map((f) => within(f.closest('li')!).queryByText('Por autorizar'))
+    expect(avisos.map(Boolean)).toEqual([false, false, true])
+    expect(screen.getByRole('heading', { name: /^Servicios/ })).toHaveTextContent('3')
+  })
+
+  it('no repite «Por autorizar» cuando el estado ya lo dice', async () => {
+    server.use(
+      agenda([servicio({ id: 'd', estado: 'pendiente_autorizacion', requiere_autorizacion: true })]),
+    )
+    renderizar(<ServiciosPage />)
+    const fila = (await within(await screen.findByRole('list', { name: 'Servicios' })).findByRole('link')).closest('li')!
+    expect(within(fila).getAllByText('Por autorizar')).toHaveLength(1)
   })
 
   it('combina ciudad y rango de fechas en la consulta', async () => {
@@ -86,7 +101,7 @@ describe('listado de servicios', () => {
     )
     const user = userEvent.setup()
     renderizar(<ServiciosPage />)
-    await screen.findByText('No hay servicios con estos filtros.')
+    await screen.findByText(/No hay servicios agendados desde hoy/)
     await user.selectOptions(screen.getByLabelText('Ciudad'), 'Bogota')
     const hasta = screen.getByLabelText('Hasta')
     await user.clear(hasta)
@@ -97,6 +112,61 @@ describe('listado de servicios', () => {
       expect(ultima.get('hasta')).toBe('2026-12-31')
       expect(ultima.get('orden')).toBe('programado_para')
     })
+  })
+
+  it('agrupa por día y al abrir un servicio conserva los filtros', async () => {
+    const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date())
+    server.use(
+      agenda([
+            servicio({ id: 'a', programado_para: `${hoy}T15:00:00Z`, mascota: { id: 'm1', nombre: 'Luna', especie: 'Canino' } }),
+            servicio({ id: 'b', programado_para: '2099-03-02T15:00:00Z' }),
+          ]),
+    )
+    renderizar(<ServiciosPage />, { ruta: '/servicios?estado=agendado' })
+    expect(await screen.findByText(/^Hoy · /)).toBeInTheDocument()
+    // Cada día dice cuántos servicios tiene.
+    expect(screen.getByText(/^lun 2 mar ·/).closest('.servicios-dia-rotulo')).toHaveTextContent('lun 2 mar · 1')
+    expect(await screen.findByRole('link', { name: 'Luna · Consulta domiciliaria' })).toHaveAttribute('href', '/servicios/a?estado=agendado')
+    expect(screen.getByLabelText('Estado')).toHaveValue('agendado')
+  })
+
+  it('encima de hoy pone lo atrasado que sigue abierto, con su fecha', async () => {
+    const pedidas: URLSearchParams[] = []
+    server.use(
+      http.get(`${API}/servicios`, ({ request }) => {
+        const p = new URL(request.url).searchParams
+        pedidas.push(p)
+        return HttpResponse.json(
+          pagina(
+            p.has('abiertos')
+              ? [servicio({ id: 'v', estado: 'en_atencion', programado_para: '2026-11-04T15:00:00Z' })]
+              : [],
+          ),
+        )
+      }),
+    )
+    renderizar(<ServiciosPage />)
+    const atrasados = (await screen.findByText(/^Atrasados/)).closest('li')!
+    expect(within(atrasados).getByText(/^mié 4 nov · /)).toBeInTheDocument()
+    // El recuento de la cabecera cuenta los atrasados: son filas del listado.
+    expect(screen.getByRole('heading', { name: /^Servicios/ })).toHaveTextContent('Servicios 1')
+    const consulta = pedidas.find((p) => p.has('abiertos'))!
+    expect(consulta.get('abiertos')).toBe('true')
+    expect(consulta.get('hasta')).not.toBeNull()
+    expect(consulta.has('desde')).toBe(false)
+  })
+
+  it('con un filtro de estado ya no busca atrasados', async () => {
+    const pedidas: URLSearchParams[] = []
+    server.use(
+      http.get(`${API}/servicios`, ({ request }) => {
+        pedidas.push(new URL(request.url).searchParams)
+        return HttpResponse.json(pagina([]))
+      }),
+    )
+    renderizar(<ServiciosPage />, { ruta: '/servicios?estado=agendado' })
+    await screen.findByText(/Ningún servicio coincide/)
+    expect(pedidas.some((p) => p.has('abiertos'))).toBe(false)
   })
 
   it('avisa si no puede cargar los servicios', async () => {
@@ -131,7 +201,7 @@ describe('pendientes', () => {
     expect(within(fila('Ecografía')).getByRole('button', { name: 'Gestionar' })).toBeInTheDocument()
     expect(within(fila('Radiografía')).queryByRole('button', { name: 'Gestionar' })).not.toBeInTheDocument()
     expect(within(fila('Cirugía')).queryByRole('button', { name: 'Gestionar' })).not.toBeInTheDocument()
-    expect(within(fila('Ecografía')).getByRole('link', { name: 'Ver servicio' })).toHaveAttribute('href', '/servicios/s1')
+    expect(within(fila('Ecografía')).getByRole('link', { name: 'Ver el servicio' })).toHaveAttribute('href', '/servicios/s1')
   })
 
   it('filtra por estado y muestra el vacío', async () => {
@@ -246,7 +316,11 @@ describe('franjas de agenda', () => {
       }),
     )
     const user = await abrirFranjas([FRANJA, { ...FRANJA, id: 'fr2', dia_semana: 3, activa: false }])
-    expect(await screen.findByRole('button', { name: 'Activar franja Jueves 08:00' })).toHaveTextContent('Inactiva')
+    // El botón dice la acción; el estado lo dice su distintivo, en la misma fila.
+    const activar = await screen.findByRole('button', { name: 'Activar franja Jueves 08:00' })
+    expect(activar).toHaveTextContent('Activar')
+    expect(within(activar.closest('tr')!).getByText('Inactiva')).toBeInTheDocument()
+    expect(within(activar.closest('tr')!).getByText('A domicilio')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Desactivar franja Miércoles 08:00' }))
     await waitFor(() => expect(cambios).toEqual(['false']))
   })
