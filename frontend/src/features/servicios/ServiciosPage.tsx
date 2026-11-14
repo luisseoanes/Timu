@@ -7,7 +7,7 @@ import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { Pestanas } from '@/components/Pestanas'
 import { useAuth } from '@/features/auth'
-import { useCiudades } from '@/features/catalogos'
+import { MODALIDADES, NOMBRE_MODALIDAD, useCiudades } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
 import { estado as etiquetaEstado } from '@/lib/estados'
 import { hoyISO } from '@/lib/formato'
@@ -222,15 +222,6 @@ function GestionPendiente({ pendiente, onCerrar }: { pendiente: PendienteRead | 
 }
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-const MODALIDADES: FranjaRead['modalidad'][] = ['domiciliario', 'preventivo', 'clinico', 'virtual', 'aliada']
-
-const NOMBRE_MODALIDAD: Record<FranjaRead['modalidad'], string> = {
-  domiciliario: 'A domicilio',
-  preventivo: 'Preventiva',
-  clinico: 'En la clínica',
-  virtual: 'Virtual',
-  aliada: 'Clínica aliada',
-}
 
 function Franjas() {
   const [ciudad, setCiudad] = useState('')
