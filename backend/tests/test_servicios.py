@@ -714,6 +714,21 @@ async def test_el_listado_dice_a_quien_se_atiende(client: AsyncClient, db, heade
     assert sin["mascota"] is None
 
 
+async def test_el_listado_filtra_los_que_siguen_abiertos(client: AsyncClient, db, headers):
+    """R2-PAN-05: los atrasados de la agenda son los que no se completaron ni cancelaron."""
+    familia_id, _, _ = await _familia_con_servicios(db)
+    todos = (await client.get(f"/api/v1/servicios?familia_id={familia_id}", headers=headers)).json()
+    abiertos = (
+        await client.get(
+            f"/api/v1/servicios?familia_id={familia_id}&abiertos=true", headers=headers
+        )
+    ).json()
+    cerrados = {"completado", "cancelado"}
+    assert {s["estado"] for s in todos["items"]} & cerrados
+    assert abiertos["total"] == sum(1 for s in todos["items"] if s["estado"] not in cerrados)
+    assert not {s["estado"] for s in abiertos["items"]} & cerrados
+
+
 # --- 6.3 Beneficios y cupo del plan de cada peludo --------------------------------------------
 
 

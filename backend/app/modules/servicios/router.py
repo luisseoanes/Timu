@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timedelta
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import select
 
@@ -283,8 +283,13 @@ async def listar(
     ciudad: str | None = None,
     desde: date | None = None,
     hasta: date | None = None,
+    abiertos: bool = Query(False, description="Solo los que no se completaron ni cancelaron"),
 ) -> Page[ServicioListado]:
     stmt = select(Servicio)
+    if abiertos:
+        stmt = stmt.where(
+            Servicio.estado.notin_((EstadoServicio.COMPLETADO, EstadoServicio.CANCELADO))
+        )
     if familia_id:
         stmt = stmt.where(Servicio.familia_id == familia_id)
     if mascota_id:

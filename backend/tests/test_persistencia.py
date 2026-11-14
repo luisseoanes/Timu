@@ -1203,6 +1203,7 @@ _LISTADOS = (
     "/api/v1/tareas",
     "/api/v1/tareas?mias=true",
     "/api/v1/servicios",
+    "/api/v1/servicios?abiertos=true&hasta=2026-11-05",
     "/api/v1/pendientes",
     "/api/v1/cartera/contratos?solo_mora=true",
     "/api/v1/encuestas",
