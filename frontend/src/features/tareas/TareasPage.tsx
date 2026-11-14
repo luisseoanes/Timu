@@ -73,8 +73,8 @@ export function TareasPage() {
           <Icono nombre="mas" size={16} /> Nueva tarea
         </button>
       </div>
-      <div className="filtros tareas-filtros">
-        <div className="segmento tareas-vistas" role="group" aria-label="Vista de tareas">
+      <div className="filtros bandeja-filtros">
+        <div className="segmento bandeja-vistas" role="group" aria-label="Vista de tareas">
           {VISTAS.map((v) => (
             <button
               key={v.valor}
@@ -91,13 +91,13 @@ export function TareasPage() {
             </button>
           ))}
         </div>
-        <select className="input tareas-filtro" value={area} onChange={(e) => { setArea(e.target.value as Area | ''); setOffset(0) }} aria-label="Área">
+        <select className="input bandeja-filtro" value={area} onChange={(e) => { setArea(e.target.value as Area | ''); setOffset(0) }} aria-label="Área">
           <option value="">Todas las áreas</option>
           {AREAS.map((a) => (
             <option key={a.valor} value={a.valor}>{a.label}</option>
           ))}
         </select>
-        <select className="input tareas-filtro" value={estado} onChange={(e) => { setEstado(e.target.value); setOffset(0) }} aria-label="Estado de la tarea">
+        <select className="input bandeja-filtro" value={estado} onChange={(e) => { setEstado(e.target.value); setOffset(0) }} aria-label="Estado de la tarea">
           <option value="abierta">Abiertas</option>
           <option value="en_progreso">En progreso</option>
           <option value="cerrada">Cerradas</option>
@@ -119,7 +119,7 @@ export function TareasPage() {
         {(d) => (
           <>
             <div className="scroll-x">
-              <table className="tabla tabla-apilable tareas-tabla">
+              <table className="tabla tabla-apilable bandeja-tabla">
                 <thead>
                   <tr>
                     <th>Tarea</th>
@@ -136,12 +136,12 @@ export function TareasPage() {
                     return (
                       <tr key={t.id}>
                         <td className="principal" data-etiqueta="Tarea">
-                          <span className="tarea-titulo">
+                          <span className="bandeja-titulo">
                             {t.titulo}
                             <Distintivo dominio="tarea" valor={t.estado} />
                           </span>
                           {/* A quién afecta: la familia y, si es de un servicio, cuál y de quién. */}
-                          <div className="tarea-detalle">
+                          <div className="bandeja-detalle">
                             <span>{area}</span>
                             {t.familia && <Link to={`/familias/${t.familia.id}`}>{t.familia.titular_nombre}</Link>}
                             {t.servicio && (
@@ -156,7 +156,7 @@ export function TareasPage() {
                         <td data-etiqueta="Vence">
                           {/* Lo vencido se dice en texto e icono, no solo en rojo. */}
                           {vencida ? (
-                            <span className="tarea-vencida">
+                            <span className="bandeja-vencida">
                               <Icono nombre="alerta" size={14} />
                               <span className="numero">{fechaCortaConDia(t.vence_el!)} ·</span>
                               <span>vencida</span>
