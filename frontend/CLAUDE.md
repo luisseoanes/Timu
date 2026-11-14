@@ -68,7 +68,7 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
 
 - **Sorteos de la skill**: `serve-question --wait --key <k>` sale con 3 cada 60 s sin respuesta:
   repítelo en bucle en segundo plano hasta que salga 0. Las capturas para el revisor final siguen
-  «Capturas para el revisor final» de la hoja de ruta.
+  [`docs/frontend/capturas-revisor.md`](../docs/frontend/capturas-revisor.md).
   `concept-seed --help` no imprime ayuda: ejecuta una tirada. La forma del payload la da
   `serve-question --schema`.
   Una superficie sin sorteo (hereda patrones) escribe igual su contrato, con

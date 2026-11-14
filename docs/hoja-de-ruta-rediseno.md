@@ -68,35 +68,8 @@ técnicas las gobierna el repositorio: el `CLAUDE.md`, las guardas de pruebas y 
 
 ### Capturas para el revisor final
 
-Aprendido al cerrar Rutas y Clínica (2026-11-12): una captura inválida le cuesta al revisor una
-ronda entera, porque responde `recapture` y no puntúa nada hasta tenerla.
-
-- Una carpeta por superficie: `.impeccable/review/<superficie>/` (ignorada por git), con el
-  nombre `perfil-estado-ancho.png`. Las de Familias están sueltas en `.impeccable/review/`.
-- Antes de disparar, esperar a un elemento de la pantalla (su título), no solo a la red: la
-  espera de sesión no se distingue por texto (el lema va dentro del SVG del logo) y una
-  captura tomada antes enseña el esqueleto.
-- En una captura de página completa, volver arriba antes (`window.scrollTo(0, 0)`): si la
-  página quedó desplazada, la barra fija sale pintada a media página.
-- El ingreso y la renovación admiten 10 por minuto por IP, y la API 120 peticiones por minuto
-  por usuario: un lote grande de capturas los agota. Esperar un minuto entre lotes, y
-  reutilizar la sesión guardada en vez de ingresar en cada script.
-- Un estado que gasta datos (una parada que se cierra, una consulta que se firma) se captura
-  en el orden en que los datos lo permiten: primero lo que exige el estado anterior.
-
-Aprendido al cerrar el portal (2026-11-13):
-
-- El ingreso por script es un formulario: `request.post('/api/v1/auth/login', { form: {
-  username, password } })`. Con `data` (JSON) responde 422.
-- La renovación rota el token de renovación: tras cada contexto del navegador hay que volver a
-  guardar su `storageState` en el fichero de sesión. Si el siguiente contexto carga uno ya
-  rotado, el backend lo trata como robo y cierra todas las sesiones del usuario.
-- Un estado que `datos_demo` no tiene (una familia al día, citas en camino, un pago rechazado)
-  se captura interceptando la API con `page.route` en el script, y se le dice al revisor qué
-  capturas son simuladas. La respuesta simulada tiene que ser realista: un 503 sin cuerpo,
-  no uno con un `detail` inventado, que el revisor toma por texto del servidor.
-- `impeccable concept-seed --help` no imprime la ayuda: ejecuta una tirada sin modo. La forma
-  del payload de la página de decisión la da `serve-question --schema`.
+Cómo se capturan las pantallas para el revisor (anchos, sesiones, cupos, estados simulados y el
+esqueleto del script): [`frontend/capturas-revisor.md`](frontend/capturas-revisor.md).
 
 ### Definición de terminado de cada unidad
 

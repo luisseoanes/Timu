@@ -170,6 +170,6 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [PRODUCT.md](PRODUCT.md) | Contexto de producto para diseñar: quién usa cada espacio, desde qué dispositivo y para qué |
 | [docs/manual-de-marca.md](docs/manual-de-marca.md) | Identidad de TIMU (color, tipografía, logo y voz) y su ampliación para la plataforma: roles, contrastes, reglas de uso |
 | [docs/hoja-de-ruta-rediseno.md](docs/hoja-de-ruta-rediseno.md) | Rediseño de la interfaz con la marca: unidades, estado, decisiones y siguiente paso |
-| [docs/frontend/](docs/frontend/) | Cómo se construye el panel: componentes, plantillas de página y convenciones |
+| [docs/frontend/](docs/frontend/) | Cómo se construye el panel: componentes, plantillas de página, convenciones y cómo se capturan las pantallas para el revisor final |
 | [infra/respaldos/README.md](infra/respaldos/README.md) | Respaldo y restauración de la base |
 | `CLAUDE.md`, `backend/CLAUDE.md`, `frontend/CLAUDE.md` | Reglas de arquitectura para Claude Code; también sirven de guía técnica |

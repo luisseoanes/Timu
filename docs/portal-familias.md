@@ -74,7 +74,7 @@ Las palabras para la familia no son las del equipo. Viven en el portal, no en `l
 `datos_demo` crea una sola familia con portal, Ana Ruiz (`ana@example.com`, clave
 `demo12345`), con el plan **congelado**: tres cuotas y siete preventivos vencidos, sin citas
 ni pagos. Sirve para el estado más difícil, no para el sano. Las capturas de una familia al
-día se hacen interceptando la API (hoja de ruta, «Capturas para el revisor final»).
+día se hacen interceptando la API ([`frontend/capturas-revisor.md`](frontend/capturas-revisor.md)).
 
 ## Lo que queda abierto
 

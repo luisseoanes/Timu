@@ -15,8 +15,9 @@
 | [Manual de marca](../manual-de-marca.md) | Color, tipografía, logo y voz de TIMU, y los roles y contrastes de la plataforma (Parte II). |
 | [`PRODUCT.md`](../../PRODUCT.md) | Para quién es cada pantalla y desde qué dispositivo la usa. |
 | [components.md](components.md) | Inventario de componentes y clases: cuándo va cada uno y qué regla no se rompe. |
-| [layouts.md](layouts.md) | Plantillas de página: estructura del panel, listado con ficha, ventanas, ingreso, inicio y portal, con los cortes de pantalla. |
+| [layouts.md](layouts.md) | Plantillas de página: estructura del panel, listado con ficha, inicio, bandeja de tareas, ventanas, ingreso y portal, con los cortes de pantalla. |
 | [conventions.md](conventions.md) | Estructura por dominio, nombres, datos, sesión, pruebas, accesibilidad, tokens y su guarda, qué revisar antes de empujar y la deuda conocida. |
+| [capturas-revisor.md](capturas-revisor.md) | Cómo se capturan las pantallas para el revisor final de la skill: anchos, sesiones y cupos, estados simulados y el esqueleto del script. |
 
 El diseño lo gobierna la skill del repositorio (`/impeccable`): una superficie con identidad
 propia empieza con un sorteo de direcciones y se cierra con su revisor final hasta el `ship`
