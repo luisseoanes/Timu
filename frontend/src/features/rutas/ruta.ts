@@ -78,14 +78,11 @@ export function partirDireccion(texto: string): [string, string, string] {
   return [texto.slice(0, numero.index), numero[0], texto.slice(numero.index + numero[0].length)]
 }
 
-/** Los campos de un paso del servicio que la consulta clínica llena al firmarse (backend:
- * `_PASOS_DESDE_LA_CONSULTA` en clinica/service.py). */
-const CAMPOS_DE_LA_CONSULTA = ['hallazgos', 'recomendaciones']
-
 /** Si firmar la consulta registra todos los pasos que faltan. El de una vacuna (producto y lote)
- * no lo llena: ese se registra en el servicio. */
+ * no lo llena: ese se registra en el servicio. Lo dice el catálogo de tipos de servicio
+ * (`lo_registra_la_consulta`), que se lo pregunta a clínica: el panel no copia la regla. */
 export function laConsultaLosRegistra(faltan: PasoTipoRead[]): boolean {
-  return faltan.every((p) => (p.campos ?? []).length > 0 && (p.campos ?? []).every((c) => CAMPOS_DE_LA_CONSULTA.includes(c)))
+  return faltan.every((p) => p.lo_registra_la_consulta)
 }
 
 /** La navegación del celular hacia la parada: sus coordenadas, que son las que usó el

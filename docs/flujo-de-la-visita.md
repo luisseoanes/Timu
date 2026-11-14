@@ -68,9 +68,11 @@ Decidido con el usuario en `R2-PAN-07` (`docs/hoja-de-ruta-rediseno.md`).
 consulta, así que en esos servicios «Registrar la atención» lleva a la ficha del servicio con
 `?origen=ruta` (decidido con el usuario en `R2-PAN-05`): la ficha abre en el primer paso que falta,
 al guardarlo pasa al siguiente, bloquea «Completar» mientras falte alguno obligatorio y ofrece
-«Volver a mi ruta». El panel decide adónde lleva el botón con `laConsultaLosRegistra` (`frontend/src/features/rutas/ruta.ts`), que copia la tabla
-del backend. Esa copia es deuda: ver «Deuda conocida» en
-[`frontend/conventions.md`](frontend/conventions.md).
+«Volver a mi ruta». El panel decide adónde lleva el botón con `laConsultaLosRegistra` (`frontend/src/features/rutas/ruta.ts`),
+que lee `lo_registra_la_consulta` de cada paso en el catálogo de tipos de servicio. Ese dato lo
+calcula el catálogo con los campos que clínica le conecta al importarse
+(`catalogos.conectar_campos_de_la_consulta`, desde `_PASOS_DESDE_LA_CONSULTA`): el panel ya no copia
+la tabla (`R2-PAN-08`).
 
 ## La visita de un preventivo es su registro
 

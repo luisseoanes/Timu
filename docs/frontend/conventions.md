@@ -200,13 +200,6 @@ Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñ
   fuentes base del PDF (latin-1), que estropean las tildes. El carnet ya usa
   `app/core/marca_pdf.py` (logo, paleta, GeosansLight e Inter); los demás lo adoptan en su
   unidad.
-- **El panel copia qué pasos registra la consulta clínica.** `CAMPOS_DE_LA_CONSULTA`
-  (`src/features/rutas/ruta.ts`) repite las claves de `_PASOS_DESDE_LA_CONSULTA`
-  (`backend/app/modules/clinica/service.py`) para decidir si «Registrar la atención» abre la
-  consulta o el servicio. Si el backend añade un campo y el panel no, el botón manda al sitio
-  equivocado y ninguna prueba lo ve. Se cierra cuando la API diga en el catálogo de tipos de
-  servicio qué pasos llena la consulta, mejor en `R2-PAN-08`. El flujo completo, en
-  [`flujo-de-la-visita.md`](../flujo-de-la-visita.md).
 - **`.impeccable/design.json` va por detrás de `DESIGN.md`.** Le faltan «La regla del número
   de casa» y «La regla de la acción de quien recorre» en `narrative.rules`, y el «don't» de las
   siluetas de la marca (lo vio el documentador al fusionar el portal, 2026-11-13). Desde el
