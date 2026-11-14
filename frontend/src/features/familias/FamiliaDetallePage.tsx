@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
 import { Distintivo, Insignia } from '@/components/Distintivo'
@@ -70,7 +70,9 @@ function Ficha({
   const { usuario } = useAuth()
   const [params] = useSearchParams()
   const navegar = useNavigate()
-  const [seccion, setSeccion] = useState('datos')
+  // Un enlace puede abrir la ficha en una pestaña (la bandeja de Cartera, en «cartera»).
+  const pedida = (useLocation().state as { seccion?: string } | null)?.seccion
+  const [seccion, setSeccion] = useState(pedida ?? 'datos')
   const [pagando, setPagando] = useState<string | null>(null)
   const cuenta = useEstadoCuenta(f.id)
   const abiertas = cuenta.data?.cuotas.filter((q) => q.estado !== 'pagada' && q.estado !== 'anulada') ?? []

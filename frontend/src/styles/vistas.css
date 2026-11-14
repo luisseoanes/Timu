@@ -224,6 +224,25 @@
 /* La fecha y «· vencida» bajan de línea enteras, nunca partidas por dentro. */
 .bandeja-vencida { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 var(--e1); font-weight: 600; color: var(--texto-error); }
 .bandeja-vencida > span { white-space: nowrap; }
+/* El recuento de cada vista, a la derecha de su nombre: cuánto hay sin entrar. */
+.segmento-recuento { font-weight: 600; color: var(--texto-suave); }
+.segmento-opcion[data-state="active"] .segmento-recuento { color: var(--texto); }
+@media (max-width: 599px) {
+  /* Tres vistas caben en una fila de tres; dos filas dejarían una sola abajo. */
+  .segmento.bandeja-vistas-tres { grid-template-columns: repeat(3, auto); }
+  .segmento.bandeja-vistas-tres .segmento-opcion { padding-inline: var(--e2); white-space: nowrap; }
+}
+.cartera-renovable { font-size: var(--t-menor); color: var(--texto-suave); }
+/* Apilada, la acción de la fila a todo el ancho y al pulgar. */
+@container (max-width: 639px) {
+  .cartera-tabla .tabla-acciones > .btn:first-child { flex: 1 1 100%; }
+}
+/* Por debajo de lo que cabe en una fila, las vistas ocupan la suya y el buscador y las listas
+   bajan juntos a la siguiente: antes la ciudad bajaba sola y el buscador cortaba su texto. */
+@media (max-width: 1179px) {
+  .bandeja-filtros > .segmento { flex: 1 1 100%; }
+  .bandeja-filtros > .buscador { flex: 1 1 240px; }
+}
 .tarea-responsable { min-width: 150px; }
 
 /* ===== Inicio (R2-PAN-04): «La línea de hoy» =====

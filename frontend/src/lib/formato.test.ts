@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { mensajeError } from './errores'
 import { estado } from './estados'
-import { diaISO, edad, fecha, fechaCorta, fechaCortaConDia, fechaHora, fechaLarga, moneda, peso, porcentaje, rangoHoras } from './formato'
+import { diaISO, edad, fecha, fechaCompacta, fechaCorta, fechaCortaConDia, fechaHora, fechaLarga, moneda, peso, porcentaje, rangoHoras } from './formato'
 
 describe('formato colombiano', () => {
   it('muestra pesos sin decimales y con punto de miles', () => {
@@ -29,6 +29,11 @@ describe('formato colombiano', () => {
     expect(rangoHoras('2026-11-12T15:00:00Z', '2026-11-12T16:00:00Z')).toMatch(/^10:00 – 11:00 a\.\sm\.$/)
     expect(rangoHoras('2026-11-12T16:30:00Z', '2026-11-12T17:30:00Z')).toMatch(/^11:30 a\.\sm\. – 12:30 p\.\sm\.$/)
     expect(rangoHoras('2026-11-12T15:00:00Z', null)).toBeNull()
+  })
+
+  it('da el año solo cuando no es el actual', () => {
+    expect(fechaCompacta('2026-11-21', '2026-11-14')).toBe('21 nov')
+    expect(fechaCompacta('2027-08-21', '2026-11-14')).toBe('21 ago 2027')
   })
 
   it('nombra el día de la semana de una fecha de calendario', () => {

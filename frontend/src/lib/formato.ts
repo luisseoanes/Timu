@@ -34,6 +34,13 @@ export function fechaCorta(valor: string): string {
   return `${parte('day')} ${parte('month')}`
 }
 
+/** «21 ago» si es del año en curso, «21 ago 2027» si no: una renovación o un refuerzo del año que viene
+ * no se confunde con una fecha de este. */
+export function fechaCompacta(valor: string, hoy = hoyISO()): string {
+  const anio = valor.slice(0, 4)
+  return anio === hoy.slice(0, 4) ? fechaCorta(valor) : `${fechaCorta(valor)} ${anio}`
+}
+
 const FECHA_HORA = new Intl.DateTimeFormat('es-CO', {
   timeZone: ZONA,
   day: '2-digit',

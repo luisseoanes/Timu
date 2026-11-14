@@ -183,6 +183,23 @@ test.describe('gerencia en servicios', () => {
   })
 })
 
+test.describe('gerencia en cartera', () => {
+  // Con el perfil de administración: el de equipo no tiene cupo de peticiones para uno más.
+  test.use({ storageState: sesion('admin') })
+
+  test('la cartera abre en lo que se debe y cobra desde la fila con las cuotas de la familia', async ({ page }) => {
+    await page.goto('/cartera')
+    await expect(page.getByRole('button', { name: /^En mora \d+$/ })).toHaveAttribute('aria-pressed', 'true')
+    // datos_demo deja a Ana Ruiz con cuotas vencidas.
+    await page.getByRole('button', { name: 'Registrar pago de Ana Ruiz' }).click()
+    const ventana = page.getByRole('dialog', { name: 'Registrar pago de Ana Ruiz' })
+    // Abre con la cuota vencida más antigua puesta.
+    await expect(ventana.getByLabel('Cuota')).not.toHaveValue('')
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('alert')).toHaveCount(0)
+  })
+})
+
 test.describe('médico en el inicio', () => {
   test.use({ storageState: sesion('medico') })
 

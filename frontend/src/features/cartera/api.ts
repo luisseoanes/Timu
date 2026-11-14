@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { ContratoListado, EstadoCuenta, Page, PagoRead } from '@/types'
+import type { ContratoListado, ContratoRead, EstadoCuenta, Page, PagoRead, RecuentosCartera } from '@/types'
 
 export type MedioPago = 'efectivo' | 'transferencia' | 'consignacion' | 'datafono' | 'otro'
 
@@ -20,6 +20,7 @@ export interface FiltrosCartera {
   ciudad?: string
   q?: string
   solo_mora?: boolean
+  por_renovar?: boolean
   limit?: number
   offset?: number
 }
@@ -29,6 +30,26 @@ export function useContratos(filtros: FiltrosCartera = {}) {
     queryKey: ['cartera', 'contratos', filtros],
     queryFn: async () =>
       (await api.get<Page<ContratoListado>>('/cartera/contratos', { params: filtros })).data,
+  })
+}
+
+/** Cuántos contratos hay en cada vista de la bandeja, con los mismos filtros. */
+export function useRecuentosCartera(filtros: Pick<FiltrosCartera, 'ciudad' | 'q'>) {
+  return useQuery({
+    queryKey: ['cartera', 'recuentos', filtros],
+    queryFn: async () => (await api.get<RecuentosCartera>('/cartera/contratos/recuentos', { params: filtros })).data,
+  })
+}
+
+/** Renovar extiende un año la vigencia del contrato (F1-CAR-07). */
+export function useRenovarContrato() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (contratoId: string) => (await api.post<ContratoRead>(`/cartera/contratos/${contratoId}/renovar`)).data,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['cartera'] })
+      void qc.invalidateQueries({ queryKey: ['familias'] })
+    },
   })
 }
 

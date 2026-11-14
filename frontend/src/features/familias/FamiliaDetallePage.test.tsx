@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { Route, Routes } from 'react-router-dom'
+import { Link, Route, Routes } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
 import { FamiliaDetallePage } from './FamiliaDetallePage'
@@ -266,6 +266,18 @@ describe('FamiliaDetallePage', () => {
     abrirFicha()
     await user.click(await screen.findByRole('button', { name: 'Ver cuota septiembre' }))
     expect(screen.getByRole('tab', { name: 'Cartera' })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('abre en la pestaña que pide el enlace (Cartera, desde la bandeja de cartera)', async () => {
+    const user = userEvent.setup()
+    renderizar(
+      <Routes>
+        <Route path="/" element={<Link to={`/familias/${FAMILIA.id}`} state={{ seccion: 'cartera' }}>Ir</Link>} />
+        <Route path="/familias/:id" element={<FamiliaDetallePage />} />
+      </Routes>,
+    )
+    await user.click(screen.getByRole('link', { name: 'Ir' }))
+    expect(await screen.findByRole('tab', { name: 'Cartera' })).toHaveAttribute('aria-selected', 'true')
   })
 
   it('muestra el historial vacío sin dejar la pestaña en blanco', async () => {

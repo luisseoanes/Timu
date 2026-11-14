@@ -4,6 +4,7 @@ import { moneda } from '@/lib/formato'
 import type { CuotaRead } from '@/types'
 
 import { type MedioPago, useRegistrarPago } from './api'
+import { nombreCuota, saldoDe } from './cuotas'
 
 const MEDIOS: { valor: MedioPago; label: string }[] = [
   { valor: 'transferencia', label: 'Transferencia' },
@@ -17,12 +18,15 @@ const MEDIOS: { valor: MedioPago; label: string }[] = [
  * la cuota elegida y su saldo como valor. */
 export function RegistrarPagoModal({
   familiaId,
+  titular,
   cuotas,
   cuotaId,
   abierto,
   onCerrar,
 }: {
   familiaId: string
+  /** Fuera de la ficha de la familia (la bandeja de cartera), el título dice de quién es el pago. */
+  titular?: string
   cuotas: CuotaRead[]
   cuotaId?: string
   abierto: boolean
@@ -57,8 +61,12 @@ export function RegistrarPagoModal({
           onCerrar()
         }
       }}
-      titulo="Registrar pago"
-      descripcion="Para pagos recibidos fuera de la pasarela. Sin cuota indicada, se aplica a la más antigua."
+      titulo={titular ? `Registrar pago de ${titular}` : 'Registrar pago'}
+      descripcion={
+        elegida
+          ? 'Para pagos recibidos fuera de la pasarela.'
+          : 'Para pagos recibidos fuera de la pasarela. Sin cuota indicada, se aplica a la más antigua.'
+      }
       pie={
         <button className="btn btn-primario" type="submit" form="registrar-pago" disabled={registrar.isPending}>
           {registrar.isPending ? 'Registrando…' : 'Registrar pago'}
@@ -66,9 +74,10 @@ export function RegistrarPagoModal({
       }
     >
       <form id="registrar-pago" className="formulario" onSubmit={guardar}>
-        <label className="campo">
-          <span>Valor (COP)</span>
+        <div className="campo">
+          <label htmlFor="pago-valor">Valor (COP)</label>
           <input
+            id="pago-valor"
             className="input"
             name="valor"
             type="number"
@@ -76,9 +85,15 @@ export function RegistrarPagoModal({
             step="1"
             required
             inputMode="numeric"
-            defaultValue={elegida ? Number(elegida.valor) - Number(elegida.valor_pagado) : undefined}
+            defaultValue={elegida ? saldoDe(elegida) : undefined}
+            aria-describedby={elegida ? 'pago-saldo' : undefined}
           />
-        </label>
+          {elegida && (
+            <small id="pago-saldo" className="campo-ayuda">
+              Le faltan <span className="numero">{moneda(saldoDe(elegida))}</span> a esta cuota.
+            </small>
+          )}
+        </div>
         <label className="campo">
           <span>Medio</span>
           <select className="input" name="medio" defaultValue="transferencia">
@@ -97,7 +112,7 @@ export function RegistrarPagoModal({
             <option value="">La más antigua pendiente</option>
             {cuotas.map((q) => (
               <option key={q.id} value={q.id}>
-                {q.descripcion ?? q.periodo} · {moneda(q.valor)}
+                {nombreCuota(q)} · {moneda(saldoDe(q))}
               </option>
             ))}
           </select>
