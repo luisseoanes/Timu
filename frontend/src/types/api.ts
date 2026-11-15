@@ -752,6 +752,12 @@ export interface RecuentosUsuarios {
   inactivos: number
 }
 
+export interface RecuentosEventosPasarela {
+  error: number
+  procesado: number
+  todos: number
+}
+
 export interface EncuestaRead {
   id: string
   servicio_id: string

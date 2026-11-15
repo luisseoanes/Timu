@@ -100,6 +100,7 @@ ESQUEMAS = [
     "RecuentosEmbudo",
     "RecuentosRemisiones",
     "RecuentosUsuarios",
+    "RecuentosEventosPasarela",
     "EncuestaRead",
     "ClinicaRead",
     "ConvenioRead",

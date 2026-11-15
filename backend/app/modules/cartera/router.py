@@ -6,7 +6,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import Rol
@@ -26,6 +26,7 @@ from app.modules.cartera.schemas import (
     PagoManual,
     PagoRead,
     RecuentosCartera,
+    RecuentosEventosPasarela,
 )
 from app.modules.familias import service as familias
 from app.modules.planes import service as planes
@@ -207,6 +208,24 @@ async def eventos(
         campos_orden={"created_at": EventoPasarela.created_at},
         orden_por_defecto="-created_at",
         desempate=EventoPasarela.id,
+    )
+
+
+@router.get(
+    "/eventos-pasarela/recuentos",
+    response_model=RecuentosEventosPasarela,
+    dependencies=[ADMIN],
+)
+async def recuentos_eventos(db: DbSession) -> RecuentosEventosPasarela:
+    """Cuantos eventos hay en cada vista de la bandeja: con error, procesados y todos."""
+    filas = await db.execute(
+        select(EventoPasarela.estado, func.count()).group_by(EventoPasarela.estado)
+    )
+    por_estado: dict[str, int] = dict(filas.tuples().all())
+    return RecuentosEventosPasarela(
+        error=por_estado.get("error", 0),
+        procesado=por_estado.get("procesado", 0),
+        todos=sum(por_estado.values()),
     )
 
 

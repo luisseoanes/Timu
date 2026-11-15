@@ -1226,6 +1226,8 @@ _LISTADOS = (
     "/api/v1/auth/usuarios?grupo=equipo",
     "/api/v1/auth/usuarios?grupo=inactivos",
     "/api/v1/auth/usuarios/recuentos",
+    "/api/v1/cartera/eventos-pasarela?estado=error",
+    "/api/v1/cartera/eventos-pasarela/recuentos",
 )
 # Los que necesitan una familia que exista: se completan con la que crea la prueba.
 _LISTADOS_DE_FAMILIA = (

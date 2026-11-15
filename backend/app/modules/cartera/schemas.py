@@ -171,6 +171,14 @@ class MedioPagoRead(BaseModel):
     activo: bool
 
 
+class RecuentosEventosPasarela(BaseModel):
+    """Cuantos eventos hay en cada vista de la bandeja de la pasarela."""
+
+    error: int
+    procesado: int
+    todos: int
+
+
 class EventoPasarelaRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

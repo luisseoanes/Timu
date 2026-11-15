@@ -718,6 +718,10 @@ async def test_eventos_de_la_pasarela_se_listan_reprocesan_y_recuperan(
     assert (await client.get("/api/v1/cartera/eventos-pasarela", headers=headers)).json()[
         "total"
     ] == 1
+    # Cada vista de la bandeja dice cuantos tiene, sin entrar (DEU-26).
+    recuentos = "/api/v1/cartera/eventos-pasarela/recuentos"
+    antes = (await client.get(recuentos, headers=headers)).json()
+    assert antes == {"error": 1, "procesado": 0, "todos": 1}
 
     # Corregido el dato que lo hizo fallar, el reproceso lo concilia.
     pago.valor = 45_000
@@ -728,6 +732,8 @@ async def test_eventos_de_la_pasarela_se_listan_reprocesan_y_recuperan(
         )
     ).json()
     assert (reprocesado["estado"], reprocesado["error"]) == ("procesado", None)
+    despues = (await client.get(recuentos, headers=headers)).json()
+    assert despues == {"error": 0, "procesado": 1, "todos": 1}
 
 
 async def test_un_evento_perdido_se_recupera_por_api(client: AsyncClient, db, headers, monkeypatch):
