@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { http, HttpResponse } from 'msw'
+import { delay, http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { ComercialPage } from './ComercialPage'
@@ -113,7 +113,13 @@ describe('interesados', () => {
 
   it('registra un interesado sin enviar los campos vacíos y abre su ficha', async () => {
     let enviado: unknown = null
+    let listados = 0
     server.use(
+      // La recarga del listado tras crear no responde: la ficha se abre igual, sin esperarla.
+      http.get(`${API}/comercial/interesados`, async () => {
+        if (++listados > 1) await delay('infinite')
+        return HttpResponse.json({ items: [], total: 0, limit: 50, offset: 0 })
+      }),
       http.post(`${API}/comercial/interesados`, async ({ request }) => {
         enviado = await request.json()
         return HttpResponse.json(interesado({ id: 'nuevo', nombre: 'Laura' }), { status: 201 })
@@ -128,9 +134,8 @@ describe('interesados', () => {
     await user.selectOptions(within(ventana).getByLabelText('Cómo llegó'), 'referido')
     await user.click(within(ventana).getByRole('button', { name: 'Guardar interesado' }))
     await waitFor(() => expect(enviado).toEqual({ nombre: 'Laura', telefono: '3001234567', origen: 'referido' }))
-    // Crear y abrir la ficha encadena el cierre de la ventana, el listado y la ficha: con la
-    // suite entera bajo cobertura, un segundo no siempre basta (frontend/CLAUDE.md).
-    expect(await screen.findByRole('region', { name: 'Interesado abierto' }, { timeout: 5000 })).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'Interesado abierto' })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })
 

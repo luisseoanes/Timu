@@ -244,14 +244,14 @@ qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son 
 | `DEU-28`–`DEU-70` | El «techo» del revisor en cada superficie | Como lo recomendó Claude: sí a todo salvo 28, 29, 30, 38, 39, 43, 44, 65, 68, 69 y 70 (detalle abajo) | ahora | Pendiente |
 | `DEU-E` | Lo que decide TIMU | Valor provisional en el código para cada uno, pero **todos siguen pendientes** hasta que TIMU confirme el valor oficial ([pendientes externos](pendientes-externos.md#valores-provisionales)) | — | Pendiente de TIMU |
 
-**Abierto, encontrado al cerrar este lote:** la prueba de Comercial «registra un interesado sin
-enviar los campos vacíos y abre su ficha» falla de vez en cuando dentro de `npm run verificar` en
-local (cuatro veces el 2026-11-15, también con la máquina libre), y pasa al repetirla: catorce
-ejecuciones seguidas de la suite con cobertura, con y sin carga, no la reprodujeron. El CI no la ha
-visto fallar. No es el fallo sistemático que arregló `setup.ts` ese día (peticiones de una prueba
-cobradas a la siguiente, 5 de cada 6 ejecuciones); la hipótesis abierta es que el `onSuccess`
-pasado a `mutate` no se llame si la ventana se vuelve a montar antes de la respuesta, y entonces la
-ventana no se cierra. Se investiga en el lote, antes de `R3-PUB-02`.
+**Encontrado al cerrar este lote y resuelto el mismo día:** la prueba de Comercial «registra un
+interesado sin enviar los campos vacíos y abre su ficha» fallaba de vez en cuando en
+`npm run verificar`. La causa era real, no de la prueba: `useMutacion` de Comercial devolvía en su
+`onSuccess` la promesa de recargar todo Comercial, y React Query la espera antes de llamar al
+`onSuccess` de cada `mutate`; la ventana del interesado nuevo seguía «Guardando…» hasta que se
+recargaba todo. Ya no se espera, y la prueba lo fija con una recarga que no responde. Portal,
+Clínica, Tareas y Aliadas siguen esperando la recarga a propósito (evita un parpadeo y no retiene
+ninguna ventana que abra otra cosa); si alguna llega a hacerlo, se cambia igual.
 
 El «techo» aceptado, por superficie (los números son los de la lista):
 

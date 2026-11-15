@@ -103,7 +103,15 @@ export function useArbol(habilitado: boolean) {
 
 function useMutacion<T, R>(fn: (datos: T) => Promise<R>) {
   const qc = useQueryClient()
-  return useMutation({ mutationFn: fn, onSuccess: () => qc.invalidateQueries({ queryKey: ['comercial'] }) })
+  // La recarga no se espera: si `onSuccess` devolviera su promesa, la mutación seguiría pendiente
+  // hasta que todo Comercial se recargara, y la ventana de un interesado nuevo no se cerraba ni
+  // abría su ficha hasta entonces.
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['comercial'] })
+    },
+  })
 }
 
 export function useCrearInteresado() {
