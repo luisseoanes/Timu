@@ -147,8 +147,8 @@
 
   /* Series de gráfico, siempre en este orden */
   --serie-1: var(--verde-600);
-  --serie-2: var(--naranja-600);
-  --serie-3: var(--azul-500);
+  --serie-2: var(--azul-500);
+  --serie-3: var(--naranja-600);
   --serie-4: var(--marino-900);
 
   /* --- Tipografía ----------------------------------------------- */

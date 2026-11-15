@@ -52,8 +52,8 @@ colors:
   ruta-recorrida: "#111537"
   ruta-pendiente: "#85889D"
   serie-1: "#769116"
-  serie-2: "#BE7700"
-  serie-3: "#477095"
+  serie-2: "#477095"
+  serie-3: "#BE7700"
   serie-4: "#111537"
 typography:
   display:
@@ -801,10 +801,11 @@ Servicios hereda el listado con ficha; Tareas, la tabla apilable.
   lo que viene; cada estación lleva su acción. La primera acción es el único verde de la vista;
   las de consulta («Ver», «Ver la agenda») nunca lo llevan.
 
-**La regla de las series que se distinguen.** Las series 1 y 2 del manual (verde-600 y
-naranja-600) son casi iguales para quien no distingue el rojo del verde (ΔE 2,7, medido con el
-validador de la skill `dataviz`). Un gráfico de dos series usa la 1 y la 3 (verde y azul,
-ΔE 20,4); uno de una serie, la 1. El rojo nunca es una serie.
+**La regla de las series que se distinguen.** El manual pone el azul en segundo lugar: verde,
+azul, naranja y marino. Antes del 2026-11-15 las series 1 y 2 eran el verde-600 y el naranja-600,
+casi iguales para quien no distingue el rojo del verde (ΔE 2,7, medido con el validador de la
+skill `dataviz`), y el Inicio usaba la 1 y la 3 como excepción. Ahora un gráfico de dos series usa
+la 1 y la 2 (verde y azul, ΔE 20,4) sin excepción; uno de una serie, la 1. El rojo nunca es una serie.
 
 ### Bandejas (componente común: Tareas, Cartera, Preventivos, Conversaciones, Remisiones y Usuarios)
 Lo que hay por resolver, en una `tabla-apilable` a todo el ancho de un panel blanco.

@@ -650,23 +650,8 @@
         ]
       },
       "serie-2": {
-        "role": "tertiary",
-        "displayName": "Serie 2",
-        "canonical": "var(--naranja-600)",
-        "tonalRamp": [
-          "#813E00",
-          "#9B5600",
-          "#BE7700",
-          "#D48200",
-          "#DD9B33",
-          "#E5B466",
-          "#F4E0BF",
-          "#FAF0E0"
-        ]
-      },
-      "serie-3": {
         "role": "secondary",
-        "displayName": "Serie 3",
+        "displayName": "Serie 2",
         "canonical": "var(--azul-500)",
         "tonalRamp": [
           "#153E60",
@@ -677,6 +662,21 @@
           "#91A9BF",
           "#D1DBE4",
           "#E9EEF2"
+        ]
+      },
+      "serie-3": {
+        "role": "tertiary",
+        "displayName": "Serie 3",
+        "canonical": "var(--naranja-600)",
+        "tonalRamp": [
+          "#813E00",
+          "#9B5600",
+          "#BE7700",
+          "#D48200",
+          "#DD9B33",
+          "#E5B466",
+          "#F4E0BF",
+          "#FAF0E0"
         ]
       },
       "serie-4": {
@@ -1099,7 +1099,7 @@
       },
       {
         "name": "La regla de las series que se distinguen",
-        "body": "Las series 1 y 2 del manual (verde-600 y naranja-600) son casi iguales para quien no distingue el rojo del verde (ΔE 2,7, medido con el validador de la skill `dataviz`). Un gráfico de dos series usa la 1 y la 3 (verde y azul, ΔE 20,4); uno de una serie, la 1. El rojo nunca es una serie.",
+        "body": "El manual pone el azul en segundo lugar: verde, azul, naranja y marino. Antes del 2026-11-15 las series 1 y 2 eran el verde-600 y el naranja-600, casi iguales para quien no distingue el rojo del verde (ΔE 2,7, medido con el validador de la skill `dataviz`), y el Inicio usaba la 1 y la 3 como excepción. Ahora un gráfico de dos series usa la 1 y la 2 (verde y azul, ΔE 20,4) sin excepción; uno de una serie, la 1. El rojo nunca es una serie.",
         "section": "components"
       },
       {

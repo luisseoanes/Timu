@@ -360,13 +360,15 @@ Amigos por Siempre, en ese orden (sección 4).
 ### Gráficos
 
 Las series se usan siempre en este orden, y todas llegan a 3:1 sobre blanco. El rojo no se usa
-como serie, para que no se lea como alarma.
+como serie, para que no se lea como alarma. El orden pone el azul en segundo lugar (decidido con
+el usuario el 2026-11-15): el verde-600 y el naranja-600 son casi iguales para quien no distingue
+el rojo del verde (ΔE 2,7), y un gráfico de dos series usaba antes la 1 y la 3 como excepción.
 
 | Rol | Paso | vs blanco | vs lienzo |
 | --- | --- | --- | --- |
 | `--serie-1` | verde-600 | 3.60 | 3.32 |
-| `--serie-2` | naranja-600 | 3.60 | 3.32 |
-| `--serie-3` | azul-500 | 5.22 | 4.81 |
+| `--serie-2` | azul-500 | 5.22 | 4.81 |
+| `--serie-3` | naranja-600 | 3.60 | 3.32 |
 | `--serie-4` | marino-900 | 17.70 | 16.30 |
 
 ## 11. Reglas de uso del color

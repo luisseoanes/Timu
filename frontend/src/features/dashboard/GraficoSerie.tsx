@@ -8,7 +8,7 @@ const MARGEN = { arriba: 12, derecha: 20, abajo: 44, izquierda: 64 }
 /** Los dos colores de un gráfico de dos series: la 1 y la 3 del manual. La 1 y la 2 (verde y
  * naranja) son casi iguales para quien no distingue el rojo del verde (ΔE 2,7, validado con la
  * skill dataviz), así que nunca van juntas. */
-const COLORES = ['var(--serie-1)', 'var(--serie-3)'] as const
+const COLORES = ['var(--serie-1)', 'var(--serie-2)'] as const
 
 /**
  * La serie de 12 meses de una cifra: un eje, una o dos líneas, el mes en curso marcado y la cruz
