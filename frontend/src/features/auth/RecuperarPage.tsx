@@ -6,6 +6,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '@/api/client'
 import { Icono } from '@/components/Icono'
 import { esErrorPasajero, mensajeError } from '@/lib/errores'
+import { diaISO, fechaCortaConDia, hora, hoyISO } from '@/lib/formato'
 import { inicioDeRol } from '@/lib/permisos'
 import type { EstadoEnlace } from '@/types'
 
@@ -161,6 +162,12 @@ function EnlaceQueNoSirve({ titulo, texto }: { titulo: string; texto: string }) 
   )
 }
 
+/** «Este enlace sirve hasta hoy a las 10:42 a. m.»: la vigencia la da la API. */
+function vigencia(expira: string): string {
+  const dia = diaISO(expira)
+  return `Este enlace sirve hasta ${dia === hoyISO() ? 'hoy' : `el ${fechaCortaConDia(dia)}`} a las ${hora(expira)}.`
+}
+
 function DefinirClave({ token, enlace }: { token: string; enlace: EstadoEnlace }) {
   const { entrarConEnlace } = useAuth()
   const navigate = useNavigate()
@@ -184,6 +191,7 @@ function DefinirClave({ token, enlace }: { token: string; enlace: EstadoEnlace }
           {activar
             ? 'Elige la contraseña con la que vas a entrar a TIMU.'
             : 'Crea tu contraseña nueva. Al guardarla se cierran las sesiones que tengas abiertas en otros equipos.'}
+          {enlace.expira_en && <> {vigencia(enlace.expira_en)}</>}
         </p>
       </div>
 

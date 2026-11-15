@@ -228,12 +228,19 @@ describe('Recuperación de contraseña', () => {
     server.use(
       sinSesion,
       http.post(`${API}/auth/enlace`, () =>
-        HttpResponse.json({ estado: 'vigente', proposito: 'recuperacion', nombre: 'Valentina' }),
+        HttpResponse.json({
+          estado: 'vigente',
+          proposito: 'recuperacion',
+          nombre: 'Valentina',
+          expira_en: '2026-11-18T14:00:00Z',
+        }),
       ),
     )
     renderizar(<RestablecerPage modo="restablecer" />, { ruta: '/restablecer?token=abc' })
     expect(await screen.findByRole('heading', { name: 'Hola, Valentina' })).toBeInTheDocument()
     expect(screen.getByText(/se cierran las sesiones/)).toBeInTheDocument()
+    // La vigencia la da la API, en la hora de Colombia (UTC−5).
+    expect(screen.getByText(/Este enlace sirve hasta el mié 18 nov a las 9:00/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Guardar y entrar' })).toBeInTheDocument()
   })
 
