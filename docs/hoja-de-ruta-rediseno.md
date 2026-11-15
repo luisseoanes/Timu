@@ -191,11 +191,13 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 
 ## Mientras dura el rediseño
 
-- **Una pantalla nueva se construye ya con la línea nueva**, salvo que su espacio todavía no
-  tenga componentes base. En ese caso entra en la lista de pendientes con su ID de esta hoja.
+- **Una pantalla nueva se construye ya con la línea nueva.** La lista de pendientes del barrido
+  responsive está vacía desde `R2-PAN-10` y no vuelve a crecer: un fallo de desborde o contraste se
+  arregla en el cambio que lo trae.
 - **Nada vuelve a la paleta menta.** La guarda lo impide desde `R1-TOK-01`.
-- Cada fase se entrega por separado y deja la aplicación usable. Durante R2 y R3 conviven
-  pantallas con la línea nueva y con la antigua; es lo esperado.
+- Cada fase se entrega por separado y deja la aplicación usable. Hasta cerrar R3 conviven pantallas
+  con la línea nueva y con la antigua (el ingreso, el registro, la encuesta y la aliada); es lo
+  esperado.
 - **Una pantalla con pestañas que se cierra activa `pestanas: true`** en su ruta del barrido
   (`e2e-stack/responsive.spec.ts`), como la ficha de familia: si no, el barrido solo mide la
   pestaña inicial.

@@ -2,10 +2,10 @@
 
 > **En rediseño.** La interfaz se está rediseñando con la marca real de TIMU; el orden, el
 > estado de cada unidad y el siguiente paso están en la
-> [hoja de ruta](../hoja-de-ruta-rediseno.md). Ya usan la línea nueva la estructura del panel,
-> Familias, Rutas, Clínica, el Inicio, Servicios y Tareas, Cartera y Preventivos, las ventanas, la espera de sesión y el portal de familias entero; el
-> resto de pantallas tiene la paleta, la tipografía y el logo nuevos con su composición
-> anterior, hasta su unidad.
+> [hoja de ruta](../hoja-de-ruta-rediseno.md). El panel del equipo está rediseñado entero (R2) y
+> el portal de familias también. Quedan con su composición anterior, aunque ya con la paleta, la
+> tipografía y el logo nuevos, el ingreso, el registro en línea, la encuesta y el portal de la
+> clínica aliada (R3).
 
 ## Qué leer antes de escribir una pantalla
 
@@ -15,7 +15,7 @@
 | [Manual de marca](../manual-de-marca.md) | Color, tipografía, logo y voz de TIMU, y los roles y contrastes de la plataforma (Parte II). |
 | [`PRODUCT.md`](../../PRODUCT.md) | Para quién es cada pantalla y desde qué dispositivo la usa. |
 | [components.md](components.md) | Inventario de componentes y clases: cuándo va cada uno y qué regla no se rompe. |
-| [layouts.md](layouts.md) | Plantillas de página: estructura del panel, listado con ficha, inicio, bandeja de tareas, ventanas, ingreso y portal, con los cortes de pantalla. |
+| [layouts.md](layouts.md) | Plantillas de página: estructura del panel, listado con ficha, inicio, bandejas, ventanas, ingreso y portal, con los cortes de pantalla. |
 | [conventions.md](conventions.md) | Estructura por dominio, nombres, datos, sesión, pruebas, accesibilidad, tokens y su guarda, qué revisar antes de empujar y la deuda conocida. |
 | [capturas-revisor.md](capturas-revisor.md) | Cómo se capturan las pantallas para el revisor final de la skill: anchos, sesiones y cupos, estados simulados y el esqueleto del script. |
 
@@ -32,8 +32,8 @@ frontend/src/
     tokens.css       Única fuente de color, tipografía, medidas, capas: paleta, roles y @pares
     base.css         Reinicio, @font-face de GeosansLight, tipografía base y utilidades
     componentes.css  Botones, campos, tarjetas, insignias, tablas (y la apilable), ventanas…
-    vistas.css       Estructura de página: barra del panel, ingreso, portal, inicio, Familias,
-                     Rutas y Clínica
+    vistas.css       Estructura de página: barra del panel, ingreso, portal, inicio, y un bloque
+                     por módulo (Familias, Rutas, Clínica, bandejas, Comercial, Aliadas…)
     index.css        Índice que impone el orden de la cascada
   assets/            El logo en SVG y GeosansLight, con la receta para regenerarlos
   components/        Piezas compartidas sin lógica de dominio (Modal, Consulta, Pestanas,

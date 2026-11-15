@@ -73,6 +73,7 @@ npm run test:e2e:stack              # recorridos contra el stack real: docker co
 
 # CI: log de un job (`gh run view --log-failed` a veces sale vacío)
 gh api --allow-escape-sequences repos/{owner}/{repo}/actions/jobs/<id>/logs | sed 's/\x1b\[[0-9;]*m//g'
+gh run watch <id> --exit-status --interval 60 && gh run view <id> --json jobs --jq '.jobs[] | "\(.name): \(.conclusion)"'
 ```
 
 ### Prueba de carga
@@ -243,6 +244,8 @@ aparece como no rastreado: añade rutas explícitas (nunca `git add -A`) y bórr
 repositorio principal (`<repo>/backend/.venv/bin/pytest`): la base de pruebas no necesita `.env`.
 Un fichero con cambios de dos commits se copia al worktree en su versión intermedia (sin el
 bloque del segundo, generada con un script), y cada commit se verifica sobre su propio estado.
+Si dos commits cambian schemas, cada uno regenera `frontend/src/types/api.ts` en el worktree con
+`generar_tipos_frontend.py` (desde su `backend/`): la copia de trabajo solo tiene el final.
 
 ## Convenciones de escritura
 

@@ -182,6 +182,8 @@ sesión, para las pruebas que alternan usuarios.
 
 ## Persistencia: la base garantiza, Python explica
 
+Cada regla nueva entra en una o dos frases; el detalle va en `docs/plan-persistencia.md`.
+
 Toda regla que PostgreSQL puede hacer cumplir se hace cumplir en PostgreSQL. Python valida
 antes para devolver un mensaje claro, pero la regla definitiva está en la base: si Python se
 equivoca, o alguien escribe por SQL, la base rechaza la operación. Solo se quedan

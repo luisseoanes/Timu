@@ -73,6 +73,8 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   `serve-question --schema`.
   Una superficie sin sorteo (hereda patrones) escribe igual su contrato, con
   `seed: none (pinned)` y las palabras del usuario que fijan la composición.
+  Se escribe con `.claude/skills/impeccable/scripts/impeccable surface-brief write <Pantalla.tsx>
+  <contrato.md> [ficheros…]`, que lo deja en `.impeccable/surfaces/`.
 - **Color, tipografía, logo y voz**: [`docs/manual-de-marca.md`](../docs/manual-de-marca.md).
   Los componentes usan los roles de su sección 10, nunca un color de la paleta.
 - **Decisiones de diseño**: la skill del repositorio, `/impeccable`, con
@@ -98,13 +100,15 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   construido: qué pieza y qué plantilla reutilizar. `conventions.md` incluye la checklist de revisión y la deuda
   conocida (tema oscuro, PDF sin marca, medidas escritas a mano, tildes del catálogo).
 
-## Trampas conocidas de las pruebas
+## Trampas conocidas (pruebas, estilos y herramientas)
 
 - La ficha vacía y la abierta de un listado con ficha comparten `aria-label` («Ruta abierta»): espera a un elemento de la ficha (su título), no a la región, o la prueba lee el marcador.
 - Con una ventana de Radix abierta, el resto de la página queda oculto a los lectores de pantalla y `findByRole` no lo encuentra hasta que se cierra. Crear y abrir la ficha encadena el cierre, el listado y la ficha: espera a su título con `{ timeout: 5000 }`. Con un segundo falla a veces con la suite entera bajo cobertura.
 - `Pestanas` sin `valor` no cambia de pestaña al cambiar la URL: un enlace desde otra pestaña que abre un registro (`?interesado=`) lo deja en una pestaña oculta. La página controla la pestaña y vuelve a la del registro cuando este cambia (`ComercialPage.tsx`).
 - Dentro de `.fila-cuerpo` cada `span` es un bloque: un dato en un `span` propio («60 min», un número) parte la línea. Escríbelo en un solo texto.
 - `npx eslint`, `npx tsc` o `npx vitest` desde la raíz del repositorio descargan otra versión y fallan: se corren desde `frontend/`.
+- Con la máquina cargada (`uptime` alto), `verificar` agota los tiempos de Vitest: corre los mismos
+  pasos por separado, con `npx vitest run --coverage --maxWorkers=2`, antes de dar por buena una falla.
 - `playwright test -g` compara con el título unido por espacios, no por «›»: la ruta `admin` del barrido es `-g "admin admin$"`.
 - **MSW usa el primer handler que coincide**: en `server.use(...base, override)` gana `base`. Los comunes van en un `beforeEach` y cada prueba los sustituye con su propio `server.use`.
 - En jsdom el parser multipart de undici no acepta el `File` de jsdom, y el nombre llega como `blob`: una subida se comprueba leyendo `await request.text()`, no con `request.formData()`.
