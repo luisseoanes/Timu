@@ -92,28 +92,18 @@ REGLAS: list[dict[str, Any]] = [
         "detener": True,
     },
     # F1-PLA-04 Recomendacion.
+    # Valor provisional (docs/pendientes-externos.md): TIMU no ha dicho que plan recomendar
+    # segun ciudad, especie y numero de peludos. Mientras tanto, el plan principal del manual
+    # de marca (seccion 4). Si no aplica en la ciudad, se recomienda el de menor valor.
     {
-        "codigo": "recomendar_familiar",
-        "nombre": "Dos o mas mascotas: plan familiar",
-        "evento": "plan.recomendacion",
-        "condicion": _desde("mascotas.total", 2),
-        "accion": {
-            "tipo": "recomendar",
-            "plan_codigo": "familiar",
-            "motivo": "Cubre varias mascotas con un solo valor mensual",
-        },
-        "prioridad": 50,
-        "detener": True,
-    },
-    {
-        "codigo": "recomendar_individual",
-        "nombre": "Una mascota: plan individual",
+        "codigo": "recomendar_mi_amigo_fiel",
+        "nombre": "Plan principal: Mi Amigo Fiel",
         "evento": "plan.recomendacion",
         "condicion": {},
         "accion": {
             "tipo": "recomendar",
-            "plan_codigo": "individual",
-            "motivo": "Es el plan de menor valor para una sola mascota",
+            "plan_codigo": "mi_amigo_fiel",
+            "motivo": "Es nuestro plan principal",
         },
         "prioridad": 100,
         "detener": True,

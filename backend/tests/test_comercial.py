@@ -88,7 +88,7 @@ async def comerciales(db):
 @pytest.fixture
 async def planes(db):
     await db.run_sync(fabricas.plan, "individual", 45_000, 1)
-    await db.run_sync(fabricas.plan, "familiar", 75_000, 3)
+    await db.run_sync(fabricas.plan, "mi_amigo_fiel", 75_000, 3)
 
 
 # --- F3-COM-02 / 03 Conversacion y recomendacion ----------------------------------------------
@@ -118,9 +118,9 @@ async def test_de_hola_a_la_recomendacion_y_la_afiliacion(db, comerciales, plane
     assert "ciudad" in await chat.escribir("1")
     assert "mascotas" in await chat.escribir("cali")
     recomendacion = await chat.escribir("2 perros y un gato")
-    assert "Plan familiar" in recomendacion and "$75.000" in recomendacion
+    assert "Plan mi_amigo_fiel" in recomendacion and "$75.000" in recomendacion
     await db.refresh(interesado)
-    assert (interesado.etapa, interesado.plan_sugerido) == ("cotizado", "familiar")
+    assert (interesado.etapa, interesado.plan_sugerido) == ("cotizado", "mi_amigo_fiel")
     assert interesado.ciudad == "Cali"
 
     enlace = await chat.escribir("1")

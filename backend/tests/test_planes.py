@@ -335,24 +335,22 @@ async def test_solo_el_administrador_cambia_tarifas(client: AsyncClient, db, tim
 # --- F1-PLA-04 --------------------------------------------------------------------------------
 
 
-async def test_recomendacion_por_composicion(client: AsyncClient, db, headers):
+async def test_recomendacion_provisional_es_el_plan_principal(client: AsyncClient, db, headers):
+    """Valor provisional hasta que TIMU diga el criterio (docs/pendientes-externos.md)."""
     await db.run_sync(fabricas.plan, "individual", 45_000, 1)
-    await db.run_sync(fabricas.plan, "familiar", 75_000, 3)
+    await db.run_sync(fabricas.plan, "mi_amigo_fiel", 69_000, 3)
     await db.commit()
-    una = await client.get(
-        "/api/v1/planes/recomendacion", params={"ciudad": "cali"}, headers=headers
-    )
-    assert (una.json()["plan"]["codigo"], una.json()["regla"]) == (
-        "individual",
-        "recomendar_individual",
-    )
-    dos = await client.get(
-        "/api/v1/planes/recomendacion",
-        params={"ciudad": "Cali", "especies": ["canino", "felino"]},
-        headers=headers,
-    )
-    assert dos.json()["plan"]["codigo"] == "familiar"
-    assert "varias mascotas" in dos.json()["motivo"]
+    for especies in (["canino"], ["canino", "felino"]):
+        resp = await client.get(
+            "/api/v1/planes/recomendacion",
+            params={"ciudad": "Cali", "especies": especies},
+            headers=headers,
+        )
+        assert (resp.json()["plan"]["codigo"], resp.json()["regla"]) == (
+            "mi_amigo_fiel",
+            "recomendar_mi_amigo_fiel",
+        )
+        assert resp.json()["motivo"] == "Es nuestro plan principal"
 
 
 async def test_recomendacion_salta_plan_de_otra_ciudad(db):
