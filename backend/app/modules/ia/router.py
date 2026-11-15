@@ -6,7 +6,7 @@ from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 from sqlalchemy import select
 
 from app.api.deps import DbSession, requiere
@@ -74,6 +74,12 @@ class CasoRead(CasoBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def esperado_texto(self) -> str:
+        """Lo que exige el caso, en palabras (el JSON es para el motor que evalua)."""
+        return service.describir_esperado(self.esperado)
 
 
 class ConsultaRead(BaseModel):

@@ -205,6 +205,39 @@ def consultar(
 # --- F4-IAA-04 Evaluacion ---------------------------------------------------------------------
 
 
+# Los campos que miran los casos, dichos para Administracion (cadenas que se muestran: con tildes).
+_CAMPOS_RESPUESTA = {
+    "alcance": "el alcance",
+    "senales_alarma": "señales de alarma",
+    "recomendar_presencial": "recomendar atención presencial",
+}
+
+
+def _valor(valor: Any) -> str:
+    if isinstance(valor, bool):
+        return "sí" if valor else "no"
+    return f"«{valor}»"
+
+
+def describir_esperado(esperado: dict[str, Any]) -> str:
+    """Lo que un caso exige, en palabras: Administracion no lee el JSON con que se evalua."""
+
+    def campo(nombre: str) -> str:
+        return _CAMPOS_RESPUESTA.get(nombre, nombre.replace("_", " "))
+
+    partes = []
+    if "campo" in esperado:
+        partes.append(f"{campo(esperado['campo'])}: {_valor(esperado.get('igual'))}")
+    if "no_vacio" in esperado:
+        partes.append(f"trae {campo(esperado['no_vacio'])}")
+    if esperado.get("contiene"):
+        partes.append("menciona " + " y ".join(_valor(p) for p in esperado["contiene"]))
+    if esperado.get("no_contiene"):
+        partes.append("no menciona " + " ni ".join(_valor(p) for p in esperado["no_contiene"]))
+    texto = "; ".join(partes) or "cualquier respuesta"
+    return texto[0].upper() + texto[1:]
+
+
 def _cumple(resultado: Any, esperado: dict[str, Any]) -> tuple[bool, str]:
     texto = (
         resultado.lower()

@@ -845,6 +845,7 @@ export interface CasoRead {
   entrada: string
   esperado: Record<string, unknown>
   id: string
+  esperado_texto: string
 }
 
 export interface ConsultaRead {

@@ -166,13 +166,15 @@ describe('casos de prueba', () => {
   it('lista los casos con su uso y lo que se espera', async () => {
     server.use(
       http.get(`${API}/ia/casos`, () =>
-        HttpResponse.json([{ id: 'k1', prompt_codigo: 'comercial_guion', nombre: 'Precio', entrada: '¿Cuánto vale?', esperado: { alcance: 'dentro' } }]),
+        HttpResponse.json([{ id: 'k1', prompt_codigo: 'comercial_guion', nombre: 'Precio', entrada: '¿Cuánto vale?', esperado: { campo: 'alcance', igual: 'dentro' }, esperado_texto: 'El alcance: «dentro»' }]),
       ),
     )
     abrir()
     expect(await screen.findByText('Precio')).toBeInTheDocument()
     expect(screen.getByText(/Atención comercial por WhatsApp · «¿Cuánto vale\?»/)).toBeInTheDocument()
-    expect(screen.getByText('{"alcance":"dentro"}')).toBeInTheDocument()
+    // Lo esperado en palabras, como lo dice la API; el JSON es del motor (DEU-26).
+    expect(screen.getByText(/→ El alcance: «dentro»/)).toBeInTheDocument()
+    expect(screen.queryByText(/"alcance"/)).not.toBeInTheDocument()
   })
 
   it('sin casos avisa de que no se podrá activar ninguna versión', async () => {

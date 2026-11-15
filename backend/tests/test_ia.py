@@ -321,6 +321,7 @@ async def test_casos_de_prueba_por_api(client: AsyncClient, headers):
     }
     creado = await client.post(url, json=caso, headers=headers)
     assert creado.status_code == 201, creado.text
+    assert creado.json()["esperado_texto"] == "Recomendar atención presencial: sí"
     # Lo que el evaluador no entiende no se comprueba: el caso aprobaria siempre.
     for malo in ({"presencial": True}, {"campo": "alcance"}, {}):
         resp = await client.post(url, json={**caso, "esperado": malo}, headers=headers)
@@ -384,3 +385,22 @@ async def test_solo_la_administracion_gobierna_la_ia(client: AsyncClient, db):
     ):
         assert (await client.get(ruta, headers=medico)).status_code == 403, ruta
     assert (await client.post("/api/v1/ia/prompts/sembrar", headers=medico)).status_code == 403
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("esperado", "texto"),
+    [
+        ({"campo": "alcance", "igual": "fuera"}, "El alcance: «fuera»"),
+        ({"campo": "recomendar_presencial", "igual": True}, "Recomendar atención presencial: sí"),
+        (
+            {"no_vacio": "senales_alarma", "no_contiene": ["mg/kg", "mg por kg"]},
+            "Trae señales de alarma; no menciona «mg/kg» ni «mg por kg»",
+        ),
+        ({"contiene": ["plan"]}, "Menciona «plan»"),
+        ({}, "Cualquier respuesta"),
+    ],
+)
+def test_lo_esperado_de_un_caso_se_dice_en_palabras(esperado, texto):
+    """DEU-26: Administracion no lee el JSON con que se evalua un caso."""
+    assert service.describir_esperado(esperado) == texto

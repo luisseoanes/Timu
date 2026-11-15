@@ -112,7 +112,7 @@ export function InteligenciaArtificial() {
                 <div className="fila-cuerpo">
                   <strong>{c.nombre}</strong>
                   <span>
-                    {USOS[c.prompt_codigo]} · «{c.entrada}» → <span className="codigo">{JSON.stringify(c.esperado)}</span>
+                    {USOS[c.prompt_codigo]} · «{c.entrada}» → {c.esperado_texto}
                   </span>
                 </div>
               </div>
