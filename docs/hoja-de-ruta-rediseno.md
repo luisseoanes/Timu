@@ -204,6 +204,79 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 - **Cada superficie se cierra con el revisor final de la skill** hasta su `ship`, como
   `R2-PAN-03`, con capturas a 1440, 1180, 900 y 390 px.
 
+### Deuda decidida con el usuario (2026-11-15)
+
+El usuario respondió de una vez la deuda acumulada hasta `R3-PUB-01`. Cada decisión lleva el
+número de la lista que contestó (`DEU-<n>`) y dice dónde se hace: **ahora** es el lote de deuda que
+sigue a `R3-PUB-01`, antes de `R3-PUB-02`; el resto, en la unidad que se nombra. Lo hecho se marca
+**Hecho** con su fecha y lo que no se hace, **No**, con el motivo. Ninguna fila se borra: así se ve
+qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son el detalle de origen.
+
+| ID | Qué | Decisión | Dónde | Estado |
+| --- | --- | --- | --- | --- |
+| `DEU-1` | Las series 1 y 2 del manual no se distinguen sin ver el rojo y el verde | El manual pasa a verde, azul, naranja y marino | ahora | Pendiente |
+| `DEU-2` | El portal no ofrece la consulta en la clínica que el backend permite | El portal la ofrece y la API dice qué puede agendar, cambiar y cancelar la familia | ahora | Pendiente |
+| `DEU-3` | La visita preventiva del portal no se enlaza con ningún preventivo | El portal agenda preventivos concretos, como la bandeja | ahora | Pendiente |
+| `DEU-4` | La desparasitación hecha en visita se aplica sin peso | Campo opcional en los pasos del catálogo; el peso en «Aplicación» | ahora | Pendiente |
+| `DEU-5` | «Por autorizar» con la llave solo en Preventivos | La llave en el mapeo común (`lib/estados.ts`): también en Servicios | ahora | Pendiente |
+| `DEU-6` | La clínica aliada entra por «Equipo TIMU» | **Sin respuesta**: se pregunta al usuario | — | Pendiente de decisión |
+| `DEU-7` | La pantalla del enlace no dice cuánto dura | La API da la vigencia y la pantalla la dice | ahora | Pendiente |
+| `DEU-8` | Las reglas se editan en JSON | Editor por campos | ahora | Pendiente |
+| `DEU-9` | Pasar una cuenta a o desde clínica aliada | **No**: se crea otra cuenta, como ahora | — | No |
+| `DEU-10` | Las plantillas de WhatsApp enseñan su código de Meta | Campo «nombre» en el catálogo de plantillas | ahora | Pendiente |
+| `DEU-11` | Textos guardados sin tildes (catálogos y reglas sembradas) | Migración de datos que los corrige | ahora | Pendiente |
+| `DEU-12` | Comercial no muestra correos ni llamadas | **No**: fuera de alcance | — | No |
+| `DEU-13` | En el celular, la línea de Familias no se abre en «hoy» | Se arregla (es un defecto) | ahora | Pendiente |
+| `DEU-14` | `datos_demo` sin una familia de portal al día | Siembra gruesa: uno o dos meses de operación que recorran todos los casos y todas las rutas | ahora | Pendiente |
+| `DEU-15` | Sin plantilla de consulta en `datos_demo` | Dentro de la siembra gruesa | ahora | Pendiente |
+| `DEU-16` | La prueba de la foto deja un PNG de 1×1 en la mascota de Ana | Que no ensucie los datos | ahora | Pendiente |
+| `DEU-17` | El barrido responsive no mide 900 px | Se añade el ancho | ahora (adelanta parte de `R4-CIE-01`) | Pendiente |
+| `DEU-18` | El espaciado de la etiqueta en mayúsculas no tiene token | Un token y una sola medida | ahora | Pendiente |
+| `DEU-19` | Radios escritos a mano | Pasan a tokens | ahora | Pendiente |
+| `DEU-20` | Cortes a 899 y a 900 px mezclados | Todo a 899 | ahora | Pendiente |
+| `DEU-21` | `--sombra-1` y `--sombra-2` valen `none` | Se retiran | ahora | Pendiente |
+| `DEU-22` | El portal copia cuatro reglas del backend | Lo cierra `DEU-2` | ahora | Pendiente |
+| `DEU-23` | El panel copia qué tipo de servicio agenda cada preventivo | La API lo dice en cada preventivo | ahora | Pendiente |
+| `DEU-24` | Contrato, fórmula y comprobante en PDF sin marca | Usan `marca_pdf` | ahora | Pendiente |
+| `DEU-25` | Los campos con icono del acceso miden 48 px | 48 px es la norma del acceso | ahora (documentación) | Pendiente |
+| `DEU-26` | Pasarela sin recuento ni vista en la URL, casos de la IA en JSON, `style` en Reportes | Se arreglan | ahora | Pendiente |
+| `DEU-27` | `.impeccable/design.json` va por detrás de `DESIGN.md` | Se completa en el cierre | `R4-CIE-03` | Pendiente |
+| `DEU-28`–`DEU-70` | El «techo» del revisor en cada superficie | Como lo recomendó Claude: sí a todo salvo 28, 29, 30, 38, 39, 43, 44, 65, 68, 69 y 70 (detalle abajo) | ahora | Pendiente |
+| `DEU-E` | Lo que decide TIMU | Valor provisional en el código para cada uno, pero **todos siguen pendientes** hasta que TIMU confirme el valor oficial ([pendientes externos](pendientes-externos.md#valores-provisionales)) | — | Pendiente de TIMU |
+
+El «techo» aceptado, por superficie (los números son los de la lista):
+
+- **Rutas:** 31 etiquetar la hora de «Por rutear» · 32 centrar la columna del médico en
+  escritorio · 33 capturar una ruta con una parada omitida (con la siembra de `DEU-14`).
+- **Clínica:** 34 área de texto de unos 75 caracteres en escritorio · 35 unificar la cabecera del
+  borrador y la de la lectura · 36 valores largos de la tabla apilable alineados a la izquierda en
+  el celular.
+- **Portal:** 37 la flecha de las listas como chevron de trazo · 40 el cuadrado del plan en Pagos ·
+  41 icono propio para «Atendida».
+- **Servicios:** 42 ficha fija al desplazar · 45 menos blanco en la ficha vacía · 46 foco en
+  «Familia» al abrir «Agendar servicio».
+- **Cartera y Preventivos:** 47 franjas de agendar en tres columnas iguales · 48 «Escribir» en
+  todos los grupos · 49 estrechar la columna del preventivo · 50 que el separador no parta el
+  documento y la ciudad en el carnet a 390.
+- **Comercial y Campañas:** 51 desvanecido o «mensajes anteriores» en la conversación recortada ·
+  52 «Recibido» y «Enviado» con algo más que la palabra, cuerpos a dos líneas · 53 fichas de cifra
+  de Encuestas más pequeñas · 54 «Destinatarios en CSV» alineado y oculto en un borrador · 55
+  «Interesados» que no repita el recuento de «Abiertos» · 56 «A quién le llega» con más ancho a
+  1440 · 57 un vacío de Segmentos que oriente.
+- **Aliadas:** 58 etiquetas de la liquidación sin partir · 59 la ficha de la clínica lleva a sus
+  remisiones atendidas y anuladas (la bandeja filtra por clínica) · 60 el total en un `th` · 61
+  sin la columna de acciones vacía.
+- **Administración:** 62 tarifas en 2×2, o en una línea si son iguales · 63 beneficios apilados en
+  el celular · 64 la barra del presupuesto junto a «Gastado».
+- **Común:** 66 la tira de pestañas a 390 indica que se desplaza.
+- **Acceso:** 67 la línea se dibuja hasta «Hoy» al cargar, respetando `prefers-reduced-motion`.
+- **No:** 28 estaciones de 34 px, 29 etiquetas cuadradas y 30 paneles sin radio en Familias (el
+  panel es denso y contradicen `DESIGN.md`); 38 estaciones en citas y pagos y 39 la marca de Hoy en
+  la cita en camino (son otra composición); 43 la marca de «ahora» en Servicios y 44 las franjas
+  como rejilla semanal (trabajo grande); 65 «Desactivar» en neutro (lo destructivo va en plano
+  rojo); 68 «Afiliación» que se enciende al activar (retrasa la entrada), 69 el título alineado con
+  la frase y 70 estaciones equidistantes a 900 (volvería a partir el rótulo).
+
 ### Lo que quedó de Familias tras su cierre
 
 - **En el celular, la línea no se abre en «hoy».** El contrato de la superficie lo pide («la

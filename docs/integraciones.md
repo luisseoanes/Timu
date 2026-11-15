@@ -118,7 +118,7 @@ acota el gasto, a cambio de rutas estimadas cuando se agota.
 
 ## IA
 
-Variables: `ANTHROPIC_API_KEY`, `IA_MODELO` (por defecto `claude-opus-5-5`),
+Variables: `ANTHROPIC_API_KEY`, `IA_MODELO` (por defecto `claude-haiku-5-5`, valor provisional),
 `IA_PRESUPUESTO_MENSUAL_USD` (50) e `IA_TIMEOUT_SEGUNDOS` (30).
 
 - **Un solo punto de integración** (`modules/ia`). Los prompts tienen versiones: cada una

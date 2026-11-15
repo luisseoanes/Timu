@@ -7,6 +7,29 @@ se puede resolver desde el repositorio. Se tacha cuando se resuelve.
 El estado de cada unidad de trabajo está en el [backlog](backlog.md); cómo funciona cada
 integración, en [integraciones](integraciones.md).
 
+## Valores provisionales
+
+Decidido con el usuario el 2026-11-15: cada pendiente que depende de una decisión de TIMU tiene en
+el código un **valor provisional** para que la plataforma funcione entera mientras tanto. **La
+regla:** un valor provisional sigue **PENDIENTE** aunque funcione, y ninguno se tacha ni se marca
+resuelto hasta que se informe explícitamente que TIMU dio el valor oficial. Al recibirlo se cambia
+el código, se anota la fecha y quién lo confirmó, y solo entonces se tacha.
+
+| Pendiente de TIMU | Valor provisional | Dónde vive | Estado |
+| --- | --- | --- | --- |
+| Precios de los planes | Colita Feliz $35.500, Mi Amigo Fiel $69.000 y Amigos por Siempre $98.000 al mes por un peludo (los del manual y de la página de cada plan), con su escala por número de peludos y los periodos largos | `backend/scripts/seed.py` (`PLANES_TIMU`); desplegado, el administrador los da de alta | PENDIENTE |
+| Coberturas, topes y frecuencias de cada plan | Las del plegable 2026: hospitalización al 40 % en Mi Amigo Fiel y al 80 % en Amigos por Siempre; consultas al mes, una en Mi Amigo Fiel y dos en Amigos por Siempre. Lo que el plegable no dice, sin beneficio | Siembra de los planes (`DEU-14`, hoja de ruta) | PENDIENTE |
+| Términos y condiciones publicables | Ninguno: la plataforma no enlaza un documento de términos que no existe | — | PENDIENTE |
+| Periodo de carencia del peludo que se agrega con contrato vigente | Sin carencia; no se permite con el contrato en mora ni congelado | `afiliaciones/altas.py` | PENDIENTE |
+| Cobro del alta de un peludo desde el panel | No cobra el periodo en curso: el valor nuevo corre desde la siguiente cuota no emitida | `cartera/contratos.py` | PENDIENTE |
+| Qué plan recomienda el bot comercial | Mi Amigo Fiel, el plan principal según el manual (sección 4), para cualquier ciudad, especie y número de peludos | Reglas `plan.recomendacion` (`reglas/datos.py` y su migración) | PENDIENTE |
+| Proveedor de la IA | Mientras se migra a Gemini, `claude-haiku-5-5`, el económico de la comparativa | `IA_MODELO` (`core/config.py`, `.env.example`) | PENDIENTE |
+| Plantillas de WhatsApp aprobadas en Meta | Sin plantilla aprobada, el enlace de cada mensaje sale solo por correo | `comunicaciones` | PENDIENTE |
+| Mapa de las rutas | Sin mapa: cada parada abre la navegación del celular («Cómo llegar») | `rutas` | PENDIENTE |
+| Ventana de la bandeja de preventivos | 30 días | `VENTANA_BANDEJA_DIAS` (`preventivos/service.py`) | PENDIENTE |
+| Fotos originales para las páginas públicas | Las páginas públicas van sin fotos | — | PENDIENTE |
+| Sandbox de Wompi de TIMU | No admite valor provisional: sin credenciales no hay prueba de punta a punta | — | PENDIENTE |
+
 ## Requisito 6.1 (con el 6.12)
 
 El código está completo (`F1-FAM-06` a `F1-FAM-09`, `F1-AFI-01`), pero la revisión no se
@@ -85,8 +108,9 @@ un modelo económico de Gemini (recomendado `gemini-3.1-flash-lite`, en la capa 
   casos de evaluación de `modules/ia` no dependen del proveedor.
 - **Solo la capa paga.** La gratuita de Gemini usa los datos para mejorar productos de
   Google: con datos personales o clínicos choca con la Ley 1581.
-- **Mientras tanto,** `IA_MODELO` vale por defecto `claude-opus-5-5`, el modelo más caro de
-  la comparativa. Si la IA se enciende antes de migrar, conviene `claude-haiku-5-5`.
+- **Mientras tanto,** `IA_MODELO` vale por defecto `claude-haiku-5-5`, el económico de la
+  comparativa: es el valor provisional (ver «Valores provisionales»). Antes del 2026-11-15 era
+  `claude-opus-5-5`, el más caro.
 
 A este volumen (unas 300 consultas al bot y 14 borradores al mes) la diferencia entre los
 modelos económicos es de centavos al mes ([costos](costos-infraestructura.md)): la decisión

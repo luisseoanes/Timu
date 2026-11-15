@@ -30,7 +30,9 @@ sus unidades (`R0-…` a `R4-…`) están en
 gobierna la skill del repositorio (`/impeccable`,
 en `.claude/skills/`, con su hook en `.claude/settings.json`). Lo que falta fuera del código
 para cerrar un requisito (sandbox de Wompi, plantillas de Meta, decisiones de TIMU) está en
-[`docs/pendientes-externos.md`](docs/pendientes-externos.md).
+[`docs/pendientes-externos.md`](docs/pendientes-externos.md). Allí, un **valor provisional** sigue pendiente
+aunque funcione: no se marca resuelto hasta que se informe explícitamente que TIMU dio el valor
+oficial.
 
 ## Comandos
 
