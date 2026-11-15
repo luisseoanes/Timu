@@ -443,7 +443,7 @@
   .con-rail { grid-template-columns: minmax(0, 1fr); }
   .rail { grid-template-columns: repeat(2, 1fr); display: grid; }
 }
-@media (max-width: 900px) {
+@media (max-width: 899px) {
   .dos-columnas, .rail { grid-template-columns: 1fr; }
   .accesos { grid-template-columns: repeat(2, 1fr); }
 }
@@ -469,7 +469,7 @@
 .historial-fecha { color: var(--texto-suave); }
 @media (max-width: 600px) { .historial li { grid-template-columns: minmax(0, 1fr); } }
 
-@media (max-width: 900px) {
+@media (max-width: 899px) {
   .formulario { grid-template-columns: 1fr; }
 }
 
@@ -640,7 +640,7 @@
 }
 .publica-ancha { width: min(760px, 100%); }
 
-@media (max-width: 900px) {
+@media (max-width: 899px) {
   .publica-tarjeta { padding: var(--e5); }
 }
 @media (max-width: 899px) {
@@ -659,7 +659,7 @@
 
 /* Tres columnas iguales que bajan a una en pantallas angostas (carnet: aplicados, vencidos, próximos). */
 .tres-columnas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e5); }
-@media (max-width: 900px) { .tres-columnas { grid-template-columns: 1fr; } }
+@media (max-width: 899px) { .tres-columnas { grid-template-columns: 1fr; } }
 
 /* ================= Portal de familias (R3-POR-01) =================
    Contrato «Hoy, estás aquí» (.impeccable/surfaces): la estructura del panel (barra marina y,
