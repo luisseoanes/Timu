@@ -1,4 +1,5 @@
-"""F1-AFI-02 Contrato de afiliacion en PDF con los datos reales de la familia.
+"""F1-AFI-02 Contrato de afiliacion en PDF con los datos reales de la familia y la marca de
+TIMU (como el carnet).
 
 El texto de las condiciones generales es provisional: TIMU debe entregar el texto legal
 aprobado, que se versiona en TERMINOS_VERSION para que cada aceptacion quede atada a una
@@ -8,37 +9,42 @@ version concreta.
 from datetime import date
 from typing import Any
 
-from fpdf import FPDF
-
+from app.core import marca_pdf as marca
 from app.modules.cartera.periodos import formato_cop
 
 TERMINOS_VERSION = "2026-11-provisional"
 
 CONDICIONES = [
-    "El plan cubre los servicios y beneficios descritos para cada tipo de atencion, con los "
+    "El plan cubre los servicios y beneficios descritos para cada tipo de atención, con los "
     "cupos indicados, durante la vigencia del contrato.",
-    "La cuota se paga, segun la periodicidad elegida, a mas tardar en la fecha de corte. "
-    "Pasado el plazo de gracia, "
-    "la afiliacion entra en mora y, si la mora continua, se congela: no se agendan servicios "
-    "hasta ponerse al dia. Al pagar, la afiliacion se reactiva automaticamente.",
-    "El contrato tiene vigencia de un ano y se renueva previa gestion con la familia.",
-    "Cada peludo paga la tarifa de su plan segun el numero de peludos afiliados. Si se agregan "
+    "La cuota se paga, según la periodicidad elegida, a más tardar en la fecha de corte. "
+    "Pasado el plazo de gracia, la afiliación entra en mora y, si la mora continúa, se congela: "
+    "no se agendan servicios hasta ponerse al día. Al pagar, la afiliación se reactiva "
+    "automáticamente.",
+    "El contrato tiene vigencia de un año y se renueva previa gestión con la familia.",
+    "Cada peludo paga la tarifa de su plan según el número de peludos afiliados. Si se agregan "
     "o se retiran peludos, el valor se recalcula desde la siguiente cuota. El precio por pago "
     "trimestral, semestral o anual aplica solo con un peludo.",
-    "Los datos personales se tratan conforme a la politica de tratamiento de datos de TIMU "
+    "Los datos personales se tratan conforme a la política de tratamiento de datos de TIMU "
     "(Ley 1581 de 2012).",
 ]
 
+_PERIODO_CUPO = {"mensual": "al mes", "anual": "al año"}
 
-def _texto(valor: Any) -> str:
-    # Las fuentes base del PDF son latin-1: se reemplazan caracteres fuera de ese rango.
-    return str(valor).encode("latin-1", "replace").decode("latin-1")
+
+def _telefono(e164: str) -> str:
+    """«+57 300 111 2233», como lo escribe el panel: un celular colombiano en grupos."""
+    if len(e164) == 13 and e164.startswith("+57"):
+        return f"+57 {e164[3:6]} {e164[6:9]} {e164[9:]}"
+    return e164
 
 
 def _cupo(beneficio: dict[str, Any]) -> str:
+    """Lo que sí tiene un beneficio: nunca «ilimitado» (manual de marca, voz)."""
+    periodo = _PERIODO_CUPO.get(beneficio["periodo_cupo"], f"por {beneficio['periodo_cupo']}")
     if beneficio["cupo"] is None:
-        return "Ilimitado"
-    return f"{beneficio['cupo']} por {beneficio['periodo_cupo']}"
+        return f"Sin tope de usos {periodo}"
+    return f"{beneficio['cupo']} {periodo}"
 
 
 def generar_contrato(
@@ -51,88 +57,79 @@ def generar_contrato(
     contrato: dict[str, Any],
 ) -> bytes:
     """`mascotas`: nombre, especie, raza, plan y valor_mensual de cada peludo. `planes`:
-    nombre y beneficios de cada plan contratado."""
-    pdf = FPDF(format="Letter")
-    pdf.set_auto_page_break(auto=True, margin=18)
+    nombre, color y beneficios (con el nombre de su tipo de servicio) de cada plan contratado."""
+    pdf = marca.PdfMarca()
+    pdf.set_title(f"Contrato de afiliación {numero}")
+    pdf.set_author("TIMU")
     pdf.add_page()
-    pdf.set_font("Helvetica", "B", 15)
-    pdf.cell(0, 10, "Contrato de afiliacion TIMU", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("Helvetica", "", 10)
-    pdf.cell(0, 6, _texto(f"No. {numero}  -  {fecha:%d/%m/%Y}"), new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(4)
+    marca.cabecera(pdf, "Contrato de afiliación", f"N.º {numero} · {fecha:%d/%m/%Y}")
 
-    def seccion(titulo: str, filas: list[tuple[str, Any]]) -> None:
-        pdf.set_font("Helvetica", "B", 11)
-        pdf.cell(0, 8, _texto(titulo), new_x="LMARGIN", new_y="NEXT")
-        pdf.set_font("Helvetica", "", 10)
-        for etiqueta, valor in filas:
-            pdf.cell(55, 6, _texto(etiqueta))
-            pdf.multi_cell(
-                0,
-                6,
-                _texto(valor if valor not in (None, "") else "-"),
-                new_x="LMARGIN",
-                new_y="NEXT",
-            )
-        pdf.ln(2)
-
-    seccion(
-        "Titular",
+    marca.titulo_seccion(pdf, "Titular")
+    marca.datos(
+        pdf,
         [
             ("Nombre", familia["titular_nombre"]),
             ("Documento", f"{familia['tipo_documento']} {familia['documento']}"),
-            ("Telefono", familia["telefono"]),
-            ("Correo", familia.get("email")),
-            ("Direccion", f"{familia.get('direccion') or ''} - {familia['ciudad']}"),
+            ("Teléfono", _telefono(familia["telefono"])),
+            ("Correo", familia.get("email") or "—"),
+            ("Dirección", familia.get("direccion") or "—"),
+            ("Ciudad", familia["ciudad"]),
         ],
+        columnas=3,
     )
-    seccion(
-        "Afiliacion",
+    marca.titulo_seccion(pdf, "Afiliación")
+    marca.datos(
+        pdf,
         [
             ("Forma de pago", str(contrato["periodicidad"]).capitalize()),
             ("Valor de cada cuota", formato_cop(contrato["valor_periodo"])),
-            ("Valor mensual de los peludos", formato_cop(contrato["valor_mensual"])),
-            ("Dia de corte", contrato["dia_corte"]),
+            ("Valor mensual", formato_cop(contrato["valor_mensual"])),
+            ("Día de corte", str(contrato["dia_corte"])),
             ("Inicio", f"{contrato['fecha_inicio']:%d/%m/%Y}"),
-            ("Renovacion", f"{contrato['fecha_renovacion']:%d/%m/%Y}"),
+            ("Renovación", f"{contrato['fecha_renovacion']:%d/%m/%Y}"),
         ],
+        columnas=3,
     )
-    seccion(
-        "Peludos afiliados",
+    marca.titulo_seccion(pdf, "Peludos afiliados")
+    marca.tabla(
+        pdf,
+        ("Peludo", "Especie y raza", "Plan", "Valor mensual"),
         [
             (
                 m["nombre"],
-                f"{m['especie']} {m.get('raza') or ''}".strip()
-                + f" - {m['plan']} - {formato_cop(m['valor_mensual'])} al mes",
+                f"{m['especie']} {m.get('raza') or ''}".strip(),
+                m["plan"],
+                formato_cop(m["valor_mensual"]),
             )
             for m in mascotas
         ],
+        (25, 30, 25, 20),
     )
     for plan in planes:
         if plan.get("beneficios"):
-            seccion(
-                f"Beneficios del plan {plan['nombre']}",
+            marca.titulo_seccion(
+                pdf,
+                f"Beneficios de {plan['nombre']}",
+                marca.COLOR_PLAN.get(plan.get("color") or "", marca.MARINO),
+            )
+            marca.tabla(
+                pdf,
+                ("Servicio", "Cupo", "Cobertura"),
                 [
-                    (b["tipo_servicio_codigo"], f"{_cupo(b)}, cobertura {b['cobertura_pct']}%")
+                    (b["tipo_servicio"], _cupo(b), f"{b['cobertura_pct']} %")
                     for b in plan["beneficios"]
                 ],
+                (50, 30, 20),
             )
-    pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(0, 8, "Condiciones generales", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("Helvetica", "", 9)
+    marca.titulo_seccion(pdf, "Condiciones generales")
     for i, condicion in enumerate(CONDICIONES, start=1):
-        pdf.multi_cell(0, 5, _texto(f"{i}. {condicion}"), new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(1)
-    pdf.ln(3)
-    pdf.set_font("Helvetica", "I", 8)
-    pdf.multi_cell(
-        0,
-        4,
-        _texto(
-            f"Version de condiciones: {TERMINOS_VERSION}. La aceptacion queda registrada en la "
-            "plataforma con fecha, medio y datos de la sesion."
-        ),
-        new_x="LMARGIN",
-        new_y="NEXT",
+        marca.parrafo(pdf, f"{i}. {condicion}")
+    pdf.ln(2)
+    marca.parrafo(
+        pdf,
+        f"Versión de las condiciones: {TERMINOS_VERSION}. La aceptación queda registrada en la "
+        "plataforma con su fecha, el medio y los datos de la sesión.",
+        tamano=8,
+        color=marca.SUAVE,
     )
     return bytes(pdf.output())

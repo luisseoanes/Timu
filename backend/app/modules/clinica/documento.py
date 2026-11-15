@@ -1,14 +1,15 @@
-"""F2-CLI-03 Formula medica veterinaria en PDF."""
+"""F2-CLI-03 Formula medica veterinaria en PDF, con la marca de TIMU (como el carnet)."""
 
 from datetime import date
 from typing import Any
 
-from fpdf import FPDF
+from app.core import marca_pdf as marca
 
 
-def _texto(valor: Any) -> str:
-    # Las fuentes base del PDF son latin-1: se reemplazan caracteres fuera de ese rango.
-    return str(valor if valor is not None else "").encode("latin-1", "replace").decode("latin-1")
+def _peso(kg: float | None) -> str:
+    if kg is None:
+        return "—"
+    return f"{kg:.1f}".rstrip("0").rstrip(".").replace(".", ",") + " kg"
 
 
 def generar_formula(
@@ -21,51 +22,51 @@ def generar_formula(
     items: list[dict[str, Any]],
     indicaciones: str | None,
 ) -> bytes:
-    pdf = FPDF(format="Letter")
-    pdf.set_auto_page_break(auto=True, margin=18)
+    pdf = marca.PdfMarca()
+    pdf.set_title(f"Fórmula de {mascota['nombre']}")
+    pdf.set_author("TIMU")
     pdf.add_page()
-    pdf.set_font("Helvetica", "B", 15)
-    pdf.cell(0, 10, "Formula medica veterinaria", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("Helvetica", "", 10)
-    peso = f"  -  {mascota['peso_kg']} kg" if mascota.get("peso_kg") else ""
-    for linea in (
-        f"Fecha: {fecha:%d/%m/%Y}",
-        f"Paciente: {mascota['nombre']} ({mascota['especie']}){peso}",
-        f"Responsable: {titular}",
-        f"Diagnostico: {diagnostico or '-'}",
-    ):
-        pdf.cell(0, 6, _texto(linea), new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(4)
-    pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(0, 8, "Prescripcion", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("Helvetica", "", 10)
-    for n, item in enumerate(items, start=1):
-        partes = [
-            item.get("medicamento"),
-            item.get("presentacion"),
-            f"dosis {item['dosis']}" if item.get("dosis") else None,
-            item.get("frecuencia"),
-            f"por {item['duracion']}" if item.get("duracion") else None,
-        ]
-        pdf.multi_cell(
-            0,
-            5,
-            _texto(f"{n}. " + ", ".join(p for p in partes if p)),
-            new_x="LMARGIN",
-            new_y="NEXT",
-        )
-        if item.get("indicaciones"):
-            pdf.multi_cell(
-                0, 5, _texto(f"   {item['indicaciones']}"), new_x="LMARGIN", new_y="NEXT"
+    marca.cabecera(pdf, "Fórmula médica veterinaria", f"Emitida el {fecha:%d/%m/%Y}")
+    marca.datos(
+        pdf,
+        [
+            ("Paciente", mascota["nombre"]),
+            ("Especie", mascota.get("especie") or "—"),
+            ("Peso", _peso(mascota.get("peso_kg"))),
+            ("Responsable", titular),
+        ],
+    )
+    marca.datos(pdf, [("Diagnóstico", diagnostico or "—")], columnas=1)
+    marca.titulo_seccion(pdf, "Prescripción", marca.AZUL)
+    marca.tabla(
+        pdf,
+        ("Medicamento", "Dosis", "Frecuencia", "Duración", "Indicaciones"),
+        [
+            (
+                " · ".join(p for p in (i.get("medicamento"), i.get("presentacion")) if p),
+                i.get("dosis") or "—",
+                i.get("frecuencia") or "—",
+                i.get("duracion") or "—",
+                i.get("indicaciones") or "—",
             )
+            for i in items
+        ],
+        (30, 13, 17, 13, 27),
+    )
     if indicaciones:
-        pdf.ln(3)
-        pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(0, 6, "Indicaciones generales", new_x="LMARGIN", new_y="NEXT")
-        pdf.set_font("Helvetica", "", 10)
-        pdf.multi_cell(0, 5, _texto(indicaciones), new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(12)
-    pdf.cell(0, 6, _texto(profesional), new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("Helvetica", "", 8)
-    pdf.cell(0, 5, "Medico veterinario TIMU", new_x="LMARGIN", new_y="NEXT")
+        marca.titulo_seccion(pdf, "Indicaciones generales")
+        marca.parrafo(pdf, indicaciones, tamano=10)
+    if pdf.will_page_break(30):
+        pdf.add_page()
+    pdf.ln(14)
+    pdf.set_draw_color(*marca.BORDE)
+    pdf.set_line_width(0.3)
+    pdf.line(marca.MARGEN, pdf.get_y(), marca.MARGEN + 70, pdf.get_y())
+    pdf.ln(2)
+    pdf.set_font(marca.CUERPO, "B", 10)
+    pdf.set_text_color(*marca.MARINO)
+    pdf.cell(0, 6, profesional, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font(marca.CUERPO, "", 8)
+    pdf.set_text_color(*marca.SUAVE)
+    pdf.cell(0, 5, "Médico veterinario TIMU", new_x="LMARGIN", new_y="NEXT")
     return bytes(pdf.output())

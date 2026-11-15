@@ -19,7 +19,7 @@ from app.integrations.payments import construir_link_pago
 from app.modules.cartera import contratos
 from app.modules.cartera import service as cartera
 from app.modules.cartera.models import AplicacionPago, Cuota, Pago
-from app.modules.cartera.periodos import centavos, dinero
+from app.modules.cartera.periodos import centavos, dinero, nombre_cuota
 from app.modules.clinica import service as clinica
 from app.modules.clinica.models import AdjuntoClinico, HistoriaClinica
 from app.modules.familias import service as familias
@@ -264,7 +264,7 @@ def comprobante(db: Session, familia: Familia, pago_id: UUID) -> bytes:
     if pago.estado != "aprobado":
         raise ReglaNegocio("El comprobante esta disponible cuando el pago se aprueba")
     aplicadas = db.execute(
-        select(Cuota.descripcion, AplicacionPago.valor)
+        select(Cuota.periodo, Cuota.meses, Cuota.tipo, Cuota.descripcion, AplicacionPago.valor)
         .join(Cuota, Cuota.id == AplicacionPago.cuota_id)
         .where(AplicacionPago.pago_id == pago.id)
     ).all()
@@ -276,7 +276,7 @@ def comprobante(db: Session, familia: Familia, pago_id: UUID) -> bytes:
             "medio": pago.medio or pago.proveedor,
             "valor": dinero(pago.valor),
         },
-        aplicaciones=[(d or "Cuota", dinero(v)) for d, v in aplicadas],
+        aplicaciones=[(nombre_cuota(p, m, t, d), dinero(v)) for p, m, t, d, v in aplicadas],
     )
 
 

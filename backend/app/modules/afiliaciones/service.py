@@ -29,6 +29,7 @@ from app.modules.cartera import contratos, pasarela
 from app.modules.cartera import service as cartera
 from app.modules.cartera.models import Contrato, Pago
 from app.modules.cartera.periodos import centavos, dinero, formato_cop
+from app.modules.catalogos.models import TipoServicioCatalogo
 from app.modules.comercial import service as comercial
 from app.modules.comunicaciones import service as comunicaciones
 from app.modules.familias import service as familias
@@ -356,6 +357,10 @@ def _al_embudo(db: Session, familia: Familia, etapa: str, origen: str, plan: str
 
 def _documento(db: Session, contrato: Contrato, familia: Familia, contratados: list[Plan]) -> None:
     nombres = {p.id: p.nombre for p in contratados}
+    # El contrato nombra cada servicio como el catalogo, no por su codigo.
+    tipos = dict(
+        db.execute(select(TipoServicioCatalogo.codigo, TipoServicioCatalogo.nombre)).tuples().all()
+    )
     peludos = []
     for linea in contratos.lineas(db, contrato):
         mascota = db.get(Mascota, linea.mascota_id)
@@ -385,9 +390,10 @@ def _documento(db: Session, contrato: Contrato, familia: Familia, contratados: l
         planes=[
             {
                 "nombre": plan.nombre,
+                "color": plan.color,
                 "beneficios": [
                     {
-                        "tipo_servicio_codigo": b.tipo_servicio_codigo,
+                        "tipo_servicio": tipos.get(b.tipo_servicio_codigo, b.tipo_servicio_codigo),
                         "cupo": b.cupo,
                         "periodo_cupo": b.periodo_cupo,
                         "cobertura_pct": b.cobertura_pct,

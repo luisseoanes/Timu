@@ -43,3 +43,56 @@ def dias_del_periodo(inicio_periodo: date) -> int:
 
 def formato_cop(valor: Any) -> str:
     return "$" + f"{dinero(valor):,.0f}".replace(",", ".")
+
+
+_MESES = (
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
+)
+
+
+def nombre_cuota(
+    periodo: str, meses: int, tipo: str = "cuota", descripcion: str | None = None
+) -> str:
+    """La cuota por su mes, como la dice el portal: «Cuota de octubre de 2026», «Cuota de enero a
+    marzo de 2027». En un documento el ano va siempre. Un ajuste conserva su descripcion."""
+    if tipo != "cuota":
+        return descripcion or "Ajuste de plan"
+    anio, mes = (int(p) for p in periodo.split("-"))
+    fin_total = mes - 1 + max(meses, 1) - 1
+    anio_fin, mes_fin = anio + fin_total // 12, fin_total % 12
+    if (anio, mes - 1) == (anio_fin, mes_fin):
+        return f"Cuota de {_MESES[mes - 1]} de {anio}"
+    desde = _MESES[mes - 1] + ("" if anio == anio_fin else f" de {anio}")
+    return f"Cuota de {desde} a {_MESES[mes_fin]} de {anio_fin}"
+
+
+# Como llega el medio de un pago: el que registra el equipo o el que dice la pasarela.
+_MEDIOS = {
+    "efectivo": "Efectivo",
+    "transferencia": "Transferencia",
+    "consignacion": "Consignación",
+    "datafono": "Datáfono",
+    "otro": "Otro medio",
+    "CARD": "Tarjeta",
+    "NEQUI": "Nequi",
+    "PSE": "PSE",
+    "BANCOLOMBIA_TRANSFER": "Transferencia Bancolombia",
+    "BANCOLOMBIA_COLLECT": "Corresponsal Bancolombia",
+    "DAVIPLATA": "Daviplata",
+    "wompi": "Pago en línea",
+}
+
+
+def nombre_medio(medio: str | None) -> str:
+    return _MEDIOS.get(medio or "", medio or "—")
