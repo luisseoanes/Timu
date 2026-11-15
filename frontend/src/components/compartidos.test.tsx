@@ -137,6 +137,21 @@ describe('Distintivo', () => {
     expect(alta).toHaveClass('distintivo-peligro')
     expect(alta.querySelector('svg')?.innerHTML).not.toBe(cancelado.querySelector('svg')?.innerHTML)
   })
+
+  it('«Por autorizar» lleva la llave, no el triángulo de lo vencido, también en Servicios', () => {
+    renderizar(
+      <>
+        <Distintivo dominio="servicio" valor="pendiente_autorizacion" />
+        <Insignia tono="alerta" icono="llave">
+          Llave
+        </Insignia>
+        <Insignia tono="alerta">Vencido</Insignia>
+      </>,
+    )
+    const trazo = (texto: string) => screen.getByText(texto).querySelector('svg')?.innerHTML
+    expect(trazo('Por autorizar')).toBe(trazo('Llave'))
+    expect(trazo('Por autorizar')).not.toBe(trazo('Vencido'))
+  })
 })
 
 describe('Pestanas', () => {

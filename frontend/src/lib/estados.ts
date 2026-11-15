@@ -9,8 +9,9 @@ export interface Estado {
   label: string
   tono: Tono
   /** Icono propio cuando varios estados comparten tono y hay que distinguirlos sin leer:
-   * agendado, en ruta y en atención son todos del camino normal (tono informativo). */
-  icono?: 'rutas' | 'pulso' | 'arriba'
+   * agendado, en ruta y en atención son todos del camino normal (tono informativo). «Por
+   * autorizar» lleva la llave: el triángulo del tono de aviso es de lo vencido. */
+  icono?: 'rutas' | 'pulso' | 'arriba' | 'llave'
 }
 
 const AFILIACION: Record<string, Estado> = {
@@ -23,7 +24,7 @@ const AFILIACION: Record<string, Estado> = {
 
 const SERVICIO: Record<string, Estado> = {
   solicitado: { label: 'Solicitado', tono: 'info' },
-  pendiente_autorizacion: { label: 'Por autorizar', tono: 'alerta' },
+  pendiente_autorizacion: { label: 'Por autorizar', tono: 'alerta', icono: 'llave' },
   agendado: { label: 'Agendado', tono: 'info' },
   reprogramado: { label: 'Reprogramado', tono: 'alerta' },
   en_ruta: { label: 'En ruta', tono: 'info', icono: 'rutas' },
@@ -119,7 +120,7 @@ const REMISION: Record<string, Estado> = {
 }
 
 const PENDIENTE: Record<string, Estado> = {
-  pendiente_autorizacion: { label: 'Por autorizar', tono: 'alerta' },
+  pendiente_autorizacion: { label: 'Por autorizar', tono: 'alerta', icono: 'llave' },
   autorizado: { label: 'Autorizado', tono: 'info' },
   en_gestion: { label: 'En gestión', tono: 'info' },
   resuelto: { label: 'Resuelto', tono: 'ok' },

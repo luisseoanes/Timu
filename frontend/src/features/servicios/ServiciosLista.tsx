@@ -207,7 +207,7 @@ function FilaServicio({
       {/* Solo si el estado no lo dice ya: «Pendiente de autorización» lo lleva en su distintivo. */}
       {s.requiere_autorizacion && !s.autorizado && !['cancelado', 'pendiente_autorizacion'].includes(s.estado) && (
         <span className="servicio-fila-alerta">
-          <Icono nombre="alerta" size={14} />
+          <Icono nombre="llave" size={14} />
           Por autorizar
         </span>
       )}

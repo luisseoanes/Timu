@@ -106,7 +106,9 @@ function Ficha({ servicio: s }: { servicio: ServicioRead }) {
                 {s.autorizado_en ? `Autorizado el ${fechaCorta(diaISO(s.autorizado_en))}` : 'Autorizado'}
               </Insignia>
             ) : (
-              <Insignia tono="alerta">Por autorizar</Insignia>
+              <Insignia tono="alerta" icono="llave">
+                Por autorizar
+              </Insignia>
             ))}
         </div>
         <AccionesServicio
