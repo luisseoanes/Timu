@@ -186,10 +186,6 @@ Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñ
   `puedeCancelar`) y qué tipos se agendan. La última ya no coincide: el backend deja agendar una
   consulta en la clínica y el portal no la ofrece. Se cierra cuando la API diga qué puede hacer
   la familia. El detalle, en [`portal-familias.md`](../portal-familias.md).
-- **El contrato, la fórmula médica y el comprobante de pago siguen en PDF sin marca**, con las
-  fuentes base del PDF (latin-1), que estropean las tildes. El carnet ya usa
-  `app/core/marca_pdf.py` (logo, paleta, GeosansLight e Inter); los demás lo adoptan en su
-  unidad.
 - **`.impeccable/design.json` va algo por detrás de `DESIGN.md`.** Al cerrar `R2-PAN-08`
   (2026-11-14) el documentador le añadió las reglas que faltaban (número de casa, acción de quien
   recorre, series que se distinguen y una sola redacción), el «don't» de las siluetas, los componentes

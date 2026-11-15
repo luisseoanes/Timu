@@ -214,35 +214,44 @@ qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son 
 
 | ID | Qué | Decisión | Dónde | Estado |
 | --- | --- | --- | --- | --- |
-| `DEU-1` | Las series 1 y 2 del manual no se distinguen sin ver el rojo y el verde | El manual pasa a verde, azul, naranja y marino | ahora | Pendiente |
+| `DEU-1` | Las series 1 y 2 del manual no se distinguen sin ver el rojo y el verde | El manual pasa a verde, azul, naranja y marino | ahora | Hecho (2026-11-15): el manual, los tokens, `DESIGN.md` y el gráfico del Inicio, que usa la 1 y la 2 |
 | `DEU-2` | El portal no ofrece la consulta en la clínica que el backend permite | El portal la ofrece y la API dice qué puede agendar, cambiar y cancelar la familia | ahora | Pendiente |
 | `DEU-3` | La visita preventiva del portal no se enlaza con ningún preventivo | El portal agenda preventivos concretos, como la bandeja | ahora | Pendiente |
 | `DEU-4` | La desparasitación hecha en visita se aplica sin peso | Campo opcional en los pasos del catálogo; el peso en «Aplicación» | ahora | Pendiente |
-| `DEU-5` | «Por autorizar» con la llave solo en Preventivos | La llave en el mapeo común (`lib/estados.ts`): también en Servicios | ahora | Pendiente |
+| `DEU-5` | «Por autorizar» con la llave solo en Preventivos | La llave en el mapeo común (`lib/estados.ts`): también en Servicios | ahora | Hecho (2026-11-15): la llave en `lib/estados.ts`, la fila y la ficha del servicio |
 | `DEU-6` | La clínica aliada entra por «Equipo TIMU» | **Sin respuesta**: se pregunta al usuario | — | Pendiente de decisión |
-| `DEU-7` | La pantalla del enlace no dice cuánto dura | La API da la vigencia y la pantalla la dice | ahora | Pendiente |
+| `DEU-7` | La pantalla del enlace no dice cuánto dura | La API da la vigencia y la pantalla la dice | ahora | Hecho (2026-11-15): `expira_en` en `POST /auth/enlace` y «Este enlace sirve hasta…» |
 | `DEU-8` | Las reglas se editan en JSON | Editor por campos | ahora | Pendiente |
 | `DEU-9` | Pasar una cuenta a o desde clínica aliada | **No**: se crea otra cuenta, como ahora | — | No |
 | `DEU-10` | Las plantillas de WhatsApp enseñan su código de Meta | Campo «nombre» en el catálogo de plantillas | ahora | Pendiente |
 | `DEU-11` | Textos guardados sin tildes (catálogos y reglas sembradas) | Migración de datos que los corrige | ahora | Pendiente |
 | `DEU-12` | Comercial no muestra correos ni llamadas | **No**: fuera de alcance | — | No |
-| `DEU-13` | En el celular, la línea de Familias no se abre en «hoy» | Se arregla (es un defecto) | ahora | Pendiente |
+| `DEU-13` | En el celular, la línea de Familias no se abre en «hoy» | Se arregla (es un defecto) | ahora | Hecho (2026-11-15): en vertical, tres o más vencidas van en un grupo rojo con «Ver cada una» |
 | `DEU-14` | `datos_demo` sin una familia de portal al día | Siembra gruesa: uno o dos meses de operación que recorran todos los casos y todas las rutas | ahora | Pendiente |
 | `DEU-15` | Sin plantilla de consulta en `datos_demo` | Dentro de la siembra gruesa | ahora | Pendiente |
 | `DEU-16` | La prueba de la foto deja un PNG de 1×1 en la mascota de Ana | Que no ensucie los datos | ahora | Pendiente |
 | `DEU-17` | El barrido responsive no mide 900 px | Se añade el ancho | ahora (adelanta parte de `R4-CIE-01`) | Pendiente |
-| `DEU-18` | El espaciado de la etiqueta en mayúsculas no tiene token | Un token y una sola medida | ahora | Pendiente |
-| `DEU-19` | Radios escritos a mano | Pasan a tokens | ahora | Pendiente |
-| `DEU-20` | Cortes a 899 y a 900 px mezclados | Todo a 899 | ahora | Pendiente |
-| `DEU-21` | `--sombra-1` y `--sombra-2` valen `none` | Se retiran | ahora | Pendiente |
+| `DEU-18` | El espaciado de la etiqueta en mayúsculas no tiene token | Un token y una sola medida | ahora | Hecho (2026-11-15): `--tracking-etiqueta`, y la guarda de tokens lo exige |
+| `DEU-19` | Radios escritos a mano | Pasan a tokens | ahora | Hecho (2026-11-15): `--r-fino` y `--r-barra`, y la guarda de tokens rechaza un radio a mano |
+| `DEU-20` | Cortes a 899 y a 900 px mezclados | Todo a 899 | ahora | Hecho (2026-11-15) |
+| `DEU-21` | `--sombra-1` y `--sombra-2` valen `none` | Se retiran | ahora | Hecho (2026-11-15) |
 | `DEU-22` | El portal copia cuatro reglas del backend | Lo cierra `DEU-2` | ahora | Pendiente |
-| `DEU-23` | El panel copia qué tipo de servicio agenda cada preventivo | La API lo dice en cada preventivo | ahora | Pendiente |
-| `DEU-24` | Contrato, fórmula y comprobante en PDF sin marca | Usan `marca_pdf` | ahora | Pendiente |
-| `DEU-25` | Los campos con icono del acceso miden 48 px | 48 px es la norma del acceso | ahora (documentación) | Pendiente |
-| `DEU-26` | Pasarela sin recuento ni vista en la URL, casos de la IA en JSON, `style` en Reportes | Se arreglan | ahora | Pendiente |
+| `DEU-23` | El panel copia qué tipo de servicio agenda cada preventivo | La API lo dice en cada preventivo | ahora | Hecho (2026-11-15): `tipo_servicio_codigo` en cada preventivo |
+| `DEU-24` | Contrato, fórmula y comprobante en PDF sin marca | Usan `marca_pdf` | ahora | Hecho (2026-11-15): piezas comunes en `marca_pdf`; además dicen cada cosa en palabras |
+| `DEU-25` | Los campos con icono del acceso miden 48 px | 48 px es la norma del acceso | ahora (documentación) | Hecho (2026-11-15): `DESIGN.md` lo recoge en Inputs |
+| `DEU-26` | Pasarela sin recuento ni vista en la URL, casos de la IA en JSON, `style` en Reportes | Se arreglan | ahora | Hecho (2026-11-15): recuentos y vista en la URL, casos en palabras (`esperado_texto`) y sin `style`; de paso, la API rechaza un caso que el evaluador no entiende |
 | `DEU-27` | `.impeccable/design.json` va por detrás de `DESIGN.md` | Se completa en el cierre | `R4-CIE-03` | Pendiente |
 | `DEU-28`–`DEU-70` | El «techo» del revisor en cada superficie | Como lo recomendó Claude: sí a todo salvo 28, 29, 30, 38, 39, 43, 44, 65, 68, 69 y 70 (detalle abajo) | ahora | Pendiente |
 | `DEU-E` | Lo que decide TIMU | Valor provisional en el código para cada uno, pero **todos siguen pendientes** hasta que TIMU confirme el valor oficial ([pendientes externos](pendientes-externos.md#valores-provisionales)) | — | Pendiente de TIMU |
+
+**Abierto, encontrado al cerrar este lote:** la prueba de Comercial «registra un interesado sin
+enviar los campos vacíos y abre su ficha» falla de vez en cuando dentro de `npm run verificar` en
+local (cuatro veces el 2026-11-15, también con la máquina libre), y pasa al repetirla: catorce
+ejecuciones seguidas de la suite con cobertura, con y sin carga, no la reprodujeron. El CI no la ha
+visto fallar. No es el fallo sistemático que arregló `setup.ts` ese día (peticiones de una prueba
+cobradas a la siguiente, 5 de cada 6 ejecuciones); la hipótesis abierta es que el `onSuccess`
+pasado a `mutate` no se llame si la ventana se vuelve a montar antes de la respuesta, y entonces la
+ventana no se cierra. Se investiga en el lote, antes de `R3-PUB-02`.
 
 El «techo» aceptado, por superficie (los números son los de la lista):
 
@@ -279,9 +288,8 @@ El «techo» aceptado, por superficie (los números son los de la lista):
 
 ### Lo que quedó de Familias tras su cierre
 
-- **En el celular, la línea no se abre en «hoy».** El contrato de la superficie lo pide («la
-  vista abierta en hoy»): con muchas estaciones vencidas, «hoy» y la próxima quedan abajo.
-  Pendiente; el revisor lo señaló.
+- ~~**En el celular, la línea no se abre en «hoy».**~~ Resuelto el 2026-11-15 (`DEU-13`): en
+  vertical, lo vencido se agrupa.
 - **Sugerencias del revisor, opcionales** (el «techo» de la dirección, no defectos): estaciones
   de 34 px con anillo de 6 px como en el boceto (hoy 24 y 4), etiquetas de estado cuadradas en
   lugar de píldoras, y el listado y el detalle como paneles planos a ras en lugar de tarjetas
@@ -327,10 +335,8 @@ El «techo» aceptado, por superficie (los números son los de la lista):
 
 ### Lo que quedó del Inicio tras cerrar `R2-PAN-04`
 
-- **Las series 1 y 2 del manual no se distinguen** para quien no ve el rojo y el verde (ΔE 2,7
-  con el validador de la skill `dataviz`). El Inicio usa la 1 y la 3 (regla escrita en
-  `DESIGN.md`), pero la sección 10 del manual dice «siempre en este orden». Hay que decidir con el
-  usuario si el manual cambia el orden o anota la excepción.
+- ~~**Las series 1 y 2 del manual no se distinguen**~~ Resuelto el 2026-11-15 (`DEU-1`): el manual
+  pasa a verde, azul, naranja y marino.
 - **Rendimiento de la serie con volumen real**: son 13 cálculos por carga. Sobre los datos de
   demostración tarda 190–335 ms sin caché; contra el umbral de 2 s de F4-DAS-02 lo dirá la prueba
   de carga, que ya la incluye.

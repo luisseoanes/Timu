@@ -99,7 +99,7 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   `page.clock.setFixedTime`.
 - [`docs/frontend/`](../docs/frontend/) (components, layouts, conventions) describe lo
   construido: qué pieza y qué plantilla reutilizar. `conventions.md` incluye la checklist de revisión y la deuda
-  conocida (tema oscuro, PDF sin marca, medidas escritas a mano, tildes del catálogo).
+  conocida (tema oscuro, tildes del catálogo).
 
 ## Trampas conocidas (pruebas, estilos y herramientas)
 

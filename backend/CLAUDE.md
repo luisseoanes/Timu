@@ -148,8 +148,9 @@ Reglas que atraviesan todo el backend:
   `STORAGE_PUBLIC_ENDPOINT_URL` (el host que ve el navegador; en compose lo fija el propio
   compose).
 - **Los PDF usan `app/core/marca_pdf.py`** (`PdfMarca`: logo, paleta, GeosansLight e Inter,
-  que no estropean las tildes como las fuentes base del PDF). El carnet es la referencia; el
-  contrato, la fórmula y el comprobante aún no lo usan.
+  que no estropean las tildes como las fuentes base del PDF), y sus piezas comunes: `cabecera`,
+  `datos`, `titulo_seccion`, `tabla` y `parrafo`. Todos los documentos las usan (carnet, contrato,
+  fórmula y comprobante) y dicen las cosas en palabras: nunca un código ni «ilimitado».
 - **Un dato del equipo que la familia ve en el portal se guarda como constancia en la fila**
   (como `aplicado_por_nombre` en `eventos_preventivos`): RLS no le deja leer `usuarios`, y
   buscarlo al mostrarlo devolvería vacío sin error.
