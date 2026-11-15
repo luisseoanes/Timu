@@ -511,6 +511,7 @@ export interface EventoRead {
   autorizado_en: string | null
   notificado_en: string | null
   servicio_id: string | null
+  tipo_servicio_codigo: string
 }
 
 export interface EventoBandeja {
@@ -534,6 +535,7 @@ export interface EventoBandeja {
   autorizado_en: string | null
   notificado_en: string | null
   servicio_id: string | null
+  tipo_servicio_codigo: string
   nombre: string
   mascota_nombre: string
   especie: string

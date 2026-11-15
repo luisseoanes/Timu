@@ -16,6 +16,7 @@ const EVENTO: EventoBandeja = {
   mascota_id: 'm1',
   esquema_codigo: 'can_rabia',
   tipo: 'vacuna',
+  tipo_servicio_codigo: 'vacunacion',
   dosis_numero: 1,
   es_refuerzo: true,
   estado: 'programado',
@@ -78,10 +79,12 @@ describe('GestionarPreventivo (desde la estación de la línea de una familia)',
   })
 
   it('autorizado, agenda la visita en la ciudad de la familia', async () => {
-    conBandeja([{ ...EVENTO, autorizado: true, siguiente: 'agendar' }])
+    // El tipo de servicio de la visita lo dice la API, no un mapa copiado en el panel (DEU-23).
+    conBandeja([{ ...EVENTO, autorizado: true, siguiente: 'agendar', tipo_servicio_codigo: 'desparasitacion' }])
     server.use(
       http.get(`${API}/agenda/disponibilidad`, ({ request }) => {
         expect(new URL(request.url).searchParams.get('ciudad')).toBe('Bogota')
+        expect(new URL(request.url).searchParams.get('tipo_codigo')).toBe('desparasitacion')
         return HttpResponse.json([])
       }),
     )

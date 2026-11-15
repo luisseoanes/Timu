@@ -17,6 +17,7 @@ const EVENTO: EventoBandeja = {
   mascota_id: LUNA.id,
   esquema_codigo: 'rabia',
   tipo: 'vacuna',
+  tipo_servicio_codigo: 'vacunacion',
   dosis_numero: 1,
   es_refuerzo: false,
   estado: 'programado',

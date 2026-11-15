@@ -9,6 +9,13 @@ from app.core.auditoria import Auditable
 from app.core.database import Base, EnumDb, JSONTipo, TimestampMixin, UUIDMixin
 from app.core.enums import EstadoEventoPreventivo, MedioAutorizacion, TipoPreventivo
 
+# Tipo de servicio con el que se agenda cada clase de preventivo.
+TIPO_SERVICIO = {
+    "vacuna": "vacunacion",
+    "desparasitacion_interna": "desparasitacion",
+    "desparasitacion_externa": "desparasitacion",
+}
+
 
 class EventoPreventivo(Base, UUIDMixin, TimestampMixin, Auditable):
     """6.8 / 6.13 / 6.15 Calendario preventivo. Al aplicarse alimenta el carnet digital."""
@@ -55,6 +62,11 @@ class EventoPreventivo(Base, UUIDMixin, TimestampMixin, Auditable):
     # F2-PRE-04 Aviso a la familia de que se acerca la fecha (una sola vez por evento).
     notificado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     servicio_id: Mapped[UUID | None] = mapped_column(ForeignKey("servicios.id"), index=True)
+
+    @property
+    def tipo_servicio_codigo(self) -> str:
+        """Con que tipo de servicio se agenda su visita: el panel pide con el las franjas."""
+        return TIPO_SERVICIO.get(self.tipo, "vacunacion")
 
 
 class CarnetEmitido(Base, UUIDMixin, TimestampMixin):

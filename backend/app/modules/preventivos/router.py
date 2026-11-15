@@ -54,6 +54,9 @@ class EventoRead(BaseModel):
     autorizado_en: datetime | None
     notificado_en: datetime | None
     servicio_id: UUID | None
+    tipo_servicio_codigo: str = Field(
+        description="Con que tipo de servicio se agenda su visita (para pedir las franjas)"
+    )
 
 
 class VisitaPreventivo(BaseModel):

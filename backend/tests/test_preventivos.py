@@ -386,6 +386,12 @@ async def test_la_bandeja_agrupa_por_familia_con_el_siguiente_paso(
     assert grupo["eventos"][0]["mascota_nombre"] == mascota.nombre
     # El nombre del esquema, no el tipo: «Rabia», no «vacuna».
     assert all(e["nombre"] != e["tipo"] for e in grupo["eventos"])
+    # Con que tipo de servicio se agenda cada uno: el panel pide con el las franjas (DEU-23).
+    assert {(e["tipo"], e["tipo_servicio_codigo"]) for e in grupo["eventos"]} <= {
+        ("vacuna", "vacunacion"),
+        ("desparasitacion_interna", "desparasitacion"),
+        ("desparasitacion_externa", "desparasitacion"),
+    }
 
     # La familia autoriza de una vez lo que se le pidio.
     autorizados = await client.post(

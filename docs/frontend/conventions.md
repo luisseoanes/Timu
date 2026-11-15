@@ -196,9 +196,5 @@ Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñ
   de las bandejas, la franja de cifras del Inicio y los pasos de la atención. Siguen sin estar la
   línea del día y el gráfico de serie del Inicio. Se completa con `/impeccable document` o en
   `R4-CIE-03`.
-- **El panel copia qué tipo de servicio agenda cada preventivo** (`TIPO_SERVICIO` en
-  `src/features/preventivos/AccionesPreventivo.tsx`, espejo del de `preventivos/service.py`), para
-  pedir las franjas de la visita. Venía del calendario anterior; se cierra cuando la bandeja diga en
-  cada preventivo el tipo de su visita.
 - **Nombres de catálogo sin tildes** («Atencion en clinica aliada», «Vacunacion»): vienen de
   `backend/app/modules/catalogos/datos.py` y se ven en la línea y en los botones.

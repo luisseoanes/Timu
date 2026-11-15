@@ -33,13 +33,6 @@ logger = structlog.get_logger(__name__)
 # Hasta esta edad se asume que la mascota no ha completado la serie inicial.
 EDAD_SERIE_INICIAL_SEMANAS = 52
 
-# Tipo de servicio con el que se agenda cada clase de preventivo.
-TIPO_SERVICIO = {
-    "vacuna": "vacunacion",
-    "desparasitacion_interna": "desparasitacion",
-    "desparasitacion_externa": "desparasitacion",
-}
-
 PLANTILLA_RECORDATORIO = "recordatorio_preventivo"
 
 
@@ -508,7 +501,7 @@ def agendar(
     mascota = _mascota(db, evento.mascota_id)
     familia = db.get(Familia, mascota.familia_id)
     assert familia is not None
-    tipo = servicios.tipo_servicio(db, TIPO_SERVICIO.get(evento.tipo, "vacunacion"))
+    tipo = servicios.tipo_servicio(db, evento.tipo_servicio_codigo)
     servicio = servicios.agendar(
         db,
         familia=familia,

@@ -18,13 +18,6 @@ import {
 } from './api'
 import { pedido } from './preventivo'
 
-// Mismo mapa que preventivos/service.py: TIPO_SERVICIO.
-const TIPO_SERVICIO: Record<string, string> = {
-  vacuna: 'vacunacion',
-  desparasitacion_interna: 'desparasitacion',
-  desparasitacion_externa: 'desparasitacion',
-}
-
 const MEDIOS: { valor: MedioAutorizacion; label: string }[] = [
   { valor: 'whatsapp', label: 'WhatsApp' },
   { valor: 'telefono', label: 'Teléfono' },
@@ -124,7 +117,7 @@ export function AgendarModal({ evento, titulo, ciudad, onCerrar }: { evento: Eve
   const [dia, setDia] = useState(evento.fecha_programada < hoyISO() ? hoyISO() : evento.fecha_programada)
   const [inicio, setInicio] = useState('')
   const agendar = useAgendarPreventivo()
-  const cupos = useDisponibilidad({ fecha: dia, ciudad, tipo_codigo: TIPO_SERVICIO[evento.tipo] ?? 'vacunacion' })
+  const cupos = useDisponibilidad({ fecha: dia, ciudad, tipo_codigo: evento.tipo_servicio_codigo })
   return (
     <Modal
       abierto
