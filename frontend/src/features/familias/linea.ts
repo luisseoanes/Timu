@@ -20,13 +20,23 @@ export interface Tramo {
   paradas: Parada[]
 }
 
-export type Elemento = Parada | Tramo | { tipo: 'hoy' }
+/** Lo vencido agrupado en vertical: sigue en rojo, dice cuántas y desde cuándo, y se despliega. */
+export interface GrupoVencidas {
+  tipo: 'vencidas'
+  paradas: Parada[]
+}
+
+export type Elemento = Parada | Tramo | GrupoVencidas | { tipo: 'hoy' }
 
 /** Cuando un día junta varias estaciones, la parada toma el estado más urgente. */
 const URGENCIA: Record<EstadoParada, number> = { vencida: 3, proxima: 2, futura: 1, hecha: 0 }
 
 export const esTramo = (e: Elemento): e is Tramo => 'tipo' in e && e.tipo === 'tramo'
 export const esHoy = (e: Elemento): e is { tipo: 'hoy' } => 'tipo' in e && e.tipo === 'hoy'
+export const esGrupoVencidas = (e: Elemento): e is GrupoVencidas => 'tipo' in e && e.tipo === 'vencidas'
+
+/** Desde cuántas paradas vencidas se agrupan en vertical. */
+export const MINIMO_GRUPO_VENCIDAS = 3
 
 export function paradas(estaciones: EstacionRead[]): Parada[] {
   const porFecha = new Map<string, EstacionRead[]>()
@@ -43,15 +53,28 @@ export function paradas(estaciones: EstacionRead[]): Parada[] {
 /**
  * Las paradas con «hoy» en su sitio. Antes de hoy, las hechas se pliegan en un tramo al
  * principio salvo la última, que da contexto; solo se pliega si son al menos dos. Lo vencido
- * nunca se pliega.
+ * nunca se esconde: con `agruparVencidas` (la línea en vertical, en el celular), tres o más
+ * paradas vencidas van en un grupo que dice cuántas son, para que «hoy» y la próxima queden en
+ * la primera pantalla, como en el portal.
  */
-export function recorrido(estaciones: EstacionRead[], hoy: string, desplegado = false): Elemento[] {
+export function recorrido(
+  estaciones: EstacionRead[],
+  hoy: string,
+  desplegado = false,
+  agruparVencidas = false,
+): Elemento[] {
   const todas = paradas(estaciones)
   const pasadas = todas.filter((p) => p.fecha < hoy)
   const desdeHoy = todas.filter((p) => p.fecha >= hoy)
   const hechas = pasadas.filter((p) => p.estado === 'hecha')
   const plegadas = desplegado || hechas.length < 3 ? [] : hechas.slice(0, -1)
-  const visibles = pasadas.filter((p) => !plegadas.includes(p))
+  let visibles: (Parada | GrupoVencidas)[] = pasadas.filter((p) => !plegadas.includes(p))
+  const vencidas = visibles.filter((p): p is Parada => !esGrupoVencidas(p) && p.estado === 'vencida')
+  if (agruparVencidas && vencidas.length >= MINIMO_GRUPO_VENCIDAS) {
+    const donde = visibles.indexOf(vencidas[0])
+    const resto = visibles.filter((p) => !vencidas.includes(p as Parada))
+    visibles = [...resto.slice(0, donde), { tipo: 'vencidas', paradas: vencidas }, ...resto.slice(donde)]
+  }
   return [
     ...(plegadas.length > 0 ? [{ tipo: 'tramo' as const, paradas: plegadas }] : []),
     ...visibles,

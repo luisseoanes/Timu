@@ -4,7 +4,7 @@ import { Icono } from '@/components/Icono'
 import { fechaCorta, hoyISO } from '@/lib/formato'
 import type { ColorPlan, EstacionRead } from '@/types'
 
-import { esHoy, esTramo, orientacion, recorrido, resumen, type Parada } from './linea'
+import { esGrupoVencidas, esHoy, esTramo, orientacion, recorrido, resumen, type Parada } from './linea'
 
 const ESTADO: Record<Parada['estado'], string> = {
   hecha: 'hecha',
@@ -68,8 +68,10 @@ export function LineaFamilia({
   onActivar?: (parada: Parada) => void
 }) {
   const [desplegado, setDesplegado] = useState(false)
-  const elementos = recorrido(estaciones, hoyISO(), desplegado)
-  const [ref, forma] = useOrientacion(elementos.length)
+  const [vencidasAbiertas, setVencidasAbiertas] = useState(false)
+  // La orientación se mide con todas las paradas; en vertical, lo vencido se agrupa.
+  const [ref, forma] = useOrientacion(recorrido(estaciones, hoyISO(), desplegado).length)
+  const elementos = recorrido(estaciones, hoyISO(), desplegado, forma === 'vertical' && !vencidasAbiertas)
   if (estaciones.length === 0) {
     return (
       <p className="linea-vacia">
@@ -94,6 +96,28 @@ export function LineaFamilia({
               <button className="linea-tramo-boton" type="button" onClick={() => setDesplegado(true)}>
                 {el.paradas.length} hechas
               </button>
+            </li>
+          )
+        }
+        if (esGrupoVencidas(el)) {
+          const total = el.paradas.reduce((n, p) => n + p.estaciones.length, 0)
+          return (
+            <li key="vencidas" className="parada parada-grupo" data-estado="vencida" data-rotulada="true">
+              <span className="parada-punto" aria-hidden="true">
+                <Icono nombre="alerta" size={12} />
+              </span>
+              <span className="parada-etiqueta">
+                <strong>{total} vencidas</strong>
+                <span>desde el {fechaCorta(el.paradas[0].fecha)}</span>
+                <button
+                  className="linea-tramo-boton"
+                  type="button"
+                  aria-expanded="false"
+                  onClick={() => setVencidasAbiertas(true)}
+                >
+                  Ver cada una
+                </button>
+              </span>
             </li>
           )
         }
@@ -124,6 +148,8 @@ export function LineaMini({ estaciones, color = 'ninguno' }: { estaciones: Estac
           <span key="hoy" className="linea-mini-hoy" />
         ) : esTramo(el) ? (
           <span key="tramo" className="linea-mini-punto" data-estado="hecha" />
+        ) : esGrupoVencidas(el) ? (
+          <span key="vencidas" className="linea-mini-punto" data-estado="vencida" />
         ) : (
           <span key={`${el.fecha}-${i}`} className="linea-mini-punto" data-estado={el.estado} />
         ),

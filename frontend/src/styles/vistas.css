@@ -1189,6 +1189,10 @@
 .linea[data-orientacion="vertical"] .linea-hoy { grid-template-columns: 24px auto; justify-items: center; align-items: center; justify-content: start; padding: 0; gap: var(--e3); }
 .linea[data-orientacion="vertical"] .linea-hoy-marca { width: 24px; height: 4px; }
 .linea[data-orientacion="vertical"] .linea-tramo { padding: 0 0 0 32px; }
+/* Lo vencido agrupado (DEU-13): la estación roja no es un botón; el botón es «Ver cada una». */
+.parada-grupo .parada-punto { cursor: default; }
+.parada-grupo .parada-etiqueta { display: grid; justify-items: start; gap: 2px; }
+.parada-grupo .linea-tramo-boton { margin-top: var(--e1); }
 
 /* ===== Comercial (R2-PAN-09): los interesados en listado con ficha ===== */
 .comercial-mes { font-size: var(--t-menor); color: var(--texto-suave); }
