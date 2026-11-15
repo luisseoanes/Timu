@@ -74,94 +74,27 @@ def generar_carnet(
     pdf.set_author("TIMU")
     pdf.add_page()
     ancho = pdf.ancho_util
-
-    # Cabecera: el logo a la izquierda, el titulo a la derecha y la linea verde de la marca.
-    pdf.image(str(marca.LOGO), x=marca.MARGEN, y=13, w=44)
-    pdf.set_xy(marca.MARGEN, 15)
-    pdf.set_font(marca.TITULOS, "", 22)
-    pdf.set_text_color(*marca.MARINO)
-    pdf.cell(ancho, 10, "Carnet preventivo", align="R", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font(marca.CUERPO, "", 9)
-    pdf.set_text_color(*marca.SUAVE)
-    pdf.cell(
-        ancho,
-        5,
+    marca.cabecera(
+        pdf,
+        "Carnet preventivo",
         f"Vacunación y desparasitación · emitido el {emitido or hoy():%d/%m/%Y}",
-        align="R",
-        new_x="LMARGIN",
-        new_y="NEXT",
     )
-    pdf.set_draw_color(*marca.VERDE)
-    pdf.set_line_width(0.8)
-    pdf.line(marca.MARGEN, 40, marca.MARGEN + ancho, 40)
+    marca.datos(
+        pdf,
+        [
+            ("Mascota", mascota["nombre"]),
+            ("Especie", mascota.get("especie") or "—"),
+            ("Raza", mascota.get("raza") or "—"),
+            ("Nacimiento", _fecha(mascota.get("fecha_nacimiento"))),
+        ],
+    )
 
-    # La mascota: cuatro datos en una fila, con su etiqueta encima.
-    pdf.set_y(45)
-    datos_mascota = [
-        ("Mascota", mascota["nombre"]),
-        ("Especie", mascota.get("especie") or "—"),
-        ("Raza", mascota.get("raza") or "—"),
-        ("Nacimiento", _fecha(mascota.get("fecha_nacimiento"))),
-    ]
-    columna = ancho / len(datos_mascota)
-    pdf.set_font(marca.CUERPO, "B", 7)
-    pdf.set_text_color(*marca.SUAVE)
-    pdf.set_char_spacing(0.4)
-    for etiqueta, _ in datos_mascota:
-        pdf.cell(columna, 5, etiqueta.upper())
-    pdf.set_char_spacing(0)
-    pdf.ln(5)
-    pdf.set_font(marca.CUERPO, "B", 11)
-    pdf.set_text_color(*marca.MARINO)
-    for _, valor in datos_mascota:
-        pdf.cell(columna, 7, valor)
-    pdf.ln(12)
-
-    def titulo(texto: str, color: tuple[int, int, int]) -> None:
-        if pdf.will_page_break(24):
-            pdf.add_page()
-        y = pdf.get_y()
-        pdf.set_fill_color(*color)
-        pdf.rect(marca.MARGEN, y + 2.2, 3, 3, style="F")
-        pdf.set_x(marca.MARGEN + 5)
-        pdf.set_font(marca.TITULOS, "", 15)
-        pdf.set_text_color(*marca.MARINO)
-        pdf.cell(ancho - 5, 8, texto, new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(1)
-
-    def tabla(
-        cabecera: tuple[str, ...], filas: list[tuple[str, ...]], anchos: tuple[int, ...]
-    ) -> None:
-        pdf.set_font(marca.CUERPO, "", 9)
-        pdf.set_text_color(*marca.TEXTO)
-        pdf.set_draw_color(*marca.BORDE)
-        pdf.set_line_width(0.2)
-        # El relleno lo pone solo la cabecera: sin esto, las filas heredan el del titulo.
-        pdf.set_fill_color(255, 255, 255)
-        estilo = FontFace(
-            family=marca.CUERPO, emphasis="BOLD", color=marca.MARINO, fill_color=marca.LIENZO
-        )
-        with pdf.table(
-            width=int(ancho),
-            col_widths=anchos,
-            line_height=7,
-            cell_fill_mode="NONE",
-            headings_style=estilo,
-            borders_layout="HORIZONTAL_LINES",
-            text_align="LEFT",
-        ) as t:
-            fila = t.row()
-            for celda in cabecera:
-                fila.cell(celda)
-            for valores in filas:
-                fila = t.row()
-                for celda in valores:
-                    # Lo vencido se dice en rojo, ademas de con la palabra.
-                    fila.cell(celda, style=VENCIDO if celda == "Vencido" else None)
-        pdf.ln(6)
+    def vencido(celda: str) -> FontFace | None:
+        # Lo vencido se dice en rojo, ademas de con la palabra.
+        return VENCIDO if celda == "Vencido" else None
 
     for tipo, nombre, color in SECCIONES:
-        titulo(nombre, color)
+        marca.titulo_seccion(pdf, nombre, color)
         filas = filas_seccion(tipo, datos["aplicados"])
         if not filas:
             pdf.set_font(marca.CUERPO, "", 9)
@@ -169,14 +102,14 @@ def generar_carnet(
             pdf.cell(ancho, 6, "Sin aplicaciones registradas.", new_x="LMARGIN", new_y="NEXT")
             pdf.ln(5)
         elif tipo == "vacuna":
-            tabla(CABECERA_VACUNA, filas, (26, 10, 14, 19, 11, 14, 22))
+            marca.tabla(pdf, CABECERA_VACUNA, filas, (26, 10, 14, 19, 11, 14, 22))
         else:
-            tabla(CABECERA_DESPARASITACION, filas, (14, 11, 26, 13, 14, 22))
+            marca.tabla(pdf, CABECERA_DESPARASITACION, filas, (14, 11, 26, 13, 14, 22))
 
     pendientes = filas_pendientes(datos)
     if pendientes:
-        titulo("Pendiente", marca.MARINO)
-        tabla(CABECERA_PENDIENTES, pendientes, (55, 25, 20))
+        marca.titulo_seccion(pdf, "Pendiente")
+        marca.tabla(pdf, CABECERA_PENDIENTES, pendientes, (55, 25, 20), vencido)
 
     # Verificacion: el codigo y donde comprobarlo, sin cuenta.
     if pdf.will_page_break(26):
