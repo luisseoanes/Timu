@@ -100,6 +100,11 @@ El formulario de una ventana lleva un `id` y el botón de guardar, en el `pie`, 
 dice «Guardando…» y queda deshabilitado; el error del servidor aparece con `role="alert"`
 dentro del formulario, y al cerrar se limpia (`mutation.reset()`).
 
+Una confirmación no lleva cuerpo: título, descripción con lo que pasa y, en el pie, las dos salidas
+(«Mantenerla», «Dejarlo activo» y la acción). Sin `children`, la ventana no pinta el cuerpo. Lo que no
+se deshace confirma con `btn-peligro`; lo que se deshace (activar, desactivar un plan) va en el menú de
+tres puntos y no confirma.
+
 ## Capas — `--capa-*`
 
 Todo `z-index` sale de la escala de `tokens.css`: `--capa-elevada` (algo que pisa a sus
@@ -244,7 +249,7 @@ leyenda; es una lista accesible con `aria-label`.
 
 ## Bandejas — `.bandeja-*`
 
-La pieza común de Tareas, Cartera, Preventivos y Conversaciones (Comercial): `.bandeja-filtros` con el selector segmentado de
+La pieza común de Tareas, Cartera, Preventivos, Conversaciones (Comercial), Remisiones (Aliadas), Usuarios y los eventos de la pasarela (Administración): `.bandeja-filtros` con el selector segmentado de
 vistas (`.segmento.bandeja-vistas`; `.bandeja-vistas-tres` si son tres, que caben en una fila del
 celular) y su recuento (`.segmento-recuento`, separado del nombre por un espacio para que el nombre
 accesible sea «En mora 1»), `.bandeja-filtro` para el buscador y las listas, y en la tabla
@@ -298,8 +303,9 @@ profesional lo revisa y nunca se envía solo.
 ## Utilidades de `src/lib/`
 
 - **`formato.ts`**: moneda, fechas (`fecha`, `fechaCorta`, `fechaLarga`, `fechaHora`), horas y
-  franjas (`hora`, `rangoHoras`: «10:00 – 11:00 a. m.»), `edad` de una mascota, `peso` («8,4 kg»)
-  y porcentajes, como en Colombia.
+  franjas (`hora`, `rangoHoras`: «10:00 – 11:00 a. m.»), `edad` de una mascota, `peso` («8,4 kg»),
+  porcentajes, `telefono` (el celular «+57 300 444 5588» y el fijo «601 765 4321») y `dolares` («US$
+  50,00», el gasto de la IA), como en Colombia.
 - **`estados.ts`**: el mapeo único de estados a etiqueta y tono, y los estados derivados
   (`estadoCuota`).
 - **`permisos.ts`**: `puede(usuario, accion)` decide qué se muestra e `inicioDeRol(rol)` a

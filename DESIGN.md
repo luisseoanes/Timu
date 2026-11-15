@@ -230,7 +230,9 @@ ventanas); después, Rutas (la ruta del día del médico y su coordinación) y C
 cada mascota y la consulta guiada), el Inicio (las cifras del período y la línea del día), Servicios y Tareas (el listado con
 ficha de los servicios y la bandeja), Cartera y Preventivos (sus bandejas, el carnet y el
 preventivo atendido desde su estación) y Comercial y Campañas (los interesados del embudo con su
-conversación, la bandeja de conversaciones y las campañas en listado con ficha). El portal de familias está rediseñado entero: la
+conversación, la bandeja de conversaciones y las campañas en listado con ficha) y Aliadas y
+Administración (las remisiones y los usuarios en bandeja; las clínicas, los planes y las reglas en
+listado con ficha). El portal de familias está rediseñado entero: la
 estructura, el inicio y los peludos (R3-POR-01) y las citas, los pagos y los datos (R3-POR-02).
 El resto de módulos del panel y las páginas públicas todavía usan la maqueta anterior y adoptan este sistema en sus unidades de
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md): lo que se ve hoy en ellos no
@@ -390,7 +392,8 @@ lema de la marca y el buscador encoge a 220 px. Por debajo de 900 px la navegaci
 barra inferior fija (56 px, al alcance del pulgar) con los cuatro módulos que más usa cada
 perfil y «Más» con el resto; el contenido reserva su alto más el área segura.
 
-**Listado y ficha (`.con-ficha`: Familias, Rutas, Clínica, Comercial, Campañas).** Dos columnas: listado de 320–420 px
+**Listado y ficha (`.con-ficha`: Familias, Rutas, Clínica, Comercial, Campañas, las clínicas de
+Aliadas, Planes y Reglas).** Dos columnas: listado de 320–420 px
 (`.listado`) y el registro abierto en el resto (`.ficha-abierta`), separadas 20 px. Por debajo
 de 900 px se ve uno u otro: el listado sin registro abierto, la ficha (con botón de volver) con
 él.
@@ -522,6 +525,10 @@ Firmes y planos; el color dice la jerarquía, no la forma.
 - **Internal Padding:** 16 px en el listado, 24 px en la ficha (16 px por debajo de 900 px).
 - **Bloque:** un apartado dentro de un panel (título de 14 px y su tabla o lista), separado
   24 px del anterior.
+- **Ficha de datos** (`dl.ficha`): pares etiqueta/valor en la rejilla de 180 px. Cada par se
+  alinea arriba (`align-content: start`), así un valor corto junto a uno de dos líneas no queda
+  flotando a media altura; `.ancho` ocupa la fila entera, para lo que es texto y no dato
+  («Cuándo aplica», «Qué hace», «Servicios que presta», «Especies»).
 
 ### Inputs / Fields
 - **Style:** blanco, borde de control de 1 px, esquina de campo, 40 px de alto, 8 × 12 px de
@@ -566,6 +573,11 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   20 px de relleno, sobre el velo marino. Cabecera (título de 16 px, descripción de 13 px suave y
   cierre con botón de icono) y pie fijos; solo el cuerpo se desplaza, así la acción principal
   del pie se ve siempre. El pie va alineado a la derecha sobre un hilo.
+- **Confirmación sin cuerpo:** sin `children`, la ventana es solo título, descripción y pie. El
+  título nombra lo que se hace y a quién («Desactivar a Luisa Gómez», «¿Luisa Gómez pasa a
+  Comercial?», «Apagar Cali»), la descripción dice su efecto, y el botón de cancelar nombra lo que
+  se conserva («Mantener el acceso», «Dejar en Operaciones», «Dejarlo activo»). Si hace falta un
+  dato (el motivo de anular), lleva cuerpo.
 - Por debajo de 600 px es una hoja que sube desde abajo: todo el ancho, hasta el 92 % del alto,
   esquinas de panel solo arriba y relleno para el área segura. `recorridos.spec.ts` comprueba
   que el pie queda a la vista.
@@ -577,8 +589,9 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   marino y 700; el resto, pares etiqueta y valor con la etiqueta (de `data-etiqueta`, que repite
   la cabecera) en la misma voz que la cabecera de columna. Las acciones bajan a una fila propia.
   La cabecera sigue en el DOM para los lectores de pantalla.
-- Hoy la usan las pestañas de Familias, las bandejas (Tareas, Cartera, Preventivos y
-  Conversaciones) y los mensajes de Campañas; las tablas de los demás módulos la adoptan en su
+- Hoy la usan las pestañas de Familias, las bandejas (Tareas, Cartera, Preventivos,
+  Conversaciones, Remisiones, Usuarios y los eventos de la pasarela), los mensajes de Campañas,
+  los convenios de una clínica, la liquidación, los beneficios de un plan y las consultas de la IA; las tablas de los demás módulos la adoptan en su
   unidad de la hoja de ruta.
 
 ### Historial
@@ -767,7 +780,7 @@ naranja-600) son casi iguales para quien no distingue el rojo del verde (ΔE 2,7
 validador de la skill `dataviz`). Un gráfico de dos series usa la 1 y la 3 (verde y azul,
 ΔE 20,4); uno de una serie, la 1. El rojo nunca es una serie.
 
-### Bandejas (componente común: Tareas, Cartera, Preventivos y Conversaciones)
+### Bandejas (componente común: Tareas, Cartera, Preventivos, Conversaciones, Remisiones y Usuarios)
 Lo que hay por resolver, en una `tabla-apilable` a todo el ancho de un panel blanco.
 - **Vistas:** un selector segmentado (pastilla hundida con hilo, 4 px de relleno; la vista activa
   en blanco y marino, las demás en texto suave, 13 px en 700) con el recuento de cada vista en
@@ -887,6 +900,77 @@ un asesor, el verde es «Enviar» (contestarle) y «Pasar a <etapa>» queda suav
 pasar a la etapa siguiente que dice la API (`siguiente_etapa`; el panel no copia el embudo) y
 «Enviar» queda secundario.
 
+### Aliadas y Administración (R2-PAN-10)
+Lo que se toca poco, con los dos patrones ya construidos: lo que hay por resolver en bandeja y cada
+registro en listado con ficha, abierto en la URL (`?clinica=`, `?plan=`, `?regla=`). Como en
+Comercial, «Nueva clínica» y «Nuevo plan» son verdes solo sin ficha abierta.
+- **Remisiones:** bandeja con «Por usar» (la de entrada, la que vence antes primero),
+  «Utilizadas», «Anuladas» y «Todas», con su recuento de la API; «Emitir remisión» es el verde.
+  Cada fila: el titular y la mascota («Jorge Ramirez · Rocky», enlace a la familia) con el código y
+  el motivo debajo; la clínica; lo que cubre (`cobertura()`: «80 % hasta $ 200.000»); y cuándo
+  vence. La vencida (lo dice la API, `vencida`) lleva icono y «Venció el 4 nov» con la gramática de
+  lo vencido; una utilizada cambia la columna a «Atendida», con la fecha de la atención, y la
+  cobertura a «Cubrió $ 180.000». La columna Estado solo aparece en «Todas». La única acción de una
+  remisión por usar es «Anular», plana en rojo; abre una ventana con el motivo, «Mantenerla» y
+  `btn-peligro` «Anular remisión», y la descripción dice qué pasa («la clínica ya no la acepta y el
+  cupo del beneficio vuelve a la familia. No se deshace»).
+- **Ficha de la clínica:** el nombre a 34 px, la ciudad y el teléfono (`telefono()`, también el
+  fijo: «601 765 4321»); «Nuevo convenio» como verde y activar o desactivar en el menú de tres
+  puntos (inactiva, una nota: «no recibe remisiones nuevas», y el verde deshabilitado). NIT,
+  dirección y servicios como ficha de datos; los convenios (beneficio y plan, cubre, tarifa,
+  vigencia) en tabla apilable; y las remisiones por usar como lista con hilo, sin tabla: el titular
+  y la mascota en 700, el código y «Vence el 4 dic» (o vencida, con icono) debajo, con una línea de
+  recuentos encima («1 por usar · 3 atendidas · 0 anuladas»).
+- **Liquidación:** el período (Desde y Hasta) en una fila de dos campos de hasta 180 px, que en el
+  celular reparten el ancho; la tabla apilable con una fila por clínica (NIT debajo del nombre) y
+  un `tfoot` de total en 700 marino sobre un hilo de 2 px, que apilada es un bloque más. Las
+  columnas de cifras van a la derecha. «Descargar CSV» es suave: la vista no tiene verde.
+- **Usuarios:** bandeja con «Equipo», «Clínicas aliadas», «Familias» e «Inactivos» (la API agrupa y
+  cuenta), buscador y una nota fija encima: cambiar el perfil o desactivar cierra sus sesiones al
+  instante. Cada fila: el nombre con el correo y el teléfono debajo; el perfil como lista que se
+  cambia ahí (solo en el equipo activo) y confirma en una ventana con el verde «Cambiar el perfil»;
+  y «Desactivar» plano en rojo, que confirma con `btn-peligro`. Activar de nuevo es directo, suave.
+  La propia fila lleva la insignia «Tú» y ni lista ni acciones.
+- **Ficha del plan:** el plan como cuadrado y nombre, «Editar plan» como verde y activar o
+  desactivar en el menú. Debajo, «Valor mensual por peludo» («1 peludo», «2 peludos (c/u)»… como
+  ficha de datos, con la nota de que cuenta la afiliación entera), el pago por período, los beneficios en
+  tabla apilable («2 al año», «Ilimitado») y «Se vende en 12 ciudades» con las ciudades en una línea
+  separadas por «·».
+- **Reglas:** el listado agrupado por evento con el rótulo de los días de Servicios («AVISOS
+  ESCALONADOS DE MORA · 4»); cada fila dice en palabras cuándo aplica (`condicion_texto`). La ficha:
+  el nombre, el evento, «Editar regla» como verde y activar o desactivar en el menú; «Cuándo aplica»
+  y «Qué hace» (`accion_texto`) a todo el ancho, prioridad y «Si aplica» como datos. El JSON solo
+  aparece en la ventana de editar. Una regla de un evento retirado lleva la insignia «Retirada» y
+  una nota que dice por qué; no tiene acciones ni «Probar»: se lee, no se edita.
+- **Probar esta regla:** un bloque dentro de la ficha con un campo con nombre por dato que mira la
+  condición («Días de mora»; ninguno si aplica siempre, y lo dice) y «Probar» suave. El resultado,
+  en un recuadro hundido con esquina de tarjeta: «Esta regla aplica.» o «no aplica con estos
+  datos», en negrita, y las reglas del evento que aplicarían, cada una con lo que hace en palabras.
+- **Catálogos:** ciudades, tipos de servicio y esquemas preventivos en filas, con una nota encima
+  que dice qué deja de pasar al apagar. Cada fila lleva su estado escrito («Activo» en tono ok,
+  «Apagado» en neutro) y la acción al lado: «Apagar» plano, que confirma en rojo con la nota como
+  descripción y «Dejarlo activo»; «Encender», suave y directo. No se borran: hay registros que los
+  usan.
+- **Inteligencia artificial:** el gasto del mes en indicadores (`dolares()`: «US$ 50,00»; cuatro
+  decimales en el costo de una consulta) y la barra del presupuesto; los prompts, cada versión con
+  su distintivo de estado, «Correr casos» en plano de acción y «Activar» suave, y las instrucciones
+  plegadas. Un solo verde: «Cargar versiones iniciales» sin prompts, «Nueva versión» con ellos.
+- **Eventos de la pasarela:** bandeja con «Con error» (la de entrada), «Procesados» y «Todos» en
+  una fila de tres; cada evento en palabras («Cambio en un pago», «Wompi»), el error debajo en rojo,
+  el estado con su distintivo y «Reprocesar» suave en los que no se procesaron.
+
+**La regla de lo que se deshace.** Lo reversible que no sale del registro (desactivar un plan, una
+regla o una clínica) va en el menú de tres puntos y se hace sin preguntar. Lo que no se deshace, o
+cuyo efecto alcanza a otros (anular una remisión, desactivar a alguien o cambiarle el perfil, que
+cierran sus sesiones, apagar una ciudad), se confirma en una ventana que dice ese efecto: en
+`btn-peligro` si quita algo, en verde si es el camino normal. Deshacerlo (activar, encender) es
+directo.
+
+**La regla de las palabras de la API.** El panel no muestra códigos del backend: la API dice cada
+cosa en palabras (`condicion_texto`, `accion_texto`, `retirada`, los grupos de usuarios, de quién
+es una remisión y si venció) y los estados llegan a la vista por `Distintivo` con su nombre. El
+panel no deduce nada de un código ni copia una regla del backend para decidir qué mostrar.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -912,6 +996,10 @@ pasar a la etapa siguiente que dice la API (`siguiente_etapa`; el panel no copia
   si es el camino normal, con `btn-peligro` si anula (cancelar, marcar como perdido).
 - **Do** di la dirección de un mensaje en palabras («Escribió», «Le escribimos a») y los
   teléfonos con `telefono()`.
+- **Do** lleva lo reversible al menú de tres puntos, y en una confirmación nombra en el botón de
+  cancelar lo que se conserva («Mantenerla», «Mantener el acceso», «Dejarlo activo»).
+- **Do** muestra lo que la API dice en palabras (`condicion_texto`, `accion_texto`, estados con
+  nombre) y los importes en dólares con `dolares()`.
 
 ### Don't:
 - **Don't** escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.
@@ -933,3 +1021,7 @@ pasar a la etapa siguiente que dice la API (`siguiente_etapa`; el panel no copia
 - **Don't** uses «+» para «Más» en la navegación: se lee como crear.
 - **Don't** uses el triángulo de alerta para un estado que no está vencido: «Por autorizar» lleva
   la llave.
+- **Don't** muestres un código del backend a la vista (`dias_mora gte 25`, `borrador`, `aliada`):
+  si la API no lo dice en palabras, se arregla en la API.
+- **Don't** confirmes en verde lo que anula o desactiva, ni pongas un interruptor o una casilla
+  suelta que apague algo sin decir qué deja de pasar.

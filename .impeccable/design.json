@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-14T00:00:00Z",
+  "generatedAt": "2026-11-15T00:00:00Z",
   "title": "Design System: TIMU",
   "extensions": {
     "colorMeta": {
@@ -973,6 +973,30 @@
       "description": "Burbujas sobre fondo hundido: lo que escribió la persona en blanco a la izquierda, lo que respondimos en verde tenue a la derecha, cada una ajustada a su texto (hasta min(48ch, 85%)) con la hora en 12 px suave.",
       "html": "<div class=\"ds-conv\"><div class=\"ds-msj\"><span class=\"ds-sr\">Escribió:</span><p>quiero hablar con un asesor</p><span class=\"ds-h\">14 nov · 12:18 p. m.</span></div><div class=\"ds-msj\" data-d=\"saliente\"><span class=\"ds-sr\">Respondimos:</span><p>Te comunico con un asesor de TIMU; te escribirá en breve.</p><span class=\"ds-h\">14 nov · 12:18 p. m.</span></div></div>",
       "css": ".ds-conv { display: grid; gap: var(--e3); padding: var(--e3); border-radius: var(--r-tarjeta); background: var(--superficie-hundida); font-family: var(--fuente); } .ds-msj { justify-self: start; max-width: min(48ch, 85%); padding: var(--e2) var(--e3); border-radius: var(--r-tarjeta); background: var(--superficie); } .ds-msj[data-d=\"saliente\"] { justify-self: end; background: var(--accion-suave-fondo); } .ds-msj p { margin: 0; white-space: pre-line; overflow-wrap: anywhere; color: var(--texto-titulo); font-size: var(--t-cuerpo); } .ds-h { display: block; margin-top: 2px; font-size: var(--t-etiqueta); color: var(--texto-suave); } .ds-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }"
+    },
+    {
+      "name": "Confirmación de lo que no se deshace",
+      "kind": "card",
+      "refersTo": "btn-peligro",
+      "description": "Ventana sin cuerpo: el título nombra lo que se hace y a quién, la descripción su efecto, y el pie lleva el botón que conserva («Mantener el acceso») y el rojo lleno. Anular, desactivar a alguien y apagar un catálogo (R2-PAN-10).",
+      "html": "<div class=\"ds-modal\" role=\"dialog\" aria-labelledby=\"ds-m-t\"><h2 id=\"ds-m-t\" class=\"ds-modal-titulo\">Desactivar a Luisa Gómez</h2><p class=\"ds-modal-desc\">Sus sesiones se cierran al instante y ya no puede entrar. Se puede volver a activar desde «Inactivos».</p><div class=\"ds-modal-pie\"><button class=\"ds-btn ds-btn-secundario\">Mantener el acceso</button><button class=\"ds-btn ds-btn-peligro\">Desactivar</button></div></div>",
+      "css": ".ds-modal { max-width: 560px; padding: var(--e5); background: var(--superficie); border-radius: var(--r-panel); box-shadow: var(--sombra-3); font-family: var(--fuente); } .ds-modal-titulo { margin: 0; font-size: var(--t-seccion); color: var(--texto-titulo); } .ds-modal-desc { margin: var(--e1) 0 0; font-size: var(--t-menor); color: var(--texto-suave); } .ds-modal-pie { display: flex; justify-content: flex-end; gap: var(--e1); margin-top: var(--e5); padding-top: var(--e1); } .ds-btn { font-family: var(--fuente); font-size: var(--t-cuerpo); font-weight: 600; min-height: 40px; padding: 0 var(--e5); border-radius: var(--r-campo); border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; transition: background-color var(--duracion) var(--curva), border-color var(--duracion) var(--curva); } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; } .ds-btn-secundario { background: var(--superficie); color: var(--texto-titulo); border-color: var(--borde-control); } .ds-btn-secundario:hover { border-color: var(--borde-control-hover); background: var(--superficie-hundida); } .ds-btn-peligro { background: var(--peligro-accion-fondo); color: var(--peligro-accion-texto); } .ds-btn-peligro:hover { background: var(--peligro-accion-fondo-hover); }"
+    },
+    {
+      "name": "La regla en palabras y su prueba",
+      "kind": "custom",
+      "refersTo": "superficie-hundida",
+      "description": "Ficha de una regla: «Cuándo aplica» y «Qué hace» a todo el ancho (`.ancho`), los datos alineados arriba, y el resultado de «Probar esta regla» en un recuadro hundido, cada regla que aplicaría con lo que hace en palabras.",
+      "html": "<dl class=\"ds-ficha\"><div class=\"ds-ancho\"><dt>Cuándo aplica</dt><dd>Días de mora: 25 o más</dd></div><div class=\"ds-ancho\"><dt>Qué hace</dt><dd>Envía un aviso por WhatsApp</dd></div><div><dt>Prioridad</dt><dd class=\"ds-num\">75</dd></div><div><dt>Si aplica</dt><dd>Sigue con las siguientes</dd></div></dl><div class=\"ds-resultado\" role=\"status\"><p><strong>Esta regla aplica.</strong></p><ul><li><strong>Aviso de mora a los 25 días</strong><span>Envía un aviso por WhatsApp</span></li><li><strong>Congelar a los 30 días de mora</strong><span>Congela la afiliación</span></li></ul></div>",
+      "css": ".ds-ficha { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--e4); margin: 0 0 var(--e5); font-family: var(--fuente); } .ds-ficha div { display: grid; gap: 2px; align-content: start; } .ds-ficha .ds-ancho { grid-column: 1 / -1; } .ds-ficha dt { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--texto-suave); } .ds-ficha dd { margin: 0; font-size: var(--t-cuerpo); font-weight: 700; color: var(--texto-titulo); } .ds-num { font-variant-numeric: tabular-nums; } .ds-resultado { display: grid; gap: var(--e2); padding: var(--e3) var(--e4); border-radius: var(--r-tarjeta); background: var(--superficie-hundida); font-family: var(--fuente); font-size: var(--t-cuerpo); color: var(--texto-titulo); } .ds-resultado p { margin: 0; } .ds-resultado ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e2); } .ds-resultado li { display: grid; gap: 2px; } .ds-resultado span { font-size: var(--t-menor); color: var(--texto); }"
+    },
+    {
+      "name": "Estado escrito de un catálogo",
+      "kind": "chip",
+      "refersTo": "btn-secundario",
+      "description": "Cada ciudad, tipo de servicio o esquema dice su estado con una insignia («Activo» en ok, «Apagado» en neutro) y lleva al lado la acción: «Apagar» plano, que confirma; «Encender» suave y directo.",
+      "html": "<div class=\"ds-fila\"><span class=\"ds-nombre\">Cali</span><span class=\"ds-estado\"><span class=\"ds-insignia ds-ok\">Activo</span><button class=\"ds-btn ds-btn-plano\">Apagar</button></span></div><div class=\"ds-fila\"><span class=\"ds-nombre\">Pasto</span><span class=\"ds-estado\"><span class=\"ds-insignia ds-neutro\">Apagado</span><button class=\"ds-btn ds-btn-suave\">Encender</button></span></div>",
+      "css": ".ds-fila { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); padding-block: var(--e3); border-bottom: 1px solid var(--borde); font-family: var(--fuente); } .ds-nombre { font-size: var(--t-cuerpo); font-weight: 700; color: var(--texto-titulo); } .ds-estado { display: inline-flex; align-items: center; gap: var(--e2); flex-shrink: 0; } .ds-insignia { font-size: var(--t-etiqueta); font-weight: 700; padding: 3px 10px; border-radius: var(--r-pastilla); } .ds-ok { background: var(--estado-ok-fondo); color: var(--estado-ok-texto); } .ds-neutro { background: var(--estado-neutro-fondo); color: var(--estado-neutro-texto); } .ds-btn { font-family: var(--fuente); font-size: var(--t-cuerpo); font-weight: 600; min-height: 40px; padding: 0 var(--e5); border-radius: var(--r-campo); border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; transition: background-color var(--duracion) var(--curva), border-color var(--duracion) var(--curva); } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; } .ds-btn-plano { background: transparent; color: var(--texto-suave); } .ds-btn-plano:hover { color: var(--texto-titulo); background: var(--superficie-lienzo); } .ds-btn-suave { background: var(--accion-suave-fondo); color: var(--accion-suave-texto); } .ds-btn-suave:hover { background: var(--accion-suave-fondo-hover); }"
     }
   ],
   "narrative": {
@@ -1076,6 +1100,16 @@
         "name": "La regla del verde de quien espera",
         "body": "En la ficha de un interesado, si su conversación espera a un asesor, el verde es «Enviar» (contestarle) y «Pasar a <etapa>» queda suave; si no, el verde es pasar a la etapa siguiente que dice la API (`siguiente_etapa`; el panel no copia el embudo) y «Enviar» queda secundario.",
         "section": "components"
+      },
+      {
+        "name": "La regla de lo que se deshace",
+        "section": "components",
+        "body": "Lo reversible que no sale del registro (desactivar un plan, una regla o una clínica) va en el menú de tres puntos y se hace sin preguntar. Lo que no se deshace, o cuyo efecto alcanza a otros (anular una remisión, desactivar a alguien o cambiarle el perfil, que cierran sus sesiones, apagar una ciudad), se confirma en una ventana que dice ese efecto: en `btn-peligro` si quita algo, en verde si es el camino normal. Deshacerlo (activar, encender) es directo."
+      },
+      {
+        "name": "La regla de las palabras de la API",
+        "section": "components",
+        "body": "El panel no muestra códigos del backend: la API dice cada cosa en palabras (`condicion_texto`, `accion_texto`, `retirada`, los grupos de usuarios, de quién es una remisión y si venció) y los estados llegan a la vista por `Distintivo` con su nombre. El panel no deduce nada de un código ni copia una regla del backend para decidir qué mostrar."
       }
     ],
     "dos": [
@@ -1091,7 +1125,9 @@
       "Do acompaña el estado del plan, para la familia, de una frase que diga por qué y qué hacer.",
       "Do escribe lo vencido de una bandeja con icono, fecha o importe y la palabra, y cada preventivo con la misma redacción (`pedido`, `dosis`) en todas partes.",
       "Do confirma lo que no se deshace diciendo su alcance («Enviar ahora a 3 familias»): en verde si es el camino normal, con `btn-peligro` si anula (cancelar, marcar como perdido).",
-      "Do di la dirección de un mensaje en palabras («Escribió», «Le escribimos a») y los teléfonos con `telefono()`."
+      "Do di la dirección de un mensaje en palabras («Escribió», «Le escribimos a») y los teléfonos con `telefono()`.",
+      "Do lleva lo reversible al menú de tres puntos, y en una confirmación nombra en el botón de cancelar lo que se conserva («Mantenerla», «Mantener el acceso», «Dejarlo activo»).",
+      "Do muestra lo que la API dice en palabras (`condicion_texto`, `accion_texto`, estados con nombre) y los importes en dólares con `dolares()`."
     ],
     "donts": [
       "Don't escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.",
@@ -1104,7 +1140,9 @@
       "Don't resuelvas la línea con scroll horizontal ni con una ventana de «Anteriores» y «Siguientes»: escondían una cuota vencida.",
       "Don't añadas un tema oscuro ni uses GeosansLight por debajo de 20 px, en texto corrido, tablas o botones.",
       "Don't uses «+» para «Más» en la navegación: se lee como crear.",
-      "Don't uses el triángulo de alerta para un estado que no está vencido: «Por autorizar» lleva la llave."
+      "Don't uses el triángulo de alerta para un estado que no está vencido: «Por autorizar» lleva la llave.",
+      "Don't muestres un código del backend a la vista (`dias_mora gte 25`, `borrador`, `aliada`): si la API no lo dice en palabras, se arregla en la API.",
+      "Don't confirmes en verde lo que anula o desactiva, ni pongas un interruptor o una casilla suelta que apague algo sin decir qué deja de pasar."
     ]
   }
 }

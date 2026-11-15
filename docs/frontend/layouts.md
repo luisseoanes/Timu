@@ -7,7 +7,7 @@ superficie (`.impeccable/surfaces/`).
 
 > En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)). **Rediseñado:** la estructura
 > del panel, el listado con ficha (Familias, Rutas y Clínica), la ruta propia del médico, la
-> consulta guiada, el inicio del panel, las bandejas (Tareas, Cartera y Preventivos), Comercial y Campañas, las ventanas, la espera de sesión y el portal de familias entero. **Aún con la composición anterior** (aunque ya con la paleta, la
+> consulta guiada, el inicio del panel, las bandejas (Tareas, Cartera y Preventivos), Comercial y Campañas, Aliadas y Administración, las ventanas, la espera de sesión y el portal de familias entero. **Aún con la composición anterior** (aunque ya con la paleta, la
 > tipografía y el logo): el ingreso, el detalle de un registro y las
 > páginas públicas. Cada uno se rehace en su
 > unidad.
@@ -41,7 +41,7 @@ superficie (`.impeccable/surfaces/`).
   perfil (`PRINCIPALES`: el médico lleva Inicio, Rutas, Servicios y Clínica) y
   «Más» para el resto.
 
-## Listado con ficha — `.con-ficha` (Familias, Rutas, Clínica, Servicios, Comercial, Campañas)
+## Listado con ficha — `.con-ficha` (Familias, Rutas, Clínica, Servicios, Comercial, Campañas, Aliadas, Administración)
 
 El patrón de un módulo cuyo trabajo es abrir un registro y actuar sobre él.
 
@@ -105,6 +105,16 @@ cuándo salen; la ficha dice a quién le llega, la plantilla, la audiencia con e
 envío y «Cómo le fue». Enviar ahora confirma con la audiencia («Enviar ahora a 3 familias»);
 programar no, porque se cancela antes de salir. Segmentos, Encuestas, Mensajes y Plantillas de
 WhatsApp siguen en sus pestañas, cada una en su fichero (`CampanasPage.tsx` solo arma las pestañas).
+
+En Aliadas (R2-PAN-10) la pestaña Clínicas y convenios es un listado con ficha (`/aliadas?clinica=`):
+la ficha dice sus datos, sus convenios en tabla apilable (beneficio y plan, lo que cubre, la tarifa y
+la vigencia) y las remisiones que tiene por usar. «Nuevo convenio» es la verde, para administración;
+activar o desactivar la clínica va en el menú. Una clínica recién registrada abre su ficha. En
+Administración, Planes (`?plan=`) y Reglas (`?regla=`) siguen el mismo patrón. El plan dice lo que paga
+cada peludo, el pago por periodo, sus beneficios y dónde se vende, con «Editar plan» en verde. Las
+reglas van agrupadas por el evento que las evalúa, y la abierta dice en palabras cuándo aplica y qué
+hace (lo genera el motor del backend) y se prueba ahí mismo, con un campo por cada dato que mira la
+condición. Una regla de un evento retirado se lee pero no se edita.
 
 ## La consulta guiada — `.consulta` (Clínica)
 
@@ -248,6 +258,19 @@ la cuota y su periodicidad; la renovación («21 ago 2027», con «ya se puede r
 `renovable`), y el estado. Acciones de fila suaves: «Registrar pago» si debe (la ventana abre con la
 cuota más antigua y su saldo) y «Renovar» si es renovable, que se confirma en una ventana. Sin verde
 lleno en la bandeja: cada ventana tiene el suyo.
+
+### Remisiones y usuarios (R2-PAN-10)
+
+Remisiones, en Aliadas: «Por usar» (la de entrada, por la que vence antes), «Utilizadas», «Anuladas» y
+«Todas» con su recuento, y «Emitir remisión» en verde en la cabecera. Cada fila: el titular y la
+mascota (enlace a la familia), el código y el motivo; la clínica; lo que cubre («80 % hasta $ 200.000»,
+o «Cubrió …» si ya se atendió); cuándo vence (la vencida, con icono y palabra) o cuándo se atendió; y
+«Anular», que confirma en rojo. La pestaña Liquidación pide el período y da una fila por clínica con su
+total. Usuarios, en Administración: «Equipo», «Clínicas aliadas», «Familias» e «Inactivos» con su
+recuento y un buscador. El perfil se cambia en la fila (solo entre perfiles del equipo) y se confirma
+antes, porque cierra las sesiones de esa persona; «Desactivar» confirma en rojo y «Activar» es
+directo. La propia fila lleva «Tú», sin acciones. Los eventos de la pasarela, en Reportes, son otra
+bandeja: «Con error», «Procesados» y «Todos», con «Reprocesar».
 
 ### Preventivos (R2-PAN-08)
 

@@ -64,26 +64,26 @@ lo aprendido al cerrar Familias, Rutas, Clínica, el portal, el Inicio y Servici
 ## El script
 
 Vive en el scratchpad y se copia a `frontend/` solo para ejecutarlo (`eslint .` lo recogería y
-`verificar` fallaría); se borra al terminar. Como `/tmp` se vacía al reiniciar, este es el
-esqueleto que se usó para Servicios:
+`verificar` fallaría); se borra al terminar. Como `/tmp` se vacía al reiniciar, este es el que se usó
+para Aliadas y Administración. Los lotes van en un JSON aparte (`{"lote": [entradas]}`), un lote por
+usuario y tanda:
 
 ```js
-// Uso: SESIONES=<carpeta con sesiones/> node _capturar.mjs <salida> [lote...]
-import { mkdirSync } from 'node:fs'
+// Uso: SESIONES=<carpeta con sesiones/> node _capturar.mjs <salida> <lotes.json> [lote...]
+// Entrada: [perfil, estado, ancho, url, {clics, soloViewport, reloj, rutas}]
+//   clics: [rol, nombre, exacto?] pulsa por rol y nombre (^… es una expresión regular);
+//          ['escribir', etiqueta, texto] y ['seleccionar', etiqueta, valor] rellenan un campo.
+//   rutas: [patrón de la ruta de la API, cuerpo JSON] simula un estado que datos_demo no tiene.
+import { mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { chromium } from '@playwright/test'
 
-const [OUT, ...ELEGIDOS] = process.argv.slice(2)
+const [OUT, FICHERO, ...ELEGIDOS] = process.argv.slice(2)
+const LOTES = JSON.parse(readFileSync(FICHERO, 'utf8'))
 const BASE = 'http://localhost:5173'
 const ALTOS = { 1440: 900, 1180: 900, 900: 900, 390: 844 }
 mkdirSync(OUT, { recursive: true })
-
-// [perfil, estado, ancho, url, opciones]: un lote por usuario y tanda.
-const LOTES = {
-  listado: [1440, 1180, 900, 390].map((a) => ['operaciones', 'listado', a, '/servicios']),
-  medico: [['medico', 'ficha', 390, '/servicios/:id?origen=ruta']],
-}
 
 const navegador = await chromium.launch()
 for (const [n, lote] of (ELEGIDOS.length ? ELEGIDOS : Object.keys(LOTES)).entries()) {
@@ -92,18 +92,39 @@ for (const [n, lote] of (ELEGIDOS.length ? ELEGIDOS : Object.keys(LOTES)).entrie
     const sesion = join(process.env.SESIONES, 'sesiones', `${perfil}.json`)
     const ctx = await navegador.newContext({ storageState: sesion, viewport: { width: ancho, height: ALTOS[ancho] } })
     const page = await ctx.newPage()
-    if (op.reloj) await page.clock.setFixedTime(new Date(op.reloj))
-    await page.goto(BASE + url)
-    await page.waitForSelector('.contenido h1', { timeout: 20000 }) // un elemento, no solo la red
-    await page.waitForLoadState('networkidle')
-    await page.evaluate(() => window.scrollTo(0, 0))
-    await page.screenshot({ path: join(OUT, `${perfil}-${estado}-${ancho}.png`), fullPage: !op.soloViewport })
+    try {
+      if (op.reloj) await page.clock.setFixedTime(new Date(op.reloj))
+      for (const [patron, cuerpo] of op.rutas ?? []) {
+        // Solo rutas de la API: la URL de la página no se intercepta.
+        await page.route((u) => u.pathname.startsWith('/api/') && new RegExp(patron).test(u.pathname + u.search), (r) =>
+          r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(cuerpo) }),
+        )
+      }
+      await page.goto(BASE + url)
+      await page.waitForSelector('.contenido h1', { timeout: 20000 }) // un elemento, no solo la red
+      await page.waitForLoadState('networkidle')
+      for (const [rol, nombre, valor] of op.clics ?? []) {
+        if (rol === 'escribir') await page.getByLabel(nombre).first().fill(valor)
+        else if (rol === 'seleccionar') await page.getByLabel(nombre).first().selectOption(valor)
+        else await page.getByRole(rol, { name: nombre.startsWith('^') ? new RegExp(nombre) : nombre, exact: !!valor }).first().click()
+        await page.waitForLoadState('networkidle')
+        await page.waitForTimeout(300)
+      }
+      if (!op.soloViewport) await page.evaluate(() => window.scrollTo(0, 0))
+      await page.screenshot({ path: join(OUT, `${perfil}-${estado}-${ancho}.png`), fullPage: !op.soloViewport })
+    } catch (e) {
+      console.log('FALLO', perfil, estado, ancho, e.message.split('\n')[0])
+    }
     await ctx.storageState({ path: sesion }) // la renovación rotó el token
     await ctx.close()
   }
 }
 await navegador.close()
 ```
+
+Un resultado que sale más abajo del primer viewport (el de «Probar» en una regla) se captura a página
+completa: con `soloViewport` queda fuera. Antes de mandar una captura, comprueba que es posterior al
+último cambio del fichero que enseña (`ls --time-style=+%T`): el revisor lo mira y pide recapturar.
 
 Las sesiones se crean una vez con el ingreso por formulario de arriba (`request.newContext` y
 `ctx.storageState({ path })`), y un id real (`:id`) se pide a la API con `page.request` después de
