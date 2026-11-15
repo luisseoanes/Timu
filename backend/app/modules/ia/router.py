@@ -6,7 +6,7 @@ from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import select
 
 from app.api.deps import DbSession, requiere
@@ -44,14 +44,33 @@ class PromptRead(BaseModel):
     evaluacion: dict[str, Any]
 
 
-class CasoIn(BaseModel):
+class CasoBase(BaseModel):
     prompt_codigo: Codigo
     nombre: str = Field(min_length=3, max_length=160)
     entrada: str = Field(min_length=3)
     esperado: dict[str, Any]
 
 
-class CasoRead(CasoIn):
+# Lo que entiende el evaluador (`service._cumple`). Una clave que no conoce no se comprueba: el
+# caso aprobaba siempre sin que nadie lo notara.
+_CLAVES_ESPERADO = {"campo", "igual", "no_vacio", "contiene", "no_contiene"}
+
+
+class CasoIn(CasoBase):
+    @field_validator("esperado")
+    @classmethod
+    def _solo_lo_que_se_evalua(cls, esperado: dict[str, Any]) -> dict[str, Any]:
+        desconocidas = sorted(set(esperado) - _CLAVES_ESPERADO)
+        if desconocidas:
+            raise ValueError(f"El evaluador no entiende {', '.join(desconocidas)}")
+        if ("campo" in esperado) != ("igual" in esperado):
+            raise ValueError("campo e igual van juntos")
+        if not esperado:
+            raise ValueError("Un caso tiene que exigir algo")
+        return esperado
+
+
+class CasoRead(CasoBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID

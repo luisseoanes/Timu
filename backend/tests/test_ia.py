@@ -317,10 +317,14 @@ async def test_casos_de_prueba_por_api(client: AsyncClient, headers):
         "prompt_codigo": "veterinario_borrador",
         "nombre": "Sangrado",
         "entrada": "Vomita sangre",
-        "esperado": {"presencial": True},
+        "esperado": {"campo": "recomendar_presencial", "igual": True},
     }
     creado = await client.post(url, json=caso, headers=headers)
-    assert creado.status_code == 201 and creado.json()["esperado"] == {"presencial": True}
+    assert creado.status_code == 201, creado.text
+    # Lo que el evaluador no entiende no se comprueba: el caso aprobaria siempre.
+    for malo in ({"presencial": True}, {"campo": "alcance"}, {}):
+        resp = await client.post(url, json={**caso, "esperado": malo}, headers=headers)
+        assert resp.status_code == 422, malo
     await client.post(
         url, json={**caso, "prompt_codigo": "comercial_guion", "nombre": "Precio"}, headers=headers
     )

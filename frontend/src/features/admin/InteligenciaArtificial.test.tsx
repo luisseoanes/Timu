@@ -221,7 +221,7 @@ describe('casos de prueba', () => {
         prompt_codigo: 'veterinario_borrador',
         nombre: 'Vómito',
         entrada: 'Vomitó sangre',
-        esperado: { alcance: 'fuera' },
+        esperado: { campo: 'alcance', igual: 'fuera' },
       }),
     )
   })

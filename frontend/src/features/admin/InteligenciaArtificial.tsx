@@ -343,7 +343,7 @@ function NuevoCaso({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => vo
         </label>
         <label className="campo">
           <span>Esperado (JSON)</span>
-          <textarea className="input codigo" name="esperado" rows={3} defaultValue={'{"alcance": "fuera"}'} required />
+          <textarea className="input codigo" name="esperado" rows={3} defaultValue={'{"campo": "alcance", "igual": "fuera"}'} required />
         </label>
         {(errorJson || crear.isError) && (
           <p className="error" role="alert">
