@@ -1,79 +1,78 @@
 import type { ReactNode } from 'react'
 
-import { Icono, type NombreIcono } from '@/components/Icono'
+import { Icono } from '@/components/Icono'
 import { MarcaTimu } from '@/components/MarcaTimu'
 
-const PILARES: { icono: NombreIcono; titulo: string; texto: string }[] = [
-  { icono: 'clinica', titulo: 'Historia clínica', texto: 'Cada consulta, fórmula y adjunto, firmado y en un solo lugar.' },
-  { icono: 'rutas', titulo: 'Visitas a domicilio', texto: 'Rutas del día optimizadas para el equipo médico.' },
-  { icono: 'preventivos', titulo: 'Preventivos al día', texto: 'Vacunas y desparasitaciones con carnet digital verificable.' },
+/** El año de una familia, como un plano de metro: lo hecho, hoy y lo que viene. Decorativo. */
+const ESTACIONES: { nombre: string; tipo: 'hecha' | 'proxima' | 'programada' }[] = [
+  { nombre: 'Afiliación', tipo: 'hecha' },
+  { nombre: 'Vacunas', tipo: 'hecha' },
+  { nombre: 'Visita en casa', tipo: 'proxima' },
+  { nombre: 'Renovación', tipo: 'programada' },
 ]
 
 /**
- * Pantallas de acceso (ingreso, recuperación, activación): panel de marca a la
- * izquierda y el formulario a la derecha. Bajo 900 px el panel se reduce a la marca.
+ * Pantallas de acceso (ingreso, recuperación, restablecimiento y activación). Desde 900 px,
+ * el panel marino con el logo, la frase de la pantalla y la línea a la izquierda, y el
+ * formulario a la derecha; por debajo, una franja marina arriba y el formulario debajo.
+ * La frase le habla a quien llega: la activación, a la familia.
  */
-export function AccesoLayout({ children }: { children: ReactNode }) {
+export function AccesoLayout({
+  frase = 'Tu peludito, bien cuidado.',
+  children,
+}: {
+  frase?: string
+  children: ReactNode
+}) {
   return (
     <div className="ingreso">
       <aside className="ingreso-marca">
-        <MarcaTimu claro />
-
+        <span className="ingreso-logo">
+          <MarcaTimu claro />
+        </span>
+        <span className="ingreso-logo-compacto">
+          <MarcaTimu claro compacta />
+        </span>
         <div className="ingreso-mensaje">
-          <p className="ingreso-kicker">
-            <Icono nombre="pulso" size={16} /> Plataforma clínica y operativa
-          </p>
-          <h2>El cuidado de cada mascota, coordinado de la casa a la consulta.</h2>
-          <ul className="ingreso-pilares">
-            {PILARES.map((p) => (
-              <li key={p.titulo}>
-                <span className="ingreso-pilar-icono" aria-hidden="true">
-                  <Icono nombre={p.icono} size={18} />
-                </span>
-                <span>
-                  <strong>{p.titulo}</strong>
-                  <span>{p.texto}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+          <p className="ingreso-frase">{frase}</p>
+          <LineaDeMarca />
         </div>
-
-        <VistaPreviaVisita />
-
-        <p className="ingreso-legal">
-          <Icono nombre="escudo" size={16} /> Datos clínicos protegidos · Ley 1581 de 2012
-        </p>
+        <NotaDatos />
       </aside>
 
-      <main className="ingreso-contenido">{children}</main>
+      <main className="ingreso-contenido">
+        <div className="ingreso-panel">
+          {children}
+          <NotaDatos />
+        </div>
+      </main>
     </div>
   )
 }
 
-/** Tarjeta ilustrativa: así se ve una visita en la plataforma. Decorativa. */
-function VistaPreviaVisita() {
+/** La línea de la familia en la señalética del metro, sobre marino (regla 6 del manual). */
+function LineaDeMarca() {
   return (
-    <div className="ingreso-vista" aria-hidden="true">
-      <div className="ingreso-vista-cabeza">
-        <span className="ingreso-avatar">
-          <Icono nombre="huella" size={18} />
-        </span>
-        <span>
-          <strong>Luna · Canino</strong>
-          <span>Vacuna polivalente · 10:30 a. m.</span>
-        </span>
-        <span className="ingreso-chip">
-          <Icono nombre="check" size={14} /> Aplicada
-        </span>
-      </div>
-      <svg className="ingreso-pulso" viewBox="0 0 320 48" preserveAspectRatio="none">
-        <path d="M0 30h70l10-18 14 32 12-24 8 10h52l9-14 11 20 8-8h126" />
-      </svg>
-      <div className="ingreso-vista-pie">
-        <span><Icono nombre="rutas" size={14} /> Ruta norte · parada 3 de 8</span>
-        <span><Icono nombre="clinica" size={14} /> Historia firmada</span>
-      </div>
-    </div>
+    <ol className="ingreso-linea" aria-hidden="true">
+      {ESTACIONES.map((e, i) => (
+        <li key={e.nombre} className="ingreso-estacion" data-tipo={e.tipo}>
+          {i === 2 && (
+            <span className="ingreso-hoy">
+              <span>Hoy</span>
+            </span>
+          )}
+          <span className="ingreso-punto" />
+          <span className="ingreso-rotulo">{e.nombre}</span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+function NotaDatos() {
+  return (
+    <p className="ingreso-legal">
+      <Icono nombre="escudo" size={16} /> Datos protegidos · Ley 1581 de 2012
+    </p>
   )
 }

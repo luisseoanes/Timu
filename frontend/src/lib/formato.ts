@@ -109,8 +109,9 @@ export function telefono(valor: string | null | undefined): string {
   if (!valor) return '—'
   const co = /^\+57(\d{3})(\d{3})(\d{4})$/.exec(valor)
   if (co) return `+57 ${co[1]} ${co[2]} ${co[3]}`
-  const fijo = /^(60\d)(\d{3})(\d{4})$/.exec(valor)
-  return fijo ? `${fijo[1]} ${fijo[2]} ${fijo[3]}` : valor
+  // Fijo (601…) o celular (300…) escritos sin indicativo, como los teclea la familia.
+  const local = /^(60\d|3\d{2})(\d{3})(\d{4})$/.exec(valor)
+  return local ? `${local[1]} ${local[2]} ${local[3]}` : valor
 }
 
 /** Edad a partir de la fecha de nacimiento: en meses hasta el año, después en años. */

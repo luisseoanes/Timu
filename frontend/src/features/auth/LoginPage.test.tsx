@@ -1,7 +1,7 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, type InitialEntry } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
 import { LoginPage } from './LoginPage'
@@ -12,14 +12,14 @@ import { renderizar } from '@/test/utils'
 
 const API = '*/api/v1'
 
-function abrirLogin() {
+function abrirLogin(ruta: InitialEntry = '/login') {
   return renderizar(
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/" element={<p>Panel del equipo</p>} />
       <Route path="/portal" element={<p>Portal de la familia</p>} />
     </Routes>,
-    { ruta: '/login' },
+    { ruta },
   )
 }
 
@@ -27,7 +27,8 @@ describe('LoginPage', () => {
   it('muestra el ingreso del equipo con sus campos etiquetados', async () => {
     server.use(sinSesion)
     abrirLogin()
-    expect(await screen.findByRole('heading', { name: 'Bienvenido de nuevo' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Hola de nuevo' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /equipo/i })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByLabelText('Correo')).toBeInTheDocument()
     expect(screen.getByLabelText('Contraseña')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /familias/i })).toBeInTheDocument()
@@ -104,6 +105,7 @@ describe('LoginPage', () => {
     await user.click(await screen.findByRole('tab', { name: /familias/i }))
     await user.type(screen.getByLabelText('Celular registrado'), '3001112233')
     await user.click(screen.getByRole('button', { name: 'Recibir código' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('al 300 111 2233')
     await user.type(await screen.findByLabelText('Código'), '123456')
     await user.click(screen.getByRole('button', { name: 'Entrar al portal' }))
     expect(await screen.findByText('Portal de la familia')).toBeInTheDocument()
@@ -127,6 +129,43 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: 'Entrar al portal' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Codigo invalido')
     await user.click(screen.getByRole('button', { name: 'Cambiar número' }))
+    expect(screen.getByLabelText('Celular registrado')).toBeInTheDocument()
+  })
+
+  it('una familia con su cuenta activada entra con su celular y su contraseña', async () => {
+    let cuerpo = ''
+    server.use(
+      sinSesion,
+      http.post(`${API}/auth/login`, async ({ request }) => {
+        cuerpo = await request.text()
+        return HttpResponse.json({ usuario: { ...USUARIO_ADMIN, rol: 'familia' } })
+      }),
+    )
+    const user = userEvent.setup()
+    abrirLogin()
+    await user.click(await screen.findByRole('tab', { name: /familias/i }))
+    await user.click(screen.getByRole('button', { name: 'Ingresar con contraseña' }))
+    await user.type(screen.getByLabelText('Correo o celular'), '3001112233')
+    await user.type(screen.getByLabelText('Contraseña'), 'clave-familia')
+    await user.click(screen.getByRole('button', { name: 'Ingresar' }))
+    expect(await screen.findByText('Portal de la familia')).toBeInTheDocument()
+    expect(cuerpo).toBe('username=3001112233&password=clave-familia')
+  })
+
+  it('quien vuelve al ingreso desde la contraseña de familia puede pedir el código', async () => {
+    server.use(sinSesion)
+    const user = userEvent.setup()
+    abrirLogin()
+    await user.click(await screen.findByRole('tab', { name: /familias/i }))
+    await user.click(screen.getByRole('button', { name: 'Ingresar con contraseña' }))
+    await user.click(screen.getByRole('button', { name: 'Recibir un código por WhatsApp' }))
+    expect(screen.getByLabelText('Celular registrado')).toBeInTheDocument()
+  })
+
+  it('quien llega desde el portal encuentra abierta la pestaña de familias', async () => {
+    server.use(sinSesion)
+    abrirLogin({ pathname: '/login', state: { from: '/portal/pagos' } })
+    expect(await screen.findByRole('tab', { name: /familias/i })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByLabelText('Celular registrado')).toBeInTheDocument()
   })
 
@@ -154,33 +193,105 @@ describe('Recuperación de contraseña', () => {
     expect(enviado).toEqual({ identificador: 'ana@example.com' })
   })
 
-  it('define la contraseña nueva con el token del enlace', async () => {
-    let enviado: unknown = null
+  it('saluda con el enlace vigente, define la contraseña y entra a su espacio', async () => {
+    const enviado: unknown[] = []
     server.use(
       sinSesion,
+      http.post(`${API}/auth/enlace`, async ({ request }) => {
+        enviado.push(await request.json())
+        return HttpResponse.json({ estado: 'vigente', proposito: 'activacion', nombre: 'Ana' })
+      }),
       http.post(`${API}/auth/restablecer`, async ({ request }) => {
-        enviado = await request.json()
-        return new HttpResponse(null, { status: 204 })
+        enviado.push(await request.json())
+        return HttpResponse.json({ usuario: { ...USUARIO_ADMIN, rol: 'familia' } })
       }),
     )
     const user = userEvent.setup()
-    renderizar(<RestablecerPage modo="activar" />, { ruta: '/activar?token=abc' })
-    expect(await screen.findByRole('heading', { name: 'Activa tu cuenta' })).toBeInTheDocument()
+    renderizar(
+      <Routes>
+        <Route path="/activar" element={<RestablecerPage modo="activar" />} />
+        <Route path="/portal" element={<p>Portal de la familia</p>} />
+      </Routes>,
+      { ruta: '/activar?token=abc' },
+    )
+    expect(await screen.findByRole('heading', { name: 'Hola, Ana' })).toBeInTheDocument()
+    expect(screen.getByText('Te damos la bienvenida a la manada TIMU.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Contraseña nueva')).toHaveAccessibleDescription('Al menos 8 caracteres.')
     await user.type(screen.getByLabelText('Contraseña nueva'), 'segura1234')
     await user.type(screen.getByLabelText('Confirma la contraseña'), 'segura1234')
-    await user.click(screen.getByRole('button', { name: 'Activar cuenta' }))
-    expect(await screen.findByRole('status')).toHaveTextContent('quedó guardada')
-    expect(enviado).toEqual({ token: 'abc', password: 'segura1234' })
+    await user.click(screen.getByRole('button', { name: 'Activar mi cuenta' }))
+    expect(await screen.findByText('Portal de la familia')).toBeInTheDocument()
+    expect(enviado).toEqual([{ token: 'abc' }, { token: 'abc', password: 'segura1234' }])
   })
 
-  it('no deja enviar si las contraseñas no coinciden ni sin token', async () => {
+  it('el enlace de recuperación dice que cierra las otras sesiones', async () => {
+    server.use(
+      sinSesion,
+      http.post(`${API}/auth/enlace`, () =>
+        HttpResponse.json({ estado: 'vigente', proposito: 'recuperacion', nombre: 'Valentina' }),
+      ),
+    )
+    renderizar(<RestablecerPage modo="restablecer" />, { ruta: '/restablecer?token=abc' })
+    expect(await screen.findByRole('heading', { name: 'Hola, Valentina' })).toBeInTheDocument()
+    expect(screen.getByText(/se cierran las sesiones/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Guardar y entrar' })).toBeInTheDocument()
+  })
+
+  it.each([
+    ['usado', 'Este enlace ya se usó'],
+    ['vencido', 'Este enlace venció'],
+    ['invalido', 'Este enlace no sirve'],
+  ])('un enlace %s lo dice de entrada y ofrece otro', async (estado, titulo) => {
+    server.use(sinSesion, http.post(`${API}/auth/enlace`, () => HttpResponse.json({ estado })))
+    renderizar(<RestablecerPage modo="activar" />, { ruta: '/activar?token=abc' })
+    expect(await screen.findByRole('heading', { name: titulo })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Pedir un enlace nuevo' })).toHaveAttribute('href', '/recuperar')
+    expect(screen.queryByLabelText('Contraseña nueva')).not.toBeInTheDocument()
+  })
+
+  it('sin token no consulta nada y dice que el enlace está incompleto', async () => {
     server.use(sinSesion)
-    const user = userEvent.setup()
     renderizar(<RestablecerPage modo="restablecer" />, { ruta: '/restablecer' })
-    expect(await screen.findByRole('alert')).toHaveTextContent('enlace está incompleto')
-    await user.type(screen.getByLabelText('Contraseña nueva'), 'segura1234')
+    expect(await screen.findByRole('heading', { name: 'El enlace está incompleto' })).toBeInTheDocument()
+  })
+
+  it('si no se pudo comprobar el enlace, deja reintentar', async () => {
+    let intentos = 0
+    server.use(
+      sinSesion,
+      http.post(`${API}/auth/enlace`, () =>
+        ++intentos === 1
+          ? new HttpResponse(null, { status: 503 })
+          : HttpResponse.json({ estado: 'vigente', proposito: 'activacion', nombre: 'Ana' }),
+      ),
+    )
+    const user = userEvent.setup()
+    renderizar(<RestablecerPage modo="activar" />, { ruta: '/activar?token=abc' })
+    expect(await screen.findByRole('heading', { name: 'No pudimos comprobar el enlace' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByRole('heading', { name: 'Hola, Ana' })).toBeInTheDocument()
+  })
+
+  it('no deja enviar si las contraseñas no coinciden, y avisa si el enlace caducó al guardar', async () => {
+    server.use(
+      sinSesion,
+      http.post(`${API}/auth/enlace`, () =>
+        HttpResponse.json({ estado: 'vigente', proposito: 'recuperacion', nombre: 'Ana' }),
+      ),
+      http.post(`${API}/auth/restablecer`, () =>
+        HttpResponse.json({ detail: 'El enlace no es valido', codigo: 'enlace_invalido' }, { status: 400 }),
+      ),
+    )
+    const user = userEvent.setup()
+    renderizar(<RestablecerPage modo="restablecer" />, { ruta: '/restablecer?token=abc' })
+    await user.type(await screen.findByLabelText('Contraseña nueva'), 'segura1234')
     await user.type(screen.getByLabelText('Confirma la contraseña'), 'otra')
-    expect(screen.getByText('Las contraseñas no coinciden.')).toBeInTheDocument()
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Guardar contraseña' })).toBeDisabled())
+    expect(screen.getByLabelText('Confirma la contraseña')).toHaveAccessibleDescription('Las contraseñas no coinciden.')
+    expect(screen.getByRole('button', { name: 'Guardar y entrar' })).toBeDisabled()
+    await user.clear(screen.getByLabelText('Confirma la contraseña'))
+    await user.type(screen.getByLabelText('Confirma la contraseña'), 'segura1234')
+    await user.click(screen.getByRole('button', { name: 'Guardar y entrar' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('dejó de servir')
+    expect(screen.getByRole('link', { name: 'Pide uno nuevo' })).toHaveAttribute('href', '/recuperar')
   })
 })

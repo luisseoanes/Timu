@@ -48,6 +48,8 @@ interface AuthState {
   login: (email: string, password: string) => Promise<Usuario>
   /** Ingreso del portal: celular más el código que llegó por WhatsApp (F3-POR-07). */
   ingresarConCodigo: (telefono: string, codigo: string) => Promise<Usuario>
+  /** Define la contraseña con el enlace de recuperación o de activación y entra. */
+  entrarConEnlace: (token: string, password: string) => Promise<Usuario>
   logout: () => Promise<void>
 }
 
@@ -98,14 +100,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data.usuario
   }, [])
 
+  const entrarConEnlace = useCallback(async (token: string, password: string) => {
+    const { data } = await api.post<Sesion>('/auth/restablecer', { token, password })
+    setUsuario(data.usuario)
+    setErrorSesion(false)
+    return data.usuario
+  }, [])
+
   const logout = useCallback(async () => {
     await api.post('/auth/logout').catch(() => undefined)
     setUsuario(null)
   }, [])
 
   const value = useMemo(
-    () => ({ usuario, cargando, errorSesion, reintentarSesion, login, ingresarConCodigo, logout }),
-    [usuario, cargando, errorSesion, reintentarSesion, login, ingresarConCodigo, logout],
+    () => ({ usuario, cargando, errorSesion, reintentarSesion, login, ingresarConCodigo, entrarConEnlace, logout }),
+    [usuario, cargando, errorSesion, reintentarSesion, login, ingresarConCodigo, entrarConEnlace, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

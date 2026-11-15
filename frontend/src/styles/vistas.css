@@ -476,13 +476,13 @@
 /* ================= Ingreso, recuperación y activación ================= */
 /* Ver features/auth/AccesoLayout.tsx */
 .ingreso {
-  min-height: 100vh;
+  min-height: 100vh; min-height: 100dvh;
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   background: var(--superficie);
 }
 
-/* --- Panel de marca --- */
+/* --- Panel de marca: marino plano, el logo, la frase de la pantalla y la línea --- */
 .ingreso-marca {
   display: flex;
   flex-direction: column;
@@ -512,62 +512,58 @@
 .espera-sesion-aviso h1 { font-family: var(--fuente); font-weight: 600; font-size: var(--t-seccion); }
 .espera-sesion-aviso .btn { margin-top: var(--e2); }
 
-.ingreso-mensaje { display: grid; gap: var(--e5); max-width: 520px; margin-top: auto; }
-.ingreso-kicker {
-  display: inline-flex; align-items: center; gap: var(--e2);
-  width: fit-content;
-  padding: 6px var(--e3);
-  border-radius: var(--r-pastilla);
-  background: var(--superficie-sobre-marca);
-  border: 1px solid var(--borde-sobre-marca);
-  font-size: var(--t-menor); font-weight: 700;
-}
-.ingreso-mensaje h2 {
+.ingreso-logo { display: block; align-self: flex-start; }
+.ingreso-logo .marca { height: 104px; }
+.ingreso-logo-compacto { display: none; }
+.ingreso-mensaje { display: grid; gap: var(--e8); max-width: 560px; margin-block: auto; }
+.ingreso-frase {
+  margin: 0;
+  font-family: var(--fuente-titulos); font-size: var(--t-display); line-height: 1.2;
   color: var(--texto-sobre-marca);
-  font-size: var(--t-display);
-  line-height: 1.2;
-}
-.ingreso-pilares { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e4); }
-.ingreso-pilares li { display: grid; grid-template-columns: auto 1fr; gap: var(--e3); align-items: start; }
-.ingreso-pilares strong { display: block; color: var(--texto-sobre-marca); font-size: var(--t-cuerpo); }
-.ingreso-pilares li span span { color: var(--texto-sobre-marca-suave); font-size: var(--t-menor); }
-.ingreso-pilar-icono {
-  width: 36px; height: 36px;
-  display: grid; place-items: center;
-  border-radius: var(--r-campo);
-  background: var(--superficie-sobre-marca);
-  border: 1px solid var(--borde-sobre-marca);
+  text-wrap: balance;
 }
 
-/* Tarjeta de vista previa: vidrio esmerilado sobre la marca. */
-.ingreso-vista {
-  max-width: 420px;
-  padding: var(--e4) var(--e5);
-  border-radius: var(--r-tarjeta);
-  background: var(--superficie-sobre-marca);
-  border: 1px solid var(--borde-sobre-marca);
-  backdrop-filter: blur(8px);
-  box-shadow: var(--sombra-3);
-  display: grid; gap: var(--e3);
+/* La línea de una familia en señalética: verde lo hecho, «Hoy» en blanco, la próxima con
+   halo y lo que falta en contorno sobre un tramo translúcido (regla 6 del manual). */
+.ingreso-linea {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(4, minmax(max-content, 1fr));
 }
-.ingreso-vista-cabeza { display: grid; grid-template-columns: auto 1fr auto; gap: var(--e3); align-items: center; }
-.ingreso-vista-cabeza strong { display: block; color: var(--texto-sobre-marca); font-size: var(--t-cuerpo); }
-.ingreso-vista-cabeza span span { color: var(--texto-sobre-marca-suave); font-size: var(--t-menor); }
-.ingreso-avatar {
-  width: 38px; height: 38px; display: grid; place-items: center;
-  border-radius: var(--r-pastilla); background: var(--superficie); color: var(--accion-suave-texto);
+.ingreso-estacion { position: relative; display: grid; justify-items: start; gap: var(--e3); padding-top: 28px; }
+.ingreso-estacion::before {
+  content: ''; position: absolute; top: 36px; left: 12px; width: 100%; height: 8px;
+  background: var(--borde-sobre-marca);
 }
-.ingreso-chip {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 10px; border-radius: var(--r-pastilla);
-  background: var(--estado-ok-fondo); color: var(--estado-ok-texto);
-  font-size: var(--t-etiqueta); font-weight: 700;
+.ingreso-estacion[data-tipo="hecha"]::before { background: var(--indicador-sobre-marca); }
+.ingreso-estacion:last-child::before { display: none; }
+.ingreso-punto {
+  position: relative; z-index: var(--capa-elevada);
+  width: 24px; height: 24px; border-radius: var(--r-pastilla);
+  border: 4px solid var(--texto-sobre-marca-suave); background: var(--superficie-marca);
 }
-.ingreso-pulso { width: 100%; height: 40px; }
-.ingreso-pulso path { fill: none; stroke: var(--texto-sobre-marca-acento); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.ingreso-vista-pie { display: flex; flex-wrap: wrap; gap: var(--e4); font-size: var(--t-menor); color: var(--texto-sobre-marca-suave); }
-.ingreso-vista-pie span { display: inline-flex; align-items: center; gap: 6px; }
-.ingreso-legal { display: inline-flex; align-items: center; gap: var(--e2); font-size: var(--t-menor); color: var(--texto-sobre-marca-suave); }
+.ingreso-estacion[data-tipo="hecha"] .ingreso-punto { border-color: var(--indicador-sobre-marca); background: var(--indicador-sobre-marca); }
+.ingreso-estacion[data-tipo="proxima"] .ingreso-punto {
+  border-color: var(--texto-sobre-marca);
+  box-shadow: 0 0 0 3px var(--indicador-sobre-marca);
+}
+.ingreso-rotulo { font-size: var(--t-menor); color: var(--texto-sobre-marca-suave); padding-right: var(--e3); white-space: nowrap; }
+.ingreso-estacion[data-tipo="proxima"] .ingreso-rotulo { color: var(--texto-sobre-marca); font-weight: 600; }
+/* «Hoy» va justo antes de la próxima: del marcador a ella, el tramo es lo que falta. */
+.ingreso-hoy { position: absolute; top: 0; left: -40px; width: 40px; height: 60px; }
+.ingreso-hoy::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 36px; height: 8px;
+  background: var(--superficie-marca); box-shadow: inset 0 0 0 8px var(--borde-sobre-marca);
+}
+.ingreso-hoy::after {
+  content: ''; position: absolute; left: 0; top: 28px; width: 4px; height: 24px;
+  border-radius: 2px; background: var(--texto-sobre-marca); z-index: var(--capa-elevada);
+}
+.ingreso-hoy > span {
+  position: absolute; top: 0; left: 2px; transform: translateX(-50%);
+  font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--texto-sobre-marca);
+}
+.ingreso-legal { display: inline-flex; align-items: center; gap: var(--e2); margin: 0; font-size: var(--t-menor); color: var(--texto-sobre-marca-suave); }
 
 /* --- Formulario --- */
 .ingreso-contenido {
@@ -577,19 +573,14 @@
   background: var(--superficie);
 }
 .ingreso-panel { width: min(400px, 100%); display: grid; gap: var(--e6); }
-.ingreso-panel > .marca { display: none; }
-.ingreso-marca .marca { height: 112px; }
+.ingreso-panel > .ingreso-legal { display: none; color: var(--texto-suave); padding-top: var(--e4); border-top: 1px solid var(--borde); }
+.ingreso-panel > .ingreso-legal svg { color: var(--accion-suave-texto); }
 .ingreso-titulo { display: grid; gap: var(--e2); }
-.ingreso-titulo h1 { font-size: var(--t-display); }
-.ingreso-titulo p { color: var(--texto-suave); }
+.ingreso-titulo p { color: var(--texto-suave); text-wrap: pretty; }
 .ingreso-form { display: grid; gap: var(--e4); }
 .ingreso-ayuda { display: flex; justify-content: flex-end; align-items: center; gap: var(--e2); font-size: var(--t-menor); }
-.ingreso-pie {
-  display: flex; align-items: center; justify-content: center; gap: var(--e2);
-  font-size: var(--t-menor); color: var(--texto-suave);
-  padding-top: var(--e4); border-top: 1px solid var(--borde);
-}
-.ingreso-pie svg { color: var(--accion-suave-texto); }
+.ingreso-volver { justify-self: center; }
+.ingreso-esqueleto { padding-block: var(--e6); }
 
 /* Selector Equipo / Familias */
 .segmento {
@@ -611,6 +602,7 @@
 
 /* Campo con icono a la izquierda y acción opcional a la derecha */
 .campo-adorno { position: relative; display: flex; align-items: center; }
+.campo > .campo-adorno { font-size: var(--t-cuerpo); font-weight: 400; color: var(--texto); }
 .campo-adorno > svg { position: absolute; left: 14px; color: var(--texto-suave); pointer-events: none; }
 .campo-adorno:focus-within > svg { color: var(--foco); }
 .campo-adorno .input { width: 100%; padding-left: 42px; min-height: 48px; }
@@ -632,6 +624,7 @@
   border-radius: var(--r-campo);
   font-size: var(--t-menor);
 }
+.aviso-error > svg, .aviso-ok > svg { flex-shrink: 0; margin-top: 2px; }
 .aviso-error { background: var(--estado-peligro-fondo); color: var(--estado-peligro-texto); }
 .aviso-ok { background: var(--estado-ok-fondo); color: var(--estado-ok-texto); }
 
@@ -648,10 +641,20 @@
 .publica-ancha { width: min(760px, 100%); }
 
 @media (max-width: 900px) {
-  .ingreso { grid-template-columns: 1fr; }
-  .ingreso-marca { display: none; }
-  .ingreso-panel > .marca { display: block; }
   .publica-tarjeta { padding: var(--e5); }
+}
+@media (max-width: 899px) {
+  .ingreso { grid-template-columns: 1fr; align-content: start; }
+  .ingreso-marca { gap: var(--e5); padding: var(--e5) var(--e4); }
+  .ingreso-logo { display: none; }
+  .ingreso-logo-compacto { display: block; align-self: flex-start; }
+  .ingreso-mensaje { margin: 0; gap: 0; }
+  .ingreso-marca > .ingreso-legal, .ingreso-frase, .ingreso-rotulo, .ingreso-hoy > span { display: none; }
+  .ingreso-estacion { padding-top: 0; }
+  .ingreso-estacion::before { top: 8px; }
+  .ingreso-hoy { top: -28px; }
+  .ingreso-contenido { place-items: start center; padding: var(--e6) var(--e4) var(--e7); }
+  .ingreso-panel > .ingreso-legal { display: inline-flex; }
 }
 
 /* Tres columnas iguales que bajan a una en pantallas angostas (carnet: aplicados, vencidos, próximos). */

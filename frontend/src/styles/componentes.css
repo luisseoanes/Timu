@@ -50,6 +50,7 @@
 .campo > span, .campo > label { font-size: var(--t-menor); font-weight: 600; color: var(--texto-titulo); }
 /* Ayuda bajo un campo; se enlaza con aria-describedby para que la lea un lector de pantalla. */
 .campo > .campo-ayuda { font-size: var(--t-etiqueta); font-weight: 400; color: var(--texto-suave); }
+.campo > .error { font-weight: 400; color: var(--texto-error); }
 .input {
   font: inherit;
   min-height: 40px;
@@ -97,15 +98,6 @@ select.input:disabled { --flecha-lista: var(--texto-deshabilitado); cursor: not-
 .input:disabled::-webkit-calendar-picker-indicator { background: var(--texto-deshabilitado); cursor: not-allowed; }
 textarea.input { min-height: 0; padding-block: var(--e2); }
 
-/* Variante subrayada: sólo en el ingreso */
-.input-linea {
-  border: 0;
-  border-bottom: 1.5px solid var(--borde-control);
-  border-radius: 0;
-  padding: 8px 28px 8px 0;
-  background: transparent;
-}
-.input-linea:focus { border-bottom-color: var(--foco); box-shadow: none; }
 
 /* Misma forma que .input (radio, alto, borde): junto a un select en un filtro, son un solo
    tipo de control. */

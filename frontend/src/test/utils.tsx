@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, type InitialEntry } from 'react-router-dom'
 
 import { AuthProvider } from '@/features/auth'
 
@@ -12,7 +12,7 @@ export function crearQueryClient() {
   })
 }
 
-export function envolver(ui: ReactNode, { ruta = '/' } = {}) {
+export function envolver(ui: ReactNode, { ruta = '/' as InitialEntry } = {}) {
   return (
     <QueryClientProvider client={crearQueryClient()}>
       <MemoryRouter initialEntries={[ruta]}>
@@ -22,6 +22,6 @@ export function envolver(ui: ReactNode, { ruta = '/' } = {}) {
   )
 }
 
-export function renderizar(ui: ReactElement, opciones?: { ruta?: string }) {
+export function renderizar(ui: ReactElement, opciones?: { ruta?: InitialEntry }) {
   return render(envolver(ui, opciones))
 }
