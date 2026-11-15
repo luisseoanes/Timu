@@ -332,6 +332,25 @@ describe('Administración: catálogos apagados', () => {
 })
 
 describe('Administración: reportes y pasarela', () => {
+  it('abre la vista de eventos que dice la URL', async () => {
+    const estados: (string | null)[] = []
+    server.use(
+      ...base,
+      http.get(`${API}/dashboard/reportes`, () => HttpResponse.json([])),
+      http.get(`${API}/dashboard/definiciones`, () => HttpResponse.json([])),
+      http.get(`${API}/cartera/eventos-pasarela/recuentos`, () => HttpResponse.json({ error: 0, procesado: 2, todos: 2 })),
+      http.get(`${API}/cartera/eventos-pasarela`, ({ request }) => {
+        estados.push(new URL(request.url).searchParams.get('estado'))
+        return HttpResponse.json({ items: [], total: 0, limit: 50, offset: 0 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<AdminPage />, { ruta: '/admin?eventos=procesado' })
+    await user.click(await screen.findByRole('tab', { name: 'Reportes y pasarela' }))
+    expect(await screen.findByRole('button', { name: 'Procesados 2' })).toHaveAttribute('aria-pressed', 'true')
+    await waitFor(() => expect(estados).toContain('procesado'))
+  })
+
   it('crea un reporte con sus indicadores y reprocesa un evento con error', async () => {
     const pedidos: unknown[] = []
     server.use(
@@ -352,6 +371,9 @@ describe('Administración: reportes y pasarela', () => {
           offset: 0,
         }),
       ),
+      http.get(`${API}/cartera/eventos-pasarela/recuentos`, () =>
+        HttpResponse.json({ error: 1, procesado: 4, todos: 5 }),
+      ),
       http.post(`${API}/cartera/eventos-pasarela/ev1/reprocesar`, () => {
         pedidos.push('reprocesar')
         return HttpResponse.json({})
@@ -362,6 +384,9 @@ describe('Administración: reportes y pasarela', () => {
     // El evento en palabras, no el código del proveedor.
     expect(screen.getByText('Cambio en un pago')).toBeInTheDocument()
     expect(screen.getByText('Wompi')).toBeInTheDocument()
+    // Cada vista dice cuántos tiene, y la elegida vive en la URL, como en las demás bandejas (DEU-26).
+    expect(await screen.findByRole('button', { name: 'Con error 1' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Procesados 4' })).toHaveAttribute('aria-pressed', 'false')
     await user.click(screen.getByRole('button', { name: 'Reprocesar el evento TX-1' }))
     await user.click(screen.getByRole('button', { name: /nuevo reporte/i }))
     const modal = await screen.findByRole('dialog')

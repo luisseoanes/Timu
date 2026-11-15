@@ -10,6 +10,7 @@ import type {
   Page,
   PlanRead,
   PromptRead,
+  RecuentosEventosPasarela,
   RecuentosUsuarios,
   ReglaRead,
   ReporteRead,
@@ -125,6 +126,13 @@ export function useReportes() {
   return useQuery({
     queryKey: ['reportes'],
     queryFn: async () => (await api.get<ReporteRead[]>('/dashboard/reportes')).data,
+  })
+}
+
+export function useRecuentosEventosPasarela() {
+  return useQuery({
+    queryKey: ['pasarela', 'recuentos'],
+    queryFn: async () => (await api.get<RecuentosEventosPasarela>('/cartera/eventos-pasarela/recuentos')).data,
   })
 }
 

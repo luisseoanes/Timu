@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
 import { Distintivo } from '@/components/Distintivo'
@@ -9,7 +10,7 @@ import { mensajeError } from '@/lib/errores'
 import { fechaHora } from '@/lib/formato'
 import type { ReporteRead } from '@/types'
 
-import { useEventosPasarela, useGuardarReporte, useReportes, useReprocesarEvento } from './api'
+import { useEventosPasarela, useGuardarReporte, useRecuentosEventosPasarela, useReportes, useReprocesarEvento } from './api'
 
 const PERIODICIDAD: Record<string, string> = {
   diaria: 'Cada día (el día anterior)',
@@ -139,7 +140,7 @@ function EditarReporte({ reporte, onCerrar }: { reporte: ReporteRead | null; onC
           <span>Destinatarios (correos separados por coma)</span>
           <input className="input" name="destinatarios" defaultValue={reporte?.destinatarios.join(', ')} required />
         </label>
-        <fieldset className="ancho grupo-chips" style={{ border: 0, padding: 0, margin: 0 }}>
+        <fieldset className="ancho grupo-chips">
           <legend className="subtitulo">Indicadores</legend>
           {definiciones.data?.map((d) => (
             <button
@@ -169,18 +170,29 @@ function EditarReporte({ reporte, onCerrar }: { reporte: ReporteRead | null; onC
 const TIPOS_EVENTO: Record<string, string> = { 'transaction.updated': 'Cambio en un pago' }
 const PROVEEDORES: Record<string, string> = { wompi: 'Wompi' }
 
-// Los valores son los del backend (core/enums.py, EstadoEventoPasarela); «Todos» no filtra.
+// Los valores son los del backend (core/enums.py, EstadoEventoPasarela) y las claves de sus
+// recuentos; «Todos» no filtra.
 const VISTAS_EVENTOS = [
   { valor: 'error', label: 'Con error', vacio: 'Ningún evento de la pasarela ha fallado.' },
   { valor: 'procesado', label: 'Procesados', vacio: 'Aún no se ha procesado ningún evento.' },
-  { valor: '', label: 'Todos', vacio: 'La pasarela no ha enviado ningún evento todavía.' },
+  { valor: 'todos', label: 'Todos', vacio: 'La pasarela no ha enviado ningún evento todavía.' },
 ] as const
+type VistaEventos = (typeof VISTAS_EVENTOS)[number]['valor']
 
-/** Lo que avisa la pasarela de pagos: los que fallaron primero, para reprocesarlos. */
+/** Lo que avisa la pasarela de pagos: los que fallaron primero, para reprocesarlos. La vista vive
+ * en la URL (`?eventos=`), como en las demás bandejas, y cada una dice cuántos tiene. */
 function EventosPasarela() {
-  const [estado, setEstado] = useState<string>('error')
-  const eventos = useEventosPasarela(estado || undefined)
+  const [params, setParams] = useSearchParams()
+  const estado: VistaEventos = VISTAS_EVENTOS.find((v) => v.valor === params.get('eventos'))?.valor ?? 'error'
+  const eventos = useEventosPasarela(estado === 'todos' ? undefined : estado)
+  const recuentos = useRecuentosEventosPasarela()
   const reprocesar = useReprocesarEvento()
+
+  function setEstado(valor: VistaEventos) {
+    const siguiente = new URLSearchParams(params)
+    siguiente.set('eventos', valor)
+    setParams(siguiente, { replace: true })
+  }
 
   return (
     <section className="tarjeta">
@@ -199,6 +211,12 @@ function EventosPasarela() {
               onClick={() => setEstado(v.valor)}
             >
               {v.label}
+              {recuentos.data && (
+                <>
+                  {' '}
+                  <span className="segmento-recuento numero">{recuentos.data[v.valor]}</span>
+                </>
+              )}
             </button>
           ))}
         </div>
