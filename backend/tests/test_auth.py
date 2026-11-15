@@ -1,7 +1,7 @@
 """F1-AUT-01 sesion y cierre, F1-AUT-03 recuperacion, F1-AUT-04 usuario de portal."""
 
 import re
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from httpx import AsyncClient
 from sqlalchemy import select, update
@@ -200,19 +200,34 @@ async def test_el_enlace_dice_si_sirve_sin_gastarse(client: AsyncClient, db, adm
     for _ in range(2):
         resp = await client.post(ENLACE, json={"token": token})
         assert resp.status_code == 200
-        assert resp.json() == {
+        vigente = resp.json()
+        expira = datetime.fromisoformat(vigente.pop("expira_en"))
+        assert vigente == {
             "estado": "vigente",
             "proposito": "recuperacion",
             "nombre": admin.nombre.split()[0],
         }
+        # La recuperacion dura TOKEN_RECUPERACION_MINUTOS: la pantalla dice hasta cuando.
+        restante = expira - ahora()
+        assert timedelta(minutes=29) < restante <= timedelta(minutes=30)
 
     clave = {"token": token, "password": "nueva-clave-segura"}
     assert (await client.post("/api/v1/auth/restablecer", json=clave)).status_code == 200
     usado = (await client.post(ENLACE, json={"token": token})).json()
-    assert usado == {"estado": "usado", "proposito": "recuperacion", "nombre": None}
+    assert usado == {
+        "estado": "usado",
+        "proposito": "recuperacion",
+        "nombre": None,
+        "expira_en": None,
+    }
 
     ajeno = (await client.post(ENLACE, json={"token": "no-existe"})).json()
-    assert ajeno == {"estado": "invalido", "proposito": None, "nombre": None}
+    assert ajeno == {
+        "estado": "invalido",
+        "proposito": None,
+        "nombre": None,
+        "expira_en": None,
+    }
 
 
 async def test_un_enlace_vencido_o_de_una_cuenta_inactiva_no_sirve(
@@ -232,7 +247,12 @@ async def test_un_enlace_vencido_o_de_una_cuenta_inactiva_no_sirve(
         .values(expira_en=ahora() - timedelta(minutes=1))
     )
     vencido = (await client.post(ENLACE, json={"token": token})).json()
-    assert vencido == {"estado": "vencido", "proposito": "recuperacion", "nombre": None}
+    assert vencido == {
+        "estado": "vencido",
+        "proposito": "recuperacion",
+        "nombre": None,
+        "expira_en": None,
+    }
 
 
 async def test_consultar_enlaces_cuenta_en_el_limite_de_las_credenciales(
@@ -292,7 +312,9 @@ async def test_el_enlace_de_activacion_saluda_a_la_familia(client: AsyncClient, 
     await client.post(f"/api/v1/familias/{familia['id']}/acceso-portal", headers=headers)
     token = _token_del_correo((await _correo_para(db, FAMILIA["email"])).contenido)
     resp = await client.post(ENLACE, json={"token": token})
-    assert resp.json() == {"estado": "vigente", "proposito": "activacion", "nombre": "Ana"}
+    activacion = resp.json()
+    assert activacion.pop("expira_en") is not None
+    assert activacion == {"estado": "vigente", "proposito": "activacion", "nombre": "Ana"}
 
 
 async def test_familia_activa_su_cuenta_y_ve_solo_lo_suyo(client: AsyncClient, db, headers):

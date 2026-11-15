@@ -102,6 +102,7 @@ export interface EstadoEnlace {
   estado: 'vigente' | 'usado' | 'vencido' | 'invalido'
   proposito?: 'recuperacion' | 'activacion' | null
   nombre?: string | null
+  expira_en?: string | null
 }
 
 export interface CiudadRead {

@@ -217,7 +217,12 @@ def consultar_enlace(db: Session, token: str) -> EstadoEnlace:
     usuario = db.get(Usuario, registro.usuario_id)
     if usuario is None or not usuario.activo:
         return EstadoEnlace(estado="invalido")
-    return EstadoEnlace(estado="vigente", proposito=proposito, nombre=usuario.nombre.split()[0])
+    return EstadoEnlace(
+        estado="vigente",
+        proposito=proposito,
+        nombre=usuario.nombre.split()[0],
+        expira_en=con_zona(registro.expira_en),
+    )
 
 
 def restablecer(db: Session, token: str, password: str) -> Usuario:

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
@@ -91,6 +92,9 @@ class EstadoEnlace(BaseModel):
     estado: Literal["vigente", "usado", "vencido", "invalido"]
     proposito: Literal["recuperacion", "activacion"] | None = None
     nombre: str | None = None
+    expira_en: datetime | None = Field(
+        default=None, description="Hasta cuando sirve un enlace vigente: la pantalla lo dice"
+    )
 
 
 class CodigoIn(BaseModel):
