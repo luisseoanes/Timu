@@ -128,7 +128,9 @@ describe('interesados', () => {
     await user.selectOptions(within(ventana).getByLabelText('Cómo llegó'), 'referido')
     await user.click(within(ventana).getByRole('button', { name: 'Guardar interesado' }))
     await waitFor(() => expect(enviado).toEqual({ nombre: 'Laura', telefono: '3001234567', origen: 'referido' }))
-    expect(await screen.findByRole('region', { name: 'Interesado abierto' })).toBeInTheDocument()
+    // Crear y abrir la ficha encadena el cierre de la ventana, el listado y la ficha: con la
+    // suite entera bajo cobertura, un segundo no siempre basta (frontend/CLAUDE.md).
+    expect(await screen.findByRole('region', { name: 'Interesado abierto' }, { timeout: 5000 })).toBeInTheDocument()
   })
 })
 
