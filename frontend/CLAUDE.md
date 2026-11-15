@@ -104,6 +104,9 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
 ## Trampas conocidas (pruebas, estilos y herramientas)
 
 - La ficha vacía y la abierta de un listado con ficha comparten `aria-label` («Ruta abierta»): espera a un elemento de la ficha (su título), no a la región, o la prueba lee el marcador.
+- Si una prueba falla con «peticiones sin handler» que no son suyas, eran de la anterior: `setup.ts`
+  ya espera la red al cerrar cada prueba (tope de 2 s); una consulta que se dispara más tarde (un
+  temporizador, un `refetchInterval`) se simula en la prueba que la provoca.
 - Con una ventana de Radix abierta, el resto de la página queda oculto a los lectores de pantalla y `findByRole` no lo encuentra hasta que se cierra. Crear y abrir la ficha encadena el cierre, el listado y la ficha: espera a su título con `{ timeout: 5000 }`. Con un segundo falla a veces con la suite entera bajo cobertura.
 - `Pestanas` sin `valor` no cambia de pestaña al cambiar la URL: un enlace desde otra pestaña que abre un registro (`?interesado=`) lo deja en una pestaña oculta. La página controla la pestaña y vuelve a la del registro cuando este cambia (`ComercialPage.tsx`).
 - Dentro de `.fila-cuerpo` cada `span` es un bloque: un dato en un `span` propio («60 min», un número) parte la línea. Escríbelo en un solo texto.

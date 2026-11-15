@@ -20,9 +20,27 @@ beforeAll(() =>
     },
   }),
 )
-afterEach(() => {
-  // Primero se desmonta: así ninguna consulta en vuelo llega cuando ya no hay handlers.
+// Peticiones que salieron y aún no tienen respuesta.
+const enVuelo = new Set<string>()
+server.events.on('request:start', ({ requestId }) => enVuelo.add(requestId))
+server.events.on('request:end', ({ requestId }) => enVuelo.delete(requestId))
+
+/** Deja salir lo que ya estaba saliendo y espera sus respuestas, con un tope. */
+async function esperarRed(topeMs = 2000) {
+  const fin = Date.now() + topeMs
+  do {
+    // axios arma la petición en una cadena de promesas: sale uno o dos turnos después.
+    await new Promise((r) => setTimeout(r, 0))
+  } while (enVuelo.size > 0 && Date.now() < fin)
+}
+
+afterEach(async () => {
+  // Primero se desmonta; después se deja terminar lo que la prueba ya había pedido, con sus
+  // handlers. Sin esa espera, una petición que axios aún armaba salía tras `resetHandlers`, sin
+  // handler, y la guarda de abajo se la cobraba a la prueba siguiente: Comercial y Campañas
+  // fallaban en 5 de cada 6 ejecuciones locales de la suite con cobertura.
   cleanup()
+  await esperarRed()
   server.resetHandlers()
   const pendientes = sinHandler.splice(0)
   expect(pendientes, 'peticiones sin handler de MSW: simúlalas en la prueba o en src/test/handlers.ts').toEqual([])
