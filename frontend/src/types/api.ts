@@ -98,6 +98,12 @@ export interface MiembroEquipo {
   rol: Rol
 }
 
+export interface EstadoEnlace {
+  estado: 'vigente' | 'usado' | 'vencido' | 'invalido'
+  proposito?: 'recuperacion' | 'activacion' | null
+  nombre?: string | null
+}
+
 export interface CiudadRead {
   codigo: string
   nombre: string

@@ -33,6 +33,7 @@ ESQUEMAS = [
     "CambioHistorial",
     "UsuarioRead",
     "MiembroEquipo",
+    "EstadoEnlace",
     "CiudadRead",
     "EspecieRead",
     "PasoTipoRead",

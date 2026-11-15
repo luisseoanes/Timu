@@ -75,6 +75,8 @@ PUBLICAS_ESPERADAS = {
     "POST /api/v1/auth/login",
     "POST /api/v1/auth/refresh",
     "POST /api/v1/auth/recuperar",
+    # R3-PUB-01 la pantalla del enlace dice de entrada si sirve, sin gastarlo.
+    "POST /api/v1/auth/enlace",
     "POST /api/v1/auth/restablecer",
     "POST /api/v1/auth/codigo",  # F3-POR-07 ingreso del portal por WhatsApp
     "POST /api/v1/auth/codigo/verificacion",

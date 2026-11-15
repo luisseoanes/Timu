@@ -27,6 +27,8 @@ from app.modules.auth import service, sesiones
 from app.modules.auth.models import Usuario
 from app.modules.auth.schemas import (
     CodigoIn,
+    EnlaceIn,
+    EstadoEnlace,
     MiembroEquipo,
     RecuentosUsuarios,
     RecuperarIn,
@@ -117,12 +119,29 @@ async def recuperar(db: DbSession, data: RecuperarIn) -> Mensaje:
     return Mensaje(detail="Si la cuenta existe, enviamos un enlace para restablecer la contrasena")
 
 
-@router.post(
-    "/restablecer", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(publico)]
-)
-async def restablecer(db: DbSession, data: RestablecerIn) -> None:
-    """Define la contrasena con un enlace de recuperacion o de activacion del portal."""
-    await db.run_sync(service.restablecer, data.token, data.password)
+@router.post("/enlace", response_model=EstadoEnlace, dependencies=[Depends(publico)])
+async def consultar_enlace(db: DbSession, data: EnlaceIn) -> EstadoEnlace:
+    """Estado de un enlace de recuperacion o de activacion, sin gastarlo. El token va en el
+    cuerpo y no en la URL: el registro de accesos escribe la URL entera."""
+    return await db.run_sync(service.consultar_enlace, data.token)
+
+
+@router.post("/restablecer", response_model=Sesion, dependencies=[Depends(publico)])
+async def restablecer(
+    db: DbSession, request: Request, response: Response, data: RestablecerIn
+) -> Sesion:
+    """Define la contrasena con un enlace de recuperacion o de activacion del portal y abre
+    la sesion: el enlace ya es la credencial, y pedir otra vez la clave recien creada no
+    anade nada. Las demas sesiones de la cuenta quedan cerradas."""
+    usuario = await db.run_sync(service.restablecer, data.token, data.password)
+    access, refresh = await db.run_sync(
+        sesiones.crear,
+        usuario,
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    establecer_cookie_sesion(response, access, refresh)
+    return _sesion(usuario)
 
 
 @router.post("/codigo", status_code=status.HTTP_202_ACCEPTED, dependencies=[Depends(publico)])

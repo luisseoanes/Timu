@@ -1,13 +1,16 @@
 """F1-AUT-01 sesion y cierre, F1-AUT-03 recuperacion, F1-AUT-04 usuario de portal."""
 
 import re
+from datetime import timedelta
 
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.core.config import settings
 from app.core.enums import Rol
-from app.modules.auth.models import Usuario
+from app.core.security import hash_token
+from app.core.tiempo import ahora
+from app.modules.auth.models import TokenUsoUnico, Usuario
 from app.modules.comunicaciones.models import Mensaje
 from tests.conftest import PASSWORD, crear_usuario, login
 
@@ -153,7 +156,7 @@ async def test_recuperacion_con_enlace_de_un_solo_uso(client: AsyncClient, db, a
 
     token = _token_del_correo(correo.contenido)
     nueva = {"token": token, "password": "nueva-clave-segura"}
-    assert (await client.post("/api/v1/auth/restablecer", json=nueva)).status_code == 204
+    assert (await client.post("/api/v1/auth/restablecer", json=nueva)).status_code == 200
     await _login(client, admin.email, "nueva-clave-segura")
 
     reuso = await client.post("/api/v1/auth/restablecer", json=nueva)
@@ -186,6 +189,79 @@ async def test_nuevo_enlace_invalida_el_anterior(client: AsyncClient, db, admin)
     assert resp.status_code == 400
 
 
+ENLACE = "/api/v1/auth/enlace"
+
+
+async def test_el_enlace_dice_si_sirve_sin_gastarse(client: AsyncClient, db, admin):
+    """R3-PUB-01 La pantalla del enlace dice de entrada si sirve: consultarlo no lo gasta."""
+    await client.post("/api/v1/auth/recuperar", json={"identificador": admin.email})
+    token = _token_del_correo((await _correo_para(db, admin.email)).contenido)
+
+    for _ in range(2):
+        resp = await client.post(ENLACE, json={"token": token})
+        assert resp.status_code == 200
+        assert resp.json() == {
+            "estado": "vigente",
+            "proposito": "recuperacion",
+            "nombre": admin.nombre.split()[0],
+        }
+
+    clave = {"token": token, "password": "nueva-clave-segura"}
+    assert (await client.post("/api/v1/auth/restablecer", json=clave)).status_code == 200
+    usado = (await client.post(ENLACE, json={"token": token})).json()
+    assert usado == {"estado": "usado", "proposito": "recuperacion", "nombre": None}
+
+    ajeno = (await client.post(ENLACE, json={"token": "no-existe"})).json()
+    assert ajeno == {"estado": "invalido", "proposito": None, "nombre": None}
+
+
+async def test_un_enlace_vencido_o_de_una_cuenta_inactiva_no_sirve(
+    client: AsyncClient, db, headers
+):
+    otro = await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    otro_id = otro.id
+    await client.post("/api/v1/auth/recuperar", json={"identificador": "vet@timu.co"})
+    token = _token_del_correo((await _correo_para(db, "vet@timu.co")).contenido)
+
+    await client.patch(f"/api/v1/auth/usuarios/{otro_id}", json={"activo": False}, headers=headers)
+    assert (await client.post(ENLACE, json={"token": token})).json()["estado"] == "invalido"
+
+    await db.execute(
+        update(TokenUsoUnico)
+        .where(TokenUsoUnico.token_hash == hash_token(token))
+        .values(expira_en=ahora() - timedelta(minutes=1))
+    )
+    vencido = (await client.post(ENLACE, json={"token": token})).json()
+    assert vencido == {"estado": "vencido", "proposito": "recuperacion", "nombre": None}
+
+
+async def test_consultar_enlaces_cuenta_en_el_limite_de_las_credenciales(
+    client: AsyncClient, monkeypatch
+):
+    """Un token se podria adivinar a fuerza de consultas: comparte el limite estricto."""
+    from app.core import rate_limit
+
+    monkeypatch.setattr(rate_limit.time, "time", lambda: 1_790_000_010.0)
+    for _ in range(10):
+        assert (await client.post(ENLACE, json={"token": "x"})).status_code == 200
+    assert (await client.post(ENLACE, json={"token": "x"})).status_code == 429
+
+
+async def test_restablecer_abre_la_sesion(client: AsyncClient, db, admin):
+    """Tras definir la clave con el enlace se entra directo: pedirla otra vez no anade nada."""
+    await client.post("/api/v1/auth/recuperar", json={"identificador": admin.email})
+    token = _token_del_correo((await _correo_para(db, admin.email)).contenido)
+    resp = await client.post(
+        "/api/v1/auth/restablecer", json={"token": token, "password": "otra-clave-1"}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["usuario"]["email"] == admin.email
+    acceso = resp.cookies[settings.COOKIE_NAME]
+    client.cookies.clear()
+    me = await client.get("/api/v1/auth/me", headers=_con(acceso))
+    assert me.status_code == 200
+
+
 # --- F1-AUT-04 --------------------------------------------------------------------------------
 
 FAMILIA = {
@@ -209,6 +285,14 @@ async def _familia_con_portal(client: AsyncClient, db, headers, datos=FAMILIA) -
     )
     sesion = await _login(client, datos["email"], "clave-familia")
     return familia["id"], _con(sesion["acceso"])
+
+
+async def test_el_enlace_de_activacion_saluda_a_la_familia(client: AsyncClient, db, headers):
+    familia = (await client.post("/api/v1/familias", json=FAMILIA, headers=headers)).json()
+    await client.post(f"/api/v1/familias/{familia['id']}/acceso-portal", headers=headers)
+    token = _token_del_correo((await _correo_para(db, FAMILIA["email"])).contenido)
+    resp = await client.post(ENLACE, json={"token": token})
+    assert resp.json() == {"estado": "vigente", "proposito": "activacion", "nombre": "Ana"}
 
 
 async def test_familia_activa_su_cuenta_y_ve_solo_lo_suyo(client: AsyncClient, db, headers):

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import acotar_publico, nuevo_id
-from app.core.enums import Rol
+from app.core.enums import PropositoToken, Rol
 from app.core.errores import Conflicto, ErrorDominio, NoEncontrado, ReglaNegocio
 from app.core.security import (
     generar_token_opaco,
@@ -23,7 +23,7 @@ from app.core.tiempo import ahora, con_zona
 from app.core.validaciones import normalizar_telefono
 from app.modules.auth import sesiones
 from app.modules.auth.models import TokenUsoUnico, Usuario
-from app.modules.auth.schemas import UsuarioCreate, UsuarioUpdate
+from app.modules.auth.schemas import EstadoEnlace, UsuarioCreate, UsuarioUpdate
 from app.modules.comunicaciones import service as comunicaciones
 
 logger = structlog.get_logger(__name__)
@@ -190,6 +190,34 @@ def solicitar_recuperacion(db: Session, identificador: str) -> None:
         logger.info("Recuperacion solicitada para identificador inexistente o inactivo")
         return
     emitir_enlace(db, usuario, "recuperacion")
+
+
+def consultar_enlace(db: Session, token: str) -> EstadoEnlace:
+    """Dice si un enlace de recuperacion o de activacion sirve, sin gastarlo, para que la
+    pantalla no pida la contrasena dos veces y falle al final. Un enlace sustituido por uno
+    mas nuevo cuenta como usado: `emitir_enlace` lo marca asi."""
+    token_hash = hash_token(token)
+    acotar_publico(db, token=token_hash)
+    registro = db.scalar(
+        select(TokenUsoUnico).where(
+            TokenUsoUnico.token_hash == token_hash,
+            TokenUsoUnico.proposito.in_((PropositoToken.RECUPERACION, PropositoToken.ACTIVACION)),
+        )
+    )
+    if registro is None:
+        return EstadoEnlace(estado="invalido")
+    proposito: Proposito = (
+        "recuperacion" if registro.proposito == PropositoToken.RECUPERACION else "activacion"
+    )
+    if registro.usado_en is not None:
+        return EstadoEnlace(estado="usado", proposito=proposito)
+    if con_zona(registro.expira_en) <= ahora():
+        return EstadoEnlace(estado="vencido", proposito=proposito)
+    acotar_publico(db, usuario=registro.usuario_id)
+    usuario = db.get(Usuario, registro.usuario_id)
+    if usuario is None or not usuario.activo:
+        return EstadoEnlace(estado="invalido")
+    return EstadoEnlace(estado="vigente", proposito=proposito, nombre=usuario.nombre.split()[0])
 
 
 def restablecer(db: Session, token: str, password: str) -> Usuario:

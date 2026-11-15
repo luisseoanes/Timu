@@ -1,3 +1,4 @@
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
@@ -77,6 +78,19 @@ class RecuperarIn(BaseModel):
 class RestablecerIn(BaseModel):
     token: str
     password: str = Field(min_length=8, max_length=128)
+
+
+class EnlaceIn(BaseModel):
+    token: str = Field(max_length=255)
+
+
+class EstadoEnlace(BaseModel):
+    """Lo que la pantalla necesita para decir de entrada si el enlace sirve, sin gastarlo.
+    El nombre de pila solo va con un enlace vigente: quien lo tiene ya tiene la credencial."""
+
+    estado: Literal["vigente", "usado", "vencido", "invalido"]
+    proposito: Literal["recuperacion", "activacion"] | None = None
+    nombre: str | None = None
 
 
 class CodigoIn(BaseModel):
