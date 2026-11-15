@@ -43,6 +43,10 @@ lo aprendido al cerrar Familias, Rutas, Clínica, el portal, el Inicio y Servici
 - **Con una sesión guardada hace más de 30 minutos, el token de acceso ha vencido**: antes de
   pedir nada con `page.request`, carga una pantalla y espera a `networkidle` para que se renueve.
   (En el e2e no pasa: las sesiones son recién creadas.)
+- **Las páginas sin sesión (el acceso) no necesitan gastar el cupo**: cada carga pregunta por
+  `/auth/me` y prueba una renovación, que cuenta en el límite de 10 por minuto. Interceptar las dos
+  con un 401 (`page.route`) deja capturar todas las que hagan falta; el estado del enlace
+  (`/auth/enlace`) se simula igual.
 - **Lotes por usuario con un minuto entre lotes**: la API admite 120 peticiones por minuto por
   usuario, y una carga del panel gasta de 8 a 12. No captures con `comercial@timu.co` justo
   antes del e2e contra el stack, que lo deja sin cupo (429).

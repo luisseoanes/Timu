@@ -698,7 +698,7 @@
     "typographyMeta": {
       "display": {
         "displayName": "Display (--t-display)",
-        "purpose": "Nombre de la familia abierta, saludo, ingreso. Uno por pantalla."
+        "purpose": "Nombre de la familia abierta, saludo, título del acceso. Uno por pantalla; en el acceso, la frase del panel de marca va también a 34 px en blanco."
       },
       "cifra": {
         "displayName": "Cifra (--t-cifra)",
@@ -755,6 +755,11 @@
         "name": "halo-proxima",
         "value": "0 0 0 3px var(--indicador-seleccion)",
         "purpose": "Estación próxima o actual de toda línea (familia, portal, ruta, Inicio, consulta)."
+      },
+      {
+        "name": "halo-proxima-sobre-marca",
+        "value": "0 0 0 3px var(--indicador-sobre-marca)",
+        "purpose": "Estación próxima de la línea de marca del acceso, sobre marino."
       }
     ],
     "motion": [
@@ -793,7 +798,7 @@
       {
         "name": "movil",
         "value": "900px",
-        "purpose": "Barra inferior; listado o ficha; formularios a una columna; controles de 44 px."
+        "purpose": "Barra inferior; listado o ficha; formularios a una columna; controles de 44 px. En el acceso, el panel de marca pasa a franja con el logo compacto y la línea sin rótulos, y el formulario baja debajo."
       },
       {
         "name": "barra-6",
@@ -997,6 +1002,22 @@
       "description": "Cada ciudad, tipo de servicio o esquema dice su estado con una insignia («Activo» en ok, «Apagado» en neutro) y lleva al lado la acción: «Apagar» plano, que confirma; «Encender» suave y directo.",
       "html": "<div class=\"ds-fila\"><span class=\"ds-nombre\">Cali</span><span class=\"ds-estado\"><span class=\"ds-insignia ds-ok\">Activo</span><button class=\"ds-btn ds-btn-plano\">Apagar</button></span></div><div class=\"ds-fila\"><span class=\"ds-nombre\">Pasto</span><span class=\"ds-estado\"><span class=\"ds-insignia ds-neutro\">Apagado</span><button class=\"ds-btn ds-btn-suave\">Encender</button></span></div>",
       "css": ".ds-fila { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); padding-block: var(--e3); border-bottom: 1px solid var(--borde); font-family: var(--fuente); } .ds-nombre { font-size: var(--t-cuerpo); font-weight: 700; color: var(--texto-titulo); } .ds-estado { display: inline-flex; align-items: center; gap: var(--e2); flex-shrink: 0; } .ds-insignia { font-size: var(--t-etiqueta); font-weight: 700; padding: 3px 10px; border-radius: var(--r-pastilla); } .ds-ok { background: var(--estado-ok-fondo); color: var(--estado-ok-texto); } .ds-neutro { background: var(--estado-neutro-fondo); color: var(--estado-neutro-texto); } .ds-btn { font-family: var(--fuente); font-size: var(--t-cuerpo); font-weight: 600; min-height: 40px; padding: 0 var(--e5); border-radius: var(--r-campo); border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; transition: background-color var(--duracion) var(--curva), border-color var(--duracion) var(--curva); } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; } .ds-btn-plano { background: transparent; color: var(--texto-suave); } .ds-btn-plano:hover { color: var(--texto-titulo); background: var(--superficie-lienzo); } .ds-btn-suave { background: var(--accion-suave-fondo); color: var(--accion-suave-texto); } .ds-btn-suave:hover { background: var(--accion-suave-fondo-hover); }"
+    },
+    {
+      "name": "La línea de marca del acceso",
+      "kind": "custom",
+      "refersTo": "parada-punto",
+      "description": "El año de una familia en señalética sobre el panel marino del acceso (regla 6): tramo de 8 px, recorrido en verde-500, lo que falta translúcido; hechas llenas, la próxima con anillo blanco y halo verde, la programada en contorno marino-200; «Hoy» como marca blanca de 4 × 24 px. Decorativa (aria-hidden).",
+      "html": "<div class=\"ds-acceso\"><p class=\"ds-frase\">Tu peludito, bien cuidado.</p><ol class=\"ds-lm\" aria-hidden=\"true\"><li data-t=\"hecha\"><span class=\"ds-lp\"></span><span class=\"ds-lr\">Afiliación</span></li><li data-t=\"hecha\"><span class=\"ds-lp\"></span><span class=\"ds-lr\">Vacunas</span></li><li data-t=\"proxima\"><span class=\"ds-hoy\"><span>Hoy</span></span><span class=\"ds-lp\"></span><span class=\"ds-lr\">Visita en casa</span></li><li data-t=\"programada\"><span class=\"ds-lp\"></span><span class=\"ds-lr\">Renovación</span></li></ol></div>",
+      "css": ".ds-acceso { display: grid; gap: var(--e8); padding: var(--e8) var(--e6); background: var(--superficie-marca); font-family: var(--fuente); } .ds-frase { margin: 0; font-family: var(--fuente-titulos); font-size: var(--t-display); line-height: 1.2; color: var(--texto-sobre-marca); } .ds-lm { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(max-content, 1fr)); } .ds-lm li { position: relative; display: grid; justify-items: start; gap: var(--e3); padding-top: 28px; } .ds-lm li::before { content: \"\"; position: absolute; top: 36px; left: 12px; width: 100%; height: 8px; background: var(--borde-sobre-marca); } .ds-lm li[data-t=\"hecha\"]::before { background: var(--indicador-sobre-marca); } .ds-lm li:last-child::before { display: none; } .ds-lp { position: relative; z-index: 1; box-sizing: border-box; width: 24px; height: 24px; border-radius: var(--r-pastilla); border: 4px solid var(--texto-sobre-marca-suave); background: var(--superficie-marca); } .ds-lm li[data-t=\"hecha\"] .ds-lp { border-color: var(--indicador-sobre-marca); background: var(--indicador-sobre-marca); } .ds-lm li[data-t=\"proxima\"] .ds-lp { border-color: var(--texto-sobre-marca); box-shadow: 0 0 0 3px var(--indicador-sobre-marca); } .ds-lr { font-size: var(--t-menor); color: var(--texto-sobre-marca-suave); padding-right: var(--e3); white-space: nowrap; } .ds-lm li[data-t=\"proxima\"] .ds-lr { color: var(--texto-sobre-marca); font-weight: 600; } .ds-hoy { position: absolute; top: 0; left: -40px; width: 40px; height: 60px; } .ds-hoy::before { content: \"\"; position: absolute; left: 0; right: 0; top: 36px; height: 8px; background: var(--borde-sobre-marca); } .ds-hoy::after { content: \"\"; position: absolute; left: 0; top: 28px; width: 4px; height: 24px; border-radius: 2px; background: var(--texto-sobre-marca); z-index: 1; } .ds-hoy > span { position: absolute; top: 0; left: 2px; transform: translateX(-50%); font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--texto-sobre-marca); }"
+    },
+    {
+      "name": "Aviso con icono",
+      "kind": "custom",
+      "refersTo": "distintivo-ok",
+      "description": "Recuadro tintado del tono de estado con esquina de campo y el icono de 16 px delante, que no encoge; un teléfono va en una sola pieza (.sin-cortes).",
+      "html": "<p class=\"ds-aviso ds-aviso-ok\" role=\"status\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z\"/></svg><span>Enviamos un código por WhatsApp al <span class=\"ds-sin-cortes\">300 123 4567</span>.</span></p><p class=\"ds-aviso ds-aviso-error\" role=\"alert\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 4 2.5 20h19z\"/><path d=\"M12 10v4\"/><path d=\"M12 17h.01\"/></svg><span>El correo o la contraseña no coinciden. Intenta de nuevo.</span></p>",
+      "css": ".ds-aviso { display: flex; gap: var(--e2); align-items: flex-start; margin: 0 0 var(--e2); padding: var(--e3) var(--e4); border-radius: var(--r-campo); font-family: var(--fuente); font-size: var(--t-menor); max-width: 400px; } .ds-aviso > svg { flex-shrink: 0; margin-top: 2px; } .ds-aviso-ok { background: var(--estado-ok-fondo); color: var(--estado-ok-texto); } .ds-aviso-error { background: var(--estado-peligro-fondo); color: var(--estado-peligro-texto); } .ds-sin-cortes { white-space: nowrap; }"
     }
   ],
   "narrative": {
@@ -1110,6 +1131,16 @@
         "name": "La regla de las palabras de la API",
         "section": "components",
         "body": "El panel no muestra códigos del backend: la API dice cada cosa en palabras (`condicion_texto`, `accion_texto`, `retirada`, los grupos de usuarios, de quién es una remisión y si venció) y los estados llegan a la vista por `Distintivo` con su nombre. El panel no deduce nada de un código ni copia una regla del backend para decidir qué mostrar."
+      },
+      {
+        "name": "La regla del enlace que se dice de entrada",
+        "section": "components",
+        "body": "El acceso no pide una contraseña con un enlace que no sirve: lo dice la API al abrirlo, y la pantalla responde a lo que dijo. El panel no deduce el estado de un enlace ni deja escribir dos veces la clave para enterarse después."
+      },
+      {
+        "name": "La regla de la frase que le habla a quien llega",
+        "section": "components",
+        "body": "El panel de marca dice una frase a la persona que llega, no vende la plataforma: ni funciones con icono, ni antetítulo. La frase cambia con la pantalla (la activación le da la bienvenida a la familia) y el título del formulario la saluda por su nombre cuando la API lo sabe."
       }
     ],
     "dos": [
@@ -1127,14 +1158,16 @@
       "Do confirma lo que no se deshace diciendo su alcance («Enviar ahora a 3 familias»): en verde si es el camino normal, con `btn-peligro` si anula (cancelar, marcar como perdido).",
       "Do di la dirección de un mensaje en palabras («Escribió», «Le escribimos a») y los teléfonos con `telefono()`.",
       "Do lleva lo reversible al menú de tres puntos, y en una confirmación nombra en el botón de cancelar lo que se conserva («Mantenerla», «Mantener el acceso», «Dejarlo activo»).",
-      "Do muestra lo que la API dice en palabras (`condicion_texto`, `accion_texto`, estados con nombre) y los importes en dólares con `dolares()`."
+      "Do muestra lo que la API dice en palabras (`condicion_texto`, `accion_texto`, estados con nombre) y los importes en dólares con `dolares()`.",
+      "Do en un aviso o una frase que nombra un teléfono, escríbelo con `telefono()` y envuélvelo en `.sin-cortes`: «300 123 4567» no se parte entre dos líneas.",
+      "Do en el acceso, pregunta a la API si un enlace sirve antes de pedir la contraseña, y ante uno que no sirve ofrece «Pedir un enlace nuevo» como el verde."
     ],
     "donts": [
       "Don't escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.",
       "Don't pongas sombra, borde de adorno ni degradado en paneles, tarjetas o barras.",
       "Don't pongas una etiqueta en mayúsculas encima de un título como antetítulo: la etiqueta nombra el dato o el bloque que tiene debajo.",
       "Don't deduzcas el color de un plan de su nombre ni uses el color de plan como estado.",
-      "Don't uses verde o naranja de marca como texto sobre claro (regla 1 del manual); sobre la barra marina solo blanco, marino-200, verde-500 y naranja-500 (regla 6).",
+      "Don't uses verde o naranja de marca como texto sobre claro (regla 1 del manual); sobre marino (la barra o el panel de marca del acceso) solo blanco, marino-200, verde-500 y naranja-500 (regla 6), más el translúcido `borde-sobre-marca` para lo que es tramo o hilo.",
       "Don't recolorees el logo ni lo dibujes con texto: va el SVG de `MarcaTimu`, a color o en blanco (sección 13 del manual).",
       "Don't uses los patrones de siluetas de la marca como decoración en las pantallas de trabajo (panel, portal, clínica aliada): son para las páginas públicas y de venta, donde la marca se presenta. En una pantalla de trabajo compiten con los datos.",
       "Don't resuelvas la línea con scroll horizontal ni con una ventana de «Anteriores» y «Siguientes»: escondían una cuota vencida.",
@@ -1142,7 +1175,9 @@
       "Don't uses «+» para «Más» en la navegación: se lee como crear.",
       "Don't uses el triángulo de alerta para un estado que no está vencido: «Por autorizar» lleva la llave.",
       "Don't muestres un código del backend a la vista (`dias_mora gte 25`, `borrador`, `aliada`): si la API no lo dice en palabras, se arregla en la API.",
-      "Don't confirmes en verde lo que anula o desactiva, ni pongas un interruptor o una casilla suelta que apague algo sin decir qué deja de pasar."
+      "Don't confirmes en verde lo que anula o desactiva, ni pongas un interruptor o una casilla suelta que apague algo sin decir qué deja de pasar.",
+      "Don't pongas en el panel de marca un antetítulo en pastilla, una tarjeta de vidrio (`backdrop-filter`) ni sombra, ni una lista de funciones con icono: es marino plano con el logo, la frase y la línea.",
+      "Don't pidas una contraseña con un enlace del que no sabes si sirve, ni digas que venció después de que la persona la escribió dos veces."
     ]
   }
 }

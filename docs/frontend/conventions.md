@@ -188,9 +188,9 @@ Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñ
   pasan a una columna mientras `.con-ficha` sigue a dos.
 - **`--sombra-1` y `--sombra-2` valen `none`** y siguen referenciados. Es coherente con el
   diseño plano, pero son tokens muertos: o se retiran o se les da uso.
-- **El ingreso y los módulos sin rediseñar** contradicen el sistema en puntos que sus unidades
-  de la hoja de ruta corrigen: el antetítulo en pastilla y el vidrio de `.ingreso-vista`, y la
-  opacidad de `.cupo:disabled` (la usa el selector de horarios del portal y del panel).
+- **Los módulos sin rediseñar** contradicen el sistema en puntos que sus unidades de la hoja de
+  ruta corrigen, como la opacidad de `.cupo:disabled` (la usa el selector de horarios del portal
+  y del panel).
 - **El portal copia cuatro reglas del backend** para no ofrecer lo que la API rechazaría:
   cuándo se agenda (`motivoSinAgendar`), qué cita cambia de fecha o se cancela (`puedeCambiar`,
   `puedeCancelar`) y qué tipos se agendan. La última ya no coincide: el backend deja agendar una

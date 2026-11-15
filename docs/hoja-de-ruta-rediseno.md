@@ -28,12 +28,12 @@ actualiza aquí, igual que en el backlog.
 | R0 — Preparación | 4 | 4 | 0 | 0 |
 | R1 — Fundaciones | 7 | 5 | 2 | 0 |
 | R2 — Panel del equipo | 10 | 10 | 0 | 0 |
-| R3 — Familias, aliada y páginas públicas | 6 | 2 | 0 | 4 |
+| R3 — Familias, aliada y páginas públicas | 6 | 3 | 0 | 3 |
 | R4 — Cierre | 4 | 0 | 0 | 4 |
-| **Total** | **31** | **21** | **2** | **8** |
+| **Total** | **31** | **22** | **2** | **7** |
 
-Al cierre de `R2-PAN-10` (2026-11-15) el panel del equipo está rediseñado entero. Lo siguiente es
-`R3-PUB-01` (ver «Orden de lo que sigue»).
+Al cierre de `R2-PAN-10` (2026-11-15) el panel del equipo está rediseñado entero, y con `R3-PUB-01`
+(el mismo día) también el acceso. Lo siguiente es `R3-PUB-02` (ver «Orden de lo que sigue»).
 
 ## Alcance medido
 
@@ -173,7 +173,7 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 
 | ID | Trabajo | Criterio de aceptación | Estado |
 | --- | --- | --- | --- |
-| `R3-PUB-01` | Ingreso | Ingreso, recuperación, restablecimiento y activación de la cuenta (`AccesoLayout`). El panel de marca pasa a marino, con los colores permitidos sobre marino (regla 6 del manual). | Pendiente |
+| `R3-PUB-01` | Ingreso | Ingreso, recuperación, restablecimiento y activación de la cuenta (`AccesoLayout`). El panel de marca pasa a marino, con los colores permitidos sobre marino (regla 6 del manual). | Hecho (2026-11-15), sin sorteo: el usuario eligió «Marino con la línea» (contrato en `.impeccable/surfaces/frontend-src-features-auth-accesolayout-tsx.md`). **Composición**: desde 900 px, el panel marino plano con el logo completo en blanco, una frase que le habla a quien llega («Tu peludito, bien cuidado.»; en la activación, «Te damos la bienvenida a la manada TIMU.») y la línea de una familia dibujada como señalética (hechas en verde, «Hoy», la próxima con halo); el formulario en una columna de 400 px. Por debajo, una franja marina con el logo compacto y la línea en miniatura. Desaparecen el antetítulo en pastilla, la tarjeta de vidrio y las tres funciones que vendían la plataforma al equipo. **Ingreso por público, con la contraseña en Familias** (decidido con el usuario): Familias ofrece el código por WhatsApp y, debajo, «Ingresar con contraseña»; antes, una familia que activaba su cuenta solo podía usar esa contraseña en «Equipo TIMU», y una sin celular no tenía cómo entrar. Quien llega desde el portal encuentra abierta la pestaña Familias. **La API dice si el enlace sirve antes de pedir la contraseña** (decidido con el usuario): `POST /auth/enlace` (el token en el cuerpo, no en la URL, que el registro de accesos escribe entera) da vigente, usado, vencido o inválido, el propósito y el nombre de pila, sin gastarlo y con el límite estricto de las credenciales; la pantalla saluda («Hola, Ana») o lo dice de entrada con «Pedir un enlace nuevo». Antes se escribía la contraseña dos veces para enterarse al final. **Al activar o restablecer se entra directo** (decidido con el usuario): `POST /auth/restablecer` abre la sesión y lleva a cada perfil a su espacio. También: la recuperación enviada dice qué pasó y nombra el dato, los campos no heredan la negrita de su etiqueta (el ejemplo parecía un valor escrito), el error de un campo va en rojo y enlazado, y el teléfono del código se agrupa como en el campo. Cerrado con el veredicto `ship` del revisor final tras tres pasadas. |
 | `R3-POR-01` | Portal: estructura y mascotas | Navegación del portal en el móvil, inicio, mascotas, carnet y «Agregar un peludo». | Hecho (2026-11-12): sorteo de superficie en modo Operate, elegida «Hoy, estás aquí» (contrato en `.impeccable/surfaces/frontend-src-features-portal-inicioportal-tsx.md`, boceto en `docs/rediseno/boceto-portal-hoy-estas-aqui.html`). El portal toma la estructura del panel (barra marina y, en el celular, barra inferior de cinco destinos). El inicio es la línea de la familia abierta en «hoy», servida por `GET /portal/linea`: lo hecho plegado, lo vencido agrupado (cuotas y preventivos, con el reparto por peludo), una sola acción verde (pagar lo vencido, agendar los preventivos o pagar la próxima cuota), el próximo cobro aunque su cuota no exista y un cierre que dice qué viene. El plan se dice en una frase («En pausa» para la familia) y solo ofrece agendar si el backend lo permitiría. Cada peludo tiene su ficha con su propia línea, su carnet sin contradicciones, su historia y su plan con los cupos de frente (desaparece «ilimitado»). También: las listas y los campos de fecha de todo el sistema dejan de mostrar el control del navegador, decidido con el usuario. Cerrado con el veredicto `ship` del revisor final tras tres pasadas. |
 | `R3-POR-02` | Portal: citas, pagos y datos | Citas, pagos, datos y documentos. Se aplica la voz del manual: desaparece «ilimitado» (`PortalPages.tsx`), sustituido por lo que sí aplica, como «sin tope de usos al mes». | Hecho (2026-11-13), sin sorteo: hereda los patrones de `R3-POR-01` («ilimitado» ya había desaparecido allí). **Citas**: agendar es el verde solo si el plan lo permite (si no, dice por qué y lleva a pagos); pestañas Próximas y Pasadas; cada cita con su día en la zona de Colombia, su estado dicho a la familia («Confirmada», «Por autorizar», «En camino») y solo las acciones que el backend acepta (antes se ofrecían en citas que rechazaba); la cancelación se confirma en rojo. **Pagos**: un solo verde por todo lo pendiente y, con varias cuotas, cada una se paga sola; las cuotas se nombran por su mes (la descripción del backend es técnica); el historial dice «No se cobró» en un rechazo, y al volver de la pasarela un aviso dice qué pasó con ese pago, preguntando mientras siga pendiente (antes esa ruta lo ignoraba). **Datos**: titular y documento de solo lectura, el contrato solo si hay uno vigente y los documentos en su panel. `PortalPages.tsx` desaparece, repartido por pantalla. Cerrado con el veredicto `ship` del revisor final. |
 | `R3-PUB-02` | Registro en línea | Sorteo de superficie en modo persuasivo para `/afiliacion`, el resultado y el formulario posterior. El plan es protagonista, con su color y con sus condiciones y carencias dichas de frente. Precios y coberturas salen del catálogo. | Pendiente |
@@ -196,7 +196,7 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
   arregla en el cambio que lo trae.
 - **Nada vuelve a la paleta menta.** La guarda lo impide desde `R1-TOK-01`.
 - Cada fase se entrega por separado y deja la aplicación usable. Hasta cerrar R3 conviven pantallas
-  con la línea nueva y con la antigua (el ingreso, el registro, la encuesta y la aliada); es lo
+  con la línea nueva y con la antigua (el registro, la encuesta, el carnet y la aliada); es lo
   esperado.
 - **Una pantalla con pestañas que se cierra activa `pestanas: true`** en su ruta del barrido
   (`e2e-stack/responsive.spec.ts`), como la ficha de familia: si no, el barrido solo mide la
@@ -346,6 +346,26 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 - **Textos guardados sin tildes**: el motivo de algunas reglas sembradas («mas cupos») y los nombres de
   reglas y catálogos («Aviso de mora a los 25 dias», «Atencion en clinica aliada») vienen de los datos;
   la deuda ya está en `docs/frontend/conventions.md`.
+
+### Lo que quedó del acceso tras cerrar `R3-PUB-01`
+
+- **La clínica aliada entra por «Equipo TIMU»**, que no es su nombre. Se mantuvo el selector por
+  público por decisión del usuario; si se renombra, es solo el texto de la pestaña.
+- **La vigencia de los enlaces no se dice en pantalla** (30 minutos la recuperación y 72 horas la
+  activación, en `Settings`): el panel no copia esos valores. Si TIMU quiere decirla, la API la da
+  con el estado del enlace.
+- **La consulta del enlace no entra en la guarda de caminos calientes**, que solo recorre listados
+  por GET: es una búsqueda por `token_hash`, que es único y tiene índice.
+- **Lo que el documentador vio fuera del sistema** y no se canonizó: los campos con icono del
+  acceso miden 48 px (`.campo-adorno .input`, anterior a esta unidad) y no los 40/44 del resto;
+  `.publica-tarjeta` lleva sombra estando quieta (es de las páginas públicas sin rediseñar, se
+  corrige en su unidad); y el segmento activo del selector pide `--sombra-2`, que vale `none`.
+- **Sugerencias del revisor, opcionales** (el «techo»): que el tramo de la línea se dibuje hasta
+  «Hoy» al cargar (respetando `prefers-reduced-motion`), que en la activación la estación
+  «Afiliación» se encienda al guardar la contraseña antes de llevar al portal, y anclar a 1440 el
+  título del formulario a la altura de la frase del panel. A 900 px las estaciones de la línea no
+  quedan a la misma distancia (sus columnas toman el ancho del rótulo). Se deciden con el usuario
+  antes de `R4-CIE-02`.
 
 ### Orden de lo que sigue
 

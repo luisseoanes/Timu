@@ -44,7 +44,13 @@ estira si su vecino de fila es más alto (`align-content: start`).
   amplía la página al enfocar).
 - `.buscador` — la misma forma que `.input`, con lupa y campo transparente. En la barra del
   panel y en los filtros de listado.
-- `.input-linea` — solo subrayado. **Exclusivo del ingreso.**
+- `.campo-adorno` — el campo con su icono a la izquierda y, si hace falta, un botón de icono a la
+  derecha (`.campo-accion`). Solo en las pantallas de acceso. Dentro de un `.campo` no hereda la
+  letra de la etiqueta.
+- `CampoClave` (`features/auth`) — la contraseña con su botón para verla y su ayuda enlazada
+  (`aria-describedby`). La comparten el ingreso y la pantalla del enlace.
+- `.campo > .error` — el error de un campo, debajo de él, en `texto-error` a peso normal; el
+  campo lleva `aria-invalid` y lo enlaza con `aria-describedby`.
 - Una casilla entre campos va en `label.acciones`; dentro de un `.formulario` se alinea con la
   base de los campos.
 
@@ -234,7 +240,9 @@ menú.
 ## Avisos — `.aviso`, `.aviso-error`, `.aviso-ok`
 
 Bloque informativo dentro de una tarjeta, o resultado de una acción en las páginas de acceso.
-Una condición que exige acción va con su botón.
+Una condición que exige acción va con su botón. El icono no encoge (`flex-shrink: 0`) y el texto va
+en un solo elemento: el aviso es flex, y un `span` suelto (un teléfono con `.sin-cortes`) pasaría a
+ser otra columna.
 
 ## Indicadores — `.indicadores` / `.indicador`
 

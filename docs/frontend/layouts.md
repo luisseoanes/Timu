@@ -7,8 +7,8 @@ superficie (`.impeccable/surfaces/`).
 
 > En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)). **Rediseñado:** la estructura
 > del panel, el listado con ficha (Familias, Rutas y Clínica), la ruta propia del médico, la
-> consulta guiada, el inicio del panel, las bandejas (Tareas, Cartera y Preventivos), Comercial y Campañas, Aliadas y Administración, las ventanas, la espera de sesión y el portal de familias entero. **Aún con la composición anterior** (aunque ya con la paleta, la
-> tipografía y el logo): el ingreso, el detalle de un registro y las
+> consulta guiada, el inicio del panel, las bandejas (Tareas, Cartera y Preventivos), Comercial y Campañas, Aliadas y Administración, las ventanas, la espera de sesión, el portal de familias entero y el acceso. **Aún con la composición anterior** (aunque ya con la paleta, la
+> tipografía y el logo): el detalle de un registro y las
 > páginas públicas. Cada uno se rehace en su
 > unidad.
 
@@ -178,15 +178,41 @@ color sobre el lienzo y un esqueleto anunciado a los lectores de pantalla, sin l
 ningún espacio. Si el servidor no responde, una tarjeta con su título, la explicación y
 «Reintentar».
 
-## Ingreso — `.ingreso` (`AccesoLayout`), pendiente de `R3-PUB-01`
+## Acceso — `.ingreso` (`AccesoLayout`, R3-PUB-01)
 
-La misma plantilla sirve al ingreso, la recuperación y la activación de la cuenta. Dos
-columnas: el panel de marca (marino, con el logo completo en blanco, el mensaje, tres
-funciones y una vista previa decorativa) y el formulario. El formulario tiene un selector
-entre **Equipo** (correo y contraseña) y **Familias** (celular y código por WhatsApp). Por
-debajo de 900 px el panel de marca desaparece y el logo a color sube encima del formulario.
-Su vista previa en vidrio y su antetítulo en pastilla contradicen el sistema y se rehacen en
-su unidad (`docs/frontend/conventions.md`, deuda).
+La misma plantilla sirve al ingreso, la recuperación, el restablecimiento y la activación.
+
+```
+≥ 900 px                                        < 900 px
+┌──────── marino ────────┬──── blanco ────────┐ ┌──── marino ────┐
+│ TIMU (logo completo)   │                    │ │ TIMU (compacto)│
+│                        │ Hola de nuevo      │ │ ●━━●━━|◉──○    │
+│ Tu peludito, bien      │ [Equipo|Familias]  │ ├──── blanco ────┤
+│ cuidado.               │ Correo             │ │ Hola de nuevo  │
+│ ●━━━━●━━━|━◉────○      │ Contraseña         │ │ …formulario…   │
+│ Afiliación … Renovación│ [    Ingresar    ] │ │ [  Ingresar  ] │
+│ Datos protegidos …     │                    │ │ Datos protegid…│
+└────────────────────────┴────────────────────┘ └────────────────┘
+```
+
+- **Desde 900 px, dos columnas iguales.** A la izquierda, el panel marino plano: el logo completo
+  en blanco, la frase de la pantalla (`frase`; «Tu peludito, bien cuidado.», y en la activación
+  «Te damos la bienvenida a la manada TIMU.») con la línea de una familia dibujada como
+  señalética, y la nota de datos protegidos abajo. A la derecha, el formulario en una columna de
+  400 px, centrada.
+- **Por debajo de 900 px**, una franja marina arriba con el logo compacto y la línea en miniatura
+  (sin rótulos ni frase), el formulario debajo y la nota al final. El verde queda dentro de la
+  primera pantalla del celular (lo comprueba `e2e/sesion.spec.ts`).
+- **Ingreso**: el selector Equipo TIMU / Familias. Equipo, con correo y contraseña; Familias, con
+  el celular y el código por WhatsApp y, debajo, «Ingresar con contraseña» (correo o celular).
+  Quien llega desde una ruta del portal lo encuentra abierto en Familias.
+- **Enlace** (`/restablecer`, `/activar`): la pantalla pregunta a la API si el enlace sirve
+  (`POST /auth/enlace`) antes de pedir nada. Vigente, saluda por el nombre y pide la contraseña
+  según su propósito; al guardar entra directo al espacio de cada perfil. Usado, vencido,
+  inválido o sin token, lo dice de entrada con «Pedir un enlace nuevo»; si el servidor no
+  respondió, «Reintentar».
+- **Recuperación**: al enviar, el título pasa a «Revisa tu correo o tu WhatsApp» y nombra el dato
+  escrito, sin decir si la cuenta existe.
 
 Las páginas públicas sencillas (encuesta, verificación del carnet, registro, clínica aliada)
 usan `.publica` + `.publica-tarjeta`: el logo arriba y una tarjeta centrada.
@@ -357,7 +383,7 @@ con el color de enlace (`.btn-plano.btn-accion`).
 | ≥ 1360 px | Barra con 8 módulos |
 | 1180–1359 px | 6 módulos y buscador más estrecho |
 | 900–1179 px | 3 módulos; el inicio apila la línea y su columna; Familias y Rutas siguen con listado y ficha lado a lado |
-| < 900 px | Barra inferior; listado o ficha; ingreso en una columna; formularios en una columna |
+| < 900 px | Barra inferior; listado o ficha; acceso con la franja marina arriba; formularios en una columna |
 | ≤ 600 px | Ventanas como hoja inferior; la línea siempre vertical; pestañas en una fila desplazable |
 
 Además de la ventana, hay piezas que deciden por el **ancho de su contenedor**: la tabla

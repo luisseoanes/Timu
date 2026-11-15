@@ -234,7 +234,10 @@ conversación, la bandeja de conversaciones y las campañas en listado con ficha
 Administración (las remisiones y los usuarios en bandeja; las clínicas, los planes y las reglas en
 listado con ficha). El portal de familias está rediseñado entero: la
 estructura, el inicio y los peludos (R3-POR-01) y las citas, los pagos y los datos (R3-POR-02).
-El resto de módulos del panel y las páginas públicas todavía usan la maqueta anterior y adoptan este sistema en sus unidades de
+De las páginas públicas, el acceso (R3-PUB-01): ingreso, recuperación, restablecimiento y
+activación de la cuenta. El resto de módulos del panel y las demás páginas públicas (el registro
+en línea, la encuesta y la verificación del carnet), y la clínica aliada, todavía usan la maqueta
+anterior y adoptan este sistema en sus unidades de
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md): lo que se ve hoy en ellos no
 es el sistema. El color, la tipografía, el logo y la voz los fija el
 [manual de marca](docs/manual-de-marca.md); aquí se dice cómo se aplican en la interfaz y se
@@ -352,8 +355,10 @@ Las cifras siguen en Inter por sus números tabulares (sección 12 del manual).
 
 ### Hierarchy
 - **Display** (GeosansLight 400, `--t-display` 2.125rem / 34 px, 1.2, −0.01em en la ficha): el
-  nombre de la familia abierta, el saludo y el ingreso. Uno por pantalla. En el portal todo `h1`
-  va a este tamaño: «Hola, Ana», «Tus peludos» y el nombre de cada peludo.
+  nombre de la familia abierta, el saludo y el título del acceso («Hola de nuevo», «Hola, Ana»,
+  «Este enlace venció»). Uno por pantalla. En el portal todo `h1` va a este tamaño: «Hola, Ana»,
+  «Tus peludos» y el nombre de cada peludo. En el acceso, la frase del panel de marca va también
+  a 34 px, en blanco sobre marino; no es un título (`p`), y por debajo de 900 px desaparece.
 - **Cifra** (600, `--t-cifra` 1.5rem / 24 px): cifras destacadas de indicadores.
 - **Headline** (GeosansLight 400, `--t-titulo` 1.25rem / 20 px, 1.2): título de página
   (`cabecera-pagina`).
@@ -397,6 +402,12 @@ Aliadas, Planes y Reglas).** Dos columnas: listado de 320–420 px
 (`.listado`) y el registro abierto en el resto (`.ficha-abierta`), separadas 20 px. Por debajo
 de 900 px se ve uno u otro: el listado sin registro abierto, la ficha (con botón de volver) con
 él.
+
+**El acceso.** Sin barra de marca ni `.shell`: desde 900 px, dos columnas iguales a todo el alto
+(`100dvh`), el panel de marca marino a la izquierda y el formulario sobre blanco a la derecha,
+centrado en una columna de 400 px. Por debajo de 900 px, una franja marina arriba y el formulario
+debajo, alineado arriba con 24 px de relleno (16 a los lados), para que el verde quede en la
+primera pantalla del celular.
 
 **La ruta propia (Rutas).** Quien solo sale a campo no ve listado: su ruta del día ocupa una
 columna de hasta 760 px, que se lee igual en el escritorio que en el celular. Encima, una línea
@@ -460,7 +471,7 @@ una ventana quede por encima de ella.
   activo en la barra marina; en la barra inferior, `inset 0 3px 0 var(--indicador-seleccion)`
   arriba.
 - **Halo de la próxima** (`box-shadow: 0 0 0 3px var(--indicador-seleccion)`): la estación
-  próxima de la línea.
+  próxima de la línea. Sobre marino (la línea del acceso), el halo es `indicador-sobre-marca`.
 
 ### Named Rules
 **La regla de lo que flota.** Sombra solo para lo que tapa a otra cosa y desaparece al cerrarse.
@@ -537,7 +548,17 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   un `select` sean un solo tipo de control.
 - **Focus:** borde azul y anillo de 1 px azul, sin contorno extra.
 - **Error / Disabled:** `aria-invalid` pone el borde (y el anillo al enfocar) en rojo de error;
-  deshabilitado, fondo de lienzo y texto suave.
+  deshabilitado, fondo de lienzo y texto suave. El error de un campo va debajo de él en
+  `texto-error` a peso normal (`.campo > .error`, 13 px), enlazado con `aria-describedby`: la
+  etiqueta es la que va en 600, el error no compite con ella.
+- **Campo con icono** (`campo-adorno`): icono de 18 px a 14 px del borde izquierdo, en texto
+  suave y azul de foco al enfocar; el campo sube a 48 px. Una acción dentro del campo (ver la
+  contraseña, `CampoClave`) es un botón redondo de 36 px a la derecha, con `aria-pressed` y su
+  nombre («Mostrar contraseña»).
+- **Avisos** (`aviso-ok`, `aviso-error`): recuadro tintado del tono de estado con esquina de
+  campo, 12 × 16 px de relleno, 13 px e icono de 16 px delante. El icono no encoge
+  (`flex-shrink: 0`) y se alinea con la primera línea: con dos líneas de texto, un icono
+  aplastado deja de leerse.
 - **Listas y fechas:** con la forma del sistema, no la del navegador. Una lista (`select`) no
   muestra el control nativo: su flecha son dos `linear-gradient` de 5 px que dibujan una «v» en
   el rol de texto suave (`--flecha-lista`), a 13–18 px del borde derecho, y el relleno derecho
@@ -971,6 +992,68 @@ cosa en palabras (`condicion_texto`, `accion_texto`, `retirada`, los grupos de u
 es una remisión y si venció) y los estados llegan a la vista por `Distintivo` con su nombre. El
 panel no deduce nada de un código ni copia una regla del backend para decidir qué mostrar.
 
+### El acceso (R3-PUB-01)
+Ingreso, recuperación, restablecimiento y activación comparten `AccesoLayout`: el único sitio de
+la aplicación donde la marca se presenta, y un formulario que no hace nada más (ver Layout).
+- **Panel de marca (desde 900 px):** marino plano (`superficie-marca`), sin tarjeta, sin borde y
+  sin sombra, 40 px de relleno arriba y abajo. Arriba, el logo completo en blanco (`MarcaTimu
+  claro`, 104 px de alto); a media altura, la frase de la pantalla en GeosansLight de 34 px en
+  blanco («Tu peludito, bien cuidado.»; en la activación, «Te damos la bienvenida a la manada
+  TIMU.») y, 40 px debajo, la línea de marca; abajo, la nota «Datos protegidos · Ley 1581 de
+  2012» con el icono del escudo, en 13 px y marino-200 (`texto-sobre-marca-suave`).
+- **Franja (por debajo de 900 px):** el mismo marino, 20 × 16 px de relleno, con el logo compacto
+  en blanco (28 px) y debajo la línea en miniatura: estaciones y marca de Hoy sin rótulos ni la
+  palabra «Hoy». La frase y la nota se ocultan; la nota baja bajo el formulario, separada por un
+  hilo y con el escudo en verde oscuro (`accion-suave-texto`).
+- **La línea de marca** (`LineaDeMarca`): el año de una familia (Afiliación, Vacunas, Visita en
+  casa, Renovación) en la señalética del metro y con los colores que admite el marino (regla 6
+  del manual). Tramo de 8 px; lo recorrido en verde-500 (`indicador-sobre-marca`), lo que falta
+  translúcido (`borde-sobre-marca`). Estaciones de 24 px con borde de 4 px: hechas llenas de
+  verde-500; la próxima con anillo blanco y halo verde-500 de 3 px, su rótulo en blanco y 600;
+  la programada en contorno marino-200 sobre el marino. «Hoy», justo antes de la próxima, es una
+  marca blanca de 4 × 24 px con «Hoy» en etiqueta blanca encima. Las cuatro columnas son
+  `minmax(max-content, 1fr)` y los rótulos (13 px, marino-200) no se parten: la línea crece antes
+  que cortar «Visita en casa». Es dibujo (`aria-hidden`): no dice nada que la pantalla necesite.
+- **Formulario:** columna de 400 px con 24 px entre bloques y 16 px entre campos. El título en
+  `h1` de 34 px y, si hace falta, una frase en texto suave debajo; campos con icono (ver
+  Inputs); el verde a todo el ancho y de 48 px en 16 px (`btn-grande`); lo secundario en plano y
+  centrado («Volver al ingreso», «Ir al ingreso», con la flecha de volver).
+- **Quién ingresa:** bajo «Hola de nuevo», un selector segmentado (Radix Tabs) «Equipo TIMU»
+  (icono de clínica) / «Familias» (huella). Equipo, también la clínica aliada: correo,
+  contraseña, «¿Olvidaste tu contraseña?» a la derecha y «Ingresar». Familias: el celular
+  registrado con la ayuda «Te enviamos un código de un solo uso por WhatsApp.», el verde «Recibir
+  código» y debajo, plano, «Ingresar con contraseña» (correo o celular), que vuelve con «Recibir
+  un código por WhatsApp». Enviado el código, un aviso ok nombra el número con `telefono()` y el
+  campo del código va centrado a 20 px con espaciado ancho. Si se llega desde una ruta del portal,
+  el selector abre en Familias. Credenciales que no coinciden se dicen en palabras propias («El
+  correo o la contraseña no coinciden»); un bloqueo o una caída, con su causa.
+- **Recuperación:** «Recupera tu acceso» con «Correo o celular» y «Enviar enlace». Enviada, el
+  título cambia a «Revisa tu correo o tu WhatsApp» y la frase nombra el dato escrito («Si hay una
+  cuenta con <lo que escribió>, en unos minutos te llega un enlace…»), igual exista o no la cuenta.
+- **La pantalla del enlace** (`RestablecerPage`, `/restablecer` y `/activar`): antes de pedir
+  nada, la API dice si el enlace sirve (`POST /auth/enlace`, con el token en el cuerpo: vigente,
+  usado, vencido o inválido, su propósito y el nombre de pila). Mientras comprueba, un esqueleto
+  de tres líneas con «Comprobando el enlace…» para lectores de pantalla. Vigente: «Hola, Ana», la
+  frase según el propósito, la contraseña nueva con «Al menos 8 caracteres.» y su confirmación
+  (si no coinciden, el error bajo el campo y el verde deshabilitado), y el verde «Activar mi
+  cuenta» o «Guardar y entrar». Al guardar se entra directo, al espacio de cada perfil. Si el
+  enlace deja de servir con la pantalla abierta, el aviso de error lo dice con «Pide uno nuevo».
+- **El enlace que no sirve:** el título dice qué pasó («Este enlace ya se usó», «Este enlace
+  venció», «Este enlace no sirve», «El enlace está incompleto») y la frase qué hacer; el verde es
+  «Pedir un enlace nuevo» y «Ir al ingreso» va plano y centrado. Si el servidor no respondió:
+  «No pudimos comprobar el enlace», el aviso con su causa y, si el error es pasajero,
+  «Reintentar» como verde (la comprobación comparte el límite del ingreso y no se reintenta
+  sola).
+
+**La regla del enlace que se dice de entrada.** El acceso no pide una contraseña con un enlace que
+no sirve: lo dice la API al abrirlo, y la pantalla responde a lo que dijo. El panel no deduce el
+estado de un enlace ni deja escribir dos veces la clave para enterarse después.
+
+**La regla de la frase que le habla a quien llega.** El panel de marca dice una frase a la persona
+que llega, no vende la plataforma: ni funciones con icono, ni antetítulo. La frase cambia con la
+pantalla (la activación le da la bienvenida a la familia) y el título del formulario la saluda
+por su nombre cuando la API lo sabe.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -1000,6 +1083,10 @@ panel no deduce nada de un código ni copia una regla del backend para decidir q
   cancelar lo que se conserva («Mantenerla», «Mantener el acceso», «Dejarlo activo»).
 - **Do** muestra lo que la API dice en palabras (`condicion_texto`, `accion_texto`, estados con
   nombre) y los importes en dólares con `dolares()`.
+- **Do** en un aviso o una frase que nombra un teléfono, escríbelo con `telefono()` y envuélvelo
+  en `.sin-cortes`: «300 123 4567» no se parte entre dos líneas.
+- **Do** en el acceso, pregunta a la API si un enlace sirve antes de pedir la contraseña, y ante
+  uno que no sirve ofrece «Pedir un enlace nuevo» como el verde.
 
 ### Don't:
 - **Don't** escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.
@@ -1007,8 +1094,9 @@ panel no deduce nada de un código ni copia una regla del backend para decidir q
 - **Don't** pongas una etiqueta en mayúsculas encima de un título como antetítulo: la etiqueta
   nombra el dato o el bloque que tiene debajo.
 - **Don't** deduzcas el color de un plan de su nombre ni uses el color de plan como estado.
-- **Don't** uses verde o naranja de marca como texto sobre claro (regla 1 del manual); sobre la
-  barra marina solo blanco, marino-200, verde-500 y naranja-500 (regla 6).
+- **Don't** uses verde o naranja de marca como texto sobre claro (regla 1 del manual); sobre
+  marino (la barra o el panel de marca del acceso) solo blanco, marino-200, verde-500 y
+  naranja-500 (regla 6), más el translúcido `borde-sobre-marca` para lo que es tramo o hilo.
 - **Don't** recolorees el logo ni lo dibujes con texto: va el SVG de `MarcaTimu`, a color o en
   blanco (sección 13 del manual).
 - **Don't** uses los patrones de siluetas de la marca como decoración en las pantallas de
@@ -1025,3 +1113,8 @@ panel no deduce nada de un código ni copia una regla del backend para decidir q
   si la API no lo dice en palabras, se arregla en la API.
 - **Don't** confirmes en verde lo que anula o desactiva, ni pongas un interruptor o una casilla
   suelta que apague algo sin decir qué deja de pasar.
+- **Don't** pongas en el panel de marca un antetítulo en pastilla, una tarjeta de vidrio
+  (`backdrop-filter`) ni sombra, ni una lista de funciones con icono: es marino plano con el logo,
+  la frase y la línea.
+- **Don't** pidas una contraseña con un enlace del que no sabes si sirve, ni digas que venció
+  después de que la persona la escribió dos veces.

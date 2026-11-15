@@ -128,5 +128,7 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   `vi.useRealTimers()` en un `finally`.
 - `useNombreTipoServicio` devuelve el código («consulta domiciliaria») hasta que llega el
   catálogo: un nombre que lo incluye se busca con `findBy`, no con `getBy`.
+- `npm run test:e2e` sirve `dist/` con `vite preview` (y en local reutiliza el que ya esté arriba):
+  no recompila. Tras cambiar el panel, `npx vite build` antes, o la prueba mira la versión vieja.
 - Un bloque nuevo de `vistas.css` insertado antes de `.filtros` o `.listado .filtros > .input`
   pierde contra ellos: sube la especificidad (`.listado .filtros.mi-clase`) o ponlo detrás.
