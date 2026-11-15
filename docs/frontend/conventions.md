@@ -150,8 +150,9 @@ mínimo. Lo que significa cada rol y cada medida está en [`DESIGN.md`](../../DE
 componente escribe un color a mano (también en `style={{}}` y en atributos SVG), usa un color
 de la paleta en vez de un rol, usa una variable que no está definida, si un par no llega a su
 mínimo, si un rol de texto o de control no tiene ningún par declarado, o si un `z-index` no
-sale de la escala `--capa-*`. **Un rol nuevo llega con su par.** Los radios y las sombras no los
-vigila la guarda: se revisan en el diff. Los `.svg` tampoco: sus colores son el activo de la
+sale de la escala `--capa-*`, o si un radio o el espaciado de una etiqueta se escriben a mano
+(`--r-…`, `--tracking-etiqueta`). **Un rol nuevo llega con su par.** Las sombras no las vigila la
+guarda: se revisan en el diff (solo hay una, `--sombra-3`, para lo que flota). Los `.svg` tampoco: sus colores son el activo de la
 marca, no colores de la interfaz.
 
 ## Qué revisar antes de empujar
@@ -177,17 +178,6 @@ marca, no colores de la interfaz.
 
 Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñó:
 
-- **Espaciado de la etiqueta en mayúsculas sin token.** Es `.09em` en `.etiqueta`,
-  `.tabla th`, `.ficha dt` y la tabla apilada, y `.08em` en `.resumen h3`, `.linea-hoy-texto`
-  e `.indicador-titulo`. Hace falta un token y una sola medida.
-- **Radios escritos a mano**: 3 px en `.marcador-plan`, 4 px en `.esqueleto-linea` y en
-  `.inicio-barra-valor`, 2 px en las marcas de Hoy (`.linea-hoy-marca`, `.linea-portal-hoy-marca`,
-  `.inicio-linea-hoy-marca`) y en `.grafico-clave`, y 6 px en `:focus-visible` (el valor de
-  `--r-campo`).
-- **Cortes a 899 y a 900 px mezclados.** A 900 px justos, `.formulario` y `.dos-columnas` ya
-  pasan a una columna mientras `.con-ficha` sigue a dos.
-- **`--sombra-1` y `--sombra-2` valen `none`** y siguen referenciados. Es coherente con el
-  diseño plano, pero son tokens muertos: o se retiran o se les da uso.
 - **Los módulos sin rediseñar** contradicen el sistema en puntos que sus unidades de la hoja de
   ruta corrigen, como la opacidad de `.cupo:disabled` (la usa el selector de horarios del portal
   y del panel).

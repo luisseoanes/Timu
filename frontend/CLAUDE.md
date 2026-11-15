@@ -46,8 +46,9 @@ perfil), el portal de familias (`/portal`) y el de la clínica aliada (`/aliada`
 - **Ningún color, radio o sombra literal en un componente**: todo sale de `tokens.css`.
   `src/test/tokens.test.ts` rechaza un color escrito a mano fuera de ese fichero (también en
   `style={{}}` y en atributos `fill`), un `var(--…)` sin definir y un `z-index` que no sale de
-  la escala `--capa-*`. Los radios y las sombras
-  los revisa quien empuja (`docs/frontend/conventions.md`, «Qué revisar antes de empujar»).
+  la escala `--capa-*`, un radio escrito a mano (`--r-…`) y el `.09em` de una etiqueta fuera de
+  `--tracking-etiqueta`. Las sombras las revisa quien empuja (`docs/frontend/conventions.md`,
+  «Qué revisar antes de empujar»).
 - Toda lectura va por React Query con clave que incluya los filtros (`['familias', filtros]`)
   y toda pantalla cubre carga, error y vacío.
 - **El día de un instante (`2026-11-13T00:30:00Z`) sale de `diaISO` (`lib/formato.ts`)**, en la

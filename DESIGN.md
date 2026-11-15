@@ -367,7 +367,7 @@ Las cifras siguen en Inter por sus números tabulares (sección 12 del manual).
 - **Body** (400, `--t-cuerpo` 0.875rem / 14 px, 1.55): texto de la interfaz, botones, celdas.
 - **Menor** (400–600, `--t-menor` 0.8125rem / 13 px): metadatos, pestañas, módulos de la barra,
   rótulos de estación.
-- **Label** (700, `--t-etiqueta` 0.75rem / 12 px, 0.09em, mayúsculas, `texto-suave`): cabeceras
+- **Label** (700, `--t-etiqueta` 0.75rem / 12 px, `--tracking-etiqueta` 0.09em, mayúsculas, `texto-suave`): cabeceras
   de columna, `dt` de una ficha de datos, la etiqueta de cada valor en la tabla apilada, los
   encabezados de los bloques Mascotas y Cartera del resumen, y «Hoy» en la línea. Nada baja de
   12 px.
@@ -375,7 +375,7 @@ Las cifras siguen en Inter por sus números tabulares (sección 12 del manual).
 ### Named Rules
 **La regla de la escala fija.** El tipo se mide en rem con los siete pasos de `tokens.css`; una
 interfaz de trabajo no escala el tipo con la ventana (nada de `clamp()` ni `vw` en tamaños de
-letra). En pantallas táctiles o de 900 px o menos, campos y buscadores suben a 1rem para que
+letra). En pantallas táctiles o por debajo de 900 px, campos y buscadores suben a 1rem para que
 iOS no amplíe la página al enfocar.
 
 **La regla de las cifras tabulares.** Importes, fechas, totales y contadores llevan `.numero`
@@ -438,7 +438,9 @@ px; dentro de un panel 20–24 px; entre filas de un listado 12 px de relleno co
 
 **Zonas táctiles.** Botones, campos, buscadores, botones de icono y cupos (`.cupo`, también los
 filtros de una campaña) miden 40 px y suben a 44 px
-en pantallas de 900 px o menos o con puntero grueso.
+por debajo de 900 px o con puntero grueso. Todo corte «por debajo de 900 px» se escribe
+`max-width: 899px`, el complemento exacto del `min-width: 900px` de la barra: a 900 justos todo el
+sistema está ya en escritorio.
 
 ### Named Rules
 **La regla del contenedor.** Lo que cambia de forma según el sitio que tiene lo decide su
@@ -455,8 +457,8 @@ pestaña por pestaña. Lo vigila `frontend/e2e-stack/responsive.spec.ts`, cuya l
 ## Elevation & Depth
 
 El sistema es plano. Las superficies quietas (paneles, tarjetas, barras) no llevan sombra: la
-profundidad la dan el blanco sobre el lienzo, el hilo entre filas y la barra marina. `--sombra-1`
-y `--sombra-2` valen `none` a propósito. Solo lo que flota sobre la pantalla —menús
+profundidad la dan el blanco sobre el lienzo, el hilo entre filas y la barra marina. Hay una sola
+sombra, `--sombra-3`. Solo lo que flota sobre la pantalla —menús
 desplegables, ventanas y la lista de opciones de un selector— lleva sombra, difusa y teñida de
 marino. El apilamiento sale entero de la escala `--capa-*`: `elevada` (1, una estación sobre su
 línea), `barra` (10), `velo` (30), `ventana` (31) y `menu` (40), para que lo que se abre desde
@@ -488,7 +490,10 @@ Campos, botones, botones de icono e iconos de fila llevan esquina de campo (6 px
 interiores, menús e indicadores, de tarjeta (8 px); paneles del listado y la ficha, ventanas y
 la espera de sesión, de panel (12 px; la hoja del celular solo arriba). La pastilla (999 px) es
 para distintivos de estado, la línea, sus estaciones, el botón del tramo plegado y el avatar de
-la cuenta. El marcador de plan es un cuadrado: el plan es identidad, no estado. Los bordes son
+la cuenta. Dos radios menores para lo que no es contenedor: `--r-fino` (2 px) en las marcas de
+«Hoy», las claves de un gráfico y el marcador de plan, que es un cuadrado (el plan es identidad, no
+estado), y `--r-barra` (4 px) en las barras del esqueleto y del Inicio. Ningún radio se escribe a
+mano: lo comprueba `tokens.test.ts`. Los bordes son
 de 1 px; los controles usan `borde-control` y los separadores `borde`. La iconografía es un solo
 juego (`Icono`): trazo de 1.6, extremos y uniones redondeados, 20 px por defecto, siempre
 `currentColor`.

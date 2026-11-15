@@ -284,6 +284,24 @@ describe('guarda de tokens', () => {
     expect(cortos, 'cambia el paso de la paleta al que apunta el rol (manual, sección 9)').toEqual([])
   })
 
+  it('radios y espaciado de etiqueta salen de tokens.css', () => {
+    // DEU-18 y DEU-19: un radio o un .09em escritos a mano se desvían sin que nadie lo note.
+    const sueltos = fuentes
+      .filter(({ fichero }) => fichero !== TOKENS)
+      .flatMap(({ fichero, texto }) => {
+        const limpio = texto.replace(/\/\*[\s\S]*?\*\//g, '')
+        const radios = [...limpio.matchAll(/(?:border(?:-[a-z]+)*-radius\s*:|borderRadius\s*:)\s*([^;}\n]+)/g)]
+          .map((m) => m[1].trim())
+          .filter((valor) => /(?<![\w-])[1-9][\d.]*(px|rem|em|%)/.test(valor))
+          .map((valor) => `${fichero}: radio ${valor}`)
+        const espaciados = [...limpio.matchAll(/(?:letter-spacing\s*:|letterSpacing\s*:)\s*['"]?(\.0[0-9]em)/g)].map(
+          (m) => `${fichero}: letter-spacing ${m[1]}`,
+        )
+        return [...radios, ...espaciados]
+      })
+    expect(sueltos, 'usa --r-… o --tracking-etiqueta de tokens.css').toEqual([])
+  })
+
   it('todo z-index sale de la escala de capas de tokens.css', () => {
     // Un número suelto pinta una estación o una barra por encima de una ventana abierta.
     const sueltos = fuentes

@@ -122,7 +122,6 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
   background: var(--superficie);
   border-radius: var(--r-panel);
   padding: var(--e5);
-  box-shadow: var(--sombra-2);
 }
 .tarjeta-plana { box-shadow: none; border: 1px solid var(--borde); }
 /* Un apartado dentro de una tarjeta (título y su tabla o lista), separado del anterior. */
@@ -196,7 +195,7 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 .tabla th {
   text-align: left;
   font-size: var(--t-etiqueta);
-  letter-spacing: .09em;
+  letter-spacing: var(--tracking-etiqueta);
   text-transform: uppercase;
   color: var(--texto-suave);
   font-weight: 700;
@@ -231,7 +230,7 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
   .tabla-apilable td::before {
     content: attr(data-etiqueta); flex: none; max-width: 45%;
     color: var(--texto-suave); font-size: var(--t-etiqueta); font-weight: 700;
-    letter-spacing: .09em; text-transform: uppercase; text-align: left;
+    letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; text-align: left;
   }
   .tabla-apilable td:first-child { padding-bottom: var(--e2); color: var(--texto-titulo); font-weight: 700; text-align: left; }
   .tabla-apilable td:first-child::before, .tabla-apilable .tabla-acciones::before { content: none; }
@@ -388,7 +387,7 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 .ficha .ancho { grid-column: 1 / -1; }
 .ficha dt {
   font-size: var(--t-etiqueta);
-  letter-spacing: .09em;
+  letter-spacing: var(--tracking-etiqueta);
   text-transform: uppercase;
   color: var(--texto-suave);
   font-weight: 700;
@@ -444,7 +443,7 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
   background: var(--superficie-hundida);
   border: 1px solid var(--borde);
 }
-.indicador-titulo { font-size: var(--t-etiqueta); letter-spacing: .08em; text-transform: uppercase; color: var(--texto-suave); font-weight: 700; }
+.indicador-titulo { font-size: var(--t-etiqueta); letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; color: var(--texto-suave); font-weight: 700; }
 .indicador-valor { font-family: var(--fuente); font-size: var(--t-cifra); color: var(--texto-titulo); line-height: 1.2; }
 .indicador-detalle { font-size: var(--t-menor); color: var(--texto-suave); }
 .subtitulo { font-size: var(--t-cuerpo); margin-bottom: var(--e3); }
@@ -528,7 +527,7 @@ a.acceso { text-decoration: none; }
 }
 /* Marcador de plan: identidad, no estado (manual de marca, regla 4). El color sale del campo
    `color` del catálogo; el nombre del plan va siempre al lado, en texto. */
-.marcador-plan { width: 12px; height: 12px; flex: none; border-radius: 3px; background: var(--plan-verde); }
+.marcador-plan { width: 12px; height: 12px; flex: none; border-radius: var(--r-fino); background: var(--plan-verde); }
 .marcador-plan[data-color="naranja"] { background: var(--plan-naranja); }
 .marcador-plan[data-color="azul"] { background: var(--plan-azul); }
 .beneficios { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: var(--t-menor); }
@@ -574,7 +573,7 @@ a.acceso { text-decoration: none; }
 
 /* --- Carga y error de una consulta (Consulta.tsx) ---------------- */
 .esqueleto { display: grid; gap: var(--e3); padding-block: var(--e2); }
-.esqueleto-linea { height: 12px; border-radius: 4px; background: var(--pista); animation: esqueleto 1.2s var(--curva) infinite alternate; }
+.esqueleto-linea { height: 12px; border-radius: var(--r-barra); background: var(--pista); animation: esqueleto 1.2s var(--curva) infinite alternate; }
 .esqueleto-linea:nth-child(3) { width: 80%; }
 .esqueleto-linea:nth-child(4) { width: 55%; }
 @keyframes esqueleto { from { opacity: 1; } to { opacity: .45; } }

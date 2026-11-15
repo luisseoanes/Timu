@@ -732,16 +732,6 @@
         "purpose": "Solo lo que flota: menús, ventanas, lista de opciones."
       },
       {
-        "name": "sombra-1",
-        "value": "none",
-        "purpose": "Plano a propósito: superficies quietas sin sombra."
-      },
-      {
-        "name": "sombra-2",
-        "value": "none",
-        "purpose": "Plano a propósito: superficies quietas sin sombra."
-      },
-      {
         "name": "anillo-campo",
         "value": "0 0 0 1px var(--foco)",
         "purpose": "Campo o buscador enfocado, junto a su borde azul."

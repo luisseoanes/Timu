@@ -44,7 +44,7 @@ a:hover { color: var(--texto-enlace-hover); }
 :focus-visible {
   outline: 2px solid var(--foco);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: var(--r-campo);
 }
 
 /* Superficies del navegador: también llevan la paleta (manual de marca, roles de selección). */
@@ -58,7 +58,7 @@ a { text-underline-offset: 2px; }
 .apagado   { color: var(--texto-suave); }
 .etiqueta  {
   font-size: var(--t-etiqueta);
-  letter-spacing: .09em;
+  letter-spacing: var(--tracking-etiqueta);
   text-transform: uppercase;
   color: var(--texto-suave);
   font-weight: 700;

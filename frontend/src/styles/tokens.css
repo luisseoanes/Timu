@@ -165,6 +165,7 @@
   --t-cuerpo:   0.875rem;  /* 14 px */
   --t-menor:    0.8125rem; /* 13 px */
   --t-etiqueta: 0.75rem;   /* 12 px: mayúsculas espaciadas; nada por debajo */
+  --tracking-etiqueta: .09em; /* el espaciado de toda etiqueta en mayúsculas */
 
   /* --- Espaciado: escala de 4 ----------------------------------- */
   --e1: 4px;  --e2: 8px;  --e3: 12px; --e4: 16px;
@@ -172,6 +173,8 @@
 
   /* --- Radios: esquinas contenidas, como la señalética del metro; la pastilla queda para
      distintivos y estaciones ------------------------------------- */
+  --r-fino: 2px;        /* marcas de «Hoy», claves de un gráfico y el marcador de plan */
+  --r-barra: 4px;       /* barras: el esqueleto de carga */
   --r-pastilla: 999px;
   --r-campo: 6px;
   --r-tarjeta: 8px;
@@ -179,8 +182,6 @@
 
   /* --- Sombras: las superficies son planas (contrato de dirección); solo lo que flota sobre
      la pantalla (menús, ventanas) lleva sombra, difusa y teñida de marino --- */
-  --sombra-1: none;
-  --sombra-2: none;
   --sombra-3: 0 12px 32px rgb(17 21 55 / 16%);
 
   /* --- Capas: todo z-index sale de aquí. La ventana va por encima de las barras, y lo que
