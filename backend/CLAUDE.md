@@ -95,6 +95,14 @@ Reglas que atraviesan todo el backend:
   familia de un número y quién contesta un mensaje entrante (encuesta, conversación
   comercial) se lo conecta `app/workers/tasks/comunicaciones.py` con
   `conectar_entrantes`; sin conectar, un entrante falla en lugar de quedar sin respuesta.
+- **La traza de mensajes tapa los tokens de un solo uso.** `MensajeRead` cambia `?token=…` y
+  `/encuesta/<token>` por `[oculto]` al responder (lo leía el equipo en Campañas y en la API). Un script
+  que necesite uno, como `datos_demo` para activar la cuenta de Ana, lo lee de la base con
+  `sesion_worker`, no de la API.
+- **Las reglas se describen en palabras en `reglas/motor.py`** (`describir_condicion`,
+  `describir_accion`, `campos`), y la API las da como `condicion_texto`, `accion_texto` y
+  `campos_condicion`. Un campo, un estado o un evento nuevo lleva su nombre en `_CAMPOS`, `_VALORES` o
+  `_NOMBRES_EVENTOS`: sin él, Administración lo enseña por su código.
 - **`tareas` no importa `servicios`** (que crea tareas): `servicios/service.py` le conecta al
   importarse cómo describir sus servicios (`tareas.conectar_servicios`) para nombrar cada tarea
   de la bandeja; sin conectar, el listado falla.
@@ -319,7 +327,9 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
   todas las tareas del beat, captura cada sentencia y la analiza con
   `EXPLAIN (GENERIC_PLAN)` y `enable_seqscan = off`. Si aun así una tabla que crece con el
   negocio se recorre entera, ningún índice sirve esa consulta y la prueba falla. Un listado
-  o una tarea nueva se añade a `_LISTADOS`, o entra sola si es del beat. Las tablas acotadas
+  o una tarea nueva se añade a `_LISTADOS`, o entra sola si es del beat. Para ordenar de lo más reciente a
+  lo más antiguo sin índice en `created_at`, se ordena por `id`: es UUIDv7, sigue el orden de creación y
+  usa la clave primaria (la bandeja de remisiones). Las tablas acotadas
   por naturaleza van en `_ACOTADAS`, y los procesos por lotes que leen casi toda la tabla a
   propósito en `_RECORRIDOS_A_PROPOSITO`, siempre con su motivo. Ordenar por una expresión
   (`CASE`) impide usar un índice: la bandeja de tareas ordena por el enum `prioridad`, cuyo

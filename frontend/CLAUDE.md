@@ -101,6 +101,11 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
 ## Trampas conocidas de las pruebas
 
 - La ficha vacía y la abierta de un listado con ficha comparten `aria-label` («Ruta abierta»): espera a un elemento de la ficha (su título), no a la región, o la prueba lee el marcador.
+- Con una ventana de Radix abierta, el resto de la página queda oculto a los lectores de pantalla y `findByRole` no lo encuentra hasta que se cierra. Crear y abrir la ficha encadena el cierre, el listado y la ficha: espera a su título con `{ timeout: 5000 }`. Con un segundo falla a veces con la suite entera bajo cobertura.
+- `Pestanas` sin `valor` no cambia de pestaña al cambiar la URL: un enlace desde otra pestaña que abre un registro (`?interesado=`) lo deja en una pestaña oculta. La página controla la pestaña y vuelve a la del registro cuando este cambia (`ComercialPage.tsx`).
+- Dentro de `.fila-cuerpo` cada `span` es un bloque: un dato en un `span` propio («60 min», un número) parte la línea. Escríbelo en un solo texto.
+- `npx eslint`, `npx tsc` o `npx vitest` desde la raíz del repositorio descargan otra versión y fallan: se corren desde `frontend/`.
+- `playwright test -g` compara con el título unido por espacios, no por «›»: la ruta `admin` del barrido es `-g "admin admin$"`.
 - **MSW usa el primer handler que coincide**: en `server.use(...base, override)` gana `base`. Los comunes van en un `beforeEach` y cada prueba los sustituye con su propio `server.use`.
 - En jsdom el parser multipart de undici no acepta el `File` de jsdom, y el nombre llega como `blob`: una subida se comprueba leyendo `await request.text()`, no con `request.formData()`.
 - Al simular `window.location` con `vi.stubGlobal`, dale el `pathname` de una página pública: si no, el cliente manda a `/login` ante el 401 de `/auth/me` (`PAGINAS_PUBLICAS` en `src/api/client.ts`).

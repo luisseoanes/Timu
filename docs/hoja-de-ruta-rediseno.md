@@ -27,10 +27,13 @@ actualiza aquí, igual que en el backlog.
 | --- | ---: | ---: | ---: | ---: |
 | R0 — Preparación | 4 | 4 | 0 | 0 |
 | R1 — Fundaciones | 7 | 5 | 2 | 0 |
-| R2 — Panel del equipo | 10 | 8 | 0 | 2 |
+| R2 — Panel del equipo | 10 | 10 | 0 | 0 |
 | R3 — Familias, aliada y páginas públicas | 6 | 2 | 0 | 4 |
 | R4 — Cierre | 4 | 0 | 0 | 4 |
-| **Total** | **31** | **19** | **2** | **10** |
+| **Total** | **31** | **21** | **2** | **8** |
+
+Al cierre de `R2-PAN-10` (2026-11-15) el panel del equipo está rediseñado entero. Lo siguiente es
+`R3-PUB-01` (ver «Orden de lo que sigue»).
 
 ## Alcance medido
 
@@ -65,6 +68,33 @@ técnicas las gobierna el repositorio: el `CLAUDE.md`, las guardas de pruebas y 
 4. **No hay generación de imágenes en este entorno.** Todo se construye directamente en
    código, y las opciones de cada sorteo se presentan como bocetos HTML. La skill lo prevé para
    las pantallas de trabajo.
+
+### El ciclo de una unidad
+
+Así se trabajó R2 entero; la siguiente sesión lo retoma igual.
+
+1. **Al empezar**: el stack y `db-test` arriba, el último CI de `main` en verde (si no, se arregla
+   antes que nada) y `datos_demo` sembrado hoy (si no, la ruta de la médica no aparece). Se leen los
+   `CLAUDE.md`, esta hoja, `DESIGN.md`, `PRODUCT.md` y `docs/frontend/`.
+2. **Se mira la pantalla actual** con capturas a 1440 y 390 de cada pestaña, con los perfiles que la
+   usan, antes de proponer nada.
+3. **La composición la decide el usuario.** Se le pregunta con dos opciones con boceto ASCII y la
+   recomendada primero (bandeja, listado con ficha o lo que corresponda), y se le avisa en cada punto
+   en que haya que decidir algo más. Sin sorteo, el contrato lleva `seed: none (pinned)` con sus
+   palabras literales (`impeccable surface-brief write`).
+4. **Lo que el panel necesita y no debe calcular lo da la API** (recuentos, nombres, el siguiente
+   paso, textos en palabras), con sus pruebas, sus tipos regenerados y su sitio en la guarda de
+   caminos calientes.
+5. **Un fichero de más de unas 500 líneas se reparte antes**, en un commit `refactor` que no cambia
+   nada (las pruebas de antes pasan sin tocarlas).
+6. **Capturas a 1440, 1180, 900 y 390** en `.impeccable/review/<superficie>/`, y el revisor final
+   hasta `ship`. Sus arreglos se aplican todos; del «techo», lo que sea de una línea, y el resto se
+   apunta en «Lo que quedó».
+7. **Documentación**: el documentador de la skill pone al día `DESIGN.md` y su sidecar; a mano, la
+   fila de la unidad, su apartado «Lo que quedó», la tabla de estado y `docs/frontend/`.
+8. **Commits** en un worktree, cada uno verificado sobre su propio estado: backend primero, el
+   refactor aparte, el panel por dominio y la documentación al final. Antes de empujar, la e2e contra
+   el stack; después, el CI hasta verde.
 
 ### Capturas para el revisor final
 
@@ -115,7 +145,7 @@ salen de su contrato.
 | `R1-PLA-01` | Color de plan en el catálogo | El catálogo de planes gana un campo de color (`verde`, `naranja` o `azul`), con migración, restricción en la base, `Literal` en el schema y tipos del panel regenerados. Administración → Planes permite elegirlo. La interfaz no deduce nunca el color a partir del nombre del plan (regla 5 del manual). | Hecho: migración `0038` (enum `color_plan`), los tres planes de TIMU con el color del manual y los demás en verde; selector en Administración → Planes y marcador junto a cada plan. |
 | `R1-CMP-01` | Acciones y campos | Botones (principal, secundario, suave, destructivo y de icono), campos de texto, listas, áreas de texto, casillas, opciones e interruptores, cada uno con su etiqueta, ayuda y error. Tienen todos los estados y una zona táctil de 44 px o más en el móvil. | Hecho: `.btn-secundario` y `.btn-peligro` nuevos, estados completos, campos con estado inválido y deshabilitado, 44 px y letra de 16 px en pantallas táctiles; selección de texto, cursor, casillas y barras de desplazamiento con la paleta. |
 | `R1-CMP-02` | Datos | La tabla con su versión para el móvil (la forma la fija la dirección), la paginación, los filtros y el orden. El distintivo de estado (pastilla, icono y texto) y el marcador de plan (regla 4 del manual). | Parcial: `Insignia` (pastilla con icono por tono) sustituye a los 23 distintivos escritos a mano, y el marcador de plan está hecho. La versión móvil de la tabla está hecha con las de Familias: `tabla-apilable` pasa a una fila por bloque cuando su contenedor mide menos de 640 px, con la etiqueta de cada celda en `data-etiqueta`. Cada módulo la adopta en su unidad. Faltan la paginación, los filtros y el orden comunes. |
-| `R1-CMP-03` | Capas y avisos | La ventana modal sobre Radix (en el móvil, hoja que sube desde abajo), los avisos, las pestañas y los menús. Los estados de carga con esqueleto, los vacíos que explican qué hacer y los errores con «Reintentar». | Parcial: esqueleto de carga anunciado a los lectores de pantalla, «Reintentar» solo ante fallos pasajeros y la ventana modal como hoja inferior en pantallas estrechas. Que cada vacío diga qué hacer se revisa con cada pantalla en R2 y R3; hoy no hay menús. |
+| `R1-CMP-03` | Capas y avisos | La ventana modal sobre Radix (en el móvil, hoja que sube desde abajo), los avisos, las pestañas y los menús. Los estados de carga con esqueleto, los vacíos que explican qué hacer y los errores con «Reintentar». | Parcial: esqueleto de carga anunciado a los lectores de pantalla, «Reintentar» solo ante fallos pasajeros y la ventana modal como hoja inferior en pantallas estrechas. Que cada vacío diga qué hacer se revisa con cada pantalla: R2 ya está, queda R3. Los menús existen desde R2 (Radix DropdownMenu, en `docs/frontend/components.md`): lo reversible de un registro va en el de tres puntos. |
 | `R1-CMP-04` | Marca e iconos | `MarcaTimu` pasa a ser el marcador de texto del manual (sección 13), con el lema «Medicina veterinaria prepagada». Los iconos se ajustan al lenguaje de la dirección. | Hecho: `MarcaTimu` pinta el logo en SVG sacado del vector de TIMU (2026-11-11), completo o compacto, a color o en blanco; antes era un marcador de texto. Los iconos se mantienen: un trazo y sin relleno, como los pictogramas de señalética de la dirección. |
 
 ## R2 — Panel del equipo
