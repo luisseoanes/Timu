@@ -92,6 +92,8 @@ describe('ServiciosPage', () => {
     renderizar(<ServiciosPage />)
     await user.click(await screen.findByRole('button', { name: /agendar servicio/i }))
     const modal = await screen.findByRole('dialog')
+    // Lo primero que se llena es la familia: el foco ya está en su búsqueda (techo 46).
+    expect(within(modal).getByRole('searchbox')).toHaveFocus()
     await user.type(within(modal).getByRole('searchbox'), 'Ana')
     await user.click(await within(modal).findByRole('button', { name: /ana ruiz/i }))
     await user.selectOptions(within(modal).getByLabelText('Mascota'), 'Luna')

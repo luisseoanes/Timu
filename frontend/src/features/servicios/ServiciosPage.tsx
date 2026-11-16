@@ -43,7 +43,7 @@ export function ServiciosPage({ abierto }: { abierto?: string }) {
 /** La agenda: el listado y, al lado, el servicio abierto o qué aparecerá al elegir uno. */
 function Agenda({ abierto, nuevoInicial }: { abierto?: string; nuevoInicial: boolean }) {
   return (
-    <div className="con-ficha" data-abierta={abierto ? 'true' : undefined}>
+    <div className="con-ficha agenda-servicios" data-abierta={abierto ? 'true' : undefined}>
       <ServiciosLista seleccionado={abierto} nuevoInicial={nuevoInicial} />
       {abierto ? (
         // La clave reinicia la ficha al cambiar de servicio: el paso abierto vuelve a decidirse.

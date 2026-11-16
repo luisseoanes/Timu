@@ -174,6 +174,12 @@ test.describe('gerencia en servicios', () => {
     await ultimo.click()
     const ficha = page.getByRole('region', { name: 'Servicio abierto' })
     await expect(ficha.getByRole('heading', { level: 2 })).toBeInViewport()
+    // La ficha va fija al desplazar: la fila pulsada no se sale de la vista y, al volver arriba
+    // del listado, la ficha sigue a la vista (techo 42).
+    await expect(ultimo).toBeInViewport()
+    await page.mouse.wheel(0, -3000)
+    await expect(listado.getByRole('link').first()).toBeInViewport()
+    await expect(ficha.getByRole('heading', { level: 2 })).toBeInViewport()
     // El listado sigue al lado, con la fila abierta marcada y el filtro de la URL intacto.
     await expect(listado.locator('[aria-current="page"]')).toHaveCount(1)
     expect(new URL(page.url()).searchParams.has('desde')).toBe(true)

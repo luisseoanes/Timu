@@ -82,6 +82,7 @@ export function NuevoServicioModal({
       <form id="nuevo-servicio" className="formulario" onSubmit={guardar}>
         <div className="ancho">
           <SelectorFamilia
+            enfocar
             valor={familia}
             onCambio={(f) => {
               setFamilia(f)

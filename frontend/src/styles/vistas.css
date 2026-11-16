@@ -8,7 +8,7 @@
 
 .barra-marca {
   position: sticky; top: 0; z-index: var(--capa-barra);
-  height: 64px;
+  height: var(--alto-barra);
   display: flex; align-items: center; gap: var(--e6);
   padding-inline: var(--e6);
   background: var(--superficie-marca);
@@ -151,7 +151,18 @@
 .servicio-fila-alerta { display: inline-flex; align-items: center; gap: var(--e1); font-size: var(--t-menor); font-weight: 600; color: var(--estado-alerta-texto); }
 
 /* Al traer la ficha a la vista, que no quede bajo la barra marina fija. */
-.servicio-ficha { scroll-margin-top: calc(64px + var(--e4)); }
+.servicio-ficha { scroll-margin-top: calc(var(--alto-barra) + var(--e4)); }
+/* En escritorio la ficha se queda a la vista mientras se desplaza el listado, y la fila pulsada
+   no se pierde; si es más alta que la ventana, se desplaza por dentro. */
+@media (min-width: 900px) {
+  .agenda-servicios > .ficha-abierta {
+    position: sticky; top: calc(var(--alto-barra) + var(--e4));
+    max-height: calc(100vh - var(--alto-barra) - 2 * var(--e4));
+    overflow-y: auto; overscroll-behavior: contain;
+  }
+}
+/* Sin servicio abierto, la ficha es una nota: no reserva el alto de una ficha. */
+.agenda-servicios > .ficha-vacia { min-height: 0; }
 .servicio-quien { font-size: var(--t-cuerpo); color: var(--texto); }
 .servicio-acciones > .servicio-falta, .servicio-acciones > .apagado { flex-basis: 100%; }
 .servicio-falta { display: flex; align-items: center; gap: var(--e2); font-size: var(--t-menor); font-weight: 600; color: var(--estado-alerta-texto); }

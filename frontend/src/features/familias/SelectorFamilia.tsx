@@ -14,10 +14,13 @@ export function SelectorFamilia({
   valor,
   onCambio,
   etiqueta = 'Familia',
+  enfocar = false,
 }: {
   valor: FamiliaRead | null
   onCambio: (familia: FamiliaRead | null) => void
   etiqueta?: string
+  /** Al montarse, el foco va a la búsqueda: es lo primero que se llena en el formulario. */
+  enfocar?: boolean
 }) {
   const [q, setQ] = useState('')
   const resultados = useFamilias({ q: q || undefined, limit: 6 })
@@ -53,6 +56,7 @@ export function SelectorFamilia({
           <input
             type="search"
             placeholder="Nombre, documento o celular"
+            autoFocus={enfocar}
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
