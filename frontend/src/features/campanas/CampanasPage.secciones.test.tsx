@@ -127,6 +127,14 @@ describe('campañas', () => {
     expect(within(modal).queryByRole('button', { name: 'Enviar ahora' })).not.toBeInTheDocument()
   })
 
+  it('dice la plantilla como la llama el equipo, con el código de Meta debajo', async () => {
+    detalle({ plantilla_titulo: 'Recordatorio de renovación' })
+    const { modal } = await abrirDetalle()
+    const plantilla = within(modal).getByText('Plantilla').nextElementSibling as HTMLElement
+    expect(plantilla).toHaveTextContent('Recordatorio de renovación')
+    expect(within(plantilla).getByText('recordatorio_renovacion')).toHaveClass('campana-plantilla-codigo')
+  })
+
   it('sin enviar dice qué aparecerá en sus resultados', async () => {
     detalle()
     const { modal } = await abrirDetalle()
@@ -590,13 +598,15 @@ describe('plantillas de WhatsApp', () => {
     expect(await screen.findByText('No hay plantillas.')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /nueva plantilla/i }))
     const modal = await screen.findByRole('dialog')
-    await user.type(within(modal).getByLabelText('Nombre (como en Meta)'), 'promo_vacunas')
+    await user.type(within(modal).getByLabelText('Nombre para el equipo'), 'Promoción de vacunas')
+    await user.type(within(modal).getByLabelText('Código en Meta'), 'promo_vacunas')
     await user.selectOptions(within(modal).getByLabelText('Categoría'), 'marketing')
     await user.type(within(modal).getByLabelText(/^Texto/), 'Hola {{{{1}}, {{{{2}} y otra vez {{{{1}}')
     await user.click(within(modal).getByRole('button', { name: 'Guardar' }))
     await waitFor(() =>
       expect(enviado).toEqual({
         nombre: 'promo_vacunas',
+        titulo: 'Promoción de vacunas',
         categoria: 'marketing',
         cuerpo: 'Hola {{1}}, {{2}} y otra vez {{1}}',
         variables: ['1', '2'],
@@ -610,7 +620,7 @@ describe('plantillas de WhatsApp', () => {
     const user = await abrirPestana('Plantillas de WhatsApp')
     await user.click(await screen.findByRole('button', { name: /nueva plantilla/i }))
     const modal = await screen.findByRole('dialog')
-    await user.type(within(modal).getByLabelText('Nombre (como en Meta)'), 'promo')
+    await user.type(within(modal).getByLabelText('Código en Meta'), 'promo')
     await user.type(within(modal).getByLabelText(/^Texto/), 'Hola')
     await user.click(within(modal).getByRole('button', { name: 'Guardar' }))
     expect(await within(modal).findByRole('alert')).toHaveTextContent('Nombre repetido')

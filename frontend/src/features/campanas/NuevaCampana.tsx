@@ -79,7 +79,7 @@ export function NuevaCampana({ abierto, onCerrar }: { abierto: boolean; onCerrar
               {aprobadas.length ? 'Elige la plantilla' : 'No hay plantillas aprobadas'}
             </option>
             {aprobadas.map((p) => (
-              <option key={p.id} value={p.nombre}>{p.nombre}</option>
+              <option key={p.id} value={p.nombre}>{p.titulo ?? p.nombre}</option>
             ))}
           </select>
         </label>

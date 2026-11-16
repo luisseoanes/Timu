@@ -1247,6 +1247,8 @@
 /* ===== Campañas (R2-PAN-09): listado con ficha ===== */
 .campana-quien { color: var(--texto); font-size: var(--t-cuerpo); }
 .campana-plantilla { overflow-wrap: anywhere; }
+/* El código de Meta bajo el nombre que da el equipo a la plantilla: dato secundario. */
+.campana-plantilla-codigo { display: block; overflow-wrap: anywhere; font-size: var(--t-menor); color: var(--texto-suave); }
 .campana-audiencia { color: var(--texto); }
 .campana-audiencia strong { color: var(--texto-titulo); }
 /* El mensaje como le llega a la familia: la burbuja de lo que respondemos en una conversación. */

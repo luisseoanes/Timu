@@ -189,7 +189,7 @@ export function useCrearSegmento() {
 
 export function useCrearPlantillaWhatsApp() {
   return useMutacion(
-    async (datos: { nombre: string; categoria: string; cuerpo: string; variables: string[] }) =>
+    async (datos: { nombre: string; titulo?: string; categoria: string; cuerpo: string; variables: string[] }) =>
       (await api.post<PlantillaWhatsAppRead>('/comunicaciones/plantillas', datos)).data,
     [['comunicaciones', 'plantillas']],
   )

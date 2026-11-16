@@ -6,13 +6,16 @@ import { Paginacion } from '@/components/Paginacion'
 import { mensajeError } from '@/lib/errores'
 import { diaISO, fechaCompacta, fechaHora, hora, telefono } from '@/lib/formato'
 
-import { useBajas, useCrearBaja, useMensajes, useQuitarBaja } from './api'
+import { useBajas, useCrearBaja, useMensajes, usePlantillasWhatsApp, useQuitarBaja } from './api'
 
 export function Mensajes() {
   const [estado, setEstado] = useState('')
   const [offset, setOffset] = useState(0)
   const mensajes = useMensajes({ estado: estado || undefined, limit: 25, offset })
   const bajas = useBajas()
+  // Cada plantilla por el nombre que le da el equipo; el código de Meta si no lo tiene (DEU-10).
+  const plantillas = usePlantillasWhatsApp()
+  const nombrePlantilla = (codigo: string) => plantillas.data?.find((p) => p.nombre === codigo && p.titulo)?.titulo ?? codigo
   const crearBaja = useCrearBaja()
   const quitarBaja = useQuitarBaja()
 
@@ -51,12 +54,12 @@ export function Mensajes() {
                     {d.items.map((m) => (
                       <tr key={m.id}>
                         <td className="principal" data-etiqueta="Mensaje">
-                          <span className="mensaje-contenido">{m.contenido ?? (m.plantilla ? `Plantilla «${m.plantilla}»` : '—')}</span>
+                          <span className="mensaje-contenido">{m.contenido ?? (m.plantilla ? `Plantilla «${nombrePlantilla(m.plantilla)}»` : '—')}</span>
                           <div className="bandeja-detalle">
                             {/* La dirección en palabras: una flecha sola no la lee nadie con lector de pantalla. */}
                             <span>{m.direccion === 'entrante' ? 'Escribió' : 'Le escribimos a'}</span>
                             <span className="numero sin-cortes">{telefono(m.destino)}</span>
-                            {m.contenido && m.plantilla && <span>Plantilla «{m.plantilla}»</span>}
+                            {m.contenido && m.plantilla && <span>Plantilla «{nombrePlantilla(m.plantilla)}»</span>}
                           </div>
                           {m.error && <div className="error">{m.error}</div>}
                         </td>

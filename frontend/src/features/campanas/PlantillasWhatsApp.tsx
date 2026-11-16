@@ -55,8 +55,9 @@ export function PlantillasWhatsApp() {
                 {p.map((pl) => (
                   <tr key={pl.id}>
                     <td className="principal" data-etiqueta="Plantilla">
-                      <span className="campana-plantilla">{pl.nombre}</span>
+                      {pl.titulo ?? <span className="campana-plantilla">{pl.nombre}</span>}
                       <div className="bandeja-detalle">
+                        {pl.titulo && <span className="campana-plantilla">{pl.nombre}</span>}
                         <span>{CATEGORIAS[pl.categoria] ?? pl.categoria}</span>
                         <span className="numero">versión {pl.version}</span>
                       </div>
@@ -115,13 +116,23 @@ export function PlantillasWhatsApp() {
             const cuerpo = String(fd.get('cuerpo')).trim()
             const variables = [...cuerpo.matchAll(/\{\{(\d+)\}\}/g)].map((m) => m[1] ?? '')
             crear.mutate(
-              { nombre: String(fd.get('nombre')).trim(), categoria: String(fd.get('categoria')), cuerpo, variables: [...new Set(variables)] },
+              {
+                nombre: String(fd.get('nombre')).trim(),
+                titulo: String(fd.get('titulo')).trim() || undefined,
+                categoria: String(fd.get('categoria')),
+                cuerpo,
+                variables: [...new Set(variables)],
+              },
               { onSuccess: () => setNueva(false) },
             )
           }}
         >
           <label className="campo">
-            <span>Nombre (como en Meta)</span>
+            <span>Nombre para el equipo</span>
+            <input className="input" name="titulo" minLength={3} maxLength={120} placeholder="Aviso de mora" />
+          </label>
+          <label className="campo">
+            <span>Código en Meta</span>
             <input className="input" name="nombre" required pattern="[a-z0-9_]+" />
           </label>
           <label className="campo">

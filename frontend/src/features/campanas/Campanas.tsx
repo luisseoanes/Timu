@@ -165,8 +165,12 @@ function Ficha({ campana: c }: { campana: CampanaRead }) {
           <dd>{resumenFiltros(c.segmento as FiltrosSegmento)}</dd>
         </div>
         <div>
-          <dt>Plantilla en Meta</dt>
-          <dd className="campana-plantilla">{c.plantilla ?? '—'}</dd>
+          <dt>Plantilla</dt>
+          <dd>
+            {/* El nombre para el equipo (DEU-10); el código de Meta, como dato secundario. */}
+            {c.plantilla_titulo ?? <span className="campana-plantilla">{c.plantilla ?? '—'}</span>}
+            {c.plantilla_titulo && <span className="campana-plantilla-codigo">{c.plantilla}</span>}
+          </dd>
         </div>
       </dl>
 
@@ -315,7 +319,7 @@ function Ficha({ campana: c }: { campana: CampanaRead }) {
           }
         >
           <p className="campana-nota">
-            Plantilla «{c.plantilla ?? '—'}» · {resumenFiltros(c.segmento as FiltrosSegmento)}
+            Plantilla «{c.plantilla_titulo ?? c.plantilla ?? '—'}» · {resumenFiltros(c.segmento as FiltrosSegmento)}
           </p>
         </Modal>
       )}
