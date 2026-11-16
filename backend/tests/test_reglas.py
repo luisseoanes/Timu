@@ -264,3 +264,27 @@ async def test_solo_admin_crea_reglas(client: AsyncClient, db):
     h = await login(client, "com@timu.co")
     resp = await client.post("/api/v1/reglas", json={}, headers=h)
     assert resp.status_code == 403
+
+
+async def test_la_accion_nombra_la_plantilla_como_el_equipo(client: AsyncClient, headers):
+    """DEU-10: «Envía por WhatsApp «Aviso de mora»», no el codigo con que se registra en Meta."""
+    await client.post(
+        "/api/v1/comunicaciones/plantillas",
+        json={"nombre": "aviso_mora", "titulo": "Aviso de mora", "cuerpo": "Hola", "variables": []},
+        headers=headers,
+    )
+    resp = await client.post(
+        "/api/v1/reglas",
+        json={
+            "codigo": "aviso_prueba",
+            "nombre": "Aviso de prueba",
+            "evento": "cartera.alerta",
+            "condicion": {},
+            "accion": {"tipo": "notificar", "plantilla": "aviso_mora", "clave": "prueba"},
+        },
+        headers=headers,
+    )
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["accion_texto"] == "Envía por WhatsApp «Aviso de mora»"
+    sin_titulo = motor.describir_accion({"tipo": "notificar", "plantilla": "otra"})
+    assert sin_titulo == "Envía un aviso por WhatsApp (plantilla otra)"

@@ -16,6 +16,7 @@ from app.core.errores import Conflicto, NoEncontrado
 from app.modules.auth.models import Usuario
 from app.modules.campanas import segmentos, service
 from app.modules.campanas.models import Campana, EjecucionCampana, Segmento
+from app.modules.comunicaciones import service as comunicaciones
 
 router = APIRouter(prefix="/campanas", tags=["campanas"])
 segmentos_router = APIRouter(prefix="/segmentos", tags=["campanas"])
@@ -61,6 +62,20 @@ class CampanaRead(BaseModel):
     programada_para: datetime | None
     recurrencia: str
     proxima_ejecucion: datetime | None
+    plantilla_titulo: str | None = Field(
+        default=None, description="Como llama el equipo a la plantilla; `plantilla` es su codigo"
+    )
+
+
+async def _leidas(db: DbSession, campanas: list[Campana]) -> list[CampanaRead]:
+    """Cada campana con el nombre que da el equipo a su plantilla."""
+    titulos = await db.run_sync(comunicaciones.titulos_plantillas)
+    return [
+        CampanaRead.model_validate(c).model_copy(
+            update={"plantilla_titulo": titulos.get(c.plantilla or "")}
+        )
+        for c in campanas
+    ]
 
 
 class ProgramacionIn(BaseModel):
@@ -130,22 +145,26 @@ def _datos(data: CampanaIn) -> dict[str, Any]:
 
 
 @router.get("", response_model=list[CampanaRead], dependencies=[EQUIPO])
-async def listar(db: DbSession, estado: str | None = None) -> list[Campana]:
+async def listar(db: DbSession, estado: str | None = None) -> list[CampanaRead]:
     stmt = select(Campana).order_by(Campana.created_at.desc())
     if estado:
         stmt = stmt.where(Campana.estado == estado)
-    return list(await db.scalars(stmt))
+    return await _leidas(db, list(await db.scalars(stmt)))
 
 
 @router.post("", response_model=CampanaRead, status_code=status.HTTP_201_CREATED)
-async def crear(db: DbSession, usuario: Mercadeo, data: CampanaIn) -> Campana:
-    return await db.run_sync(service.guardar, None, _datos(data), usuario.id)
+async def crear(db: DbSession, usuario: Mercadeo, data: CampanaIn) -> CampanaRead:
+    campana = await db.run_sync(service.guardar, None, _datos(data), usuario.id)
+    return (await _leidas(db, [campana]))[0]
 
 
 @router.put("/{campana_id}", response_model=CampanaRead)
-async def editar(db: DbSession, usuario: Mercadeo, campana_id: UUID, data: CampanaIn) -> Campana:
+async def editar(
+    db: DbSession, usuario: Mercadeo, campana_id: UUID, data: CampanaIn
+) -> CampanaRead:
     campana = await db.run_sync(service.obtener, campana_id)
-    return await db.run_sync(service.guardar, campana, _datos(data), usuario.id)
+    guardada = await db.run_sync(service.guardar, campana, _datos(data), usuario.id)
+    return (await _leidas(db, [guardada]))[0]
 
 
 @router.get("/{campana_id}/previsualizacion", dependencies=[EQUIPO])
@@ -155,16 +174,20 @@ async def previsualizar(db: DbSession, campana_id: UUID) -> dict[str, Any]:
 
 
 @router.post("/{campana_id}/programacion", response_model=CampanaRead)
-async def programar(db: DbSession, _: Mercadeo, campana_id: UUID, data: ProgramacionIn) -> Campana:
+async def programar(
+    db: DbSession, _: Mercadeo, campana_id: UUID, data: ProgramacionIn
+) -> CampanaRead:
     """F3-CAM-04 Ahora, en una fecha o de forma recurrente."""
     campana = await db.run_sync(service.obtener, campana_id)
-    return await db.run_sync(service.programar, campana, data.cuando, data.recurrencia)
+    programada = await db.run_sync(service.programar, campana, data.cuando, data.recurrencia)
+    return (await _leidas(db, [programada]))[0]
 
 
 @router.post("/{campana_id}/cancelacion", response_model=CampanaRead)
-async def cancelar(db: DbSession, _: Mercadeo, campana_id: UUID) -> Campana:
+async def cancelar(db: DbSession, _: Mercadeo, campana_id: UUID) -> CampanaRead:
     campana = await db.run_sync(service.obtener, campana_id)
-    return await db.run_sync(service.cancelar, campana)
+    cancelada = await db.run_sync(service.cancelar, campana)
+    return (await _leidas(db, [cancelada]))[0]
 
 
 @router.get("/{campana_id}/ejecuciones", response_model=list[EjecucionRead], dependencies=[EQUIPO])

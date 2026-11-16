@@ -416,3 +416,19 @@ async def test_sin_conectar_un_entrante_falla_en_vez_de_quedar_sin_respuesta(db,
     evento = _evento(messages=[{"from": "573001112233", "id": "wamid.x", "text": {"body": "hola"}}])
     with pytest.raises(RuntimeError, match="sin conectar"):
         await db.run_sync(service.procesar_evento_whatsapp, evento)
+
+
+async def test_la_plantilla_tiene_nombre_para_el_equipo_y_lo_conserva(client: AsyncClient, headers):
+    """DEU-10: el equipo la llama por su titulo; el codigo de Meta queda como dato secundario."""
+    url = "/api/v1/comunicaciones/plantillas"
+    primera = await client.post(
+        url,
+        json={"nombre": "aviso_x", "titulo": "Aviso de prueba", "cuerpo": "Hola", "variables": []},
+        headers=headers,
+    )
+    assert primera.json()["titulo"] == "Aviso de prueba"
+    # Una version nueva sin titulo conserva el de la anterior.
+    segunda = await client.post(
+        url, json={"nombre": "aviso_x", "cuerpo": "Hola de nuevo", "variables": []}, headers=headers
+    )
+    assert (segunda.json()["version"], segunda.json()["titulo"]) == (2, "Aviso de prueba")

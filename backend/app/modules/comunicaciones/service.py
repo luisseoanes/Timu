@@ -68,6 +68,21 @@ def plantilla_vigente(db: Session, nombre: str, idioma: str = "es") -> Plantilla
     )
 
 
+def titulos_plantillas(db: Session) -> dict[str, str]:
+    """El nombre que da el equipo a cada plantilla (por su codigo de Meta), el de su version mas
+    reciente que lo tenga: reglas y campanas lo dicen en lugar del codigo."""
+    filas = db.execute(
+        select(PlantillaWhatsApp.nombre, PlantillaWhatsApp.titulo)
+        .where(PlantillaWhatsApp.titulo.is_not(None))
+        .order_by(PlantillaWhatsApp.nombre, PlantillaWhatsApp.version.desc())
+    ).tuples()
+    titulos: dict[str, str] = {}
+    for nombre, titulo in filas:
+        if titulo:
+            titulos.setdefault(nombre, titulo)
+    return titulos
+
+
 def crear_version_plantilla(db: Session, datos: dict[str, Any]) -> PlantillaWhatsApp:
     ultima = db.scalar(
         select(func.max(PlantillaWhatsApp.version)).where(
@@ -75,6 +90,9 @@ def crear_version_plantilla(db: Session, datos: dict[str, Any]) -> PlantillaWhat
             PlantillaWhatsApp.idioma == datos.get("idioma", "es"),
         )
     )
+    if not datos.get("titulo"):
+        # Una version nueva de la misma plantilla conserva el nombre que le da el equipo.
+        datos = {**datos, "titulo": titulos_plantillas(db).get(datos["nombre"])}
     plantilla = PlantillaWhatsApp(**datos, version=(ultima or 0) + 1, estado_aprobacion="borrador")
     db.add(plantilla)
     db.flush()

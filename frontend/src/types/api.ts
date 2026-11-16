@@ -674,6 +674,7 @@ export interface CampanaRead {
   programada_para: string | null
   recurrencia: string
   proxima_ejecucion: string | null
+  plantilla_titulo?: string | null
 }
 
 export interface SegmentoRead {
@@ -927,8 +928,8 @@ export interface ReglaRead {
   vigente_desde: string | null
   vigente_hasta: string | null
   activa: boolean
+  accion_texto?: string
   condicion_texto: string
-  accion_texto: string
   evento_nombre: string
   retirada: string | null
   campos_condicion: CampoCondicion[]
@@ -1155,6 +1156,7 @@ export interface SolicitudAfiliacionRead {
 export interface PlantillaWhatsAppRead {
   id: string
   nombre: string
+  titulo: string | null
   idioma: string
   version: number
   categoria: string

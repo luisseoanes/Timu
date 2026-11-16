@@ -73,6 +73,8 @@ class PlantillaWhatsApp(Base, UUIDMixin, TimestampMixin):
     __table_args__ = (UniqueConstraint("nombre", "idioma", "version"),)
 
     nombre: Mapped[str] = mapped_column(String(120), index=True)
+    # Como la llama el equipo («Aviso de mora»); `nombre` es el codigo con que se registra en Meta.
+    titulo: Mapped[str | None] = mapped_column(String(120))
     idioma: Mapped[str] = mapped_column(String(10), default="es")
     version: Mapped[int] = mapped_column(Integer, default=1)
     categoria: Mapped[str] = mapped_column(EnumDb(CategoriaPlantilla), default="utility")

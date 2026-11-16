@@ -13,7 +13,7 @@ Acciones: cada evento declara que acciones admite y con que parametros (ver
 """
 
 import operator
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import date
 from typing import Annotated, Any, Literal, Union
 
@@ -338,13 +338,17 @@ _PRORRATEO = {
 }
 
 
-def describir_accion(accion: dict[str, Any]) -> str:
-    """Lo que hace la regla cuando se cumple, en una frase."""
+def describir_accion(accion: dict[str, Any], titulos: Mapping[str, str] | None = None) -> str:
+    """Lo que hace la regla cuando se cumple, en una frase. `titulos` nombra cada plantilla de
+    WhatsApp como la llama el equipo (`comunicaciones.titulos_plantillas`)."""
     tipo = accion.get("tipo")
     if tipo == "estado":
         return f"Pasa el contrato a «{_valor(accion['estado'])}»"
     if tipo == "notificar":
-        # La plantilla solo tiene el codigo con que se registra en Meta: va como dato secundario.
+        titulo = (titulos or {}).get(accion["plantilla"])
+        if titulo:
+            return f"Envía por WhatsApp «{titulo}»"
+        # Sin nombre para el equipo, el codigo con que se registra en Meta, como dato secundario.
         return f"Envía un aviso por WhatsApp (plantilla {accion['plantilla']})"
     if tipo == "tarea":
         dias = accion.get("vence_en_dias", 2)

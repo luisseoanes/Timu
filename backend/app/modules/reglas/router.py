@@ -11,6 +11,7 @@ from sqlalchemy import String, cast, select
 from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import Rol
 from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
+from app.modules.comunicaciones import service as comunicaciones
 from app.modules.reglas import motor, service
 from app.modules.reglas.models import Regla
 
@@ -92,10 +93,15 @@ class ReglaRead(BaseModel):
         """Cuando aplica, en palabras: el panel no descifra el JSON del motor."""
         return motor.describir_condicion(self.condicion)
 
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def accion_texto(self) -> str:
-        return motor.describir_accion(self.accion)
+    # Lo que hace, en palabras. Lo llena `_leidas` con el nombre que da el equipo a cada
+    # plantilla; sin ese contexto, el validador lo dice con el codigo de Meta.
+    accion_texto: str = ""
+
+    @model_validator(mode="after")
+    def _accion_en_palabras(self) -> "ReglaRead":
+        if not self.accion_texto:
+            self.accion_texto = motor.describir_accion(self.accion)
+        return self
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -127,18 +133,29 @@ async def eventos() -> dict[str, str]:
     return {evento: descripcion for evento, (descripcion, _) in motor.EVENTOS.items()}
 
 
+async def _leidas(db: DbSession, reglas: list[Regla]) -> list[ReglaRead]:
+    """Cada regla con su accion en palabras, nombrando las plantillas como el equipo."""
+    titulos = await db.run_sync(comunicaciones.titulos_plantillas)
+    return [
+        ReglaRead.model_validate(r).model_copy(
+            update={"accion_texto": motor.describir_accion(r.accion, titulos)}
+        )
+        for r in reglas
+    ]
+
+
 @router.get("", response_model=list[ReglaRead], dependencies=[EQUIPO])
-async def listar(db: DbSession, evento: str | None = None) -> list[Regla]:
+async def listar(db: DbSession, evento: str | None = None) -> list[ReglaRead]:
     stmt = select(Regla).order_by(cast(Regla.evento, String), Regla.prioridad, Regla.codigo)
     if evento:
         stmt = stmt.where(Regla.evento == evento)
-    return list(await db.scalars(stmt))
+    return await _leidas(db, list(await db.scalars(stmt)))
 
 
 @router.post(
     "", response_model=ReglaRead, status_code=status.HTTP_201_CREATED, dependencies=[ADMIN]
 )
-async def crear(db: DbSession, data: ReglaCreate) -> Regla:
+async def crear(db: DbSession, data: ReglaCreate) -> ReglaRead:
     if await db.scalar(select(Regla.id).where(Regla.codigo == data.codigo)):
         raise Conflicto(f"Ya existe una regla con codigo {data.codigo}")
     datos = data.model_dump()
@@ -146,11 +163,11 @@ async def crear(db: DbSession, data: ReglaCreate) -> Regla:
     regla = Regla(**datos)
     db.add(regla)
     await db.flush()
-    return regla
+    return (await _leidas(db, [regla]))[0]
 
 
 @router.patch("/{regla_id}", response_model=ReglaRead, dependencies=[ADMIN])
-async def actualizar(db: DbSession, regla_id: UUID, data: ReglaUpdate) -> Regla:
+async def actualizar(db: DbSession, regla_id: UUID, data: ReglaUpdate) -> ReglaRead:
     regla = await db.get(Regla, regla_id)
     if regla is None:
         raise NoEncontrado("Regla no encontrada")
@@ -165,7 +182,7 @@ async def actualizar(db: DbSession, regla_id: UUID, data: ReglaUpdate) -> Regla:
     for campo, valor in cambios.items():
         setattr(regla, campo, valor)
     await db.flush()
-    return regla
+    return (await _leidas(db, [regla]))[0]
 
 
 @router.post("/probar", dependencies=[EQUIPO])
@@ -176,12 +193,13 @@ async def probar(db: DbSession, data: Prueba) -> list[dict[str, Any]]:
     resultados = await db.run_sync(
         service.evaluar, data.evento, data.contexto, plan_id=data.plan_id
     )
+    titulos = await db.run_sync(comunicaciones.titulos_plantillas)
     return [
         {
             "regla": r.regla,
             "nombre": r.nombre,
             "accion": r.accion,
-            "accion_texto": motor.describir_accion(r.accion),
+            "accion_texto": motor.describir_accion(r.accion, titulos),
         }
         for r in resultados
     ]

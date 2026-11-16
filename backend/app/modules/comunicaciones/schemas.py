@@ -17,6 +17,12 @@ _TOKEN_EN_ENLACE = re.compile(r"([?&]token=|/encuesta/)[^&/?\s]+")
 
 class PlantillaCreate(BaseModel):
     nombre: str = Field(pattern=r"^[a-z0-9_]{1,120}$", description="Nombre exacto en Meta")
+    titulo: str | None = Field(
+        default=None,
+        min_length=3,
+        max_length=120,
+        description="Como la llama el equipo; sin el, la version nueva conserva el de la anterior",
+    )
     idioma: str = "es"
     categoria: Literal["utility", "marketing", "authentication"] = "utility"
     cuerpo: str = Field(min_length=1, max_length=1024)
@@ -42,6 +48,7 @@ class PlantillaRead(BaseModel):
 
     id: UUID
     nombre: str
+    titulo: str | None
     idioma: str
     version: int
     categoria: str

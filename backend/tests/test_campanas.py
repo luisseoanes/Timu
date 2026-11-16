@@ -28,6 +28,7 @@ async def base(db):
     db.add(
         PlantillaWhatsApp(
             nombre=PLANTILLA,
+            titulo="Descuento en vacunas",
             cuerpo="Hola {{1}}, {{2}} tiene descuento en vacunas",
             variables=["titular", "mascota"],
             estado_aprobacion="aprobada",
@@ -99,7 +100,12 @@ async def test_campana_se_valida_contra_la_plantilla(client, db, base, headers):
     assert (
         await _campana(client, headers, variables=["titular_nombre", "cumpleanos"])
     ).status_code == 422
-    assert (await _campana(client, headers)).status_code == 201
+    creada = await _campana(client, headers)
+    assert creada.status_code == 201
+    # DEU-10: la ficha dice la plantilla como la llama el equipo, no por su codigo de Meta.
+    assert creada.json()["plantilla_titulo"] == "Descuento en vacunas"
+    [listada] = (await client.get("/api/v1/campanas", headers=headers)).json()
+    assert listada["plantilla_titulo"] == "Descuento en vacunas"
 
 
 async def test_previsualizacion_con_exclusiones(client, db, base, headers):
