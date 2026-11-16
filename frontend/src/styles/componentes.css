@@ -71,8 +71,9 @@
 .input[aria-invalid="true"]:focus { box-shadow: 0 0 0 1px var(--texto-error); }
 .input:disabled { background: var(--superficie-hundida); color: var(--texto-suave); cursor: not-allowed; }
 
-/* Listas y fechas con la forma del sistema, no la del navegador. La flecha de la lista son dos
-   degradados del rol de texto suave (sin imagen ni color escrito); el calendario es una máscara
+/* Listas y fechas con la forma del sistema, no la del navegador. La flecha de la lista es un
+   chevron de trazo, como los iconos: dos franjas diagonales finas («\» y «/»), degradados del rol
+   de texto suave (sin imagen ni color escrito); el calendario es una máscara
    (solo cuenta su transparencia) pintada con el mismo rol. Lo señaló el revisor del portal. */
 select.input:not([multiple]) {
   appearance: none;
@@ -82,10 +83,10 @@ select.input:not([multiple]) {
 select.input:not([multiple]),
 select.input:not([multiple]):disabled {
   background-image:
-    linear-gradient(45deg, transparent 50%, var(--flecha-lista) 50%),
-    linear-gradient(135deg, var(--flecha-lista) 50%, transparent 50%);
-  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
-  background-size: 5px 5px;
+    linear-gradient(45deg, transparent calc(50% - .8px), var(--flecha-lista) calc(50% - .8px) calc(50% + .8px), transparent calc(50% + .8px)),
+    linear-gradient(-45deg, transparent calc(50% - .8px), var(--flecha-lista) calc(50% - .8px) calc(50% + .8px), transparent calc(50% + .8px));
+  background-position: calc(100% - 19px) calc(50% + 1px), calc(100% - 13px) calc(50% + 1px);
+  background-size: 6px 6px;
   background-repeat: no-repeat;
 }
 select.input { --flecha-lista: var(--texto-suave); }
