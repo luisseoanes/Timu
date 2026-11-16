@@ -50,6 +50,8 @@
 .campo > span, .campo > label { font-size: var(--t-menor); font-weight: 600; color: var(--texto-titulo); }
 /* Ayuda bajo un campo; se enlaza con aria-describedby para que la lea un lector de pantalla. */
 .campo > .campo-ayuda { font-size: var(--t-etiqueta); font-weight: 400; color: var(--texto-suave); }
+/* «(opcional)» junto a la etiqueta: se lee, pero no compite con ella. */
+.campo-opcional { font-weight: 400; color: var(--texto-suave); }
 .campo > .error { font-weight: 400; color: var(--texto-error); }
 .input {
   font: inherit;

@@ -192,6 +192,42 @@ describe('pasos de la atención', () => {
     await waitFor(() => expect(enviado).toEqual({ datos: { hallazgos: 'Otitis leve bilateral' } }))
   })
 
+  it('un campo opcional lleva el nombre que da la API y no se exige', async () => {
+    let enviado: unknown = null
+    server.use(
+      http.get(`${API}/catalogos/tipos-servicio`, () =>
+        HttpResponse.json([
+          {
+            ...TIPOS_SERVICIO[0]!,
+            pasos: [
+              {
+                codigo: 'aplicacion',
+                nombre: 'Aplicación',
+                obligatorio: true,
+                campos: ['producto'],
+                opcionales: [{ campo: 'peso_kg', nombre: 'Peso de la mascota (kg)', numerico: true }],
+                lo_registra_la_consulta: false,
+              },
+            ],
+          },
+        ]),
+      ),
+      http.put(`${API}/servicios/s1/pasos/aplicacion`, async ({ request }) => {
+        enviado = await request.json()
+        return HttpResponse.json({ paso_codigo: 'aplicacion', datos: {}, completado_por_id: null, created_at: '' })
+      }),
+    )
+    const user = abrir({ estado: 'en_atencion' })
+    const tarjeta = await tarjetaPasos()
+    const peso = await within(tarjeta).findByLabelText(/Peso de la mascota \(kg\)/)
+    expect(peso).not.toBeRequired()
+    expect(peso).toHaveAttribute('inputmode', 'decimal')
+    await user.type(within(tarjeta).getByLabelText('Producto'), 'Drontal')
+    await user.type(peso, '12,5')
+    await user.click(within(tarjeta).getByRole('button', { name: 'Guardar paso' }))
+    await waitFor(() => expect(enviado).toEqual({ datos: { producto: 'Drontal', peso_kg: '12,5' } }))
+  })
+
   it('un paso opcional sin campos se marca hecho, y se puede cancelar la edición', async () => {
     server.use(
       http.get(`${API}/catalogos/tipos-servicio`, () =>

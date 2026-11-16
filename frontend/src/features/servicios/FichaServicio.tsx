@@ -318,11 +318,16 @@ function Paso({
 }) {
   const completar = useCompletarPaso(servicioId)
   const campos = paso.campos ?? []
+  // Lo que el paso acepta sin exigir (el peso de una desparasitación): su nombre lo da la API.
+  const opcionales = paso.opcionales ?? []
+  const rotulo = (campo: string) => opcionales.find((o) => o.campo === campo)?.nombre ?? rotuloCampo(campo)
 
   function guardar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const d = new FormData(e.currentTarget)
-    const valores = Object.fromEntries(campos.map((c) => [c, String(d.get(c) ?? '').trim()]))
+    const valores = Object.fromEntries(
+      [...campos, ...opcionales.map((o) => o.campo)].map((c) => [c, String(d.get(c) ?? '').trim()]),
+    )
     completar.mutate({ paso: paso.codigo, datos: valores }, { onSuccess: onGuardado })
   }
 
@@ -341,7 +346,7 @@ function Paso({
         <dl className="servicio-paso-datos">
           {Object.entries(datos).map(([k, v]) => (
             <div key={k}>
-              <dt>{rotuloCampo(k)}</dt>
+              <dt>{rotulo(k)}</dt>
               <dd>{String(v)}</dd>
             </div>
           ))}
@@ -349,11 +354,26 @@ function Paso({
       )}
       {abierto && (
         <form className="formulario servicio-paso-formulario" onSubmit={guardar} aria-label={`Paso ${paso.nombre}`}>
-          {campos.length === 0 && <p className="apagado ancho">Este paso no pide datos: guárdalo para marcarlo hecho.</p>}
+          {campos.length === 0 && opcionales.length === 0 && (
+            <p className="apagado ancho">Este paso no pide datos: guárdalo para marcarlo hecho.</p>
+          )}
           {campos.map((c) => (
             <label key={c} className="campo ancho">
               <span>{rotuloCampo(c)}</span>
               <textarea className="input" name={c} rows={3} required defaultValue={datos ? String(datos[c] ?? '') : ''} />
+            </label>
+          ))}
+          {opcionales.map((o) => (
+            <label key={o.campo} className="campo">
+              <span>
+                {o.nombre} <span className="campo-opcional">(opcional)</span>
+              </span>
+              <input
+                className="input"
+                name={o.campo}
+                inputMode={o.numerico ? 'decimal' : undefined}
+                defaultValue={datos ? String(datos[o.campo] ?? '').replace('.', ',') : ''}
+              />
             </label>
           ))}
           {completar.isError && (
