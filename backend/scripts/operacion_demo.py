@@ -37,6 +37,7 @@ from app.core.database import sesion_worker
 from app.modules.encuestas import service as encuestas
 from app.modules.encuestas.models import Encuesta
 from app.workers.celery_app import celery_app
+from app.workers.tasks import campanas as tareas_campanas
 from app.workers.tasks import cartera as tareas_cartera
 from app.workers.tasks import outbox
 from scripts.datos_demo import API, BOGOTA, CLAVE_EQUIPO, Cliente, pagar_lo_vencido
@@ -514,11 +515,16 @@ def preventivos(
 
 
 def candidatas(c: Cliente, ciudad: str) -> list[tuple[dict[str, Any], dict[str, Any]]]:
-    """(familia, mascota) de la ciudad con ubicacion: a quienes se puede visitar."""
+    """(familia, mascota) de la ciudad con ubicacion y contrato: a quienes se puede visitar.
+    Cada familia lleva `afiliada_desde`: antes de esa fecha no se le visita ni se le remite."""
     pares = []
     for familia in c.get("/familias", ciudad=ciudad, limit=100)["items"]:
         if familia.get("latitud") is None:
             continue
+        cuenta = c.http.get(f"/cartera/familias/{familia['id']}/estado-cuenta")
+        if cuenta.status_code != 200:
+            continue
+        familia["afiliada_desde"] = date.fromisoformat(cuenta.json()["contrato"]["fecha_inicio"])
         pares.extend((familia, m) for m in familia["mascotas"] if m.get("activa", True))
     return pares
 
@@ -559,6 +565,8 @@ def operar_dias(c: Cliente, medicos: dict[str, tuple[Cliente, str]], hoy: date) 
             familia, mascota = pares[turno[ciudad] % len(pares)]
             turno[ciudad] += 1
             intentos += 1
+            if familia["afiliada_desde"] > dia:
+                continue
             # La API dice si se puede (plan vigente, cartera al dia, cupo): si no, la siguiente.
             if not c.get(
                 "/servicios/elegibilidad",
@@ -842,6 +850,262 @@ def encuestas_respondidas(c: Cliente, op: Operacion, motor: Any) -> None:
             ),
             {"ids": hechas},
         )
+        # La tarea que deja una calificacion baja nace cuando la familia respondio, y vencia
+        # ese mismo dia: las que siguen abiertas quedan vencidas, como pasaria.
+        cx.execute(
+            text(
+                "UPDATE tareas t SET created_at = e.respondida_en, updated_at = e.respondida_en,"
+                " vence_el = (e.respondida_en AT TIME ZONE 'America/Bogota')::date"
+                " FROM encuestas e WHERE e.servicio_id = t.servicio_id"
+                " AND t.origen = 'encuesta' AND e.respondida_en IS NOT NULL"
+                " AND t.servicio_id = ANY(:ids)"
+            ),
+            {"ids": hechas},
+        )
+
+
+# --- Lo demas de la operacion: comercial, tareas, aliadas, clinica virtual y campanas --------
+
+# Cada fila se crea hoy por la API y despues se lleva `dias` al pasado: estas son sus columnas
+# de fecha (las de tipo date se restan en dias; las de instante, como intervalo).
+FECHAS: dict[str, dict[str, str]] = {
+    "interesados": {"created_at": "marca", "updated_at": "marca", "ultimo_contacto": "marca"},
+    "tareas": {
+        "created_at": "marca",
+        "updated_at": "marca",
+        "cerrada_en": "marca",
+        "vence_el": "dia",
+    },
+    "remisiones_aliadas": {
+        "created_at": "marca",
+        "updated_at": "marca",
+        "reportada_en": "marca",
+        "vence_en": "dia",
+    },
+    "solicitudes_virtuales": {
+        "created_at": "marca",
+        "updated_at": "marca",
+        "tomada_en": "marca",
+        "respondida_en": "marca",
+        "borrador_en": "marca",
+    },
+    "campanas": {"created_at": "marca", "updated_at": "marca", "programada_para": "marca"},
+    "ejecuciones_campana": {
+        "created_at": "marca",
+        "updated_at": "marca",
+        "iniciada_en": "marca",
+        "terminada_en": "marca",
+    },
+}
+
+
+def al_pasado(cx: Any, tabla: str, fila_id: str, dias: int, *, donde: str = "id") -> None:
+    """Lleva `dias` al pasado las fechas de una fila (o de las filas de `donde`). La tabla y
+    sus columnas salen de FECHAS, nunca de fuera."""
+    columnas = ", ".join(
+        f"{c} = {c} - :d" if tipo == "dia" else f"{c} = {c} - make_interval(days => :d)"
+        for c, tipo in FECHAS[tabla].items()
+    )
+    cx.execute(
+        text(f"UPDATE {tabla} SET {columnas} WHERE {donde} = :i"),  # noqa: S608 - nombres fijos
+        {"d": dias, "i": UUID(fila_id)},
+    )
+
+
+# (nombre, celular, ciudad, origen, etapa a la que llega, dias atras, motivo si se perdio)
+INTERESADOS = [
+    ("Marta Lucía Ospina", "3112340001", "Bogota", "whatsapp", "nuevo", 2, None),
+    ("Jaime Cárdenas", "3112340002", "Bogota", "formulario", "nuevo", 5, None),
+    ("Paola Jiménez", "3112340003", "Medellin", "referido", "contactado", 9, None),
+    ("Oscar Duarte", "3112340004", "Bogota", "evento", "contactado", 16, None),
+    ("Natalia Ruiz", "3112340005", "Bogota", "campana", "contactado", 23, None),
+    ("Mauricio Peña", "3112340006", "Medellin", "whatsapp", "cotizado", 12, None),
+    ("Lina Marcela Rojas", "3112340007", "Bogota", "referido", "cotizado", 30, None),
+    ("Esteban Quintero", "3112340008", "Bogota", "formulario", "cotizado", 38, None),
+    ("Daniela Cano", "3112340009", "Medellin", "evento", "en_afiliacion", 20, None),
+    ("Alejandro Torres", "3112340010", "Bogota", "whatsapp", "en_afiliacion", 44, None),
+    ("Mónica Herrera", "3112340011", "Bogota", "campana", "perdido", 35, "Precio"),
+    ("Iván Gaviria", "3112340012", "Medellin", "formulario", "perdido", 50, "Eligió otra opción"),
+]
+ORDEN_EMBUDO = ["contactado", "cotizado", "en_afiliacion"]
+
+
+def comercial(c: Cliente, motor: Any) -> None:
+    """El embudo en el tiempo: interesados que llegaron en las ultimas semanas, cada uno en la
+    etapa a la que llego. Ninguno llega a afiliado: eso lo pone la afiliacion en linea al
+    aprobarse el pago, y la pasarela de pruebas aun no esta (pendientes-externos, Wompi)."""
+    with motor.begin() as cx:
+        for nombre, telefono, ciudad, origen, etapa, dias, motivo in INTERESADOS:
+            nuevo = c.post(
+                "/comercial/interesados",
+                {"nombre": nombre, "telefono": telefono, "ciudad": ciudad, "origen": origen},
+            )
+            if nuevo is None:
+                continue
+            if etapa == "perdido":
+                c.http.patch(f"/comercial/interesados/{nuevo['id']}", json={"etapa": "contactado"})
+                c.post(f"/comercial/interesados/{nuevo['id']}/perdida", {"motivo": motivo})
+            elif etapa != "nuevo":
+                for paso in ORDEN_EMBUDO[: ORDEN_EMBUDO.index(etapa) + 1]:
+                    c.http.patch(f"/comercial/interesados/{nuevo['id']}", json={"etapa": paso})
+            al_pasado(cx, "interesados", nuevo["id"], dias)
+
+
+# (titulo, area, prioridad, plazo en dias, dias atras, como se cerro; sin cierre sigue abierta)
+TAREAS = [
+    ("Confirmar dirección nueva de la familia", "operaciones", "media", 2, 40, "Confirmada"),
+    ("Llamar por la cuota de septiembre", "cartera", "alta", 1, 35, "Pagó por transferencia"),
+    ("Enviar la cotización de Amigos por Siempre", "comercial", "media", 3, 30, "Enviada"),
+    ("Revisar el examen de sangre de Bruno", "medico", "alta", 2, 26, "Valores normales"),
+    ("Reponer el inventario de vacunas", "operaciones", "baja", 7, 21, "Pedido hecho"),
+    ("Atender la queja por la demora de la visita", "servicio_cliente", "alta", 1, 14, None),
+    ("Llamar a la familia en mora de Medellín", "cartera", "media", 3, 12, None),
+    ("Agendar el control de la cirugía", "medico", "media", 5, 6, None),
+    ("Actualizar el teléfono del titular", "servicio_cliente", "baja", 7, 3, None),
+    ("Preparar la campaña de diciembre", "comercial", "baja", 14, 2, None),
+]
+
+
+def tareas(c: Cliente, motor: Any) -> None:
+    """Tareas de las ultimas semanas: las mas viejas cerradas y unas abiertas ya vencidas."""
+    with motor.begin() as cx:
+        for titulo, area, prioridad, plazo, dias, cierre in TAREAS:
+            nueva = c.post(
+                "/tareas",
+                {"titulo": titulo, "area": area, "prioridad": prioridad, "vence_en_dias": plazo},
+            )
+            if nueva is None:
+                continue
+            if cierre:
+                c.post(f"/tareas/{nueva['id']}/cerrar", {"resolucion": cierre})
+            al_pasado(cx, "tareas", nueva["id"], dias)
+
+
+# (motivo, dias atras, que paso: atendida, anulada, vencida o por usar)
+REMISIONES = [
+    ("Radiografía de cadera por cojera", 45, "atendida"),
+    ("Ecografía abdominal por vómito persistente", 33, "atendida"),
+    ("Limpieza dental bajo anestesia", 24, "atendida"),
+    ("Hospitalización por deshidratación", 18, "anulada"),
+    ("Radiografía de tórax por tos", 40, "vencida"),
+    ("Ecografía de control", 4, "por usar"),
+]
+
+
+def remisiones(c: Cliente, motor: Any, hoy: date) -> None:
+    """Remisiones a la clinica aliada de Bogota: atendidas y reportadas por la clinica, una
+    anulada, una que vencio sin usarse y una por usar."""
+    clinica = next((x for x in c.get("/aliadas") if x["ciudad"] == "Bogota"), None)
+    if clinica is None:
+        return
+    aliada = Cliente("aliada@timu.co", CLAVE_EQUIPO)
+    pares = [
+        (f, m)
+        for f, m in candidatas(c, "Bogota")
+        # Afiliada desde antes de la remision mas antigua.
+        if f["afiliada_desde"] <= hoy - timedelta(days=max(d for _, d, _ in REMISIONES))
+        and c.get(
+            "/servicios/elegibilidad",
+            familia_id=f["id"],
+            mascota_id=m["id"],
+            tipo_codigo="atencion_aliada",
+        )["elegible"]
+    ]
+    with motor.begin() as cx:
+        for (motivo, dias, final), (_, mascota) in zip(REMISIONES, pares, strict=False):
+            remision = c.post(
+                "/aliadas/remisiones",
+                {"clinica_id": clinica["id"], "mascota_id": mascota["id"], "motivo": motivo},
+            )
+            if remision is None:
+                continue
+            if final == "atendida":
+                aliada.post(
+                    f"/aliadas/mi-clinica/remisiones/{remision['codigo']}/atencion",
+                    {
+                        # Dentro de la vigencia de la remision, que se emitio hoy: despues se
+                        # lleva al pasado con ella.
+                        "fecha": hoy.isoformat(),
+                        "valor_atencion": "180000",
+                        "resumen": "Procedimiento sin complicaciones; se envía el informe.",
+                    },
+                )
+            elif final == "anulada":
+                c.post(
+                    f"/aliadas/remisiones/{remision['id']}/anulacion",
+                    {"motivo": "La familia prefirió esperar"},
+                )
+            al_pasado(cx, "remisiones_aliadas", remision["id"], dias)
+            # Se atendio dos dias despues de emitirse, y la clinica lo reporto esa tarde.
+            cx.execute(
+                text(
+                    "UPDATE remisiones_aliadas SET fecha_atencion = fecha_atencion - :d,"
+                    " reportada_en = (fecha_atencion - :d + time '17:00')"
+                    " AT TIME ZONE 'America/Bogota'"
+                    " WHERE id = :i AND fecha_atencion IS NOT NULL"
+                ),
+                {"d": dias - 2, "i": UUID(remision["id"])},
+            )
+
+
+VIRTUALES = [
+    ("Queremos cambiarle el concentrado, ¿cómo lo hacemos?", 28),
+    ("¿Cada cuánto debo bañar a mi gato?", 15),
+    ("Le salió una mancha en la piel, ¿es grave?", 7),
+]
+
+
+def clinica_virtual(c: Cliente, medico: Cliente, motor: Any, hoy: date) -> None:
+    """Orientaciones virtuales ya respondidas y cerradas por la medica."""
+    antigua = hoy - timedelta(days=max(d for _, d in VIRTUALES))
+    pares = [(f, m) for f, m in candidatas(c, "Bogota") if f["afiliada_desde"] <= antigua]
+    with motor.begin() as cx:
+        for (motivo, dias), (_, mascota) in zip(VIRTUALES, pares[3:], strict=False):
+            solicitud = c.post(
+                "/clinica/virtual",
+                {"mascota_id": mascota["id"], "motivo": motivo, "prioridad": "media"},
+            )
+            if solicitud is None:
+                continue
+            medico.post(f"/clinica/virtual/{solicitud['id']}/toma")
+            medico.post(
+                f"/clinica/virtual/{solicitud['id']}/respuesta",
+                {"respuesta_codigo": "control_alimentacion", "variables": [mascota["nombre"]]},
+            )
+            c.post(f"/clinica/virtual/{solicitud['id']}/cierre")
+            al_pasado(cx, "solicitudes_virtuales", solicitud["id"], dias)
+
+
+def campana_enviada(c: Cliente, motor: Any) -> None:
+    """Una campana que ya salio hace tres semanas, con sus mensajes."""
+    campana = c.post(
+        "/campanas",
+        {
+            "nombre": "Renovaciones de octubre",
+            "plantilla": "recordatorio_renovacion",
+            "variables": ["titular_nombre", "plan"],
+            "segmento": {"estados": ["activa"], "renovacion_en_dias": 400},
+        },
+    )
+    if campana is None:
+        return
+    c.post(f"/campanas/{campana['id']}/programacion", {"recurrencia": "ninguna"})
+    # El beat la lanza y despacha cada minuto: aqui, ya.
+    tareas_campanas.lanzar_programadas()
+    tareas_campanas.despachar()
+    dias = 21
+    with motor.begin() as cx:
+        al_pasado(cx, "campanas", campana["id"], dias)
+        al_pasado(cx, "ejecuciones_campana", campana["id"], dias, donde="campana_id")
+        cx.execute(
+            text(
+                "UPDATE mensajes SET created_at = created_at - make_interval(days => :d),"
+                " updated_at = updated_at - make_interval(days => :d),"
+                " enviado_en = enviado_en - make_interval(days => :d)"
+                " WHERE campana_id = :i"
+            ),
+            {"d": dias, "i": UUID(campana["id"])},
+        )
 
 
 # --- Orquestacion ---------------------------------------------------------------------------
@@ -883,6 +1147,12 @@ def main() -> None:
     fechar(motor, op)
     print("Encuestas")
     encuestas_respondidas(c, op, motor)
+    print("Comercial, tareas, remisiones, clinica virtual y una campana")
+    comercial(c, motor)
+    tareas(c, motor)
+    remisiones(c, motor, hoy)
+    clinica_virtual(c, medico, motor, hoy)
+    campana_enviada(c, motor)
     print(
         f"Listo: {len(op.rutas)} rutas, {sum(not v.omitida for v in op.visitas)} visitas,"
         f" {sum(v.omitida for v in op.visitas)} omitidas y {len(op.cancelados)} canceladas."
@@ -901,6 +1171,11 @@ MINIMOS = {
     "preventivos aplicados": 30,
     "familias en mora": 2,
     "familias congeladas": 1,
+    "interesados perdidos": 1,
+    "remisiones atendidas": 2,
+    "tareas cerradas": 3,
+    "orientaciones cerradas": 2,
+    "campanas enviadas": 1,
 }
 
 
@@ -925,6 +1200,17 @@ def comprobar(op: Operacion) -> None:
             "familias congeladas": contar(
                 "SELECT count(*) FROM contratos WHERE estado = 'congelada'"
             ),
+            "interesados perdidos": contar(
+                "SELECT count(*) FROM interesados WHERE etapa = 'perdido'"
+            ),
+            "remisiones atendidas": contar(
+                "SELECT count(*) FROM remisiones_aliadas WHERE estado = 'utilizada'"
+            ),
+            "tareas cerradas": contar("SELECT count(*) FROM tareas WHERE estado = 'cerrada'"),
+            "orientaciones cerradas": contar(
+                "SELECT count(*) FROM solicitudes_virtuales WHERE estado = 'cerrada'"
+            ),
+            "campanas enviadas": contar("SELECT count(*) FROM ejecuciones_campana"),
         }
     faltan = [f"{k}: {hechos[k]} de {v}" for k, v in MINIMOS.items() if hechos[k] < v]
     if faltan:

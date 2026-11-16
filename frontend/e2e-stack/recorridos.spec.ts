@@ -349,8 +349,13 @@ test.describe('clínica aliada', () => {
     const equipo = await playwright.request.newContext({ baseURL, storageState: sesion('equipo') })
     const remisiones = await (await equipo.get('/api/v1/aliadas/remisiones', { params: { estado: 'emitida' } })).json()
     await equipo.dispose()
-    expect(remisiones.length, 'datos_demo debe dejar al menos una remisión emitida').toBeGreaterThan(0)
-    const codigo: string = remisiones[0].codigo
+    // La de datos_demo, por su motivo: con la operación sembrada hay otras emitidas, y la primera
+    // del listado (la que vence antes) puede ser una ya vencida, que la clínica no valida.
+    const vigente = remisiones.find(
+      (r: { motivo: string; vencida: boolean }) => r.motivo === 'Radiografia de cadera por cojera' && !r.vencida,
+    )
+    expect(vigente, 'datos_demo debe dejar una remisión emitida y vigente').toBeTruthy()
+    const codigo: string = vigente.codigo
 
     await page.goto('/')
     await expect(page).toHaveURL(/\/aliada/)
