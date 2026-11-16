@@ -414,6 +414,8 @@ describe('las rutas del día para quien coordina', () => {
     const porRutear = screen.getByRole('region', { name: /Por rutear/ })
     expect(await within(porRutear).findByRole('link', { name: 'Marcela Torres · Simba' })).toHaveAttribute('href', '/servicios/s9')
     expect(within(porRutear).getByText('Consulta domiciliaria · Calle 53 # 20-11, Galerías, Bogota')).toBeInTheDocument()
+    // La hora dice qué es: la agendada, no la de llegada (techo 31).
+    expect(within(porRutear).getByText(/^agendado a las \d{1,2}:\d{2}\s[ap]\.\sm\.$/)).toBeInTheDocument()
     expect(screen.getByText(/Elige una ruta para ver sus paradas/)).toBeInTheDocument()
   })
 

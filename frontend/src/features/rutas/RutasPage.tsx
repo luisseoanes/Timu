@@ -273,7 +273,8 @@ function RutasDelDia({
                         {s.familia.titular_nombre}
                         {s.mascota && ` · ${s.mascota.nombre}`}
                       </Link>
-                      <span className="apagado numero">{hora(s.programado_para)}</span>
+                      {/* La hora dice qué es: la agendada, no la de llegada en una ruta. */}
+                      <span className="apagado numero">agendado a las {hora(s.programado_para)}</span>
                     </span>
                     <span className="ruta-fila-datos">
                       {nombreTipo(s.tipo_codigo)} · {donde(s.familia)}
