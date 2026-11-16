@@ -20,12 +20,13 @@ describe('las citas dichas a la familia', () => {
     expect(estadoDeCita('desconocido')).toEqual({ label: 'desconocido', tono: 'neutro' })
   })
 
-  it('solo ofrece lo que el backend acepta', () => {
-    expect(puedeCambiar(cita('agendado', null))).toBe(true)
-    expect(puedeCambiar(cita('pendiente_autorizacion', null))).toBe(false)
-    expect(puedeCancelar(cita('pendiente_autorizacion', null))).toBe(true)
-    expect(puedeCancelar(cita('solicitado', null))).toBe(false)
-    expect(puedeCancelar(cita('en_ruta', null))).toBe(false)
+  it('ofrece lo que dice el backend en cada cita, no lo que deduciría de su estado', () => {
+    const confirmada = cita('agendado', null)
+    expect(puedeCambiar(confirmada)).toBe(false)
+    expect(puedeCambiar({ ...confirmada, puede_cambiar: true })).toBe(true)
+    // Confirmada pero en la ruta del día, o a pocas horas: el backend dice que no (DEU-2).
+    expect(puedeCancelar({ ...confirmada, puede_cancelar: false, sin_cambios: 'Faltan menos de 4 horas' })).toBe(false)
+    expect(puedeCancelar({ ...cita('pendiente_autorizacion', null), puede_cancelar: true })).toBe(true)
   })
 
   it('las pasadas: cerradas o con la hora cumplida, sin las que están en curso, la más reciente primero', () => {

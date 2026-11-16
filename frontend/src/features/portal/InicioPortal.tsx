@@ -62,7 +62,7 @@ export function PortalInicio() {
         <div className="acciones">
           {sinAgendar === null && (
             <button className="btn btn-secundario" type="button" onClick={() => setAgendando(true)}>
-              <Icono nombre="calendario" size={18} /> Agendar una visita
+              <Icono nombre="calendario" size={18} /> Agendar una cita
             </button>
           )}
           <button className="btn btn-secundario" type="button" onClick={() => setOrientacion(true)}>

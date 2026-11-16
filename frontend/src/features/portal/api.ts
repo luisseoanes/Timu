@@ -40,6 +40,10 @@ export interface PlanPortal {
   fecha_inicio: string
   fecha_renovacion: string
   mascotas: { mascota_id: string; mascota: string; plan: string; color: ColorPlan; valor_mensual: string; beneficios: BeneficioPortal[] }[]
+  /** Por qué la familia no puede agendar sola ahora, en sus palabras; null si puede. Lo decide el backend. */
+  motivo_sin_agendar: string | null
+  /** Lo que la familia puede agendar sola: en casa, preventivos y en la clínica. */
+  tipos_agendables: { codigo: string; nombre: string; modalidad: string }[]
 }
 
 /** Historia en la vista de la familia: todo lo clínico menos las notas internas. */

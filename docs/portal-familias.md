@@ -23,26 +23,20 @@ la acota otra vez en la base.
 `/plan` y `/estado-cuenta` responden 404 sin contrato vigente. No es un error: el panel lo lee
 como «sin plan» (`useMiPlan` y `useMiCuenta` devuelven `null`).
 
-## Lo que el panel copia del backend
+## Lo que dice el backend y el panel no copia
 
-El portal no ofrece lo que el backend va a rechazar. Para eso repite cuatro reglas del backend,
-y una copia puede quedarse atrás sin que ninguna prueba lo note (deuda en
-[`frontend/conventions.md`](frontend/conventions.md)):
+El portal no ofrece lo que el backend va a rechazar, y no lo deduce: se lo pregunta (`DEU-2`, el
+2026-11-16; antes copiaba cuatro reglas, y una ya no coincidía).
 
-| Regla | Backend | Panel |
+| Qué | Lo dice | Lo usa el panel |
 | --- | --- | --- |
-| Agendar solo con el plan activo | `servicios.elegibilidad` (plan vigente, afiliación activa, cartera al día, cupo) | `motivoSinAgendar` en `plan.ts`, solo por el estado del plan |
-| Cambiar de fecha solo una cita `agendado` sin ruta | `portal.service.reprogramar` | `puedeCambiar` en `citas.ts` |
-| Cancelar solo `agendado` o `pendiente_autorizacion` | `portal.service.cancelar` | `puedeCancelar` en `citas.ts` |
-| Qué tipos se agendan | `MODALIDADES_AUTOGESTION`: domiciliario, preventivo y clínico | `AgendarModal` en `Agenda.tsx`: solo domiciliario y preventivo |
+| Si la familia puede agendar, y por qué no | `motivo_sin_agendar` de `GET /portal/plan`, con las causas del contrato de `servicios.elegibilidad` (plan vencido, en pausa, cuotas vencidas) | `motivoSinAgendar` en `plan.ts` |
+| Qué puede agendar sola | `tipos_agendables` de `GET /portal/plan` (`MODALIDADES_AUTOGESTION`: en casa, preventivos y en la clínica) | `AgendarModal` en `Agenda.tsx` |
+| Si una cita se cambia o se cancela, y por qué no | `puede_cambiar`, `puede_cancelar` y `sin_cambios` de cada cita (`portal.service.que_puede`: estado, ruta y `PORTAL_ANTELACION_HORAS`), lo mismo que comprueban `reprogramar` y `cancelar` | `puedeCambiar` y `puedeCancelar` en `citas.ts`, y la nota de la cita |
 
-La última no coincide: el backend deja agendar una consulta en la clínica y el portal no la
-ofrece. Queda abierto (abajo).
-
-Lo que el panel no copia y deja decir al backend: el cupo de cada beneficio, las reglas
-configurables de `servicio.elegibilidad` y la antelación para cambiar o cancelar
-(`PORTAL_ANTELACION_HORAS`, 4 por defecto). En esos casos, el mensaje del 422 llega a la
-familia tal cual: es español para el usuario, por convención del backend.
+Lo que depende de cada cita al agendarla (el cupo de cada beneficio, la mascota, las reglas
+configurables de `servicio.elegibilidad`) lo dice el 422 del backend, que llega a la familia tal
+cual: es español para el usuario, por convención del backend.
 
 ## Pagar
 
@@ -78,9 +72,7 @@ día se hacen interceptando la API ([`frontend/capturas-revisor.md`](frontend/ca
 
 ## Lo que queda abierto
 
-- **La consulta en la clínica no se agenda desde el portal**, aunque el backend lo permite
-  (tabla de arriba). Hay que decidir si el portal la ofrece.
-- **Las cuatro reglas copiadas**: se cierran cuando la API diga, en `/portal/plan` o en cada
-  servicio, qué puede hacer la familia, en vez de que el panel lo deduzca.
+- ~~**La consulta en la clínica no se agenda desde el portal**~~ y ~~**las cuatro reglas
+  copiadas**~~: resueltas el 2026-11-16 (`DEU-2`, tabla de arriba).
 - **Una segunda familia con portal en `datos_demo`**, al día, con citas y pagos, daría al
   barrido y a los recorridos el estado sano.

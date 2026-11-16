@@ -31,7 +31,7 @@ export function PortalCitas() {
         <h1>Tus citas</h1>
         {sinAgendar === null && (
           <button className="btn btn-primario" type="button" onClick={() => setAgendando(true)}>
-            <Icono nombre="calendario" size={18} /> Agendar una visita
+            <Icono nombre="calendario" size={18} /> Agendar una cita
           </button>
         )}
       </header>
@@ -71,6 +71,7 @@ function Proximas() {
           <ul className="citas" aria-label="Citas próximas">
             {d.map((s) => (
               <Cita key={s.id} cita={s}>
+                {s.sin_cambios && <p className="cita-nota">{s.sin_cambios}</p>}
                 {(puedeCambiar(s) || puedeCancelar(s)) && (
                   <div className="cita-acciones">
                     {puedeCambiar(s) && (

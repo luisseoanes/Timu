@@ -795,6 +795,8 @@
 .cita-que p { font-size: var(--t-menor); color: var(--texto-suave); }
 /* Las acciones de una fila van siempre a la derecha, también cuando bajan a su propia fila. */
 .cita-acciones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--e2); margin-left: auto; }
+/* Por qué una cita ya no se cambia desde el portal: lo dice la API (DEU-2). */
+.cita-nota { flex-basis: 100%; font-size: var(--t-menor); color: var(--texto-suave); }
 @container (max-width: 480px) {
   .cita-cuando { flex-basis: 100%; grid-auto-flow: column; justify-content: start; gap: var(--e2); }
   .cita-acciones { flex-basis: 100%; }

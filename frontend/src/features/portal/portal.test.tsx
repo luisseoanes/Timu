@@ -35,8 +35,16 @@ const linea = (estaciones: EstacionRead[]): LineaFamiliaRead => ({
   estaciones,
 })
 
+// Lo que dice la API (`portal/service.py`): por qué no se agenda y qué se puede agendar.
+const MOTIVOS: Record<string, string> = { congelada: 'Tu plan está en pausa por cuotas vencidas: al pagarlas, podrás agendar.' }
 const plan = (estado: string) => ({
   estado,
+  motivo_sin_agendar: MOTIVOS[estado] ?? null,
+  tipos_agendables: [
+    { codigo: 'consulta_domiciliaria', nombre: 'Consulta domiciliaria', modalidad: 'domiciliario' },
+    { codigo: 'vacunacion', nombre: 'Vacunación', modalidad: 'preventivo' },
+    { codigo: 'consulta_clinica', nombre: 'Consulta clínica', modalidad: 'clinico' },
+  ],
   periodicidad: 'mensual',
   valor_periodo: '75000.00',
   valor_mensual: '75000.00',
@@ -117,9 +125,9 @@ describe('Portal de la familia', () => {
     expect(await screen.findByText('Tu plan está al día. Se renueva el 1 de enero de 2027.')).toBeInTheDocument()
     const agendar = await screen.findByRole('button', { name: 'Agendar' })
     expect(agendar).toHaveClass('btn-primario')
-    expect(screen.getByRole('button', { name: /agendar una visita/i })).toHaveClass('btn-secundario')
+    expect(screen.getByRole('button', { name: /agendar una cita/i })).toHaveClass('btn-secundario')
     await user.click(agendar)
-    expect(await screen.findByRole('dialog', { name: 'Agendar una visita' })).toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: 'Agendar una cita' })).toBeInTheDocument()
   })
 
   it('pinta lo hecho plegado, lo que viene con su estado y paga la próxima cuota', async () => {
@@ -231,13 +239,13 @@ describe('Portal de la familia', () => {
     const user = userEvent.setup()
     renderizar(<PortalCitas />)
     expect(await screen.findByText('No tienes citas próximas.')).toBeInTheDocument()
-    await user.click(await screen.findByRole('button', { name: /agendar una visita/i }))
+    await user.click(await screen.findByRole('button', { name: /agendar una cita/i }))
     const modal = await screen.findByRole('dialog')
-    await waitFor(() => expect(within(modal).getByRole('option', { name: 'Consulta domiciliaria' })).toBeInTheDocument())
-    await user.selectOptions(within(modal).getByLabelText('Tipo de visita'), 'consulta_domiciliaria')
+    await waitFor(() => expect(within(modal).getByRole('option', { name: 'Consulta domiciliaria · en casa' })).toBeInTheDocument())
+    await user.selectOptions(within(modal).getByLabelText('Qué necesitas'), 'consulta_domiciliaria')
     await user.click(await within(modal).findByRole('button', { pressed: false }))
     await user.click(within(modal).getByRole('button', { name: 'Agendar' }))
-    expect(await within(modal).findByText(/tu visita quedó/i)).toBeInTheDocument()
+    expect(await within(modal).findByText(/tu cita quedó/i)).toBeInTheDocument()
     expect(enviado).toMatchObject({ mascota_id: FAMILIA.mascotas?.[0]?.id, tipo_codigo: 'consulta_domiciliaria', inicio: '2099-01-10T14:00:00Z' })
   })
 

@@ -181,11 +181,6 @@ Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñ
 - **Los módulos sin rediseñar** contradicen el sistema en puntos que sus unidades de la hoja de
   ruta corrigen, como la opacidad de `.cupo:disabled` (la usa el selector de horarios del portal
   y del panel).
-- **El portal copia cuatro reglas del backend** para no ofrecer lo que la API rechazaría:
-  cuándo se agenda (`motivoSinAgendar`), qué cita cambia de fecha o se cancela (`puedeCambiar`,
-  `puedeCancelar`) y qué tipos se agendan. La última ya no coincide: el backend deja agendar una
-  consulta en la clínica y el portal no la ofrece. Se cierra cuando la API diga qué puede hacer
-  la familia. El detalle, en [`portal-familias.md`](../portal-familias.md).
 - **`.impeccable/design.json` va algo por detrás de `DESIGN.md`.** Al cerrar `R2-PAN-08`
   (2026-11-14) el documentador le añadió las reglas que faltaban (número de casa, acción de quien
   recorre, series que se distinguen y una sola redacción), el «don't» de las siluetas, los componentes

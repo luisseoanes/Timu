@@ -1,13 +1,12 @@
 import { useState } from 'react'
 
 import { Modal } from '@/components/Modal'
-import { useTiposServicio } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
 import { fechaHora, hora, hoyISO } from '@/lib/formato'
 
-import { useAgendarPortal, useDisponibilidadPortal, useMiFamilia, useOrientacionVirtual } from './api'
+import { useAgendarPortal, useDisponibilidadPortal, useMiFamilia, useMiPlan, useOrientacionVirtual } from './api'
 
-// Agendar una visita y pedir orientación: se abren desde el inicio, la ficha de cada peludo y
+// Agendar una cita y pedir orientación: se abren desde el inicio, la ficha de cada peludo y
 // las citas.
 
 export function SelectorCupo({ tipo, valor, onCambio }: { tipo: string; valor: string; onCambio: (inicio: string) => void }) {
@@ -46,14 +45,16 @@ export function SelectorCupo({ tipo, valor, onCambio }: { tipo: string; valor: s
   )
 }
 
-/** Agendar una visita en casa. Desde la ficha de un peludo llega con él elegido. */
+/** Agendar una cita: lo que la familia puede agendar sola lo dice el plan (`tipos_agendables`),
+ * en casa o en la clínica. Desde la ficha de un peludo llega con él elegido. */
 export function AgendarModal({ abierto, onCerrar, mascotaId }: { abierto: boolean; onCerrar: () => void; mascotaId?: string }) {
   const familia = useMiFamilia()
-  const tipos = useTiposServicio()
+  const plan = useMiPlan()
   const agendar = useAgendarPortal()
   const [tipo, setTipo] = useState('')
   const [inicio, setInicio] = useState('')
-  const enCasa = tipos.data?.filter((t) => t.activo && (t.modalidad === 'domiciliario' || t.modalidad === 'preventivo')) ?? []
+  const tipos = plan.data?.tipos_agendables ?? []
+  const elegido = tipos.find((t) => t.codigo === tipo)
 
   function cerrar() {
     agendar.reset()
@@ -66,7 +67,7 @@ export function AgendarModal({ abierto, onCerrar, mascotaId }: { abierto: boolea
     <Modal
       abierto={abierto}
       onCambio={(v) => !v && cerrar()}
-      titulo="Agendar una visita"
+      titulo="Agendar una cita"
       descripcion="Te confirmamos por WhatsApp. Algunos servicios requieren autorización antes de confirmarse."
       pie={
         !agendar.isSuccess && (
@@ -78,7 +79,7 @@ export function AgendarModal({ abierto, onCerrar, mascotaId }: { abierto: boolea
     >
       {agendar.isSuccess ? (
         <p className="aviso-ok" role="status">
-          ¡Listo! Tu visita quedó para el {fechaHora(agendar.data.programado_para)}.
+          ¡Listo! Tu cita quedó para el {fechaHora(agendar.data.programado_para)}.
         </p>
       ) : (
         <form
@@ -106,14 +107,20 @@ export function AgendarModal({ abierto, onCerrar, mascotaId }: { abierto: boolea
             </select>
           </label>
           <label className="campo">
-            <span>Tipo de visita</span>
+            <span>Qué necesitas</span>
             <select className="input" value={tipo} onChange={(e) => { setTipo(e.target.value); setInicio('') }} required>
               <option value="" disabled>Elige</option>
-              {enCasa.map((t) => (
-                <option key={t.codigo} value={t.codigo}>{t.nombre}</option>
+              {tipos.map((t) => (
+                <option key={t.codigo} value={t.codigo}>
+                  {t.nombre}
+                  {t.modalidad === 'clinico' ? ' · en la clínica' : ' · en casa'}
+                </option>
               ))}
             </select>
           </label>
+          {elegido?.modalidad === 'clinico' && (
+            <p className="campo-ayuda ancho">Es en la clínica TIMU, no en tu casa.</p>
+          )}
           <SelectorCupo tipo={tipo} valor={inicio} onCambio={setInicio} />
           <label className="campo ancho">
             <span>¿Algo que debamos saber? (opcional)</span>
@@ -121,7 +128,7 @@ export function AgendarModal({ abierto, onCerrar, mascotaId }: { abierto: boolea
           </label>
           {agendar.isError && (
             <p className="error ancho" role="alert">
-              {mensajeError(agendar.error, 'No pudimos agendar la visita.')}
+              {mensajeError(agendar.error, 'No pudimos agendar la cita.')}
             </p>
           )}
         </form>

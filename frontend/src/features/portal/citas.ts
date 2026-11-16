@@ -2,7 +2,7 @@ import type { Tono } from '@/lib/estados'
 import type { ServicioPortalRead } from '@/types'
 
 // Las citas dichas a la familia (R3-POR-02): el estado con sus palabras y qué se puede hacer
-// con cada una, con las mismas reglas que el backend (`portal/service.py`).
+// con cada una, según lo que dice el backend (`portal/service.py`, `que_puede`).
 
 const ESTADOS: Record<string, { label: string; tono: Tono; explicacion?: string }> = {
   solicitado: { label: 'Recibida', tono: 'info', explicacion: 'TIMU te confirma la hora por WhatsApp.' },
@@ -20,11 +20,11 @@ export function estadoDeCita(estado: string): { label: string; tono: Tono; expli
   return ESTADOS[estado] ?? { label: estado, tono: 'neutro' }
 }
 
-/** Solo una cita confirmada cambia de fecha desde el portal (el backend rechaza las demás). */
-export const puedeCambiar = (s: ServicioPortalRead) => s.estado === 'agendado'
+/** Qué se puede hacer con una cita lo dice el backend en cada una (estado, ruta y antelación): el
+ * portal no copia sus reglas (DEU-2). */
+export const puedeCambiar = (s: ServicioPortalRead) => s.puede_cambiar ?? false
 
-/** Se cancela confirmada o mientras espera autorización. */
-export const puedeCancelar = (s: ServicioPortalRead) => s.estado === 'agendado' || s.estado === 'pendiente_autorizacion'
+export const puedeCancelar = (s: ServicioPortalRead) => s.puede_cancelar ?? false
 
 const CERRADAS = new Set(['completado', 'cancelado'])
 /** Una visita en camino o en atención es de ahora, aunque su hora ya pasó. */

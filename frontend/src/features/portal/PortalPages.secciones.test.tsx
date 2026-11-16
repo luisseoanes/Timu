@@ -21,18 +21,32 @@ const FAMILIA_CON_BAJA: FamiliaRead = {
   mascotas: [LUNA, { ...LUNA, id: 'm2', nombre: 'Tom', raza: null, especie: 'gato', activa: false }],
 }
 
-const cita = (cambios: Partial<ServicioPortalRead>): ServicioPortalRead => ({
-  id: 's1',
-  mascota_id: LUNA.id,
-  tipo_codigo: 'consulta_domiciliaria',
-  estado: 'agendado',
-  programado_para: '2099-01-10T14:00:00Z',
-  termina_en: null,
-  ...cambios,
-})
+// Una cita como la da la API: con lo que se puede hacer con ella según su estado (`que_puede`),
+// sin ruta ni poca antelación salvo que la prueba diga otra cosa.
+const cita = (cambios: Partial<ServicioPortalRead>): ServicioPortalRead => {
+  const estado = cambios.estado ?? 'agendado'
+  return {
+    id: 's1',
+    mascota_id: LUNA.id,
+    tipo_codigo: 'consulta_domiciliaria',
+    estado,
+    programado_para: '2099-01-10T14:00:00Z',
+    termina_en: null,
+    puede_cambiar: estado === 'agendado',
+    puede_cancelar: estado === 'agendado' || estado === 'pendiente_autorizacion',
+    sin_cambios: null,
+    ...cambios,
+  }
+}
 
 const PLAN = {
   estado: 'activa',
+  motivo_sin_agendar: null as string | null,
+  tipos_agendables: [
+    { codigo: 'consulta_domiciliaria', nombre: 'Consulta domiciliaria', modalidad: 'domiciliario' },
+    { codigo: 'vacunacion', nombre: 'Vacunación', modalidad: 'preventivo' },
+    { codigo: 'consulta_clinica', nombre: 'Consulta clínica', modalidad: 'clinico' },
+  ],
   periodicidad: 'trimestral',
   valor_periodo: '103800.00',
   valor_mensual: '35500.00',
@@ -285,7 +299,7 @@ describe('mascotas', () => {
     expect(within(lista).queryByText(/cuota/i)).not.toBeInTheDocument()
     expect(screen.getByText('Colita Feliz')).toBeInTheDocument()
     await user.click(within(lista).getByRole('button', { name: 'Agendar' }))
-    const modal = await screen.findByRole('dialog', { name: 'Agendar una visita' })
+    const modal = await screen.findByRole('dialog', { name: 'Agendar una cita' })
     await waitFor(() => expect(within(modal).getByLabelText('Mascota')).toHaveValue(LUNA.id))
   })
 
@@ -300,6 +314,20 @@ describe('mascotas', () => {
 describe('citas', () => {
   // Con el plan activo: agendar solo se ofrece si el plan lo permite.
   beforeEach(() => server.use(http.get(`${API}/portal/plan`, () => HttpResponse.json(PLAN))))
+
+  it('una cita que ya no se cambia dice por qué, con las palabras de la API', async () => {
+    const motivo = 'Ya está en la ruta del día: para cambiarla, escríbenos por WhatsApp.'
+    server.use(
+      http.get(`${API}/portal/servicios`, () =>
+        HttpResponse.json([cita({ id: 'a', puede_cambiar: false, puede_cancelar: true, sin_cambios: motivo })]),
+      ),
+    )
+    renderizar(<PortalCitas />)
+    const proximas = await screen.findByRole('list', { name: 'Citas próximas' })
+    expect(await within(proximas).findByText(motivo)).toBeInTheDocument()
+    expect(within(proximas).queryByRole('button', { name: 'Cambiar la fecha' })).not.toBeInTheDocument()
+    expect(within(proximas).getByRole('button', { name: 'Cancelar' })).toBeInTheDocument()
+  })
 
   it('cada próxima ofrece lo que el backend acepta; las pasadas están en su pestaña', async () => {
     const pedidas: (string | null)[] = []
@@ -330,7 +358,7 @@ describe('citas', () => {
   })
 
   it('con el plan en pausa no ofrece agendar y lleva a pagar', async () => {
-    server.use(http.get(`${API}/portal/plan`, () => HttpResponse.json({ ...PLAN, estado: 'congelada' })))
+    server.use(http.get(`${API}/portal/plan`, () => HttpResponse.json({ ...PLAN, estado: 'congelada', motivo_sin_agendar: 'Tu plan está en pausa por cuotas vencidas: al pagarlas, podrás agendar.' })))
     renderizar(<PortalCitas />)
     expect(await screen.findByText(/Tu plan está en pausa por cuotas vencidas/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ir a tus pagos' })).toHaveAttribute('href', '/portal/pagos')
@@ -388,11 +416,11 @@ describe('citas', () => {
     server.use(http.get(`${API}/portal/disponibilidad`, () => HttpResponse.json([{ inicio: '2099-01-10T13:00:00Z', fin: '', disponibles: 0 }])))
     const user = userEvent.setup()
     renderizar(<PortalCitas />)
-    await user.click(await screen.findByRole('button', { name: /agendar una visita/i }))
+    await user.click(await screen.findByRole('button', { name: /agendar una cita/i }))
     const modal = await screen.findByRole('dialog')
     expect(within(modal).getByText('Elige el tipo de visita para ver los horarios.')).toBeInTheDocument()
-    await waitFor(() => expect(within(modal).getByRole('option', { name: 'Vacunación' })).toBeInTheDocument())
-    await user.selectOptions(within(modal).getByLabelText('Tipo de visita'), 'vacunacion')
+    await waitFor(() => expect(within(modal).getByRole('option', { name: 'Vacunación · en casa' })).toBeInTheDocument())
+    await user.selectOptions(within(modal).getByLabelText('Qué necesitas'), 'vacunacion')
     expect(await within(modal).findByText('No hay horarios ese día. Prueba otra fecha.')).toBeInTheDocument()
     expect(within(modal).getByRole('button', { name: 'Agendar' })).toBeDisabled()
 
@@ -409,10 +437,10 @@ describe('citas', () => {
     )
     const user = userEvent.setup()
     renderizar(<PortalCitas />)
-    await user.click(await screen.findByRole('button', { name: /agendar una visita/i }))
+    await user.click(await screen.findByRole('button', { name: /agendar una cita/i }))
     const modal = await screen.findByRole('dialog')
-    await waitFor(() => expect(within(modal).getByRole('option', { name: 'Consulta domiciliaria' })).toBeInTheDocument())
-    await user.selectOptions(within(modal).getByLabelText('Tipo de visita'), 'consulta_domiciliaria')
+    await waitFor(() => expect(within(modal).getByRole('option', { name: 'Consulta domiciliaria · en casa' })).toBeInTheDocument())
+    await user.selectOptions(within(modal).getByLabelText('Qué necesitas'), 'consulta_domiciliaria')
     await user.click(await within(modal).findByRole('button', { pressed: false }))
     await user.type(within(modal).getByLabelText('¿Algo que debamos saber? (opcional)'), 'Perro nervioso')
     await user.click(within(modal).getByRole('button', { name: 'Agendar' }))
@@ -477,7 +505,7 @@ describe('pagos', () => {
       { ...CUENTA.cuotas[0]!, id: 'q2', periodo: '2026-10', dias_mora: 36 },
     ]
     server.use(
-      http.get(`${API}/portal/plan`, () => HttpResponse.json({ ...PLAN, estado: 'congelada' })),
+      http.get(`${API}/portal/plan`, () => HttpResponse.json({ ...PLAN, estado: 'congelada', motivo_sin_agendar: 'Tu plan está en pausa por cuotas vencidas: al pagarlas, podrás agendar.' })),
       http.get(`${API}/portal/estado-cuenta`, () =>
         HttpResponse.json({ ...CUENTA, saldo_pendiente: '150000.00', saldo_vencido: '150000.00', cuotas: vencidas }),
       ),

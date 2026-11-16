@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest'
 import type { PlanPortal } from './api'
 import { alPagar, cupo, estadoDelPlan, finDeLinea, frase, motivoSinAgendar, planesDe } from './plan'
 
-const plan = (estado: string, mascotas = ['Luna', 'Michi']): PlanPortal => ({
+const plan = (estado: string, mascotas = ['Luna', 'Michi'], motivo: string | null = null): PlanPortal => ({
   estado,
+  motivo_sin_agendar: motivo,
+  tipos_agendables: [],
   periodicidad: 'mensual',
   valor_periodo: '75000.00',
   valor_mensual: '75000.00',
@@ -27,12 +29,11 @@ describe('el plan dicho a la familia', () => {
     expect(frase(null, 0)).toMatch(/Aún no tienes un plan activo/)
   })
 
-  it('solo deja agendar con el plan activo, como la elegibilidad del backend', () => {
+  it('dice por qué no se puede agendar con las palabras del backend, sin copiar su regla', () => {
     expect(motivoSinAgendar(plan('activa'))).toBeNull()
-    expect(motivoSinAgendar(plan('congelada'))).toBe('Tu plan está en pausa por cuotas vencidas: al pagarlas, podrás agendar.')
-    expect(motivoSinAgendar(plan('en_mora'))).toBe('Tienes cuotas vencidas: al pagarlas, podrás agendar.')
+    // Lo decide la API: con el plan activo pero vencido, tampoco (el portal no lo sabría solo).
+    expect(motivoSinAgendar(plan('activa', ['Luna'], 'Tu plan venció y no se ha renovado.'))).toBe('Tu plan venció y no se ha renovado.')
     expect(motivoSinAgendar(null)).toMatch(/plan activo/)
-    expect(motivoSinAgendar(plan('cancelada'))).toMatch(/WhatsApp/)
     expect(motivoSinAgendar(undefined)).not.toBeNull()
   })
 

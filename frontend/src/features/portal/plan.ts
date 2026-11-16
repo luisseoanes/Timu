@@ -44,16 +44,12 @@ export function frase(p: PlanPortal | null, cuotasVencidas: number | null): stri
   }
 }
 
-/** Por qué no se puede agendar desde el portal ahora, o null si se puede: lo decide el plan,
- * igual que la elegibilidad del backend. */
+/** Por qué no se puede agendar desde el portal ahora, o null si se puede. Lo dice el backend
+ * (`motivo_sin_agendar`, DEU-2); aquí solo lo que no es del plan: que aún carga o que no hay. */
 export function motivoSinAgendar(p: PlanPortal | null | undefined): string | null {
   if (p === undefined) return 'Cargando tu plan…'
   if (p === null) return 'Necesitas un plan activo para agendar.'
-  if (p.estado === 'activa') return null
-  // Dice la causa con la palabra de la pastilla del inicio y qué hacer.
-  if (p.estado === 'congelada') return 'Tu plan está en pausa por cuotas vencidas: al pagarlas, podrás agendar.'
-  if (p.estado === 'en_mora') return 'Tienes cuotas vencidas: al pagarlas, podrás agendar.'
-  return 'Escríbenos por WhatsApp para agendar.'
+  return p.motivo_sin_agendar
 }
 
 /** Lo que le queda de un beneficio: «le quedan 4 de 6 este año» o «sin tope de usos este mes». */
