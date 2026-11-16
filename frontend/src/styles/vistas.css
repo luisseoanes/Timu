@@ -1282,6 +1282,8 @@
 .liquidacion-periodo .input { min-width: 0; width: 100%; }
 .liquidacion-tabla :is(th, td):not(:first-child) { text-align: right; }
 .liquidacion-tabla tfoot :is(th, td) { border-top: 2px solid var(--borde); font-weight: 700; color: var(--texto-titulo); }
+/* El total es la cabecera de su fila (un th), pero se lee como las celdas, no como etiqueta. */
+.liquidacion-tabla tfoot th { font-size: var(--t-cuerpo); letter-spacing: normal; text-transform: none; text-align: left; }
 @media (max-width: 599px) {
   .liquidacion-periodo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -1290,6 +1292,9 @@
   .liquidacion-tabla tfoot, .liquidacion-tabla tfoot tr { display: block; }
   .liquidacion-tabla tfoot tr { padding-block: var(--e3); border-top: 2px solid var(--borde); }
   .liquidacion-tabla tfoot td { border-top: 0; }
+  .liquidacion-tabla tfoot th { display: block; border-top: 0; padding: 0 0 var(--e2); }
+  /* Las cifras son cortas: la etiqueta («Valor de las atenciones») cabe en una línea. */
+  .liquidacion-tabla td::before { max-width: none; white-space: nowrap; }
 }
 
 /* ===== Administración (R2-PAN-10): usuarios en bandeja; planes y reglas en listado con ficha ===== */

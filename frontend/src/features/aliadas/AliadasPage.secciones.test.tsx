@@ -86,6 +86,25 @@ describe('remisiones', () => {
     expect(within(fila).queryByRole('button', { name: /anular/i })).not.toBeInTheDocument()
   })
 
+  it('desde la ficha de una clínica muestra solo las suyas, sin columna de acciones si no se anula', async () => {
+    const pedidas: (string | null)[] = []
+    server.use(
+      http.get(`${API}/aliadas/remisiones`, ({ request }) => {
+        pedidas.push(new URL(request.url).searchParams.get('clinica_id'))
+        return HttpResponse.json([REMISION])
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<AliadasPage />, { ruta: '/aliadas?pestana=remisiones&vista=utilizada&remisiones_de=cl1' })
+    expect(await screen.findByText(/Solo las de Clínica Norte/)).toBeInTheDocument()
+    await waitFor(() => expect(pedidas).toContain('cl1'))
+    // En Utilizadas no se anula nada: la columna de acciones no existe (techo 61).
+    expect(screen.queryByRole('columnheader', { name: 'Acciones' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Ver las de todas' }))
+    expect(screen.queryByText(/Solo las de/)).not.toBeInTheDocument()
+    await waitFor(() => expect(pedidas.at(-1)).toBeNull())
+  })
+
   it('las vistas llevan su recuento, piden su estado y dicen su vacío', async () => {
     const estados: (string | null)[] = []
     server.use(
@@ -247,7 +266,16 @@ describe('clínicas y convenios', () => {
     expect(within(convenio).getByText(/^80 %\shasta\s\$\s200\.000$/)).toBeInTheDocument()
     expect(within(convenio).getByText('Todos los planes')).toBeInTheDocument()
     expect(within(convenio).getByText('Desde el 1 ene')).toBeInTheDocument()
-    expect(await within(ficha).findByText(/por usar ·/)).toHaveTextContent('1 por usar · 1 atendida · 0 anuladas')
+    // Cada recuento lleva a sus remisiones en la bandeja, solo las de esta clínica (techo 59).
+    expect(await within(ficha).findByRole('link', { name: '1 por usar' })).toHaveAttribute(
+      'href',
+      `/aliadas?pestana=remisiones&vista=emitida&remisiones_de=${CLINICA.id}`,
+    )
+    expect(within(ficha).getByRole('link', { name: '1 atendida' })).toHaveAttribute(
+      'href',
+      `/aliadas?pestana=remisiones&vista=utilizada&remisiones_de=${CLINICA.id}`,
+    )
+    expect(within(ficha).getByRole('link', { name: '0 anuladas' })).toBeInTheDocument()
     expect(within(ficha).getByRole('link', { name: 'Ana Ruiz · Luna' })).toHaveAttribute('href', '/familias/f1')
   })
 

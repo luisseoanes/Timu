@@ -230,9 +230,18 @@ function Ficha({ clinica: c }: { clinica: ClinicaRead }) {
         <h3 id="clinica-remisiones">Remisiones</h3>
         {recuentos.data && (
           <p className="aliada-nota">
-            <span className="numero">{recuentos.data.emitida}</span> por usar · <span className="numero">{recuentos.data.utilizada}</span>{' '}
-            {recuentos.data.utilizada === 1 ? 'atendida' : 'atendidas'} · <span className="numero">{recuentos.data.anulada}</span>{' '}
-            {recuentos.data.anulada === 1 ? 'anulada' : 'anuladas'}
+            {/* Cada recuento lleva a sus remisiones en la bandeja, solo las de esta clínica. */}
+            <Link to={`/aliadas?pestana=remisiones&vista=emitida&remisiones_de=${c.id}`}>
+              <span className="numero">{recuentos.data.emitida}</span> por usar
+            </Link>{' '}
+            ·{' '}
+            <Link to={`/aliadas?pestana=remisiones&vista=utilizada&remisiones_de=${c.id}`}>
+              <span className="numero">{recuentos.data.utilizada}</span> {recuentos.data.utilizada === 1 ? 'atendida' : 'atendidas'}
+            </Link>{' '}
+            ·{' '}
+            <Link to={`/aliadas?pestana=remisiones&vista=anulada&remisiones_de=${c.id}`}>
+              <span className="numero">{recuentos.data.anulada}</span> {recuentos.data.anulada === 1 ? 'anulada' : 'anuladas'}
+            </Link>
           </p>
         )}
         <Consulta

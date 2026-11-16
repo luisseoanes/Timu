@@ -89,7 +89,7 @@ export function Liquidacion() {
               {d.length > 1 && (
                 <tfoot>
                   <tr>
-                    <td className="principal" data-etiqueta="Clínica">Total</td>
+                    <th scope="row" className="principal">Total</th>
                     <td className="numero" data-etiqueta="Atenciones">{d.reduce((t, f) => t + f.atenciones, 0)}</td>
                     <td className="numero" data-etiqueta="Valor de las atenciones">{moneda(suma(d, 'valor_atenciones'))}</td>
                     <td className="numero" data-etiqueta="Cubre TIMU">{moneda(suma(d, 'valor_cubierto'))}</td>

@@ -28,8 +28,20 @@ const VISTAS: { valor: Vista; label: string; vacio: string }[] = [
 export function Remisiones() {
   const [params, setParams] = useSearchParams()
   const vista: Vista = VISTAS.find((v) => v.valor === params.get('vista'))?.valor ?? 'emitida'
-  const recuentos = useRecuentosRemisiones()
-  const remisiones = useRemisiones({ estado: vista === 'todas' ? undefined : vista })
+  // Desde la ficha de una clínica, solo las suyas (`?remisiones_de=`).
+  const clinicaId = params.get('remisiones_de') ?? undefined
+  const recuentos = useRecuentosRemisiones(clinicaId)
+  const remisiones = useRemisiones({ estado: vista === 'todas' ? undefined : vista, clinica_id: clinicaId })
+  // Filtradas, todas son de la misma clínica: su nombre sale de ellas, sin otra consulta.
+  const nombreClinica = remisiones.data?.[0]?.clinica
+  // Solo una remisión por usar se anula: en Utilizadas y Anuladas no hay columna de acciones.
+  const conAcciones = vista === 'emitida' || vista === 'todas'
+
+  function verTodas() {
+    const siguiente = new URLSearchParams(params)
+    siguiente.delete('remisiones_de')
+    setParams(siguiente, { replace: true })
+  }
   const [nueva, setNueva] = useState(false)
   const [anulando, setAnulando] = useState<RemisionRead | null>(null)
 
@@ -47,6 +59,14 @@ export function Remisiones() {
           <Icono nombre="mas" size={16} /> Emitir remisión
         </button>
       </div>
+      {clinicaId && (
+        <p className="aliada-nota remisiones-de">
+          Solo las de {nombreClinica ?? 'una clínica'}.{' '}
+          <button className="btn btn-plano btn-accion" type="button" onClick={verTodas}>
+            Ver las de todas
+          </button>
+        </p>
+      )}
       <div className="filtros bandeja-filtros">
         <div className="segmento bandeja-vistas" role="group" aria-label="Vista de las remisiones">
           {VISTAS.map((v) => (
@@ -86,7 +106,7 @@ export function Remisiones() {
                   <th>Cobertura</th>
                   <th>{vista === 'utilizada' ? 'Atendida' : 'Vence'}</th>
                   {vista === 'todas' && <th>Estado</th>}
-                  <th><span className="sr-only">Acciones</span></th>
+                  {conAcciones && <th><span className="sr-only">Acciones</span></th>}
                 </tr>
               </thead>
               <tbody>
@@ -129,13 +149,15 @@ export function Remisiones() {
                         <Distintivo dominio="remision" valor={r.estado} />
                       </td>
                     )}
-                    <td className="tabla-acciones">
-                      {r.estado === 'emitida' && (
-                        <button className="btn btn-plano btn-plano-peligro" type="button" onClick={() => setAnulando(r)} aria-label={`Anular la remisión ${r.codigo}`}>
-                          Anular
-                        </button>
-                      )}
-                    </td>
+                    {conAcciones && (
+                      <td className="tabla-acciones">
+                        {r.estado === 'emitida' && (
+                          <button className="btn btn-plano btn-plano-peligro" type="button" onClick={() => setAnulando(r)} aria-label={`Anular la remisión ${r.codigo}`}>
+                            Anular
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
