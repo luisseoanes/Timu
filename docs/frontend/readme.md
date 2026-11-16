@@ -2,7 +2,8 @@
 
 > **En rediseño.** La interfaz se está rediseñando con la marca real de TIMU; el orden, el
 > estado de cada unidad y el siguiente paso están en la
-> [hoja de ruta](../hoja-de-ruta-rediseno.md). El panel del equipo está rediseñado entero (R2) y
+> [hoja de ruta](../hoja-de-ruta-rediseno.md) («Dónde se retoma»). La unidad siguiente no se
+> empieza sin que el usuario lo diga. El panel del equipo está rediseñado entero (R2) y
 > el portal de familias también, igual que el acceso (ingreso, recuperación y activación). Quedan
 > con su composición anterior, aunque ya con la paleta, la tipografía y el logo nuevos, el
 > registro en línea, la encuesta, la verificación del carnet y el portal de la clínica aliada (R3).

@@ -83,4 +83,4 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 ## Pendiente
 
-- Lo que quedó, en la hoja de ruta («Lo que quedó del Inicio tras cerrar `R2-PAN-04`»).
+- Lo que quedó, en las notas de cierre del rediseño (`docs/rediseno/notas-de-cierre.md`, «Lo que quedó del Inicio tras cerrar `R2-PAN-04`»).

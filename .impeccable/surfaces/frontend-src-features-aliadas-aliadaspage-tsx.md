@@ -68,4 +68,4 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 ## Pendiente
 
-- Lo que quede, en la hoja de ruta («Lo que quedó de Aliadas y administración»).
+- Lo que quede, en las notas de cierre del rediseño (`docs/rediseno/notas-de-cierre.md`, «Lo que quedó de Aliadas y administración»).

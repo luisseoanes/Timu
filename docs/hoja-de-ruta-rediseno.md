@@ -41,7 +41,7 @@ Para la sesión siguiente, que no tiene la conversación anterior: todo lo decid
 hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
 
 - **El techo del revisor (`DEU-28`–`DEU-70`) y la deuda decidida están hechos**, salvo lo que la
-  tabla «Deuda decidida con el usuario» marca como pendiente: `DEU-8` (editor de reglas por
+  tabla de [deuda decidida](rediseno/deuda.md) marca como pendiente: `DEU-8` (editor de reglas por
   campos), `DEU-14` (terminar la siembra gruesa), `DEU-15` (plantillas de consulta, decidida, TODO)
   y `DEU-27` (va en `R4-CIE-03`). `DEU-E` espera a TIMU.
 - **Siguiente unidad: `R3-ALI-01`, pero solo cuando el usuario lo diga** (lo dejó para otra
@@ -109,9 +109,9 @@ Así se trabajó R2 entero; la siguiente sesión lo retoma igual.
    nada (las pruebas de antes pasan sin tocarlas).
 6. **Capturas a 1440, 1180, 900 y 390** en `.impeccable/review/<superficie>/`, y el revisor final
    hasta `ship`. Sus arreglos se aplican todos; del «techo», lo que sea de una línea, y el resto se
-   apunta en «Lo que quedó».
+   apunta en «Lo que quedó» de la unidad, en las [notas de cierre](rediseno/notas-de-cierre.md).
 7. **Documentación**: el documentador de la skill pone al día `DESIGN.md` y su sidecar; a mano, la
-   fila de la unidad, su apartado «Lo que quedó», la tabla de estado y `docs/frontend/`.
+   fila de la unidad, su apartado en las [notas de cierre](rediseno/notas-de-cierre.md), la tabla de estado y `docs/frontend/`.
 8. **Commits** en un worktree, cada uno verificado sobre su propio estado: backend primero, el
    refactor aparte, el panel por dominio y la documentación al final. Antes de empujar, la e2e contra
    el stack; después, el CI hasta verde.
@@ -209,7 +209,7 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 | --- | --- | --- | --- |
 | `R4-CIE-01` | Recorrido completo | La lista de rutas pendientes de `R0-QAA-02` está vacía (desde `R2-PAN-10`) y se elimina. El recorrido cubre todas las rutas a los cuatro anchos (375, 768, 900 y 1280 px). | Pendiente |
 | `R4-CIE-02` | Auditoría | `/impeccable audit` en cada espacio y `/impeccable critique` en el panel y el portal. Se corrigen todos los hallazgos P0 y P1; los P2 y P3 quedan como deuda escrita. | Pendiente |
-| `R4-CIE-03` | Documentación final | La skill refresca `DESIGN.md`. Se reescriben `docs/frontend/` (componentes, plantillas y convenciones) y la sección 15 del manual. El `CLAUDE.md` describe las guardas definitivas. | Pendiente |
+| `R4-CIE-03` | Documentación final | La skill refresca `DESIGN.md`. Se reescriben `docs/frontend/` (componentes, plantillas y convenciones) y la sección 15 del manual. El `CLAUDE.md` describe las guardas definitivas, y los tres `CLAUDE.md` se condensan (el del backend pasa de 35 KB) sin perder ninguna regla: lo que sea historia o explicación larga va a `docs/`. | Pendiente |
 | `R4-CIE-04` | Umbrales de cobertura | Los umbrales de `vitest.config.ts` se ajustan a lo medido, según la regla del `CLAUDE.md`. | Pendiente |
 
 ## Mientras dura el rediseño
@@ -227,248 +227,15 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 - **Cada superficie se cierra con el revisor final de la skill** hasta su `ship`, como
   `R2-PAN-03`, con capturas a 1440, 1180, 900 y 390 px.
 
-### Deuda decidida con el usuario (2026-11-15)
+### Deuda decidida y notas de cierre
 
-El usuario respondió de una vez la deuda acumulada hasta `R3-PUB-01`. Cada decisión lleva el
-número de la lista que contestó (`DEU-<n>`) y dice dónde se hace: **ahora** es el lote de deuda que
-sigue a `R3-PUB-01`, antes de `R3-PUB-02`; el resto, en la unidad que se nombra. Lo hecho se marca
-**Hecho** con su fecha y lo que no se hace, **No**, con el motivo. Ninguna fila se borra: así se ve
-qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son el detalle de origen.
+Viven en dos anexos de `docs/rediseno/`, separados de esta hoja el 2026-11-16:
 
-| ID | Qué | Decisión | Dónde | Estado |
-| --- | --- | --- | --- | --- |
-| `DEU-1` | Las series 1 y 2 del manual no se distinguen sin ver el rojo y el verde | El manual pasa a verde, azul, naranja y marino | ahora | Hecho (2026-11-15): el manual, los tokens, `DESIGN.md` y el gráfico del Inicio, que usa la 1 y la 2 |
-| `DEU-2` | El portal no ofrece la consulta en la clínica que el backend permite | El portal la ofrece y la API dice qué puede agendar, cambiar y cancelar la familia | ahora | Hecho (2026-11-16): `motivo_sin_agendar` y `tipos_agendables` en el plan, y `puede_cambiar`, `puede_cancelar` y `sin_cambios` en cada cita; el portal agenda también en la clínica |
-| `DEU-3` | La visita preventiva del portal no se enlaza con ningún preventivo | El portal agenda preventivos concretos, como la bandeja | ahora | Hecho (2026-11-16): `GET /portal/preventivos` y `POST /portal/preventivos/{id}/visita`; agendarlo es la autorización de la familia (migración `0047`, RLS) |
-| `DEU-4` | La desparasitación hecha en visita se aplica sin peso | Campo opcional en los pasos del catálogo; el peso en «Aplicación» | ahora | Hecho (2026-11-16): los pasos ganan `opcionales` con nombre y tipo; la desparasitación pide el peso, que va al carnet (migración `0046`) |
-| `DEU-5` | «Por autorizar» con la llave solo en Preventivos | La llave en el mapeo común (`lib/estados.ts`): también en Servicios | ahora | Hecho (2026-11-15): la llave en `lib/estados.ts`, la fila y la ficha del servicio |
-| `DEU-6` | La clínica aliada entra por «Equipo TIMU» | Renombrarla «Equipo y aliadas» (decidido con el usuario el 2026-11-16) | ahora | Hecho (2026-11-16) |
-| `DEU-7` | La pantalla del enlace no dice cuánto dura | La API da la vigencia y la pantalla la dice | ahora | Hecho (2026-11-15): `expira_en` en `POST /auth/enlace` y «Este enlace sirve hasta…» |
-| `DEU-8` | Las reglas se editan en JSON | Editor por campos | ahora | Pendiente |
-| `DEU-9` | Pasar una cuenta a o desde clínica aliada | **No**: se crea otra cuenta, como ahora | — | No |
-| `DEU-10` | Las plantillas de WhatsApp enseñan su código de Meta | Campo «nombre» en el catálogo de plantillas | ahora | Hecho (2026-11-16): `titulo` en las plantillas (migración `0044`); reglas, campañas y mensajes lo dicen, con el código debajo |
-| `DEU-11` | Textos guardados sin tildes (catálogos y reglas sembradas) | Migración de datos que los corrige | ahora | Hecho (2026-11-16): `datos.py` con tildes y migración `0045` para lo sembrado que nadie editó. Las ciudades y los departamentos («Bogota», «Medellin»), que son la clave por la que se guardan, también: decidido con el usuario y hecho el 2026-11-16 (migración `0048`, que propaga el nombre por las llaves foráneas y corrige los JSON de segmentos, campañas y reglas; `ciudad_valida` acepta el nombre con o sin tildes) |
-| `DEU-12` | Comercial no muestra correos ni llamadas | **No**: fuera de alcance | — | No |
-| `DEU-13` | En el celular, la línea de Familias no se abre en «hoy» | Se arregla (es un defecto) | ahora | Hecho (2026-11-15): en vertical, tres o más vencidas van en un grupo rojo con «Ver cada una» |
-| `DEU-14` | `datos_demo` sin una familia de portal al día | Siembra gruesa: uno o dos meses de operación que recorran todos los casos y todas las rutas | ahora | **Pendiente de terminar** (el usuario lo confirmó el 2026-11-16: hay que completar lo que falta, al final de esta celda). Hecho el 2026-11-16: el portal de Jorge Ramírez al día, las coberturas del plegable en los planes y el núcleo de la operación, `scripts/operacion_demo.py` (decidido con el usuario: se crea por la API y luego se corren las fechas al pasado, en un comando aparte que el CI corre tras la e2e del stack). Siembra ocho semanas: familias en cada estado de cartera (al día, en mora, congelada, anual, trimestral por renovar, nueva y dada de baja) con sus pagos fechados, 38 rutas pasadas en Bogotá y Medellín con 100 visitas, consultas firmadas, paradas omitidas y servicios cancelados, preventivos aplicados y vencidos y encuestas respondidas. También (2026-11-16): el embudo comercial en el tiempo (sin «afiliado»: lo pone la afiliación en línea al aprobarse el pago, y la pasarela de pruebas sigue pendiente), tareas cerradas y vencidas (también las que deja una calificación baja), remisiones atendidas, anulada, vencida y por usar, orientaciones virtuales cerradas y una campaña enviada. Solo se visita o se remite a quien ya estaba afiliado ese día. **Falta, y se termina antes del cierre (`R4`)**: visitas de otros tipos en la operación de `operacion_demo` (vacunas y desparasitaciones en ruta, con la aplicación del preventivo; controles y consultas en clínica, que necesitan franjas de esa modalidad), y `DEU-15` |
-| `DEU-15` | Sin plantilla de consulta en `datos_demo` | **Opción 4, decidida por el usuario el 2026-11-16**: `datos_demo` crea por la API dos o tres plantillas de prueba («Control general», «Otitis externa», «Gastroenteritis leve»), un recorrido e2e abre una consulta, elige una y comprueba que rellena los campos, y `operacion_demo` usa esas plantillas en parte de sus consultas. **Además, las plantillas deben poder editarse**: hoy en Clínica → «Plantillas de consulta» solo se crean (médico y administración, `POST /clinica/plantillas`); falta editarlas y activarlas o desactivarlas (sin borrarlas: nada de negocio se borra). El sitio con más lógica es esa misma pestaña de Clínica, para los mismos perfiles, porque es contenido clínico y lo mantiene el equipo médico | otra sesión | **Pendiente (TODO)**: decidido, sin empezar; se hace en otra sesión, con la plantilla editable incluida |
-| `DEU-16` | La prueba de la foto deja un PNG de 1×1 en la mascota de Ana | Que no ensucie los datos | ahora | Hecho (2026-11-16): la prueba quita la foto al terminar si la mascota no tenía una |
-| `DEU-17` | El barrido responsive no mide 900 px | Se añade el ancho | ahora (adelanta parte de `R4-CIE-01`) | Hecho (2026-11-16): ninguna ruta falla a 900 px |
-| `DEU-18` | El espaciado de la etiqueta en mayúsculas no tiene token | Un token y una sola medida | ahora | Hecho (2026-11-15): `--tracking-etiqueta`, y la guarda de tokens lo exige |
-| `DEU-19` | Radios escritos a mano | Pasan a tokens | ahora | Hecho (2026-11-15): `--r-fino` y `--r-barra`, y la guarda de tokens rechaza un radio a mano |
-| `DEU-20` | Cortes a 899 y a 900 px mezclados | Todo a 899 | ahora | Hecho (2026-11-15) |
-| `DEU-21` | `--sombra-1` y `--sombra-2` valen `none` | Se retiran | ahora | Hecho (2026-11-15) |
-| `DEU-22` | El portal copia cuatro reglas del backend | Lo cierra `DEU-2` | ahora | Hecho (2026-11-16): con `DEU-2` |
-| `DEU-23` | El panel copia qué tipo de servicio agenda cada preventivo | La API lo dice en cada preventivo | ahora | Hecho (2026-11-15): `tipo_servicio_codigo` en cada preventivo |
-| `DEU-24` | Contrato, fórmula y comprobante en PDF sin marca | Usan `marca_pdf` | ahora | Hecho (2026-11-15): piezas comunes en `marca_pdf`; además dicen cada cosa en palabras |
-| `DEU-25` | Los campos con icono del acceso miden 48 px | 48 px es la norma del acceso | ahora (documentación) | Hecho (2026-11-15): `DESIGN.md` lo recoge en Inputs |
-| `DEU-26` | Pasarela sin recuento ni vista en la URL, casos de la IA en JSON, `style` en Reportes | Se arreglan | ahora | Hecho (2026-11-15): recuentos y vista en la URL, casos en palabras (`esperado_texto`) y sin `style`; de paso, la API rechaza un caso que el evaluador no entiende |
-| `DEU-27` | `.impeccable/design.json` va por detrás de `DESIGN.md` | Se completa en el cierre | `R4-CIE-03` | Pendiente |
-| `DEU-28`–`DEU-70` | El «techo» del revisor en cada superficie | Como lo recomendó Claude: sí a todo salvo 28, 29, 30, 38, 39, 43, 44, 65, 68, 69 y 70 (detalle abajo) | ahora | Hecho (2026-11-16) |
-| `DEU-E` | Lo que decide TIMU | Valor provisional en el código para cada uno, pero **todos siguen pendientes** hasta que TIMU confirme el valor oficial ([pendientes externos](pendientes-externos.md#valores-provisionales)) | — | Pendiente de TIMU |
-
-**Encontrado al cerrar este lote y resuelto el mismo día:** la prueba de Comercial «registra un
-interesado sin enviar los campos vacíos y abre su ficha» fallaba de vez en cuando en
-`npm run verificar`. La causa era real, no de la prueba: `useMutacion` de Comercial devolvía en su
-`onSuccess` la promesa de recargar todo Comercial, y React Query la espera antes de llamar al
-`onSuccess` de cada `mutate`; la ventana del interesado nuevo seguía «Guardando…» hasta que se
-recargaba todo. Ya no se espera, y la prueba lo fija con una recarga que no responde. Portal,
-Clínica, Tareas y Aliadas siguen esperando la recarga a propósito (evita un parpadeo y no retiene
-ninguna ventana que abra otra cosa); si alguna llega a hacerlo, se cambia igual.
-
-El «techo» aceptado, por superficie (los números son los de la lista). Hecho el 2026-11-16 salvo
-lo que se marca como pendiente:
-
-- **Rutas:** 31 etiquetar la hora de «Por rutear» («agendado a las …») · 32 centrar la columna
-  del médico en escritorio · 33 capturar una ruta con una parada omitida (la siembra de `DEU-14`
-  deja seis).
-- **Clínica:** 34 área de texto de unos 75 caracteres en escritorio · 35 unificar la cabecera del
-  borrador y la de la lectura (mismas piezas: título, distintivo del estado y modalidad; el tamaño
-  del título sigue al contexto. Composición elegida sin preguntar: se cambia si el usuario prefiere
-  otra) · 36 valores largos de la tabla apilable alineados a la izquierda en
-  el celular.
-- **Portal:** 37 la flecha de las listas como chevron de trazo · 40 el cuadrado del plan en Pagos ·
-  41 icono propio para «Atendida».
-- **Servicios:** 42 ficha fija al desplazar · 45 menos blanco en la ficha vacía · 46 foco en
-  «Familia» al abrir «Agendar servicio».
-- **Cartera y Preventivos:** 47 franjas de agendar en tres columnas iguales (solo en la ventana de
-  preventivos: las de «Agendar servicio» dicen el rango y se partirían) · 48 «Escribir» en todos los
-  grupos · 49 estrechar la columna del preventivo · 50 que el separador no parta el documento y la
-  ciudad en el carnet a 390.
-- **Comercial y Campañas:** 51 desvanecido o «mensajes anteriores» en la conversación recortada ·
-  52 «Recibido» y «Enviado» con algo más que la palabra, cuerpos a dos líneas · 53 fichas de cifra
-  de Encuestas más pequeñas · 54 «Destinatarios en CSV» alineado y oculto en un borrador · 55
-  «Interesados» que no repita el recuento de «Abiertos» · 56 «A quién le llega» con más ancho a
-  1440 · 57 un vacío de Segmentos que oriente.
-- **Aliadas:** 58 etiquetas de la liquidación sin partir · 59 la ficha de la clínica lleva a sus
-  remisiones atendidas y anuladas (la bandeja filtra por clínica) · 60 el total en un `th` · 61
-  sin la columna de acciones vacía.
-- **Administración:** 62 tarifas en 2×2, o en una línea si son iguales · 63 beneficios apilados en
-  el celular · 64 la barra del presupuesto junto a «Gastado».
-- **Común:** 66 la tira de pestañas a 390 indica que se desplaza.
-- **Acceso:** 67 la línea se dibuja hasta «Hoy» al cargar (un tramo tras otro y la marca al
-  final, `--duracion-dibujo`), respetando `prefers-reduced-motion`.
-- **No:** 28 estaciones de 34 px, 29 etiquetas cuadradas y 30 paneles sin radio en Familias (el
-  panel es denso y contradicen `DESIGN.md`); 38 estaciones en citas y pagos y 39 la marca de Hoy en
-  la cita en camino (son otra composición); 43 la marca de «ahora» en Servicios y 44 las franjas
-  como rejilla semanal (trabajo grande); 65 «Desactivar» en neutro (lo destructivo va en plano
-  rojo); 68 «Afiliación» que se enciende al activar (retrasa la entrada), 69 el título alineado con
-  la frase y 70 estaciones equidistantes a 900 (volvería a partir el rótulo).
-
-### Lo que quedó de Familias tras su cierre
-
-- ~~**En el celular, la línea no se abre en «hoy».**~~ Resuelto el 2026-11-15 (`DEU-13`): en
-  vertical, lo vencido se agrupa.
-- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes) (el «techo» de la dirección, no defectos): estaciones
-  de 34 px con anillo de 6 px como en el boceto (hoy 24 y 4), etiquetas de estado cuadradas en
-  lugar de píldoras, y el listado y el detalle como paneles planos a ras en lugar de tarjetas
-  con radio de 12 px.
-
-### Lo que quedó de Rutas tras su cierre
-
-- **Mapa embebido** (requisito 6.7): decidido con el usuario dejarlo fuera; cada parada abre la
-  navegación del celular. Para cerrarlo, TIMU elige proveedor y presupuesto
-  ([pendientes externos](pendientes-externos.md#mapa-de-las-rutas-requisito-67-r2-pan-06)).
-- ~~**Registrar los pasos de la atención desde la propia parada**~~ Resuelto en `R2-PAN-05`: la consulta es el registro de la visita y «Registrar la atención» la abre. Antes: hoy «Registrar la atención»
-  lleva a la ficha del servicio. Se decide al rediseñar ese detalle en `R2-PAN-05`.
-- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes): etiquetar la hora de «Por rutear» («programado 4:19 a.
-  m.»), centrar la columna del médico en escritorio y capturar una ruta con una parada omitida.
-
-### Lo que quedó de Clínica tras su cierre
-
-- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes): limitar el área de texto de la consulta a unos 75
-  caracteres en escritorio, unificar la cabecera del borrador y la de la lectura, alinear a la
-  izquierda los valores largos de la tabla apilable en el celular (es del componente común) y
-  sembrar una plantilla de consulta en `datos_demo`.
-
-### Lo que quedó del portal tras cerrar `R3-POR-01` y `R3-POR-02`
-
-- ~~**Datos de demostración**~~ Resuelto el 2026-11-16 (`DEU-14`): Jorge Ramírez
-  (`jorge@example.com`) entra al portal al día. Antes: la única familia con portal (Ana) tiene el plan congelado. Los
-  estados «al día» se capturaron para el revisor interceptando la API. Una segunda familia con
-  portal en `datos_demo` daría al barrido y a los recorridos el estado sano.
-- ~~**La consulta en la clínica no se agenda desde el portal**~~ Resuelto el 2026-11-16 (`DEU-2`)., aunque el backend la permite
-  (`MODALIDADES_AUTOGESTION`): la ventana de agendar solo ofrece las visitas en casa y las
-  preventivas. Hay que decidir con el usuario si el portal la ofrece
-  ([`portal-familias.md`](portal-familias.md)).
-- ~~**La prueba de la foto**~~ Resuelto el 2026-11-16 (`DEU-16`): la prueba quita la foto al terminar. Antes: (`e2e-stack/recorridos.spec.ts`) sube un PNG de 1×1 a la primera
-  mascota de Ana, que el portal enseña después como su foto. No rompe nada, pero ensucia las
-  capturas: hay que quitarla antes de capturar.
-- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes): la flecha de las listas es un triángulo relleno,
-  y el resto del sistema usa chevrones de trazo. En citas y pagos, el «techo» de la dirección:
-  usar las estaciones de la línea (la vencida en las cuotas vencidas, la próxima con halo en la
-  próxima cita), la marca de «Hoy» en la cita en camino y el color del plan en Pagos. Y
-  «Confirmada» y «Atendida» comparten tono (en pestañas distintas).
-
-### Lo que quedó del Inicio tras cerrar `R2-PAN-04`
-
-- ~~**Las series 1 y 2 del manual no se distinguen**~~ Resuelto el 2026-11-15 (`DEU-1`): el manual
-  pasa a verde, azul, naranja y marino.
-- **Rendimiento de la serie con volumen real**: son 13 cálculos por carga. Sobre los datos de
-  demostración tarda 190–335 ms sin caché; contra el umbral de 2 s de F4-DAS-02 lo dirá la prueba
-  de carga, que ya la incluye.
-- ~~Las estaciones de servicio no nombran familia ni mascota~~: resuelto en `R2-PAN-05`, con el
-  listado que las trae.
-- **«Ver los servicios» y «Ver la agenda» llevan a la agenda de hoy**: Servicios ya lee sus
-  filtros de la URL (`R2-PAN-05`) y muestra encima los atrasados, que es lo que esos enlaces
-  buscan; no hace falta un filtro más.
-- ~~**Los datos de demostración tienen poca historia**~~ Resuelto el 2026-11-16 (`DEU-14`, `operacion_demo`: ocho semanas de operación). Antes: las series son planas antes de agosto y
-  Rutas tiene un solo mes con dato. El revisor juzgó con esa limitación.
-
-### Lo que quedó de Servicios y Tareas tras cerrar `R2-PAN-05`
-
-- ~~Fallo abierto: «Editar» un paso ya registrado devuelve 500~~: resuelto el 2026-11-14. Decidido
-  con el usuario, los pasos se corrigen mientras el servicio está en atención y quedan fijos al
-  completarlo: la matriz de RLS da `U` en `servicio_pasos` a quien los inserta (migración `0041`),
-  con la prueba que reproducía el 500.
-- ~~**El barrido responsive no mide 900 px**~~ Resuelto el 2026-11-16 (`DEU-17`).: el revisor lo propuso, pero medir un ancho más metería
-  en `PENDIENTES` fallos de módulos sin rediseñar, y esa lista solo puede encoger. Esta superficie
-  se comprobó a 900 en las capturas del revisor. Se puede añadir en `R4-CIE-01`, cuando
-  `PENDIENTES` quede vacía.
-- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes) (el «techo», no defectos): una ficha fija al desplazar
-  (hoy se trae a la vista al abrirla y la fila pulsada queda fuera del listado visible), una marca
-  de «ahora» dentro del grupo de Hoy y un tratamiento propio del servicio atrasado, las franjas
-  como rejilla semanal por ciudad y modalidad en lugar de 24 filas, menos blanco en la ficha vacía
-  y el foco en «Familia» al abrir «Agendar servicio».
-
-### Lo que quedó de Cartera y preventivos tras cerrar `R2-PAN-08`
-
-- ~~**El peso de la desparasitación no está en el paso «Aplicación»**~~ Resuelto el 2026-11-16 (`DEU-4`). del servicio: con «el servicio
-  manda», una desparasitación hecha en visita se aplica sin peso (`F2-PRE-07` lo pide opcional). Para
-  tenerlo hay que añadir un campo opcional a los pasos del catálogo (hoy todos los campos son
-  obligatorios en `completar_paso`). Se decide con el usuario.
-- ~~**Una visita preventiva agendada desde el portal no se enlaza con ningún preventivo**~~ Resuelto el 2026-11-16 (`DEU-3`).: el portal
-  agenda un servicio de vacunación sin decir cuál, así que completarlo no aplica nada. Hay que decidir
-  con el usuario si el portal agenda preventivos concretos (como la bandeja) o si la visita elige el
-  preventivo al completarse.
-- **La ventana de la bandeja de preventivos es de 30 días** (valor provisional de TIMU, en `pendientes-externos.md`) (`VENTANA_BANDEJA_DIAS`): lo que vence en
-  el próximo mes. La puso esta unidad; si TIMU quiere otra, es una constante.
-- ~~**Nombres de los esquemas sin tildes**~~ Resuelto el 2026-11-16 (`DEU-11`, migración `0045`). Antes: («Antirrabica canina», «Desparasitacion interna»): son del
-  catálogo (`catalogos/datos.py`), deuda ya anotada en `docs/frontend/conventions.md`.
-- ~~**«Por autorizar» con el icono de la llave solo en la bandeja de preventivos**~~ Resuelto el 2026-11-15 (`DEU-5`). Antes: el revisor pidió
-  que no compartiera el triángulo de lo vencido. Llevarlo al mapeo de `lib/estados.ts` cambiaría el
-  distintivo en Servicios también: se decide con el usuario.
-- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes) (el «techo»): las franjas de la ventana de agendar en una
-  rejilla de tres columnas iguales, «Escribir» en todos los grupos de la bandeja (también sirve para
-  avisar de la visita por agendar), estrechar la columna del preventivo para que «Toca» no quede en
-  medio de un vacío a 1440, y en la tarjeta de familia del carnet a 390 el separador parte
-  «1020304050 · Bogota».
-
-### Lo que quedó de Comercial y campañas tras cerrar `R2-PAN-09`
-
-- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes) (el «techo»): un desvanecido o «mensajes anteriores» en lo
-  alto de la conversación recortada; distinguir «Recibido» y «Enviado» en Mensajes con algo más que
-  la palabra, y recortar los cuerpos largos a dos líneas en peso normal; las fichas de cifra de
-  Encuestas, grandes para dos cifras vacías; «Destinatarios en CSV» alineado con el contenido y
-  oculto en un borrador que nunca salió; «Interesados 6» repite «Abiertos 6»; «A quién le llega» en
-  una columna estrecha a 1440; y un vacío de Segmentos que oriente.
-- ~~**La conversación de Comercial es la de WhatsApp**~~ Decidido con el usuario no hacerlo (`DEU-12`). Antes: el embudo no muestra correos ni llamadas,
-  porque no se registran. Si TIMU los quiere en la ficha, hay que guardarlos primero.
-- ~~**«Plantilla en Meta» enseña el código**~~ Resuelto el 2026-11-16 (`DEU-10`). con que se registra la plantilla (`recordatorio_renovacion`):
-  el catálogo no tiene nombre legible. Darle uno es un campo nuevo en las plantillas.
-
-### Lo que quedó de Aliadas y administración tras cerrar `R2-PAN-10`
-
-- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes) (el «techo»). En Aliadas: las etiquetas de la liquidación
-  apilada se parten en dos líneas; la ficha de una clínica no lleva a sus remisiones atendidas o
-  anuladas (la bandeja no filtra por clínica); el total de la liquidación iría mejor en un `th`; y en
-  Utilizadas y Anuladas queda la columna de acciones vacía. En Administración: las tarifas de un plan
-  en 2×2, y en una línea cuando son iguales; los beneficios sin apilar en el celular; la barra de
-  presupuesto de la IA junto a «Gastado»; y «Desactivar» en un plano neutro que solo se vuelva rojo
-  al confirmar. Común a todo el panel: la tira de pestañas a 390 corta la última sin indicar que se
-  desplaza.
-- ~~**Lo que el documentador vio fuera del sistema**~~ Resuelto el 2026-11-15 (`DEU-26`). Antes: y no se canonizó: los eventos de la pasarela son una
-  bandeja sin recuento en sus vistas (la API no los cuenta) y con la vista fuera de la URL; los casos de
-  prueba de la IA enseñan lo esperado en JSON; y el formulario de reportes lleva un `style` en línea en su
-  `fieldset`. Los dos últimos son anteriores a esta unidad.
-- **Las reglas se editan en JSON** (decidido el editor por campos, pendiente: `DEU-8`): se leen y se prueban en palabras, pero cambiar una condición o una
-  acción sigue siendo escribir el JSON del motor. Un editor por campos es trabajo nuevo.
-- ~~**Pasar una cuenta a clínica aliada, o de clínica aliada al equipo, no se hace desde la fila**~~ Decidido con el usuario no hacerlo: se crea otra cuenta (`DEU-9`). Antes:
-  necesita la clínica, que solo se elige al crear el usuario. Hoy hay que crear la cuenta nueva.
-- ~~**Las plantillas de WhatsApp no tienen nombre legible**~~ Resuelto el 2026-11-16 (`DEU-10`).: las reglas y las campañas enseñan el código
-  con que se registran en Meta (`aviso_mora`) como dato secundario.
-- ~~**Textos guardados sin tildes**~~ Resuelto el 2026-11-16 (`DEU-11`), también las ciudades (migración `0048`).: el motivo de algunas reglas sembradas («mas cupos») y los nombres de
-  reglas y catálogos («Aviso de mora a los 25 dias», «Atencion en clinica aliada») vienen de los datos;
-  la deuda ya está en `docs/frontend/conventions.md`.
-
-### Lo que quedó del acceso tras cerrar `R3-PUB-01`
-
-- ~~**La clínica aliada entra por «Equipo TIMU»**~~ Resuelto el 2026-11-16 (`DEU-6`): la pestaña se llama «Equipo y aliadas». Antes:, que no es su nombre. Se mantuvo el selector por
-  público por decisión del usuario; si se renombra, es solo el texto de la pestaña.
-- ~~**La vigencia de los enlaces no se dice en pantalla**~~ Resuelto el 2026-11-15 (`DEU-7`). Antes: (30 minutos la recuperación y 72 horas la
-  activación, en `Settings`): el panel no copia esos valores. Si TIMU quiere decirla, la API la da
-  con el estado del enlace.
-- **La consulta del enlace no entra en la guarda de caminos calientes**, que solo recorre listados
-  por GET: es una búsqueda por `token_hash`, que es único y tiene índice.
-- **Lo que el documentador vio fuera del sistema** (los 48 px son la norma del acceso, `DEU-25`; las sombras a `none` se retiraron, `DEU-21`; la sombra de `.publica-tarjeta` se corrige en `R3-PUB-02`) y no se canonizó: los campos con icono del
-  acceso miden 48 px (`.campo-adorno .input`, anterior a esta unidad) y no los 40/44 del resto;
-  `.publica-tarjeta` lleva sombra estando quieta (es de las páginas públicas sin rediseñar, se
-  corrige en su unidad); y el segmento activo del selector pide `--sombra-2`, que vale `none`.
-- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes) (el «techo»): que el tramo de la línea se dibuje hasta
-  «Hoy» al cargar (respetando `prefers-reduced-motion`), que en la activación la estación
-  «Afiliación» se encienda al guardar la contraseña antes de llevar al portal, y anclar a 1440 el
-  título del formulario a la altura de la frase del panel. A 900 px las estaciones de la línea no
-  quedan a la misma distancia (sus columnas toman el ancho del rótulo).
+- [**Deuda decidida y techo del revisor**](rediseno/deuda.md): la tabla `DEU-1` a `DEU-70` y
+  `DEU-E` con cada decisión del usuario y su estado. Lo que sigue pendiente está arriba, en
+  «Dónde se retoma».
+- [**Notas de cierre de cada unidad**](rediseno/notas-de-cierre.md): «lo que quedó» al cerrar cada
+  una. Una nota abierta nueva se añade allí.
 
 ### Orden de lo que sigue
 
