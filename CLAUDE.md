@@ -43,18 +43,9 @@ oficial.
 # backend/.env.example es la base y backend/.env (si existe) la sobrescribe.
 # Puertos del host ocupados por otro proyecto → .env de la raíz (ver .env.example).
 docker compose up --build
-docker compose exec api python -m scripts.datos_demo   # familias, servicios, rutas… de prueba (solo local)
-                                      # Solo crea lo que falta: no actualiza lo ya sembrado. Si se amplía
-                                      # (un campo nuevo de las mascotas), un stack local viejo conserva los
-                                      # datos antiguos; el del CI, recién levantado, recibe los nuevos.
-docker compose exec api python -m scripts.operacion_demo   # después de datos_demo: ocho semanas de operación
-                                      # (cartera en cada estado, rutas pasadas con parada omitida, consultas
-                                      # firmadas, preventivos, encuestas, embudo comercial, tareas, remisiones,
-                                      # clínica virtual y una campaña). Se crea por la API y se corre al
-                                      # pasado; tarda unos 5 min. Si ya sembró, no hace nada: para repetirla
-                                      # desde cero hace falta un stack recién levantado (el de verificación,
-                                      # abajo). Sale con error si queda por debajo de sus mínimos. El CI la
-                                      # corre después de la e2e del stack.
+docker compose exec api python -m scripts.datos_demo   # usuarios, familias, ruta… de prueba (solo local; solo crea lo que falta)
+docker compose exec api python -m scripts.operacion_demo   # después: ocho semanas de operación (~5 min; si ya sembró, nada)
+                                      # Qué deja cada uno, cómo se amplían y sus límites: docs/datos-de-demostracion.md
 docker compose run --rm inicializar   # tras traer una migración nueva, sin reiniciar el stack
 docker compose up -d --build -V       # tras traer dependencias nuevas: el código va montado, las librerías
                                       # van en la imagen, y -V renueva el node_modules anónimo de `web`
@@ -85,6 +76,10 @@ npm run test:e2e:stack              # recorridos contra el stack real: docker co
 gh api --allow-escape-sequences repos/{owner}/{repo}/actions/jobs/<id>/logs | sed 's/\x1b\[[0-9;]*m//g'
 gh run watch <id> --exit-status --interval 60 && gh run view <id> --json jobs --jq '.jobs[] | "\(.name): \(.conclusion)"'
 ```
+
+- `npm run verificar 2>&1 | tail` o `pytest | tail` devuelven el código de `tail`, no el de la prueba:
+  guarda el log, mira el `$?` del propio comando y lee el resultado en el log.
+- `docker compose down -v` no baja `db-test` (va en el perfil `test`): sigue arriba con su base efímera.
 
 ### Prueba de carga
 
@@ -183,6 +178,7 @@ parte de las propias suites; ninguno se desactiva:
 | `forbidOnly` en `frontend/playwright.config.ts` y `frontend/playwright.stack.config.ts` | Un `.only` en e2e cuando corre en CI. |
 | Umbrales de cobertura | Que la cobertura baje del mínimo (abajo). |
 | Umbrales `count>0` de `infra/carga/recorrido.js` | Una prueba de carga que no llegó a hacer peticiones: sin muestras, k6 da por cumplido cualquier umbral de tiempos. |
+| Mínimos de `backend/scripts/operacion_demo.py` (`MINIMOS`) | Una siembra de la operación por debajo de sus mínimos (rutas, visitas, encuestas respondidas, remisiones atendidas…): `Cliente.post` solo avisa de un error y sigue, así que sin esto un cambio en la API podría vaciar la operación sin que nadie lo viera. |
 
 Reglas que mantienen esto vivo:
 

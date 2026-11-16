@@ -134,5 +134,16 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   catálogo: un nombre que lo incluye se busca con `findBy`, no con `getBy`.
 - `npm run test:e2e` sirve `dist/` con `vite preview` (y en local reutiliza el que ya esté arriba):
   no recompila. Tras cambiar el panel, `npx vite build` antes, o la prueba mira la versión vieja.
+- Para enfocar un campo al abrir un `Modal`, `autoFocus` en el campo: Radix respeta el foco que ya
+  está dentro (`SelectorFamilia`, prop `enfocar`).
+- `:is()` no admite pseudoelementos (`:is(.a::after, .b)` invalida la regla entera): sepáralos con coma.
+- jsdom no desplaza: para probar un manejador de `scroll`, `Object.defineProperty(el, 'scrollTop',
+  { value, configurable: true })` y `fireEvent.scroll(el)`.
+- Una animación de CSS se prueba en `e2e/` leyendo `getComputedStyle(el, '::before').animationName`;
+  con `test.use({ reducedMotion: 'reduce' })` da `none` (la apaga `base.css`).
+- `margin-inline: auto` en un hijo de grid o flex lo encoge a su contenido: dale también
+  `width: min(<máx>, 100%)`.
+- `verificar` muestra un aviso previo de ESLint en `AuthContext.tsx`
+  (`react-refresh/only-export-components`): no es de tu cambio.
 - Un bloque nuevo de `vistas.css` insertado antes de `.filtros` o `.listado .filtros > .input`
   pierde contra ellos: sube la especificidad (`.listado .filtros.mi-clase`) o ponlo detrás.

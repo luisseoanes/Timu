@@ -385,6 +385,8 @@ Una migración que borra o renombra columnas necesita dos despliegues si no se q
 cortar el servicio: primero el código que tolera las dos formas, después la migración
 destructiva. La primera migración no tiene ese problema porque parte de una base vacía.
 
+- Una migración de datos se prueba en `tests/test_migraciones.py` con `_base_en("<revisión anterior>")`:
+  se llena la base, `upgrade`, se comprueba, `downgrade` y se vuelve a comprobar (`test_0048_…`).
 - Una migración que redefine una función SQL (`anonimizar_familia`) copia la versión anterior
   de la migración previa con `runpy.run_path(...)["_ANONIMIZAR"]`: el `downgrade` queda exacto.
 - Columna `NOT NULL` nueva en una tabla con filas: `server_default` para rellenarlas y
@@ -424,7 +426,12 @@ Trampas conocidas:
 - Tras `await db.commit()` los objetos ORM caducan: leer un atributo en una prueba async da `MissingGreenlet`. Guarda los ids antes del `commit`.
 - asyncpg no acepta dos sentencias en un mismo `text()`: una `db.execute` por sentencia.
 - Un servicio (o cualquier fila con estado) en un estado avanzado se inserta ya en él: el trigger de transiciones solo valida `UPDATE` (ver `_atendido` en `tests/test_encuestas.py`).
-- `mypy` del CI cubre solo `app/`: `scripts/datos_demo.py` arrastra tres errores de tipos previos; no son de tu cambio.
+- `mypy` del CI cubre solo `app/`. Los scripts de datos pasan sin errores y se comprueban a mano al tocarlos: `mypy scripts/datos_demo.py scripts/operacion_demo.py`.
+- `dict(db.execute(...).tuples())` falla (TupleResult tiene `keys()`): usa `.tuples().all()`.
+- asyncpg quiere un parámetro `text[]` o `uuid[]` como lista de Python, no como tupla.
+- En SQL, `fecha + time '11:30' AT TIME ZONE 'America/Bogota'` aplica la zona a la hora sola: va entre paréntesis, `(fecha + time '11:30') AT TIME ZONE …`.
+- Un CHECK de fechas (`ck_contratos_renovacion_posterior`) impide insertar un contrato «del pasado» en una prueba: se mueve el reloj con `monkeypatch` sobre el `hoy` del servicio.
+- Los diagnósticos de Pyright del editor («Import could not be resolved») son ruido del entorno: mandan `ruff` y `mypy` con `backend/.venv`.
 - **`POST /auth/restablecer` abre la sesión** de quien activa o restablece (desde `R3-PUB-01`): un script que lo llame con el cliente del administrador se queda con las cookies de la familia, y sus peticiones siguientes dan 404 o 403. `datos_demo` lo hace con una petición aparte, sin cookies.
 - **Los scripts de datos no escriben por debajo de la API**, salvo dos excepciones con su motivo en el código: `datos_demo` lee de la base el token de activación (la API lo tapa), y `operacion_demo` corre al pasado las fechas de lo que creó, con la conexión del dueño del esquema (la única que puede fechar una consulta firmada). Lo que la API no permite hacer (llevar un interesado a «afiliado» sin pasarela) no se fuerza por SQL.
 - **`operacion_demo` drena el outbox y llama a tareas del beat en el propio proceso** (`outbox.drenar`, `cartera.generar_cuotas`, `revisar_mora`, `encuestas.enviar_pendientes`, `campanas.lanzar_programadas` y `despachar`): por eso importa al arrancar los mismos módulos de tareas que el worker (`celery_app.conf.include`); sin ellos, un evento sin declarar hace fallar el drenado.
