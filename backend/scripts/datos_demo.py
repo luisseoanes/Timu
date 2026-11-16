@@ -163,7 +163,7 @@ UBICACIONES = [
 # hasta que TIMU confirme las oficiales. Donde el plegable 2026 dice algo, lo del plegable (las
 # consultas al mes y la hospitalizacion, que se cubre como atencion en clinica aliada); lo que
 # no dice, estos cupos de prueba.
-BENEFICIOS = [
+BENEFICIOS: list[dict[str, Any]] = [
     {"tipo_servicio_codigo": "consulta_domiciliaria", "cupo": 6, "periodo_cupo": "anual"},
     {"tipo_servicio_codigo": "vacunacion", "cupo": 4, "periodo_cupo": "anual"},
     {"tipo_servicio_codigo": "desparasitacion", "cupo": 4, "periodo_cupo": "anual"},
@@ -476,14 +476,14 @@ def main() -> None:
     existentes = {(f["ciudad"], f["dia_semana"], f["modalidad"]) for f in c.get("/agenda/franjas")}
     for ciudad in ("Bogotá", "Medellín"):
         for modalidad in ("domiciliario", "preventivo"):
-            for dia in range(6):
-                if (ciudad, dia, modalidad) not in existentes:
+            for dia_semana in range(6):
+                if (ciudad, dia_semana, modalidad) not in existentes:
                     c.post(
                         "/agenda/franjas",
                         {
                             "ciudad": ciudad,
                             "modalidad": modalidad,
-                            "dia_semana": dia,
+                            "dia_semana": dia_semana,
                             "hora_inicio": "08:00",
                             "hora_fin": "17:00",
                             "capacidad": 2,

@@ -517,7 +517,7 @@ def preventivos(
 def candidatas(c: Cliente, ciudad: str) -> list[tuple[dict[str, Any], dict[str, Any]]]:
     """(familia, mascota) de la ciudad con ubicacion y contrato: a quienes se puede visitar.
     Cada familia lleva `afiliada_desde`: antes de esa fecha no se le visita ni se le remite."""
-    pares = []
+    pares: list[tuple[dict[str, Any], dict[str, Any]]] = []
     for familia in c.get("/familias", ciudad=ciudad, limit=100)["items"]:
         if familia.get("latitud") is None:
             continue
