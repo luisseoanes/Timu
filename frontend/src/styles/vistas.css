@@ -257,7 +257,7 @@
 .preventivos-familia-titulo a { font-size: var(--t-seccion); font-weight: 700; }
 .preventivos-familia-acciones { display: flex; flex-wrap: wrap; gap: var(--e2); float: right; }
 @container (min-width: 640px) {
-  .preventivos-tabla :is(th, td):nth-child(1) { width: 46%; }
+  .preventivos-tabla :is(th, td):nth-child(1) { width: 36%; }
 }
 .preventivos-tabla td.preventivo-menu { width: 56px; text-align: right; }
 @container (max-width: 639px) {

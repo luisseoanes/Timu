@@ -120,7 +120,12 @@ describe('PreventivosPage', () => {
     )
     const user = userEvent.setup()
     renderizar(<PreventivosPage />, { ruta: '/preventivos?vista=por_agendar' })
-    await user.click(await screen.findByRole('button', { name: 'Agendar Rabia de Luna' }))
+    // Sin nada por autorizar, el grupo sigue ofreciendo escribirle a la familia (techo 48).
+    const agendar = await screen.findByRole('button', { name: 'Agendar Rabia de Luna' })
+    const grupoFamilia = agendar.closest('tbody')!
+    expect(within(grupoFamilia).getByRole('link', { name: /Escribir/ })).toHaveAttribute('href', expect.stringContaining('wa.me'))
+    expect(within(grupoFamilia).queryByRole('button', { name: /Registrar autorización/ })).not.toBeInTheDocument()
+    await user.click(agendar)
     const ventana = await screen.findByRole('dialog', { name: 'Agendar Rabia de Luna' })
     await user.click(await within(ventana).findByRole('button', { name: '9:00 a. m.' }))
     await user.click(within(ventana).getByRole('button', { name: 'Agendar a las 9:00 a. m.' }))

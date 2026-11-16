@@ -171,6 +171,8 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 .fila-cuerpo { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .fila-cuerpo strong { display: block; color: var(--texto-titulo); font-size: var(--t-cuerpo); }
 .fila-cuerpo span { display: block; font-size: var(--t-menor); color: var(--texto-suave); }
+/* Documento y ciudad en una línea: el separador no los parte; si no caben, se recortan. */
+.fila-cuerpo .seleccion-dato { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; overflow-wrap: normal; }
 /* La fecha se parte en dos líneas antes de apretar el texto de la fila: en una columna
    estrecha, sin tope, la fila le daba todo su ancho y el texto se montaba encima. */
 .fila-lado { flex: 0 1 auto; max-width: 40%; text-wrap: balance; text-align: right; font-size: var(--t-menor); color: var(--texto-suave); }
@@ -483,6 +485,8 @@ a.acceso { text-decoration: none; }
 }
 .cupo[aria-pressed="true"] { background: var(--accion-fondo); border-color: var(--indicador-seleccion); color: var(--accion-texto); }
 .cupo:disabled { opacity: .45; cursor: default; }
+/* En una ventana de agendar, las franjas en columnas iguales: las horas quedan alineadas. */
+.cupos-rejilla { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 /* --- Línea de tiempo (pasos, historia) ------------------------- */
 .linea-tiempo { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e4); }

@@ -32,7 +32,7 @@ export function SelectorFamilia({
           </span>
           <span className="fila-cuerpo">
             <strong>{valor.titular_nombre}</strong>
-            <span>
+            <span className="seleccion-dato">
               {valor.documento} · {valor.ciudad}
             </span>
           </span>

@@ -143,7 +143,7 @@ export function AgendarModal({ evento, titulo, ciudad, onCerrar }: { evento: Eve
           ) : cupos.data?.length === 0 ? (
             <p className="apagado">No hay franjas ese día. Prueba con otro.</p>
           ) : (
-            <div className="cupos" role="group" aria-label="Franjas disponibles">
+            <div className="cupos cupos-rejilla" role="group" aria-label="Franjas disponibles">
               {cupos.data?.map((c) => (
                 <button key={c.inicio} type="button" className="cupo" aria-pressed={inicio === c.inicio} disabled={c.disponibles === 0} onClick={() => setInicio(c.inicio)}>
                   {hora(c.inicio)}

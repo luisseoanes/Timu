@@ -128,16 +128,17 @@ export function BandejaPreventivos() {
                               {g.ciudad} · {g.eventos.length} {g.eventos.length === 1 ? 'preventivo' : 'preventivos'}
                             </span>
                           </span>
-                          {porAutorizar.length > 0 && (
-                            <span className="preventivos-familia-acciones">
-                              <a className="btn btn-plano btn-accion" href={enlaceWhatsApp(g.telefono)} target="_blank" rel="noopener noreferrer">
-                                <Icono nombre="mensaje" size={16} /> Escribir
-                              </a>
+                          {/* Escribir sirve en cualquier paso: pedir la autorización o avisar de la visita. */}
+                          <span className="preventivos-familia-acciones">
+                            <a className="btn btn-plano btn-accion" href={enlaceWhatsApp(g.telefono)} target="_blank" rel="noopener noreferrer">
+                              <Icono nombre="mensaje" size={16} /> Escribir
+                            </a>
+                            {porAutorizar.length > 0 && (
                               <button className="btn btn-suave" type="button" onClick={() => setAccion({ tipo: 'autorizar', grupo: g })}>
                                 Registrar autorización{porAutorizar.length > 1 ? ` (${porAutorizar.length})` : ''}
                               </button>
-                            </span>
-                          )}
+                            )}
+                          </span>
                         </th>
                       </tr>
                       {g.eventos.map((e) => (
