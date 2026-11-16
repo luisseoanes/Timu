@@ -241,7 +241,7 @@ qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son 
 | `DEU-25` | Los campos con icono del acceso miden 48 px | 48 px es la norma del acceso | ahora (documentación) | Hecho (2026-11-15): `DESIGN.md` lo recoge en Inputs |
 | `DEU-26` | Pasarela sin recuento ni vista en la URL, casos de la IA en JSON, `style` en Reportes | Se arreglan | ahora | Hecho (2026-11-15): recuentos y vista en la URL, casos en palabras (`esperado_texto`) y sin `style`; de paso, la API rechaza un caso que el evaluador no entiende |
 | `DEU-27` | `.impeccable/design.json` va por detrás de `DESIGN.md` | Se completa en el cierre | `R4-CIE-03` | Pendiente |
-| `DEU-28`–`DEU-70` | El «techo» del revisor en cada superficie | Como lo recomendó Claude: sí a todo salvo 28, 29, 30, 38, 39, 43, 44, 65, 68, 69 y 70 (detalle abajo) | ahora | En curso (2026-11-16): hecho todo salvo 33 (espera la siembra de `DEU-14`) y 67 |
+| `DEU-28`–`DEU-70` | El «techo» del revisor en cada superficie | Como lo recomendó Claude: sí a todo salvo 28, 29, 30, 38, 39, 43, 44, 65, 68, 69 y 70 (detalle abajo) | ahora | En curso (2026-11-16): hecho todo salvo 33, que espera la siembra de `DEU-14` |
 | `DEU-E` | Lo que decide TIMU | Valor provisional en el código para cada uno, pero **todos siguen pendientes** hasta que TIMU confirme el valor oficial ([pendientes externos](pendientes-externos.md#valores-provisionales)) | — | Pendiente de TIMU |
 
 **Encontrado al cerrar este lote y resuelto el mismo día:** la prueba de Comercial «registra un
@@ -283,8 +283,8 @@ lo que se marca como pendiente:
 - **Administración:** 62 tarifas en 2×2, o en una línea si son iguales · 63 beneficios apilados en
   el celular · 64 la barra del presupuesto junto a «Gastado».
 - **Común:** 66 la tira de pestañas a 390 indica que se desplaza.
-- **Acceso:** **pendiente:** 67 la línea se dibuja hasta «Hoy» al cargar, respetando
-  `prefers-reduced-motion`.
+- **Acceso:** 67 la línea se dibuja hasta «Hoy» al cargar (un tramo tras otro y la marca al
+  final, `--duracion-dibujo`), respetando `prefers-reduced-motion`.
 - **No:** 28 estaciones de 34 px, 29 etiquetas cuadradas y 30 paneles sin radio en Familias (el
   panel es denso y contradicen `DESIGN.md`); 38 estaciones en citas y pagos y 39 la marca de Hoy en
   la cita en camino (son otra composición); 43 la marca de «ahora» en Servicios y 44 las franjas

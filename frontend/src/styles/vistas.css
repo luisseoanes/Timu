@@ -575,6 +575,14 @@
   color: var(--texto-sobre-marca);
 }
 .ingreso-legal { display: inline-flex; align-items: center; gap: var(--e2); margin: 0; font-size: var(--t-menor); color: var(--texto-sobre-marca-suave); }
+/* Al cargar, lo hecho se dibuja de izquierda a derecha, un tramo tras otro, y al final aparece la
+   marca de «Hoy». El tramo de lo que falta no se anima: tapa el verde, que se detiene en «Hoy».
+   Sin movimiento (prefers-reduced-motion), base.css apaga las animaciones y la línea sale entera. */
+.ingreso-estacion[data-tipo="hecha"]::before { transform-origin: left; animation: ingreso-tramo var(--duracion-dibujo) var(--curva) both; }
+.ingreso-estacion[data-tipo="hecha"] + .ingreso-estacion[data-tipo="hecha"]::before { animation-delay: var(--duracion-dibujo); }
+.ingreso-hoy::after, .ingreso-hoy > span { animation: ingreso-hoy var(--duracion) var(--curva) calc(2 * var(--duracion-dibujo)) both; }
+@keyframes ingreso-tramo { from { transform: scaleX(0); } }
+@keyframes ingreso-hoy { from { opacity: 0; } }
 
 /* --- Formulario --- */
 .ingreso-contenido {

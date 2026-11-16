@@ -197,6 +197,7 @@
 
   /* --- Movimiento: corto y solo para cambios de estado ----------- */
   --duracion: 160ms;
+  --duracion-dibujo: 420ms;  /* un tramo de la línea que se dibuja al cargar (el acceso) */
   --curva: cubic-bezier(0.2, 0, 0, 1);
 
   /* --- Estructura ------------------------------------------------ */
