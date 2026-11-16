@@ -57,15 +57,19 @@ Servicios (puertos por defecto):
 Datos de demostración (solo local) y migraciones nuevas con el stack ya arriba:
 
 ```bash
-docker compose exec api python -m scripts.datos_demo
+docker compose exec api python -m scripts.datos_demo       # lo que piden las pruebas, ~1 min
+docker compose exec api python -m scripts.operacion_demo   # ocho semanas de operación, ~5 min
 docker compose run --rm inicializar
 ```
 
 `datos_demo` crea familias, servicios, rutas y campañas, y estos usuarios con la clave
 `demo12345`: `medico@timu.co`, `operaciones@timu.co`, `comercial@timu.co`,
 `gerencia@timu.co` (administrador para los recorridos e2e), `aliada@timu.co` (clínica
-aliada) y `ana@example.com` (portal de familias, con el plan en pausa por cuotas vencidas).
-Solo crea lo que falta: no actualiza lo ya sembrado.
+aliada) y, en el portal de familias, `ana@example.com` (con el plan en pausa por cuotas
+vencidas) y `jorge@example.com` (al día). Solo crea lo que falta: no actualiza lo ya
+sembrado. `operacion_demo`, después, siembra dos meses de historia: cartera en cada estado,
+rutas pasadas con sus consultas, preventivos, encuestas, comercial, tareas, remisiones y una
+campaña. Qué deja cada uno y cómo ampliarlos: [datos de demostración](docs/datos-de-demostracion.md).
 
 `db-test` (perfil `test`) y `respaldos` (perfil `respaldos`) no arrancan con el `up`
 general.
@@ -128,7 +132,8 @@ backend/
     workers/       celery_app.py (beat_schedule) + tasks/ por dominio
     models.py      registro único de modelos para Alembic
   alembic/         migraciones
-  scripts/         inicializar, catálogos, seed, datos_demo, datos_volumen, generar_tipos_frontend
+  scripts/         inicializar, catálogos, seed, datos_demo, operacion_demo, datos_volumen,
+                   generar_tipos_frontend
   tests/           pytest contra PostgreSQL (db-test)
 frontend/
   src/
@@ -164,12 +169,14 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [docs/flujo-de-la-visita.md](docs/flujo-de-la-visita.md) | Cómo se atiende una visita en casa: estados de la parada y del servicio, pasos de cada tipo y la consulta como registro |
 | [docs/portal-familias.md](docs/portal-familias.md) | Qué ve y qué hace la familia en el portal, de dónde sale cada dato y las reglas del backend que el panel copia |
 | [docs/indicadores.md](docs/indicadores.md) | Definición de cada indicador del dashboard y de los exportables |
+| [docs/datos-de-demostracion.md](docs/datos-de-demostracion.md) | Qué siembran `datos_demo` y `operacion_demo`, cómo se hizo la operación (por la API y corrida al pasado), sus límites y cómo ampliarlos |
 | [docs/plan-persistencia.md](docs/plan-persistencia.md) | Registro (cerrado): por qué la base garantiza integridad y permisos, decisiones y verificación de cada fase |
 | [docs/deuda-ciclos-dominios.md](docs/deuda-ciclos-dominios.md) | Registro (cerrado): cómo se eliminaron los ciclos entre dominios del backend |
 | [DESIGN.md](DESIGN.md) | Sistema de diseño de la interfaz, escrito desde lo construido: roles de color, tipografía, medidas, componentes y sus reglas |
 | [PRODUCT.md](PRODUCT.md) | Contexto de producto para diseñar: quién usa cada espacio, desde qué dispositivo y para qué |
 | [docs/manual-de-marca.md](docs/manual-de-marca.md) | Identidad de TIMU (color, tipografía, logo y voz) y su ampliación para la plataforma: roles, contrastes, reglas de uso |
-| [docs/hoja-de-ruta-rediseno.md](docs/hoja-de-ruta-rediseno.md) | Rediseño de la interfaz con la marca: unidades, estado, decisiones y siguiente paso |
+| [docs/hoja-de-ruta-rediseno.md](docs/hoja-de-ruta-rediseno.md) | Rediseño de la interfaz con la marca: unidades, estado, dónde se retoma, decisiones y siguiente paso |
+| [docs/rediseno/](docs/rediseno/) | Anexos de la hoja: la [deuda decidida](docs/rediseno/deuda.md), las [notas de cierre](docs/rediseno/notas-de-cierre.md) de cada unidad y los bocetos de cada superficie |
 | [docs/frontend/](docs/frontend/) | Cómo se construye el panel: componentes, plantillas de página, convenciones y cómo se capturan las pantallas para el revisor final |
 | [infra/respaldos/README.md](infra/respaldos/README.md) | Respaldo y restauración de la base |
 | `CLAUDE.md`, `backend/CLAUDE.md`, `frontend/CLAUDE.md` | Reglas de arquitectura para Claude Code; también sirven de guía técnica |
