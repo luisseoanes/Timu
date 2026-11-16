@@ -689,3 +689,68 @@ def verificar_carnet(db: Session, codigo: str) -> dict[str, Any]:
             for a in registro.contenido["aplicados"]
         ],
     }
+
+
+# --- DEU-3 El portal agenda preventivos concretos ---------------------------------------------
+
+
+def por_agendar_de_familia(db: Session, familia_id: UUID) -> list[dict[str, Any]]:
+    """Los preventivos de la familia que esperan su visita: programados y sin servicio, de sus
+    mascotas activas, del mas antiguo al mas reciente. Cada uno dicho como en la bandeja
+    («Antirrabica canina, refuerzo») y con el tipo de servicio de su visita."""
+    filas = db.execute(
+        select(EventoPreventivo, Mascota)
+        .join(Mascota, Mascota.id == EventoPreventivo.mascota_id)
+        .where(
+            Mascota.familia_id == familia_id,
+            Mascota.activa.is_(True),
+            EventoPreventivo.estado == "programado",
+            EventoPreventivo.servicio_id.is_(None),
+        )
+        .order_by(EventoPreventivo.fecha_programada, Mascota.nombre)
+    ).all()
+    esquemas = dict(
+        db.execute(select(EsquemaPreventivo.codigo, EsquemaPreventivo.nombre)).tuples().all()
+    )
+    hoy_ = hoy()
+    return [
+        {
+            "id": evento.id,
+            "mascota_id": mascota.id,
+            "mascota_nombre": mascota.nombre,
+            "nombre": (
+                f"{esquemas.get(evento.esquema_codigo or '', evento.tipo)}, "
+                + ("refuerzo" if evento.es_refuerzo else f"dosis {evento.dosis_numero}")
+            ),
+            "fecha_programada": evento.fecha_programada,
+            "vencido": evento.fecha_programada < hoy_,
+            "tipo_servicio_codigo": evento.tipo_servicio_codigo,
+        }
+        for evento, mascota in filas
+    ]
+
+
+def agendar_desde_el_portal(
+    db: Session,
+    familia_id: UUID,
+    evento_id: UUID,
+    inicio: datetime,
+    observaciones: str | None,
+    usuario_id: UUID,
+) -> EventoPreventivo:
+    """La familia agenda la visita de un preventivo concreto suyo. Agendarlo es su autorizacion
+    (medio «portal»), asi que la visita nace autorizada y, al completarse, aplica el preventivo
+    (el servicio manda). Antes, el portal agendaba una vacunacion sin decir cual."""
+    evento = db.get(EventoPreventivo, evento_id)
+    mascota = db.get(Mascota, evento.mascota_id) if evento else None
+    if evento is None or mascota is None or mascota.familia_id != familia_id:
+        raise NoEncontrado("Preventivo no encontrado")
+    if evento.requiere_autorizacion and not evento.autorizado:
+        autorizar(db, evento, usuario_id, "portal", aprobado=True)
+    return agendar(
+        db,
+        evento,
+        inicio,
+        f"[portal] {observaciones}" if observaciones else "[portal]",
+        usuario_id=usuario_id,
+    )

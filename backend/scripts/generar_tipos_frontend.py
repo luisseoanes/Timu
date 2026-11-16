@@ -118,6 +118,7 @@ ESQUEMAS = [
     "BajaRead",
     "ConfiguracionRead",
     "ServicioPortalRead",
+    "PreventivoPorAgendar",
     "PagoPortalRead",
     "InicioPago",
     "MedioPagoRead",

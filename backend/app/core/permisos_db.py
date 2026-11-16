@@ -209,7 +209,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "documentos_familia": "S",
         "especies": "S",
         "esquemas_preventivos": "S",
-        "eventos_preventivos": "S",
+        "eventos_preventivos": "SU",
         "eventos_salientes": "SI",
         "familias": "SU",
         "franjas_agenda": "SL",

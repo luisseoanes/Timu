@@ -17,6 +17,7 @@ import type {
   PeludoNuevoIn,
   Periodicidad,
   PlanPublico,
+  PreventivoPorAgendar,
   ServicioPortalRead,
 } from '@/types'
 
@@ -182,10 +183,35 @@ export function useActualizarMisDatos() {
   )
 }
 
+/** Los preventivos de la familia que esperan su visita (DEU-3): uno por visita. */
+export function usePreventivosPorAgendar(activo = true) {
+  return useQuery({
+    queryKey: ['portal', 'preventivos'],
+    enabled: activo,
+    queryFn: async () => (await api.get<PreventivoPorAgendar[]>('/portal/preventivos')).data,
+  })
+}
+
+/** Agenda una cita; con `preventivo_id`, la visita de ese preventivo (al completarse, lo aplica). */
 export function useAgendarPortal() {
   return useMutacion(
-    async (datos: { mascota_id: string; tipo_codigo: string; inicio: string; observaciones?: string }) =>
-      (await api.post<ServicioPortalRead>('/portal/servicios', datos)).data,
+    async ({
+      preventivo_id,
+      ...datos
+    }: {
+      mascota_id: string
+      tipo_codigo: string
+      inicio: string
+      observaciones?: string
+      preventivo_id?: string
+    }) =>
+      (preventivo_id
+        ? await api.post<ServicioPortalRead>(`/portal/preventivos/${preventivo_id}/visita`, {
+            inicio: datos.inicio,
+            observaciones: datos.observaciones,
+          })
+        : await api.post<ServicioPortalRead>('/portal/servicios', datos)
+      ).data,
   )
 }
 

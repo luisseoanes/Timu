@@ -413,7 +413,10 @@ describe('citas', () => {
   })
 
   it('el selector de horario guía hasta elegir tipo y avisa días sin cupo o sin agenda', async () => {
-    server.use(http.get(`${API}/portal/disponibilidad`, () => HttpResponse.json([{ inicio: '2099-01-10T13:00:00Z', fin: '', disponibles: 0 }])))
+    server.use(
+      http.get(`${API}/portal/disponibilidad`, () => HttpResponse.json([{ inicio: '2099-01-10T13:00:00Z', fin: '', disponibles: 0 }])),
+      http.get(`${API}/portal/preventivos`, () => HttpResponse.json([])),
+    )
     const user = userEvent.setup()
     renderizar(<PortalCitas />)
     await user.click(await screen.findByRole('button', { name: /agendar una cita/i }))
@@ -422,6 +425,8 @@ describe('citas', () => {
     await waitFor(() => expect(within(modal).getByRole('option', { name: 'Vacunación · en casa' })).toBeInTheDocument())
     await user.selectOptions(within(modal).getByLabelText('Qué necesitas'), 'vacunacion')
     expect(await within(modal).findByText('No hay horarios ese día. Prueba otra fecha.')).toBeInTheDocument()
+    // Sin preventivos de ese tipo por agendar lo dice, y no hay qué agendar.
+    expect(await within(modal).findByText('Luna no tiene preventivos de este tipo por agendar.')).toBeInTheDocument()
     expect(within(modal).getByRole('button', { name: 'Agendar' })).toBeDisabled()
 
     server.use(http.get(`${API}/portal/disponibilidad`, () => HttpResponse.json({ detail: 'Agenda en mantenimiento' }, { status: 503 })))
@@ -429,6 +434,37 @@ describe('citas', () => {
     await user.clear(dia)
     await user.type(dia, '2099-02-01')
     expect(await within(modal).findByRole('alert')).toHaveTextContent('Agenda en mantenimiento')
+  })
+
+  it('una visita preventiva es la de un preventivo concreto, que se elige', async () => {
+    let enviado: { url: string; cuerpo: unknown } | null = null
+    server.use(
+      http.get(`${API}/portal/disponibilidad`, () => HttpResponse.json([{ inicio: '2099-01-10T14:00:00Z', fin: '', disponibles: 1 }])),
+      http.get(`${API}/portal/preventivos`, () =>
+        HttpResponse.json([
+          { id: 'e1', mascota_id: LUNA.id, mascota_nombre: 'Luna', nombre: 'Antirrábica canina, refuerzo', fecha_programada: '2026-11-04', vencido: true, tipo_servicio_codigo: 'vacunacion' },
+          { id: 'e2', mascota_id: LUNA.id, mascota_nombre: 'Luna', nombre: 'Desparasitación interna canina, dosis 2', fecha_programada: '2026-12-01', vencido: false, tipo_servicio_codigo: 'desparasitacion' },
+        ]),
+      ),
+      http.post(`${API}/portal/preventivos/:id/visita`, async ({ request }) => {
+        enviado = { url: new URL(request.url).pathname, cuerpo: await request.json() }
+        return HttpResponse.json(cita({ id: 's9', tipo_codigo: 'vacunacion', programado_para: '2099-01-10T14:00:00Z' }), { status: 201 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<PortalCitas />)
+    await user.click(await screen.findByRole('button', { name: /agendar una cita/i }))
+    const modal = await screen.findByRole('dialog')
+    await waitFor(() => expect(within(modal).getByRole('option', { name: 'Vacunación · en casa' })).toBeInTheDocument())
+    await user.selectOptions(within(modal).getByLabelText('Qué necesitas'), 'vacunacion')
+    // Solo los de ese tipo, dichos como en la bandeja.
+    const cual = await within(modal).findByLabelText('Cuál')
+    expect(within(cual).getAllByRole('option').map((o) => o.textContent)).toEqual(['Elige', 'Antirrábica canina, refuerzo · tocaba el mié 4 nov'])
+    await user.selectOptions(cual, 'e1')
+    await user.click(await within(modal).findByRole('button', { pressed: false }))
+    await user.click(within(modal).getByRole('button', { name: 'Agendar' }))
+    expect(await within(modal).findByText(/tu cita quedó/i)).toBeInTheDocument()
+    expect(enviado).toEqual({ url: '/api/v1/portal/preventivos/e1/visita', cuerpo: { inicio: '2099-01-10T14:00:00Z' } })
   })
 
   it('explica por qué no se pudo agendar', async () => {

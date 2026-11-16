@@ -974,6 +974,16 @@ export interface ServicioPortalRead {
   sin_cambios?: string | null
 }
 
+export interface PreventivoPorAgendar {
+  id: string
+  mascota_id: string
+  mascota_nombre: string
+  nombre: string
+  fecha_programada: string
+  vencido: boolean
+  tipo_servicio_codigo: string
+}
+
 export interface PagoPortalRead {
   id: string
   referencia_externa: string

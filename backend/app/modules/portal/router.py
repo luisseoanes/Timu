@@ -61,6 +61,23 @@ class CancelacionIn(BaseModel):
     motivo: str = Field(min_length=3, max_length=255)
 
 
+class PreventivoPorAgendar(BaseModel):
+    """DEU-3 Un preventivo de la familia que espera su visita, dicho como en la bandeja."""
+
+    id: UUID
+    mascota_id: UUID
+    mascota_nombre: str
+    nombre: str = Field(description="«Antirrabica canina, refuerzo»")
+    fecha_programada: date
+    vencido: bool
+    tipo_servicio_codigo: str
+
+
+class VisitaPreventivoIn(BaseModel):
+    inicio: datetime
+    observaciones: str | None = Field(default=None, max_length=1000)
+
+
 class ServicioPortalRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -277,6 +294,39 @@ async def cancelar(
     db: DbSession, familia: FamiliaActual, servicio_id: UUID, data: CancelacionIn
 ) -> Servicio:
     return await db.run_sync(service.cancelar, familia, servicio_id, data.motivo)
+
+
+@router.get("/preventivos", response_model=list[PreventivoPorAgendar])
+async def preventivos_por_agendar(db: DbSession, familia: FamiliaActual) -> list[dict[str, Any]]:
+    """DEU-3 Lo que la familia puede agendar de sus preventivos: uno por visita."""
+    return await db.run_sync(preventivos.por_agendar_de_familia, familia.id)
+
+
+@router.post(
+    "/preventivos/{evento_id}/visita",
+    response_model=ServicioPortalRead,
+    status_code=status.HTTP_201_CREATED,
+)
+async def agendar_preventivo(
+    db: DbSession,
+    familia: FamiliaActual,
+    usuario: CurrentUser,
+    evento_id: UUID,
+    data: VisitaPreventivoIn,
+) -> Servicio:
+    """DEU-3 La visita de un preventivo concreto: al completarse, lo aplica."""
+    evento = await db.run_sync(
+        preventivos.agendar_desde_el_portal,
+        familia.id,
+        evento_id,
+        data.inicio,
+        data.observaciones,
+        usuario.id,
+    )
+    servicio = await db.get(Servicio, evento.servicio_id)
+    if servicio is None:
+        raise NoEncontrado("Visita no encontrada")
+    return servicio
 
 
 @router.post("/orientacion-virtual", status_code=status.HTTP_201_CREATED)

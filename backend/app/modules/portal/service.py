@@ -182,6 +182,9 @@ def agendar(
 
     mascota = mascota_propia(db, familia, mascota_id)
     tipo = _tipo_autogestionable(db, tipo_codigo)
+    if tipo.modalidad == TipoServicio.PREVENTIVO:
+        # DEU-3 Una visita preventiva sin su preventivo no aplicaba nada al completarse.
+        raise ReglaNegocio("Elige cuál de sus preventivos vas a agendar")
     return servicios.agendar(
         db,
         familia=familia,

@@ -3,6 +3,7 @@ actualizacion de datos e ingreso con codigo por WhatsApp."""
 
 import re
 from datetime import datetime, time, timedelta
+from uuid import UUID
 
 import pytest
 from httpx import AsyncClient
@@ -708,3 +709,70 @@ async def test_el_plan_dice_por_que_no_se_puede_agendar(client, db, portal, monk
     monkeypatch.setattr(servicio_portal, "hoy", lambda: renovacion + timedelta(days=1))
     plan = (await client.get("/api/v1/portal/plan", headers=portal["headers"])).json()
     assert plan["motivo_sin_agendar"].startswith("Tu plan venció")
+
+
+async def test_la_familia_agenda_un_preventivo_concreto(client, db, portal):
+    """DEU-3: elige el preventivo; agendarlo es su autorizacion y la visita queda enlazada."""
+    db.add(
+        Franja(
+            ciudad="Cali",
+            modalidad="preventivo",
+            dia_semana=DIA.weekday(),
+            hora_inicio=time(8),
+            hora_fin=time(12),
+            capacidad=2,
+        )
+    )
+    evento = EventoPreventivo(
+        mascota_id=portal["mascota_id"],
+        esquema_codigo="can_rabia",
+        tipo=TipoPreventivo.VACUNA,
+        es_refuerzo=True,
+        fecha_programada=hoy() - timedelta(days=3),
+        estado=EstadoEventoPreventivo.PROGRAMADO,
+        requiere_autorizacion=True,
+    )
+    ajeno = EventoPreventivo(
+        mascota_id=portal["mascota_ajena_id"],
+        tipo=TipoPreventivo.VACUNA,
+        fecha_programada=hoy(),
+        estado=EstadoEventoPreventivo.PROGRAMADO,
+    )
+    db.add_all([evento, ajeno])
+    await db.flush()
+    evento_id, ajeno_id = evento.id, ajeno.id
+    await db.commit()
+    h = portal["headers"]
+
+    [propio] = (await client.get("/api/v1/portal/preventivos", headers=h)).json()
+    assert propio["id"] == str(evento_id)
+    assert (propio["nombre"], propio["vencido"]) == ("Antirrábica canina, refuerzo", True)
+    assert propio["tipo_servicio_codigo"] == "vacunacion"
+
+    # Una vacunacion sin decir cual ya no se agenda: no aplicaria nada al completarse.
+    generica = await client.post(
+        "/api/v1/portal/servicios",
+        json={
+            "mascota_id": str(portal["mascota_id"]),
+            "tipo_codigo": "vacunacion",
+            "inicio": _hora(9),
+        },
+        headers=h,
+    )
+    assert generica.status_code == 422
+    assert "Elige cuál" in generica.json()["detail"]
+    # El de otra familia no existe para esta.
+    otro = await client.post(
+        f"/api/v1/portal/preventivos/{ajeno_id}/visita", json={"inicio": _hora(9)}, headers=h
+    )
+    assert otro.status_code == 404
+
+    visita = await client.post(
+        f"/api/v1/portal/preventivos/{evento_id}/visita", json={"inicio": _hora(9)}, headers=h
+    )
+    assert visita.status_code == 201, visita.text
+    assert visita.json()["estado"] == "agendado"
+    await db.refresh(evento := await db.get(EventoPreventivo, evento_id))
+    assert (evento.servicio_id, evento.autorizado) == (UUID(visita.json()["id"]), True)
+    assert evento.medio_autorizacion == "portal"
+    assert (await client.get("/api/v1/portal/preventivos", headers=h)).json() == []
