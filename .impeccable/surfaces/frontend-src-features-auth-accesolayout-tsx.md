@@ -63,6 +63,9 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   usuario: «Se mantiene “Equipo TIMU” / “Familias”; Familias ofrece el código y, debajo,
   “Ingresar con contraseña”. La clínica aliada sigue entrando por “Equipo TIMU”»). Si se llega
   desde una ruta del portal, el selector abre en Familias.
+  **Cambio posterior (2026-11-16, `DEU-6`, decidido con el usuario):** la pestaña «Equipo TIMU» se
+  renombró «Equipo y aliadas», porque por ella entran también las clínicas aliadas. El resto de
+  esta decisión sigue igual.
 - **La API comprueba el enlace al abrirlo** (`POST /auth/enlace`, con el token en el cuerpo y no
   en la URL, que el registro de accesos escribe entera): vigente, usado, vencido o inválido, su
   propósito y el nombre de pila, sin gastarlo y con el límite estricto de las rutas de

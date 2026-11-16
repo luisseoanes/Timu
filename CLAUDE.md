@@ -51,8 +51,10 @@ docker compose exec api python -m scripts.operacion_demo   # después de datos_d
                                       # (cartera en cada estado, rutas pasadas con parada omitida, consultas
                                       # firmadas, preventivos, encuestas, embudo comercial, tareas, remisiones,
                                       # clínica virtual y una campaña). Se crea por la API y se corre al
-                                      # pasado; tarda unos 5 min. Si ya sembró, no hace nada. El CI la corre
-                                      # después de la e2e del stack.
+                                      # pasado; tarda unos 5 min. Si ya sembró, no hace nada: para repetirla
+                                      # desde cero hace falta un stack recién levantado (el de verificación,
+                                      # abajo). Sale con error si queda por debajo de sus mínimos. El CI la
+                                      # corre después de la e2e del stack.
 docker compose run --rm inicializar   # tras traer una migración nueva, sin reiniciar el stack
 docker compose up -d --build -V       # tras traer dependencias nuevas: el código va montado, las librerías
                                       # van en la imagen, y -V renueva el node_modules anónimo de `web`
@@ -202,10 +204,16 @@ Reglas que mantienen esto vivo:
   - **Cupo de la API** (120 peticiones por minuto y por usuario): el perfil de equipo es
     `comercial@timu.co`, no el admin, porque `datos_demo` gasta el cupo del admin justo antes; por
     eso Administración se recorre con `gerencia@timu.co`, un administrador que `datos_demo` crea
-    solo para los recorridos. No lances scripts propios con `comercial@timu.co` justo antes del
-    barrido, o sus pantallas cargarán un 429. La suite ya deja a ese perfil al borde del cupo: un
+    solo para los recorridos. No lances scripts propios con `comercial@timu.co` ni con
+    `gerencia@timu.co` justo antes del barrido, o sus pantallas cargarán un 429: por eso
+    `operacion_demo` trabaja con `admin@timu.co`, `operaciones@timu.co` y los médicos. La suite ya deja a ese perfil al borde del cupo: un
     recorrido nuevo del panel que no necesite el perfil de equipo va con el de administración
     (`sesion('admin')`), como el del Inicio.
+  - **Datos gruesos**: con `operacion_demo` sembrado hay muchas más filas (remisiones, rutas,
+    interesados). Un recorrido busca lo que dejó `datos_demo` por su identidad (el motivo, el
+    nombre), nunca el primero del listado: la primera remisión emitida, por ejemplo, puede ser una
+    ya vencida. La suite pasa con los dos sembrados (así se verificó) y en el CI solo con
+    `datos_demo`, porque la operación corre después.
   - **Datos del día**: la ruta de prueba de la médica no siempre es de hoy (va en el primer día
     con cupo): los recorridos la buscan con `rutaDemo` (`e2e-stack/datos.ts`). Si `datos_demo` se
     sembró otro día, en local fallan con «datos_demo no dejó ninguna ruta en la próxima semana»:

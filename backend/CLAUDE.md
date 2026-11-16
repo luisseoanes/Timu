@@ -225,7 +225,9 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
   ciudad, la especie, un plan, una plantilla o una regla (`ciudad`, `especie`, `*_codigo`)
   lleva `ForeignKey` a su catálogo, con `onupdate="CASCADE"` si apunta a un código o un
   nombre, para que una corrección en el catálogo se propague en vez de bloquearse. Las
-  ciudades se guardan por nombre canónico (`ciudades.nombre` es único). Python sigue
+  ciudades se guardan por nombre canónico (`ciudades.nombre` es único), con sus tildes desde la
+  migración `0048` («Bogotá», «Medellín»): las pruebas y los scripts escriben ese nombre, y
+  `catalogos.ciudad_valida` acepta también «bogota» y devuelve el canónico. Python sigue
   validando antes para dar el mensaje (`catalogos.ciudad_valida`).
   `test_toda_referencia_a_un_catalogo_tiene_llave_foranea` falla si falta una, salvo las de
   `_REFERENCIAS_SIN_LLAVE` con su motivo.
@@ -423,3 +425,6 @@ Trampas conocidas:
 - asyncpg no acepta dos sentencias en un mismo `text()`: una `db.execute` por sentencia.
 - Un servicio (o cualquier fila con estado) en un estado avanzado se inserta ya en él: el trigger de transiciones solo valida `UPDATE` (ver `_atendido` en `tests/test_encuestas.py`).
 - `mypy` del CI cubre solo `app/`: `scripts/datos_demo.py` arrastra tres errores de tipos previos; no son de tu cambio.
+- **`POST /auth/restablecer` abre la sesión** de quien activa o restablece (desde `R3-PUB-01`): un script que lo llame con el cliente del administrador se queda con las cookies de la familia, y sus peticiones siguientes dan 404 o 403. `datos_demo` lo hace con una petición aparte, sin cookies.
+- **Los scripts de datos no escriben por debajo de la API**, salvo dos excepciones con su motivo en el código: `datos_demo` lee de la base el token de activación (la API lo tapa), y `operacion_demo` corre al pasado las fechas de lo que creó, con la conexión del dueño del esquema (la única que puede fechar una consulta firmada). Lo que la API no permite hacer (llevar un interesado a «afiliado» sin pasarela) no se fuerza por SQL.
+- **`operacion_demo` drena el outbox y llama a tareas del beat en el propio proceso** (`outbox.drenar`, `cartera.generar_cuotas`, `revisar_mora`, `encuestas.enviar_pendientes`, `campanas.lanzar_programadas` y `despachar`): por eso importa al arrancar los mismos módulos de tareas que el worker (`celery_app.conf.include`); sin ellos, un evento sin declarar hace fallar el drenado.
