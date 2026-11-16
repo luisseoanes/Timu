@@ -52,15 +52,16 @@ export function InteligenciaArtificial() {
                     <span className="indicador-titulo">Gastado</span>
                     <strong className="indicador-valor numero">{dolares(c.gasto_usd)}</strong>
                     <span className="indicador-detalle">de {dolares(c.presupuesto_usd)} · {porcentaje(uso)}</span>
+                    {/* La barra junto a la cifra que mide (techo 64). */}
+                    <div className="barra-presupuesto" role="meter" aria-label="Presupuesto de IA usado" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(uso * 100)}>
+                      <span style={{ width: `${Math.min(100, uso * 100)}%` }} />
+                    </div>
                   </div>
                   <div className="indicador">
                     <span className="indicador-titulo">Disponible</span>
                     <strong className="indicador-valor numero">{dolares(c.disponible_usd)}</strong>
                     <span className="indicador-detalle">Al agotarse, la IA se apaga sola hasta el mes siguiente</span>
                   </div>
-                </div>
-                <div className="barra-presupuesto" role="meter" aria-label="Presupuesto de IA usado" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(uso * 100)}>
-                  <span style={{ width: `${Math.min(100, uso * 100)}%` }} />
                 </div>
               </div>
             )

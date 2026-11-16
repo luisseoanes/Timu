@@ -176,14 +176,21 @@ function Ficha({ plan: p }: { plan: PlanRead }) {
       <section className="bloque" aria-labelledby="plan-tarifas">
         <h3 id="plan-tarifas">Valor mensual por peludo</h3>
         <p className="admin-nota">Cada peludo paga según cuántos peludos tiene la afiliación, aunque estén en planes distintos.</p>
-        <dl className="ficha" aria-label={`Tarifas de ${p.nombre}`}>
-          {p.tarifas.map((t) => (
-            <div key={t.peludos}>
-              <dt>{ETIQUETA_PELUDOS[t.peludos - 1]}</dt>
-              <dd className="numero">{moneda(t.valor)}</dd>
-            </div>
-          ))}
-        </dl>
+        {/* Iguales, una frase; si cambian con el número de peludos, en 2×2 (techo 62). */}
+        {p.tarifas.length > 0 && p.tarifas.every((t) => Number(t.valor) === Number(p.tarifas[0]!.valor)) ? (
+          <p className="admin-tarifa-unica">
+            <span className="numero">{moneda(p.tarifas[0]!.valor)}</span> por peludo, tenga la afiliación los peludos que tenga.
+          </p>
+        ) : (
+          <dl className="ficha plan-tarifas" aria-label={`Tarifas de ${p.nombre}`}>
+            {p.tarifas.map((t) => (
+              <div key={t.peludos}>
+                <dt>{ETIQUETA_PELUDOS[t.peludos - 1]}</dt>
+                <dd className="numero">{moneda(t.valor)}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </section>
 
       <section className="bloque" aria-labelledby="plan-periodos">
@@ -206,7 +213,8 @@ function Ficha({ plan: p }: { plan: PlanRead }) {
         <h3 id="plan-beneficios">Beneficios</h3>
         {p.beneficios.length ? (
           <div className="scroll-x">
-            <table className="tabla tabla-apilable bandeja-tabla">
+            {/* Dos columnas cortas: caben en fila también en el celular (techo 63). */}
+            <table className="tabla bandeja-tabla plan-beneficios">
               <thead>
                 <tr>
                   <th>Servicio</th>
@@ -220,7 +228,7 @@ function Ficha({ plan: p }: { plan: PlanRead }) {
                       {tipos.data?.find((t) => t.codigo === b.tipo_servicio_codigo)?.nombre ?? b.tipo_servicio_codigo.replace(/_/g, ' ')}
                     </td>
                     <td data-etiqueta="Cupo">
-                      <span className="numero sin-cortes">{b.cupo ? `${b.cupo} al ${b.periodo_cupo === 'anual' ? 'año' : 'mes'}` : 'Ilimitado'}</span>
+                      <span className="numero sin-cortes">{b.cupo ? `${b.cupo} al ${b.periodo_cupo === 'anual' ? 'año' : 'mes'}` : `Sin tope al ${b.periodo_cupo === 'anual' ? 'año' : 'mes'}`}</span>
                     </td>
                   </tr>
                 ))}

@@ -74,6 +74,16 @@ describe('Administración: planes', () => {
     expect(within(ficha).getByRole('button', { name: 'Editar plan' })).toHaveClass('btn-primario')
   })
 
+  it('con la misma tarifa para cualquier número de peludos, la dice en una frase', async () => {
+    const iguales = PLAN.tarifas.map((t) => ({ ...t, valor: '45000.00' }))
+    server.use(...base, http.get(`${API}/planes`, () => HttpResponse.json([{ ...PLAN, tarifas: iguales }])))
+    const user = await abrirPestana('Planes')
+    await user.click(await screen.findByRole('link', { name: 'Colita Feliz' }))
+    const ficha = screen.getByRole('region', { name: 'Plan abierto' })
+    expect(await within(ficha).findByText(/por peludo, tenga la afiliación los peludos que tenga/)).toBeInTheDocument()
+    expect(within(ficha).queryByLabelText('Tarifas de Colita Feliz')).not.toBeInTheDocument()
+  })
+
   it('edita ciudades, tarifas y beneficios en un solo guardado', async () => {
     const pedidos: [string, unknown][] = []
     const registrar = (ruta: string) => async ({ request }: { request: Request }) => {

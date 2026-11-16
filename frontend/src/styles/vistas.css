@@ -1299,6 +1299,11 @@
 
 /* ===== Administración (R2-PAN-10): usuarios en bandeja; planes y reglas en listado con ficha ===== */
 .admin-nota { max-width: 65ch; margin-bottom: var(--e3); font-size: var(--t-menor); color: var(--texto-suave); }
+/* Tarifas de un plan: iguales, una frase; distintas, en 2×2 (1 y 2 peludos arriba, 3 y 4 abajo). */
+.admin-tarifa-unica { color: var(--texto-titulo); }
+.ficha.plan-tarifas { grid-template-columns: repeat(2, minmax(0, 220px)); }
+.plan-beneficios td:last-child, .plan-beneficios th:last-child { text-align: right; }
+.indicador .barra-presupuesto { margin-top: var(--e2); }
 .admin-quien { color: var(--texto); font-size: var(--t-cuerpo); }
 .admin-ciudades { max-width: 70ch; color: var(--texto); line-height: 1.6; }
 /* Cada versión de un prompt: qué es y su estado arriba, las acciones a la derecha, el texto plegado. */
