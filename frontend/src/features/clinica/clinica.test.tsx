@@ -108,6 +108,10 @@ describe('La consulta de una visita', () => {
     )
     const user = abrir(VISITA)
     expect(await screen.findByText('De la visita de hoy')).toBeInTheDocument()
+    // Sin guardar todavía: la cabecera lo dice, con la modalidad, como la de la lectura.
+    const cabeza = screen.getByRole('region', { name: 'Consulta de Luna' }).querySelector('header')!
+    expect(within(cabeza).getByText('Sin guardar aún')).toBeInTheDocument()
+    expect(within(cabeza).getByText('Domiciliaria')).toBeInTheDocument()
     // En el celular la historia no está al lado: la consulta dice a quién se atiende.
     const consulta = screen.getByRole('region', { name: 'Consulta de Luna' })
     expect(await within(consulta).findByText('Luna · Ana Ruiz')).toBeInTheDocument()
@@ -131,6 +135,9 @@ describe('La consulta de una visita', () => {
     const user = abrir(VISITA, [{ ...ENTRADA, servicio_id: 's1', tratamiento: null, anamnesis: 'Rasca hace una semana', examen_fisico: 'Eritema' }])
     // Abre en el primer apartado vacío: el tratamiento.
     expect(await screen.findByRole('heading', { name: 'Tratamiento' })).toBeInTheDocument()
+    // La cabecera del borrador lleva el estado con el mismo distintivo que la lectura (techo 35).
+    const cabeza = screen.getByRole('region', { name: 'Consulta de Luna' }).querySelector('header')!
+    expect(within(cabeza).getByText('Borrador')).toHaveClass('distintivo')
     await user.click(screen.getByRole('button', { name: 'Firmar consulta' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Para firmar falta: Tratamiento. Sin tratamiento, la visita no se puede terminar.')
     expect(firmada).toBe(false)
@@ -193,6 +200,9 @@ describe('Consulta de la historia', () => {
     )
     const user = conConsulta({})
     await user.click(await screen.findByRole('button', { name: 'Tratamiento, escrito' }))
+    // Abierto desde la historia, sin visita, el borrador dice su propia modalidad.
+    const cabeza = screen.getByRole('region', { name: 'Consulta de Luna' }).querySelector('header')!
+    expect(within(cabeza).getByText('Domiciliaria')).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Tratamiento' })).toHaveValue('Gotas cada 12 horas')
     await user.click(screen.getByRole('button', { name: 'Firmar consulta' }))
     await waitFor(() => expect(firmada).toBe(true))

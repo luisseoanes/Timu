@@ -1119,7 +1119,7 @@
 }
 .consulta-quien { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--e1) var(--e3); }
 .consulta-quien strong { color: var(--texto-titulo); font-weight: 600; font-size: var(--t-seccion); }
-.consulta-quien span { color: var(--texto-suave); font-size: var(--t-menor); }
+.consulta-quien > span:not(.distintivo) { color: var(--texto-suave); font-size: var(--t-menor); }
 
 /* La guía: cinco columnas iguales, para que lo recorrido llegue justo a la estación actual. La
    línea va del centro de la primera al de la última (10 % y 90 % del ancho útil). */
@@ -1166,6 +1166,8 @@
 .consulta-titulo, .ficha-cabeza h2.consulta-titulo { font-size: var(--t-cifra); }
 .consulta-ayuda { font-size: var(--t-menor); font-weight: 600; color: var(--texto-titulo); }
 .consulta-campo { min-height: 180px; resize: vertical; line-height: 1.5; }
+/* Una línea de unos 75 caracteres se lee de un vistazo: en escritorio el campo no se estira más. */
+.consulta-campo, .consulta-apartado .campo textarea { max-width: 75ch; }
 .consulta-antes { display: grid; gap: 2px; padding-top: var(--e3); border-top: 1px solid var(--borde); font-size: var(--t-menor); color: var(--texto-suave); white-space: pre-wrap; }
 .consulta-pie { display: flex; gap: var(--e2); }
 .consulta-pie > .btn-primario { flex: 1 1 auto; }

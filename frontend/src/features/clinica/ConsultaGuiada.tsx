@@ -1,6 +1,7 @@
 import { useId, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
+import { Distintivo } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { mensajeError } from '@/lib/errores'
 import { fecha } from '@/lib/formato'
@@ -62,7 +63,8 @@ export function ConsultaGuiada({
   const [valores, setValores] = useState<Valores>(() => valoresDe(entrada))
   const [guardados, setGuardados] = useState<Valores>(() => valoresDe(entrada))
   const [actual, setActual] = useState(() => estacionPedida ?? (entrada ? estacionInicial(valoresDe(entrada)) : 0))
-  const [tipo, setTipo] = useState(servicioId ? 'domiciliaria' : 'presencial')
+  // Un borrador ya guardado dice su modalidad; uno nuevo la toma de la visita, si viene de una.
+  const [tipo, setTipo] = useState(entrada?.tipo ?? (servicioId ? 'domiciliaria' : 'presencial'))
   const [plantilla, setPlantilla] = useState('')
   const [faltan, setFaltan] = useState<CampoGuiado[]>([])
   const [sinMotivo, setSinMotivo] = useState(false)
@@ -149,9 +151,12 @@ export function ConsultaGuiada({
         </Link>
         <div className="consulta-cabeza-textos">
           {identidad}
+          {/* Las mismas piezas que la cabecera de la lectura: título, estado y modalidad. */}
           <p className="consulta-quien">
             <strong>{entrada ? `Consulta del ${fecha(entrada.fecha)}` : 'Consulta nueva'}</strong>
-            <span>{servicioId ? 'De la visita de hoy' : id ? 'Borrador guardado' : 'Sin guardar aún'}</span>
+            {id ? <Distintivo dominio="historia" valor="borrador" /> : <span>Sin guardar aún</span>}
+            <span>{tipo === 'domiciliaria' ? 'Domiciliaria' : 'Presencial'}</span>
+            {servicioId && <span>De la visita de hoy</span>}
           </p>
         </div>
       </header>
