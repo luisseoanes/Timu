@@ -223,7 +223,7 @@ Dashboard, apoyo de IA, migración y estabilización.
 | ID | Trabajo | Criterio de aceptación | Req. | Estado |
 | --- | --- | --- | --- | --- |
 | `F4-DAS-01` | Definición de indicadores | Afiliaciones, retiros, recaudo, mora, cumplimiento de rutas, servicios por tipo y satisfacción, con fórmula acordada y documentada. | Sección 8 | Hecho |
-| `F4-DAS-02` | Consultas del dashboard | Las agregaciones responden en menos de dos segundos sobre volumen real, con caché y filtros por período y ciudad. | Sección 8 | Parcial: caché y filtros listos; los dos segundos sólo se miden sobre una base casi vacía, no sobre volumen real. |
+| `F4-DAS-02` | Consultas del dashboard | Las agregaciones responden en menos de dos segundos sobre volumen real, con caché y filtros por período y ciudad. | Sección 8 | Parcial: caché y filtros listos. La prueba de carga con el volumen a 12 meses (2026-11-05) dio un p95 de 7,85 ms en el dashboard (registro de la fase 5 de `plan-persistencia.md`), pero es anterior a la serie de 12 meses del Inicio (`/dashboard/evolucion`, 2026-11-13): falta repetir la completa con ella para darlo por hecho. |
 | `F4-DAS-03` | Exportables y reportes programados | Cualquier vista se descarga en Excel o CSV, y los reportes definidos llegan por correo en su periodicidad. | Sección 8 | Hecho |
 
 ### Apoyo de inteligencia artificial
@@ -245,7 +245,7 @@ Dashboard, apoyo de IA, migración y estabilización.
 
 | ID | Trabajo | Criterio de aceptación | Req. | Estado |
 | --- | --- | --- | --- | --- |
-| `F4-QAA-01` | Pruebas integradas de los ciclos completos | Los recorridos de captar, afiliar, cobrar, agendar, atender, prevenir y fidelizar corren de extremo a extremo en automático. | Sección 18 | Parcial: hay ciclos parciales (afiliación, vacunación, atención virtual) y cinco recorridos en `e2e-stack/`; ninguno recorre el ciclo completo. |
+| `F4-QAA-01` | Pruebas integradas de los ciclos completos | Los recorridos de captar, afiliar, cobrar, agendar, atender, prevenir y fidelizar corren de extremo a extremo en automático. | Sección 18 | Parcial: hay ciclos parciales (afiliación, vacunación, atención virtual) y 18 recorridos en `e2e-stack/recorridos.spec.ts`; `operacion_demo` recorre buena parte del ciclo por la API, pero no es una prueba, y ninguna recorre el ciclo completo. |
 | `F4-QAA-02` | Pruebas de carga y ajuste de índices | El sistema sostiene el volumen proyectado a doce meses dentro de los tiempos acordados. | Escalabilidad | Hecho: `scripts/datos_volumen.py` (5.000 familias a 12 meses) e `infra/carga/recorrido.js` (k6, 20 usuarios): p95 de 54 ms en consultas y 7,85 ms en el dashboard frente a 500 ms y 2 s. Índices de la `0024` y la `0025` y guarda de `EXPLAIN` sobre los caminos calientes. Versión reducida en el job del stack. |
 | `F4-DOC-01` | Documentación técnica y de operación | Manual por perfil, documentación de la API y guía de despliegue y recuperación, entregadas a TIMU. | Sección E | Parcial: hay OpenAPI, README, guía del panel y guía de respaldos; faltan el manual por perfil y la guía de despliegue. |
 | `F4-EST-01` | Estabilización y salida a producción | Lista de verificación de seguridad, respaldos, monitoreo y plan de reversa ejecutados antes del corte. | Sección D | Pendiente |

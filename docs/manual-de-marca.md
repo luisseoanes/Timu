@@ -452,7 +452,7 @@ La guarda automática hará fallar la suite si:
 - un par declarado queda por debajo de su mínimo, o un rol de texto o de borde no tiene ningún
   par declarado.
 
-Además, Playwright recorre todas las rutas a 375, 768 y 1280 px. Falla si algo desborda la
+Además, Playwright recorre todas las rutas a 375, 768, 900 y 1280 px. Falla si algo desborda la
 pantalla en horizontal o si `axe-core` encuentra un contraste insuficiente en la página ya
 dibujada.
 
