@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { delay, http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -88,6 +88,8 @@ describe('interesados', () => {
     expect(within(lista).getAllByText('WhatsApp').length).toBe(2)
     expect(screen.getByRole('button', { name: 'Afiliados 2' })).toBeInTheDocument()
     expect(screen.getByText(/conversión/)).toHaveTextContent('25')
+    // El título no repite el recuento de «Abiertos» (techo 55).
+    expect(screen.getByRole('heading', { level: 2, name: 'Interesados' })).toBeInTheDocument()
   })
 
   it('cambia a perdidos y dice por qué está vacía una vista', async () => {
@@ -249,6 +251,14 @@ describe('ficha del interesado', () => {
     const mensajes = await screen.findByRole('list', { name: 'Mensajes con Paula Díaz' })
     expect(within(mensajes).getByText('Escribió:')).toBeInTheDocument()
     expect(within(mensajes).getByText('Hola, soy el asistente de TIMU')).toBeInTheDocument()
+    // Desplazada hacia abajo, lo alto se desvanece mientras queden mensajes anteriores (techo 51).
+    // jsdom no desplaza: se simula la posición.
+    Object.defineProperty(mensajes, 'scrollTop', { configurable: true, value: 120 })
+    fireEvent.scroll(mensajes)
+    expect(mensajes).toHaveAttribute('data-anteriores', 'true')
+    Object.defineProperty(mensajes, 'scrollTop', { configurable: true, value: 0 })
+    fireEvent.scroll(mensajes)
+    expect(mensajes).not.toHaveAttribute('data-anteriores')
     expect(screen.getByText('Espera a un asesor')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Pasar a cotizado' })).toHaveClass('btn-suave')
     await user.type(screen.getByLabelText('Responder por WhatsApp'), 'Hola Paula, te cuento del plan')

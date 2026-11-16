@@ -1250,6 +1250,13 @@
   display: grid; gap: var(--e2); max-height: 420px; overflow-y: auto;
   background: var(--superficie-hundida); border-radius: var(--r-tarjeta);
 }
+/* Con mensajes anteriores fuera de la vista, lo alto se desvanece en el fondo de la caja: se ve
+   que la conversación sigue hacia arriba. Va pegado al borde mientras se desplaza. */
+.comercial-mensajes[data-anteriores]::before {
+  content: ""; position: sticky; top: calc(-1 * var(--e3)); z-index: var(--capa-elevada);
+  height: 40px; margin: calc(-1 * var(--e3)) calc(-1 * var(--e3)) -40px;
+  background: linear-gradient(var(--superficie-hundida), transparent); pointer-events: none;
+}
 .comercial-mensaje { justify-self: start; max-width: min(48ch, 85%); padding: var(--e2) var(--e3); border-radius: var(--r-tarjeta); background: var(--superficie); }
 .comercial-mensaje[data-direccion="saliente"] { justify-self: end; background: var(--accion-suave-fondo); }
 .comercial-mensaje p { white-space: pre-line; overflow-wrap: anywhere; color: var(--texto-titulo); }

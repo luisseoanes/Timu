@@ -202,9 +202,14 @@ function Conversacion({
   const lista = useRef<HTMLOListElement>(null)
   const responder = useResponderConversacion()
   const ultimo = conversacion?.mensajes.at(-1)?.id
+  // Hay mensajes anteriores fuera de la vista: el borde de arriba se desvanece.
+  const [hayAnteriores, setHayAnteriores] = useState(false)
   // Como en un chat, la conversación abre en lo último que se dijo.
   useEffect(() => {
-    if (lista.current) lista.current.scrollTop = lista.current.scrollHeight
+    const l = lista.current
+    if (!l) return
+    l.scrollTop = l.scrollHeight
+    setHayAnteriores(l.scrollTop > 1)
   }, [ultimo])
   const liberar = useLiberarConversacion()
   const conv = conversacion?.conversacion
@@ -229,7 +234,14 @@ function Conversacion({
       ) : !conversacion || conversacion.mensajes.length === 0 ? (
         <p className="apagado">Todavía no ha escrito por WhatsApp.</p>
       ) : (
-        <ol ref={lista} className="comercial-mensajes" aria-label={`Mensajes con ${nombreDe(i)}`} tabIndex={0}>
+        <ol
+          ref={lista}
+          className="comercial-mensajes"
+          aria-label={`Mensajes con ${nombreDe(i)}`}
+          tabIndex={0}
+          data-anteriores={hayAnteriores || undefined}
+          onScroll={(e) => setHayAnteriores(e.currentTarget.scrollTop > 1)}
+        >
           {conversacion.mensajes.map((m) => (
             <Mensaje key={m.id} mensaje={m} />
           ))}

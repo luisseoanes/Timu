@@ -58,9 +58,8 @@ export function InteresadosLista({ seleccionado }: { seleccionado: string | null
   return (
     <section className="listado" aria-labelledby="interesados-titulo">
       <div className="listado-cabeza">
-        <h2 id="interesados-titulo">
-          Interesados {recuentos.data && <span className="apagado numero">{recuentos.data.abiertos}</span>}
-        </h2>
+        {/* Sin recuento: ya lo dice «Abiertos», justo debajo. */}
+        <h2 id="interesados-titulo">Interesados</h2>
         {/* Verde solo sin un interesado abierto: con la ficha a la vista, el verde es de ella. */}
         <button className={`btn ${seleccionado ? 'btn-suave' : 'btn-primario'}`} type="button" onClick={() => setNuevo(true)}>
           <Icono nombre="mas" size={16} /> Nuevo interesado
