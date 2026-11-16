@@ -215,8 +215,8 @@ qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son 
 | ID | Qué | Decisión | Dónde | Estado |
 | --- | --- | --- | --- | --- |
 | `DEU-1` | Las series 1 y 2 del manual no se distinguen sin ver el rojo y el verde | El manual pasa a verde, azul, naranja y marino | ahora | Hecho (2026-11-15): el manual, los tokens, `DESIGN.md` y el gráfico del Inicio, que usa la 1 y la 2 |
-| `DEU-2` | El portal no ofrece la consulta en la clínica que el backend permite | El portal la ofrece y la API dice qué puede agendar, cambiar y cancelar la familia | ahora | Pendiente |
-| `DEU-3` | La visita preventiva del portal no se enlaza con ningún preventivo | El portal agenda preventivos concretos, como la bandeja | ahora | Pendiente |
+| `DEU-2` | El portal no ofrece la consulta en la clínica que el backend permite | El portal la ofrece y la API dice qué puede agendar, cambiar y cancelar la familia | ahora | Hecho (2026-11-16): `motivo_sin_agendar` y `tipos_agendables` en el plan, y `puede_cambiar`, `puede_cancelar` y `sin_cambios` en cada cita; el portal agenda también en la clínica |
+| `DEU-3` | La visita preventiva del portal no se enlaza con ningún preventivo | El portal agenda preventivos concretos, como la bandeja | ahora | Hecho (2026-11-16): `GET /portal/preventivos` y `POST /portal/preventivos/{id}/visita`; agendarlo es la autorización de la familia (migración `0047`, RLS) |
 | `DEU-4` | La desparasitación hecha en visita se aplica sin peso | Campo opcional en los pasos del catálogo; el peso en «Aplicación» | ahora | Hecho (2026-11-16): los pasos ganan `opcionales` con nombre y tipo; la desparasitación pide el peso, que va al carnet (migración `0046`) |
 | `DEU-5` | «Por autorizar» con la llave solo en Preventivos | La llave en el mapeo común (`lib/estados.ts`): también en Servicios | ahora | Hecho (2026-11-15): la llave en `lib/estados.ts`, la fila y la ficha del servicio |
 | `DEU-6` | La clínica aliada entra por «Equipo TIMU» | **Sin respuesta**: se pregunta al usuario | — | Pendiente de decisión |
@@ -235,7 +235,7 @@ qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son 
 | `DEU-19` | Radios escritos a mano | Pasan a tokens | ahora | Hecho (2026-11-15): `--r-fino` y `--r-barra`, y la guarda de tokens rechaza un radio a mano |
 | `DEU-20` | Cortes a 899 y a 900 px mezclados | Todo a 899 | ahora | Hecho (2026-11-15) |
 | `DEU-21` | `--sombra-1` y `--sombra-2` valen `none` | Se retiran | ahora | Hecho (2026-11-15) |
-| `DEU-22` | El portal copia cuatro reglas del backend | Lo cierra `DEU-2` | ahora | Pendiente |
+| `DEU-22` | El portal copia cuatro reglas del backend | Lo cierra `DEU-2` | ahora | Hecho (2026-11-16): con `DEU-2` |
 | `DEU-23` | El panel copia qué tipo de servicio agenda cada preventivo | La API lo dice en cada preventivo | ahora | Hecho (2026-11-15): `tipo_servicio_codigo` en cada preventivo |
 | `DEU-24` | Contrato, fórmula y comprobante en PDF sin marca | Usan `marca_pdf` | ahora | Hecho (2026-11-15): piezas comunes en `marca_pdf`; además dicen cada cosa en palabras |
 | `DEU-25` | Los campos con icono del acceso miden 48 px | 48 px es la norma del acceso | ahora (documentación) | Hecho (2026-11-15): `DESIGN.md` lo recoge en Inputs |
@@ -319,7 +319,7 @@ El «techo» aceptado, por superficie (los números son los de la lista):
 - **Datos de demostración**: la única familia con portal (Ana) tiene el plan congelado. Los
   estados «al día» se capturaron para el revisor interceptando la API. Una segunda familia con
   portal en `datos_demo` daría al barrido y a los recorridos el estado sano.
-- **La consulta en la clínica no se agenda desde el portal**, aunque el backend la permite
+- ~~**La consulta en la clínica no se agenda desde el portal**~~ Resuelto el 2026-11-16 (`DEU-2`)., aunque el backend la permite
   (`MODALIDADES_AUTOGESTION`): la ventana de agendar solo ofrece las visitas en casa y las
   preventivas. Hay que decidir con el usuario si el portal la ofrece
   ([`portal-familias.md`](portal-familias.md)).
@@ -371,7 +371,7 @@ El «techo» aceptado, por superficie (los números son los de la lista):
   manda», una desparasitación hecha en visita se aplica sin peso (`F2-PRE-07` lo pide opcional). Para
   tenerlo hay que añadir un campo opcional a los pasos del catálogo (hoy todos los campos son
   obligatorios en `completar_paso`). Se decide con el usuario.
-- **Una visita preventiva agendada desde el portal no se enlaza con ningún preventivo**: el portal
+- ~~**Una visita preventiva agendada desde el portal no se enlaza con ningún preventivo**~~ Resuelto el 2026-11-16 (`DEU-3`).: el portal
   agenda un servicio de vacunación sin decir cuál, así que completarlo no aplica nada. Hay que decidir
   con el usuario si el portal agenda preventivos concretos (como la bandeja) o si la visita elige el
   preventivo al completarse.
