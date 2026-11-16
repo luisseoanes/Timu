@@ -3,6 +3,17 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 
 type Desborde = 'derecha' | 'izquierda' | 'ambos' | undefined
 
+/** Desplaza la tira lo justo para que la pestaña activa se vea entera: abierta desde la URL o
+ * elegida con el teclado, no puede quedar cortada en el borde. Solo mueve la tira, no la página. */
+function mostrarActiva(lista: HTMLElement | null) {
+  const activa = lista?.querySelector<HTMLElement>('[role="tab"][data-state="active"]')
+  if (!lista || !activa) return
+  const inicio = activa.offsetLeft - lista.offsetLeft
+  const fin = inicio + activa.offsetWidth
+  if (inicio < lista.scrollLeft) lista.scrollLeft = inicio
+  else if (fin > lista.scrollLeft + lista.clientWidth) lista.scrollLeft = fin - lista.clientWidth
+}
+
 /** Por dónde sigue la tira cuando no cabe (en el celular se desplaza en su fila): el borde de
  * ese lado se desvanece para que se vea que hay más pestañas. */
 function useDesborde() {
@@ -16,6 +27,7 @@ function useDesborde() {
       const derecha = lista.scrollLeft + lista.clientWidth < lista.scrollWidth - 1
       setDesborde(izquierda && derecha ? 'ambos' : derecha ? 'derecha' : izquierda ? 'izquierda' : undefined)
     }
+    mostrarActiva(lista)
     medir()
     const observador = new ResizeObserver(medir)
     observador.observe(lista)
@@ -47,10 +59,15 @@ export function Pestanas({
   valor?: string
   onCambio?: (valor: string) => void
 }) {
-  const controlada = valor !== undefined ? { value: valor, onValueChange: onCambio } : {}
   const [ref, desborde] = useDesborde()
+  // Tras cada cambio de pestaña, que la activa quede a la vista en la tira.
+  const alCambiar = (v: string) => {
+    onCambio?.(v)
+    requestAnimationFrame(() => mostrarActiva(ref.current))
+  }
+  const controlada = valor !== undefined ? { value: valor } : {}
   return (
-    <Tabs.Root defaultValue={inicial ?? pestanas[0]?.valor} {...controlada}>
+    <Tabs.Root defaultValue={inicial ?? pestanas[0]?.valor} {...controlada} onValueChange={alCambiar}>
       <Tabs.List ref={ref} className="pestanas-lista" aria-label={etiqueta} data-desborda={desborde}>
         {pestanas.map((p) => (
           <Tabs.Trigger key={p.valor} value={p.valor} className="pestana">
