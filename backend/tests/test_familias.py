@@ -531,6 +531,7 @@ async def test_tipos_de_servicio_exponen_sus_pasos(client: AsyncClient, headers)
         "nombre": "Valoración clínica",
         "obligatorio": True,
         "campos": ["hallazgos"],
+        "opcionales": [],
         # La consulta firmada lo registra: el panel no copia que campos llena (R2-PAN-08).
         "lo_registra_la_consulta": True,
     }

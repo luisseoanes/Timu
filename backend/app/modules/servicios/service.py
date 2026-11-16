@@ -556,6 +556,19 @@ def completar_paso(
     faltantes = [c for c in paso.get("campos", []) if not datos.get(c)]
     if faltantes:
         raise ReglaNegocio(f"El paso {paso['nombre']} requiere: {', '.join(faltantes)}")
+    datos = dict(datos)
+    for opcional in paso.get("opcionales", []):
+        valor = datos.get(opcional["campo"])
+        if valor in (None, ""):
+            datos.pop(opcional["campo"], None)
+        elif opcional.get("numerico"):
+            try:
+                cifra = float(str(valor).replace(",", "."))
+            except ValueError:
+                raise ReglaNegocio(f"{opcional['nombre']} debe ser una cifra") from None
+            if not 0 < cifra < 150:
+                raise ReglaNegocio(f"{opcional['nombre']} no es un valor posible")
+            datos[opcional["campo"]] = cifra
     existente = db.scalar(
         select(ServicioPaso).where(
             ServicioPaso.servicio_id == servicio.id, ServicioPaso.paso_codigo == paso_codigo

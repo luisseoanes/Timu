@@ -156,8 +156,23 @@ ESPECIES: list[dict[str, Any]] = [
 ]
 
 
-def _paso(codigo: str, nombre: str, *campos: str, obligatorio: bool = True) -> dict[str, Any]:
-    return {"codigo": codigo, "nombre": nombre, "obligatorio": obligatorio, "campos": list(campos)}
+def _paso(
+    codigo: str,
+    nombre: str,
+    *campos: str,
+    obligatorio: bool = True,
+    opcionales: tuple[dict[str, Any], ...] = (),
+) -> dict[str, Any]:
+    """`campos` se exigen para guardar el paso; `opcionales`, no: cada uno con su nombre en
+    palabras y si es una cifra, para que el panel arme el campo sin adivinarlo."""
+    paso = {"codigo": codigo, "nombre": nombre, "obligatorio": obligatorio, "campos": list(campos)}
+    if opcionales:
+        paso["opcionales"] = list(opcionales)
+    return paso
+
+
+# F2-PRE-07 el peso de la mascota el dia de la desparasitacion, que va al carnet.
+PESO = {"campo": "peso_kg", "nombre": "Peso de la mascota (kg)", "numerico": True}
 
 
 _PASOS_CONSULTA = [
@@ -166,6 +181,10 @@ _PASOS_CONSULTA = [
 ]
 _PASOS_PREVENTIVO = [
     _paso("aplicacion", "Aplicación", "producto", "lote"),
+    _paso("evidencia", "Evidencia fotográfica", obligatorio=False),
+]
+_PASOS_DESPARASITACION = [
+    _paso("aplicacion", "Aplicación", "producto", "lote", opcionales=(PESO,)),
     _paso("evidencia", "Evidencia fotográfica", obligatorio=False),
 ]
 
@@ -191,7 +210,7 @@ TIPOS_SERVICIO: list[dict[str, Any]] = [
         "modalidad": "preventivo",
         "duracion_min": 15,
         "requiere_autorizacion": True,
-        "pasos": _PASOS_PREVENTIVO,
+        "pasos": _PASOS_DESPARASITACION,
     },
     {
         "codigo": "consulta_clinica",

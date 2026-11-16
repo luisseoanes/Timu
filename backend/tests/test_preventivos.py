@@ -272,11 +272,12 @@ async def test_agendar_crea_el_servicio(client: AsyncClient, db, headers):
 # --- R2-PAN-08 El servicio manda: la visita de un preventivo es su registro -------------------
 
 
-async def _visita(client: AsyncClient, db, headers, *, autorizado: bool):
-    """Agenda la visita del primer refuerzo de rabia de un cachorro, autorizado o no antes."""
+async def _visita(client: AsyncClient, db, headers, *, autorizado: bool, esquema="can_rabia"):
+    """Agenda la visita del primer preventivo del esquema (por defecto, el refuerzo de rabia)
+    de un cachorro, autorizado o no antes."""
     _franja_preventiva(db)
     _, mascota = await _cachorro(db)
-    evento = (await _eventos(db, mascota, "can_rabia"))[0]
+    evento = (await _eventos(db, mascota, esquema))[0]
     evento_id = evento.id
     await db.commit()
     url = f"/api/v1/preventivos/{evento_id}"
@@ -338,6 +339,40 @@ async def test_completar_la_visita_aplica_el_preventivo(client: AsyncClient, db,
     assert (evento["fecha_aplicacion"], evento["aplicado_por_nombre"]) == (str(HOY), "vet")
     # Y la siguiente dosis queda programada desde hoy, como al aplicarlo en Preventivos.
     assert evento["proxima_fecha"] == str(HOY + timedelta(days=365))
+
+
+async def test_la_desparasitacion_en_visita_lleva_el_peso_al_carnet(
+    client: AsyncClient, db, headers
+):
+    """DEU-4 / F2-PRE-07: el peso es opcional en la aplicacion de una desparasitacion."""
+    evento_id, servicio_id = await _visita(
+        client, db, headers, autorizado=True, esquema="can_desp_interna"
+    )
+    await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    medico = await login(client, "vet@timu.co")
+    url = f"/api/v1/servicios/{servicio_id}"
+    await client.post(f"{url}/estado", json={"estado": "en_atencion"}, headers=medico)
+    paso = f"{url}/pasos/aplicacion"
+    malo = await client.put(
+        paso,
+        json={"datos": {"producto": "Drontal", "lote": "D-1", "peso_kg": "doce"}},
+        headers=medico,
+    )
+    assert malo.status_code == 422
+    assert "Peso de la mascota (kg) debe ser una cifra" in malo.json()["detail"]
+    sin_peso = await client.put(
+        paso, json={"datos": {"producto": "Drontal", "lote": "D-1", "peso_kg": ""}}, headers=medico
+    )
+    assert sin_peso.status_code == 200, sin_peso.text
+    con_peso = await client.put(
+        paso,
+        json={"datos": {"producto": "Drontal", "lote": "D-1", "peso_kg": "12,5"}},
+        headers=medico,
+    )
+    assert con_peso.status_code == 200, con_peso.text
+    await client.post(f"{url}/estado", json={"estado": "completado"}, headers=medico)
+    evento = await _evento(client, headers, evento_id)
+    assert (evento["estado"], evento["peso_kg"]) == ("aplicado", 12.5)
 
 
 async def test_cancelar_la_visita_deja_el_preventivo_por_agendar(client: AsyncClient, db, headers):

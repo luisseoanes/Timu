@@ -36,6 +36,7 @@ ESQUEMAS = [
     "EstadoEnlace",
     "CiudadRead",
     "EspecieRead",
+    "CampoOpcional",
     "PasoTipoRead",
     "TipoServicioRead",
     "EsquemaPreventivoRead",

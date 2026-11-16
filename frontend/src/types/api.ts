@@ -120,11 +120,18 @@ export interface EspecieRead {
   activa: boolean
 }
 
+export interface CampoOpcional {
+  campo: string
+  nombre: string
+  numerico?: boolean
+}
+
 export interface PasoTipoRead {
   codigo: string
   nombre: string
   obligatorio?: boolean
   campos?: string[]
+  opcionales?: CampoOpcional[]
   lo_registra_la_consulta: boolean
 }
 

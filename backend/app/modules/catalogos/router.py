@@ -35,6 +35,12 @@ class EspecieRead(BaseModel):
     activa: bool
 
 
+class CampoOpcional(BaseModel):
+    campo: str
+    nombre: str = Field(description="Como se rotula el campo")
+    numerico: bool = False
+
+
 class PasoTipoRead(BaseModel):
     """Paso de la atencion (F1-SER-02): el panel arma con esto el formulario de cada paso."""
 
@@ -42,6 +48,9 @@ class PasoTipoRead(BaseModel):
     nombre: str
     obligatorio: bool = True
     campos: list[str] = []
+    opcionales: list[CampoOpcional] = Field(
+        default=[], description="Campos que el paso acepta sin exigirlos, como el peso"
+    )
     lo_registra_la_consulta: bool = Field(description="La consulta clinica firmada lo registra")
 
     @model_validator(mode="before")

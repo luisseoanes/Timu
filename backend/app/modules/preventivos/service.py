@@ -551,6 +551,9 @@ def _seguir_servicio(
             fecha=hoy(),
             producto=paso.datos["producto"],
             lote=paso.datos.get("lote"),
+            # F2-PRE-07 el peso, si se anoto en el paso: va al carnet y, si es el mas reciente,
+            # a la ficha de la mascota. Solo cuenta el que el paso valido como cifra.
+            peso_kg=peso if isinstance(peso := paso.datos.get("peso_kg"), float) else None,
             usuario_id=paso.completado_por_id,
             aplicado_por_nombre=db.scalar(
                 select(Usuario.nombre).where(Usuario.id == paso.completado_por_id)
