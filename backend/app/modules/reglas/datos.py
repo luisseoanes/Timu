@@ -13,7 +13,7 @@ REGLAS: list[dict[str, Any]] = [
     # F1-CAR-03 Estado de cartera por dias de mora de la cuota mas antigua sin pagar.
     {
         "codigo": "cartera_congelada",
-        "nombre": "Congelar a los 30 dias de mora",
+        "nombre": "Congelar a los 30 días de mora",
         "evento": "cartera.estado",
         "condicion": _desde("dias_mora", 30),
         "accion": {"tipo": "estado", "estado": "congelada"},
@@ -22,7 +22,7 @@ REGLAS: list[dict[str, Any]] = [
     },
     {
         "codigo": "cartera_en_mora",
-        "nombre": "En mora desde 5 dias de vencida la cuota",
+        "nombre": "En mora desde 5 días de vencida la cuota",
         "evento": "cartera.estado",
         "condicion": _desde("dias_mora", 5),
         "accion": {"tipo": "estado", "estado": "en_mora"},
@@ -31,7 +31,7 @@ REGLAS: list[dict[str, Any]] = [
     },
     {
         "codigo": "cartera_al_dia",
-        "nombre": "Al dia",
+        "nombre": "Al día",
         "evento": "cartera.estado",
         "condicion": {},
         "accion": {"tipo": "estado", "estado": "activa"},
@@ -42,7 +42,7 @@ REGLAS: list[dict[str, Any]] = [
     *[
         {
             "codigo": f"alerta_mora_{dias}",
-            "nombre": f"Aviso de mora a los {dias} dias",
+            "nombre": "Aviso de mora a 1 día" if dias == 1 else f"Aviso de mora a los {dias} días",
             "evento": "cartera.alerta",
             "condicion": _desde("dias_mora", dias),
             "accion": {"tipo": "notificar", "plantilla": plantilla, "clave": f"mora_{dias}"},
@@ -58,12 +58,12 @@ REGLAS: list[dict[str, Any]] = [
     # F1-CAR-07 Renovacion anual.
     {
         "codigo": "renovacion_30_dias",
-        "nombre": "Gestionar renovacion 30 dias antes",
+        "nombre": "Gestionar renovación 30 días antes",
         "evento": "cartera.renovacion",
         "condicion": {"campo": "dias_para_renovacion", "op": "lte", "valor": 30},
         "accion": {
             "tipo": "tarea",
-            "titulo": "Gestionar renovacion del contrato",
+            "titulo": "Gestionar renovación del contrato",
             "area": "comercial",
             "prioridad": "media",
             "vence_en_dias": 7,
@@ -86,7 +86,7 @@ REGLAS: list[dict[str, Any]] = [
         "condicion": {"campo": "familia.estado", "op": "in", "valor": ["en_mora", "congelada"]},
         "accion": {
             "tipo": "rechazar",
-            "motivo": "La familia debe estar al dia para cambiar de plan",
+            "motivo": "La familia debe estar al día para cambiar de plan",
         },
         "prioridad": 10,
         "detener": True,

@@ -161,12 +161,12 @@ def _paso(codigo: str, nombre: str, *campos: str, obligatorio: bool = True) -> d
 
 
 _PASOS_CONSULTA = [
-    _paso("valoracion", "Valoracion clinica", "hallazgos"),
+    _paso("valoracion", "Valoración clínica", "hallazgos"),
     _paso("plan", "Plan y recomendaciones", "recomendaciones"),
 ]
 _PASOS_PREVENTIVO = [
-    _paso("aplicacion", "Aplicacion", "producto", "lote"),
-    _paso("evidencia", "Evidencia fotografica", obligatorio=False),
+    _paso("aplicacion", "Aplicación", "producto", "lote"),
+    _paso("evidencia", "Evidencia fotográfica", obligatorio=False),
 ]
 
 TIPOS_SERVICIO: list[dict[str, Any]] = [
@@ -179,7 +179,7 @@ TIPOS_SERVICIO: list[dict[str, Any]] = [
     },
     {
         "codigo": "vacunacion",
-        "nombre": "Vacunacion",
+        "nombre": "Vacunación",
         "modalidad": "preventivo",
         "duracion_min": 20,
         "requiere_autorizacion": True,
@@ -187,7 +187,7 @@ TIPOS_SERVICIO: list[dict[str, Any]] = [
     },
     {
         "codigo": "desparasitacion",
-        "nombre": "Desparasitacion",
+        "nombre": "Desparasitación",
         "modalidad": "preventivo",
         "duracion_min": 15,
         "requiere_autorizacion": True,
@@ -195,26 +195,26 @@ TIPOS_SERVICIO: list[dict[str, Any]] = [
     },
     {
         "codigo": "consulta_clinica",
-        "nombre": "Consulta clinica",
+        "nombre": "Consulta clínica",
         "modalidad": "clinico",
         "duracion_min": 30,
         "pasos": _PASOS_CONSULTA,
     },
     {
         "codigo": "control_post",
-        "nombre": "Control post atencion",
+        "nombre": "Control post atención",
         "modalidad": "clinico",
         "duracion_min": 20,
     },
     {
         "codigo": "orientacion_virtual",
-        "nombre": "Orientacion veterinaria virtual",
+        "nombre": "Orientación veterinaria virtual",
         "modalidad": "virtual",
         "duracion_min": 20,
     },
     {
         "codigo": "atencion_aliada",
-        "nombre": "Atencion en clinica aliada",
+        "nombre": "Atención en clínica aliada",
         "modalidad": "aliada",
         "duracion_min": 60,
         "requiere_autorizacion": True,
@@ -236,7 +236,7 @@ ESQUEMAS_PREVENTIVOS: list[dict[str, Any]] = [
         "codigo": "can_rabia",
         "especie_codigo": "canino",
         "tipo": "vacuna",
-        "nombre": "Antirrabica canina",
+        "nombre": "Antirrábica canina",
         "edad_minima_semanas": 12,
         "dosis_iniciales": 1,
         "intervalo_refuerzo_dias": 365,
@@ -245,7 +245,7 @@ ESQUEMAS_PREVENTIVOS: list[dict[str, Any]] = [
         "codigo": "can_desp_interna",
         "especie_codigo": "canino",
         "tipo": "desparasitacion_interna",
-        "nombre": "Desparasitacion interna canina",
+        "nombre": "Desparasitación interna canina",
         "edad_minima_semanas": 2,
         "dosis_iniciales": 3,
         "intervalo_inicial_dias": 15,
@@ -255,7 +255,7 @@ ESQUEMAS_PREVENTIVOS: list[dict[str, Any]] = [
         "codigo": "can_desp_externa",
         "especie_codigo": "canino",
         "tipo": "desparasitacion_externa",
-        "nombre": "Desparasitacion externa canina",
+        "nombre": "Desparasitación externa canina",
         "edad_minima_semanas": 8,
         "dosis_iniciales": 1,
         "intervalo_refuerzo_dias": 30,
@@ -274,7 +274,7 @@ ESQUEMAS_PREVENTIVOS: list[dict[str, Any]] = [
         "codigo": "fel_rabia",
         "especie_codigo": "felino",
         "tipo": "vacuna",
-        "nombre": "Antirrabica felina",
+        "nombre": "Antirrábica felina",
         "edad_minima_semanas": 12,
         "dosis_iniciales": 1,
         "intervalo_refuerzo_dias": 365,
@@ -283,7 +283,7 @@ ESQUEMAS_PREVENTIVOS: list[dict[str, Any]] = [
         "codigo": "fel_desp_interna",
         "especie_codigo": "felino",
         "tipo": "desparasitacion_interna",
-        "nombre": "Desparasitacion interna felina",
+        "nombre": "Desparasitación interna felina",
         "edad_minima_semanas": 3,
         "dosis_iniciales": 3,
         "intervalo_inicial_dias": 15,

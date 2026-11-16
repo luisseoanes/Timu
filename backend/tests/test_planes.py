@@ -399,7 +399,7 @@ async def test_no_cambia_de_plan_en_mora(db):
     # La primera cuota vencio hace 10 dias y no se pago.
     familia, contrato = await fabricas.afiliada(db, hoy() - timedelta(days=10), basico)
     await db.run_sync(cartera.reevaluar_estado, contrato)
-    with pytest.raises(ReglaNegocio, match="al dia"):
+    with pytest.raises(ReglaNegocio, match="al día"):
         await db.run_sync(contratos.cambiar_plan, contrato, familia.mascotas[0].id, superior, None)
 
 

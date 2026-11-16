@@ -192,5 +192,6 @@ Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñ
   de las bandejas, la franja de cifras del Inicio y los pasos de la atención. Siguen sin estar la
   línea del día y el gráfico de serie del Inicio. Se completa con `/impeccable document` o en
   `R4-CIE-03`.
-- **Nombres de catálogo sin tildes** («Atencion en clinica aliada», «Vacunacion»): vienen de
-  `backend/app/modules/catalogos/datos.py` y se ven en la línea y en los botones.
+- **Ciudades y departamentos sin tildes** («Bogota», «Medellin», «Atlantico»): son la clave por la
+  que se guarda la ciudad en las familias, los planes y los servicios, y las citan unas 35 pruebas
+  y datos. El resto del catálogo y de las reglas sembradas ya las lleva (migración `0045`).

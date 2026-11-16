@@ -449,7 +449,7 @@ async def test_carnet_separa_aplicado_vencido_y_proximo(db, admin):
     await db.flush()
 
     datos = await db.run_sync(service.carnet, mascota.id, HOY)
-    assert [a["nombre"] for a in datos["aplicados"]] == ["Antirrabica canina"]
+    assert [a["nombre"] for a in datos["aplicados"]] == ["Antirrábica canina"]
     assert datos["aplicados"][0]["peso_kg"] is None
     assert any(v["id"] == str(externa.id) for v in datos["vencidos"])
     assert all(p["fecha_programada"] >= str(HOY) for p in datos["proximos"])

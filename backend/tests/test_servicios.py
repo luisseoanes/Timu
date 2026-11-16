@@ -176,7 +176,7 @@ async def test_ciclo_de_vacunacion(client: AsyncClient, db, headers, afiliada, t
     await client.post(f"{url}/estado", json={"estado": "en_atencion"}, headers=headers)
 
     incompleto = await client.post(f"{url}/estado", json={"estado": "completado"}, headers=headers)
-    assert "Aplicacion" in incompleto.json()["detail"]
+    assert "Aplicación" in incompleto.json()["detail"]
 
     paso = await client.put(
         f"{url}/pasos/aplicacion", json={"datos": {"producto": "Nobivac"}}, headers=headers

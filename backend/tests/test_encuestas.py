@@ -124,7 +124,7 @@ async def test_respuesta_por_enlace(client: AsyncClient, db):
     token = encuesta.token
     await db.commit()
     contexto = await client.get(f"/api/v1/encuestas/respuesta/{token}")
-    assert contexto.status_code == 200 and contexto.json()["atencion"] == "Control post atencion"
+    assert contexto.status_code == 200 and contexto.json()["atencion"] == "Control post atención"
     assert "telefono" not in contexto.text
 
     ok = await client.post(f"/api/v1/encuestas/respuesta/{token}", json={"puntaje": 5})

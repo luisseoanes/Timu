@@ -528,7 +528,7 @@ async def test_tipos_de_servicio_exponen_sus_pasos(client: AsyncClient, headers)
     valoracion = next(p for p in consulta["pasos"] if p["codigo"] == "valoracion")
     assert valoracion == {
         "codigo": "valoracion",
-        "nombre": "Valoracion clinica",
+        "nombre": "Valoración clínica",
         "obligatorio": True,
         "campos": ["hallazgos"],
         # La consulta firmada lo registra: el panel no copia que campos llena (R2-PAN-08).
