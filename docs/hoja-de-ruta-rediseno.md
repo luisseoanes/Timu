@@ -217,14 +217,14 @@ qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son 
 | `DEU-1` | Las series 1 y 2 del manual no se distinguen sin ver el rojo y el verde | El manual pasa a verde, azul, naranja y marino | ahora | Hecho (2026-11-15): el manual, los tokens, `DESIGN.md` y el gráfico del Inicio, que usa la 1 y la 2 |
 | `DEU-2` | El portal no ofrece la consulta en la clínica que el backend permite | El portal la ofrece y la API dice qué puede agendar, cambiar y cancelar la familia | ahora | Pendiente |
 | `DEU-3` | La visita preventiva del portal no se enlaza con ningún preventivo | El portal agenda preventivos concretos, como la bandeja | ahora | Pendiente |
-| `DEU-4` | La desparasitación hecha en visita se aplica sin peso | Campo opcional en los pasos del catálogo; el peso en «Aplicación» | ahora | Pendiente |
+| `DEU-4` | La desparasitación hecha en visita se aplica sin peso | Campo opcional en los pasos del catálogo; el peso en «Aplicación» | ahora | Hecho (2026-11-16): los pasos ganan `opcionales` con nombre y tipo; la desparasitación pide el peso, que va al carnet (migración `0046`) |
 | `DEU-5` | «Por autorizar» con la llave solo en Preventivos | La llave en el mapeo común (`lib/estados.ts`): también en Servicios | ahora | Hecho (2026-11-15): la llave en `lib/estados.ts`, la fila y la ficha del servicio |
 | `DEU-6` | La clínica aliada entra por «Equipo TIMU» | **Sin respuesta**: se pregunta al usuario | — | Pendiente de decisión |
 | `DEU-7` | La pantalla del enlace no dice cuánto dura | La API da la vigencia y la pantalla la dice | ahora | Hecho (2026-11-15): `expira_en` en `POST /auth/enlace` y «Este enlace sirve hasta…» |
 | `DEU-8` | Las reglas se editan en JSON | Editor por campos | ahora | Pendiente |
 | `DEU-9` | Pasar una cuenta a o desde clínica aliada | **No**: se crea otra cuenta, como ahora | — | No |
-| `DEU-10` | Las plantillas de WhatsApp enseñan su código de Meta | Campo «nombre» en el catálogo de plantillas | ahora | Pendiente |
-| `DEU-11` | Textos guardados sin tildes (catálogos y reglas sembradas) | Migración de datos que los corrige | ahora | Pendiente |
+| `DEU-10` | Las plantillas de WhatsApp enseñan su código de Meta | Campo «nombre» en el catálogo de plantillas | ahora | Hecho (2026-11-16): `titulo` en las plantillas (migración `0044`); reglas, campañas y mensajes lo dicen, con el código debajo |
+| `DEU-11` | Textos guardados sin tildes (catálogos y reglas sembradas) | Migración de datos que los corrige | ahora | Hecho (2026-11-16): `datos.py` con tildes y migración `0045` para lo sembrado que nadie editó. **Fuera, por decidir:** las ciudades y los departamentos («Bogota», «Medellin»), que son la clave por la que se guardan |
 | `DEU-12` | Comercial no muestra correos ni llamadas | **No**: fuera de alcance | — | No |
 | `DEU-13` | En el celular, la línea de Familias no se abre en «hoy» | Se arregla (es un defecto) | ahora | Hecho (2026-11-15): en vertical, tres o más vencidas van en un grupo rojo con «Ver cada una» |
 | `DEU-14` | `datos_demo` sin una familia de portal al día | Siembra gruesa: uno o dos meses de operación que recorran todos los casos y todas las rutas | ahora | Pendiente |
@@ -367,7 +367,7 @@ El «techo» aceptado, por superficie (los números son los de la lista):
 
 ### Lo que quedó de Cartera y preventivos tras cerrar `R2-PAN-08`
 
-- **El peso de la desparasitación no está en el paso «Aplicación»** del servicio: con «el servicio
+- ~~**El peso de la desparasitación no está en el paso «Aplicación»**~~ Resuelto el 2026-11-16 (`DEU-4`). del servicio: con «el servicio
   manda», una desparasitación hecha en visita se aplica sin peso (`F2-PRE-07` lo pide opcional). Para
   tenerlo hay que añadir un campo opcional a los pasos del catálogo (hoy todos los campos son
   obligatorios en `completar_paso`). Se decide con el usuario.
@@ -399,7 +399,7 @@ El «techo» aceptado, por superficie (los números son los de la lista):
   de `R4-CIE-02`.
 - **La conversación de Comercial es la de WhatsApp**: el embudo no muestra correos ni llamadas,
   porque no se registran. Si TIMU los quiere en la ficha, hay que guardarlos primero.
-- **«Plantilla en Meta» enseña el código** con que se registra la plantilla (`recordatorio_renovacion`):
+- ~~**«Plantilla en Meta» enseña el código**~~ Resuelto el 2026-11-16 (`DEU-10`). con que se registra la plantilla (`recordatorio_renovacion`):
   el catálogo no tiene nombre legible. Darle uno es un campo nuevo en las plantillas.
 
 ### Lo que quedó de Aliadas y administración tras cerrar `R2-PAN-10`
@@ -420,9 +420,9 @@ El «techo» aceptado, por superficie (los números son los de la lista):
   acción sigue siendo escribir el JSON del motor. Un editor por campos es trabajo nuevo.
 - **Pasar una cuenta a clínica aliada, o de clínica aliada al equipo, no se hace desde la fila**:
   necesita la clínica, que solo se elige al crear el usuario. Hoy hay que crear la cuenta nueva.
-- **Las plantillas de WhatsApp no tienen nombre legible**: las reglas y las campañas enseñan el código
+- ~~**Las plantillas de WhatsApp no tienen nombre legible**~~ Resuelto el 2026-11-16 (`DEU-10`).: las reglas y las campañas enseñan el código
   con que se registran en Meta (`aviso_mora`) como dato secundario.
-- **Textos guardados sin tildes**: el motivo de algunas reglas sembradas («mas cupos») y los nombres de
+- ~~**Textos guardados sin tildes**~~ Resuelto el 2026-11-16 (`DEU-11`), salvo las ciudades.: el motivo de algunas reglas sembradas («mas cupos») y los nombres de
   reglas y catálogos («Aviso de mora a los 25 dias», «Atencion en clinica aliada») vienen de los datos;
   la deuda ya está en `docs/frontend/conventions.md`.
 
