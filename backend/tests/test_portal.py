@@ -16,10 +16,11 @@ from app.core.security import hash_password
 from app.core.tiempo import ZONA_NEGOCIO, hoy
 from app.modules.auth.models import Usuario
 from app.modules.cartera import pasarela
-from app.modules.cartera.models import Pago
+from app.modules.cartera.models import Contrato, Pago
 from app.modules.clinica import service as clinica
 from app.modules.comunicaciones.models import Mensaje, PlantillaWhatsApp
 from app.modules.familias.models import Mascota
+from app.modules.portal import service as servicio_portal
 from app.modules.preventivos.models import EventoPreventivo
 from app.modules.servicios.models import Franja
 from tests import fabricas
@@ -82,6 +83,11 @@ async def test_ve_su_plan_y_estado_de_cuenta(client, portal):
     plan = (await client.get("/api/v1/portal/plan", headers=h)).json()
     assert plan["estado"] == "activa"
     assert [m["color"] for m in plan["mascotas"]] == ["verde"]
+    # Lo decide el backend y lo dice el plan: si puede agendar y que (DEU-2), incluida la
+    # consulta en la clinica, que el portal no ofrecia.
+    assert plan["motivo_sin_agendar"] is None
+    modalidades = {t["modalidad"] for t in plan["tipos_agendables"]}
+    assert modalidades == {"domiciliario", "preventivo", "clinico"}
     cuenta = (await client.get("/api/v1/portal/estado-cuenta", headers=h)).json()
     assert cuenta["contrato"]["familia_id"] == str(portal["familia_id"])
 
@@ -268,13 +274,23 @@ async def test_cambios_con_poca_antelacion_van_por_el_equipo(client, portal, mon
         },
         headers=h,
     )
+    # A tiempo, la cita dice que se puede cambiar y cancelar: el portal no copia las reglas.
+    [cita] = (await client.get("/api/v1/portal/servicios", headers=h)).json()
+    assert (cita["puede_cambiar"], cita["puede_cancelar"], cita["sin_cambios"]) == (
+        True,
+        True,
+        None,
+    )
     monkeypatch.setattr(settings, "PORTAL_ANTELACION_HORAS", 24 * 30)
+    [tarde] = (await client.get("/api/v1/portal/servicios", headers=h)).json()
+    assert (tarde["puede_cambiar"], tarde["puede_cancelar"]) == (False, False)
+    assert tarde["sin_cambios"].startswith("Faltan menos de 720 horas")
     resp = await client.post(
         f"/api/v1/portal/servicios/{agendado.json()['id']}/cancelacion",
         json={"motivo": "Tarde"},
         headers=h,
     )
-    assert resp.status_code == 422 and "anticipacion" in resp.json()["detail"]
+    assert resp.status_code == 422 and "Faltan menos de" in resp.json()["detail"]
 
 
 # --- F3-POR-05 Pagos --------------------------------------------------------------------------
@@ -508,7 +524,7 @@ async def test_sus_servicios_activos_y_los_pasados_a_pedido(client, portal):
         json={"inicio": _hora(10), "motivo": "Otro dia"},
         headers=h,
     )
-    assert mover.status_code == 422 and "reprogramar" in mover.json()["detail"]
+    assert mover.status_code == 422 and "ya no se puede cambiar" in mover.json()["detail"]
 
 
 async def test_actualizar_sin_cambios_se_rechaza(client, portal):
@@ -675,3 +691,20 @@ async def test_el_equipo_quita_la_foto_de_una_mascota(client, portal, headers, a
     await client.put(url, files={"foto": ("x.png", FOTO, "image/png")}, headers=headers)
     resp = await client.delete(url, headers=headers)
     assert resp.status_code == 200 and resp.json()["foto_url"] is None
+
+
+async def test_el_plan_dice_por_que_no_se_puede_agendar(client, db, portal, monkeypatch):
+    """DEU-2: el portal no copia las causas de la elegibilidad del backend."""
+    contrato = await db.get(Contrato, portal["contrato_id"])
+    contrato.estado = "congelada"
+    await db.commit()
+    plan = (await client.get("/api/v1/portal/plan", headers=portal["headers"])).json()
+    assert plan["motivo_sin_agendar"].startswith("Tu plan está en pausa por cuotas vencidas")
+    contrato = await db.get(Contrato, portal["contrato_id"])
+    contrato.estado = "activa"
+    renovacion = contrato.fecha_renovacion
+    await db.commit()
+    # Un dia despues de la renovacion, sin renovar.
+    monkeypatch.setattr(servicio_portal, "hoy", lambda: renovacion + timedelta(days=1))
+    plan = (await client.get("/api/v1/portal/plan", headers=portal["headers"])).json()
+    assert plan["motivo_sin_agendar"].startswith("Tu plan venció")

@@ -969,6 +969,9 @@ export interface ServicioPortalRead {
   estado: string
   programado_para: string | null
   termina_en: string | null
+  puede_cambiar?: boolean
+  puede_cancelar?: boolean
+  sin_cambios?: string | null
 }
 
 export interface PagoPortalRead {

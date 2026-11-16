@@ -7,7 +7,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, File, Response, UploadFile, status
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from app.api.deps import CurrentUser, DbSession, FamiliaActual
 from app.core.enums import EstadoAltaPeludo, EstadoPago, Periodicidad
@@ -70,6 +70,24 @@ class ServicioPortalRead(BaseModel):
     estado: str
     programado_para: datetime | None
     termina_en: datetime | None
+    # Lo que la familia puede hacer sola con la cita (`service.que_puede`): el portal no copia
+    # las reglas del backend.
+    puede_cambiar: bool = False
+    puede_cancelar: bool = False
+    sin_cambios: str | None = Field(default=None, description="Por que no se puede, en palabras")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _que_puede(cls, servicio: Any) -> Any:
+        if isinstance(servicio, Servicio):
+            return {
+                **{c: getattr(servicio, c) for c in _CAMPOS_CITA},
+                **service.que_puede(servicio),
+            }
+        return servicio
+
+
+_CAMPOS_CITA = ("id", "mascota_id", "tipo_codigo", "estado", "programado_para", "termina_en")
 
 
 class PagoIn(BaseModel):

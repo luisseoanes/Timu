@@ -12,14 +12,15 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import nuevo_id
-from app.core.enums import EstadoServicio, TipoServicio
+from app.core.enums import EstadoAfiliacion, EstadoServicio, TipoServicio
 from app.core.errores import NoEncontrado, ReglaNegocio
-from app.core.tiempo import ahora, con_zona
+from app.core.tiempo import ahora, con_zona, hoy
 from app.integrations.payments import construir_link_pago
 from app.modules.cartera import contratos
 from app.modules.cartera import service as cartera
 from app.modules.cartera.models import AplicacionPago, Cuota, Pago
 from app.modules.cartera.periodos import centavos, dinero, nombre_cuota
+from app.modules.catalogos.models import TipoServicioCatalogo
 from app.modules.clinica import service as clinica
 from app.modules.clinica.models import AdjuntoClinico, HistoriaClinica
 from app.modules.familias import service as familias
@@ -50,6 +51,21 @@ def _servicio_propio(db: Session, familia: Familia, servicio_id: UUID) -> Servic
 
 
 # --- F3-POR-01 Plan vigente -------------------------------------------------------------------
+
+
+def _motivo_sin_agendar(contrato: Any) -> str | None:
+    """Por que la familia no puede agendar sola ahora, en sus palabras, o None si puede. Son las
+    causas del contrato de `servicios.elegibilidad`; las de cada cita (el cupo, la mascota) las
+    dice el backend al agendar."""
+    if contrato.fecha_renovacion < hoy():
+        return "Tu plan venció y no se ha renovado: escríbenos por WhatsApp para renovarlo."
+    if contrato.estado == EstadoAfiliacion.CONGELADA:
+        return "Tu plan está en pausa por cuotas vencidas: al pagarlas, podrás agendar."
+    if contrato.estado == EstadoAfiliacion.EN_MORA:
+        return "Tienes cuotas vencidas: al pagarlas, podrás agendar."
+    if contrato.estado != EstadoAfiliacion.ACTIVA:
+        return "Escríbenos por WhatsApp para agendar."
+    return None
 
 
 def plan(db: Session, familia: Familia) -> dict[str, Any]:
@@ -90,6 +106,18 @@ def plan(db: Session, familia: Familia) -> dict[str, Any]:
     return {
         "mascotas": peludos,
         "estado": contrato.estado,
+        "motivo_sin_agendar": _motivo_sin_agendar(contrato),
+        "tipos_agendables": [
+            {"codigo": t.codigo, "nombre": t.nombre, "modalidad": t.modalidad}
+            for t in db.scalars(
+                select(TipoServicioCatalogo)
+                .where(
+                    TipoServicioCatalogo.activo.is_(True),
+                    TipoServicioCatalogo.modalidad.in_(MODALIDADES_AUTOGESTION),
+                )
+                .order_by(TipoServicioCatalogo.nombre)
+            )
+        ],
         "periodicidad": contrato.periodicidad,
         "valor_periodo": dinero(contrato.valor_periodo),
         "valor_mensual": dinero(contrato.valor_mensual),
@@ -164,30 +192,47 @@ def agendar(
     )
 
 
-def _con_antelacion(servicio: Servicio) -> None:
+def _a_tiempo(servicio: Servicio) -> bool:
     limite = ahora() + timedelta(hours=settings.PORTAL_ANTELACION_HORAS)
-    if servicio.programado_para is None or con_zona(servicio.programado_para) < limite:
-        raise ReglaNegocio(
-            f"Los cambios desde el portal se hacen con al menos "
-            f"{settings.PORTAL_ANTELACION_HORAS} horas de anticipacion; comuniquese con TIMU"
+    return servicio.programado_para is not None and con_zona(servicio.programado_para) >= limite
+
+
+def que_puede(servicio: Servicio) -> dict[str, Any]:
+    """Lo que la familia puede hacer sola con una cita, y por que no si hay algo que no. Lo
+    usan el listado (el portal no copia las reglas) y `reprogramar` y `cancelar`."""
+    cambiar = servicio.estado == EstadoServicio.AGENDADO and servicio.ruta_id is None
+    cancelar = servicio.estado in (EstadoServicio.AGENDADO, EstadoServicio.PENDIENTE_AUTORIZACION)
+    motivo = None
+    if (cambiar or cancelar) and not _a_tiempo(servicio):
+        cambiar = cancelar = False
+        motivo = (
+            f"Faltan menos de {settings.PORTAL_ANTELACION_HORAS} horas: para cambiarla o "
+            "cancelarla, escríbenos por WhatsApp."
         )
+    elif servicio.estado == EstadoServicio.AGENDADO and not cambiar:
+        motivo = "Ya está en la ruta del día: para cambiarla, escríbenos por WhatsApp."
+    return {"puede_cambiar": cambiar, "puede_cancelar": cancelar, "sin_cambios": motivo}
 
 
 def reprogramar(
     db: Session, familia: Familia, servicio_id: UUID, inicio: datetime, motivo: str
 ) -> Servicio:
     servicio = _servicio_propio(db, familia, servicio_id)
-    if servicio.estado != EstadoServicio.AGENDADO or servicio.ruta_id is not None:
-        raise ReglaNegocio("Ese servicio ya no se puede reprogramar desde el portal")
-    _con_antelacion(servicio)
+    puede = que_puede(servicio)
+    if not puede["puede_cambiar"]:
+        raise ReglaNegocio(
+            puede["sin_cambios"] or "Esa cita ya no se puede cambiar desde el portal"
+        )
     return servicios.reprogramar(db, servicio, inicio, f"[portal] {motivo}")
 
 
 def cancelar(db: Session, familia: Familia, servicio_id: UUID, motivo: str) -> Servicio:
     servicio = _servicio_propio(db, familia, servicio_id)
-    if servicio.estado not in (EstadoServicio.AGENDADO, EstadoServicio.PENDIENTE_AUTORIZACION):
-        raise ReglaNegocio("Ese servicio ya no se puede cancelar desde el portal")
-    _con_antelacion(servicio)
+    puede = que_puede(servicio)
+    if not puede["puede_cancelar"]:
+        raise ReglaNegocio(
+            puede["sin_cambios"] or "Esa cita ya no se puede cancelar desde el portal"
+        )
     return servicios.cambiar_estado(db, servicio, EstadoServicio.CANCELADO, f"[portal] {motivo}")
 
 
