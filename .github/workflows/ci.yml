@@ -212,7 +212,7 @@ jobs:
     name: Stack con un solo comando
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -281,6 +281,11 @@ jobs:
           name: informe-e2e-stack
           path: frontend/playwright-report-stack/
           retention-days: 7
+
+      # Despues de los recorridos, para no cambiarles los datos: dos meses de operacion
+      # sembrados por la API (DEU-14). Se corre aqui para que no se rompa sin que nadie lo vea.
+      - name: Operacion de demostracion
+        run: docker compose exec -T api python -m scripts.operacion_demo
 
       # Despues de los recorridos, para no cambiarles los datos. Version reducida de la prueba
       # de carga (F4-QAA-02): el 10 % del volumen proyectado y 4 usuarios durante un minuto.

@@ -227,7 +227,7 @@ qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son 
 | `DEU-11` | Textos guardados sin tildes (catálogos y reglas sembradas) | Migración de datos que los corrige | ahora | Hecho (2026-11-16): `datos.py` con tildes y migración `0045` para lo sembrado que nadie editó. **Fuera, por decidir:** las ciudades y los departamentos («Bogota», «Medellin»), que son la clave por la que se guardan |
 | `DEU-12` | Comercial no muestra correos ni llamadas | **No**: fuera de alcance | — | No |
 | `DEU-13` | En el celular, la línea de Familias no se abre en «hoy» | Se arregla (es un defecto) | ahora | Hecho (2026-11-15): en vertical, tres o más vencidas van en un grupo rojo con «Ver cada una» |
-| `DEU-14` | `datos_demo` sin una familia de portal al día | Siembra gruesa: uno o dos meses de operación que recorran todos los casos y todas las rutas | ahora | En curso: hecho (2026-11-16) el portal de Jorge Ramírez al día y las coberturas del plegable en los planes; falta la siembra de los dos meses, en un comando aparte que también corre el CI (decidido con el usuario el 2026-11-16: se crea por la API y luego se corren las fechas al pasado) |
+| `DEU-14` | `datos_demo` sin una familia de portal al día | Siembra gruesa: uno o dos meses de operación que recorran todos los casos y todas las rutas | ahora | En curso. Hecho el 2026-11-16: el portal de Jorge Ramírez al día, las coberturas del plegable en los planes y el núcleo de la operación, `scripts/operacion_demo.py` (decidido con el usuario: se crea por la API y luego se corren las fechas al pasado, en un comando aparte que el CI corre tras la e2e del stack). Siembra ocho semanas: familias en cada estado de cartera (al día, en mora, congelada, anual, trimestral por renovar, nueva y dada de baja) con sus pagos fechados, 38 rutas pasadas en Bogotá y Medellín con 100 visitas, consultas firmadas, paradas omitidas y servicios cancelados, preventivos aplicados y vencidos y encuestas respondidas. **Falta**: remisiones atendidas y anuladas, el embudo comercial en el tiempo, tareas cerradas y vencidas, la clínica virtual, una campaña enviada y visitas de otros tipos (vacunas en ruta, controles y consultas en clínica) |
 | `DEU-15` | Sin plantilla de consulta en `datos_demo` | Dentro de la siembra gruesa | ahora | Pendiente |
 | `DEU-16` | La prueba de la foto deja un PNG de 1×1 en la mascota de Ana | Que no ensucie los datos | ahora | Hecho (2026-11-16): la prueba quita la foto al terminar si la mascota no tenía una |
 | `DEU-17` | El barrido responsive no mide 900 px | Se añade el ancho | ahora (adelanta parte de `R4-CIE-01`) | Hecho (2026-11-16): ninguna ruta falla a 900 px |
@@ -241,7 +241,7 @@ qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son 
 | `DEU-25` | Los campos con icono del acceso miden 48 px | 48 px es la norma del acceso | ahora (documentación) | Hecho (2026-11-15): `DESIGN.md` lo recoge en Inputs |
 | `DEU-26` | Pasarela sin recuento ni vista en la URL, casos de la IA en JSON, `style` en Reportes | Se arreglan | ahora | Hecho (2026-11-15): recuentos y vista en la URL, casos en palabras (`esperado_texto`) y sin `style`; de paso, la API rechaza un caso que el evaluador no entiende |
 | `DEU-27` | `.impeccable/design.json` va por detrás de `DESIGN.md` | Se completa en el cierre | `R4-CIE-03` | Pendiente |
-| `DEU-28`–`DEU-70` | El «techo» del revisor en cada superficie | Como lo recomendó Claude: sí a todo salvo 28, 29, 30, 38, 39, 43, 44, 65, 68, 69 y 70 (detalle abajo) | ahora | En curso (2026-11-16): hecho todo salvo 33, que espera la siembra de `DEU-14` |
+| `DEU-28`–`DEU-70` | El «techo» del revisor en cada superficie | Como lo recomendó Claude: sí a todo salvo 28, 29, 30, 38, 39, 43, 44, 65, 68, 69 y 70 (detalle abajo) | ahora | Hecho (2026-11-16) |
 | `DEU-E` | Lo que decide TIMU | Valor provisional en el código para cada uno, pero **todos siguen pendientes** hasta que TIMU confirme el valor oficial ([pendientes externos](pendientes-externos.md#valores-provisionales)) | — | Pendiente de TIMU |
 
 **Encontrado al cerrar este lote y resuelto el mismo día:** la prueba de Comercial «registra un
@@ -257,8 +257,8 @@ El «techo» aceptado, por superficie (los números son los de la lista). Hecho 
 lo que se marca como pendiente:
 
 - **Rutas:** 31 etiquetar la hora de «Por rutear» («agendado a las …») · 32 centrar la columna
-  del médico en escritorio · **pendiente:** 33 capturar una ruta con una parada omitida (con la
-  siembra de `DEU-14`).
+  del médico en escritorio · 33 capturar una ruta con una parada omitida (la siembra de `DEU-14`
+  deja seis).
 - **Clínica:** 34 área de texto de unos 75 caracteres en escritorio · 35 unificar la cabecera del
   borrador y la de la lectura (mismas piezas: título, distintivo del estado y modalidad; el tamaño
   del título sigue al contexto. Composición elegida sin preguntar: se cambia si el usuario prefiere

@@ -24,7 +24,7 @@ el código, se anota la fecha y quién lo confirmó, y solo entonces se tacha.
 | Cobro del alta de un peludo desde el panel | No cobra el periodo en curso: el valor nuevo corre desde la siguiente cuota no emitida | `cartera/contratos.py` | PENDIENTE |
 | Qué plan recomienda el bot comercial | Mi Amigo Fiel, el plan principal según el manual (sección 4), para cualquier ciudad, especie y número de peludos | Reglas `plan.recomendacion` (`reglas/datos.py` y su migración) | PENDIENTE |
 | Proveedor de la IA | Mientras se migra a Gemini, `claude-haiku-5-5`, el económico de la comparativa | `IA_MODELO` (`core/config.py`, `.env.example`) | PENDIENTE |
-| Plantillas de WhatsApp aprobadas en Meta | Sin plantilla aprobada, el enlace de cada mensaje sale solo por correo | `comunicaciones` | PENDIENTE |
+| Plantillas de WhatsApp aprobadas en Meta | Sin plantilla aprobada, el enlace de cada mensaje sale solo por correo. En la demostración local, `datos_demo` y `operacion_demo` dan por aprobadas las suyas (`recordatorio_renovacion` y `encuesta_satisfaccion`) para recorrer campañas y encuestas | `comunicaciones` | PENDIENTE |
 | Mapa de las rutas | Sin mapa: cada parada abre la navegación del celular («Cómo llegar») | `rutas` | PENDIENTE |
 | Ventana de la bandeja de preventivos | 30 días | `VENTANA_BANDEJA_DIAS` (`preventivos/service.py`) | PENDIENTE |
 | Fotos originales para las páginas públicas | Las páginas públicas van sin fotos | — | PENDIENTE |

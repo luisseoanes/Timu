@@ -47,6 +47,11 @@ docker compose exec api python -m scripts.datos_demo   # familias, servicios, ru
                                       # Solo crea lo que falta: no actualiza lo ya sembrado. Si se amplía
                                       # (un campo nuevo de las mascotas), un stack local viejo conserva los
                                       # datos antiguos; el del CI, recién levantado, recibe los nuevos.
+docker compose exec api python -m scripts.operacion_demo   # después de datos_demo: ocho semanas de operación
+                                      # (cartera en cada estado, rutas pasadas con parada omitida, consultas
+                                      # firmadas, preventivos y encuestas). Se crea por la API y se corre al
+                                      # pasado; tarda unos 5 min. Si ya sembró, no hace nada. El CI la corre
+                                      # después de la e2e del stack.
 docker compose run --rm inicializar   # tras traer una migración nueva, sin reiniciar el stack
 docker compose up -d --build -V       # tras traer dependencias nuevas: el código va montado, las librerías
                                       # van en la imagen, y -V renueva el node_modules anónimo de `web`
