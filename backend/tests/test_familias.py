@@ -36,7 +36,7 @@ PAYLOAD = {
     "titular_nombre": "Ana Ruiz",
     "documento": "1020304050",
     "telefono": "573001112233",
-    "ciudad": "Bogota",
+    "ciudad": "Bogotá",
     "mascotas": [
         {"nombre": "Kira", "especie": "canino", "fecha_nacimiento": "2021-03-01", "peso_kg": 12.5}
     ],
@@ -59,6 +59,19 @@ async def test_crear_y_listar_familia(client: AsyncClient, headers):
 
     listado = await client.get("/api/v1/familias", params={"q": "Ana"}, headers=headers)
     assert listado.json()["total"] == 1
+
+
+async def test_la_ciudad_se_escribe_con_o_sin_tildes(client: AsyncClient, headers):
+    """Quien escribe «bogota» (en el panel, un formulario o por WhatsApp) llega a la ciudad del
+    catalogo, que lleva sus tildes; una que no esta se sigue rechazando."""
+    creada = await _crear(client, headers, ciudad="  bogota ")
+    assert creada["ciudad"] == "Bogotá"
+    resp = await client.post(
+        "/api/v1/familias",
+        json={**PAYLOAD, "documento": "99887766", "telefono": "573009998877", "ciudad": "Narnia"},
+        headers=headers,
+    )
+    assert resp.status_code == 422
 
 
 async def test_requiere_autenticacion(client: AsyncClient):
@@ -125,7 +138,7 @@ async def test_ciudad_fuera_del_catalogo(client: AsyncClient, headers):
 
 async def test_ciudad_se_guarda_con_nombre_canonico(client: AsyncClient, headers):
     creada = await _crear(client, headers, ciudad="  bogota ")
-    assert creada["ciudad"] == "Bogota"
+    assert creada["ciudad"] == "Bogotá"
 
 
 async def test_especie_fuera_del_catalogo(client: AsyncClient, headers):
@@ -439,7 +452,7 @@ FORMULARIO = {
     "titular_nombre": "Luisa Gomez",
     "documento": "52.111.222",
     "telefono": "3157778899",
-    "ciudad": "Medellin",
+    "ciudad": "Medellín",
     "mascotas": [{"nombre": "Toby", "especie": "canino"}],
 }
 
@@ -497,11 +510,11 @@ async def test_carga_de_catalogos_es_repetible(db):
 
 async def test_carga_actualiza_cambios(db):
     bogota = await db.scalar(select(Ciudad).where(Ciudad.codigo == "11001"))
-    bogota.nombre = "Santa Fe de Bogota"
+    bogota.nombre = "Santa Fe de Bogotá"
     await db.flush()
     resultado = await db.run_sync(cargar)
     assert resultado["ciudades"]["actualizados"] == 1
-    assert bogota.nombre == "Bogota"
+    assert bogota.nombre == "Bogotá"
 
 
 async def test_ciudad_desactivada_sale_de_los_formularios(client: AsyncClient, headers):
@@ -509,7 +522,7 @@ async def test_ciudad_desactivada_sale_de_los_formularios(client: AsyncClient, h
         "/api/v1/catalogos/ciudades/11001/activo", json={"activo": False}, headers=headers
     )
     ciudades = await client.get("/api/v1/catalogos/ciudades", headers=headers)
-    assert "Bogota" not in [c["nombre"] for c in ciudades.json()]
+    assert "Bogotá" not in [c["nombre"] for c in ciudades.json()]
     resp = await client.post("/api/v1/familias", json=PAYLOAD, headers=headers)
     assert resp.status_code == 422
 

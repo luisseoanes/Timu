@@ -38,7 +38,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "documento": "1020304050",
         "telefono": "3001112233",
         "email": "ana@example.com",
-        "ciudad": "Bogota",
+        "ciudad": "Bogotá",
         "barrio": "Chapinero",
         "direccion": "Calle 80 # 15-20",
         "mascotas": [
@@ -64,7 +64,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "titular_nombre": "Carlos Perez",
         "documento": "79123456",
         "telefono": "3104445566",
-        "ciudad": "Bogota",
+        "ciudad": "Bogotá",
         "barrio": "Usaquén",
         "direccion": "Carrera 7 # 120-45",
         "mascotas": [
@@ -83,7 +83,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "titular_nombre": "Laura Gomez",
         "documento": "52987654",
         "telefono": "3157778899",
-        "ciudad": "Bogota",
+        "ciudad": "Bogotá",
         "barrio": "Teusaquillo",
         "direccion": "Avenida 19 # 100-12",
         "mascotas": [
@@ -102,7 +102,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "documento": "80456123",
         "telefono": "3209990011",
         "email": "jorge@example.com",
-        "ciudad": "Bogota",
+        "ciudad": "Bogotá",
         "barrio": "Suba",
         "direccion": "Calle 140 # 9-30",
         "mascotas": [
@@ -129,7 +129,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "titular_nombre": "Marcela Torres",
         "documento": "1032456789",
         "telefono": "3015556677",
-        "ciudad": "Medellin",
+        "ciudad": "Medellín",
         "barrio": "El Poblado",
         "mascotas": [
             {
@@ -257,7 +257,7 @@ class Cliente:
 # de Meta en el worker (`procesar_evento_whatsapp`), en orden y en su propia transacción: por el
 # webhook esperaría al drenado del outbox, de minuto en minuto, y podría responderse desordenado.
 NUMERO_CONVERSACION = "573004445588"
-CONVERSACION = ("Hola", "1", "Bogota", "quiero hablar con un asesor")
+CONVERSACION = ("Hola", "1", "Bogotá", "quiero hablar con un asesor")
 
 
 def conversacion_de_prueba(c: Cliente) -> None:
@@ -398,14 +398,14 @@ def ruta_de_prueba(c: Cliente, familias: list[dict[str, Any]], hoy: date) -> Non
         libres = c.get(
             "/agenda/disponibilidad",
             fecha=dia.isoformat(),
-            ciudad="Bogota",
+            ciudad="Bogotá",
             tipo_codigo="consulta_domiciliaria",
         )
         return [x for x in libres if x["disponibles"] > 0]
 
     def por_rutear(dia: date) -> list[dict[str, Any]]:
         """Los domicilios del dia sin ruta que caben en la jornada."""
-        pendientes = c.get("/rutas/por-rutear", fecha=dia.isoformat(), ciudad="Bogota")
+        pendientes = c.get("/rutas/por-rutear", fecha=dia.isoformat(), ciudad="Bogotá")
         return [
             s
             for s in pendientes
@@ -444,7 +444,7 @@ def ruta_de_prueba(c: Cliente, familias: list[dict[str, Any]], hoy: date) -> Non
         return
     plan = c.post(
         "/rutas/planificaciones",
-        {"fecha": dia.isoformat(), "ciudad": "Bogota", "responsables": [medica]},
+        {"fecha": dia.isoformat(), "ciudad": "Bogotá", "responsables": [medica]},
     )
     # La optimizacion corre en el worker: se espera a que termine para que quien venga
     # despues (las pruebas del panel) encuentre la ruta ya creada.
@@ -474,7 +474,7 @@ def main() -> None:
 
     print("Franjas de agenda")
     existentes = {(f["ciudad"], f["dia_semana"], f["modalidad"]) for f in c.get("/agenda/franjas")}
-    for ciudad in ("Bogota", "Medellin"):
+    for ciudad in ("Bogotá", "Medellín"):
         for modalidad in ("domiciliario", "preventivo"):
             for dia in range(6):
                 if (ciudad, dia, modalidad) not in existentes:
@@ -523,7 +523,7 @@ def main() -> None:
 
     print("Ubicaciones (sin Google Maps no se geocodifica: se fijan a mano)")
     for familia, (lat, lng) in zip(familias, UBICACIONES, strict=False):
-        if familia.get("latitud") is None and familia["ciudad"] == "Bogota":
+        if familia.get("latitud") is None and familia["ciudad"] == "Bogotá":
             resp = c.http.patch(
                 f"/familias/{familia['id']}", json={"latitud": lat, "longitud": lng}
             )
@@ -544,7 +544,7 @@ def main() -> None:
             familia = familias[i % 4]
             dia = proximo_habil(hoy, dias)
             cupos = c.get(
-                "/agenda/disponibilidad", fecha=dia.isoformat(), ciudad="Bogota", tipo_codigo=tipo
+                "/agenda/disponibilidad", fecha=dia.isoformat(), ciudad="Bogotá", tipo_codigo=tipo
             )
             libres = [x for x in cupos if x["disponibles"] > 0]
             if not libres:
@@ -657,7 +657,7 @@ def main() -> None:
         for nombre, telefono, origen in INTERESADOS:
             c.post(
                 "/comercial/interesados",
-                {"nombre": nombre, "telefono": telefono, "ciudad": "Bogota", "origen": origen},
+                {"nombre": nombre, "telefono": telefono, "ciudad": "Bogotá", "origen": origen},
             )
         for i, interesado in enumerate(c.get("/comercial/interesados", limit=10)["items"]):
             etapa = ("contactado", "cotizado", "en_afiliacion")[i % 3]
@@ -701,7 +701,7 @@ def main() -> None:
             {
                 "nombre": "Clinica Veterinaria del Norte",
                 "nit": "900123456",
-                "ciudad": "Bogota",
+                "ciudad": "Bogotá",
                 "direccion": "Calle 127 # 15-30",
                 "telefono": "6017654321",
                 "servicios": "Rayos X, ecografia, hospitalizacion y cirugia",

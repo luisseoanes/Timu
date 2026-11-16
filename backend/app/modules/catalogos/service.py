@@ -1,8 +1,9 @@
 """F0-09 Carga repetible de catalogos: inserta lo nuevo y actualiza lo existente por codigo."""
 
+import unicodedata
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errores import ReglaNegocio
@@ -46,12 +47,26 @@ def cargar(db: Session) -> dict[str, dict[str, int]]:
     return {m.__tablename__: _upsert(db, m, filas) for m, filas in CATALOGOS}
 
 
+def _sin_tildes(texto: str) -> str:
+    return "".join(
+        c
+        for c in unicodedata.normalize("NFD", texto.strip().lower())
+        if not unicodedata.combining(c)
+    )
+
+
 def ciudad_valida(db: Session, nombre: str) -> str:
-    """F1-FAM-04 Devuelve el nombre canonico de la ciudad activa (sin distinguir mayusculas)."""
-    ciudad = db.scalar(
-        select(Ciudad.nombre).where(
-            func.lower(Ciudad.nombre) == nombre.strip().lower(), Ciudad.activa.is_(True)
-        )
+    """F1-FAM-04 Devuelve el nombre canonico de la ciudad activa, sin distinguir mayusculas ni
+    tildes: quien escribe «bogota» (en un formulario o por WhatsApp) llega a «Bogotá». Las
+    ciudades activas son unas decenas: se comparan en Python."""
+    buscada = _sin_tildes(nombre)
+    ciudad = next(
+        (
+            n
+            for n in db.scalars(select(Ciudad.nombre).where(Ciudad.activa.is_(True)))
+            if _sin_tildes(n) == buscada
+        ),
+        None,
     )
     if ciudad is None:
         raise ReglaNegocio(f"La ciudad '{nombre}' no esta en el catalogo de ciudades activas")

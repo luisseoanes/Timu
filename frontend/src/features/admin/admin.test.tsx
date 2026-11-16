@@ -100,7 +100,7 @@ describe('AdminPage', () => {
     let creado: unknown = null
     server.use(
       http.get(`${API}/auth/usuarios`, () => HttpResponse.json({ items: [], total: 0, limit: 200, offset: 0 })),
-      http.get(`${API}/aliadas`, () => HttpResponse.json([{ id: 'cl1', nombre: 'Clínica Norte', ciudad: 'Bogota', activa: true }])),
+      http.get(`${API}/aliadas`, () => HttpResponse.json([{ id: 'cl1', nombre: 'Clínica Norte', ciudad: 'Bogotá', activa: true }])),
       http.post(`${API}/auth/usuarios`, async ({ request }) => {
         creado = await request.json()
         return HttpResponse.json({}, { status: 201 })

@@ -44,7 +44,7 @@ async def timu(db, monkeypatch) -> dict[str, UUID]:
 
 def _registro(timu, **cambios) -> dict:
     datos = {
-        "ciudad": "Medellin",
+        "ciudad": "Medellín",
         "peludos": [
             {"nombre": "Luna", "especie": "felino", "plan_id": str(timu["colita_feliz"])},
             {"nombre": "Max", "especie": "canino", "plan_id": str(timu["mi_amigo_fiel"])},
@@ -101,14 +101,14 @@ async def _iniciar_y_pagar(client, db, timu, **cambios) -> dict:
 
 
 async def test_la_ciudad_y_los_planes_salen_del_catalogo(client: AsyncClient, timu):
-    assert (await client.get(f"{API}/ciudades")).json() == ["Bogota", "Medellin"]
+    assert (await client.get(f"{API}/ciudades")).json() == ["Bogotá", "Medellín"]
     bogota = (await client.get(f"{API}/planes", params={"ciudad": "bogota"})).json()
     assert [p["codigo"] for p in bogota] == ["colita_feliz", "mi_amigo_fiel"]
     assert bogota[0]["tarifas"][0] == {"peludos": 1, "valor": "35500.00"}
     cotizacion = await client.post(
         f"{API}/cotizacion",
         json={
-            "ciudad": "Medellin",
+            "ciudad": "Medellín",
             "peludos": [{"especie": "felino", "plan_id": str(timu["colita_feliz"])}],
         },
     )
@@ -135,7 +135,7 @@ async def test_el_valor_lo_calcula_el_backend_y_no_hay_familia_hasta_el_formular
     )
     assert (solicitud.familia_id, solicitud.ciudad, solicitud.estado) == (
         None,
-        "Medellin",
+        "Medellín",
         "pendiente_pago",
     )
     assert solicitud.contacto_telefono == "+573001234567"
@@ -167,10 +167,10 @@ async def test_rechaza_nombres_repetidos_y_planes_que_no_se_venden_en_la_ciudad(
     repetidos["peludos"][1]["nombre"] = " luna "
     resp = await client.post(API, json=repetidos)
     assert resp.status_code == 422 and "nombre distinto" in resp.text
-    bogota = _registro(timu, ciudad="Bogota")
+    bogota = _registro(timu, ciudad="Bogotá")
     bogota["peludos"][1]["plan_id"] = str(timu["amigos_por_siempre"])
     resp = await client.post(API, json=bogota)
-    assert resp.status_code == 422 and "no esta disponible en Bogota" in resp.text
+    assert resp.status_code == 422 and "no esta disponible en Bogotá" in resp.text
 
 
 async def test_el_pago_deja_el_registro_pagado_y_envia_el_enlace(client: AsyncClient, db, timu):
@@ -299,7 +299,7 @@ async def test_un_token_que_no_existe_no_abre_nada(client: AsyncClient, timu):
 
 
 async def test_un_documento_existente_completa_su_ficha(client: AsyncClient, db, timu):
-    existente = await db.run_sync(fabricas.familia, ciudad="Medellin", mascotas=0)
+    existente = await db.run_sync(fabricas.familia, ciudad="Medellín", mascotas=0)
     existente.email = None
     documento = existente.documento
     await db.commit()
@@ -318,7 +318,7 @@ async def test_una_mascota_de_la_ficha_fuera_del_registro_va_a_revision(
 ):
     """La tarifa depende de cuantos peludos hay: una mascota activa de la ficha que no se
     eligio en el registro no queda fuera sin que el equipo lo decida."""
-    existente = await db.run_sync(fabricas.familia, ciudad="Medellin")
+    existente = await db.run_sync(fabricas.familia, ciudad="Medellín")
     documento = existente.documento
     await db.commit()
     datos = await _iniciar_y_pagar(client, db, timu)
@@ -331,7 +331,7 @@ async def test_una_mascota_de_la_ficha_fuera_del_registro_va_a_revision(
 
 async def test_con_un_contrato_vigente_no_se_afilia_dos_veces(client: AsyncClient, db, timu):
     plan = await db.run_sync(fabricas.plan, "otro")
-    familia, _ = await fabricas.afiliada(db, hoy(), plan, ciudad="Medellin")
+    familia, _ = await fabricas.afiliada(db, hoy(), plan, ciudad="Medellín")
     documento = familia.documento
     await db.commit()
     datos = await _iniciar_y_pagar(client, db, timu)
@@ -525,7 +525,7 @@ async def test_a_las_48_horas_sin_pago_se_cierra_y_comercial_recibe_la_tarea(
     ).json()
     await _rechazar(db, rechazado["referencia"], Decimal(rechazado["valor"]))
     # Luis ya es familia (se afilio con el equipo): no hace falta llamarlo.
-    familia = await db.run_sync(fabricas.familia, ciudad="Medellin", mascotas=0)
+    familia = await db.run_sync(fabricas.familia, ciudad="Medellín", mascotas=0)
     familia.email = "luis@correo.co"
     await _envejecer_enlace(db, vencido["referencia"], rechazado["referencia"])
 

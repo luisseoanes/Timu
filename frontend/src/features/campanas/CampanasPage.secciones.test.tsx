@@ -288,7 +288,7 @@ describe('nueva campaña', () => {
     await waitFor(() => expect(within(modal).getByRole('option', { name: 'recordatorio_renovacion' })).toBeInTheDocument())
     await user.selectOptions(within(modal).getByLabelText('Plantilla'), 'recordatorio_renovacion')
     const ciudades = within(modal).getByRole('group', { name: 'Ciudades' })
-    await user.click(await within(ciudades).findByRole('button', { name: 'Bogota' }))
+    await user.click(await within(ciudades).findByRole('button', { name: 'Bogotá' }))
     await user.click(await within(within(modal).getByRole('group', { name: 'Planes' })).findByRole('button', { name: 'Colita Feliz' }))
     const activa = within(modal).getByRole('button', { name: 'Activa' })
     await user.click(activa)
@@ -302,11 +302,11 @@ describe('nueva campaña', () => {
     await user.type(within(modal).getByLabelText('Mascotas mínimas'), '2')
     await user.click(within(modal).getByRole('button', { name: 'Contar audiencia' }))
     expect(await within(modal).findByRole('status')).toHaveTextContent('3 familias · Ana, Beto, Carla…')
-    expect(contado).toMatchObject({ ciudades: ['Bogota'], planes: ['colita_feliz'], dias_mora_min: 30, sin_servicio_dias: 90, mascotas_min: 2 })
+    expect(contado).toMatchObject({ ciudades: ['Bogotá'], planes: ['colita_feliz'], dias_mora_min: 30, sin_servicio_dias: 90, mascotas_min: 2 })
     await user.click(within(modal).getByRole('button', { name: 'Crear campaña' }))
     await waitFor(() =>
       expect(enviado?.segmento).toEqual({
-        ciudades: ['Bogota'],
+        ciudades: ['Bogotá'],
         planes: ['colita_feliz'],
         estados: [],
         dias_mora_min: 30,
@@ -341,7 +341,7 @@ describe('segmentos', () => {
             id: 's3',
             nombre: 'Morosos de Bogotá',
             descripcion: null,
-            filtros: { estados: ['en_mora'], ciudades: ['Bogota'], dias_mora_min: 30, renovacion_en_dias: 15 },
+            filtros: { estados: ['en_mora'], ciudades: ['Bogotá'], dias_mora_min: 30, renovacion_en_dias: 15 },
           },
         ]),
       ),
@@ -349,7 +349,7 @@ describe('segmentos', () => {
     await abrirPestana('Segmentos')
     expect(await screen.findByText('Familias VIP')).toBeInTheDocument()
     expect(screen.getByText('Todas las familias')).toBeInTheDocument()
-    expect(screen.getByText('En mora · Bogota · mora de 30 días o más · renuevan en 15 días o menos')).toBeInTheDocument()
+    expect(screen.getByText('En mora · Bogotá · mora de 30 días o más · renuevan en 15 días o menos')).toBeInTheDocument()
   })
 
   it('guarda un segmento con sus filtros', async () => {

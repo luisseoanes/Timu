@@ -268,7 +268,7 @@ describe('El trabajo pendiente del médico', () => {
       http.get(`${API}/mascotas/:id`, () => HttpResponse.json(LUNA)),
       http.get(`${API}/rutas`, () =>
         HttpResponse.json([
-          { id: 'r1', fecha: '2026-10-24', ciudad: 'Bogota', responsable_id: USUARIO_ADMIN.id, estado: 'en_curso', distancia_km: null, duracion_min: null, inicio_real: null, fin_real: null, paradas: [PARADA, { ...PARADA, id: 'p2', servicio_id: 's2', mascota: null }] },
+          { id: 'r1', fecha: '2026-10-24', ciudad: 'Bogotá', responsable_id: USUARIO_ADMIN.id, estado: 'en_curso', distancia_km: null, duracion_min: null, inicio_real: null, fin_real: null, paradas: [PARADA, { ...PARADA, id: 'p2', servicio_id: 's2', mascota: null }] },
         ]),
       ),
       http.get(`${API}/clinica/borradores`, () => HttpResponse.json([ENTRADA])),

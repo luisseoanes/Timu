@@ -460,15 +460,15 @@ def _geocodigo(*tipos: str, status: str = "OK", lat=4.65, lng=-74.05) -> httpx.R
 
 def test_geocodificar_una_direccion_precisa(maps_key, red):
     red.responde(_geocodigo("street_address"))
-    assert geocodificacion.geocodificar("Cra 7 # 72-41", "Bogota") == (4.65, -74.05)
+    assert geocodificacion.geocodificar("Cra 7 # 72-41", "Bogotá") == (4.65, -74.05)
     params = red.ultima.url.params
-    assert params["address"] == "Cra 7 # 72-41, Bogota, Colombia"
+    assert params["address"] == "Cra 7 # 72-41, Bogotá, Colombia"
     assert (params["region"], params["components"]) == ("co", "country:CO")
 
 
 def test_geocodificar_sin_clave_no_consulta(monkeypatch, red):
     monkeypatch.setattr(settings, "GOOGLE_MAPS_API_KEY", "")
-    assert geocodificacion.geocodificar("Cra 7 # 72-41", "Bogota") is None
+    assert geocodificacion.geocodificar("Cra 7 # 72-41", "Bogotá") is None
     assert red.peticiones == []
 
 
@@ -484,4 +484,4 @@ def test_geocodificar_sin_clave_no_consulta(monkeypatch, red):
 )
 def test_geocodificar_descarta_lo_impreciso_o_no_disponible(maps_key, red, respuesta):
     red.responde(respuesta)
-    assert geocodificacion.geocodificar("Calle falsa 123", "Bogota") is None
+    assert geocodificacion.geocodificar("Calle falsa 123", "Bogotá") is None

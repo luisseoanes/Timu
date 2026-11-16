@@ -45,7 +45,7 @@ const OTRO: EventoBandeja = { ...EVENTO, id: 'e2', nombre: 'Polivalente', fecha_
 const grupo = (eventos: EventoBandeja[]): FamiliaBandeja => ({
   familia_id: FAMILIA.id,
   titular_nombre: FAMILIA.titular_nombre,
-  ciudad: 'Bogota',
+  ciudad: 'Bogotá',
   telefono: '+573001112233',
   eventos,
 })
@@ -110,7 +110,7 @@ describe('PreventivosPage', () => {
     server.use(
       http.get(`${API}/preventivos/bandeja`, () => HttpResponse.json(pagina([grupo([autorizado])]))),
       http.get(`${API}/agenda/disponibilidad`, ({ request }) => {
-        expect(new URL(request.url).searchParams.get('ciudad')).toBe('Bogota')
+        expect(new URL(request.url).searchParams.get('ciudad')).toBe('Bogotá')
         return HttpResponse.json([{ inicio: '2099-01-10T14:00:00Z', fin: '2099-01-10T15:00:00Z', disponibles: 1 }])
       }),
       http.post(`${API}/preventivos/:id/agendar`, async ({ request }) => {

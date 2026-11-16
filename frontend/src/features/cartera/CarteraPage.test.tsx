@@ -14,7 +14,7 @@ const CONTRATO: ContratoListado = {
   numero: 'TM-0001',
   familia_id: FAMILIA.id,
   titular: FAMILIA.titular_nombre,
-  ciudad: 'Bogota',
+  ciudad: 'Bogotá',
   plan: 'Plan Esencial',
   planes: [{ nombre: 'Plan Esencial', color: 'naranja' }],
   estado: 'en_mora',

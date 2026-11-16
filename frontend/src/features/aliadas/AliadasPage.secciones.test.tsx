@@ -16,7 +16,7 @@ const como = (rol: string) => http.get(`${API}/auth/me`, () => HttpResponse.json
 const CLINICA: ClinicaRead = {
   id: 'cl1',
   nombre: 'Clínica Norte',
-  ciudad: 'Bogota',
+  ciudad: 'Bogotá',
   activa: true,
   nit: '900123',
   telefono: '6011234',
@@ -185,8 +185,8 @@ describe('remisiones', () => {
     // No elige la mascota por nadie.
     expect(within(modal).getByLabelText('Mascota')).toHaveDisplayValue('Elige la mascota')
     await user.selectOptions(within(modal).getByLabelText('Mascota'), LUNA.id)
-    await waitFor(() => expect(ciudades).toContain('Bogota'))
-    await user.selectOptions(await within(modal).findByLabelText('Clínica en Bogota'), 'cl1')
+    await waitFor(() => expect(ciudades).toContain('Bogotá'))
+    await user.selectOptions(await within(modal).findByLabelText('Clínica en Bogotá'), 'cl1')
     await waitFor(() => expect(within(modal).getByRole('option', { name: 'Radiografía · 80%' })).toBeInTheDocument())
     expect(within(modal).queryByRole('option', { name: /Vencido/ })).not.toBeInTheDocument()
     await user.selectOptions(within(modal).getByLabelText('Convenio'), 'cv1')
@@ -238,7 +238,7 @@ describe('remisiones', () => {
     await user.type(within(modal).getByRole('searchbox'), 'Ana')
     await user.click(await within(modal).findByRole('button', { name: /ana ruiz/i }))
     await user.selectOptions(within(modal).getByLabelText('Mascota'), LUNA.id)
-    await user.selectOptions(await within(modal).findByLabelText('Clínica en Bogota'), 'cl1')
+    await user.selectOptions(await within(modal).findByLabelText('Clínica en Bogotá'), 'cl1')
     await user.type(within(modal).getByLabelText('Motivo de la remisión'), 'Radiografía')
     await user.click(within(modal).getByRole('button', { name: 'Emitir' }))
     expect(await within(modal).findByRole('alert')).toHaveTextContent('La familia está en mora')
@@ -358,14 +358,14 @@ describe('clínicas y convenios', () => {
     await user.click(screen.getByRole('button', { name: /nueva clínica/i }))
     const modal = await screen.findByRole('dialog')
     await user.type(within(modal).getByLabelText('Nombre'), ' Clínica Sur ')
-    await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogota')
+    await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogotá')
     await user.type(within(modal).getByLabelText('Teléfono'), '6017654')
     await user.click(within(modal).getByRole('button', { name: 'Guardar' }))
     await waitFor(() =>
       expect(enviado).toEqual({
         nombre: 'Clínica Sur',
         nit: null,
-        ciudad: 'Bogota',
+        ciudad: 'Bogotá',
         direccion: null,
         telefono: '6017654',
         email: null,
@@ -383,7 +383,7 @@ describe('clínicas y convenios', () => {
     await user.click(await screen.findByRole('button', { name: /nueva clínica/i }))
     const modal = await screen.findByRole('dialog')
     await user.type(within(modal).getByLabelText('Nombre'), 'Clínica Sur')
-    await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogota')
+    await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogotá')
     await user.click(within(modal).getByRole('button', { name: 'Guardar' }))
     expect(await within(modal).findByRole('alert')).toHaveTextContent('NIT repetido')
   })

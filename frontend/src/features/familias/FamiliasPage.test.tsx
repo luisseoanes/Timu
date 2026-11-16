@@ -86,8 +86,8 @@ describe('FamiliasPage', () => {
     await user.type(within(modal).getByLabelText('Nombre del titular'), 'Ana Ruiz')
     await user.type(within(modal).getByLabelText('Número de documento'), '1020304050')
     await user.type(within(modal).getByLabelText('Celular'), '3001112233')
-    await waitFor(() => expect(within(modal).getByRole('option', { name: 'Bogota' })).toBeInTheDocument())
-    await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogota')
+    await waitFor(() => expect(within(modal).getByRole('option', { name: 'Bogotá' })).toBeInTheDocument())
+    await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogotá')
     await user.type(within(modal).getByLabelText('Barrio'), 'Chapinero')
     await user.type(within(modal).getByLabelText('Nombre de la mascota'), 'Luna')
     await user.selectOptions(within(modal).getByLabelText('Especie'), 'perro')
@@ -101,7 +101,7 @@ describe('FamiliasPage', () => {
         tipo_documento: 'CC',
         documento: '1020304050',
         telefono: '3001112233',
-        ciudad: 'Bogota',
+        ciudad: 'Bogotá',
         barrio: 'Chapinero',
         mascotas: [{ nombre: 'Luna', especie: 'perro', fecha_nacimiento: '2021-03-01', peso_kg: 12.5 }],
       }),
@@ -121,8 +121,8 @@ describe('FamiliasPage', () => {
     await user.type(within(modal).getByLabelText('Nombre del titular'), 'Ana Ruiz')
     await user.type(within(modal).getByLabelText('Número de documento'), '1020304050')
     await user.type(within(modal).getByLabelText('Celular'), '3001112233')
-    await waitFor(() => expect(within(modal).getByRole('option', { name: 'Bogota' })).toBeInTheDocument())
-    await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogota')
+    await waitFor(() => expect(within(modal).getByRole('option', { name: 'Bogotá' })).toBeInTheDocument())
+    await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogotá')
     await user.type(within(modal).getByLabelText('Barrio'), 'Chapinero')
     await user.type(within(modal).getByLabelText('Nombre de la mascota'), 'Luna')
     await user.selectOptions(within(modal).getByLabelText('Especie'), 'perro')

@@ -19,7 +19,7 @@ const SERVICIO: ServicioRead = {
   tipo_codigo: 'consulta_domiciliaria',
   tipo: 'domiciliario',
   estado: 'agendado',
-  ciudad: 'Bogota',
+  ciudad: 'Bogotá',
   programado_para: '2026-10-26T14:30:00Z',
   termina_en: '2026-10-26T15:15:00Z',
   requiere_autorizacion: false,

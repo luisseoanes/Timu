@@ -34,7 +34,7 @@ async def operacion(db):
     cali1, _ = await fabricas.afiliada(db, HOY - timedelta(days=2), telefono="+573001000001")
     cali2, _ = await fabricas.afiliada(db, HOY - timedelta(days=1), telefono="+573001000002")
     bogota, _ = await fabricas.afiliada(
-        db, HOY - timedelta(days=3), ciudad="Bogota", telefono="+573001000003"
+        db, HOY - timedelta(days=3), ciudad="Bogotá", telefono="+573001000003"
     )
     # Una familia que paga su primera cuota y otra que se retira.
     await db.run_sync(

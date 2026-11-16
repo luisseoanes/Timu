@@ -52,7 +52,7 @@ function ruta(paradas: ParadaRead[], extra: Partial<RutaRead> = {}): RutaRead {
   return {
     id: 'r1',
     fecha: '2026-10-24',
-    ciudad: 'Bogota',
+    ciudad: 'Bogotá',
     responsable_id: MEDICA.id,
     estado: 'en_curso',
     distancia_km: 13.8,
@@ -67,7 +67,7 @@ function ruta(paradas: ParadaRead[], extra: Partial<RutaRead> = {}): RutaRead {
 const POR_RUTEAR: PorRutearRead = {
   id: 's9',
   familia_id: 'f9',
-  ciudad: 'Bogota',
+  ciudad: 'Bogotá',
   programado_para: '2026-10-24T19:00:00Z',
   tipo_codigo: 'consulta_domiciliaria',
   observaciones: null,
@@ -406,14 +406,14 @@ describe('las rutas del día para quien coordina', () => {
     renderizar(<RutasPage />)
 
     expect(await screen.findByRole('link', { name: 'Dra. Sara' })).toHaveAttribute('href', '/rutas?ruta=r1')
-    expect(screen.getByText('1 de 2 paradas · 13,8 km · Bogota')).toBeInTheDocument()
+    expect(screen.getByText('1 de 2 paradas · 13,8 km · Bogotá')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: /^1 de 2 paradas hechas\. Sigue Carlos Perez/ })).toBeInTheDocument()
     // Sin ciudad elegida se piden las de todas, y cada domicilio dice la suya.
     expect(pedido.rutas.get('ciudad')).toBeNull()
     expect(pedido.rutas.get('responsable_id')).toBeNull()
     const porRutear = screen.getByRole('region', { name: /Por rutear/ })
     expect(await within(porRutear).findByRole('link', { name: 'Marcela Torres · Simba' })).toHaveAttribute('href', '/servicios/s9')
-    expect(within(porRutear).getByText('Consulta domiciliaria · Calle 53 # 20-11, Galerías, Bogota')).toBeInTheDocument()
+    expect(within(porRutear).getByText('Consulta domiciliaria · Calle 53 # 20-11, Galerías, Bogotá')).toBeInTheDocument()
     // La hora dice qué es: la agendada, no la de llegada (techo 31).
     expect(within(porRutear).getByText(/^agendado a las \d{1,2}:\d{2}\s[ap]\.\sm\.$/)).toBeInTheDocument()
     expect(screen.getByText(/Elige una ruta para ver sus paradas/)).toBeInTheDocument()
@@ -430,10 +430,10 @@ describe('las rutas del día para quien coordina', () => {
     const pedido = conRutas([])
     const user = userEvent.setup()
     renderizar(<RutasPage />)
-    await user.selectOptions(await screen.findByLabelText('Filtrar por ciudad'), await screen.findByRole('option', { name: 'Bogota' }))
-    expect(await screen.findByText(/No hay rutas para hoy en Bogota/)).toBeInTheDocument()
-    expect(pedido.rutas.get('ciudad')).toBe('Bogota')
-    expect(pedido.porRutear.get('ciudad')).toBe('Bogota')
+    await user.selectOptions(await screen.findByLabelText('Filtrar por ciudad'), await screen.findByRole('option', { name: 'Bogotá' }))
+    expect(await screen.findByText(/No hay rutas para hoy en Bogotá/)).toBeInTheDocument()
+    expect(pedido.rutas.get('ciudad')).toBe('Bogotá')
+    expect(pedido.porRutear.get('ciudad')).toBe('Bogotá')
   })
 
   it('abre una ruta por su enlace: su línea a la derecha, y la de otra persona no le quita a planear la acción principal', async () => {
@@ -471,7 +471,7 @@ describe('las rutas del día para quien coordina', () => {
 
   it('agrega a la ruta abierta un domicilio de su ciudad que quedó por rutear', async () => {
     let pedido: unknown = null
-    conRutas([ruta([parada(1, 'pendiente')], { estado: 'planificada' })], [POR_RUTEAR, { ...POR_RUTEAR, id: 's10', ciudad: 'Medellin' }])
+    conRutas([ruta([parada(1, 'pendiente')], { estado: 'planificada' })], [POR_RUTEAR, { ...POR_RUTEAR, id: 's10', ciudad: 'Medellín' }])
     server.use(
       http.post(`${API}/rutas/r1/paradas`, async ({ request }) => {
         pedido = await request.json()
@@ -541,13 +541,13 @@ describe('las rutas del día para quien coordina', () => {
     const planear = within(modal).getByRole('button', { name: 'Planear rutas' })
     expect(planear).toBeDisabled()
     // La ciudad sale de lo que falta por rutear: nadie la escribe a mano.
-    expect(await within(modal).findByLabelText('Ciudad')).toHaveValue('Bogota')
+    expect(await within(modal).findByLabelText('Ciudad')).toHaveValue('Bogotá')
     await user.click(await within(modal).findByRole('checkbox', { name: /dra. sara/i }))
     await user.click(planear)
     expect(await within(modal).findByText(/Optimizando las rutas/)).toBeInTheDocument()
     expect(await within(modal).findByText('1 ruta creada con 3 servicios.', {}, { timeout: 5000 })).toBeInTheDocument()
     expect(within(modal).getByText(/1 servicio quedó sin ruta: la familia no tiene ubicación/)).toBeInTheDocument()
-    expect(pedido).toMatchObject({ fecha: hoyISO(), ciudad: 'Bogota', responsables: ['m1'] })
+    expect(pedido).toMatchObject({ fecha: hoyISO(), ciudad: 'Bogotá', responsables: ['m1'] })
     await user.click(within(modal).getByRole('button', { name: 'Ver las rutas' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
@@ -559,7 +559,7 @@ describe('las rutas del día para quien coordina', () => {
         HttpResponse.json({ id: 'pl2', estado: 'pendiente', resultado: {}, error: null }),
       ),
       http.get(`${API}/rutas/planificaciones/pl2`, () =>
-        HttpResponse.json({ id: 'pl2', estado: 'fallida', resultado: {}, error: 'La ciudad Bogota no tiene coordenadas de base' }),
+        HttpResponse.json({ id: 'pl2', estado: 'fallida', resultado: {}, error: 'La ciudad Bogotá no tiene coordenadas de base' }),
       ),
     )
     const user = userEvent.setup()
@@ -568,7 +568,7 @@ describe('las rutas del día para quien coordina', () => {
     const modal = await screen.findByRole('dialog', { name: 'Planear rutas' })
     await user.click(await within(modal).findByRole('checkbox', { name: /dra. sara/i }))
     await user.click(within(modal).getByRole('button', { name: 'Planear rutas' }))
-    expect(await within(modal).findByRole('alert')).toHaveTextContent('No fue posible planear: La ciudad Bogota no tiene coordenadas de base')
+    expect(await within(modal).findByRole('alert')).toHaveTextContent('No fue posible planear: La ciudad Bogotá no tiene coordenadas de base')
   })
 
   it('el comercial ve las rutas, pero no planea, ni cancela, ni avanza paradas', async () => {

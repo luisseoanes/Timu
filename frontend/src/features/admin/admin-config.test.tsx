@@ -65,7 +65,7 @@ describe('Administración: planes', () => {
     expect(await screen.findByText(/Abre un plan para ver/)).toBeInTheDocument()
     await user.click(await screen.findByRole('link', { name: 'Colita Feliz' }))
     const ficha = screen.getByRole('region', { name: 'Plan abierto' })
-    expect(await within(ficha).findByText('Bogota · Medellin')).toBeInTheDocument()
+    expect(await within(ficha).findByText('Bogotá · Medellín')).toBeInTheDocument()
     const tarifas = within(ficha).getByLabelText('Tarifas de Colita Feliz')
     expect(within(tarifas).getByText('4 o más (c/u)')).toBeInTheDocument()
     expect(within(ficha).getByText('Anual')).toBeInTheDocument()
@@ -116,7 +116,7 @@ describe('Administración: planes', () => {
     await waitFor(() => expect(pedidos).toHaveLength(4))
     expect(pedidos).toEqual([
       ['plan', { nombre: 'Colita Feliz', color: 'azul' }],
-      ['ciudades', ['Bogota']],
+      ['ciudades', ['Bogotá']],
       ['tarifas', { por_peludos: ['36000', '30500', '26000', '24000'], trimestral: '103800', semestral: '202350' }],
       ['beneficios', [{ tipo_servicio_codigo: 'vacunacion', cupo: 4, periodo_cupo: 'anual', cobertura_pct: 100, copago: '0' }]],
     ])
@@ -135,7 +135,7 @@ describe('Administración: planes', () => {
     const { user, ficha } = await abrirFicha('Planes', '/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
     await user.click(within(ficha).getByRole('button', { name: 'Editar plan' }))
     const modal = await screen.findByRole('dialog')
-    await user.click(within(modal).getByLabelText('Bogota'))
+    await user.click(within(modal).getByLabelText('Bogotá'))
     await user.click(within(modal).getByRole('button', { name: 'Guardar' }))
     expect(await within(modal).findByText('Elige al menos una ciudad donde se vende el plan.')).toBeInTheDocument()
     expect(llamadas).toBe(0)
@@ -156,7 +156,7 @@ describe('Administración: planes', () => {
     const modal = await screen.findByRole('dialog')
     await user.type(within(modal).getByLabelText('Código'), 'mi_amigo_fiel')
     await user.type(within(modal).getByLabelText('Nombre'), 'Mi Amigo Fiel')
-    await user.click(within(modal).getByLabelText('Bogota'))
+    await user.click(within(modal).getByLabelText('Bogotá'))
     await user.click(within(modal).getByLabelText('Perro'))
     for (const [campo, valor] of [
       ['1 peludo', '69000'],
@@ -175,7 +175,7 @@ describe('Administración: planes', () => {
         nombre: 'Mi Amigo Fiel',
         especies: ['perro'],
         color: 'verde',
-        ciudades: ['Bogota'],
+        ciudades: ['Bogotá'],
         tarifas: { por_peludos: ['69000', '61000', '57500', '57000'], semestral: '393300' },
       }),
     )
@@ -297,7 +297,7 @@ describe('Administración: catálogos', () => {
     let cambio: unknown = null
     server.use(
       ...base,
-      http.get(`${API}/catalogos/ciudades`, () => HttpResponse.json([{ codigo: '11001', nombre: 'Bogota', departamento: 'Bogota D.C.', activa: true }])),
+      http.get(`${API}/catalogos/ciudades`, () => HttpResponse.json([{ codigo: '11001', nombre: 'Bogotá', departamento: 'Bogotá D.C.', activa: true }])),
       http.get(`${API}/catalogos/esquemas-preventivos`, () =>
         HttpResponse.json([{ codigo: 'rabia', especie_codigo: 'canino', tipo: 'vacuna', nombre: 'Rabia', edad_minima_semanas: 12, dosis_iniciales: 1, intervalo_inicial_dias: 0, intervalo_refuerzo_dias: 365, requiere_autorizacion: true, activo: true }]),
       ),
@@ -310,8 +310,8 @@ describe('Administración: catálogos', () => {
     // Una sola dosis no tiene intervalo inicial: nada de «1 dosis cada 0 días».
     expect(await screen.findByText(/1 dosis · refuerzo cada 365 días/)).toBeInTheDocument()
     // Apagar dice qué deja de pasar y se confirma en rojo.
-    await user.click(await screen.findByRole('button', { name: 'Apagar Bogota' }))
-    const ventana = await screen.findByRole('dialog', { name: 'Apagar Bogota' })
+    await user.click(await screen.findByRole('button', { name: 'Apagar Bogotá' }))
+    const ventana = await screen.findByRole('dialog', { name: 'Apagar Bogotá' })
     expect(cambio).toBeNull()
     const confirmar = within(ventana).getByRole('button', { name: 'Apagar' })
     expect(confirmar).toHaveClass('btn-peligro')
@@ -325,7 +325,7 @@ describe('Administración: catálogos apagados', () => {
     let cambio: unknown = null
     server.use(
       ...base,
-      http.get(`${API}/catalogos/ciudades`, () => HttpResponse.json([{ codigo: '05001', nombre: 'Medellin', departamento: 'Antioquia', activa: false }])),
+      http.get(`${API}/catalogos/ciudades`, () => HttpResponse.json([{ codigo: '05001', nombre: 'Medellín', departamento: 'Antioquia', activa: false }])),
       http.get(`${API}/catalogos/esquemas-preventivos`, () => HttpResponse.json([])),
       http.patch(`${API}/catalogos/ciudades/05001/activo`, async ({ request }) => {
         cambio = await request.json()
@@ -333,9 +333,9 @@ describe('Administración: catálogos apagados', () => {
       }),
     )
     const user = await abrirPestana('Catálogos')
-    const fila = (await screen.findByText('Medellin')).closest('.fila') as HTMLElement
+    const fila = (await screen.findByText('Medellín')).closest('.fila') as HTMLElement
     expect(within(fila).getByText('Apagado')).toBeInTheDocument()
-    await user.click(within(fila).getByRole('button', { name: 'Encender Medellin' }))
+    await user.click(within(fila).getByRole('button', { name: 'Encender Medellín' }))
     await waitFor(() => expect(cambio).toEqual({ activo: true }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })

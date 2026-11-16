@@ -187,6 +187,6 @@ Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñ
   de las bandejas, la franja de cifras del Inicio y los pasos de la atención. Siguen sin estar la
   línea del día y el gráfico de serie del Inicio. Se completa con `/impeccable document` o en
   `R4-CIE-03`.
-- **Ciudades y departamentos sin tildes** («Bogota», «Medellin», «Atlantico»): son la clave por la
-  que se guarda la ciudad en las familias, los planes y los servicios, y las citan unas 35 pruebas
-  y datos. El resto del catálogo y de las reglas sembradas ya las lleva (migración `0045`).
+- ~~**Ciudades y departamentos sin tildes**~~ Resuelto el 2026-11-16 (migración `0048`): «Bogotá»,
+  «Medellín», «Atlántico». El nombre sigue siendo la clave por la que se guarda la ciudad; la API
+  acepta escribirla con o sin tildes y devuelve el nombre del catálogo.

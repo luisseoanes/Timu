@@ -126,14 +126,14 @@ async def test_los_planes_que_siembra_el_seed_se_pueden_cotizar(db):
     creados = {p.codigo: p for p in await db.run_sync(seed.crear_planes_timu)}
     cotizacion = await db.run_sync(
         service.cotizar,
-        "Bogota",
+        "Bogotá",
         [("felino", creados["colita_feliz"].id), ("canino", creados["mi_amigo_fiel"].id)],
         "mensual",
     )
     assert cotizacion.valor_mensual == Decimal("91500")
-    with pytest.raises(ReglaNegocio, match="no esta disponible en Bogota"):
+    with pytest.raises(ReglaNegocio, match="no esta disponible en Bogotá"):
         await db.run_sync(
-            service.cotizar, "Bogota", [("canino", creados["amigos_por_siempre"].id)], "mensual"
+            service.cotizar, "Bogotá", [("canino", creados["amigos_por_siempre"].id)], "mensual"
         )
 
 
@@ -178,7 +178,7 @@ async def test_el_color_de_un_plan_solo_puede_ser_uno_del_logo(client: AsyncClie
 
 async def test_un_plan_guarda_sus_tarifas_y_sus_ciudades(client: AsyncClient, headers, timu):
     plan = (await client.get(f"/api/v1/planes/{timu['colita_feliz']}", headers=headers)).json()
-    assert plan["ciudades"] == ["Bogota", "Medellin"]
+    assert plan["ciudades"] == ["Bogotá", "Medellín"]
     assert [(t["peludos"], t["valor"]) for t in plan["tarifas"]] == [
         (1, "35500.00"),
         (2, "30500.00"),
@@ -195,7 +195,7 @@ async def test_un_plan_guarda_sus_tarifas_y_sus_ciudades(client: AsyncClient, he
 async def test_un_solo_peludo_tiene_el_descuento_de_cada_periodo(
     client: AsyncClient, headers, timu
 ):
-    opciones = await _cotizar(client, headers, "Medellin", ("felino", timu["colita_feliz"]))
+    opciones = await _cotizar(client, headers, "Medellín", ("felino", timu["colita_feliz"]))
     resumen = {
         p: (c["valor_mensual"], c["valor_periodo"], c["descuento"], c["ahorro"])
         for p, c in opciones.items()
@@ -216,7 +216,7 @@ async def test_con_dos_peludos_cada_uno_paga_la_tarifa_de_dos_aunque_esten_en_pl
     opciones = await _cotizar(
         client,
         headers,
-        "Bogota",
+        "Bogotá",
         ("felino", timu["colita_feliz"]),
         ("canino", timu["mi_amigo_fiel"]),
     )
@@ -237,12 +237,12 @@ async def test_desde_cuatro_peludos_todos_pagan_la_tarifa_de_cuatro_y_el_maximo_
     client: AsyncClient, headers, timu
 ):
     cinco = [("canino", timu["colita_feliz"])] * 5
-    mensual = (await _cotizar(client, headers, "Medellin", *cinco))["mensual"]
+    mensual = (await _cotizar(client, headers, "Medellín", *cinco))["mensual"]
     assert (mensual["tarifa_de"], mensual["valor_mensual"]) == (4, "120000.00")
     once = await client.post(
         "/api/v1/planes/cotizacion",
         json={
-            "ciudad": "Medellin",
+            "ciudad": "Medellín",
             "peludos": [{"especie": "canino", "plan_id": timu["colita_feliz"]}] * 11,
         },
         headers=headers,
@@ -256,23 +256,23 @@ async def test_la_cotizacion_respeta_la_ciudad_y_la_especie_del_plan(
     en_bogota = await client.post(
         "/api/v1/planes/cotizacion",
         json={
-            "ciudad": "Bogota",
+            "ciudad": "Bogotá",
             "peludos": [{"especie": "canino", "plan_id": timu["amigos_por_siempre"]}],
         },
         headers=headers,
     )
-    assert en_bogota.status_code == 422 and "no esta disponible en Bogota" in en_bogota.text
+    assert en_bogota.status_code == 422 and "no esta disponible en Bogotá" in en_bogota.text
     ave = await client.post(
         "/api/v1/planes/cotizacion",
         json={
-            "ciudad": "Medellin",
+            "ciudad": "Medellín",
             "peludos": [{"especie": "ave", "plan_id": timu["colita_feliz"]}],
         },
         headers=headers,
     )
     assert ave.status_code == 422 and "no cubre: ave" in ave.text
     # El listado por ciudad solo trae lo que se vende alli.
-    bogota = (await client.get("/api/v1/planes?ciudad=Bogota", headers=headers)).json()
+    bogota = (await client.get("/api/v1/planes?ciudad=Bogotá", headers=headers)).json()
     assert {p["codigo"] for p in bogota} == {"colita_feliz", "mi_amigo_fiel"}
 
 
@@ -288,7 +288,7 @@ async def test_el_administrador_cambia_tarifas_y_ciudades_sin_borrar_nada(
     assert resp.status_code == 200, resp.text
     # Sin trimestral ni anual: esos descuentos se retiran.
     assert [t["periodicidad"] for t in resp.json()["tarifas_periodicidad"]] == ["semestral"]
-    opciones = await _cotizar(client, headers, "Medellin", ("canino", plan))
+    opciones = await _cotizar(client, headers, "Medellín", ("canino", plan))
     assert (opciones["trimestral"]["valor_periodo"], opciones["trimestral"]["descuento"]) == (
         "108000.00",
         False,
@@ -300,11 +300,11 @@ async def test_el_administrador_cambia_tarifas_y_ciudades_sin_borrar_nada(
     assert retiradas == 2
 
     resp = await client.put(f"/api/v1/planes/{plan}/ciudades", json=["medellin"], headers=headers)
-    assert resp.status_code == 200 and resp.json()["ciudades"] == ["Medellin"]
+    assert resp.status_code == 200 and resp.json()["ciudades"] == ["Medellín"]
     resp = await client.put(
-        f"/api/v1/planes/{plan}/ciudades", json=["Medellin", "Bogota"], headers=headers
+        f"/api/v1/planes/{plan}/ciudades", json=["Medellín", "Bogotá"], headers=headers
     )
-    assert resp.json()["ciudades"] == ["Bogota", "Medellin"]
+    assert resp.json()["ciudades"] == ["Bogotá", "Medellín"]
     filas = await db.scalar(
         text("SELECT count(*) FROM ciudades_plan WHERE plan_id = :p"), {"p": plan}
     )
@@ -328,7 +328,7 @@ async def test_solo_el_administrador_cambia_tarifas(client: AsyncClient, db, tim
     )
     assert resp.status_code == 403
     # Cotizar si: el equipo comercial la usa para afiliar.
-    opciones = await _cotizar(client, comercial, "Medellin", ("canino", timu["colita_feliz"]))
+    opciones = await _cotizar(client, comercial, "Medellín", ("canino", timu["colita_feliz"]))
     assert opciones["mensual"]["valor_periodo"] == "35500.00"
 
 
@@ -354,7 +354,7 @@ async def test_recomendacion_provisional_es_el_plan_principal(client: AsyncClien
 
 
 async def test_recomendacion_salta_plan_de_otra_ciudad(db):
-    await db.run_sync(fabricas.plan, "familiar", 75_000, 3, ciudad="Bogota")
+    await db.run_sync(fabricas.plan, "familiar", 75_000, 3, ciudad="Bogotá")
     await db.run_sync(fabricas.plan, "multi", 80_000, 4)
     plan, _, regla = await db.run_sync(service.recomendar, "Cali", ["canino", "canino"])
     assert plan.codigo == "multi"
@@ -515,7 +515,7 @@ async def test_el_unico_peludo_no_se_retira_sin_cancelar_el_contrato(
 async def test_un_plan_que_deja_de_venderse_no_impide_retirar_a_otro_peludo(db):
     viejo = await db.run_sync(fabricas.plan, "viejo", 40_000)
     familia, contrato = await fabricas.afiliada(db, hoy(), viejo, mascotas=2)
-    await db.run_sync(lambda s: service.fijar_ciudades(s, viejo, ["Bogota"]))  # ya no en Cali
+    await db.run_sync(lambda s: service.fijar_ciudades(s, viejo, ["Bogotá"]))  # ya no en Cali
     await db.run_sync(contratos.retirar_mascota, contrato, familia.mascotas[1].id, None)
     assert dinero(contrato.valor_periodo) == Decimal("40000.00")
 

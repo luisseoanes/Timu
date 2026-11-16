@@ -46,7 +46,7 @@ function conBandeja(eventos: EventoBandeja[], consultas: string[] = []) {
   server.use(
     http.get(`${API}/preventivos/bandeja`, ({ request }) => {
       consultas.push(new URL(request.url).search)
-      const items = eventos.length ? [{ familia_id: FAMILIA.id, titular_nombre: FAMILIA.titular_nombre, ciudad: 'Bogota', telefono: '+573001112233', eventos }] : []
+      const items = eventos.length ? [{ familia_id: FAMILIA.id, titular_nombre: FAMILIA.titular_nombre, ciudad: 'Bogotá', telefono: '+573001112233', eventos }] : []
       return HttpResponse.json({ items, total: items.length, limit: 20, offset: 0 })
     }),
   )
@@ -83,7 +83,7 @@ describe('GestionarPreventivo (desde la estación de la línea de una familia)',
     conBandeja([{ ...EVENTO, autorizado: true, siguiente: 'agendar', tipo_servicio_codigo: 'desparasitacion' }])
     server.use(
       http.get(`${API}/agenda/disponibilidad`, ({ request }) => {
-        expect(new URL(request.url).searchParams.get('ciudad')).toBe('Bogota')
+        expect(new URL(request.url).searchParams.get('ciudad')).toBe('Bogotá')
         expect(new URL(request.url).searchParams.get('tipo_codigo')).toBe('desparasitacion')
         return HttpResponse.json([])
       }),

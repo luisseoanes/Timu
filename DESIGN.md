@@ -843,7 +843,7 @@ acción que le toca.
 - **Preventivos, por siguiente paso:** pestañas «Por hacer» y «Carnet por mascota». La bandeja
   tiene las vistas «Por autorizar», «Por agendar», «Agendados» y «Todos», y es una sola tabla con
   un grupo (`tbody`) por familia: la cabecera de columnas una vez y las columnas alineadas. La
-  cabecera del grupo es el titular (enlace de 16 px en 700) con «Bogota · 7 preventivos» en suave
+  cabecera del grupo es el titular (enlace de 16 px en 700) con «Bogotá · 7 preventivos» en suave
   y, si algo espera autorización, «Escribir» (plano de acción, WhatsApp) y «Registrar autorización
   (7)» (suave). Cada fila: «Luna · Antirrábica canina» con la dosis debajo, la fecha en que toca,
   el estado y la única acción de su paso («Agendar visita»); el resto («Registrar aplicación sin

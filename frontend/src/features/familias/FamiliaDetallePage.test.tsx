@@ -427,7 +427,7 @@ describe('FamiliaDetallePage', () => {
     tipo_codigo: 'consulta_domiciliaria',
     tipo: 'domiciliario',
     estado: 'agendado',
-    ciudad: 'Bogota',
+    ciudad: 'Bogotá',
     programado_para: '2026-11-02T15:00:00Z',
   }
 

@@ -108,7 +108,7 @@ def test_0014_reescribe_los_ids_existentes_sin_romper_referencias(base_en_0013):
                 text(
                     "INSERT INTO familias (id, titular_nombre, documento, telefono, ciudad,"
                     " estado, usuario_portal_id, created_at)"
-                    " VALUES (:f, 'T', :doc, '573000000000', 'Bogota', 'activa', :u,"
+                    " VALUES (:f, 'T', :doc, '573000000000', 'Bogotá', 'activa', :u,"
                     " now() - make_interval(days => :dias))"
                 ),
                 {"f": f, "doc": str(i), "u": usuario if i == 0 else None, "dias": 30 - i},
@@ -273,7 +273,7 @@ def test_0032_da_tarifas_y_ciudades_a_los_planes_existentes(base_en_0031):
         conn.execute(
             text(
                 "INSERT INTO ciudades (codigo, nombre, departamento, activa) VALUES"
-                " ('11001', 'Bogota', 'Bogota', true), ('05001', 'Medellin', 'Antioquia', true),"
+                " ('11001', 'Bogotá', 'Bogotá', true), ('05001', 'Medellín', 'Antioquia', true),"
                 " ('76001', 'Cali', 'Valle', false)"
             )
         )
@@ -282,8 +282,8 @@ def test_0032_da_tarifas_y_ciudades_a_los_planes_existentes(base_en_0031):
                 "INSERT INTO planes (codigo, nombre, ciudad, valor_mensual, cupos_mascotas,"
                 " especies, activo) VALUES"
                 " ('todas', 'Todas', NULL, 45000, 1, '[]', true),"
-                " ('paisa', 'Paisa', 'Medellin', 69000, 2, '[]', true),"
-                " ('gratis', 'Gratis', 'Bogota', 0, 1, '[]', true)"
+                " ('paisa', 'Paisa', 'Medellín', 69000, 2, '[]', true),"
+                " ('gratis', 'Gratis', 'Bogotá', 0, 1, '[]', true)"
             )
         )
     command.upgrade(cfg, "0032")
@@ -306,9 +306,9 @@ def test_0032_da_tarifas_y_ciudades_a_los_planes_existentes(base_en_0031):
             )
         ).all()
         assert dict(ciudades) == {
-            "todas": ["Bogota", "Medellin"],
-            "paisa": ["Medellin"],
-            "gratis": ["Bogota"],
+            "todas": ["Bogotá", "Medellín"],
+            "paisa": ["Medellín"],
+            "gratis": ["Bogotá"],
         }
 
 
@@ -444,3 +444,87 @@ def test_0033_reparte_cada_contrato_en_lineas_por_peludo_sin_cambiar_su_precio(b
             conn.execute(text("SELECT activa FROM reglas WHERE codigo = 'cupo'")).scalar_one()
             is False
         )
+
+
+# --- 0048: las ciudades con sus tildes ----------------------------------------------------------
+
+
+@pytest.fixture
+def base_en_0047():
+    yield from _base_en("0047")
+
+
+def test_0048_pone_tildes_a_las_ciudades_y_las_propaga(base_en_0047):
+    """La ciudad del catalogo cambia de nombre y la llave foranea lo lleva a la familia; lo que
+    no es llave (la ciudad del interesado, la lista de un segmento, el valor de una regla) lo
+    corrige la migracion. Una ciudad que TIMU ya renombro se respeta, y el downgrade lo deja
+    todo como estaba."""
+    cfg, engine = base_en_0047
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO ciudades (codigo, nombre, departamento, activa) VALUES"
+                " ('11001', 'Bogota', 'Bogota D.C.', true), ('05001', 'Medellin', 'Antioquia',"
+                " true), ('76001', 'Cali', 'Valle del Cauca', true),"
+                " ('54001', 'San José de Cúcuta', 'Norte de Santander', true)"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO familias (titular_nombre, documento, telefono, ciudad, estado,"
+                " tipo_documento, origen, barrio) VALUES ('Ana Ruiz', '1020304050',"
+                " '+573001112233', 'Bogota', 'activa', 'CC', 'panel', 'Chapinero')"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO interesados (telefono, ciudad, origen, etapa, datos) VALUES"
+                " ('+573005551234', 'Medellin', 'whatsapp', 'nuevo', '{}')"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO segmentos (nombre, filtros) VALUES"
+                ' (\'Norte\', \'{"ciudades": ["Bogota", "Cali"], "estados": ["activa"]}\')'
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO reglas (codigo, nombre, evento, condicion, accion, prioridad,"
+                " detener, activa) VALUES ('paisa', 'Paisa', 'plan.recomendacion',"
+                ' \'{"campo": "familia.ciudad", "op": "eq", "valor": "Medellin"}\','
+                " '{}', 1, false, true)"
+            )
+        )
+
+    def leer() -> tuple:
+        with engine.connect() as conn:
+            return (
+                conn.execute(text("SELECT nombre FROM ciudades ORDER BY codigo")).scalars().all(),
+                conn.execute(
+                    text("SELECT departamento FROM ciudades WHERE codigo = '11001'")
+                ).scalar(),
+                conn.execute(text("SELECT ciudad FROM familias")).scalar(),
+                conn.execute(text("SELECT ciudad FROM interesados")).scalar(),
+                conn.execute(text("SELECT filtros FROM segmentos")).scalar()["ciudades"],
+                conn.execute(text("SELECT condicion FROM reglas")).scalar()["valor"],
+            )
+
+    command.upgrade(cfg, "0048")
+    assert leer() == (
+        ["Medellín", "Bogotá", "San José de Cúcuta", "Cali"],
+        "Bogotá D.C.",
+        "Bogotá",
+        "Medellín",
+        ["Bogotá", "Cali"],
+        "Medellín",
+    )
+    command.downgrade(cfg, "0047")
+    assert leer() == (
+        ["Medellin", "Bogota", "San José de Cúcuta", "Cali"],
+        "Bogota D.C.",
+        "Bogota",
+        "Medellin",
+        ["Bogota", "Cali"],
+        "Medellin",
+    )

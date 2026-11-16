@@ -167,8 +167,8 @@ describe('Inicio del equipo', () => {
     await waitFor(() => expect(pedidas).toHaveLength(1))
     expect(pedidas[0].getAll('codigos')).toContain('recaudo')
     expect(pedidas[0].get('desde')).toBe(`${hoyISO().slice(0, 8)}01`)
-    await user.selectOptions(screen.getByLabelText('Ciudad'), 'Bogota')
-    await waitFor(() => expect(pedidas.at(-1)?.get('ciudad')).toBe('Bogota'))
+    await user.selectOptions(screen.getByLabelText('Ciudad'), 'Bogotá')
+    await waitFor(() => expect(pedidas.at(-1)?.get('ciudad')).toBe('Bogotá'))
   })
 
   it('avisa si no se pueden calcular las cifras', async () => {

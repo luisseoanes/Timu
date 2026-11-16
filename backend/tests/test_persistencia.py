@@ -161,7 +161,7 @@ async def test_una_familia_lleva_su_familia_a_la_base(client: AsyncClient, db: A
         titular_nombre="Ana",
         documento="111",
         telefono="+573000000000",
-        ciudad="Bogota",
+        ciudad="Bogotá",
         barrio="Centro",
         usuario_portal_id=usuario.id,
     )
@@ -429,12 +429,12 @@ async def test_corregir_el_nombre_de_una_ciudad_se_propaga(db: AsyncSession):
         titular_nombre="T",
         documento="9",
         telefono="+573000000000",
-        ciudad="Bogota",
+        ciudad="Bogotá",
         barrio="Centro",
     )
     db.add(familia)
     await db.flush()
-    await db.execute(text("UPDATE ciudades SET nombre = 'Bogotá D.C.' WHERE nombre = 'Bogota'"))
+    await db.execute(text("UPDATE ciudades SET nombre = 'Bogotá D.C.' WHERE nombre = 'Bogotá'"))
     await db.refresh(familia)
     assert familia.ciudad == "Bogotá D.C."
 
@@ -545,7 +545,7 @@ async def test_la_base_no_admite_una_cuota_pagada_sin_cubrir(db: AsyncSession):
         (
             "INSERT INTO familias (titular_nombre, tipo_documento, documento, telefono, ciudad,"
             " barrio, estado, origen)"
-            " VALUES ('T', 'CC', '1', '3001234567', 'Bogota', 'Centro', 'activa', 'panel')",
+            " VALUES ('T', 'CC', '1', '3001234567', 'Bogotá', 'Centro', 'activa', 'panel')",
             "ck_familias_telefono_formato",
         ),
         (

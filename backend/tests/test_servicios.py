@@ -465,7 +465,7 @@ async def test_un_medico_consulta_franjas_pero_no_las_administra(client: AsyncCl
 async def test_franjas_se_filtran_por_ciudad_y_se_ajustan(client: AsyncClient, headers, db, agenda):
     db.add(
         Franja(
-            ciudad="Bogota",
+            ciudad="Bogotá",
             modalidad="domiciliario",
             dia_semana=0,
             hora_inicio=time(8),
@@ -507,7 +507,7 @@ async def test_listado_de_servicios_combina_filtros(client: AsyncClient, db, hea
     assert [s["id"] for s in propios["items"]] == [servicio["id"]]
     assert (await contar(estado="agendado", ciudad="Cali")).json()["total"] == 2
     assert (await contar(estado="completado")).json()["total"] == 0
-    assert (await contar(ciudad="Bogota")).json()["total"] == 0
+    assert (await contar(ciudad="Bogotá")).json()["total"] == 0
     assert (await contar(desde=str(DIA), hasta=str(DIA))).json()["total"] == 2
     assert (await contar(desde=str(DIA + timedelta(days=1)))).json()["total"] == 0
     assert (await contar(hasta=str(DIA - timedelta(days=1)))).json()["total"] == 0

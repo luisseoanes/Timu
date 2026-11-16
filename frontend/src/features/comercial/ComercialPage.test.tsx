@@ -17,7 +17,7 @@ const interesado = (cambios: Partial<InteresadoRead>): InteresadoRead => ({
   nombre: 'Paula Díaz',
   telefono: '+573005551234',
   email: null,
-  ciudad: 'Bogota',
+  ciudad: 'Bogotá',
   origen: 'whatsapp',
   etapa: 'contactado',
   responsable_id: null,

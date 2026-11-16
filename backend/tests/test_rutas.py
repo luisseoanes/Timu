@@ -396,7 +396,7 @@ async def test_listado_de_rutas_por_dia_ciudad_y_responsable(
         return client.get("/api/v1/rutas", params={"fecha": str(DIA), **filtros}, headers=headers)
 
     assert [r["id"] for r in (await listar()).json()] == [ruta_id]
-    assert (await listar(ciudad="Bogota")).json() == []
+    assert (await listar(ciudad="Bogotá")).json() == []
     assert [r["id"] for r in (await listar(responsable_id=str(tecnico.id))).json()] == [ruta_id]
     assert (await listar(fecha=str(DIA + timedelta(days=1)))).json() == []
 
@@ -441,7 +441,7 @@ async def test_cada_parada_dice_a_quien_se_atiende_y_donde(
         "/api/v1/rutas/por-rutear", params={"fecha": str(DIA)}, headers=headers
     )
     assert {s["id"] for s in todas.json()} == {s["id"] for s in por_rutear}
-    otra = {"fecha": str(DIA), "ciudad": "Bogota"}
+    otra = {"fecha": str(DIA), "ciudad": "Bogotá"}
     assert (await client.get("/api/v1/rutas/por-rutear", params=otra, headers=headers)).json() == []
 
     await _planificar(db, [tecnico.id])

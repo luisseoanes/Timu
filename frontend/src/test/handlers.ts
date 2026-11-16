@@ -17,7 +17,7 @@ export const FAMILIA: FamiliaRead = {
   documento: '1020304050',
   email: null,
   telefono: '573001112233',
-  ciudad: 'Bogota',
+  ciudad: 'Bogotá',
   barrio: 'Chapinero',
   direccion: null,
   latitud: null,
@@ -49,7 +49,7 @@ export const PLAN: PlanRead = {
   codigo: 'colita_feliz',
   nombre: 'Colita Feliz',
   descripcion: null,
-  ciudades: ['Bogota', 'Medellin'],
+  ciudades: ['Bogotá', 'Medellín'],
   tarifas: [
     { peludos: 1, valor: '35500.00' },
     { peludos: 2, valor: '30500.00' },
@@ -67,7 +67,7 @@ export const PLAN: PlanRead = {
 }
 
 export const CIUDADES: CiudadRead[] = [
-  { codigo: '11001', nombre: 'Bogota', departamento: 'Bogota D.C.', latitud: null, longitud: null, activa: true },
+  { codigo: '11001', nombre: 'Bogotá', departamento: 'Bogotá D.C.', latitud: null, longitud: null, activa: true },
 ]
 
 export const ESPECIES: EspecieRead[] = [

@@ -52,7 +52,7 @@ azar = random.Random(20261116)  # noqa: S311 - datos de demostracion, no secreto
 
 SEMANAS = 8
 # Dias con ruta: lunes, miercoles y viernes en Bogota; martes y sabado en Medellin.
-DIAS_RUTA = {0: "Bogota", 2: "Bogota", 4: "Bogota", 1: "Medellin", 5: "Medellin"}
+DIAS_RUTA = {0: "Bogotá", 2: "Bogotá", 4: "Bogotá", 1: "Medellín", 5: "Medellín"}
 VISITAS_POR_RUTA = 3
 # Cada cuantas rutas una parada se omite (la familia no estaba) y un servicio se cancela antes.
 CADA_OMISION = 6
@@ -68,7 +68,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "documento": "1018456001",
         "telefono": "3001230001",
         "email": "patricia@example.com",
-        "ciudad": "Bogota",
+        "ciudad": "Bogotá",
         "barrio": "Cedritos",
         "direccion": "Calle 147 # 12-40",
         "coordenadas": (4.7268, -74.0381),
@@ -81,7 +81,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "titular_nombre": "Hernán Castillo",
         "documento": "79456002",
         "telefono": "3001230002",
-        "ciudad": "Bogota",
+        "ciudad": "Bogotá",
         "barrio": "Chicó",
         "direccion": "Carrera 11 # 93-20",
         "coordenadas": (4.6779, -74.0487),
@@ -98,7 +98,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "documento": "52456003",
         "telefono": "3001230003",
         "email": "diana@example.com",
-        "ciudad": "Bogota",
+        "ciudad": "Bogotá",
         "barrio": "Niza",
         "direccion": "Calle 125 # 58-15",
         "coordenadas": (4.7115, -74.0712),
@@ -111,7 +111,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "titular_nombre": "Ricardo Salazar",
         "documento": "80456004",
         "telefono": "3001230004",
-        "ciudad": "Bogota",
+        "ciudad": "Bogotá",
         "barrio": "Modelia",
         "direccion": "Carrera 75 # 24-60",
         "coordenadas": (4.6702, -74.1201),
@@ -124,7 +124,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "titular_nombre": "Claudia Rincón",
         "documento": "52456005",
         "telefono": "3001230005",
-        "ciudad": "Bogota",
+        "ciudad": "Bogotá",
         "barrio": "Santa Bárbara",
         "direccion": "Calle 116 # 15-30",
         "coordenadas": (4.6981, -74.0441),
@@ -141,7 +141,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "titular_nombre": "Felipe Arango",
         "documento": "1018456006",
         "telefono": "3001230006",
-        "ciudad": "Bogota",
+        "ciudad": "Bogotá",
         "barrio": "Galerías",
         "direccion": "Calle 53 # 24-11",
         "coordenadas": (4.6438, -74.0758),
@@ -154,7 +154,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "titular_nombre": "Gloria Pardo",
         "documento": "41456007",
         "telefono": "3001230007",
-        "ciudad": "Bogota",
+        "ciudad": "Bogotá",
         "barrio": "Colina Campestre",
         "direccion": "Calle 138 # 55-70",
         "coordenadas": (4.7230, -74.0623),
@@ -167,7 +167,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "titular_nombre": "Sebastián Vargas",
         "documento": "1018456008",
         "telefono": "3001230008",
-        "ciudad": "Bogota",
+        "ciudad": "Bogotá",
         "barrio": "Chapinero Alto",
         "direccion": "Carrera 4 # 57-30",
         "coordenadas": (4.6487, -74.0571),
@@ -181,7 +181,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "documento": "1018456009",
         "telefono": "3001230009",
         "email": "valeria@example.com",
-        "ciudad": "Bogota",
+        "ciudad": "Bogotá",
         "barrio": "Usaquén",
         "direccion": "Carrera 6 # 119-24",
         "coordenadas": (4.6955, -74.0310),
@@ -195,7 +195,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "documento": "43456010",
         "telefono": "3001230010",
         "email": "andrea@example.com",
-        "ciudad": "Medellin",
+        "ciudad": "Medellín",
         "barrio": "Laureles",
         "direccion": "Circular 73 # 39-12",
         "coordenadas": (6.2449, -75.5949),
@@ -211,7 +211,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "titular_nombre": "Juan David Mejía",
         "documento": "71456011",
         "telefono": "3001230011",
-        "ciudad": "Medellin",
+        "ciudad": "Medellín",
         "barrio": "Envigado",
         "direccion": "Carrera 43A # 38 Sur-20",
         "coordenadas": (6.1719, -75.5866),
@@ -224,7 +224,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "titular_nombre": "Luisa Fernanda Gil",
         "documento": "43456012",
         "telefono": "3001230012",
-        "ciudad": "Medellin",
+        "ciudad": "Medellín",
         "barrio": "Belén",
         "direccion": "Calle 30A # 76-15",
         "coordenadas": (6.2286, -75.6012),
@@ -237,7 +237,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "titular_nombre": "Carolina Uribe",
         "documento": "43456013",
         "telefono": "3001230013",
-        "ciudad": "Medellin",
+        "ciudad": "Medellín",
         "barrio": "El Poblado",
         "direccion": "Carrera 37 # 8A-40",
         "coordenadas": (6.2088, -75.5698),
@@ -914,18 +914,18 @@ def al_pasado(cx: Any, tabla: str, fila_id: str, dias: int, *, donde: str = "id"
 
 # (nombre, celular, ciudad, origen, etapa a la que llega, dias atras, motivo si se perdio)
 INTERESADOS = [
-    ("Marta Lucía Ospina", "3112340001", "Bogota", "whatsapp", "nuevo", 2, None),
-    ("Jaime Cárdenas", "3112340002", "Bogota", "formulario", "nuevo", 5, None),
-    ("Paola Jiménez", "3112340003", "Medellin", "referido", "contactado", 9, None),
-    ("Oscar Duarte", "3112340004", "Bogota", "evento", "contactado", 16, None),
-    ("Natalia Ruiz", "3112340005", "Bogota", "campana", "contactado", 23, None),
-    ("Mauricio Peña", "3112340006", "Medellin", "whatsapp", "cotizado", 12, None),
-    ("Lina Marcela Rojas", "3112340007", "Bogota", "referido", "cotizado", 30, None),
-    ("Esteban Quintero", "3112340008", "Bogota", "formulario", "cotizado", 38, None),
-    ("Daniela Cano", "3112340009", "Medellin", "evento", "en_afiliacion", 20, None),
-    ("Alejandro Torres", "3112340010", "Bogota", "whatsapp", "en_afiliacion", 44, None),
-    ("Mónica Herrera", "3112340011", "Bogota", "campana", "perdido", 35, "Precio"),
-    ("Iván Gaviria", "3112340012", "Medellin", "formulario", "perdido", 50, "Eligió otra opción"),
+    ("Marta Lucía Ospina", "3112340001", "Bogotá", "whatsapp", "nuevo", 2, None),
+    ("Jaime Cárdenas", "3112340002", "Bogotá", "formulario", "nuevo", 5, None),
+    ("Paola Jiménez", "3112340003", "Medellín", "referido", "contactado", 9, None),
+    ("Oscar Duarte", "3112340004", "Bogotá", "evento", "contactado", 16, None),
+    ("Natalia Ruiz", "3112340005", "Bogotá", "campana", "contactado", 23, None),
+    ("Mauricio Peña", "3112340006", "Medellín", "whatsapp", "cotizado", 12, None),
+    ("Lina Marcela Rojas", "3112340007", "Bogotá", "referido", "cotizado", 30, None),
+    ("Esteban Quintero", "3112340008", "Bogotá", "formulario", "cotizado", 38, None),
+    ("Daniela Cano", "3112340009", "Medellín", "evento", "en_afiliacion", 20, None),
+    ("Alejandro Torres", "3112340010", "Bogotá", "whatsapp", "en_afiliacion", 44, None),
+    ("Mónica Herrera", "3112340011", "Bogotá", "campana", "perdido", 35, "Precio"),
+    ("Iván Gaviria", "3112340012", "Medellín", "formulario", "perdido", 50, "Eligió otra opción"),
 ]
 ORDEN_EMBUDO = ["contactado", "cotizado", "en_afiliacion"]
 
@@ -995,13 +995,13 @@ REMISIONES = [
 def remisiones(c: Cliente, motor: Any, hoy: date) -> None:
     """Remisiones a la clinica aliada de Bogota: atendidas y reportadas por la clinica, una
     anulada, una que vencio sin usarse y una por usar."""
-    clinica = next((x for x in c.get("/aliadas") if x["ciudad"] == "Bogota"), None)
+    clinica = next((x for x in c.get("/aliadas") if x["ciudad"] == "Bogotá"), None)
     if clinica is None:
         return
     aliada = Cliente("aliada@timu.co", CLAVE_EQUIPO)
     pares = [
         (f, m)
-        for f, m in candidatas(c, "Bogota")
+        for f, m in candidatas(c, "Bogotá")
         # Afiliada desde antes de la remision mas antigua.
         if f["afiliada_desde"] <= hoy - timedelta(days=max(d for _, d, _ in REMISIONES))
         and c.get(
@@ -1058,7 +1058,7 @@ VIRTUALES = [
 def clinica_virtual(c: Cliente, medico: Cliente, motor: Any, hoy: date) -> None:
     """Orientaciones virtuales ya respondidas y cerradas por la medica."""
     antigua = hoy - timedelta(days=max(d for _, d in VIRTUALES))
-    pares = [(f, m) for f, m in candidatas(c, "Bogota") if f["afiliada_desde"] <= antigua]
+    pares = [(f, m) for f, m in candidatas(c, "Bogotá") if f["afiliada_desde"] <= antigua]
     with motor.begin() as cx:
         for (motivo, dias), (_, mascota) in zip(VIRTUALES, pares[3:], strict=False):
             solicitud = c.post(
@@ -1120,7 +1120,7 @@ def main() -> None:
         print("La operacion ya estaba sembrada: no se hace nada.")
         return
 
-    print("Medico de Medellin")
+    print("Medico de Medellín")
     usuarios = {u["email"]: u for u in c.get("/auth/usuarios", limit=200)["items"]}
     email, nombre = MEDICO_MEDELLIN
     if email not in usuarios:
@@ -1130,8 +1130,8 @@ def main() -> None:
         )
     medico = Cliente("medico@timu.co", CLAVE_EQUIPO)
     medicos = {
-        "Bogota": (medico, usuarios["medico@timu.co"]["id"]),
-        "Medellin": (Cliente(email, CLAVE_EQUIPO), usuarios[email]["id"]),
+        "Bogotá": (medico, usuarios["medico@timu.co"]["id"]),
+        "Medellín": (Cliente(email, CLAVE_EQUIPO), usuarios[email]["id"]),
     }
 
     print("Familias, contratos y pagos")

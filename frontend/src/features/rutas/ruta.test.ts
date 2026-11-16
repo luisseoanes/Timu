@@ -44,7 +44,7 @@ function ruta(paradas: ParadaRead[], extra: Partial<RutaRead> = {}): RutaRead {
   return {
     id: 'r1',
     fecha: '2026-11-12',
-    ciudad: 'Medellin',
+    ciudad: 'Medellín',
     responsable_id: 'm1',
     estado: 'en_curso',
     distancia_km: 18.4,
@@ -124,16 +124,16 @@ describe('a quién y dónde', () => {
   })
 
   it('lleva la navegación a las coordenadas que usó el optimizador', () => {
-    expect(comoLlegar(parada(1, 'pendiente'), 'Medellin')).toBe('https://www.google.com/maps/dir/?api=1&destination=4.7%2C-74.05')
+    expect(comoLlegar(parada(1, 'pendiente'), 'Medellín')).toBe('https://www.google.com/maps/dir/?api=1&destination=4.7%2C-74.05')
   })
 
   it('sin coordenadas, a la dirección escrita con su ciudad', () => {
     const sinCoordenadas = parada(1, 'pendiente', { latitud: null, longitud: null })
-    expect(new URL(comoLlegar(sinCoordenadas, 'Medellin')).searchParams.get('destination')).toBe(
-      'Cra 43A # 7 sur-170, El Poblado, Medellin',
+    expect(new URL(comoLlegar(sinCoordenadas, 'Medellín')).searchParams.get('destination')).toBe(
+      'Cra 43A # 7 sur-170, El Poblado, Medellín',
     )
     const sinBarrio = { ...sinCoordenadas, familia: { ...sinCoordenadas.familia, barrio: null } }
-    expect(new URL(comoLlegar(sinBarrio, 'Medellin')).searchParams.get('destination')).toBe('Cra 43A # 7 sur-170, Medellin')
+    expect(new URL(comoLlegar(sinBarrio, 'Medellín')).searchParams.get('destination')).toBe('Cra 43A # 7 sur-170, Medellín')
   })
 
   it('aparta el número de casa para que no se parta entre dos líneas', () => {

@@ -36,7 +36,7 @@ async def base(db):
         )
     )
     cali, _ = await fabricas.afiliada(db, hoy(), telefono="+573001000001")
-    bogota, _ = await fabricas.afiliada(db, hoy(), ciudad="Bogota", telefono="+573001000002")
+    bogota, _ = await fabricas.afiliada(db, hoy(), ciudad="Bogotá", telefono="+573001000002")
     bogota.mascotas[0].especie = "felino"
     morosa, contrato = await fabricas.afiliada(
         db, hoy() - timedelta(days=40), telefono="+573001000003"
@@ -62,7 +62,7 @@ async def test_filtros_combinables(db, base):
     assert await contar(especies=["felino"]) == 1
     assert await contar(dias_mora_min=5) == 1
     assert await contar(ciudades=["Cali"], dias_mora_min=5) == 1
-    assert await contar(ciudades=["Bogota"], dias_mora_min=5) == 0
+    assert await contar(ciudades=["Bogotá"], dias_mora_min=5) == 0
     assert await contar(sin_servicio_dias=30) == 3
 
 

@@ -25,7 +25,7 @@ const servicio = (cambios: Partial<ServicioListado>): ServicioListado => ({
   tipo_codigo: 'consulta_domiciliaria',
   tipo: 'domiciliario',
   estado: 'agendado',
-  ciudad: 'Bogota',
+  ciudad: 'Bogotá',
   programado_para: '2026-10-26T14:30:00Z',
   termina_en: null,
   requiere_autorizacion: false,
@@ -55,7 +55,7 @@ const pendiente = (cambios: Partial<PendienteRead>): PendienteRead => ({
 
 const FRANJA: FranjaRead = {
   id: 'fr1',
-  ciudad: 'Bogota',
+  ciudad: 'Bogotá',
   modalidad: 'domiciliario',
   dia_semana: 2,
   hora_inicio: '08:00:00',
@@ -102,13 +102,13 @@ describe('listado de servicios', () => {
     const user = userEvent.setup()
     renderizar(<ServiciosPage />)
     await screen.findByText(/No hay servicios agendados desde hoy/)
-    await user.selectOptions(screen.getByLabelText('Ciudad'), 'Bogota')
+    await user.selectOptions(screen.getByLabelText('Ciudad'), 'Bogotá')
     const hasta = screen.getByLabelText('Hasta')
     await user.clear(hasta)
     await user.type(hasta, '2026-12-31')
     await waitFor(() => {
       const ultima = consultas.at(-1)!
-      expect(ultima.get('ciudad')).toBe('Bogota')
+      expect(ultima.get('ciudad')).toBe('Bogotá')
       expect(ultima.get('hasta')).toBe('2026-12-31')
       expect(ultima.get('orden')).toBe('programado_para')
     })
@@ -341,8 +341,8 @@ describe('franjas de agenda', () => {
     const user = userEvent.setup()
     renderizar(<ServiciosPage />)
     await user.click(await screen.findByRole('tab', { name: 'Franjas de agenda' }))
-    await user.selectOptions(await screen.findByLabelText('Ciudad de las franjas'), 'Bogota')
-    await waitFor(() => expect(ciudades).toContain('Bogota'))
+    await user.selectOptions(await screen.findByLabelText('Ciudad de las franjas'), 'Bogotá')
+    await waitFor(() => expect(ciudades).toContain('Bogotá'))
   })
 
   it('crea una franja nueva con todos sus datos', async () => {
@@ -356,7 +356,7 @@ describe('franjas de agenda', () => {
     const user = await abrirFranjas()
     await user.click(screen.getByRole('button', { name: /nueva franja/i }))
     const modal = await screen.findByRole('dialog')
-    await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogota')
+    await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogotá')
     await user.selectOptions(within(modal).getByLabelText('Modalidad'), 'preventivo')
     await user.selectOptions(within(modal).getByLabelText('Día'), 'Viernes')
     const capacidad = within(modal).getByLabelText('Capacidad (servicios simultáneos)')
@@ -365,7 +365,7 @@ describe('franjas de agenda', () => {
     await user.click(within(modal).getByRole('button', { name: 'Guardar franja' }))
     await waitFor(() =>
       expect(enviado).toEqual({
-        ciudad: 'Bogota',
+        ciudad: 'Bogotá',
         modalidad: 'preventivo',
         dia_semana: 4,
         hora_inicio: '08:00',
@@ -385,7 +385,7 @@ describe('franjas de agenda', () => {
     const user = await abrirFranjas()
     await user.click(screen.getByRole('button', { name: /nueva franja/i }))
     const modal = await screen.findByRole('dialog')
-    await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogota')
+    await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogotá')
     await user.click(within(modal).getByRole('button', { name: 'Guardar franja' }))
     expect(await within(modal).findByRole('alert')).toHaveTextContent('La franja se cruza con otra existente')
   })
@@ -415,7 +415,7 @@ describe('franjas de agenda', () => {
     await user.click(screen.getByRole('button', { name: 'Bloquear un día' }))
     const modal = await screen.findByRole('dialog')
     await user.type(within(modal).getByLabelText('Fecha'), '2099-12-25')
-    await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogota')
+    await user.selectOptions(within(modal).getByLabelText('Ciudad'), 'Bogotá')
     await user.selectOptions(within(modal).getByLabelText('Modalidad'), 'virtual')
     await user.type(within(modal).getByLabelText('Motivo'), 'Capacitación')
     await user.click(within(modal).getByRole('button', { name: 'Bloquear' }))

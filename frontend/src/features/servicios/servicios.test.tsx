@@ -20,7 +20,7 @@ const SERVICIO: ServicioRead = {
   tipo_codigo: 'consulta_domiciliaria',
   tipo: 'domiciliario',
   estado: 'agendado',
-  ciudad: 'Bogota',
+  ciudad: 'Bogotá',
   programado_para: '2026-10-26T14:30:00Z',
   termina_en: '2026-10-26T15:15:00Z',
   requiere_autorizacion: false,
@@ -118,7 +118,7 @@ describe('ServiciosPage', () => {
     server.use(
       http.get(`${API}/agenda/franjas`, () =>
         HttpResponse.json([
-          { id: 'f1', ciudad: 'Bogota', modalidad: 'domiciliario', dia_semana: 0, hora_inicio: '08:00:00', hora_fin: '12:00:00', capacidad: 2, activa: true },
+          { id: 'f1', ciudad: 'Bogotá', modalidad: 'domiciliario', dia_semana: 0, hora_inicio: '08:00:00', hora_fin: '12:00:00', capacidad: 2, activa: true },
         ]),
       ),
     )

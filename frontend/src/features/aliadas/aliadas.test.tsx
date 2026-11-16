@@ -12,7 +12,7 @@ import type { ClinicaRead, RemisionRead } from '@/types'
 
 const API = '*/api/v1'
 
-const CLINICA: ClinicaRead = { id: 'cl1', nombre: 'Clínica Norte', ciudad: 'Bogota', activa: true, nit: '900123', telefono: '6011234' }
+const CLINICA: ClinicaRead = { id: 'cl1', nombre: 'Clínica Norte', ciudad: 'Bogotá', activa: true, nit: '900123', telefono: '6011234' }
 
 const REMISION: RemisionRead = {
   id: 'r1',

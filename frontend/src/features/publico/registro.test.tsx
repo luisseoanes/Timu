@@ -46,7 +46,7 @@ const COTIZACION = [opcion('mensual', 1, '91500.00'), opcion('trimestral', 3, '2
 
 const REGISTRO_PAGADO = {
   estado: 'pagada',
-  ciudad: 'Medellin',
+  ciudad: 'Medellín',
   periodicidad: 'mensual',
   valor_inicial: '91500.00',
   contacto_nombre: 'Ana Ruiz',
@@ -74,7 +74,7 @@ describe('Registro en línea', () => {
     const cotizaciones: unknown[] = []
     server.use(
       sinSesion,
-      http.get(`${REGISTRO}/ciudades`, () => HttpResponse.json(['Bogota', 'Medellin'])),
+      http.get(`${REGISTRO}/ciudades`, () => HttpResponse.json(['Bogotá', 'Medellín'])),
       http.get(`${REGISTRO}/planes`, () => HttpResponse.json(PLANES)),
       http.post(`${REGISTRO}/cotizacion`, async ({ request }) => {
         cotizaciones.push(await request.json())
@@ -86,8 +86,8 @@ describe('Registro en línea', () => {
 
   async function hastaLosPeludos(user: ReturnType<typeof userEvent.setup>) {
     renderizar(<RegistroPage />, { ruta: '/afiliacion' })
-    await screen.findByRole('option', { name: 'Medellin' })
-    await user.selectOptions(screen.getByLabelText('¿En qué ciudad vives?'), 'Medellin')
+    await screen.findByRole('option', { name: 'Medellín' })
+    await user.selectOptions(screen.getByLabelText('¿En qué ciudad vives?'), 'Medellín')
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await user.click(await screen.findByRole('button', { name: 'Confirmo que solo voy a afiliar perros o gatos' }))
   }
@@ -121,7 +121,7 @@ describe('Registro en línea', () => {
     await user.selectOptions(screen.getByLabelText(/Max · Perro/), 'p-perro')
     expect(await screen.findByText(/cada uno paga la tarifa de 2/)).toBeInTheDocument()
     expect(cotizaciones.at(-1)).toEqual({
-      ciudad: 'Medellin',
+      ciudad: 'Medellín',
       peludos: [
         { especie: 'felino', plan_id: 'p-gato' },
         { especie: 'canino', plan_id: 'p-perro' },
@@ -140,7 +140,7 @@ describe('Registro en línea', () => {
 
     await waitFor(() => expect(asignar).toHaveBeenCalledWith('https://checkout.wompi.co/p/?reference=AFI-1'))
     expect(enviado).toEqual({
-      ciudad: 'Medellin',
+      ciudad: 'Medellín',
       peludos: [
         { nombre: 'Luna', especie: 'felino', plan_id: 'p-gato' },
         { nombre: 'Max', especie: 'canino', plan_id: 'p-perro' },
@@ -158,9 +158,9 @@ describe('Registro en línea', () => {
     catalogo()
     const user = userEvent.setup()
     renderizar(<RegistroPage />, { ruta: '/afiliacion' })
-    await screen.findByRole('option', { name: 'Medellin' })
+    await screen.findByRole('option', { name: 'Medellín' })
     await user.selectOptions(screen.getByLabelText('¿En qué ciudad vives?'), 'otra')
-    expect(screen.getByRole('status')).toHaveTextContent('Por ahora solo atendemos en Bogota y Medellin')
+    expect(screen.getByRole('status')).toHaveTextContent('Por ahora solo atendemos en Bogotá y Medellín')
     expect(screen.getByRole('button', { name: 'Continuar' })).toBeDisabled()
   })
 
@@ -342,7 +342,7 @@ describe('Formulario posterior al pago', () => {
     abrir()
     expect(await screen.findByLabelText('Nombre completo')).toHaveValue('Ana Ruiz')
     expect(screen.getByLabelText('Correo')).toHaveValue('ana@correo.co')
-    expect(screen.getByLabelText('Ciudad')).toHaveValue('Medellin')
+    expect(screen.getByLabelText('Ciudad')).toHaveValue('Medellín')
     expect(window.sessionStorage.getItem('timu-registro')).toBe(TOKEN)
     await llenar(user)
     await user.click(screen.getByRole('button', { name: /agregar contacto/i }))
