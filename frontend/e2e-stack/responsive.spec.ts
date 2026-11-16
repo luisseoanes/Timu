@@ -11,7 +11,7 @@ import { sesion, type Perfil } from './sesiones'
  * Recorrido responsive y de contraste (R0-QAA-02, docs/hoja-de-ruta-rediseno.md).
  *
  * Abre cada ruta de `src/App.tsx` con el perfil que la usa, contra el stack real y los datos
- * de `scripts.datos_demo`, y la mide a 375, 768 y 1280 px. Falla si el documento desborda en
+ * de `scripts.datos_demo`, y la mide a 375, 768, 900 y 1280 px. Falla si el documento desborda en
  * horizontal (una tabla dentro de su propio contenedor con desplazamiento sí se permite) o si
  * axe-core encuentra texto con contraste insuficiente (WCAG 2.2 AA, 1.4.3).
  *
@@ -29,7 +29,7 @@ import { sesion, type Perfil } from './sesiones'
  * falla, así que la lista solo puede encogerse. Debe quedar vacía en R4-CIE-01.
  */
 
-const ANCHOS = [375, 768, 1280] as const
+const ANCHOS = [375, 768, 900, 1280] as const
 const ALTO = 900
 
 type Fallo = 'desborde' | 'contraste'

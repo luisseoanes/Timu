@@ -230,7 +230,7 @@ qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son 
 | `DEU-14` | `datos_demo` sin una familia de portal al día | Siembra gruesa: uno o dos meses de operación que recorran todos los casos y todas las rutas | ahora | Pendiente |
 | `DEU-15` | Sin plantilla de consulta en `datos_demo` | Dentro de la siembra gruesa | ahora | Pendiente |
 | `DEU-16` | La prueba de la foto deja un PNG de 1×1 en la mascota de Ana | Que no ensucie los datos | ahora | Pendiente |
-| `DEU-17` | El barrido responsive no mide 900 px | Se añade el ancho | ahora (adelanta parte de `R4-CIE-01`) | Pendiente |
+| `DEU-17` | El barrido responsive no mide 900 px | Se añade el ancho | ahora (adelanta parte de `R4-CIE-01`) | Hecho (2026-11-16): ninguna ruta falla a 900 px |
 | `DEU-18` | El espaciado de la etiqueta en mayúsculas no tiene token | Un token y una sola medida | ahora | Hecho (2026-11-15): `--tracking-etiqueta`, y la guarda de tokens lo exige |
 | `DEU-19` | Radios escritos a mano | Pasan a tokens | ahora | Hecho (2026-11-15): `--r-fino` y `--r-barra`, y la guarda de tokens rechaza un radio a mano |
 | `DEU-20` | Cortes a 899 y a 900 px mezclados | Todo a 899 | ahora | Hecho (2026-11-15) |
@@ -354,7 +354,7 @@ El «techo» aceptado, por superficie (los números son los de la lista):
   con el usuario, los pasos se corrigen mientras el servicio está en atención y quedan fijos al
   completarlo: la matriz de RLS da `U` en `servicio_pasos` a quien los inserta (migración `0041`),
   con la prueba que reproducía el 500.
-- **El barrido responsive no mide 900 px**: el revisor lo propuso, pero medir un ancho más metería
+- ~~**El barrido responsive no mide 900 px**~~ Resuelto el 2026-11-16 (`DEU-17`).: el revisor lo propuso, pero medir un ancho más metería
   en `PENDIENTES` fallos de módulos sin rediseñar, y esa lista solo puede encoger. Esta superficie
   se comprobó a 900 en las capturas del revisor. Se puede añadir en `R4-CIE-01`, cuando
   `PENDIENTES` quede vacía.

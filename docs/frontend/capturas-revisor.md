@@ -12,8 +12,8 @@ lo aprendido al cerrar Familias, Rutas, Clínica, el portal, el Inicio y Servici
   nombre `perfil-estado-ancho.png` (`operaciones-abierto-1440.png`). Las de Familias están
   sueltas en `.impeccable/review/`.
 - **Los cuatro anchos**: 1440, 1180, 900 y 390 px (alto 900, o 844 a 390), con cada perfil que
-  usa la pantalla. El barrido responsive solo mide 375, 768 y 1280: los 900 de cada superficie
-  se comprueban aquí.
+  usa la pantalla. El barrido responsive mide 375, 768, 900 y 1280 (el de 900 desde el 2026-11-16);
+  aquí se ve además la composición, que el barrido no juzga.
 - **Cada estado que importa**, no solo el reposo: la ficha abierta, cada pestaña, la ventana
   abierta, el error. Al pasárselas al revisor, se le dice cuáles son obligatorias.
 - **Página completa para leer la composición; solo el viewport para probar posición.** Una
