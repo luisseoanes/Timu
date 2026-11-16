@@ -66,6 +66,9 @@ El patrón de un módulo cuyo trabajo es abrir un registro y actuar sobre él.
   pestañas, que abren en «Datos». Dentro de la ficha, las `.tarjeta` de las pestañas pierden
   fondo y relleno.
 - **Por debajo de 900 px** se ve el listado o la ficha, no los dos, con un botón de volver.
+- **Servicios** (`.agenda-servicios`): en escritorio la ficha va fija bajo la barra marina
+  (`--alto-barra`) mientras se recorre el listado y, si es más alta que la ventana, se desplaza
+  por dentro; sin servicio abierto, la ficha vacía es una nota que no reserva alto.
 
 En Familias la acción de crear es «Nueva familia» y la ficha lleva pestañas. En Rutas el listado
 son las rutas del día, cada una con su línea en miniatura, y debajo lo que falta por rutear; la
@@ -137,12 +140,15 @@ condición. Una regla de un evento retirado se lee pero no se edita.
 └───────────────────────────────────────────┘
 ```
 
-La guía y el apartado son dos paneles sobre el lienzo, no una ficha blanca. Por debajo de
+La guía y el apartado son dos paneles sobre el lienzo, no una ficha blanca. La cabecera lleva las
+mismas piezas que la de una consulta firmada: el título, el estado con su distintivo y la
+modalidad. El campo de cada apartado no pasa de unos 75 caracteres en escritorio. Por debajo de
 900 px la cabecera dice a quién se atiende, porque la historia de la izquierda no está.
 
 ## La ruta propia — `.rutas-propia` (Rutas)
 
-Quien solo sale a campo (el médico) no ve listado: abre en su ruta del día.
+Quien solo sale a campo (el médico) no ve listado: abre en su ruta del día, en una columna de
+hasta 760 px centrada en escritorio.
 
 ```
 ┌─ ruta propia (hasta 760 px) ──────────────┐
@@ -304,8 +310,9 @@ Dos pestañas: «Por hacer» (la bandeja) y «Carnet por mascota». La bandeja v
 «Por autorizar», «Por agendar» (los dos, lo que vence en el próximo mes), «Agendados» y «Todos», con
 su recuento. Una sola tabla con un grupo (`tbody`) por familia, así la cabecera de columnas sale una
 vez y las columnas se alinean: el grupo abre con el titular (enlace a la familia), la ciudad y cuántos
-preventivos tiene y, si falta autorizar, «Escribir» (WhatsApp) y «Registrar autorización (N)», que
-pide de una vez lo de la familia en una ventana con todo marcado. Cada fila: «Mascota · esquema», la
+preventivos tiene, «Escribir» (WhatsApp, en todos los grupos: sirve también para avisar de la visita)
+y, si falta autorizar, «Registrar autorización (N)», que pide de una vez lo de la familia en una
+ventana con todo marcado. La columna del preventivo ocupa el 36 % a partir de 640 px. Cada fila: «Mascota · esquema», la
 dosis, cuándo toca (lo vencido con icono y la palabra), el estado solo en «Agendados» y «Todos» (en las
 otras repetiría la vista), «Agendar visita» si toca agendar y un menú con «Registrar aplicación sin
 visita» (médico y administración, si está autorizado) y «Cancelar preventivo». Apilada, el menú va
@@ -369,7 +376,8 @@ con el color de enlace (`.btn-plano.btn-accion`).
 - **Citas**: «Agendar una visita» es el verde solo si el plan lo permite; si no, un aviso
   dice por qué y lleva a pagos. Pestañas Próximas y Pasadas; cada cita con su día y hora
   (`.cita-cuando`), qué y para quién, su estado dicho a la familia (`citas.ts`) y sus acciones.
-- **Pagos**: el saldo (`.portal-saldo`) con el único verde por todo lo pendiente y, si el
+- **Pagos**: el plan de la cuenta con el cuadrado de su color (`MarcasPlan`, el mismo del
+  inicio), el saldo (`.portal-saldo`) con el único verde por todo lo pendiente y, si el
   plan está en pausa, qué cambia al pagar; las cuotas por pagar por su mes (`pagos.ts`), y el
   historial. Al volver de la pasarela, un aviso tintado (`.portal-aviso-<tono>`) con el
   estado de ese pago.

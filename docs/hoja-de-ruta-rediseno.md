@@ -241,7 +241,7 @@ qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son 
 | `DEU-25` | Los campos con icono del acceso miden 48 px | 48 px es la norma del acceso | ahora (documentación) | Hecho (2026-11-15): `DESIGN.md` lo recoge en Inputs |
 | `DEU-26` | Pasarela sin recuento ni vista en la URL, casos de la IA en JSON, `style` en Reportes | Se arreglan | ahora | Hecho (2026-11-15): recuentos y vista en la URL, casos en palabras (`esperado_texto`) y sin `style`; de paso, la API rechaza un caso que el evaluador no entiende |
 | `DEU-27` | `.impeccable/design.json` va por detrás de `DESIGN.md` | Se completa en el cierre | `R4-CIE-03` | Pendiente |
-| `DEU-28`–`DEU-70` | El «techo» del revisor en cada superficie | Como lo recomendó Claude: sí a todo salvo 28, 29, 30, 38, 39, 43, 44, 65, 68, 69 y 70 (detalle abajo) | ahora | Pendiente |
+| `DEU-28`–`DEU-70` | El «techo» del revisor en cada superficie | Como lo recomendó Claude: sí a todo salvo 28, 29, 30, 38, 39, 43, 44, 65, 68, 69 y 70 (detalle abajo) | ahora | En curso (2026-11-16): hecho todo salvo 33 (espera la siembra de `DEU-14`) y 67 |
 | `DEU-E` | Lo que decide TIMU | Valor provisional en el código para cada uno, pero **todos siguen pendientes** hasta que TIMU confirme el valor oficial ([pendientes externos](pendientes-externos.md#valores-provisionales)) | — | Pendiente de TIMU |
 
 **Encontrado al cerrar este lote y resuelto el mismo día:** la prueba de Comercial «registra un
@@ -253,20 +253,25 @@ recargaba todo. Ya no se espera, y la prueba lo fija con una recarga que no resp
 Clínica, Tareas y Aliadas siguen esperando la recarga a propósito (evita un parpadeo y no retiene
 ninguna ventana que abra otra cosa); si alguna llega a hacerlo, se cambia igual.
 
-El «techo» aceptado, por superficie (los números son los de la lista):
+El «techo» aceptado, por superficie (los números son los de la lista). Hecho el 2026-11-16 salvo
+lo que se marca como pendiente:
 
-- **Rutas:** 31 etiquetar la hora de «Por rutear» · 32 centrar la columna del médico en
-  escritorio · 33 capturar una ruta con una parada omitida (con la siembra de `DEU-14`).
+- **Rutas:** 31 etiquetar la hora de «Por rutear» («agendado a las …») · 32 centrar la columna
+  del médico en escritorio · **pendiente:** 33 capturar una ruta con una parada omitida (con la
+  siembra de `DEU-14`).
 - **Clínica:** 34 área de texto de unos 75 caracteres en escritorio · 35 unificar la cabecera del
-  borrador y la de la lectura · 36 valores largos de la tabla apilable alineados a la izquierda en
+  borrador y la de la lectura (mismas piezas: título, distintivo del estado y modalidad; el tamaño
+  del título sigue al contexto. Composición elegida sin preguntar: se cambia si el usuario prefiere
+  otra) · 36 valores largos de la tabla apilable alineados a la izquierda en
   el celular.
 - **Portal:** 37 la flecha de las listas como chevron de trazo · 40 el cuadrado del plan en Pagos ·
   41 icono propio para «Atendida».
 - **Servicios:** 42 ficha fija al desplazar · 45 menos blanco en la ficha vacía · 46 foco en
   «Familia» al abrir «Agendar servicio».
-- **Cartera y Preventivos:** 47 franjas de agendar en tres columnas iguales · 48 «Escribir» en
-  todos los grupos · 49 estrechar la columna del preventivo · 50 que el separador no parta el
-  documento y la ciudad en el carnet a 390.
+- **Cartera y Preventivos:** 47 franjas de agendar en tres columnas iguales (solo en la ventana de
+  preventivos: las de «Agendar servicio» dicen el rango y se partirían) · 48 «Escribir» en todos los
+  grupos · 49 estrechar la columna del preventivo · 50 que el separador no parta el documento y la
+  ciudad en el carnet a 390.
 - **Comercial y Campañas:** 51 desvanecido o «mensajes anteriores» en la conversación recortada ·
   52 «Recibido» y «Enviado» con algo más que la palabra, cuerpos a dos líneas · 53 fichas de cifra
   de Encuestas más pequeñas · 54 «Destinatarios en CSV» alineado y oculto en un borrador · 55
@@ -278,7 +283,8 @@ El «techo» aceptado, por superficie (los números son los de la lista):
 - **Administración:** 62 tarifas en 2×2, o en una línea si son iguales · 63 beneficios apilados en
   el celular · 64 la barra del presupuesto junto a «Gastado».
 - **Común:** 66 la tira de pestañas a 390 indica que se desplaza.
-- **Acceso:** 67 la línea se dibuja hasta «Hoy» al cargar, respetando `prefers-reduced-motion`.
+- **Acceso:** **pendiente:** 67 la línea se dibuja hasta «Hoy» al cargar, respetando
+  `prefers-reduced-motion`.
 - **No:** 28 estaciones de 34 px, 29 etiquetas cuadradas y 30 paneles sin radio en Familias (el
   panel es denso y contradicen `DESIGN.md`); 38 estaciones en citas y pagos y 39 la marca de Hoy en
   la cita en camino (son otra composición); 43 la marca de «ahora» en Servicios y 44 las franjas
@@ -290,10 +296,10 @@ El «techo» aceptado, por superficie (los números son los de la lista):
 
 - ~~**En el celular, la línea no se abre en «hoy».**~~ Resuelto el 2026-11-15 (`DEU-13`): en
   vertical, lo vencido se agrupa.
-- **Sugerencias del revisor, opcionales** (el «techo» de la dirección, no defectos): estaciones
+- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes) (el «techo» de la dirección, no defectos): estaciones
   de 34 px con anillo de 6 px como en el boceto (hoy 24 y 4), etiquetas de estado cuadradas en
   lugar de píldoras, y el listado y el detalle como paneles planos a ras en lugar de tarjetas
-  con radio de 12 px. Se deciden con el usuario antes de `R4-CIE-02`.
+  con radio de 12 px.
 
 ### Lo que quedó de Rutas tras su cierre
 
@@ -302,17 +308,15 @@ El «techo» aceptado, por superficie (los números son los de la lista):
   ([pendientes externos](pendientes-externos.md#mapa-de-las-rutas-requisito-67-r2-pan-06)).
 - **Registrar los pasos de la atención desde la propia parada**: hoy «Registrar la atención»
   lleva a la ficha del servicio. Se decide al rediseñar ese detalle en `R2-PAN-05`.
-- **Sugerencias del revisor, opcionales**: etiquetar la hora de «Por rutear» («programado 4:19 a.
+- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes): etiquetar la hora de «Por rutear» («programado 4:19 a.
   m.»), centrar la columna del médico en escritorio y capturar una ruta con una parada omitida.
-  Se deciden con el usuario antes de `R4-CIE-02`.
 
 ### Lo que quedó de Clínica tras su cierre
 
-- **Sugerencias del revisor, opcionales**: limitar el área de texto de la consulta a unos 75
+- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes): limitar el área de texto de la consulta a unos 75
   caracteres en escritorio, unificar la cabecera del borrador y la de la lectura, alinear a la
   izquierda los valores largos de la tabla apilable en el celular (es del componente común) y
-  sembrar una plantilla de consulta en `datos_demo`. Se deciden con el usuario antes de
-  `R4-CIE-02`.
+  sembrar una plantilla de consulta en `datos_demo`.
 
 ### Lo que quedó del portal tras cerrar `R3-POR-01` y `R3-POR-02`
 
@@ -326,12 +330,11 @@ El «techo» aceptado, por superficie (los números son los de la lista):
 - **La prueba de la foto** (`e2e-stack/recorridos.spec.ts`) sube un PNG de 1×1 a la primera
   mascota de Ana, que el portal enseña después como su foto. No rompe nada, pero ensucia las
   capturas: hay que quitarla antes de capturar.
-- **Sugerencias del revisor, opcionales**: la flecha de las listas es un triángulo relleno,
+- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes): la flecha de las listas es un triángulo relleno,
   y el resto del sistema usa chevrones de trazo. En citas y pagos, el «techo» de la dirección:
   usar las estaciones de la línea (la vencida en las cuotas vencidas, la próxima con halo en la
   próxima cita), la marca de «Hoy» en la cita en camino y el color del plan en Pagos. Y
-  «Confirmada» y «Atendida» comparten tono (en pestañas distintas). Se deciden con el usuario
-  antes de `R4-CIE-02`.
+  «Confirmada» y «Atendida» comparten tono (en pestañas distintas).
 
 ### Lo que quedó del Inicio tras cerrar `R2-PAN-04`
 
@@ -358,12 +361,11 @@ El «techo» aceptado, por superficie (los números son los de la lista):
   en `PENDIENTES` fallos de módulos sin rediseñar, y esa lista solo puede encoger. Esta superficie
   se comprobó a 900 en las capturas del revisor. Se puede añadir en `R4-CIE-01`, cuando
   `PENDIENTES` quede vacía.
-- **Sugerencias del revisor, opcionales** (el «techo», no defectos): una ficha fija al desplazar
+- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes) (el «techo», no defectos): una ficha fija al desplazar
   (hoy se trae a la vista al abrirla y la fila pulsada queda fuera del listado visible), una marca
   de «ahora» dentro del grupo de Hoy y un tratamiento propio del servicio atrasado, las franjas
   como rejilla semanal por ciudad y modalidad en lugar de 24 filas, menos blanco en la ficha vacía
-  y el foco en «Familia» al abrir «Agendar servicio». Se deciden con el usuario antes de
-  `R4-CIE-02`.
+  y el foco en «Familia» al abrir «Agendar servicio».
 
 ### Lo que quedó de Cartera y preventivos tras cerrar `R2-PAN-08`
 
@@ -382,21 +384,20 @@ El «techo» aceptado, por superficie (los números son los de la lista):
 - **«Por autorizar» con el icono de la llave solo en la bandeja de preventivos**: el revisor pidió
   que no compartiera el triángulo de lo vencido. Llevarlo al mapeo de `lib/estados.ts` cambiaría el
   distintivo en Servicios también: se decide con el usuario.
-- **Sugerencias del revisor, opcionales** (el «techo»): las franjas de la ventana de agendar en una
+- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes) (el «techo»): las franjas de la ventana de agendar en una
   rejilla de tres columnas iguales, «Escribir» en todos los grupos de la bandeja (también sirve para
   avisar de la visita por agendar), estrechar la columna del preventivo para que «Toca» no quede en
   medio de un vacío a 1440, y en la tarjeta de familia del carnet a 390 el separador parte
-  «1020304050 · Bogota». Se deciden con el usuario antes de `R4-CIE-02`.
+  «1020304050 · Bogota».
 
 ### Lo que quedó de Comercial y campañas tras cerrar `R2-PAN-09`
 
-- **Sugerencias del revisor, opcionales** (el «techo»): un desvanecido o «mensajes anteriores» en lo
+- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes) (el «techo»): un desvanecido o «mensajes anteriores» en lo
   alto de la conversación recortada; distinguir «Recibido» y «Enviado» en Mensajes con algo más que
   la palabra, y recortar los cuerpos largos a dos líneas en peso normal; las fichas de cifra de
   Encuestas, grandes para dos cifras vacías; «Destinatarios en CSV» alineado con el contenido y
   oculto en un borrador que nunca salió; «Interesados 6» repite «Abiertos 6»; «A quién le llega» en
-  una columna estrecha a 1440; y un vacío de Segmentos que oriente. Se deciden con el usuario antes
-  de `R4-CIE-02`.
+  una columna estrecha a 1440; y un vacío de Segmentos que oriente.
 - **La conversación de Comercial es la de WhatsApp**: el embudo no muestra correos ni llamadas,
   porque no se registran. Si TIMU los quiere en la ficha, hay que guardarlos primero.
 - ~~**«Plantilla en Meta» enseña el código**~~ Resuelto el 2026-11-16 (`DEU-10`). con que se registra la plantilla (`recordatorio_renovacion`):
@@ -404,14 +405,14 @@ El «techo» aceptado, por superficie (los números son los de la lista):
 
 ### Lo que quedó de Aliadas y administración tras cerrar `R2-PAN-10`
 
-- **Sugerencias del revisor, opcionales** (el «techo»). En Aliadas: las etiquetas de la liquidación
+- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes) (el «techo»). En Aliadas: las etiquetas de la liquidación
   apilada se parten en dos líneas; la ficha de una clínica no lleva a sus remisiones atendidas o
   anuladas (la bandeja no filtra por clínica); el total de la liquidación iría mejor en un `th`; y en
   Utilizadas y Anuladas queda la columna de acciones vacía. En Administración: las tarifas de un plan
   en 2×2, y en una línea cuando son iguales; los beneficios sin apilar en el celular; la barra de
   presupuesto de la IA junto a «Gastado»; y «Desactivar» en un plano neutro que solo se vuelva rojo
   al confirmar. Común a todo el panel: la tira de pestañas a 390 corta la última sin indicar que se
-  desplaza. Se deciden con el usuario antes de `R4-CIE-02`.
+  desplaza.
 - **Lo que el documentador vio fuera del sistema** y no se canonizó: los eventos de la pasarela son una
   bandeja sin recuento en sus vistas (la API no los cuenta) y con la vista fuera de la URL; los casos de
   prueba de la IA enseñan lo esperado en JSON; y el formulario de reportes lleva un `style` en línea en su
@@ -439,12 +440,11 @@ El «techo» aceptado, por superficie (los números son los de la lista):
   acceso miden 48 px (`.campo-adorno .input`, anterior a esta unidad) y no los 40/44 del resto;
   `.publica-tarjeta` lleva sombra estando quieta (es de las páginas públicas sin rediseñar, se
   corrige en su unidad); y el segmento activo del selector pide `--sombra-2`, que vale `none`.
-- **Sugerencias del revisor, opcionales** (el «techo»): que el tramo de la línea se dibuje hasta
+- **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes) (el «techo»): que el tramo de la línea se dibuje hasta
   «Hoy» al cargar (respetando `prefers-reduced-motion`), que en la activación la estación
   «Afiliación» se encienda al guardar la contraseña antes de llevar al portal, y anclar a 1440 el
   título del formulario a la altura de la frase del panel. A 900 px las estaciones de la línea no
-  quedan a la misma distancia (sus columnas toman el ancho del rótulo). Se deciden con el usuario
-  antes de `R4-CIE-02`.
+  quedan a la misma distancia (sus columnas toman el ancho del rótulo).
 
 ### Orden de lo que sigue
 

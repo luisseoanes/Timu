@@ -92,8 +92,10 @@ desplace ella y no la página.
 la ventana: junto al listado, la ficha es estrecha también en un escritorio), cada fila se
 vuelve un bloque: la primera celda es el título y el resto, pares etiqueta y valor. Para eso
 cada celda lleva `data-etiqueta` con el texto de su cabecera, y la de acciones va en
-`td.tabla-acciones` (sin etiqueta), que se pasa a una fila de botones debajo. Las tablas de
-los módulos aún sin rediseñar la adoptan en su unidad.
+`td.tabla-acciones` (sin etiqueta), que se pasa a una fila de botones debajo. Apilado, el valor va
+a la derecha de su etiqueta; si es largo y se parte, sus líneas empiezan a la izquierda. Una
+columna de acciones que en una vista siempre estaría vacía no se pinta (Remisiones utilizadas y
+anuladas). Las tablas de los módulos aún sin rediseñar la adoptan en su unidad.
 
 ## Ventanas — `Modal`
 
@@ -213,7 +215,9 @@ una sola fila que se pliega en orden, alineada a la izquierda, con la principal 
 
 Sobre Radix Tabs (`src/components/Pestanas.tsx`): flechas, roles `tab`/`tabpanel` y foco los
 pone Radix. Admite modo controlado (`valor`, `onCambio`) para que otra parte de la pantalla
-abra una pestaña. En pantallas estrechas se desplazan en una sola fila. Son secciones de un
+abra una pestaña. En pantallas estrechas se desplazan en una sola fila: si no caben, el borde por
+el que sigue la tira se desvanece (`data-desborda` en `.pestanas-lista`, «derecha», «izquierda» o
+«ambos»), y la pestaña activa se trae a la vista al montarse y al cambiar. Son secciones de un
 registro, no navegación entre módulos.
 
 ## Historial — `.historial`
@@ -247,7 +251,8 @@ ser otra columna.
 ## Indicadores — `.indicadores` / `.indicador`
 
 Tarjetas de cifra: título en versalitas, valor grande (`--t-cifra`, números tabulares) y una
-línea de detalle. La fórmula va en `title`.
+línea de detalle. La fórmula va en `title`. Con dos o tres cifras sueltas, `.indicadores-pocos`
+las deja a su medida (hasta 260 px) en vez de estirarlas a todo el ancho.
 
 ## Anillo de progreso — `AnilloProgreso` y barras — `.barras`
 
@@ -269,7 +274,10 @@ accesible sea «En mora 1»), `.bandeja-filtro` para el buscador y las listas, y
 `features/comercial/FichaInteresado.tsx`: `LineaEtapas` (`ol.comercial-etapas`) pinta el embudo
 con la geometría de la guía de la consulta (`consulta-estacion`), sin botones; la actual lleva
 `aria-current="step"`. La conversación (`.comercial-conversacion`, `.comercial-mensaje` con
-`data-direccion`) se abre en lo último y se refresca cada 15 s mientras la ficha está abierta.
+`data-direccion`) se abre en lo último y se refresca cada 15 s mientras la ficha está abierta;
+con mensajes anteriores fuera de la vista lleva `data-anteriores` y lo alto se desvanece en el
+fondo de la caja. En la bandeja de Mensajes de Campañas, la dirección va con palabra e icono
+(`entrante` en el azul de info, `saliente`).
 Los teléfonos se escriben con `telefono()` de `lib/formato.ts` («+57 300 444 5588»).
 
 ## Acciones de un preventivo — `AccionesPreventivo`
@@ -290,12 +298,16 @@ de Cartera, que le pasa el titular para el título y la cuota más antigua.
 
 `features/familias/SelectorFamilia.tsx`, exportado desde `@/features/familias`: widget del
 dominio (consulta familias), así que no sube a `src/components/`. Buscar y elegir una familia
-dentro de un formulario (servicios, tareas, remisiones, orientación virtual).
+dentro de un formulario (servicios, tareas, remisiones, orientación virtual). Con `enfocar`, la
+búsqueda toma el foco al montarse (lo usa «Agendar servicio», donde la familia es lo primero que se
+llena). La familia elegida dice documento y ciudad en una sola línea (`.seleccion-dato`).
 
 ## Franjas y opciones — `.cupo`
 
 Chips con `aria-pressed` para elegir un horario disponible, un estado o una ciudad en un
-filtro. Los agotados quedan deshabilitados.
+filtro. Los agotados quedan deshabilitados. `.cupos-rejilla` los pone en tres columnas iguales,
+solo cuando cada franja es una hora suelta (la ventana de agendar un preventivo): las franjas que
+dicen el rango («10:00 a. m. – 11:00 a. m.») se partirían.
 
 ## Línea de tiempo — `.linea-tiempo`
 
