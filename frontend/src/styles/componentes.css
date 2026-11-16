@@ -584,4 +584,9 @@ a.acceso { text-decoration: none; }
 @media (max-width: 600px) {
   .pestanas-lista { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
   .pestana { white-space: nowrap; }
+  /* La tira que no cabe se desvanece por el lado en que sigue: la última pestaña cortada se
+     lee como «hay más», no como un rótulo roto. La máscara usa la opacidad, no el color. */
+  .pestanas-lista[data-desborda="derecha"] { mask-image: linear-gradient(to right, var(--texto) calc(100% - 40px), transparent); }
+  .pestanas-lista[data-desborda="izquierda"] { mask-image: linear-gradient(to left, var(--texto) calc(100% - 40px), transparent); }
+  .pestanas-lista[data-desborda="ambos"] { mask-image: linear-gradient(to right, transparent, var(--texto) 40px, var(--texto) calc(100% - 40px), transparent); }
 }

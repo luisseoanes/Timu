@@ -1,5 +1,32 @@
 import * as Tabs from '@radix-ui/react-tabs'
-import type { ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+
+type Desborde = 'derecha' | 'izquierda' | 'ambos' | undefined
+
+/** Por dónde sigue la tira cuando no cabe (en el celular se desplaza en su fila): el borde de
+ * ese lado se desvanece para que se vea que hay más pestañas. */
+function useDesborde() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [desborde, setDesborde] = useState<Desborde>()
+  useLayoutEffect(() => {
+    const lista = ref.current
+    if (!lista || typeof ResizeObserver === 'undefined') return
+    const medir = () => {
+      const izquierda = lista.scrollLeft > 1
+      const derecha = lista.scrollLeft + lista.clientWidth < lista.scrollWidth - 1
+      setDesborde(izquierda && derecha ? 'ambos' : derecha ? 'derecha' : izquierda ? 'izquierda' : undefined)
+    }
+    medir()
+    const observador = new ResizeObserver(medir)
+    observador.observe(lista)
+    lista.addEventListener('scroll', medir, { passive: true })
+    return () => {
+      observador.disconnect()
+      lista.removeEventListener('scroll', medir)
+    }
+  }, [])
+  return [ref, desborde] as const
+}
 
 /**
  * Pestañas sobre Radix Tabs: Radix pone el comportamiento (flechas, roles tab/tabpanel,
@@ -21,9 +48,10 @@ export function Pestanas({
   onCambio?: (valor: string) => void
 }) {
   const controlada = valor !== undefined ? { value: valor, onValueChange: onCambio } : {}
+  const [ref, desborde] = useDesborde()
   return (
     <Tabs.Root defaultValue={inicial ?? pestanas[0]?.valor} {...controlada}>
-      <Tabs.List className="pestanas-lista" aria-label={etiqueta}>
+      <Tabs.List ref={ref} className="pestanas-lista" aria-label={etiqueta} data-desborda={desborde}>
         {pestanas.map((p) => (
           <Tabs.Trigger key={p.valor} value={p.valor} className="pestana">
             {p.titulo}
