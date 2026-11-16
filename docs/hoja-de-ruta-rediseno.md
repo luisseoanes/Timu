@@ -227,9 +227,9 @@ qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son 
 | `DEU-11` | Textos guardados sin tildes (catálogos y reglas sembradas) | Migración de datos que los corrige | ahora | Hecho (2026-11-16): `datos.py` con tildes y migración `0045` para lo sembrado que nadie editó. **Fuera, por decidir:** las ciudades y los departamentos («Bogota», «Medellin»), que son la clave por la que se guardan |
 | `DEU-12` | Comercial no muestra correos ni llamadas | **No**: fuera de alcance | — | No |
 | `DEU-13` | En el celular, la línea de Familias no se abre en «hoy» | Se arregla (es un defecto) | ahora | Hecho (2026-11-15): en vertical, tres o más vencidas van en un grupo rojo con «Ver cada una» |
-| `DEU-14` | `datos_demo` sin una familia de portal al día | Siembra gruesa: uno o dos meses de operación que recorran todos los casos y todas las rutas | ahora | Pendiente |
+| `DEU-14` | `datos_demo` sin una familia de portal al día | Siembra gruesa: uno o dos meses de operación que recorran todos los casos y todas las rutas | ahora | En curso: hecho (2026-11-16) el portal de Jorge Ramírez al día y las coberturas del plegable en los planes; falta la siembra de los dos meses, en un comando aparte que también corre el CI (decidido con el usuario el 2026-11-16: se crea por la API y luego se corren las fechas al pasado) |
 | `DEU-15` | Sin plantilla de consulta en `datos_demo` | Dentro de la siembra gruesa | ahora | Pendiente |
-| `DEU-16` | La prueba de la foto deja un PNG de 1×1 en la mascota de Ana | Que no ensucie los datos | ahora | Pendiente |
+| `DEU-16` | La prueba de la foto deja un PNG de 1×1 en la mascota de Ana | Que no ensucie los datos | ahora | Hecho (2026-11-16): la prueba quita la foto al terminar si la mascota no tenía una |
 | `DEU-17` | El barrido responsive no mide 900 px | Se añade el ancho | ahora (adelanta parte de `R4-CIE-01`) | Hecho (2026-11-16): ninguna ruta falla a 900 px |
 | `DEU-18` | El espaciado de la etiqueta en mayúsculas no tiene token | Un token y una sola medida | ahora | Hecho (2026-11-15): `--tracking-etiqueta`, y la guarda de tokens lo exige |
 | `DEU-19` | Radios escritos a mano | Pasan a tokens | ahora | Hecho (2026-11-15): `--r-fino` y `--r-barra`, y la guarda de tokens rechaza un radio a mano |
@@ -320,14 +320,15 @@ lo que se marca como pendiente:
 
 ### Lo que quedó del portal tras cerrar `R3-POR-01` y `R3-POR-02`
 
-- **Datos de demostración**: la única familia con portal (Ana) tiene el plan congelado. Los
+- ~~**Datos de demostración**~~ Resuelto el 2026-11-16 (`DEU-14`): Jorge Ramírez
+  (`jorge@example.com`) entra al portal al día. Antes: la única familia con portal (Ana) tiene el plan congelado. Los
   estados «al día» se capturaron para el revisor interceptando la API. Una segunda familia con
   portal en `datos_demo` daría al barrido y a los recorridos el estado sano.
 - ~~**La consulta en la clínica no se agenda desde el portal**~~ Resuelto el 2026-11-16 (`DEU-2`)., aunque el backend la permite
   (`MODALIDADES_AUTOGESTION`): la ventana de agendar solo ofrece las visitas en casa y las
   preventivas. Hay que decidir con el usuario si el portal la ofrece
   ([`portal-familias.md`](portal-familias.md)).
-- **La prueba de la foto** (`e2e-stack/recorridos.spec.ts`) sube un PNG de 1×1 a la primera
+- ~~**La prueba de la foto**~~ Resuelto el 2026-11-16 (`DEU-16`): la prueba quita la foto al terminar. Antes: (`e2e-stack/recorridos.spec.ts`) sube un PNG de 1×1 a la primera
   mascota de Ana, que el portal enseña después como su foto. No rompe nada, pero ensucia las
   capturas: hay que quitarla antes de capturar.
 - **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado arriba, que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes): la flecha de las listas es un triángulo relleno,

@@ -159,6 +159,10 @@ UBICACIONES = [
     (4.7239, -74.0402),
 ]
 
+# Coberturas provisionales (docs/pendientes-externos.md, «Valores provisionales»): PENDIENTES
+# hasta que TIMU confirme las oficiales. Donde el plegable 2026 dice algo, lo del plegable (las
+# consultas al mes y la hospitalizacion, que se cubre como atencion en clinica aliada); lo que
+# no dice, estos cupos de prueba.
 BENEFICIOS = [
     {"tipo_servicio_codigo": "consulta_domiciliaria", "cupo": 6, "periodo_cupo": "anual"},
     {"tipo_servicio_codigo": "vacunacion", "cupo": 4, "periodo_cupo": "anual"},
@@ -167,6 +171,29 @@ BENEFICIOS = [
     {"tipo_servicio_codigo": "orientacion_virtual", "cupo": None, "periodo_cupo": "anual"},
     {"tipo_servicio_codigo": "atencion_aliada", "cupo": 2, "periodo_cupo": "anual"},
 ]
+DEL_PLEGABLE: dict[str, dict[str, dict[str, Any]]] = {
+    "mi_amigo_fiel": {
+        "consulta_domiciliaria": {"cupo": 1, "periodo_cupo": "mensual"},
+        "atencion_aliada": {"cobertura_pct": 40},
+    },
+    "amigos_por_siempre": {
+        "consulta_domiciliaria": {"cupo": 2, "periodo_cupo": "mensual"},
+        "atencion_aliada": {"cobertura_pct": 80},
+    },
+}
+
+
+def beneficios_de(plan: str) -> list[dict[str, Any]]:
+    """Los beneficios de un plan: los de prueba con lo que dice el plegable encima."""
+    propios = DEL_PLEGABLE.get(plan, {})
+    return [
+        {"cobertura_pct": 100, **b, **propios.get(b["tipo_servicio_codigo"], {})}
+        for b in BENEFICIOS
+    ]
+
+
+def _clave_beneficio(b: dict[str, Any]) -> tuple[Any, ...]:
+    return (b["tipo_servicio_codigo"], b["cupo"], b["periodo_cupo"], b["cobertura_pct"])
 
 
 EQUIPO = [
@@ -267,13 +294,15 @@ def proximo_habil(desde: date, dias: int) -> date:
     return d
 
 
-# Las visitas de la ruta de prueba: (familia, observaciones). Todas son consultas a domicilio:
-# vacunar y desparasitar piden autorizacion medica antes de poder rutearse. Ana Ruiz, la
-# primera familia, queda fuera: es la que se ve con cuotas vencidas en Familias y en Cartera.
+# Las visitas de la ruta de prueba: (familia, mascota, observaciones). Todas son consultas a
+# domicilio: vacunar y desparasitar piden autorizacion medica antes de poder rutearse. Ana Ruiz,
+# la primera familia, queda fuera: es la que se ve con cuotas vencidas en Familias y en Cartera.
+# De Jorge va Kira (Colita Feliz): Rocky esta en Mi Amigo Fiel, con una consulta al mes, y al
+# repetir datos_demo en el mismo mes se quedaria sin cupo.
 VISITAS = [
-    (1, "Revisar oido izquierdo. Porteria: anunciarse como TIMU."),
-    (2, "Control de peso"),
-    (3, "Vomito desde ayer; llevar suero"),
+    (1, 0, "Revisar oido izquierdo. Porteria: anunciarse como TIMU."),
+    (2, 0, "Control de peso"),
+    (3, 1, "Vomito desde ayer; llevar suero"),
 ]
 DIAS_DE_RUTA = 7
 # El outbox se drena una vez por minuto y la optimizacion busca un par de segundos: se pregunta
@@ -300,6 +329,52 @@ def poner_al_dia(c: Cliente, familia: dict[str, Any]) -> None:
                 "referencia": f"DEMO-{familia['documento']}-{datetime.now(BOGOTA):%Y%m%d%H%M%S}",
             },
         )
+
+
+def pagar_lo_vencido(c: Cliente, familia: dict[str, Any]) -> None:
+    """Registra el pago de todo lo vencido, como lo haria cartera: la familia queda al dia."""
+    resp = c.http.get(f"/cartera/familias/{familia['id']}/estado-cuenta")
+    if resp.status_code != 200 or float(resp.json()["saldo_vencido"]) <= 0:
+        return
+    c.post(
+        "/cartera/pagos",
+        {
+            "familia_id": familia["id"],
+            "valor": resp.json()["saldo_vencido"],
+            "medio": "transferencia",
+            "referencia": f"DEMO-{familia['documento']}-{datetime.now(BOGOTA):%Y%m%d%H%M%S}",
+        },
+    )
+
+
+def acceso_portal(c: Cliente, familia_id: str) -> None:
+    """Deja entrar a la familia al portal con la clave de prueba."""
+    familia = c.get(f"/familias/{familia_id}")
+    puede_entrar = httpx.post(
+        f"{API}/auth/login", data={"username": familia["email"], "password": CLAVE_EQUIPO}
+    ).is_success
+    if puede_entrar:
+        return
+    if not familia.get("usuario_portal_id"):
+        c.post(f"/familias/{familia['id']}/acceso-portal")
+    # Sin WhatsApp ni correo configurados el enlace queda en el mensaje: se toma de ahi, de la
+    # base, porque la traza de la API tapa los tokens de un solo uso.
+    with sesion_worker() as db:
+        contenido = db.scalar(
+            select(Mensaje.contenido)
+            .where(
+                Mensaje.destino == familia["email"], Mensaje.contenido.contains("activar?token=")
+            )
+            .order_by(Mensaje.created_at.desc())
+            .limit(1)
+        )
+    token = re.search(r"activar\?token=([\w-]+)", contenido or "")
+    if token:
+        # Fuera del cliente del administrador: activar la cuenta abre la sesion de la familia, y
+        # sus cookies sustituirian las del administrador en las peticiones siguientes.
+        httpx.post(
+            f"{API}/auth/restablecer", json={"token": token.group(1), "password": CLAVE_EQUIPO}
+        ).raise_for_status()
 
 
 def _inicio(cupo: dict[str, Any]) -> datetime:
@@ -351,14 +426,14 @@ def ruta_de_prueba(c: Cliente, familias: list[dict[str, Any]], hoy: date) -> Non
 
     # Si una pasada anterior agendo las visitas y no llego a planear, no se agendan otra vez.
     if len(por_rutear(dia)) < 2:
-        for (i, obs), inicio in zip(VISITAS, horas, strict=False):
+        for (i, m, obs), inicio in zip(VISITAS, horas, strict=False):
             familia = familias[i]
             poner_al_dia(c, familia)
             c.post(
                 "/servicios",
                 {
                     "familia_id": familia["id"],
-                    "mascota_id": (familia.get("mascotas") or [{}])[0].get("id"),
+                    "mascota_id": familia["mascotas"][m]["id"],
                     "tipo_codigo": "consulta_domiciliaria",
                     "inicio": inicio.isoformat(),
                     "observaciones": obs,
@@ -391,9 +466,11 @@ def main() -> None:
     print("Planes y beneficios")
     planes = {p["codigo"]: p for p in c.get("/planes")}
     for plan in planes.values():
-        codigos = {b["tipo_servicio_codigo"] for b in plan["beneficios"]}
-        if codigos != {b["tipo_servicio_codigo"] for b in BENEFICIOS}:
-            c.put(f"/planes/{plan['id']}/beneficios", BENEFICIOS)
+        deseados = beneficios_de(plan["codigo"])
+        if {_clave_beneficio(b) for b in plan["beneficios"]} != {
+            _clave_beneficio(b) for b in deseados
+        }:
+            c.put(f"/planes/{plan['id']}/beneficios", deseados)
 
     print("Franjas de agenda")
     existentes = {(f["ciudad"], f["dia_semana"], f["modalidad"]) for f in c.get("/agenda/franjas")}
@@ -662,32 +739,20 @@ def main() -> None:
             },
         )
 
-    print("Portal de Ana Ruiz")
-    ana = c.get(f"/familias/{familias[0]['id']}")
-    puede_entrar = httpx.post(
-        f"{API}/auth/login", data={"username": ana["email"], "password": CLAVE_EQUIPO}
-    ).is_success
-    if not puede_entrar:
-        if not ana.get("usuario_portal_id"):
-            c.post(f"/familias/{ana['id']}/acceso-portal")
-        # Sin WhatsApp ni correo configurados el enlace queda en el mensaje: se toma de ahi, de
-        # la base, porque la traza de la API tapa los tokens de un solo uso.
-        with sesion_worker() as db:
-            contenido = db.scalar(
-                select(Mensaje.contenido)
-                .where(
-                    Mensaje.destino == ana["email"], Mensaje.contenido.contains("activar?token=")
-                )
-                .order_by(Mensaje.created_at.desc())
-                .limit(1)
-            )
-        token = re.search(r"activar\?token=([\w-]+)", contenido or "")
-        if token:
-            c.post("/auth/restablecer", {"token": token.group(1), "password": CLAVE_EQUIPO})
+    # Dos familias en el portal: Ana, con el plan en pausa por cuotas vencidas, y Jorge, al dia
+    # (DEU-14). A Jorge se le paga lo vencido en cada pasada, para que siga al dia aunque el
+    # stack lleve semanas arriba.
+    print("Portal de Ana Ruiz y de Jorge Ramirez")
+    pagar_lo_vencido(c, familias[3])
+    for familia in (familias[0], familias[3]):
+        acceso_portal(c, familia["id"])
 
     print("Listo. Ingresa a http://localhost:5173 con admin@timu.co / cambiar123")
     print(f"Equipo de prueba (clave {CLAVE_EQUIPO}): " + ", ".join(e for e, _, _ in EQUIPO))
-    print(f"Clinica aliada: aliada@timu.co · Portal: ana@example.com (clave {CLAVE_EQUIPO})")
+    print(
+        "Clinica aliada: aliada@timu.co · Portal: ana@example.com (en pausa) y "
+        f"jorge@example.com (al dia), clave {CLAVE_EQUIPO}"
+    )
 
 
 if __name__ == "__main__":

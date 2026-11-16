@@ -112,13 +112,19 @@ test.describe('equipo', () => {
     const subida = await page.request.put(`/api/v1/mascotas/${mascota.id}/foto`, {
       multipart: { foto: { name: 'luna.png', mimeType: 'image/png', buffer: png } },
     })
-    expect(subida.ok()).toBeTruthy()
-    const { foto_url } = await subida.json()
-    // La URL apunta al almacenamiento publicado en el host, no al nombre interno del contenedor.
-    expect(foto_url).not.toContain('almacenamiento:8333')
-    const imagen = await page.request.get(foto_url)
-    expect(imagen.status()).toBe(200)
-    expect(imagen.headers()['content-type']).toBe('image/png')
+    try {
+      expect(subida.ok()).toBeTruthy()
+      const { foto_url } = await subida.json()
+      // La URL apunta al almacenamiento publicado en el host, no al nombre interno del contenedor.
+      expect(foto_url).not.toContain('almacenamiento:8333')
+      const imagen = await page.request.get(foto_url)
+      expect(imagen.status()).toBe(200)
+      expect(imagen.headers()['content-type']).toBe('image/png')
+    } finally {
+      // La mascota vuelve a quedar como estaba: un PNG de 1×1 no puede quedarse como la foto que
+      // el portal de Ana enseña en las capturas (DEU-16).
+      if (!mascota.foto_url) await page.request.delete(`/api/v1/mascotas/${mascota.id}/foto`)
+    }
   })
 })
 
