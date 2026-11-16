@@ -17,6 +17,9 @@ describe('las citas dichas a la familia', () => {
   it('nombra cada estado con sus palabras, y explica los que piden algo', () => {
     expect(estadoDeCita('en_ruta')).toEqual({ label: 'En camino', tono: 'info', explicacion: 'El médico va en camino.' })
     expect(estadoDeCita('completado').label).toBe('Atendida')
+    // Comparte el tono de Confirmada, no su icono (techo 41).
+    expect(estadoDeCita('completado').icono).toBe('huella')
+    expect(estadoDeCita('agendado').icono).toBeUndefined()
     expect(estadoDeCita('desconocido')).toEqual({ label: 'desconocido', tono: 'neutro' })
   })
 

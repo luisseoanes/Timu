@@ -141,7 +141,9 @@ function Cita({ cita, children }: { cita: ServicioPortalRead; children?: React.R
           {nombreTipo(cita.tipo_codigo)}
           {peludo && <span className="apagado"> · {peludo}</span>}
         </h3>
-        <Insignia tono={estado.tono}>{estado.label}</Insignia>
+        <Insignia tono={estado.tono} icono={estado.icono}>
+          {estado.label}
+        </Insignia>
         {estado.explicacion && <p>{estado.explicacion}</p>}
       </div>
       {children}

@@ -12,7 +12,8 @@ import { AgendarModal, OrientacionModal } from './Agenda'
 import { useMiCuenta, useMiFamilia, useMiLinea, useMiPlan, useMisServicios } from './api'
 import { conProximoCobro, recorrido, vencidasDe } from './linea'
 import { LineaPortal } from './LineaPortal'
-import { estadoDelPlan, finDeLinea, frase, motivoSinAgendar, planesDe } from './plan'
+import { MarcasPlan } from './MarcasPlan'
+import { estadoDelPlan, finDeLinea, frase, motivoSinAgendar } from './plan'
 
 /**
  * R3-POR-01 El inicio del portal: la línea de la familia abierta en «hoy» (contrato de la
@@ -45,14 +46,7 @@ export function PortalInicio() {
           {(p) => (
             <>
               <div className="portal-plan-nombre">
-                {p &&
-                  planesDe(p).map((pl, _, todos) => (
-                    <span key={pl.nombre} className="portal-plan-marca">
-                      <span className="marcador-plan" data-color={pl.color} aria-hidden="true" />
-                      {pl.nombre}
-                      {todos.length > 1 && <span className="apagado"> · {pl.mascotas.join(' y ')}</span>}
-                    </span>
-                  ))}
+                {p && <MarcasPlan plan={p} />}
                 {p && <Insignia tono={estadoDelPlan(p.estado).tono}>{estadoDelPlan(p.estado).label}</Insignia>}
               </div>
               <p className="portal-plan-frase">{frase(p, linea.data ? vencidas(estaciones, 'cuota') : null)}</p>

@@ -514,6 +514,13 @@ describe('pagos', () => {
     expect(cuerpo).toEqual({})
   })
 
+  it('dice de qué plan es la cuenta, con su color', async () => {
+    server.use(http.get(`${API}/portal/plan`, () => HttpResponse.json(PLAN)))
+    renderizar(<PortalPagos />)
+    const marca = (await screen.findByText('Colita Feliz')).closest('.portal-plan-marca')!
+    expect(marca.querySelector('.marcador-plan')).toHaveAttribute('data-color', 'naranja')
+  })
+
   it('con varias cuotas, el verde paga todo y cada una se paga sola', async () => {
     let cuerpo: unknown = null
     const dos = [CUENTA.cuotas[0]!, { ...CUENTA.cuotas[0]!, id: 'q2', periodo: '2026-12', fecha_vencimiento: '2026-12-05' }]

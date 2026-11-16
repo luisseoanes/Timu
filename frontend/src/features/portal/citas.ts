@@ -1,10 +1,13 @@
+import type { NombreIcono } from '@/components/Icono'
 import type { Tono } from '@/lib/estados'
 import type { ServicioPortalRead } from '@/types'
 
 // Las citas dichas a la familia (R3-POR-02): el estado con sus palabras y qué se puede hacer
 // con cada una, según lo que dice el backend (`portal/service.py`, `que_puede`).
 
-const ESTADOS: Record<string, { label: string; tono: Tono; explicacion?: string }> = {
+type EstadoCita = { label: string; tono: Tono; icono?: NombreIcono; explicacion?: string }
+
+const ESTADOS: Record<string, EstadoCita> = {
   solicitado: { label: 'Recibida', tono: 'info', explicacion: 'TIMU te confirma la hora por WhatsApp.' },
   pendiente_autorizacion: { label: 'Por autorizar', tono: 'alerta', explicacion: 'TIMU la autoriza antes de confirmarla.' },
   // Confirmada lleva el visto; lo que pasa ahora (en camino, en atención) va en informativo.
@@ -12,11 +15,12 @@ const ESTADOS: Record<string, { label: string; tono: Tono; explicacion?: string 
   reprogramado: { label: 'Con otra fecha', tono: 'alerta' },
   en_ruta: { label: 'En camino', tono: 'info', explicacion: 'El médico va en camino.' },
   en_atencion: { label: 'En atención', tono: 'info', explicacion: 'El médico está con tu peludo.' },
-  completado: { label: 'Atendida', tono: 'ok' },
+  // Atendida comparte el tono de Confirmada, pero no el visto: lleva la huella del peludo atendido.
+  completado: { label: 'Atendida', tono: 'ok', icono: 'huella' },
   cancelado: { label: 'Cancelada', tono: 'neutro' },
 }
 
-export function estadoDeCita(estado: string): { label: string; tono: Tono; explicacion?: string } {
+export function estadoDeCita(estado: string): EstadoCita {
   return ESTADOS[estado] ?? { label: estado, tono: 'neutro' }
 }
 

@@ -12,6 +12,7 @@ import { estadoCuota } from '@/lib/estados'
 import { diaISO, fechaCortaConDia, moneda } from '@/lib/formato'
 
 import { useMiCuenta, useMiPlan, useMisPagos, usePagarPortal } from './api'
+import { MarcasPlan } from './MarcasPlan'
 import { alPagar } from './plan'
 import { avisoDelPago } from './pagos'
 
@@ -61,6 +62,12 @@ export function PortalPagos() {
               <p className="apagado">Aún no tienes un plan con cuotas. Escríbenos por WhatsApp para afiliarte.</p>
             ) : (
               <div className="pila">
+                {/* De qué plan es la cuenta, con su color (techo 40). */}
+                {plan.data && (
+                  <p className="portal-plan-nombre">
+                    <MarcasPlan plan={plan.data} />
+                  </p>
+                )}
                 <div className="portal-saldo">
                   {Number(c.saldo_pendiente) > 0 ? (
                     <>
