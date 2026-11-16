@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import { Consulta } from '@/components/Consulta'
 import { Distintivo } from '@/components/Distintivo'
+import { Icono } from '@/components/Icono'
 import { Paginacion } from '@/components/Paginacion'
 import { mensajeError } from '@/lib/errores'
 import { diaISO, fechaCompacta, fechaHora, hora, telefono } from '@/lib/formato'
@@ -57,7 +58,10 @@ export function Mensajes() {
                           <span className="mensaje-contenido">{m.contenido ?? (m.plantilla ? `Plantilla «${nombrePlantilla(m.plantilla)}»` : '—')}</span>
                           <div className="bandeja-detalle">
                             {/* La dirección en palabras: una flecha sola no la lee nadie con lector de pantalla. */}
-                            <span>{m.direccion === 'entrante' ? 'Escribió' : 'Le escribimos a'}</span>
+                            <span className="mensaje-direccion" data-direccion={m.direccion}>
+                              <Icono nombre={m.direccion === 'entrante' ? 'entrante' : 'saliente'} size={14} />
+                              {m.direccion === 'entrante' ? 'Escribió' : 'Le escribimos a'}
+                            </span>
                             <span className="numero sin-cortes">{telefono(m.destino)}</span>
                             {m.contenido && m.plantilla && <span>Plantilla «{nombrePlantilla(m.plantilla)}»</span>}
                           </div>

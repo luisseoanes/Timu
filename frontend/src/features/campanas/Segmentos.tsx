@@ -32,7 +32,11 @@ export function Segmentos() {
         consulta={segmentos}
         cargando="Cargando segmentos…"
         error="No fue posible cargar los segmentos."
-        vacio="No hay segmentos guardados."
+        vacio={
+          puede(usuario, 'mercadeo')
+            ? 'Un segmento guarda a quién le llega una campaña (ciudad, plan, estado de la afiliación) para usarlo otra vez. Crea el primero con «Nuevo segmento».'
+            : 'Todavía no hay segmentos: los crea mercadeo para elegir a quién le llega una campaña.'
+        }
         estaVacio={(s) => s.length === 0}
       >
         {(s) =>

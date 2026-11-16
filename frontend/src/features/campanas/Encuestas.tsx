@@ -30,7 +30,7 @@ export function Encuestas() {
         <Consulta consulta={resumen} cargando="Calculando…" error="No fue posible calcular la satisfacción.">
           {(r) => (
             <div className="pila">
-              <div className="indicadores">
+              <div className="indicadores indicadores-pocos">
                 <div className="indicador">
                   <span className="indicador-titulo">Promedio</span>
                   <strong className="indicador-valor numero">{r.promedio === null ? '—' : `${r.promedio} / 5`}</strong>

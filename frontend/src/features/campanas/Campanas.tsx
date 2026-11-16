@@ -159,7 +159,7 @@ function Ficha({ campana: c }: { campana: CampanaRead }) {
         </div>
       </header>
 
-      <dl className="ficha">
+      <dl className="ficha campana-datos">
         <div>
           <dt>A quién le llega</dt>
           <dd>{resumenFiltros(c.segmento as FiltrosSegmento)}</dd>
@@ -274,19 +274,22 @@ function Ficha({ campana: c }: { campana: CampanaRead }) {
             <span className="numero" title={fechaHora(ejecuciones.data![0]!.iniciada_en)}>{hora(ejecuciones.data![0]!.iniciada_en)}</span>.
           </p>
         )}
-        <div className="acciones">
-          <button
-            className="btn btn-plano btn-accion"
-            type="button"
-            onClick={() =>
-              descargar(`/campanas/${c.id}/resultados`, { formato: 'csv' }, `campana-${c.nombre}.csv`).catch((e) =>
-                setErrorCsv(mensajeError(e, 'No fue posible descargar los destinatarios.')),
-              )
-            }
-          >
-            <Icono nombre="descargar" size={16} /> Destinatarios en CSV
-          </button>
-        </div>
+        {/* Sin haber salido nunca no hay destinatarios que descargar. */}
+        {(ejecuciones.data?.length ?? 0) > 0 && (
+          <div className="acciones">
+            <button
+              className="btn btn-plano btn-accion campana-csv"
+              type="button"
+              onClick={() =>
+                descargar(`/campanas/${c.id}/resultados`, { formato: 'csv' }, `campana-${c.nombre}.csv`).catch((e) =>
+                  setErrorCsv(mensajeError(e, 'No fue posible descargar los destinatarios.')),
+                )
+              }
+            >
+              <Icono nombre="descargar" size={16} /> Destinatarios en CSV
+            </button>
+          </div>
+        )}
         {errorCsv && (
           <p className="error" role="alert">
             {errorCsv}

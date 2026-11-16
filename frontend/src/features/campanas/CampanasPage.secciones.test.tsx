@@ -125,6 +125,15 @@ describe('campañas', () => {
     expect(within(modal).getByText('No se enviaron')).toBeInTheDocument()
     expect(within(modal).getByText(/Ha salido/)).toHaveTextContent('Ha salido 2 veces; la última, el 1 nov a las 9:00 a. m.')
     expect(within(modal).queryByRole('button', { name: 'Enviar ahora' })).not.toBeInTheDocument()
+    // Ya salió: hay destinatarios que descargar.
+    expect(within(modal).getByRole('button', { name: /destinatarios en csv/i })).toBeInTheDocument()
+  })
+
+  it('un borrador que nunca salió no ofrece descargar destinatarios', async () => {
+    detalle()
+    const { modal } = await abrirDetalle()
+    expect(await within(modal).findByText(/Todavía no ha salido/)).toBeInTheDocument()
+    expect(within(modal).queryByRole('button', { name: /destinatarios en csv/i })).not.toBeInTheDocument()
   })
 
   it('dice la plantilla como la llama el equipo, con el código de Meta debajo', async () => {
@@ -192,7 +201,7 @@ describe('campañas', () => {
   })
 
   it('explica por qué no se pudo descargar el CSV de destinatarios', async () => {
-    detalle()
+    detalle({ estado: 'finalizada' }, { ejecuciones: [{ id: 'e1', iniciada_en: '2026-11-01T14:00:00Z' }] })
     const { user, modal } = await abrirDetalle()
     server.use(
       http.get(`${API}/campanas/c1/resultados`, ({ request }) =>
@@ -201,7 +210,7 @@ describe('campañas', () => {
           : HttpResponse.json({ audiencia: 0 }),
       ),
     )
-    await user.click(within(modal).getByRole('button', { name: /destinatarios en csv/i }))
+    await user.click(await within(modal).findByRole('button', { name: /destinatarios en csv/i }))
     expect(await within(modal).findByRole('alert')).toHaveTextContent('No fue posible descargar los destinatarios.')
   })
 
@@ -351,7 +360,8 @@ describe('segmentos', () => {
       }),
     )
     const user = await abrirPestana('Segmentos')
-    expect(await screen.findByText('No hay segmentos guardados.')).toBeInTheDocument()
+    // El vacío explica qué es un segmento y cómo se crea (techo 57).
+    expect(await screen.findByText(/Crea el primero con «Nuevo segmento»/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /nuevo segmento/i }))
     const modal = await screen.findByRole('dialog')
     await user.type(within(modal).getByLabelText('Nombre'), ' Morosos ')
@@ -375,7 +385,7 @@ describe('segmentos', () => {
   it('operaciones no crea segmentos', async () => {
     server.use(como('operaciones'))
     await abrirPestana('Segmentos')
-    await screen.findByText('No hay segmentos guardados.')
+    await screen.findByText(/los crea mercadeo/)
     expect(screen.queryByRole('button', { name: /nuevo segmento/i })).not.toBeInTheDocument()
   })
 })

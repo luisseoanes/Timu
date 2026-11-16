@@ -450,6 +450,8 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 .indicador-titulo { font-size: var(--t-etiqueta); letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; color: var(--texto-suave); font-weight: 700; }
 .indicador-valor { font-family: var(--fuente); font-size: var(--t-cifra); color: var(--texto-titulo); line-height: 1.2; }
 .indicador-detalle { font-size: var(--t-menor); color: var(--texto-suave); }
+/* Dos o tres cifras sueltas: cada ficha a su medida, no estiradas a todo el ancho. */
+.indicadores-pocos { grid-template-columns: repeat(auto-fill, minmax(190px, 260px)); }
 .subtitulo { font-size: var(--t-cuerpo); margin-bottom: var(--e3); }
 
 /* Barras horizontales de una sola serie: un tono, valor rotulado, sin leyenda. */

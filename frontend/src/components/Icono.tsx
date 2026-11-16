@@ -9,6 +9,7 @@ export type NombreIcono =
   | 'tareas' | 'comercial' | 'aliadas' | 'encuestas' | 'ajustes' | 'descargar' | 'volver'
   | 'ojo' | 'ojo-cerrado' | 'escudo' | 'huella' | 'telefono' | 'correo' | 'pulso' | 'check'
   | 'ia' | 'mensaje' | 'subir' | 'editar' | 'portal' | 'candado' | 'alerta' | 'info' | 'menos' | 'abajo' | 'arriba' | 'puntos' | 'llamar'
+  | 'entrante' | 'saliente'
 
 const TRAZOS: Record<NombreIcono, string> = {
   panel: 'M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z',
@@ -54,6 +55,9 @@ const TRAZOS: Record<NombreIcono, string> = {
   info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-5v-5M12 8h.01',
   menos: 'M5 12h14',
   abajo: 'M6 9l6 6 6-6',
+  // Dirección de un mensaje: lo que entra apunta hacia abajo a la izquierda; lo que sale, al revés.
+  entrante: 'M17 7 7 17M7 9v8h8',
+  saliente: 'M7 17 17 7M9 7h8v8',
   arriba: 'M6 15l6-6 6 6',
   // Discos: con el trazo de 1.6, un radio de 1.2 queda macizo (3:1 de contraste, WCAG 1.4.11).
   puntos: 'M3.8 12a1.2 1.2 0 1 0 2.4 0 1.2 1.2 0 1 0-2.4 0ZM10.8 12a1.2 1.2 0 1 0 2.4 0 1.2 1.2 0 1 0-2.4 0ZM17.8 12a1.2 1.2 0 1 0 2.4 0 1.2 1.2 0 1 0-2.4 0Z',

@@ -1260,6 +1260,12 @@
 /* ===== Campañas (R2-PAN-09): listado con ficha ===== */
 .campana-quien { color: var(--texto); font-size: var(--t-cuerpo); }
 .campana-plantilla { overflow-wrap: anywhere; }
+/* «A quién le llega» es una frase larga: a lo ancho, el doble que la plantilla. */
+@media (min-width: 1200px) {
+  .ficha.campana-datos { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+}
+/* El botón plano pierde su relleno a la izquierda para alinearse con el texto de su bloque. */
+.campana-csv { margin-inline-start: calc(-1 * var(--e5)); }
 /* El código de Meta bajo el nombre que da el equipo a la plantilla: dato secundario. */
 .campana-plantilla-codigo { display: block; overflow-wrap: anywhere; font-size: var(--t-menor); color: var(--texto-suave); }
 .campana-audiencia { color: var(--texto); }
@@ -1278,6 +1284,10 @@
 .campana-baja { margin-block: var(--e3); }
 .campana-baja .input { flex: 1; min-width: 0; }
 .plantilla-cuerpo, .mensaje-contenido { display: block; max-width: 60ch; white-space: pre-line; overflow-wrap: anywhere; }
+/* En la bandeja de mensajes, el cuerpo en dos líneas y en peso normal: manda quién y cuándo. */
+.tabla .mensaje-contenido { font-weight: 400; color: var(--texto); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.mensaje-direccion { display: inline-flex; align-items: center; gap: var(--e1); font-weight: 600; }
+.mensaje-direccion[data-direccion="entrante"] { color: var(--estado-info-texto); }
 
 /* ===== Aliadas (R2-PAN-10): remisiones en bandeja, clínicas en listado con ficha ===== */
 .aliada-quien { color: var(--texto); font-size: var(--t-cuerpo); }
