@@ -28,7 +28,7 @@ describe('LoginPage', () => {
     server.use(sinSesion)
     abrirLogin()
     expect(await screen.findByRole('heading', { name: 'Hola de nuevo' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /equipo/i })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Equipo y aliadas' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByLabelText('Correo')).toBeInTheDocument()
     expect(screen.getByLabelText('Contraseña')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /familias/i })).toBeInTheDocument()

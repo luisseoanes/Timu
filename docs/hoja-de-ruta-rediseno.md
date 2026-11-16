@@ -219,7 +219,7 @@ qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son 
 | `DEU-3` | La visita preventiva del portal no se enlaza con ningún preventivo | El portal agenda preventivos concretos, como la bandeja | ahora | Hecho (2026-11-16): `GET /portal/preventivos` y `POST /portal/preventivos/{id}/visita`; agendarlo es la autorización de la familia (migración `0047`, RLS) |
 | `DEU-4` | La desparasitación hecha en visita se aplica sin peso | Campo opcional en los pasos del catálogo; el peso en «Aplicación» | ahora | Hecho (2026-11-16): los pasos ganan `opcionales` con nombre y tipo; la desparasitación pide el peso, que va al carnet (migración `0046`) |
 | `DEU-5` | «Por autorizar» con la llave solo en Preventivos | La llave en el mapeo común (`lib/estados.ts`): también en Servicios | ahora | Hecho (2026-11-15): la llave en `lib/estados.ts`, la fila y la ficha del servicio |
-| `DEU-6` | La clínica aliada entra por «Equipo TIMU» | **Sin respuesta**: se pregunta al usuario | — | Pendiente de decisión |
+| `DEU-6` | La clínica aliada entra por «Equipo TIMU» | Renombrarla «Equipo y aliadas» (decidido con el usuario el 2026-11-16) | ahora | Hecho (2026-11-16) |
 | `DEU-7` | La pantalla del enlace no dice cuánto dura | La API da la vigencia y la pantalla la dice | ahora | Hecho (2026-11-15): `expira_en` en `POST /auth/enlace` y «Este enlace sirve hasta…» |
 | `DEU-8` | Las reglas se editan en JSON | Editor por campos | ahora | Pendiente |
 | `DEU-9` | Pasar una cuenta a o desde clínica aliada | **No**: se crea otra cuenta, como ahora | — | No |
@@ -430,7 +430,7 @@ lo que se marca como pendiente:
 
 ### Lo que quedó del acceso tras cerrar `R3-PUB-01`
 
-- **La clínica aliada entra por «Equipo TIMU»**, que no es su nombre. Se mantuvo el selector por
+- ~~**La clínica aliada entra por «Equipo TIMU»**~~ Resuelto el 2026-11-16 (`DEU-6`): la pestaña se llama «Equipo y aliadas». Antes:, que no es su nombre. Se mantuvo el selector por
   público por decisión del usuario; si se renombra, es solo el texto de la pestaña.
 - **La vigencia de los enlaces no se dice en pantalla** (30 minutos la recuperación y 72 horas la
   activación, en `Settings`): el panel no copia esos valores. Si TIMU quiere decirla, la API la da

@@ -209,7 +209,7 @@ La misma plantilla sirve al ingreso, la recuperación, el restablecimiento y la 
 - **Por debajo de 900 px**, una franja marina arriba con el logo compacto y la línea en miniatura
   (sin rótulos ni frase), el formulario debajo y la nota al final. El verde queda dentro de la
   primera pantalla del celular (lo comprueba `e2e/sesion.spec.ts`).
-- **Ingreso**: el selector Equipo TIMU / Familias. Equipo, con correo y contraseña; Familias, con
+- **Ingreso**: el selector Equipo y aliadas / Familias. El equipo y la clínica aliada, con correo y contraseña; Familias, con
   el celular y el código por WhatsApp y, debajo, «Ingresar con contraseña» (correo o celular).
   Quien llega desde una ruta del portal lo encuentra abierto en Familias.
 - **Enlace** (`/restablecer`, `/activar`): la pantalla pregunta a la API si el enlace sirve

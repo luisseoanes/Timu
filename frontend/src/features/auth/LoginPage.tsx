@@ -38,7 +38,8 @@ export function LoginPage() {
       <Tabs.Root defaultValue={desde?.startsWith('/portal') ? 'familia' : 'equipo'} className="ingreso-form">
         <Tabs.List className="segmento" aria-label="Quién ingresa">
           <Tabs.Trigger value="equipo" className="segmento-opcion">
-            <Icono nombre="clinica" size={16} /> Equipo TIMU
+            {/* Entran el equipo de TIMU y las clínicas aliadas, con correo y contraseña (DEU-6). */}
+            <Icono nombre="clinica" size={16} /> Equipo y aliadas
           </Tabs.Trigger>
           <Tabs.Trigger value="familia" className="segmento-opcion">
             <Icono nombre="huella" size={16} /> Familias

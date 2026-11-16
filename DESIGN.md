@@ -1024,8 +1024,8 @@ la aplicación donde la marca se presenta, y un formulario que no hace nada más
   `h1` de 34 px y, si hace falta, una frase en texto suave debajo; campos con icono (ver
   Inputs); el verde a todo el ancho y de 48 px en 16 px (`btn-grande`); lo secundario en plano y
   centrado («Volver al ingreso», «Ir al ingreso», con la flecha de volver).
-- **Quién ingresa:** bajo «Hola de nuevo», un selector segmentado (Radix Tabs) «Equipo TIMU»
-  (icono de clínica) / «Familias» (huella). Equipo, también la clínica aliada: correo,
+- **Quién ingresa:** bajo «Hola de nuevo», un selector segmentado (Radix Tabs) «Equipo y
+  aliadas» (icono de clínica) / «Familias» (huella). Equipo y clínica aliada: correo,
   contraseña, «¿Olvidaste tu contraseña?» a la derecha y «Ingresar». Familias: el celular
   registrado con la ayuda «Te enviamos un código de un solo uso por WhatsApp.», el verde «Recibir
   código» y debajo, plano, «Ingresar con contraseña» (correo o celular), que vuelve con «Recibir
