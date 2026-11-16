@@ -228,7 +228,9 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
   .tabla-apilable tr + tr { border-top: 1px solid var(--borde); }
   .tabla-apilable td {
     display: flex; justify-content: space-between; align-items: baseline; gap: var(--e3);
-    padding: var(--e1) 0; border: 0; text-align: right; overflow-wrap: anywhere;
+    /* El valor va a la derecha de su etiqueta; si es largo y se parte, sus líneas empiezan
+       alineadas a la izquierda, no en zigzag. */
+    padding: var(--e1) 0; border: 0; text-align: left; overflow-wrap: anywhere;
   }
   /* La misma voz que la cabecera de su columna y que los datos de una ficha. */
   .tabla-apilable td::before {
