@@ -131,8 +131,10 @@ jobs:
   # desde el nivel pedido. pip-audit no da la gravedad: en Python bloquea cualquiera.
   # Un aviso nuevo pone esto en rojo sin que cambie el codigo: se actualiza la dependencia,
   # o, si no hay version corregida, se anade `--ignore-vuln <ID>` al paso de pip-audit con el
-  # motivo y la fecha en un comentario (npm no tiene equivalente: se espera al arreglo o se
-  # fija la transitiva con `overrides` en package.json).
+  # motivo y la fecha en un comentario. En las herramientas de npm, que no tienen equivalente,
+  # se fija la transitiva con `overrides` en package.json o, sin version corregida, la excepcion
+  # va con su motivo y su fecha en `.github/scripts/auditar-npm.mjs`, que falla si sobra.
+  # El panel en produccion no admite excepciones.
   dependencias:
     name: Vulnerabilidades conocidas
     runs-on: ubuntu-latest
@@ -163,10 +165,10 @@ jobs:
 
       - name: Herramientas del panel (bloquean altas y criticas)
         working-directory: frontend
-        run: npm audit --audit-level=high
+        run: node ../.github/scripts/auditar-npm.mjs
 
       - name: Herramientas de publicacion (bloquean altas y criticas)
-        run: npm audit --audit-level=high
+        run: node .github/scripts/auditar-npm.mjs
 
   e2e:
     name: Extremo a extremo

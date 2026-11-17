@@ -155,7 +155,8 @@ guarda.** Las tres que más se tropiezan:
 - **Eventos**: todo nombre que se publica o se escucha se declara con `declarar_evento` en el
   dominio que lo emite.
 - **Dependencias**: ninguna vulnerabilidad publicada en lo que se despliega; si no hay versión
-  corregida, `--ignore-vuln` en el job con motivo y fecha.
+  corregida, `--ignore-vuln` en el job con motivo y fecha (en las herramientas de npm,
+  `EXCEPCIONES` de `.github/scripts/auditar-npm.mjs`).
 
 ## Invariante: el CI ejecuta todas las pruebas, y todas pasan
 
@@ -173,7 +174,7 @@ parte de las propias suites; ninguno se desactiva:
 | `backend/tests/test_base_tecnica.py` (`test_cada_ajuste_de_la_configuracion_esta_en_el_env_de_ejemplo`) | Un ajuste de `Settings` que no aparece en `backend/.env.example` (salvo los `*_OVERRIDE`). |
 | `backend/tests/test_arquitectura.py` | Una capa que importa de otra superior, un dominio que usa el router de otro, una dependencia entre dominios que cierra un ciclo nuevo, una entrada de `CICLOS_CONOCIDOS` que ya no hace falta, o un import de `app` dentro de una función. |
 | `backend/tests/test_permisos.py` (`test_la_guarda_recorre_todas_las_rutas_de_la_api`) | Que la guarda de permisos deje de ver rutas que publica el OpenAPI (pasó al subir a FastAPI 0.162: `app.routes` ya no las lista). |
-| Job **Vulnerabilidades conocidas** de `ci.yml` | Una dependencia de la API, el worker o el panel con una vulnerabilidad publicada. |
+| Job **Vulnerabilidades conocidas** de `ci.yml` | Una dependencia de la API, el worker o el panel con una vulnerabilidad publicada; en las herramientas de npm, una alta o crítica fuera de las excepciones de `.github/scripts/auditar-npm.mjs` (con motivo y fecha, solo sin versión corregida), o una excepción que ya no hace falta. |
 | `frontend/src/test/tokens.test.ts` | Un color escrito a mano en `frontend/src` fuera de `styles/tokens.css` (`#hex`, `rgb()`, `oklch()`, un nombre de color, también en `style={{}}` y en atributos SVG), un `var(--…)` que no está definido, un `z-index` que no sale de la escala `--capa-*`, o un radio o el espaciado de una etiqueta escritos a mano en lugar de `--r-…` y `--tracking-etiqueta`. |
 | `frontend/e2e-stack/responsive.spec.ts` | Una ruta que, a 375, 768, 900 o 1280 px, desborda en horizontal o tiene texto con contraste insuficiente según axe-core, sin estar en `PENDIENTES`; una entrada de `PENDIENTES` que ya no falla (la lista solo encoge); o una pantalla de `App.tsx` que el recorrido no abre. Con `pestanas: true` mide cada pestaña; ante un 429 espera a `Retry-After` y vuelve a cargar, y si persiste falla en vez de medir una pantalla de error. Desde `R2-PAN-10` la lista está vacía: un fallo nuevo se arregla, no entra en ella. El ancho de 900 px entró el 2026-11-16 (`DEU-17`). |
 | `frontend/e2e-stack/recorridos.spec.ts` (ficha de familia) | Barras o línea pintadas sobre una ventana abierta, un control que se estira junto a un campo con ayuda, el pie de una ventana recortado, o más de una acción verde llena por pestaña. |

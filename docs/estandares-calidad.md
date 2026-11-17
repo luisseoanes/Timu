@@ -19,7 +19,8 @@ Las reglas detalladas viven junto al código ([`backend/CLAUDE.md`](../backend/C
 - **Al cambiar código**: si el cambio toca una fila de las tablas, cumple su regla. Si la
   guarda falla, se arregla el código; no se relaja la guarda.
 - **Al añadir una excepción** (una arista en `CICLOS_CONOCIDOS`, una tabla en `_ACOTADAS`, un
-  `--ignore-vuln`): solo con el motivo escrito al lado. Las listas de excepciones solo
+  `--ignore-vuln`, un aviso en `EXCEPCIONES` de `.github/scripts/auditar-npm.mjs`): solo con el
+  motivo escrito al lado. Las listas de excepciones solo
   encogen; las que tienen guarda de «ya no hace falta» fallan cuando sobra una entrada.
 - **Al cerrar deuda**: se borra de la columna y, si nace una regla, se añade su guarda en el
   mismo cambio.
@@ -61,13 +62,16 @@ haciendo que los dos lo usen.
 | La base decide qué filas ve y escribe cada perfil (RLS) y la aplicación se conecta con un rol sin privilegios. | `test_toda_tabla_tiene_rls_y_las_politicas_de_la_matriz`, arranque que se niega con rol privilegiado |
 | Ningún valor de desarrollo llega a un ambiente desplegado: claves, contraseñas, token de verificación de Meta, CORS, cookies. El administrador inicial fuera de local exige `ADMIN_PASSWORD_INICIAL`. | `test_produccion_con_valores_inseguros_no_arranca`, `test_el_seed_no_crea_el_admin_con_la_clave_de_desarrollo_fuera_de_local` |
 | Ninguna vulnerabilidad publicada en lo que se despliega (dependencias de API, worker y panel). | Job **Vulnerabilidades conocidas** del CI (`pip-audit`, `npm audit --omit=dev`), del que depende el release |
-| Las herramientas de desarrollo y de publicación corren en el CI con sus permisos: ninguna vulnerabilidad en las de Python y ninguna alta o crítica en las de npm (las moderadas quedan listadas en el registro del paso). | Mismo job: `pip-audit -r requirements-dev.txt` y `npm audit --audit-level=high` en el panel y en la raíz |
+| Las herramientas de desarrollo y de publicación corren en el CI con sus permisos: ninguna vulnerabilidad en las de Python y ninguna alta o crítica en las de npm (las moderadas quedan listadas en el registro del paso). | Mismo job: `pip-audit -r requirements-dev.txt` y `.github/scripts/auditar-npm.mjs` en el panel y en la raíz (`npm audit` con las excepciones escritas en el script: solo avisos sin versión corregida, con motivo y fecha; falla si una sobra) |
 | Sin patrones inseguros en el código: `subprocess`, `eval`, `pickle`, SQL armado con cadenas, secretos literales. | `ruff` con las reglas `S`; cada excepción lleva `noqa` con motivo |
 | La sesión no es legible por JavaScript (cookies httpOnly), ni el panel usa `fetch` o `localStorage`. | ESLint del panel, `e2e/sesion.spec.ts` |
 | Datos personales (Ley 1581): anonimizar una familia no deja datos suyos en ninguna tabla ni en la bitácora, y lo clínico se conserva sin las menciones exactas a la familia. El contacto de un registro en línea que nunca se pagó se borra a los seis meses. | `test_anonimizar_no_deja_datos_personales` (recorre todas las tablas; las excepciones van en `CONSERVAN_DATOS` con su motivo), `test_a_los_seis_meses_se_borra_el_contacto_de_lo_que_nunca_se_pago` |
 
 **Deuda**: avisos moderados sin versión corregida en herramientas de desarrollo: `minimatch`
 en la cadena de ESLint y el `npm` que trae `semantic-release`; se ven en el registro del job.
+Y uno alto con excepción (decidido con el usuario el 2026-11-17): `picomatch` (GHSA-fc5q-39xc-vjpf,
+ReDoS, sin versión corregida; hasta la 4.0.7), que llega por vite, vitest y semantic-release, no al
+panel desplegado. Se cierra al salir la versión que lo corrige: el script falla cuando sobra.
 La auditoría corre en cada empuje, no en un horario (decidido: un aviso nuevo sin empujes se
 ve en el siguiente).
 
