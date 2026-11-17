@@ -8,8 +8,8 @@ El estado de cada unidad de trabajo está en el [backlog](backlog.md); cómo fun
 integración, en [integraciones](integraciones.md).
 
 Lo que TIMU tiene que hacer para cada integración (Meta, Wompi, Google, Workspace, el dominio) está
-paso a paso en el documento para la cliente del 2026-11-16; las decisiones y lo que falta de nuestro
-lado, en [integraciones](integraciones.md#decisiones-del-2026-11-16).
+paso a paso en el documento para la cliente, [integraciones para TIMU](integraciones-timu.md); las
+decisiones y lo que falta de nuestro lado, en [integraciones](integraciones.md#decisiones-del-2026-11-16).
 
 ## Valores provisionales
 

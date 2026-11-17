@@ -26,8 +26,9 @@ en [costos](costos-infraestructura.md).
 
 Tomadas con el usuario al preparar la reunión de integraciones con TIMU. Lo que tiene que hacer TIMU
 en cada una, paso a paso, y las opciones de lo que falta decidir están en el documento para la
-cliente **«TIMU - Integraciones»** (Word y PDF, en `~/Escritorio` de la máquina de Pedro; la fuente
-de verdad fue `~/Descargas/documento-requerimientos-funcionales.pdf`).
+cliente: [integraciones para TIMU](integraciones-timu.md), la versión en Markdown del Word y el PDF
+«TIMU - Integraciones» que se le entregaron. Su fuente de verdad son los requisitos del
+[documento de requerimientos](documento-requerimientos-funcionales.md).
 
 | Integración | Decisión | Lo que falta de nuestro lado |
 | --- | --- | --- |
