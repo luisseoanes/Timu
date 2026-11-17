@@ -31,7 +31,11 @@ que protege los datos: los permisos de `timu_app` en cada tabla, las tablas con 
 políticas, los triggers y los permisos por defecto. Una base con todas las filas pero sin los
 `GRANT` no la puede leer la aplicación, y antes pasaba por buena. Por eso el respaldo ya no usa
 `--no-privileges`. El job «Stack con un solo comando» del CI respalda y restaura en cada
-empuje a `main`.
+empuje a `main`. Las filas se comparan con el origen tal como está al terminar la restauración: si la
+aplicación sigue escribiendo, una tabla que creció desde el volcado sale como diferencia aunque
+el respaldo esté completo. Por eso el CI detiene `worker` y `beat` antes; con la aplicación en
+marcha, una diferencia en una tabla que se escribe sola (encuestas, mensajes, tareas) se mira
+antes de darla por pérdida.
 
 El rol `timu_app` es del clúster, no de la base, y `pg_dump` no lo lleva. Si se restaura en un
 servidor nuevo, `restaurar.sh` lo crea sin login y con los límites de tiempo de las
