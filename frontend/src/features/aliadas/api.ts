@@ -1,7 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { ClinicaRead, ConvenioRead, RecuentosRemisiones, RemisionRead } from '@/types'
+import type {
+  AtendidasAliada,
+  ClinicaRead,
+  CoberturaAliada,
+  ConvenioRead,
+  MiClinica,
+  RecuentosRemisiones,
+  RemisionRead,
+  RemisionVistaAliada,
+} from '@/types'
 
 export interface FilaLiquidacion {
   clinica_id: string
@@ -12,22 +21,6 @@ export interface FilaLiquidacion {
   valor_cubierto: string
   valor_familias: string
   detalle: { codigo: string; fecha_atencion: string; beneficio: string | null; valor_atencion: string; valor_cubierto: string }[]
-}
-
-/** Lo que ve la clínica aliada al validar un código (aliadas/service.py: `vista_aliada`). */
-export interface RemisionAliada {
-  codigo: string
-  estado: string
-  vigente: boolean
-  vence_en: string
-  titular: string
-  documento_ultimos: string
-  mascota: { nombre: string; especie: string; raza: string | null }
-  motivo: string
-  beneficio: string | null
-  cobertura_pct: number
-  tope_cubierto: string | null
-  valor_cubierto: string | null
 }
 
 export function useClinicas(ciudad?: string, incluirInactivas = false) {
@@ -69,12 +62,48 @@ export function useLiquidacion(desde: string, hasta: string, habilitado: boolean
   })
 }
 
+// --- Espacio de la clínica aliada (R3-ALI-01) ---
+
+/** En qué clínica está quien ingresa. */
+export function useMiClinica() {
+  return useQuery({
+    queryKey: ['aliada', 'clinica'],
+    queryFn: async () => (await api.get<MiClinica>('/aliadas/mi-clinica')).data,
+  })
+}
+
+/** Lo que la clínica atendió en el período, con lo que cubrió TIMU (la API suma). */
+export function useAtendidas(desde: string, hasta: string) {
+  return useQuery({
+    queryKey: ['aliada', 'atendidas', desde, hasta],
+    queryFn: async () =>
+      (await api.get<AtendidasAliada>('/aliadas/mi-clinica/atendidas', { params: { desde, hasta } })).data,
+  })
+}
+
 export function useRemisionAliada(codigo: string | null) {
   return useQuery({
     queryKey: ['aliada', 'remision', codigo],
     enabled: Boolean(codigo),
     retry: false,
-    queryFn: async () => (await api.get<RemisionAliada>(`/aliadas/mi-clinica/remisiones/${codigo}`)).data,
+    queryFn: async () => (await api.get<RemisionVistaAliada>(`/aliadas/mi-clinica/remisiones/${codigo}`)).data,
+  })
+}
+
+/** Lo que cubre TIMU de un valor y lo que paga la familia, antes de reportar: lo calcula la API
+ * con la misma cuenta del reporte. */
+export function useCoberturaAliada(codigo: string, valor: string | null) {
+  return useQuery({
+    queryKey: ['aliada', 'cobertura', codigo, valor],
+    enabled: Boolean(valor),
+    retry: false,
+    placeholderData: (anterior) => anterior,
+    queryFn: async () =>
+      (
+        await api.get<CoberturaAliada>(`/aliadas/mi-clinica/remisiones/${codigo}/cobertura`, {
+          params: { valor_atencion: valor },
+        })
+      ).data,
   })
 }
 
@@ -122,10 +151,19 @@ export function useAnularRemision() {
   )
 }
 
-export function useReportarAtencion(codigo: string) {
-  return useMutacion(
-    async (datos: { fecha: string; valor_atencion: string; resumen: string }) =>
-      (await api.post<RemisionAliada>(`/aliadas/mi-clinica/remisiones/${codigo}/atencion`, datos)).data,
-    'aliada',
-  )
+/** `alReportar` corre en el `onSuccess` del hook: el formulario que reporta se desmonta en cuanto la
+ * remisión pasa a atendida, y el `onSuccess` de su `mutate` ya no llegaría. */
+export function useReportarAtencion(codigo: string, alReportar?: () => void) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (datos: { fecha: string; valor_atencion: string; resumen: string }) =>
+      (await api.post<RemisionVistaAliada>(`/aliadas/mi-clinica/remisiones/${codigo}/atencion`, datos)).data,
+    // La remisión abierta pasa a «Atendida» con lo que devuelve el reporte, y lo atendido del mes
+    // se recarga para sumarla.
+    onSuccess: (vista) => {
+      alReportar?.()
+      qc.setQueryData(['aliada', 'remision', codigo], vista)
+      return qc.invalidateQueries({ queryKey: ['aliada', 'atendidas'] })
+    },
+  })
 }

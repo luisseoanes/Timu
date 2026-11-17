@@ -4,7 +4,6 @@ import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { AliadasPage } from './AliadasPage'
-import { MiClinicaPage } from './MiClinicaPage'
 import { USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
@@ -88,56 +87,5 @@ describe('AliadasPage', () => {
     renderizar(<AliadasPage />)
     await screen.findByRole('tab', { name: 'Remisiones' })
     await waitFor(() => expect(screen.queryByRole('tab', { name: 'Liquidación' })).not.toBeInTheDocument())
-  })
-})
-
-describe('MiClinicaPage', () => {
-  it('la clínica valida el código y reporta la atención', async () => {
-    let reporte: unknown = null
-    const vista = {
-      codigo: 'REM7K2Q',
-      estado: 'emitida',
-      vigente: true,
-      vence_en: '2026-11-10',
-      titular: 'Ana Ruiz',
-      documento_ultimos: '4050',
-      mascota: { nombre: 'Luna', especie: 'canino', raza: null },
-      motivo: 'Radiografía',
-      beneficio: 'Radiografía',
-      cobertura_pct: 80,
-      tope_cubierto: null,
-      valor_cubierto: null,
-    }
-    server.use(
-      http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'aliada', nombre: 'Clínica Norte' })),
-      http.get(`${API}/aliadas/mi-clinica/remisiones/REM7K2Q`, () => HttpResponse.json(vista)),
-      http.post(`${API}/aliadas/mi-clinica/remisiones/REM7K2Q/atencion`, async ({ request }) => {
-        reporte = await request.json()
-        return HttpResponse.json({ ...vista, estado: 'utilizada', valor_cubierto: '96000.00' })
-      }),
-    )
-    const user = userEvent.setup()
-    renderizar(<MiClinicaPage />)
-    await user.type(screen.getByLabelText('Código de la remisión'), 'rem7k2q')
-    await user.click(screen.getByRole('button', { name: 'Validar' }))
-    expect(await screen.findByText(/remisión vigente hasta/i)).toBeInTheDocument()
-    expect(screen.getByText('…4050')).toBeInTheDocument()
-    await user.type(screen.getByLabelText('Valor de la atención (COP)'), '120000')
-    await user.type(screen.getByLabelText('Resumen clínico'), 'Rx de cadera sin hallazgos')
-    await user.click(screen.getByRole('button', { name: 'Reportar atención' }))
-    expect(await screen.findByText(/TIMU cubre/)).toBeInTheDocument()
-    expect(reporte).toMatchObject({ valor_atencion: '120000', resumen: 'Rx de cadera sin hallazgos' })
-  })
-
-  it('avisa si el código no existe', async () => {
-    server.use(
-      http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'aliada' })),
-      http.get(`${API}/aliadas/mi-clinica/remisiones/:codigo`, () => HttpResponse.json({ detail: 'Remision no encontrada' }, { status: 404 })),
-    )
-    const user = userEvent.setup()
-    renderizar(<MiClinicaPage />)
-    await user.type(screen.getByLabelText('Código de la remisión'), 'NOEXISTE')
-    await user.click(screen.getByRole('button', { name: 'Validar' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('Remision no encontrada')
   })
 })

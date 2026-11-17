@@ -1356,3 +1356,73 @@
 .regla-aplican span { font-size: var(--t-menor); color: var(--texto); }
 .usuarios-perfil { max-width: 16rem; }
 .catalogo-estado { display: inline-flex; align-items: center; gap: var(--e2); flex-shrink: 0; }
+
+/* ===== Mi clínica (R3-ALI-01): el espacio de la clínica aliada como un mostrador =====
+   Contrato en .impeccable/surfaces: la estructura del portal (barra marina y cuenta, sin
+   destinos), a la izquierda el código y la remisión abierta con su reporte, a la derecha lo
+   atendido en el mes. En el celular se apilan, el código primero. */
+.aliada-contenido { max-width: 1120px; }
+.aliada-barra-clinica {
+  flex: 1; min-width: 0; margin: 0;
+  font-size: var(--t-menor); font-weight: 600; color: var(--texto-sobre-marca-suave);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.aliada-mostrador { display: grid; gap: var(--e4); align-items: start; }
+@media (min-width: 900px) {
+  .aliada-mostrador { grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: var(--e5); }
+}
+.aliada-mostrador > * { min-width: 0; }
+.aliada-panel { display: grid; gap: var(--e5); align-content: start; padding: var(--e6); border-radius: var(--r-panel); background: var(--superficie); }
+@media (max-width: 899px) { .aliada-panel { padding: var(--e4); gap: var(--e4); } }
+
+/* El código y «Validar» en una fila, alineados por el campo; la ayuda debajo de los dos. */
+.aliada-codigo { display: grid; grid-template-columns: minmax(0, 320px) auto; justify-content: start; align-items: end; gap: var(--e2) var(--e3); }
+/* El campo del código lleva letra de 20 px: el botón se iguala a su alto. */
+.aliada-codigo .input, .aliada-codigo .btn { height: 48px; }
+/* El código se valida en mayúsculas: se ve como se valida aunque se escriba en minúsculas. */
+.aliada-codigo .codigo-input { text-transform: uppercase; }
+.aliada-codigo > .campo-ayuda { grid-column: 1 / -1; font-size: var(--t-etiqueta); color: var(--texto-suave); }
+@media (max-width: 599px) { .aliada-codigo { grid-template-columns: minmax(0, 1fr) auto; } }
+
+/* La remisión abierta: su estado dicho en palabras, a quién, qué cubre y el reporte. */
+.aliada-remision { display: grid; gap: var(--e4); padding-top: var(--e5); border-top: 1px solid var(--borde); container-type: inline-size; }
+/* El distintivo y, debajo, la frase: el mismo ritmo en todos los estados y anchos. */
+.aliada-remision-estado { display: grid; justify-items: start; gap: var(--e2); margin: 0; color: var(--texto); }
+.aliada-remision-quien { display: grid; gap: var(--e1); }
+.aliada-remision-quien h2 { font-size: var(--t-cifra); color: var(--texto-titulo); }
+.aliada-remision-quien h2 > span { font-family: var(--fuente); font-size: var(--t-cuerpo); color: var(--texto-suave); }
+.aliada-remision-quien p { color: var(--texto); }
+
+/* Lo que cuesta, lo que cubre TIMU y lo que paga la familia: celdas iguales en una fila, separadas
+   por hilos; a todo el ancho del formulario, así el hilo cae en el hueco entre sus dos columnas. */
+.aliada-cifras { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 1px; margin: 0; background: var(--borde); border: 1px solid var(--borde); border-radius: var(--r-tarjeta); overflow: hidden; }
+.aliada-cifras > div { padding: var(--e3); background: var(--superficie); }
+.aliada-cifras dt { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; color: var(--texto-suave); }
+.aliada-cifras dd { margin: var(--e1) 0 0; font-size: var(--t-cifra); font-weight: 600; color: var(--texto-titulo); }
+/* Estrecho (el celular, la columna de lo atendido), cada cifra es una fila de libro de cuentas:
+   la etiqueta a la izquierda y el importe a la derecha, en columna para cuadrar. */
+@container (max-width: 479px) {
+  .aliada-cifras { grid-auto-flow: row; grid-auto-columns: auto; }
+  .aliada-cifras > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e3); }
+  .aliada-cifras dd { margin: 0; font-size: var(--t-titulo); }
+}
+.aliada-atendidas { container-type: inline-size; }
+
+.aliada-reporte { padding-top: var(--e5); border-top: 1px solid var(--borde); }
+.aliada-reporte h3 { color: var(--texto-titulo); font-weight: 600; }
+.aliada-reporte textarea { max-width: 75ch; }
+.aliada-cubre { display: grid; gap: var(--e2); }
+.aliada-reportado { padding-top: var(--e5); border-top: 1px solid var(--borde); }
+.aliada-cubre h3 { font-family: var(--fuente); font-weight: 600; color: var(--texto-titulo); }
+.aliada-reporte-pie { display: flex; justify-content: flex-end; }
+@media (max-width: 899px) {
+  .aliada-reporte-pie > .btn { flex: 1; min-height: 48px; font-size: var(--t-seccion); }
+}
+
+/* Lo atendido en el mes: el mes al lado del título, las cifras y la lista con hilo. */
+.aliada-atendidas-cabeza { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--e3); }
+.aliada-atendidas-cabeza .input { width: auto; }
+.aliada-atendidas-lista { list-style: none; margin: 0; padding: 0; }
+.aliada-atendidas-lista > li { display: grid; gap: 2px; padding: var(--e3) 0; border-top: 1px solid var(--borde); font-size: var(--t-menor); color: var(--texto-suave); }
+.aliada-atendidas-lista > li:first-child { border-top: 0; padding-top: 0; }
+.aliada-atendidas-lista strong { font-size: var(--t-cuerpo); color: var(--texto-titulo); }

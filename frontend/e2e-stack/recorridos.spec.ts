@@ -359,9 +359,21 @@ test.describe('clínica aliada', () => {
 
     await page.goto('/')
     await expect(page).toHaveURL(/\/aliada/)
+    // La barra dice en qué clínica se está: la aliada lee su propia fila (migración 0049).
+    await expect(page.getByRole('banner')).toContainText('Clinica Veterinaria del Norte')
     await page.getByLabel('Código de la remisión').fill(codigo.toLowerCase())
     await page.getByRole('button', { name: 'Validar' }).click()
-    await expect(page.getByRole('status')).toContainText('Remisión vigente hasta el')
+    await expect(page.getByText(/Se puede atender hasta el/)).toBeVisible()
     await expect(page.getByText('Radiografia de cadera por cojera')).toBeVisible()
+    // La especie en palabras: la aliada lee el catálogo (antes salía «canino»).
+    await expect(page.getByRole('heading', { name: /Rocky · Canino/ })).toBeVisible()
+
+    // Lo que cubre TIMU lo calcula la API antes de reportar; la remisión no se gasta.
+    await page.getByLabel('Valor de la atención').fill('100000')
+    await expect(page.getByText('Paga la familia')).toBeVisible()
+    await expect(page.getByText(/^\$\s80\.000$/)).toBeVisible()
+    await expect(page.getByText(/^\$\s20\.000$/)).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Reportar atención' })).toBeEnabled()
+    await expect(page.getByRole('region', { name: 'Atendidas' })).toBeVisible()
   })
 })
