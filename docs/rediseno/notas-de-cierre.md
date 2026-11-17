@@ -162,13 +162,10 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
 
 ### Lo que quedó de Mi clínica tras cerrar `R3-ALI-01`
 
-- **La familia no recibe el código de la remisión por ningún canal**: la remisión no envía ningún
-  mensaje y el portal no la muestra, así que hoy se lo dice el equipo. La clínica valida justo ese
-  código. Decisión abierta con el usuario: enviarlo por WhatsApp al emitir, mostrarlo en el portal o
-  las dos.
-- **Al reportar no se vuelve a comprobar la cartera**: el plan, el pago y el cupo se validan al
-  emitir la remisión (`F2-ALI-02`), no el día de la atención. Si la familia entra en mora entre una
-  fecha y otra, la remisión sigue sirviendo hasta que vence. Decisión abierta con el usuario.
+- **La familia no recibe el código de la remisión por ningún canal** y **una remisión emitida
+  sigue sirviendo con la familia en mora, congelada o dada de baja**: el usuario los pasó al equipo
+  de TIMU el 2026-11-16. Están en [pendientes externos](../pendientes-externos.md#remisiones-a-clínicas-aliadas-requisito-622),
+  con lo que implica cada opción.
 - **`datos_demo` escribe sin tildes** la clínica («Clinica Veterinaria del Norte»), su usuario
   («Recepcion Clinica del Norte») y la remisión («Radiografia de cadera por cojera»), que el
   recorrido de la aliada busca por ese texto. Corregirlo exige cambiar a la vez la prueba, y
