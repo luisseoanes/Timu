@@ -48,6 +48,15 @@ hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
   usuario el 2026-11-16**: `R3-ALI-01` (hecha ese día), `R3-PUB-03`, `R3-PUB-02` (con los precios
   provisionales de TIMU dichos como tales); `DEU-8`, `DEU-14` y `DEU-15` intercaladas, preguntando
   antes de empezar cada una; y el cierre `R4` (recorrido, auditoría, documentación y umbrales).
+  **Al cerrar la sesión del 2026-11-16 el usuario avisó que lo siguiente puede ser algo distinto a la
+  revisión visual y que lo dirá él**: preguntarle antes de empezar nada.
+- **La plataforma reemplazará la web actual en `timu.com.co`** (decidido con el usuario el
+  2026-11-16, al preparar las integraciones con TIMU). Por eso la portada pública, que estaba fuera
+  de alcance, hace falta antes de cambiar el dominio: cuánto de ella y cuándo lo decide TIMU con las
+  opciones del documento de integraciones (ver [integraciones](integraciones.md#decisiones-del-2026-11-16)).
+  Si entra al rediseño, es una unidad nueva: se le pregunta al usuario.
+- **Los push van al cerrar cada unidad o lote**, no por commit (decidido con el usuario el
+  2026-11-16), después de la batería local completa.
 - **`R1-CMP-02` y `R1-CMP-03` siguen parciales** y se cierran con R3 y R4 (paginación, filtros y
   orden comunes; vacíos que orientan en las pantallas de R3).
 - **Datos**: `datos_demo` y luego `operacion_demo` (ocho semanas de operación). La base local se
@@ -292,7 +301,9 @@ Confirmadas por el usuario el 2026-11-10 y el 2026-11-11, cada una escrita donde
 - **Tema oscuro.** Por decisión de producto, el panel es de tema claro (`docs/frontend/conventions.md`).
 - **PWA de familias.** Es una fase posterior, según la propuesta.
 - **Portada pública (index).** Una página de inicio pública de TIMU se construirá aparte,
-  cuando TIMU entregue los recursos gráficos (pendientes externos). Las demás páginas públicas
+  cuando TIMU entregue los recursos gráficos (pendientes externos). **Revisado el 2026-11-16:** como
+  la plataforma reemplazará la web en `timu.com.co`, hace falta antes del cambio de dominio; si entra
+  en el rediseño lo decide el usuario (ver «Dónde se retoma»). Las demás páginas públicas
   sí entran: ingreso, registro en línea, encuesta y verificación de carnet.
 - **Contenidos de la web pública timu.com.co.** Es de TIMU; sus contradicciones con el manual
   están en pendientes externos.

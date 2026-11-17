@@ -145,5 +145,10 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   `width: min(<máx>, 100%)`.
 - `verificar` muestra un aviso previo de ESLint en `AuthContext.tsx`
   (`react-refresh/only-export-components`): no es de tu cambio.
+- El `onSuccess` que se pasa a `mutate(datos, { onSuccess })` no se ejecuta si el componente que
+  llamó se desmonta antes (al reportar una remisión, el formulario desaparece porque la remisión
+  pasa a «Atendida»). Lo que tiene que pasar sí o sí va en el `onSuccess` del propio `useMutation`
+  (`useReportarAtencion(codigo, alReportar)`). En Vitest puede pasar por los tiempos y fallar en el
+  navegador.
 - Un bloque nuevo de `vistas.css` insertado antes de `.filtros` o `.listado .filtros > .input`
   pierde contra ellos: sube la especificidad (`.listado .filtros.mi-clase`) o ponlo detrás.

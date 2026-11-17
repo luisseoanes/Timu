@@ -22,6 +22,25 @@ en [costos](costos-infraestructura.md).
 | Almacenamiento S3 | Fotos, contratos, carnets, fórmulas, documentos y respaldos | `integrations/storage.py` | Requerido |
 | Sentry | Errores de la API y de los workers | `configurar_sentry` | Desactivado |
 
+## Decisiones del 2026-11-16
+
+Tomadas con el usuario al preparar la reunión de integraciones con TIMU. Lo que tiene que hacer TIMU
+en cada una, paso a paso, y las opciones de lo que falta decidir están en el documento para la
+cliente **«TIMU - Integraciones»** (Word y PDF, en `~/Escritorio` de la máquina de Pedro; la fuente
+de verdad fue `~/Descargas/documento-requerimientos-funcionales.pdf`).
+
+| Integración | Decisión | Lo que falta de nuestro lado |
+| --- | --- | --- |
+| Pagos | **Wompi** (no PayU ni Refacil) | La prueba de punta a punta en el sandbox ([pendientes externos](pendientes-externos.md)) |
+| WhatsApp | **El número actual de TIMU.** El documento deja tres formas: A, coexistencia con la app WhatsApp Business (recomendada); B, el número solo en la plataforma; C, un número nuevo | Con A: registrar los mensajes que el equipo escribe desde la app (Meta los reenvía como «echoes»; hoy `_registrar_entrante` no los recoge). Con B o C: mostrar fotos, audios y documentos (hoy se guarda `[image]`, `[audio]`…) |
+| Correo | **Google Workspace**, que TIMU ya tiene (cuenta de envío con contraseña de aplicación o retransmisión SMTP; SPF, DKIM y DMARC) | `SMTP_FROM` vale `no-responder@timu.co` por defecto: el dominio real es `timu.com.co` |
+| Dominio | **La plataforma reemplaza la web actual en `timu.com.co`** (sin subdominio). El cambio de DNS no puede tocar los registros del correo y conviene hacerlo después de la verificación de Meta | La portada pública, que estaba fuera de alcance ([hoja de ruta](hoja-de-ruta-rediseno.md)) |
+| Google Maps | Decidida (cuenta de Google Cloud de TIMU) | La Distance Matrix API que usa `integrations/mapas.py` quedó como «legacy»: un proyecto nuevo puede no habilitarla. Pasar a la Routes API (`computeRouteMatrix`) |
+| IA | Gemini (decidido el 2026-11-10) | Adaptar el conector |
+| Mapa visual de las rutas | **Por decidir** (recomendada Google Maps JavaScript) | — |
+| Calendario | Por decidir. La propuesta firmada lo da como incluido: «Integraciones (WhatsApp, pasarela de pago, calendario) — Incluido» | Nada construido todavía. Recomendado: calendario ICS suscribible más invitación en las confirmaciones |
+| Hojas de cálculo, formularios, redes, APIs externas | Por decidir (opciones en el documento) | El 6.20 pide exportar las encuestas a Excel y hoy no se puede (`F4-DAS-03` dice «cualquier vista» y solo cubre el dashboard, la liquidación y los destinatarios) |
+
 ## Wompi (pagos)
 
 Variables: `WOMPI_PUBLIC_KEY`, `WOMPI_PRIVATE_KEY`, `WOMPI_EVENTS_SECRET`,
