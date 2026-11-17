@@ -134,19 +134,22 @@ def mora(db: Session, p: Periodo) -> dict[str, Any]:
     """Foto al cierre del periodo: contratos con alguna cuota vencida sin pagar.
 
     Lo abonado despues del cierre aun no estaba pagado ese dia: se devuelve al saldo, para
-    que un cierre pasado no dependa de lo que se pago despues (la serie de la evolucion)."""
+    que un cierre pasado no dependa de lo que se pago despues (la serie de la evolucion).
+
+    Lo abonado despues se agrega una vez y se une a las cuotas: como subconsulta correlacionada
+    se evaluaba por cuota (y dos veces), y su coste estimado hacia que PostgreSQL compilara la
+    consulta con JIT en cada tramo; la evolucion en frio pasaba de 2 s con el 10 % del volumen."""
     abonado_despues = (
-        select(func.coalesce(func.sum(AplicacionPago.valor), 0))
+        select(AplicacionPago.cuota_id, func.sum(AplicacionPago.valor).label("valor"))
         .join(Pago, Pago.id == AplicacionPago.pago_id)
-        .where(
-            AplicacionPago.cuota_id == Cuota.id,
-            func.coalesce(Pago.fecha_pago, Pago.created_at) >= p.fin,
-        )
-        .scalar_subquery()
+        .where(func.coalesce(Pago.fecha_pago, Pago.created_at) >= p.fin)
+        .group_by(AplicacionPago.cuota_id)
+        .subquery()
     )
-    saldo = Cuota.valor - Cuota.valor_pagado + abonado_despues
+    saldo = Cuota.valor - Cuota.valor_pagado + func.coalesce(abonado_despues.c.valor, 0)
     vencidas = (
         select(Cuota.contrato_id, func.sum(saldo).label("saldo"))
+        .outerjoin(abonado_despues, abonado_despues.c.cuota_id == Cuota.id)
         .where(
             Cuota.estado != EstadoCuota.ANULADA,
             Cuota.fecha_vencimiento < p.hasta,
