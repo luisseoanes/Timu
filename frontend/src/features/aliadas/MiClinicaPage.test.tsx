@@ -214,17 +214,59 @@ describe('MiClinicaPage', () => {
     expect(screen.getByRole('button', { name: 'Reportar atención' })).toBeEnabled()
   })
 
-  it('una remisión vencida dice cuándo venció y no deja reportar', async () => {
+  it('una remisión vencida dice cuándo venció y solo deja reportar lo atendido hasta ese día, a propósito', async () => {
+    let reporte: unknown = null
+    const vencida = {
+      ...VISTA,
+      codigo: 'KXKQNX86',
+      vigente: false,
+      vencida: true,
+      vence_en: '2026-11-06',
+      emitida_en: '2026-10-07',
+      atencion_desde: '2026-10-07',
+      atencion_hasta: '2026-11-06',
+    }
     server.use(
-      http.get(`${API}/aliadas/mi-clinica/remisiones/:codigo`, () =>
-        HttpResponse.json({ ...VISTA, vigente: false, vencida: true, vence_en: '2026-11-06', atencion_desde: null, atencion_hasta: null }),
+      http.get(`${API}/aliadas/mi-clinica/remisiones/:codigo`, () => HttpResponse.json(vencida)),
+      http.get(`${API}/aliadas/mi-clinica/remisiones/KXKQNX86/cobertura`, () =>
+        HttpResponse.json({ valor_atencion: '1000.00', valor_cubierto: '800.00', valor_familia: '200.00', con_tope: false }),
       ),
+      http.post(`${API}/aliadas/mi-clinica/remisiones/KXKQNX86/atencion`, async ({ request }) => {
+        reporte = await request.json()
+        return HttpResponse.json({
+          ...vencida,
+          estado: 'utilizada',
+          vencida: false,
+          atencion_desde: null,
+          atencion_hasta: null,
+          fecha_atencion: '2026-11-06',
+          valor_atencion: '1000.00',
+          valor_cubierto: '800.00',
+          valor_familia: '200.00',
+        })
+      }),
     )
-    await validar('KXKQNX86')
+    const user = await validar('KXKQNX86')
     expect(await screen.findByText(/Venció el 6 nov y ya no se puede usar/)).toBeInTheDocument()
     expect(screen.getByText('Vencida')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Reportar atención' })).not.toBeInTheDocument()
+    // El formulario no queda abierto: lo normal ante una vencida es no atender.
+    expect(screen.queryByLabelText('Valor de la atención')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Validar' })).toHaveClass('btn-primario')
+
+    await user.click(screen.getByRole('button', { name: 'Reportar una atención hecha hasta el 6 nov' }))
+    const fecha = screen.getByLabelText('Fecha de la atención')
+    expect(fecha).toHaveFocus()
+    expect(fecha).toHaveAttribute('min', '2026-10-07')
+    expect(fecha).toHaveAttribute('max', '2026-11-06')
+    // «Validar» sigue siendo el único verde.
+    expect(screen.getByRole('button', { name: 'Reportar atención' })).toHaveClass('btn-secundario')
+    expect(document.querySelectorAll('.btn-primario')).toHaveLength(1)
+
+    await user.type(screen.getByLabelText('Valor de la atención'), '1000')
+    await user.type(screen.getByLabelText('Resumen clínico'), 'Rx de tórax el 5 de noviembre')
+    await user.click(screen.getByRole('button', { name: 'Reportar atención' }))
+    expect(await screen.findByText('Atendida')).toBeInTheDocument()
+    expect(reporte).toMatchObject({ fecha: '2026-11-06', valor_atencion: '1000' })
   })
 
   it('una remisión anulada lo dice', async () => {

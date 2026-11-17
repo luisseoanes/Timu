@@ -152,6 +152,9 @@ function EstadoRemision({ r }: { r: RemisionVistaAliada }) {
 
 function FichaRemision({ r, alReportar }: { r: RemisionVistaAliada; alReportar: () => void }) {
   const mascota = [r.mascota.especie_nombre, r.mascota.raza].filter(Boolean).join(', ')
+  // Vencida y sin usar, una atención hecha dentro de su vigencia se reporta después; el formulario
+  // no queda abierto invitando a reportar: se abre a propósito.
+  const [tarde, setTarde] = useState(false)
   return (
     <article className="aliada-remision" aria-labelledby="aliada-remision-mascota">
       <p className="aliada-remision-estado" role="status">
@@ -189,7 +192,14 @@ function FichaRemision({ r, alReportar }: { r: RemisionVistaAliada; alReportar: 
           <Reparto atencion={r.valor_atencion} cubierto={r.valor_cubierto} familia={r.valor_familia} hecho />
         </section>
       )}
-      {r.vigente && <ReportarAtencion r={r} alReportar={alReportar} />}
+      {r.vencida && r.atencion_hasta && !tarde && (
+        <div className="aliada-tarde">
+          <button className="btn btn-plano btn-accion" type="button" onClick={() => setTarde(true)}>
+            Reportar una atención hecha hasta el {fechaCompacta(r.atencion_hasta)}
+          </button>
+        </div>
+      )}
+      {(r.vigente || (tarde && r.atencion_hasta)) && <ReportarAtencion r={r} alReportar={alReportar} principal={r.vigente} />}
     </article>
   )
 }
@@ -227,7 +237,16 @@ function Reparto({
   )
 }
 
-function ReportarAtencion({ r, alReportar }: { r: RemisionVistaAliada; alReportar: () => void }) {
+function ReportarAtencion({
+  r,
+  alReportar,
+  principal,
+}: {
+  r: RemisionVistaAliada
+  alReportar: () => void
+  /** Con la remisión vigente, reportar es el verde de la vista; con una vencida, «Validar» lo sigue siendo. */
+  principal: boolean
+}) {
   const [valor, setValor] = useState('')
   const consultado = useRetrasado(valor, 300)
   const cubre = useCoberturaAliada(r.codigo, Number(consultado) > 0 ? consultado : null)
@@ -256,6 +275,7 @@ function ReportarAtencion({ r, alReportar }: { r: RemisionVistaAliada; alReporta
           min={r.atencion_desde ?? undefined}
           max={r.atencion_hasta ?? undefined}
           defaultValue={r.atencion_hasta ?? undefined}
+          autoFocus={!principal}
           required
         />
       </label>
@@ -305,7 +325,7 @@ function ReportarAtencion({ r, alReportar }: { r: RemisionVistaAliada; alReporta
         </p>
       )}
       <div className="ancho aliada-reporte-pie">
-        <button className="btn btn-primario" type="submit" disabled={reportar.isPending}>
+        <button className={`btn ${principal ? 'btn-primario' : 'btn-secundario'}`} type="submit" disabled={reportar.isPending}>
           {reportar.isPending ? 'Reportando…' : 'Reportar atención'}
         </button>
       </div>
