@@ -15,7 +15,14 @@ from sqlalchemy.orm import Session
 from app.core.enums import MESES_PERIODICIDAD, Periodicidad
 from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
 from app.modules.catalogos.models import TipoServicioCatalogo
-from app.modules.planes.models import Beneficio, CiudadPlan, Plan, TarifaPeriodicidad, TarifaPlan
+from app.modules.planes.models import (
+    Beneficio,
+    BeneficioAdicional,
+    CiudadPlan,
+    Plan,
+    TarifaPeriodicidad,
+    TarifaPlan,
+)
 from app.modules.reglas import service as reglas
 from app.modules.reglas.contextos import LosPeludos, PlanRecomendacion
 
@@ -27,7 +34,7 @@ def obtener(db: Session, plan_id: UUID) -> Plan:
     return plan
 
 
-DETALLE = ("beneficios", "ciudades", "tarifas", "tarifas_periodicidad")
+DETALLE = ("beneficios", "adicionales", "ciudades", "tarifas", "tarifas_periodicidad")
 
 
 def con_detalle(db: Session, plan: Plan) -> Plan:
@@ -217,6 +224,15 @@ def reemplazar_beneficios(db: Session, plan: Plan, beneficios: list[dict[str, An
     return plan
 
 
+def reemplazar_adicionales(db: Session, plan: Plan, adicionales: list[dict[str, Any]]) -> Plan:
+    """Como los beneficios: los vigentes pasan a inactivos y se crean los nuevos en su orden."""
+    for anterior in plan.adicionales:
+        anterior.activo = False
+    db.add_all(BeneficioAdicional(plan_id=plan.id, orden=i, **a) for i, a in enumerate(adicionales))
+    db.flush()
+    return con_detalle(db, plan)
+
+
 def validar_para_familia(plan: Plan, ciudad: str, especies: list[str]) -> None:
     if not plan.activo:
         raise ReglaNegocio(f"El plan {plan.nombre} no esta activo")
@@ -275,7 +291,7 @@ def _pesos(valor: Decimal) -> str:
 
 def texto_beneficio(b: Beneficio) -> str:
     """El beneficio en palabras, de frente y sin «ilimitado» (manual de marca): el cupo y su
-    periodo y, si no cubre todo, el porcentaje y el copago."""
+    periodo y, si no cubre todo, el porcentaje, el copago y hasta cuanto cubre por episodio."""
     periodo = "al mes" if b.periodo_cupo == "mensual" else "al año"
     partes = ["Sin tope de usos" if b.cupo is None else f"{b.cupo} {periodo}"]
     if b.cobertura_pct < 100:
@@ -283,7 +299,21 @@ def texto_beneficio(b: Beneficio) -> str:
         partes.append(f"cubre el {b.cobertura_pct}\u00a0%")
     if b.copago > 0:
         partes.append(f"copago de {_pesos(b.copago)}")
+    if b.tope_episodio is not None:
+        partes.append(f"hasta {_pesos(b.tope_episodio)} por episodio")
     return " · ".join(partes)
+
+
+def texto_carencia(dias: int | None) -> str | None:
+    """Desde cuando aplica, como lo dice la web de TIMU: «Desde las 24 horas», «Desde los 30
+    dias». Sin carencia escrita no se dice nada."""
+    if dias is None:
+        return None
+    if dias == 0:
+        return "Desde el primer día"
+    if dias == 1:
+        return "Desde las 24 horas"
+    return f"Desde los {dias} días"
 
 
 def publicos(db: Session, planes: list[Plan]) -> list[dict[str, Any]]:
@@ -325,9 +355,22 @@ def publicos(db: Session, planes: list[Plan]) -> list[dict[str, Any]]:
                     "periodo_cupo": b.periodo_cupo,
                     "cobertura_pct": b.cobertura_pct,
                     "copago": b.copago,
+                    "tope_episodio": b.tope_episodio,
                     "texto": texto_beneficio(b),
+                    "carencia": texto_carencia(b.carencia_dias),
+                    "detalle": b.detalle,
                 }
                 for b in sorted(plan.beneficios, key=lambda b: orden.get(b.tipo_servicio_codigo, 0))
+            ],
+            "adicionales": [
+                {
+                    "nombre": a.nombre,
+                    "cubre": a.cubre,
+                    "detalle": a.detalle,
+                    "carencia": texto_carencia(a.carencia_dias),
+                    "tercero": a.tercero,
+                }
+                for a in plan.adicionales
             ],
         }
         for plan in planes

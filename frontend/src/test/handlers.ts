@@ -67,6 +67,7 @@ export const PLAN: PlanRead = {
   exclusiones: null,
   terminos_url: null,
   beneficios: [],
+  adicionales: [],
 }
 
 export const CIUDADES: CiudadRead[] = [

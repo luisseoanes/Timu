@@ -212,6 +212,7 @@ export interface PlanRead {
   exclusiones: string | null
   terminos_url: string | null
   beneficios: BeneficioRead[]
+  adicionales: AdicionalRead[]
 }
 
 export interface CotizacionRead {
@@ -238,6 +239,18 @@ export interface BeneficioRead {
   periodo_cupo?: 'mensual' | 'anual'
   cobertura_pct?: number
   copago?: string
+  tope_episodio?: string | null
+  carencia_dias?: number | null
+  detalle?: string | null
+  id: string
+}
+
+export interface AdicionalRead {
+  nombre: string
+  cubre: string
+  detalle?: string | null
+  carencia_dias?: number | null
+  tercero?: boolean
   id: string
 }
 
@@ -1222,7 +1235,18 @@ export interface BeneficioPublico {
   periodo_cupo: string
   cobertura_pct: number
   copago: string
+  tope_episodio: string | null
   texto: string
+  carencia: string | null
+  detalle: string | null
+}
+
+export interface AdicionalPublico {
+  nombre: string
+  cubre: string
+  detalle: string | null
+  carencia: string | null
+  tercero: boolean
 }
 
 export interface PlanPublico {
@@ -1235,6 +1259,7 @@ export interface PlanPublico {
   tarifas: TarifaRead[]
   tarifas_periodicidad: TarifaPeriodicidadRead[]
   beneficios: BeneficioPublico[]
+  adicionales: AdicionalPublico[]
   carencia: string | null
   exclusiones: string | null
   terminos_url: string | null

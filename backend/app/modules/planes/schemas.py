@@ -77,7 +77,22 @@ class BeneficioPublico(BaseModel):
     periodo_cupo: str
     cobertura_pct: int
     copago: Decimal
+    tope_episodio: Decimal | None
     texto: str
+    # Desde cuando aplica, en palabras («Desde los 30 días»), y su detalle: R3-PUB-04.
+    carencia: str | None
+    detalle: str | None
+
+
+class AdicionalPublico(BaseModel):
+    """Lo que el plan da sin ser un tipo de servicio que se agenda (R3-PUB-04): el servicio
+    funebre, el desparasitante externo, los beneficios de terceros."""
+
+    nombre: str
+    cubre: str
+    detalle: str | None
+    carencia: str | None
+    tercero: bool
 
 
 class PlanPublico(BaseModel):
@@ -95,6 +110,7 @@ class PlanPublico(BaseModel):
     tarifas: list[TarifaRead]
     tarifas_periodicidad: list[TarifaPeriodicidadRead]
     beneficios: list[BeneficioPublico]
+    adicionales: list[AdicionalPublico]
     carencia: str | None
     exclusiones: str | None
     terminos_url: str | None

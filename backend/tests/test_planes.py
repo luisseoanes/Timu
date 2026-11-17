@@ -645,3 +645,136 @@ async def test_mascota_nueva_recibe_calendario_preventivo(client: AsyncClient, d
         hoy() + timedelta(weeks=4),
         hoy() + timedelta(weeks=4, days=21),
     ]
+
+
+# --- R3-PUB-04 Todo lo que dice un plan, desde Administracion -----------------------------------
+
+
+async def test_el_administrador_escribe_tope_carencia_y_detalle_de_cada_beneficio(
+    client: AsyncClient, headers, timu
+):
+    url = f"/api/v1/planes/{timu['mi_amigo_fiel']}/beneficios"
+    resp = await client.put(
+        url,
+        json=[
+            {
+                "tipo_servicio_codigo": "atencion_aliada",
+                "cobertura_pct": 40,
+                "tope_episodio": "850000",
+                "carencia_dias": 30,
+                "detalle": " Hasta el día 3 de estadía. ",
+            }
+        ],
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    [beneficio] = resp.json()["beneficios"]
+    assert (Decimal(beneficio["tope_episodio"]), beneficio["carencia_dias"]) == (
+        Decimal("850000"),
+        30,
+    )
+    assert beneficio["detalle"] == "Hasta el día 3 de estadía."
+    for malo in ({"tope_episodio": "0"}, {"carencia_dias": -1}):
+        mal = await client.put(
+            url, json=[{"tipo_servicio_codigo": "vacunacion", **malo}], headers=headers
+        )
+        assert mal.status_code == 422, malo
+
+
+async def test_los_adicionales_se_reemplazan_en_su_orden_sin_borrar_los_anteriores(
+    client: AsyncClient, db, headers, timu
+):
+    url = f"/api/v1/planes/{timu['mi_amigo_fiel']}/adicionales"
+    primero = [
+        {"nombre": "Servicio fúnebre", "cubre": "100 %", "carencia_dias": 30},
+        {"nombre": "Baño y peluquería", "cubre": "30 %", "tercero": True},
+    ]
+    resp = await client.put(url, json=primero, headers=headers)
+    assert resp.status_code == 200, resp.text
+    assert [(a["nombre"], a["tercero"]) for a in resp.json()["adicionales"]] == [
+        ("Servicio fúnebre", False),
+        ("Baño y peluquería", True),
+    ]
+    resp = await client.put(
+        url, json=[{"nombre": "Desparasitante externo", "cubre": "Cada 3 meses"}], headers=headers
+    )
+    assert [a["nombre"] for a in resp.json()["adicionales"]] == ["Desparasitante externo"]
+    guardados = (
+        await db.execute(
+            text(
+                "SELECT nombre, activo FROM beneficios_adicionales_plan"
+                " WHERE plan_id = :p ORDER BY nombre"
+            ),
+            {"p": timu["mi_amigo_fiel"]},
+        )
+    ).all()
+    assert [tuple(f) for f in guardados] == [
+        ("Baño y peluquería", False),
+        ("Desparasitante externo", True),
+        ("Servicio fúnebre", False),
+    ]
+    assert (
+        await client.put(url, json=[{"nombre": "x", "cubre": ""}], headers=headers)
+    ).status_code == 422
+
+
+async def test_solo_el_administrador_escribe_los_adicionales(client: AsyncClient, db, timu):
+    await crear_usuario(db, "ventas@timu.co", Rol.COMERCIAL)
+    h = await login(client, "ventas@timu.co")
+    resp = await client.put(
+        f"/api/v1/planes/{timu['mi_amigo_fiel']}/adicionales",
+        json=[{"nombre": "Servicio fúnebre", "cubre": "100 %"}],
+        headers=h,
+    )
+    assert resp.status_code == 403
+
+
+async def test_quien_se_afilia_lee_topes_carencias_y_adicionales(client: AsyncClient, db, timu):
+    """Lo que la portada y el registro dicen de un plan: el tope dentro de la frase del
+    beneficio, la carencia en palabras y los adicionales en su orden."""
+    plan = await db.get(Plan, UUID(timu["mi_amigo_fiel"]))
+    await db.run_sync(
+        service.reemplazar_beneficios,
+        plan,
+        [
+            {
+                "tipo_servicio_codigo": "atencion_aliada",
+                "cobertura_pct": 40,
+                "tope_episodio": Decimal("850000"),
+                "carencia_dias": 30,
+                "detalle": "Hasta el día 3.",
+            },
+            {"tipo_servicio_codigo": "vacunacion", "cupo": 1, "carencia_dias": 1},
+        ],
+    )
+    await db.run_sync(
+        service.reemplazar_adicionales,
+        plan,
+        [
+            {"nombre": "Servicio fúnebre", "cubre": "100 %", "carencia_dias": 0},
+            {"nombre": "Precios preferenciales", "cubre": "Desde el 5 %", "tercero": True},
+        ],
+    )
+    await db.commit()
+    planes = (await client.get("/api/v1/afiliaciones/registro/planes?ciudad=Medellín")).json()
+    amigo = next(p for p in planes if p["codigo"] == "mi_amigo_fiel")
+    aliada, vacuna = amigo["beneficios"]
+    assert aliada["texto"] == "Sin tope de usos · cubre el 40 % · hasta $850.000 por episodio"
+    assert (aliada["carencia"], aliada["detalle"]) == ("Desde los 30 días", "Hasta el día 3.")
+    assert vacuna["carencia"] == "Desde las 24 horas"
+    assert amigo["adicionales"] == [
+        {
+            "nombre": "Servicio fúnebre",
+            "cubre": "100 %",
+            "detalle": None,
+            "carencia": "Desde el primer día",
+            "tercero": False,
+        },
+        {
+            "nombre": "Precios preferenciales",
+            "cubre": "Desde el 5 %",
+            "detalle": None,
+            "carencia": None,
+            "tercero": True,
+        },
+    ]

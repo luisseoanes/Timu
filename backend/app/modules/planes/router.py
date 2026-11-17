@@ -31,19 +31,6 @@ ADMIN = Depends(requiere(Rol.ADMIN))
 Gestion = Annotated[Usuario, Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))]
 
 
-class BeneficioIn(BaseModel):
-    tipo_servicio_codigo: str
-    cupo: int | None = Field(default=None, ge=0, description="Vacio = ilimitado")
-    periodo_cupo: Literal["mensual", "anual"] = "anual"
-    cobertura_pct: int = Field(default=100, ge=0, le=100)
-    copago: Decimal = Field(default=Decimal(0), ge=0)
-
-
-class BeneficioRead(BeneficioIn):
-    model_config = ConfigDict(from_attributes=True)
-    id: UUID
-
-
 Valor = Annotated[Decimal, Field(gt=0, max_digits=12, decimal_places=2)]
 
 
@@ -57,6 +44,42 @@ def _vacio_es_nada(v: Any) -> Any:
 Texto2000 = Annotated[
     Annotated[str, Field(max_length=2000)] | None, BeforeValidator(_vacio_es_nada)
 ]
+# Dias de afiliada desde los que aplica un beneficio (hasta diez anos).
+Carencia = Annotated[int | None, Field(default=None, ge=0, le=3650)]
+
+
+class BeneficioIn(BaseModel):
+    tipo_servicio_codigo: str
+    cupo: int | None = Field(default=None, ge=0, description="Vacio = sin tope de usos")
+    periodo_cupo: Literal["mensual", "anual"] = "anual"
+    cobertura_pct: int = Field(default=100, ge=0, le=100)
+    copago: Decimal = Field(default=Decimal(0), ge=0)
+    # R3-PUB-04: lo que la familia lee del beneficio, ademas de su cupo y su cobertura.
+    tope_episodio: Valor | None = Field(default=None, description="Vacio = sin tope por episodio")
+    carencia_dias: Carencia = None
+    detalle: Texto2000 = None
+
+
+class BeneficioRead(BeneficioIn):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+
+
+class AdicionalIn(BaseModel):
+    """R3-PUB-04 Lo que el plan da sin ser un tipo de servicio que se agenda."""
+
+    nombre: str = Field(min_length=2, max_length=160)
+    cubre: str = Field(min_length=1, max_length=160, description="«100 %», «Cada 3 meses»")
+    detalle: Texto2000 = None
+    carencia_dias: Carencia = None
+    tercero: bool = Field(default=False, description="Lo presta un tercero con convenio")
+
+
+class AdicionalRead(AdicionalIn):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+
+
 EnlaceTerminos = Annotated[
     Annotated[str, Field(max_length=500, pattern=r"^https://")] | None,
     BeforeValidator(_vacio_es_nada),
@@ -123,6 +146,7 @@ class PlanRead(BaseModel):
     exclusiones: str | None
     terminos_url: str | None
     beneficios: list[BeneficioRead]
+    adicionales: list[AdicionalRead]
 
     @field_validator("ciudades", mode="before")
     @classmethod
@@ -263,4 +287,15 @@ async def reemplazar_beneficios(
     plan = await db.run_sync(service.obtener, plan_id)
     return await db.run_sync(
         service.reemplazar_beneficios, plan, [b.model_dump() for b in beneficios]
+    )
+
+
+@router.put("/{plan_id}/adicionales", response_model=PlanRead, dependencies=[ADMIN])
+async def reemplazar_adicionales(
+    db: DbSession, plan_id: UUID, adicionales: list[AdicionalIn]
+) -> Plan:
+    """Los beneficios adicionales del plan, en el orden en que se dicen."""
+    plan = await db.run_sync(service.obtener, plan_id)
+    return await db.run_sync(
+        service.reemplazar_adicionales, plan, [a.model_dump() for a in adicionales]
     )

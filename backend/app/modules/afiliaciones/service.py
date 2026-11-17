@@ -387,24 +387,7 @@ def _documento(db: Session, contrato: Contrato, familia: Familia, contratados: l
             "ciudad": familia.ciudad,
         },
         mascotas=peludos,
-        planes=[
-            {
-                "nombre": plan.nombre,
-                "color": plan.color,
-                "carencia": plan.carencia,
-                "exclusiones": plan.exclusiones,
-                "beneficios": [
-                    {
-                        "tipo_servicio": tipos.get(b.tipo_servicio_codigo, b.tipo_servicio_codigo),
-                        "cupo": b.cupo,
-                        "periodo_cupo": b.periodo_cupo,
-                        "cobertura_pct": b.cobertura_pct,
-                    }
-                    for b in plan.beneficios
-                ],
-            }
-            for plan in contratados
-        ],
+        planes=[documento.plan_del_contrato(plan, tipos) for plan in contratados],
         contrato={
             "periodicidad": contrato.periodicidad,
             "valor_periodo": contrato.valor_periodo,

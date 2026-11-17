@@ -63,6 +63,7 @@ from app.modules.familias.models import ContactoFamilia, Familia, Mascota  # noq
 from app.modules.ia.models import CasoPruebaIA, ConsultaIA, PromptIA  # noqa: F401
 from app.modules.planes.models import (  # noqa: F401
     Beneficio,
+    BeneficioAdicional,
     CambioPlan,
     CiudadPlan,
     Plan,

@@ -6,11 +6,14 @@ aprobado, que se versiona en TERMINOS_VERSION para que cada aceptacion quede ata
 version concreta.
 """
 
+from collections.abc import Mapping
 from datetime import date
 from typing import Any
 
 from app.core import marca_pdf as marca
 from app.modules.cartera.periodos import formato_cop
+from app.modules.planes.models import Plan
+from app.modules.planes.service import texto_carencia
 
 TERMINOS_VERSION = "2026-11-provisional"
 
@@ -45,6 +48,49 @@ def _cupo(beneficio: dict[str, Any]) -> str:
     if beneficio["cupo"] is None:
         return f"Sin tope de usos {periodo}"
     return f"{beneficio['cupo']} {periodo}"
+
+
+def plan_del_contrato(plan: Plan, tipos: Mapping[str, str]) -> dict[str, Any]:
+    """Lo que el contrato dice de un plan: lo mismo que el catalogo y que la portada (R3-PUB-04).
+    `tipos` nombra cada tipo de servicio."""
+    return {
+        "nombre": plan.nombre,
+        "color": plan.color,
+        "carencia": plan.carencia,
+        "exclusiones": plan.exclusiones,
+        "beneficios": [
+            {
+                "tipo_servicio": tipos.get(b.tipo_servicio_codigo, b.tipo_servicio_codigo),
+                "cupo": b.cupo,
+                "periodo_cupo": b.periodo_cupo,
+                "cobertura_pct": b.cobertura_pct,
+                "tope_episodio": b.tope_episodio,
+                "carencia_dias": b.carencia_dias,
+            }
+            for b in plan.beneficios
+        ],
+        "adicionales": [
+            {
+                "nombre": a.nombre,
+                "cubre": a.cubre,
+                "carencia_dias": a.carencia_dias,
+                "tercero": a.tercero,
+            }
+            for a in plan.adicionales
+        ],
+    }
+
+
+def _cobertura(beneficio: dict[str, Any]) -> str:
+    """«40 % · hasta $850.000 por episodio»."""
+    texto = f"{beneficio['cobertura_pct']} %"
+    if beneficio.get("tope_episodio") is not None:
+        texto += f" · hasta {formato_cop(beneficio['tope_episodio'])} por episodio"
+    return texto
+
+
+def _desde(dias: int | None) -> str:
+    return texto_carencia(dias) or "Desde la afiliación"
 
 
 def generar_contrato(
@@ -123,12 +169,27 @@ def _peludos_planes_y_condiciones(
             )
             marca.tabla(
                 pdf,
-                ("Servicio", "Cupo", "Cobertura"),
+                ("Servicio", "Cupo", "Cobertura", "Aplica"),
                 [
-                    (b["tipo_servicio"], _cupo(b), f"{b['cobertura_pct']} %")
+                    (b["tipo_servicio"], _cupo(b), _cobertura(b), _desde(b.get("carencia_dias")))
                     for b in plan["beneficios"]
                 ],
-                (50, 30, 20),
+                (30, 22, 28, 20),
+            )
+        if plan.get("adicionales"):
+            marca.titulo_seccion(pdf, f"Beneficios adicionales de {plan['nombre']}")
+            marca.tabla(
+                pdf,
+                ("Beneficio", "Cubre", "Aplica"),
+                [
+                    (
+                        a["nombre"] + (" (lo presta un tercero)" if a["tercero"] else ""),
+                        a["cubre"],
+                        _desde(a["carencia_dias"]),
+                    )
+                    for a in plan["adicionales"]
+                ],
+                (45, 35, 20),
             )
         # Las condiciones del plan que el registro dijo de frente (R3-PUB-02), si TIMU las escribio.
         for etiqueta, texto in (

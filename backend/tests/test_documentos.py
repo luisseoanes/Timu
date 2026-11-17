@@ -169,3 +169,66 @@ def test_el_comprobante_nombra_la_cuota_por_su_mes_y_el_medio_en_palabras():
     assert nombre_medio("CARD") == "Tarjeta"
     assert nombre_medio("consignacion") == "Consignación"
     assert nombre_medio("algo_nuevo") == "algo_nuevo"
+
+
+def test_el_contrato_dice_tope_carencia_y_adicionales_como_el_catalogo(monkeypatch):
+    """R3-PUB-04: lo que el contrato dice de cada beneficio es lo que lee la portada."""
+    filas: list[tuple[str, ...]] = []
+    tabla = contrato.marca.tabla
+    monkeypatch.setattr(
+        contrato.marca,
+        "tabla",
+        lambda pdf, cabeza, datos, anchos: (filas.extend(datos), tabla(pdf, cabeza, datos, anchos))[
+            1
+        ],
+    )
+    pdf = contrato.generar_modelo(
+        mascotas=[
+            {
+                "nombre": "Luna",
+                "especie": "Canino",
+                "plan": "Mi Amigo Fiel",
+                "valor_mensual": Decimal("69000"),
+            }
+        ],
+        planes=[
+            {
+                "nombre": "Mi Amigo Fiel",
+                "color": "naranja",
+                "beneficios": [
+                    {
+                        "tipo_servicio": "Cirugía",
+                        "cupo": None,
+                        "periodo_cupo": "anual",
+                        "cobertura_pct": 40,
+                        "tope_episodio": Decimal("850000"),
+                        "carencia_dias": 30,
+                    }
+                ],
+                "adicionales": [
+                    {
+                        "nombre": "Servicio fúnebre",
+                        "cubre": "100 %",
+                        "carencia_dias": None,
+                        "tercero": False,
+                    },
+                    {"nombre": "Peluquería", "cubre": "30 %", "carencia_dias": 1, "tercero": True},
+                ],
+            }
+        ],
+        afiliacion={
+            "ciudad": "Medellín",
+            "periodicidad": "mensual",
+            "valor_periodo": Decimal("69000"),
+            "valor_mensual": Decimal("69000"),
+        },
+    )
+    _con_la_marca(pdf)
+    assert (
+        "Cirugía",
+        "Sin tope de usos al año",
+        "40 % · hasta $850.000 por episodio",
+        "Desde los 30 días",
+    ) in filas
+    assert ("Servicio fúnebre", "100 %", "Desde la afiliación") in filas
+    assert ("Peluquería (lo presta un tercero)", "30 %", "Desde las 24 horas") in filas

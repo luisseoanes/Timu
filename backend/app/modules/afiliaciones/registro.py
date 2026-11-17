@@ -93,24 +93,7 @@ def modelo_contrato(db: Session, ciudad: str, peludos: list["Peludo"], periodici
             }
             for i, (p, c) in enumerate(zip(peludos, cotizacion.peludos, strict=True), start=1)
         ],
-        planes=[
-            {
-                "nombre": plan.nombre,
-                "color": plan.color,
-                "carencia": plan.carencia,
-                "exclusiones": plan.exclusiones,
-                "beneficios": [
-                    {
-                        "tipo_servicio": tipos.get(b.tipo_servicio_codigo, b.tipo_servicio_codigo),
-                        "cupo": b.cupo,
-                        "periodo_cupo": b.periodo_cupo,
-                        "cobertura_pct": b.cobertura_pct,
-                    }
-                    for b in plan.beneficios
-                ],
-            }
-            for plan in elegidos.values()
-        ],
+        planes=[documento.plan_del_contrato(plan, tipos) for plan in elegidos.values()],
         afiliacion={
             "ciudad": ciudad,
             "periodicidad": periodicidad,

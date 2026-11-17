@@ -52,6 +52,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "auditoria": "S",
         "bajas_comunicaciones": "SIU",
         "beneficios_plan": "SIU",
+        "beneficios_adicionales_plan": "SIU",
         "bloqueos_agenda": "SI",
         "cambios_plan": "SI",
         "campanas": "SIU",
@@ -141,6 +142,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "auditoria": "S",
         "bajas_comunicaciones": "SI",
         "beneficios_plan": "S",
+        "beneficios_adicionales_plan": "S",
         "bloqueos_agenda": "S",
         "cambios_plan": "SI",
         "campanas": "SIU",
@@ -201,6 +203,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "archivos": "SI",
         "bajas_comunicaciones": "S",
         "beneficios_plan": "S",
+        "beneficios_adicionales_plan": "S",
         "bloqueos_agenda": "S",
         "carnets_emitidos": "SI",
         "ciudades": "S",
@@ -240,6 +243,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "auditoria": "S",
         "bajas_comunicaciones": "SI",
         "beneficios_plan": "S",
+        "beneficios_adicionales_plan": "S",
         "bloqueos_agenda": "S",
         "cambios_plan": "SI",
         "campanas": "S",
@@ -299,6 +303,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "auditoria": "S",
         "bajas_comunicaciones": "SI",
         "beneficios_plan": "S",
+        "beneficios_adicionales_plan": "S",
         "bloqueos_agenda": "SI",
         "cambios_plan": "SI",
         "campanas": "S",
@@ -351,6 +356,7 @@ PERMISOS: dict[str, dict[str, str]] = {
     "publico": {
         "afiliaciones_mascota": "S",
         "beneficios_plan": "S",
+        "beneficios_adicionales_plan": "S",
         "carnets_emitidos": "S",
         "ciudades": "S",
         "ciudades_plan": "S",
@@ -534,6 +540,7 @@ CONDICIONES: dict[str, dict[str, str | dict[str, str]]] = {
 # nadie. `eventos_salientes` es el outbox: un INSERT ... RETURNING tiene que poder leerse.
 CATALOGOS = frozenset(
     {
+        "beneficios_adicionales_plan",
         "beneficios_plan",
         "bloqueos_agenda",
         "ciudades",
