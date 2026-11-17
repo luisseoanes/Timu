@@ -778,8 +778,22 @@ export interface EncuestaRead {
   respondida_en: string | null
   canal_respuesta: string | null
   puntaje: number | null
+  como_sigue: 'bien' | 'duda' | 'novedad' | null
   comentario: string | null
   tarea_id: string | null
+}
+
+export interface ContextoEncuestaRead {
+  tipo: 'satisfaccion' | 'seguimiento'
+  atencion: string | null
+  fecha: string | null
+  mascota: string | null
+  respondida: boolean
+}
+
+export interface RespuestaEncuestaRead {
+  detail: string
+  te_contactamos: boolean
 }
 
 export interface ClinicaRead {

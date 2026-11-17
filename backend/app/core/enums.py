@@ -189,6 +189,14 @@ class TipoEncuesta(StrEnum):
     SEGUIMIENTO = "seguimiento"
 
 
+class ComoSigueMascota(StrEnum):
+    """6.21 Respuesta al seguimiento: como sigue la mascota despues de la atencion."""
+
+    BIEN = "bien"
+    DUDA = "duda"
+    NOVEDAD = "novedad"
+
+
 class CanalRespuestaEncuesta(StrEnum):
     ENLACE = "enlace"
     WHATSAPP = "whatsapp"

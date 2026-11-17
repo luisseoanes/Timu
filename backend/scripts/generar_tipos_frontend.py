@@ -103,6 +103,8 @@ ESQUEMAS = [
     "RecuentosUsuarios",
     "RecuentosEventosPasarela",
     "EncuestaRead",
+    "ContextoEncuestaRead",
+    "RespuestaEncuestaRead",
     "ClinicaRead",
     "ConvenioRead",
     "RemisionRead",

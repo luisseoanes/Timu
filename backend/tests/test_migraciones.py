@@ -528,3 +528,82 @@ def test_0048_pone_tildes_a_las_ciudades_y_las_propaga(base_en_0047):
         ["Bogota", "Cali"],
         "Medellin",
     )
+
+
+@pytest.fixture
+def base_en_0049():
+    yield from _base_en("0049")
+
+
+def test_0050_pasa_el_puntaje_del_seguimiento_a_como_sigue(base_en_0049):
+    """Un seguimiento respondido con puntaje pasa a `como_sigue` (hasta 3, novedad; mas, bien) y
+    la satisfaccion conserva su puntaje. El downgrade devuelve un puntaje al seguimiento."""
+    cfg, engine = base_en_0049
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO ciudades (codigo, nombre, departamento, activa) VALUES"
+                " ('11001', 'Bogotá', 'Bogotá D.C.', true)"
+            )
+        )
+        conn.execute(
+            text(
+                "INSERT INTO tipos_servicio (codigo, nombre, modalidad, duracion_min,"
+                " requiere_autorizacion, pasos, activo) VALUES ('consulta_domiciliaria',"
+                " 'Consulta domiciliaria', 'domiciliario', 60, false, '[]', true)"
+            )
+        )
+        familia = conn.execute(
+            text(
+                "INSERT INTO familias (titular_nombre, documento, telefono, ciudad, estado,"
+                " tipo_documento, origen, barrio) VALUES ('Ana Ruiz', '1020304050',"
+                " '+573001112233', 'Bogotá', 'activa', 'CC', 'panel', 'Chapinero') RETURNING id"
+            )
+        ).scalar()
+        for n, (tipo, puntaje) in enumerate(
+            [("satisfaccion", 2), ("seguimiento", 2), ("seguimiento", 5)]
+        ):
+            servicio = conn.execute(
+                text(
+                    "INSERT INTO servicios (familia_id, tipo_codigo, tipo, ciudad, estado,"
+                    " requiere_autorizacion, autorizado) VALUES (:f, 'consulta_domiciliaria',"
+                    " 'domiciliario', 'Bogotá', 'completado', false, true) RETURNING id"
+                ),
+                {"f": familia},
+            ).scalar()
+            conn.execute(
+                text(
+                    "INSERT INTO encuestas (servicio_id, familia_id, tipo, token, programada_para,"
+                    " enviada_en, respondida_en, puntaje, estado) VALUES (:s, :f, :t, :k, now(),"
+                    " now(), now(), :p, 'respondida')"
+                ),
+                {"s": servicio, "f": familia, "t": tipo, "k": f"token-{n}", "p": puntaje},
+            )
+
+    def leer() -> list[tuple]:
+        with engine.connect() as conn:
+            columnas = "tipo, puntaje" + (
+                ", como_sigue::text"
+                if conn.execute(
+                    text(
+                        "SELECT 1 FROM information_schema.columns"
+                        " WHERE table_name = 'encuestas' AND column_name = 'como_sigue'"
+                    )
+                ).scalar()
+                else ""
+            )
+            return [
+                tuple(f)
+                for f in conn.execute(text(f"SELECT {columnas} FROM encuestas ORDER BY token"))
+            ]
+
+    command.upgrade(cfg, "0050")
+    assert leer() == [
+        ("satisfaccion", 2, None),
+        ("seguimiento", None, "novedad"),
+        ("seguimiento", None, "bien"),
+    ]
+    with engine.begin() as conn, pytest.raises(IntegrityError):
+        conn.execute(text("UPDATE encuestas SET puntaje = 4 WHERE tipo = 'seguimiento'"))
+    command.downgrade(cfg, "0049")
+    assert leer() == [("satisfaccion", 2), ("seguimiento", 1), ("seguimiento", 5)]

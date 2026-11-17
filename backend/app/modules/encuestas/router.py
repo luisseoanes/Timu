@@ -1,7 +1,7 @@
 """6.20 / 6.21 Encuestas de satisfaccion y seguimiento post atencion."""
 
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -34,6 +34,7 @@ class EncuestaRead(BaseModel):
     respondida_en: datetime | None
     canal_respuesta: str | None
     puntaje: int | None
+    como_sigue: Literal["bien", "duda", "novedad"] | None
     comentario: str | None
     tarea_id: UUID | None
 
@@ -56,8 +57,27 @@ class ConfiguracionRead(ConfiguracionIn):
 
 
 class RespuestaIn(BaseModel):
-    puntaje: int = Field(ge=1, le=5)
+    """La satisfaccion lleva `puntaje`; el seguimiento, `como_sigue` (6.21)."""
+
+    puntaje: int | None = Field(default=None, ge=1, le=5)
+    como_sigue: Literal["bien", "duda", "novedad"] | None = None
     comentario: str | None = Field(default=None, max_length=2000)
+
+
+class ContextoEncuestaRead(BaseModel):
+    """Lo que ve quien abre el enlace: que se le pregunta y sobre que atencion. Nada mas."""
+
+    tipo: Literal["satisfaccion", "seguimiento"]
+    atencion: str | None
+    fecha: date | None
+    mascota: str | None
+    respondida: bool
+
+
+class RespuestaEncuestaRead(BaseModel):
+    detail: str
+    # Un puntaje bajo, una duda o una novedad dejaron tarea: el equipo contacta a la familia.
+    te_contactamos: bool
 
 
 ORDEN = {"programada_para": Encuesta.programada_para, "respondida_en": Encuesta.respondida_en}
@@ -124,15 +144,23 @@ async def guardar_configuracion(db: DbSession, data: ConfiguracionIn) -> Configu
 # --- Respuesta por enlace (publica: la autoriza el token) -------------------------------------
 
 
-@router.get("/respuesta/{token}", dependencies=[Depends(publico)])
+@router.get(
+    "/respuesta/{token}", response_model=ContextoEncuestaRead, dependencies=[Depends(publico)]
+)
 async def contexto(db: DbSession, token: str) -> dict[str, Any]:
     """Publico a proposito: el token del enlace es el secreto. Solo devuelve que se
     pregunta y sobre que atencion."""
     return await db.run_sync(service.contexto, token)
 
 
-@router.post("/respuesta/{token}", dependencies=[Depends(publico)])
-async def responder(db: DbSession, token: str, data: RespuestaIn) -> dict[str, str]:
+@router.post(
+    "/respuesta/{token}", response_model=RespuestaEncuestaRead, dependencies=[Depends(publico)]
+)
+async def responder(db: DbSession, token: str, data: RespuestaIn) -> RespuestaEncuestaRead:
     encuesta = await db.run_sync(service.por_token, token)
-    await db.run_sync(service.responder, encuesta, data.puntaje, data.comentario, "enlace")
-    return {"detail": "Gracias por tu respuesta"}
+    await db.run_sync(
+        service.responder, encuesta, data.puntaje, data.comentario, "enlace", data.como_sigue
+    )
+    return RespuestaEncuestaRead(
+        detail="Gracias por tu respuesta", te_contactamos=encuesta.tarea_id is not None
+    )

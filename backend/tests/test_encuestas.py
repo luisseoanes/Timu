@@ -156,6 +156,85 @@ async def test_calificacion_baja_crea_tarea_con_contexto(client: AsyncClient, db
     assert tarea.vence_el == hoy()
 
 
+async def _seguimiento_enviado(db) -> Encuesta:
+    _plantillas(db)
+    db.add(ConfiguracionEncuesta(tipo_servicio_codigo="control_post", seguimiento_dias=3))
+    servicio = await _atendido(db)
+    await db.run_sync(servicios.cambiar_estado, servicio, EstadoServicio.COMPLETADO)
+    encuestas = await db.run_sync(service.programar, servicio.id)
+    await db.run_sync(service.enviar_pendientes, ahora() + timedelta(days=4))
+    (seguimiento,) = [e for e in encuestas if e.tipo == "seguimiento"]
+    assert seguimiento.estado == "enviada"
+    return seguimiento
+
+
+async def test_el_seguimiento_pregunta_como_sigue_y_una_duda_deja_tarea(client: AsyncClient, db):
+    """6.21: el seguimiento no se califica del 1 al 5; dice como sigue la mascota, y una duda o
+    una novedad avisan al equipo. El puntaje queda solo para la satisfaccion."""
+    encuesta = await _seguimiento_enviado(db)
+    token = encuesta.token
+    await db.commit()
+    contexto = (await client.get(f"/api/v1/encuestas/respuesta/{token}")).json()
+    assert contexto["tipo"] == "seguimiento" and contexto["respondida"] is False
+
+    url = f"/api/v1/encuestas/respuesta/{token}"
+    assert (await client.post(url, json={"puntaje": 2})).status_code == 422
+    assert (await client.post(url, json={"como_sigue": "regular"})).status_code == 422
+    ok = await client.post(url, json={"como_sigue": "duda", "comentario": "¿Le sigo dando?"})
+    assert ok.status_code == 200 and ok.json()["te_contactamos"] is True
+    tarea = await db.scalar(select(Tarea).where(Tarea.origen == "encuesta"))
+    assert tarea.titulo == "Duda tras la atención: contactar a la familia"
+    assert (tarea.area, tarea.prioridad, tarea.vence_el) == ("servicio_cliente", "media", hoy())
+    assert "tiene una duda" in tarea.descripcion and "¿Le sigo dando?" in tarea.descripcion
+    assert "Control post atención" in tarea.descripcion
+
+
+async def test_el_seguimiento_que_va_bien_no_deja_tarea_y_una_novedad_si(db):
+    bien = await _seguimiento_enviado(db)
+    await db.run_sync(service.responder, bien, None, None, "enlace", "bien")
+    assert (bien.estado, bien.puntaje, bien.como_sigue, bien.tarea_id) == (
+        "respondida",
+        None,
+        "bien",
+        None,
+    )
+    servicio_novedad = await _atendido(db, telefono="+573009998877")
+    await db.run_sync(servicios.cambiar_estado, servicio_novedad, EstadoServicio.COMPLETADO)
+    encuestas = await db.run_sync(service.programar, servicio_novedad.id)
+    await db.run_sync(service.enviar_pendientes, ahora() + timedelta(days=4))
+    (novedad,) = [e for e in encuestas if e.tipo == "seguimiento"]
+    await db.run_sync(service.responder, novedad, None, "Sigue sin comer", "enlace", "novedad")
+    tarea = await db.get(Tarea, novedad.tarea_id)
+    assert (tarea.titulo, tarea.prioridad) == (
+        "Novedad tras la atención: contactar a la familia",
+        "alta",
+    )
+
+
+async def test_la_satisfaccion_no_acepta_como_sigue_y_dice_si_te_contactamos(
+    client: AsyncClient, db
+):
+    encuesta = await _enviada(db)
+    token = encuesta.token
+    await db.commit()
+    url = f"/api/v1/encuestas/respuesta/{token}"
+    assert (await client.post(url, json={"como_sigue": "bien"})).status_code == 422
+    assert (await client.post(url, json={})).status_code == 422
+    ok = await client.post(url, json={"puntaje": 2})
+    assert ok.json() == {"detail": "Gracias por tu respuesta", "te_contactamos": True}
+    tarea = await db.scalar(select(Tarea).where(Tarea.origen == "encuesta"))
+    assert tarea.titulo == "Calificación baja (2/5): contactar a la familia"
+    assert "Calificó la atención con 2 de 5." in tarea.descripcion
+
+
+async def test_un_numero_por_whatsapp_no_responde_el_seguimiento(db):
+    """El numero contesta la satisfaccion enviada (aunque el seguimiento sea mas reciente)."""
+    seguimiento = await _seguimiento_enviado(db)
+    respondida = await db.run_sync(service.respuesta_whatsapp, "+573001112233", "2")
+    assert (respondida.tipo, respondida.puntaje) == ("satisfaccion", 2)
+    assert seguimiento.estado == "enviada"
+
+
 async def test_respuesta_por_whatsapp(db):
     encuesta = await _enviada(db)
     evento = {

@@ -132,8 +132,12 @@ describe('CampanasPage', () => {
       ),
       http.get(`${API}/encuestas`, () =>
         HttpResponse.json({
-          items: [{ id: 'e1', servicio_id: 's1', familia_id: 'f1', responsable_id: null, tipo: 'satisfaccion', estado: 'respondida', programada_para: '', enviada_en: null, respondida_en: '2026-10-22T15:00:00Z', canal_respuesta: 'enlace', puntaje: 2, comentario: 'Llegaron tarde', tarea_id: 't1' }],
-          total: 1,
+          items: [
+            { id: 'e1', servicio_id: 's1', familia_id: 'f1', responsable_id: null, tipo: 'satisfaccion', estado: 'respondida', programada_para: '', enviada_en: null, respondida_en: '2026-10-22T15:00:00Z', canal_respuesta: 'enlace', puntaje: 2, como_sigue: null, comentario: 'Llegaron tarde', tarea_id: 't1' },
+            // El seguimiento (6.21) no tiene puntaje: dice cómo sigue la mascota.
+            { id: 'e2', servicio_id: 's2', familia_id: 'f1', responsable_id: null, tipo: 'seguimiento', estado: 'respondida', programada_para: '', enviada_en: null, respondida_en: '2026-10-25T15:00:00Z', canal_respuesta: 'enlace', puntaje: null, como_sigue: 'duda', comentario: '¿Le sigo dando el jarabe?', tarea_id: 't2' },
+          ],
+          total: 2,
           limit: 20,
           offset: 0,
         }),
@@ -145,6 +149,9 @@ describe('CampanasPage', () => {
     await user.click(await screen.findByRole('tab', { name: 'Encuestas' }))
     expect(await screen.findByText('4.7 / 5')).toBeInTheDocument()
     expect(screen.getByText('Llegaron tarde')).toBeInTheDocument()
-    expect(screen.getByText('Con tarea de seguimiento')).toBeInTheDocument()
+    expect(screen.getAllByText('Con tarea de seguimiento')).toHaveLength(2)
+    expect(screen.getByText('Tiene una duda')).toBeInTheDocument()
+    expect(screen.getByText(/^Seguimiento ·/)).toBeInTheDocument()
+    expect(screen.queryByText(/null/)).not.toBeInTheDocument()
   })
 })

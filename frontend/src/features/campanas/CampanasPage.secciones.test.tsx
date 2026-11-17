@@ -421,7 +421,7 @@ describe('encuestas', () => {
       http.get(`${API}/encuestas`, ({ request }) => {
         maximos.push(new URL(request.url).searchParams.get('puntaje_max'))
         return HttpResponse.json({
-          items: [{ id: 'e1', servicio_id: 's1', familia_id: 'f1', responsable_id: null, tipo: 'satisfaccion', estado: 'respondida', programada_para: '', enviada_en: null, respondida_en: '2026-10-22T15:00:00Z', canal_respuesta: 'enlace', puntaje: 5, comentario: null, tarea_id: null }],
+          items: [{ id: 'e1', servicio_id: 's1', familia_id: 'f1', responsable_id: null, tipo: 'satisfaccion', estado: 'respondida', programada_para: '', enviada_en: null, respondida_en: '2026-10-22T15:00:00Z', canal_respuesta: 'enlace', puntaje: 5, como_sigue: null, comentario: null, tarea_id: null }],
           total: 1,
           limit: 20,
           offset: 0,

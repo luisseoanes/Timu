@@ -12,6 +12,13 @@ import { puede } from '@/lib/permisos'
 
 import { useConfiguracionEncuestas, useEncuestas, useGuardarConfiguracion, useResumenEncuestas } from './api'
 
+/** Lo que respondió la familia al seguimiento (6.21), dicho como en la tarea que deja. */
+const COMO_SIGUE: Record<'bien' | 'duda' | 'novedad', { tono: 'ok' | 'info' | 'alerta'; texto: string }> = {
+  bien: { tono: 'ok', texto: 'Sigue bien' },
+  duda: { tono: 'info', texto: 'Tiene una duda' },
+  novedad: { tono: 'alerta', texto: 'Algo no va bien' },
+}
+
 export function Encuestas() {
   const { usuario } = useAuth()
   const hoy = hoyISO()
@@ -76,10 +83,15 @@ export function Encuestas() {
             <>
               {d.items.map((e) => (
                 <div key={e.id} className="fila">
-                  <Insignia tono={(e.puntaje ?? 0) <= 3 ? 'alerta' : 'ok'}>{e.puntaje} / 5</Insignia>
+                  {e.como_sigue ? (
+                    <Insignia tono={COMO_SIGUE[e.como_sigue].tono}>{COMO_SIGUE[e.como_sigue].texto}</Insignia>
+                  ) : (
+                    <Insignia tono={(e.puntaje ?? 0) <= 3 ? 'alerta' : 'ok'}>{e.puntaje} / 5</Insignia>
+                  )}
                   <div className="fila-cuerpo">
                     <strong>{e.comentario ?? 'Sin comentario'}</strong>
                     <span>
+                      {e.tipo === 'seguimiento' ? 'Seguimiento · ' : ''}
                       {fechaHora(e.respondida_en)} · <Link to={`/familias/${e.familia_id}`}>Ver familia</Link> ·{' '}
                       <Link to={`/servicios/${e.servicio_id}`}>Ver servicio</Link>
                     </span>

@@ -6,20 +6,31 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.auditoria import Auditable
 from app.core.database import Base, EnumDb, TimestampMixin, UUIDMixin
-from app.core.enums import CanalRespuestaEncuesta, EstadoEncuesta, TipoEncuesta
+from app.core.enums import (
+    CanalRespuestaEncuesta,
+    ComoSigueMascota,
+    EstadoEncuesta,
+    TipoEncuesta,
+)
 
 
 class Encuesta(Base, UUIDMixin, TimestampMixin):
     """6.20 / 6.21 Encuesta al cierre de la atencion (satisfaccion) o seguimiento posterior.
 
-    El puntaje queda atado al servicio y a quien lo atendio (F3-ENC-02).
+    El puntaje queda atado al servicio y a quien lo atendio (F3-ENC-02). La satisfaccion se
+    responde con un puntaje; el seguimiento, con como sigue la mascota (6.21): no se mezclan.
     """
 
     __tablename__ = "encuestas"
     __checks__ = {
         "puntaje_rango": "puntaje IS NULL OR puntaje BETWEEN 1 AND 5",
+        "respuesta_segun_tipo": (
+            "(tipo = 'satisfaccion' AND como_sigue IS NULL)"
+            " OR (tipo = 'seguimiento' AND puntaje IS NULL)"
+        ),
         "respondida_completa": (
-            "estado <> 'respondida' OR (respondida_en IS NOT NULL" " AND puntaje IS NOT NULL)"
+            "estado <> 'respondida' OR (respondida_en IS NOT NULL"
+            " AND (puntaje IS NOT NULL OR como_sigue IS NOT NULL))"
         ),
         "enviada_con_fecha": "estado NOT IN ('enviada', 'respondida') OR enviada_en IS NOT NULL",
     }
@@ -40,7 +51,8 @@ class Encuesta(Base, UUIDMixin, TimestampMixin):
     canal_respuesta: Mapped[str | None] = mapped_column(
         EnumDb(CanalRespuestaEncuesta)
     )  # enlace | whatsapp
-    puntaje: Mapped[int | None] = mapped_column(Integer)
+    puntaje: Mapped[int | None] = mapped_column(Integer)  # solo la satisfaccion
+    como_sigue: Mapped[str | None] = mapped_column(EnumDb(ComoSigueMascota))  # solo el seguimiento
     comentario: Mapped[str | None] = mapped_column(Text)
     # pendiente | enviada | respondida | vencida | omitida
     estado: Mapped[str] = mapped_column(EnumDb(EstadoEncuesta), default="pendiente", index=True)

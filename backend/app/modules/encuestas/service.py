@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import acotar_publico
-from app.core.enums import EstadoServicio
+from app.core.enums import ComoSigueMascota, EstadoServicio, TipoEncuesta
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ZONA_NEGOCIO, ahora, con_zona
 from app.modules.auth.models import Usuario
@@ -175,45 +175,81 @@ def contexto(db: Session, token: str) -> dict[str, Any]:
 
 
 def responder(
-    db: Session, encuesta: Encuesta, puntaje: int, comentario: str | None, canal: str
+    db: Session,
+    encuesta: Encuesta,
+    puntaje: int | None,
+    comentario: str | None,
+    canal: str,
+    como_sigue: str | None = None,
 ) -> Encuesta:
+    """La satisfaccion se responde con un puntaje de 1 a 5 y el seguimiento con como sigue la
+    mascota (6.21). Un puntaje bajo, una duda o una novedad dejan tarea (F3-ENC-04)."""
     if encuesta.estado == "respondida":
         raise ReglaNegocio("La encuesta ya fue respondida")
-    if not 1 <= puntaje <= 5:
-        raise ReglaNegocio("El puntaje va de 1 a 5")
+    if encuesta.tipo == TipoEncuesta.SATISFACCION:
+        if puntaje is None or not 1 <= puntaje <= 5 or como_sigue is not None:
+            raise ReglaNegocio("El puntaje va de 1 a 5")
+    elif puntaje is not None or como_sigue not in set(ComoSigueMascota):
+        raise ReglaNegocio("Dinos como sigue la mascota: bien, con una duda o con una novedad")
     encuesta.puntaje = puntaje
+    encuesta.como_sigue = como_sigue
     encuesta.comentario = comentario
     encuesta.canal_respuesta = canal
     encuesta.estado = "respondida"
     encuesta.respondida_en = ahora()
     servicio = db.get(Servicio, encuesta.servicio_id)
     assert servicio is not None
-    conf = configuracion(db, servicio.tipo_codigo)
-    if puntaje <= conf.umbral_alerta:
-        _alertar(db, encuesta, servicio)
+    if puntaje is not None and puntaje <= configuracion(db, servicio.tipo_codigo).umbral_alerta:
+        _alertar(db, encuesta, servicio, f"Calificación baja ({puntaje}/5)", "alta")
+    elif como_sigue == ComoSigueMascota.NOVEDAD:
+        _alertar(db, encuesta, servicio, "Novedad tras la atención", "alta")
+    elif como_sigue == ComoSigueMascota.DUDA:
+        _alertar(db, encuesta, servicio, "Duda tras la atención", "media")
     db.flush()
     return encuesta
 
 
-def _alertar(db: Session, encuesta: Encuesta, servicio: Servicio) -> None:
-    """F3-ENC-04 Tarea inmediata de servicio al cliente con el contexto de la atencion."""
+# Como se dice en la tarea lo que respondio la familia al seguimiento.
+COMO_SIGUE_TEXTO = {
+    ComoSigueMascota.BIEN: "sigue bien",
+    ComoSigueMascota.DUDA: "tiene una duda",
+    ComoSigueMascota.NOVEDAD: "algo no va bien",
+}
+
+
+def _alertar(
+    db: Session, encuesta: Encuesta, servicio: Servicio, motivo: str, prioridad: str
+) -> None:
+    """F3-ENC-04 / 6.21 Tarea inmediata de servicio al cliente con el contexto de la atencion."""
 
     responsable = db.get(Usuario, encuesta.responsable_id) if encuesta.responsable_id else None
+    mascota = db.get(Mascota, servicio.mascota_id) if servicio.mascota_id else None
+    atencion = db.scalar(
+        select(TipoServicioCatalogo.nombre).where(
+            TipoServicioCatalogo.codigo == servicio.tipo_codigo
+        )
+    )
     fecha = (
         f"{con_zona(servicio.programado_para).astimezone(ZONA_NEGOCIO):%d/%m/%Y}"
         if servicio.programado_para
         else "sin fecha"
     )
+    respuesta = (
+        f"Calificó la atención con {encuesta.puntaje} de 5."
+        if encuesta.como_sigue is None
+        else f"En el seguimiento dijo que {mascota.nombre if mascota else 'la mascota'} "
+        f"{COMO_SIGUE_TEXTO[ComoSigueMascota(encuesta.como_sigue)]}."
+    )
     tarea = tareas.crear(
         db,
-        titulo=f"Calificacion baja ({encuesta.puntaje}/5): contactar a la familia",
+        titulo=f"{motivo}: contactar a la familia",
         descripcion=(
-            f"Atencion {servicio.tipo_codigo} del {fecha}, "
+            f"{atencion or servicio.tipo_codigo} del {fecha}, "
             f"atendida por {responsable.nombre if responsable else 'sin asignar'}. "
-            f"Encuesta de {encuesta.tipo}. Comentario: {encuesta.comentario or '(sin comentario)'}"
+            f"{respuesta} Comentario: {encuesta.comentario or '(sin comentario)'}"
         ),
         area="servicio_cliente",
-        prioridad="alta",
+        prioridad=prioridad,
         vence_en_dias=0,
         familia_id=encuesta.familia_id,
         servicio_id=servicio.id,
@@ -225,8 +261,9 @@ def _alertar(db: Session, encuesta: Encuesta, servicio: Servicio) -> None:
 
 
 def respuesta_whatsapp(db: Session, telefono: str, texto: str) -> Encuesta | None:
-    """Si la familia contesta con un numero de 1 a 5 a una encuesta enviada hace poco, se
-    toma como su respuesta. Cualquier otro texto se ignora aqui."""
+    """Si la familia contesta con un numero de 1 a 5 a una encuesta de satisfaccion enviada hace
+    poco, se toma como su respuesta. Cualquier otro texto se ignora aqui, y el seguimiento solo
+    se responde por el enlace (no se califica con un numero)."""
     valor = texto.strip()
     if not (len(valor) == 1 and valor in "12345"):
         return None
@@ -235,6 +272,7 @@ def respuesta_whatsapp(db: Session, telefono: str, texto: str) -> Encuesta | Non
         .join(Familia, Familia.id == Encuesta.familia_id)
         .where(
             Familia.telefono == telefono,
+            Encuesta.tipo == TipoEncuesta.SATISFACCION,
             Encuesta.estado == "enviada",
             Encuesta.enviada_en >= ahora() - VENTANA_RESPUESTA,
         )
