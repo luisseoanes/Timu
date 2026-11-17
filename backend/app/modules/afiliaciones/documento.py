@@ -90,6 +90,15 @@ def generar_contrato(
         ],
         columnas=3,
     )
+    _peludos_planes_y_condiciones(pdf, mascotas, planes)
+    return bytes(pdf.output())
+
+
+def _peludos_planes_y_condiciones(
+    pdf: marca.PdfMarca, mascotas: list[dict[str, Any]], planes: list[dict[str, Any]]
+) -> None:
+    """Lo que comparten el contrato y su modelo: los peludos, lo que cubre cada plan con sus
+    condiciones y las condiciones generales con su version."""
     marca.titulo_seccion(pdf, "Peludos afiliados")
     marca.tabla(
         pdf,
@@ -121,6 +130,13 @@ def generar_contrato(
                 ],
                 (50, 30, 20),
             )
+        # Las condiciones del plan que el registro dijo de frente (R3-PUB-02), si TIMU las escribio.
+        for etiqueta, texto in (
+            ("Carencia", plan.get("carencia")),
+            ("No cubre", plan.get("exclusiones")),
+        ):
+            if texto:
+                marca.parrafo(pdf, f"{etiqueta}: {texto}")
     marca.titulo_seccion(pdf, "Condiciones generales")
     for i, condicion in enumerate(CONDICIONES, start=1):
         marca.parrafo(pdf, f"{i}. {condicion}")
@@ -132,4 +148,37 @@ def generar_contrato(
         tamano=8,
         color=marca.SUAVE,
     )
+
+
+def generar_modelo(
+    *, mascotas: list[dict[str, Any]], planes: list[dict[str, Any]], afiliacion: dict[str, Any]
+) -> bytes:
+    """El contrato antes de pagar (R3-PUB-02): lo que la familia eligio, con las mismas
+    condiciones que firmara, y sin sus datos, que se piden despues del pago. Asi acepta un
+    documento que puede leer."""
+    pdf = marca.PdfMarca()
+    pdf.set_title("Modelo del contrato de afiliación")
+    pdf.set_author("TIMU")
+    pdf.add_page()
+    marca.cabecera(pdf, "Modelo del contrato de afiliación", "Con los planes que elegiste")
+    marca.titulo_seccion(pdf, "Titular")
+    marca.parrafo(
+        pdf,
+        "Los datos del titular y la dirección se completan después del pago; el contrato "
+        "firmado los lleva, con su número y sus fechas.",
+    )
+    marca.titulo_seccion(pdf, "Afiliación")
+    marca.datos(
+        pdf,
+        [
+            ("Ciudad", afiliacion["ciudad"]),
+            ("Forma de pago", str(afiliacion["periodicidad"]).capitalize()),
+            ("Valor de cada cuota", formato_cop(afiliacion["valor_periodo"])),
+            ("Valor mensual", formato_cop(afiliacion["valor_mensual"])),
+            ("Inicio", "Al aprobarse el pago"),
+            ("Vigencia", "Un año"),
+        ],
+        columnas=3,
+    )
+    _peludos_planes_y_condiciones(pdf, mascotas, planes)
     return bytes(pdf.output())

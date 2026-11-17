@@ -18,6 +18,8 @@ _APP_DB_PASSWORD_LOCAL = "timu_app"  # noqa: S105
 _STORAGE_ACCESS_KEY_LOCAL = "timu-local"
 _STORAGE_SECRET_KEY_LOCAL = "timu-local-secreto"  # noqa: S105
 _WHATSAPP_VERIFY_TOKEN_LOCAL = "timu-verify"  # noqa: S105
+# Ficticio, para ver el contacto del registro en local (R3-PUB-02); el oficial lo da TIMU.
+_WHATSAPP_CONTACTO_LOCAL = "+573000000000"
 
 # F0-05 Variables sin las que el servicio no arranca, por ambiente desplegado.
 OBLIGATORIAS: dict[str, tuple[str, ...]] = {
@@ -97,6 +99,9 @@ class Settings(BaseSettings):
     WHATSAPP_API_VERSION: str = "v21.0"
     # Secreto de la app de Meta: firma X-Hub-Signature-256 de los webhooks.
     WHATSAPP_APP_SECRET: str = ""
+    # El WhatsApp al que escribe quien se afilia y tiene una duda (R3-PUB-02). Vacio: el registro
+    # no ofrece contacto. Lo da TIMU (docs/pendientes-externos.md).
+    WHATSAPP_CONTACTO_PUBLICO: str = ""
 
     # Solo hay una pasarela implementada (app/integrations/payments.py). Otro valor no arranca
     # en lugar de quedarse cobrando por Wompi creyendo que es otra.
@@ -217,6 +222,11 @@ class Settings(BaseSettings):
             )
         if self.WHATSAPP_VERIFY_TOKEN == _WHATSAPP_VERIFY_TOKEN_LOCAL:
             errores.append("WHATSAPP_VERIFY_TOKEN no puede ser el valor de desarrollo")
+        if self.WHATSAPP_CONTACTO_PUBLICO == _WHATSAPP_CONTACTO_LOCAL:
+            errores.append(
+                "WHATSAPP_CONTACTO_PUBLICO no puede ser el numero ficticio de desarrollo: el de "
+                "TIMU, o vacio para no ofrecer contacto"
+            )
         if self.STORAGE_PUBLIC_ENDPOINT_URL and "localhost" in self.STORAGE_PUBLIC_ENDPOINT_URL:
             errores.append("STORAGE_PUBLIC_ENDPOINT_URL no admite localhost")
         if any("localhost" in o or o == "*" for o in self.BACKEND_CORS_ORIGINS):

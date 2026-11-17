@@ -18,8 +18,9 @@ from app.api.deps import (
     publico,
     requiere,
 )
+from app.core.config import settings
 from app.core.database import ContextoDb, fijar_contexto
-from app.core.enums import EstadoPago, Periodicidad, Rol
+from app.core.enums import ColorPlan, EstadoPago, Periodicidad, Rol
 from app.core.errores import ReglaNegocio
 from app.core.validaciones import DocumentoCO, TelefonoCO, TipoDocumento
 from app.modules.afiliaciones import ciclo, linea, registro, service
@@ -39,6 +40,7 @@ from app.modules.familias.schemas import (
     MascotaRead,
 )
 from app.modules.planes import service as planes
+from app.modules.planes.models import Plan
 from app.modules.planes.schemas import CotizacionRead, PlanPublico, cotizacion_read
 from app.schemas.common import Mensaje
 
@@ -273,6 +275,12 @@ class PeludoRegistro(PeludoCotizar):
     nombre: str = Field(min_length=1, max_length=120)
 
 
+class ModeloContratoIn(BaseModel):
+    ciudad: str = Field(max_length=80)
+    peludos: list[PeludoRegistro] = Field(min_length=1, max_length=10)
+    periodicidad: Periodicidad
+
+
 class ContactoRegistro(BaseModel):
     """Para el comprobante y para enviarle el enlace del formulario si cierra el navegador."""
 
@@ -316,6 +324,9 @@ class PeludoRegistroRead(BaseModel):
     especie: str
     plan_id: UUID
     valor_mensual: Decimal
+    # Para decir la manada que pago con el nombre y el color de cada plan (R3-PUB-02).
+    plan_nombre: str = ""
+    plan_color: ColorPlan | None = None
 
 
 class RegistroRead(BaseModel):
@@ -375,6 +386,17 @@ async def ciudades_con_cobertura(db: DbSession) -> list[str]:
     return await db.run_sync(registro.ciudades_con_cobertura)
 
 
+class ContactoPublico(BaseModel):
+    """A quien escribe quien se afilia: el WhatsApp de TIMU, o nada si no esta configurado."""
+
+    whatsapp: str | None
+
+
+@router.get("/registro/contacto", response_model=ContactoPublico, dependencies=[PUBLICO])
+async def contacto_registro() -> ContactoPublico:
+    return ContactoPublico(whatsapp=settings.WHATSAPP_CONTACTO_PUBLICO or None)
+
+
 @router.get("/registro/planes", response_model=list[PlanPublico], dependencies=[PUBLICO])
 async def planes_en(db: DbSession, ciudad: str) -> Any:
     ciudad = await db.run_sync(catalogos.ciudad_valida, ciudad)
@@ -390,6 +412,27 @@ async def cotizar_registro(db: DbSession, data: CotizacionPublica) -> list[Cotiz
         cotizacion_read(await db.run_sync(planes.cotizar, ciudad, peludos, periodicidad))
         for periodicidad in Periodicidad
     ]
+
+
+@router.post(
+    "/registro/contrato-modelo",
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+    dependencies=[PUBLICO],
+)
+async def modelo_contrato(db: DbSession, data: ModeloContratoIn) -> Response:
+    """R3-PUB-02 El modelo del contrato antes de pagar: la familia acepta un documento que puede
+    leer. No guarda nada; los datos de la familia se piden despues del pago."""
+    ciudad = await db.run_sync(catalogos.ciudad_valida, data.ciudad)
+    peludos = [registro.Peludo(p.nombre, p.especie, p.plan_id) for p in data.peludos]
+    contenido = await db.run_sync(
+        registro.modelo_contrato, ciudad, peludos, data.periodicidad.value
+    )
+    return Response(
+        content=contenido,
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'inline; filename="modelo-contrato-timu.pdf"'},
+    )
 
 
 @router.post(
@@ -438,6 +481,12 @@ async def consultar_registro(db: DbSession, data: Token) -> Any:
     solicitud = await db.run_sync(registro.por_token, data.token)
     lectura = RegistroRead.model_validate(solicitud)
     lectura.estado_pago = await db.run_sync(registro.estado_pago, solicitud)
+    elegidos = {p.plan_id for p in lectura.peludos}
+    planes_elegidos = {p.id: p for p in await db.scalars(select(Plan).where(Plan.id.in_(elegidos)))}
+    for peludo in lectura.peludos:
+        plan = planes_elegidos.get(peludo.plan_id)
+        if plan is not None:
+            peludo.plan_nombre, peludo.plan_color = plan.nombre, plan.color
     return lectura
 
 

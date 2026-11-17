@@ -70,6 +70,56 @@ def test_el_contrato_lleva_la_marca():
     )
 
 
+def test_el_modelo_del_contrato_dice_lo_elegido_y_las_condiciones_del_plan(monkeypatch):
+    """R3-PUB-02: antes de pagar, sin datos de la familia; con la carencia y lo que no cubre
+    cada plan, como el contrato que se firma."""
+    dicho: list[str] = []
+    parrafo = contrato.marca.parrafo
+    monkeypatch.setattr(
+        contrato.marca,
+        "parrafo",
+        lambda pdf, texto, **kw: (dicho.append(texto), parrafo(pdf, texto, **kw))[1],
+    )
+    pdf = contrato.generar_modelo(
+        mascotas=[
+            {
+                "nombre": "Toby",
+                "especie": "Canino",
+                "plan": "Mi Amigo Fiel",
+                "valor_mensual": Decimal("69000"),
+            }
+        ],
+        planes=[
+            {
+                "nombre": "Mi Amigo Fiel",
+                "color": "verde",
+                "carencia": "Sin periodo de carencia.",
+                "exclusiones": "Excluye preexistencias.",
+                "beneficios": [
+                    {
+                        "tipo_servicio": "Consulta domiciliaria",
+                        "cupo": 1,
+                        "periodo_cupo": "mensual",
+                        "cobertura_pct": 100,
+                    }
+                ],
+            }
+        ],
+        afiliacion={
+            "ciudad": "Medellín",
+            "periodicidad": "trimestral",
+            "valor_periodo": Decimal("207000"),
+            "valor_mensual": Decimal("69000"),
+        },
+    )
+    _con_la_marca(pdf)
+    assert (
+        "Carencia: Sin periodo de carencia." in dicho
+        and "No cubre: Excluye preexistencias." in dicho
+    )
+    assert any(t.startswith("Los datos del titular") for t in dicho)
+
+
 def test_el_telefono_del_contrato_va_en_grupos():
     assert contrato._telefono("+573001112233") == "+57 300 111 2233"
     assert contrato._telefono("+12025550123") == "+12025550123"

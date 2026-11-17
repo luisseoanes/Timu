@@ -105,6 +105,7 @@ ESQUEMAS = [
     "EncuestaRead",
     "ContextoEncuestaRead",
     "RespuestaEncuestaRead",
+    "ContactoPublico",
     "CarnetVerificadoRead",
     "MascotaVerificada",
     "SeccionVerificada",

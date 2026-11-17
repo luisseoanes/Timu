@@ -38,6 +38,7 @@ from app.modules.afiliaciones.models import EstadoSolicitud, PeludoSolicitud, So
 from app.modules.cartera import contratos
 from app.modules.cartera.models import Pago
 from app.modules.cartera.periodos import centavos, dinero, sumar_meses
+from app.modules.catalogos.models import Especie, TipoServicioCatalogo
 from app.modules.comunicaciones import service as comunicaciones
 from app.modules.familias import service as familias
 from app.modules.familias.models import Familia, Mascota
@@ -71,6 +72,52 @@ def planes_en(db: Session, ciudad: str) -> list[Plan]:
     planes_activos = db.scalars(select(Plan).where(Plan.activo.is_(True)).order_by(Plan.codigo))
     disponibles = [p for p in planes_activos if planes.disponible_en(p, ciudad)]
     return sorted(disponibles, key=lambda p: (planes.tarifa(p) or Decimal(0), p.codigo))
+
+
+def modelo_contrato(db: Session, ciudad: str, peludos: list["Peludo"], periodicidad: str) -> bytes:
+    """El modelo del contrato antes de pagar (R3-PUB-02): lo elegido, con el precio del mismo
+    calculo que cobra y las condiciones que firmara; sin datos de la familia."""
+    cotizacion = planes.cotizar(db, ciudad, [(p.especie, p.plan_id) for p in peludos], periodicidad)
+    elegidos = {p.plan.id: p.plan for p in cotizacion.peludos}
+    tipos = dict(
+        db.execute(select(TipoServicioCatalogo.codigo, TipoServicioCatalogo.nombre)).tuples().all()
+    )
+    especies = dict(db.execute(select(Especie.codigo, Especie.nombre)).tuples().all())
+    return documento.generar_modelo(
+        mascotas=[
+            {
+                "nombre": p.nombre.strip() or f"Peludo {i}",
+                "especie": especies.get(p.especie, p.especie),
+                "plan": c.plan.nombre,
+                "valor_mensual": c.valor_mensual,
+            }
+            for i, (p, c) in enumerate(zip(peludos, cotizacion.peludos, strict=True), start=1)
+        ],
+        planes=[
+            {
+                "nombre": plan.nombre,
+                "color": plan.color,
+                "carencia": plan.carencia,
+                "exclusiones": plan.exclusiones,
+                "beneficios": [
+                    {
+                        "tipo_servicio": tipos.get(b.tipo_servicio_codigo, b.tipo_servicio_codigo),
+                        "cupo": b.cupo,
+                        "periodo_cupo": b.periodo_cupo,
+                        "cobertura_pct": b.cobertura_pct,
+                    }
+                    for b in plan.beneficios
+                ],
+            }
+            for plan in elegidos.values()
+        ],
+        afiliacion={
+            "ciudad": ciudad,
+            "periodicidad": periodicidad,
+            "valor_periodo": cotizacion.valor_periodo,
+            "valor_mensual": cotizacion.valor_mensual,
+        },
+    )
 
 
 @dataclass

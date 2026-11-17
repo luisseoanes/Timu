@@ -90,6 +90,9 @@ PUBLICAS_ESPERADAS = {
     "POST /api/v1/afiliaciones/registro/consulta",
     "POST /api/v1/afiliaciones/registro/completar",
     "POST /api/v1/afiliaciones/registro/reintentar",
+    # R3-PUB-02: el modelo del contrato antes de pagar y el contacto de TIMU.
+    "POST /api/v1/afiliaciones/registro/contrato-modelo",
+    "GET /api/v1/afiliaciones/registro/contacto",
     "GET /api/v1/webhooks/whatsapp",
     "POST /api/v1/webhooks/whatsapp",  # autorizada por firma de Meta
     "POST /api/v1/webhooks/pagos",  # autorizada por firma de la pasarela

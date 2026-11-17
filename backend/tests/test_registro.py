@@ -116,6 +116,34 @@ async def test_la_ciudad_y_los_planes_salen_del_catalogo(client: AsyncClient, ti
     assert (anual["valor_periodo"], anual["descuento"]) == ("378000.00", True)
 
 
+async def test_el_modelo_del_contrato_se_lee_antes_de_pagar_sin_guardar_nada(
+    client: AsyncClient, db, timu
+):
+    """R3-PUB-02: la familia acepta un contrato que puede leer. El modelo lleva lo elegido con
+    el precio que cobra el backend, y no crea solicitud, familia ni pago."""
+    cuerpo = {
+        "ciudad": "medellin",
+        "periodicidad": "trimestral",
+        "peludos": [{"nombre": "Toby", "especie": "canino", "plan_id": str(timu["mi_amigo_fiel"])}],
+    }
+    resp = await client.post(f"{API}/contrato-modelo", json=cuerpo)
+    assert resp.status_code == 200, resp.text
+    assert resp.headers["content-type"] == "application/pdf"
+    assert resp.content.startswith(b"%PDF")
+    assert "modelo-contrato-timu.pdf" in resp.headers["content-disposition"]
+    assert await db.scalar(select(func.count()).select_from(SolicitudAfiliacion)) == 0
+    # Un plan que no se vende para la especie no da modelo: el mismo calculo que cobra.
+    gato_en_otro = {**cuerpo, "peludos": [{**cuerpo["peludos"][0], "especie": "tortuga"}]}
+    assert (await client.post(f"{API}/contrato-modelo", json=gato_en_otro)).status_code == 422
+
+
+async def test_el_contacto_de_timu_sale_de_la_configuracion(client: AsyncClient, monkeypatch):
+    monkeypatch.setattr(settings, "WHATSAPP_CONTACTO_PUBLICO", "+573001112233")
+    assert (await client.get(f"{API}/contacto")).json() == {"whatsapp": "+573001112233"}
+    monkeypatch.setattr(settings, "WHATSAPP_CONTACTO_PUBLICO", "")
+    assert (await client.get(f"{API}/contacto")).json() == {"whatsapp": None}
+
+
 async def test_el_valor_lo_calcula_el_backend_y_no_hay_familia_hasta_el_formulario(
     client: AsyncClient, db, timu
 ):
@@ -181,6 +209,8 @@ async def test_el_pago_deja_el_registro_pagado_y_envia_el_enlace(client: AsyncCl
         ("Luna", "30500.00"),
         ("Max", "61000.00"),
     ]
+    # La manada que pago se dice con el nombre y el color de cada plan (R3-PUB-02).
+    assert all(p["plan_nombre"] and p["plan_color"] for p in consulta["peludos"])
     correo = await db.scalar(select(Mensaje).where(Mensaje.destino == "ana@correo.co"))
     whatsapp = await db.scalar(select(Mensaje).where(Mensaje.plantilla == "completar_afiliacion"))
     assert whatsapp is not None and whatsapp.destino == "+573001234567"

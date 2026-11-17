@@ -391,6 +391,8 @@ def _documento(db: Session, contrato: Contrato, familia: Familia, contratados: l
             {
                 "nombre": plan.nombre,
                 "color": plan.color,
+                "carencia": plan.carencia,
+                "exclusiones": plan.exclusiones,
                 "beneficios": [
                     {
                         "tipo_servicio": tipos.get(b.tipo_servicio_codigo, b.tipo_servicio_codigo),

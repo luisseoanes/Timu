@@ -799,6 +799,10 @@ export interface RespuestaEncuestaRead {
   te_contactamos: boolean
 }
 
+export interface ContactoPublico {
+  whatsapp: string | null
+}
+
 export interface CarnetVerificadoRead {
   codigo: string
   emitido_en: string
@@ -1240,6 +1244,8 @@ export interface PeludoRegistroRead {
   especie: string
   plan_id: string
   valor_mensual: string
+  plan_nombre?: string
+  plan_color?: ColorPlan | null
 }
 
 export interface RegistroRead {
