@@ -26,6 +26,7 @@ from app.modules.documentos.service import DocumentoRead
 from app.modules.familias import service as familias
 from app.modules.familias.models import Familia
 from app.modules.familias.schemas import FamiliaRead, MascotaAlta, MascotaRead
+from app.modules.planes import service as planes
 from app.modules.planes.schemas import PlanPublico
 from app.modules.portal import service
 from app.modules.preventivos import service as preventivos
@@ -419,7 +420,7 @@ class AltaPeludoRead(BaseModel):
 @router.get("/peludos/planes", response_model=list[PlanPublico])
 async def planes_para_alta(db: DbSession, familia: FamiliaActual) -> Any:
     """Los planes que se venden en la ciudad de la familia."""
-    return await db.run_sync(registro.planes_en, familia.ciudad)
+    return await db.run_sync(lambda s: planes.publicos(s, registro.planes_en(s, familia.ciudad)))
 
 
 @router.post("/peludos/cotizacion", response_model=CotizacionAltaRead)

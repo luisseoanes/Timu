@@ -181,7 +181,14 @@ export interface Tarifas {
   anual?: string
 }
 
-export interface NuevoPlan {
+/** Las condiciones que el registro dice de frente (R3-PUB-02). Vacío = sin escribir. */
+export interface CondicionesPlan {
+  carencia: string
+  exclusiones: string
+  terminos_url: string
+}
+
+export interface NuevoPlan extends CondicionesPlan {
   codigo: string
   nombre: string
   descripcion?: string
@@ -197,7 +204,10 @@ export function useCrearPlan() {
 
 export function useActualizarPlan() {
   return useMutacion(
-    async ({ id, ...datos }: { id: string; activo?: boolean; nombre?: string; descripcion?: string | null; color?: ColorPlan }) =>
+    async ({
+      id,
+      ...datos
+    }: { id: string; activo?: boolean; nombre?: string; descripcion?: string | null; color?: ColorPlan } & Partial<CondicionesPlan>) =>
       (await api.patch<PlanRead>(`/planes/${id}`, datos)).data,
     'planes',
   )

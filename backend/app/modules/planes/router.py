@@ -6,7 +6,7 @@ from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, Query, status
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator
 from sqlalchemy import select
 
 from app.api.deps import INTERNOS, DbSession, requiere
@@ -47,6 +47,22 @@ class BeneficioRead(BeneficioIn):
 Valor = Annotated[Decimal, Field(gt=0, max_digits=12, decimal_places=2)]
 
 
+def _vacio_es_nada(v: Any) -> Any:
+    """Un campo que la administracion vacia queda sin valor, no con una cadena vacia."""
+    return (v.strip() or None) if isinstance(v, str) else v
+
+
+# Las condiciones del plan que el registro dice de frente (R3-PUB-02).
+# Los topes van sobre el texto: aplicados al campo entero, rechazan el None de un campo vaciado.
+Texto2000 = Annotated[
+    Annotated[str, Field(max_length=2000)] | None, BeforeValidator(_vacio_es_nada)
+]
+EnlaceTerminos = Annotated[
+    Annotated[str, Field(max_length=500, pattern=r"^https://")] | None,
+    BeforeValidator(_vacio_es_nada),
+]
+
+
 class TarifasIn(BaseModel):
     """6.2 / 6.3 Valor mensual por peludo con 1, 2, 3 y 4 o mas peludos, y el precio total de
     cada periodo largo para un solo peludo (vacio = sin descuento por ese periodo)."""
@@ -75,6 +91,9 @@ class PlanCreate(BaseModel):
     color: ColorPlan = Field(
         default=ColorPlan.VERDE, description="Color del logo que lo identifica"
     )
+    carencia: Texto2000 = None
+    exclusiones: Texto2000 = None
+    terminos_url: EnlaceTerminos = None
 
 
 class PlanUpdate(BaseModel):
@@ -82,6 +101,9 @@ class PlanUpdate(BaseModel):
     descripcion: str | None = None
     activo: bool | None = None
     color: ColorPlan | None = None
+    carencia: Texto2000 = None
+    exclusiones: Texto2000 = None
+    terminos_url: EnlaceTerminos = None
 
 
 class PlanRead(BaseModel):
@@ -97,6 +119,9 @@ class PlanRead(BaseModel):
     especies: list[str]
     activo: bool
     color: ColorPlan
+    carencia: str | None
+    exclusiones: str | None
+    terminos_url: str | None
     beneficios: list[BeneficioRead]
 
     @field_validator("ciudades", mode="before")
@@ -202,7 +227,8 @@ async def crear(db: DbSession, data: PlanCreate) -> Plan:
 
 @router.patch("/{plan_id}", response_model=PlanRead, dependencies=[ADMIN])
 async def actualizar(db: DbSession, plan_id: UUID, data: PlanUpdate) -> Plan:
-    """Nombre, descripcion, color y si se vende. Las tarifas y las ciudades tienen su ruta."""
+    """Nombre, descripcion, color, condiciones y si se vende. Las tarifas y las ciudades
+    tienen su ruta."""
     plan = await db.run_sync(service.obtener, plan_id)
     for campo, valor in data.model_dump(exclude_unset=True).items():
         setattr(plan, campo, valor)

@@ -67,11 +67,17 @@ def cotizacion_read(c: Cotizacion) -> CotizacionRead:
 
 
 class BeneficioPublico(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    """Lo que cubre el plan por tipo de servicio, con sus condiciones dichas en palabras
+    (`texto`: «1 al mes», «Sin tope de usos · cubre el 40 %»), para que quien se afilia no tenga
+    que interpretar cupos ni porcentajes."""
 
     tipo_servicio_codigo: str
+    nombre: str
     cupo: int | None
     periodo_cupo: str
+    cobertura_pct: int
+    copago: Decimal
+    texto: str
 
 
 class PlanPublico(BaseModel):
@@ -89,3 +95,6 @@ class PlanPublico(BaseModel):
     tarifas: list[TarifaRead]
     tarifas_periodicidad: list[TarifaPeriodicidadRead]
     beneficios: list[BeneficioPublico]
+    carencia: str | None
+    exclusiones: str | None
+    terminos_url: str | None

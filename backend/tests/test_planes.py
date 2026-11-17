@@ -19,7 +19,7 @@ from app.modules.cartera.periodos import dias_del_periodo, dinero, sumar_meses
 from app.modules.familias import service as familias_service
 from app.modules.familias.models import Mascota
 from app.modules.planes import service
-from app.modules.planes.models import CambioPlan
+from app.modules.planes.models import CambioPlan, Plan
 from app.modules.reglas.models import Regla
 from scripts import seed
 from tests import fabricas
@@ -174,6 +174,68 @@ async def test_el_color_de_un_plan_solo_puede_ser_uno_del_logo(client: AsyncClie
         f"/api/v1/planes/{timu['colita_feliz']}", json={"color": "rojo"}, headers=headers
     )
     assert resp.status_code == 422
+
+
+async def test_el_administrador_escribe_las_condiciones_del_plan(
+    client: AsyncClient, headers, timu
+):
+    """R3-PUB-02: carencia, exclusiones y enlace de terminos, que el registro dice de frente.
+    Vaciar un campo lo deja sin valor, y los terminos solo se enlazan por https."""
+    url = f"/api/v1/planes/{timu['colita_feliz']}"
+    resp = await client.patch(
+        url,
+        json={
+            "carencia": " Sin periodo de carencia. ",
+            "exclusiones": "Excluye preexistencias.",
+            "terminos_url": "https://timu.com.co/terminos",
+        },
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    plan = resp.json()
+    assert (plan["carencia"], plan["exclusiones"], plan["terminos_url"]) == (
+        "Sin periodo de carencia.",
+        "Excluye preexistencias.",
+        "https://timu.com.co/terminos",
+    )
+    assert (
+        await client.patch(url, json={"terminos_url": "http://x.co"}, headers=headers)
+    ).status_code == 422
+    vaciado = await client.patch(url, json={"carencia": "", "terminos_url": ""}, headers=headers)
+    assert (vaciado.json()["carencia"], vaciado.json()["terminos_url"]) == (None, None)
+
+
+async def test_quien_se_afilia_ve_cada_beneficio_en_palabras_y_las_condiciones(
+    client: AsyncClient, db, timu
+):
+    """El registro publico no interpreta cupos ni porcentajes: la API los dice de frente, sin
+    «ilimitado», con el nombre del servicio y en el orden del catalogo para alinear filas."""
+    plan = await db.get(Plan, UUID(timu["mi_amigo_fiel"]))
+    plan.exclusiones = "Excluye preexistencias."
+    await db.run_sync(
+        service.reemplazar_beneficios,
+        plan,
+        [
+            {"tipo_servicio_codigo": "vacunacion", "cupo": 4, "periodo_cupo": "anual"},
+            {"tipo_servicio_codigo": "consulta_domiciliaria", "cupo": 1, "periodo_cupo": "mensual"},
+            {
+                "tipo_servicio_codigo": "atencion_aliada",
+                "cupo": None,
+                "periodo_cupo": "anual",
+                "cobertura_pct": 40,
+                "copago": Decimal("15000"),
+            },
+        ],
+    )
+    await db.commit()
+    planes = (await client.get("/api/v1/afiliaciones/registro/planes?ciudad=Medellín")).json()
+    amigo = next(p for p in planes if p["codigo"] == "mi_amigo_fiel")
+    assert amigo["exclusiones"] == "Excluye preexistencias." and amigo["carencia"] is None
+    assert [(b["nombre"], b["texto"]) for b in amigo["beneficios"]] == [
+        ("Atención en clínica aliada", "Sin tope de usos · cubre el 40\u00a0% · copago de $15.000"),
+        ("Consulta domiciliaria", "1 al mes"),
+        ("Vacunación", "4 al año"),
+    ]
 
 
 async def test_un_plan_guarda_sus_tarifas_y_sus_ciudades(client: AsyncClient, headers, timu):

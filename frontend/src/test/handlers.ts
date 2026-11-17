@@ -63,6 +63,9 @@ export const PLAN: PlanRead = {
   especies: ['perro', 'gato'],
   activo: true,
   color: 'naranja',
+  carencia: null,
+  exclusiones: null,
+  terminos_url: null,
   beneficios: [],
 }
 

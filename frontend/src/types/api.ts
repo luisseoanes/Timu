@@ -208,6 +208,9 @@ export interface PlanRead {
   especies: string[]
   activo: boolean
   color: ColorPlan
+  carencia: string | null
+  exclusiones: string | null
+  terminos_url: string | null
   beneficios: BeneficioRead[]
 }
 
@@ -1156,8 +1159,12 @@ export interface PeludoSolicitudRead {
 
 export interface BeneficioPublico {
   tipo_servicio_codigo: string
+  nombre: string
   cupo: number | null
   periodo_cupo: string
+  cobertura_pct: number
+  copago: string
+  texto: string
 }
 
 export interface PlanPublico {
@@ -1170,6 +1177,9 @@ export interface PlanPublico {
   tarifas: TarifaRead[]
   tarifas_periodicidad: TarifaPeriodicidadRead[]
   beneficios: BeneficioPublico[]
+  carencia: string | null
+  exclusiones: string | null
+  terminos_url: string | null
 }
 
 export interface InicioRegistro {

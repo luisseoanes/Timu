@@ -183,6 +183,17 @@ DEL_PLEGABLE: dict[str, dict[str, dict[str, Any]]] = {
 }
 
 
+# Condiciones provisionales del plan (R3-PUB-02), PENDIENTES como las coberturas: las
+# exclusiones son la nota legal del manual de marca de TIMU; la carencia, la misma que rige al
+# agregar un peludo con el contrato vigente. Sin enlace de terminos: TIMU no tiene ese documento.
+CONDICIONES = {
+    "carencia": "Sin periodo de carencia.",
+    "exclusiones": (
+        "Excluye preexistencias. Los beneficios no se acumulan y los topes aplican por episodio."
+    ),
+}
+
+
 def beneficios_de(plan: str) -> list[dict[str, Any]]:
     """Los beneficios de un plan: los de prueba con lo que dice el plegable encima."""
     propios = DEL_PLEGABLE.get(plan, {})
@@ -248,6 +259,11 @@ class Cliente:
 
     def put(self, ruta: str, cuerpo: Any) -> Any:
         resp = self.http.put(ruta, json=cuerpo)
+        resp.raise_for_status()
+        return resp.json()
+
+    def patch(self, ruta: str, cuerpo: Any) -> Any:
+        resp = self.http.patch(ruta, json=cuerpo)
         resp.raise_for_status()
         return resp.json()
 
@@ -471,6 +487,8 @@ def main() -> None:
             _clave_beneficio(b) for b in deseados
         }:
             c.put(f"/planes/{plan['id']}/beneficios", deseados)
+        if any(plan[campo] != valor for campo, valor in CONDICIONES.items()):
+            c.patch(f"/planes/{plan['id']}", CONDICIONES)
 
     print("Franjas de agenda")
     existentes = {(f["ciudad"], f["dia_semana"], f["modalidad"]) for f in c.get("/agenda/franjas")}

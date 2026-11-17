@@ -74,6 +74,20 @@ describe('Administración: planes', () => {
     expect(within(ficha).getByRole('button', { name: 'Editar plan' })).toHaveClass('btn-primario')
   })
 
+  it('dice las condiciones que ve quien se afilia, y que sin escribirlas el registro no las muestra', async () => {
+    server.use(
+      ...base,
+      http.get(`${API}/planes`, () =>
+        HttpResponse.json([{ ...PLAN, exclusiones: 'Excluye preexistencias.', terminos_url: 'https://timu.com.co/terminos' }]),
+      ),
+    )
+    const { ficha } = await abrirFicha('Planes', '/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
+    const condiciones = within(ficha).getByRole('region', { name: 'Condiciones que ve quien se afilia' })
+    expect(condiciones).toHaveTextContent('Sin escribir: el registro no la muestra.')
+    expect(condiciones).toHaveTextContent('Excluye preexistencias.')
+    expect(within(condiciones).getByRole('link', { name: 'https://timu.com.co/terminos' })).toBeInTheDocument()
+  })
+
   it('con la misma tarifa para cualquier número de peludos, la dice en una frase', async () => {
     const iguales = PLAN.tarifas.map((t) => ({ ...t, valor: '45000.00' }))
     server.use(...base, http.get(`${API}/planes`, () => HttpResponse.json([{ ...PLAN, tarifas: iguales }])))
@@ -112,10 +126,22 @@ describe('Administración: planes', () => {
     await user.type(within(modal).getByLabelText('Cupo (vacío = ilimitado)'), '4')
     expect(within(modal).getByLabelText('Color del plan')).toHaveValue('naranja')
     await user.selectOptions(within(modal).getByLabelText('Color del plan'), 'azul')
+    // Las condiciones que el registro dice de frente (R3-PUB-02).
+    await user.type(within(modal).getByLabelText('Carencia'), 'Sin periodo de carencia.')
+    await user.type(within(modal).getByLabelText('Exclusiones'), 'Excluye preexistencias.')
     await user.click(within(modal).getByRole('button', { name: 'Guardar' }))
     await waitFor(() => expect(pedidos).toHaveLength(4))
     expect(pedidos).toEqual([
-      ['plan', { nombre: 'Colita Feliz', color: 'azul' }],
+      [
+        'plan',
+        {
+          nombre: 'Colita Feliz',
+          color: 'azul',
+          carencia: 'Sin periodo de carencia.',
+          exclusiones: 'Excluye preexistencias.',
+          terminos_url: '',
+        },
+      ],
       ['ciudades', ['Bogotá']],
       ['tarifas', { por_peludos: ['36000', '30500', '26000', '24000'], trimestral: '103800', semestral: '202350' }],
       ['beneficios', [{ tipo_servicio_codigo: 'vacunacion', cupo: 4, periodo_cupo: 'anual', cobertura_pct: 100, copago: '0' }]],
@@ -175,6 +201,9 @@ describe('Administración: planes', () => {
         nombre: 'Mi Amigo Fiel',
         especies: ['perro'],
         color: 'verde',
+        carencia: '',
+        exclusiones: '',
+        terminos_url: '',
         ciudades: ['Bogotá'],
         tarifas: { por_peludos: ['69000', '61000', '57500', '57000'], semestral: '393300' },
       }),

@@ -378,7 +378,7 @@ async def ciudades_con_cobertura(db: DbSession) -> list[str]:
 @router.get("/registro/planes", response_model=list[PlanPublico], dependencies=[PUBLICO])
 async def planes_en(db: DbSession, ciudad: str) -> Any:
     ciudad = await db.run_sync(catalogos.ciudad_valida, ciudad)
-    return await db.run_sync(registro.planes_en, ciudad)
+    return await db.run_sync(lambda s: planes.publicos(s, registro.planes_en(s, ciudad)))
 
 
 @router.post("/registro/cotizacion", response_model=list[CotizacionRead], dependencies=[PUBLICO])

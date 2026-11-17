@@ -26,6 +26,7 @@ class Plan(Base, UUIDMixin, TimestampMixin, Auditable):
     __checks__ = {
         "codigo_no_vacio": "btrim(codigo) <> ''",
         "nombre_no_vacio": "btrim(nombre) <> ''",
+        "terminos_https": "terminos_url IS NULL OR terminos_url ~ '^https://'",
     }
 
     codigo: Mapped[str] = mapped_column(String(40), unique=True)
@@ -34,6 +35,11 @@ class Plan(Base, UUIDMixin, TimestampMixin, Auditable):
     especies: Mapped[list[str]] = mapped_column(JSONTipo, default=list)  # vacio = todas
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     color: Mapped[ColorPlan] = mapped_column(EnumDb(ColorPlan), default=ColorPlan.VERDE)
+    # Las condiciones que el registro dice de frente (R3-PUB-02, manual de marca: «exclusiones y
+    # carencias, de frente»). Las escribe TIMU; mientras no lo haga, valores provisionales.
+    carencia: Mapped[str | None] = mapped_column(Text)
+    exclusiones: Mapped[str | None] = mapped_column(Text)
+    terminos_url: Mapped[str | None] = mapped_column(String(500))
 
     # Solo los beneficios vigentes. Los reemplazados quedan con activo = False: lo que cubria
     # el plan antes no se borra (fase 3 de docs/registros/plan-persistencia.md).

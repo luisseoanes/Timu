@@ -232,6 +232,32 @@ function Ficha({ plan: p }: { plan: PlanRead }) {
         )}
       </section>
 
+      <section className="bloque" aria-labelledby="plan-condiciones">
+        <h3 id="plan-condiciones">Condiciones que ve quien se afilia</h3>
+        <dl className="ficha">
+          <div className="ancho">
+            <dt>Carencia</dt>
+            <dd>{p.carencia ?? <span className="apagado">Sin escribir: el registro no la muestra.</span>}</dd>
+          </div>
+          <div className="ancho">
+            <dt>Exclusiones</dt>
+            <dd>{p.exclusiones ?? <span className="apagado">Sin escribir: el registro no las muestra.</span>}</dd>
+          </div>
+          <div className="ancho">
+            <dt>Términos y condiciones</dt>
+            <dd>
+              {p.terminos_url ? (
+                <a href={p.terminos_url} target="_blank" rel="noreferrer">
+                  {p.terminos_url}
+                </a>
+              ) : (
+                <span className="apagado">Sin enlace: el registro no enlaza ningún documento.</span>
+              )}
+            </dd>
+          </div>
+        </dl>
+      </section>
+
       <section className="bloque" aria-labelledby="plan-ciudades">
         <h3 id="plan-ciudades">
           Se vende en <span className="apagado numero">{p.ciudades.length}</span> {p.ciudades.length === 1 ? 'ciudad' : 'ciudades'}

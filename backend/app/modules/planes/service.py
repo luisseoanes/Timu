@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.core.enums import MESES_PERIODICIDAD, Periodicidad
 from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
+from app.modules.catalogos.models import TipoServicioCatalogo
 from app.modules.planes.models import Beneficio, CiudadPlan, Plan, TarifaPeriodicidad, TarifaPlan
 from app.modules.reglas import service as reglas
 
@@ -259,3 +260,73 @@ def recomendar(db: Session, ciudad: str, especies: list[str]) -> tuple[Plan, str
             continue
         return plan, "Plan de menor valor que cubre a todas las mascotas", "por_defecto"
     raise NoEncontrado("No hay un plan disponible para esa ciudad y esas mascotas")
+
+
+# --- R3-PUB-02 Lo que ve quien se afilia ------------------------------------------------------
+
+
+def _pesos(valor: Decimal) -> str:
+    """«$10.000», como los escribe cartera (`cartera.periodos.formato_cop`, que no se importa
+    aqui: cartera depende de planes)."""
+    return "$" + f"{valor:,.0f}".replace(",", ".")
+
+
+def texto_beneficio(b: Beneficio) -> str:
+    """El beneficio en palabras, de frente y sin «ilimitado» (manual de marca): el cupo y su
+    periodo y, si no cubre todo, el porcentaje y el copago."""
+    periodo = "al mes" if b.periodo_cupo == "mensual" else "al año"
+    partes = ["Sin tope de usos" if b.cupo is None else f"{b.cupo} {periodo}"]
+    if b.cobertura_pct < 100:
+        # Espacio duro: el porcentaje no se separa de su signo al partirse la linea.
+        partes.append(f"cubre el {b.cobertura_pct}\u00a0%")
+    if b.copago > 0:
+        partes.append(f"copago de {_pesos(b.copago)}")
+    return " · ".join(partes)
+
+
+def publicos(db: Session, planes: list[Plan]) -> list[dict[str, Any]]:
+    """Los planes con cada beneficio nombrado y dicho en palabras, en el orden del catalogo
+    de tipos de servicio: el registro alinea las filas de los tres planes por ese orden."""
+    nombres = dict(
+        db.execute(
+            select(TipoServicioCatalogo.codigo, TipoServicioCatalogo.nombre).order_by(
+                TipoServicioCatalogo.nombre
+            )
+        )
+        .tuples()
+        .all()
+    )
+    orden = {codigo: i for i, codigo in enumerate(nombres)}
+    return [
+        {
+            **{
+                campo: getattr(plan, campo)
+                for campo in (
+                    "id",
+                    "codigo",
+                    "nombre",
+                    "descripcion",
+                    "especies",
+                    "color",
+                    "tarifas",
+                    "tarifas_periodicidad",
+                    "carencia",
+                    "exclusiones",
+                    "terminos_url",
+                )
+            },
+            "beneficios": [
+                {
+                    "tipo_servicio_codigo": b.tipo_servicio_codigo,
+                    "nombre": nombres.get(b.tipo_servicio_codigo, b.tipo_servicio_codigo),
+                    "cupo": b.cupo,
+                    "periodo_cupo": b.periodo_cupo,
+                    "cobertura_pct": b.cobertura_pct,
+                    "copago": b.copago,
+                    "texto": texto_beneficio(b),
+                }
+                for b in sorted(plan.beneficios, key=lambda b: orden.get(b.tipo_servicio_codigo, 0))
+            ],
+        }
+        for plan in planes
+    ]

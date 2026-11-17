@@ -13,6 +13,7 @@ import {
   useGuardarCiudades,
   useGuardarTarifas,
   type Beneficio,
+  type CondicionesPlan,
   type Tarifas,
 } from './api'
 import { COLORES, ETIQUETA_PELUDOS, LARGOS, PERIODOS, tarifa, valorLargo } from './planes'
@@ -61,6 +62,7 @@ export function NuevoPlan({ abierto, onCerrar }: { abierto: boolean; onCerrar: (
               descripcion: String(d.get('descripcion') ?? '').trim() || undefined,
               especies: d.getAll('especies').map(String),
               color: String(d.get('color')) as ColorPlan,
+              ...leerCondiciones(d),
               ...datos,
             },
             {
@@ -90,6 +92,7 @@ export function NuevoPlan({ abierto, onCerrar }: { abierto: boolean; onCerrar: (
         <CampoColor />
         <CampoEspecies />
         <CamposPlan />
+        <CamposCondiciones />
         {(aviso || crear.isError) && (
           <p className="error ancho" role="alert">
             {aviso ?? mensajeError(crear.error, 'No fue posible crear el plan.')}
@@ -97,6 +100,47 @@ export function NuevoPlan({ abierto, onCerrar }: { abierto: boolean; onCerrar: (
         )}
       </form>
     </Modal>
+  )
+}
+
+/** Lo vacío viaja vacío: la API lo guarda sin valor y el registro no lo muestra. */
+function leerCondiciones(d: FormData): CondicionesPlan {
+  const texto = (campo: string) => String(d.get(campo) ?? '').trim()
+  return { carencia: texto('carencia'), exclusiones: texto('exclusiones'), terminos_url: texto('terminos_url') }
+}
+
+/**
+ * Lo que el registro en línea dice de frente junto a lo que cubre el plan (manual de marca:
+ * «exclusiones y carencias, de frente»). Lo escribe TIMU; sin escribir, el registro no lo muestra.
+ */
+function CamposCondiciones({ plan }: { plan?: PlanRead }) {
+  return (
+    <fieldset className="ancho formulario">
+      <legend className="ancho">Condiciones que ve quien se afilia</legend>
+      <div className="campo ancho">
+        <label htmlFor="plan-carencia">Carencia</label>
+        <textarea id="plan-carencia" className="input" name="carencia" aria-describedby="plan-carencia-ayuda" rows={2} maxLength={2000} defaultValue={plan?.carencia ?? ''} />
+        <span className="campo-ayuda" id="plan-carencia-ayuda">Desde cuándo aplica cada beneficio. Vacío: el registro no dice nada de la carencia.</span>
+      </div>
+      <div className="campo ancho">
+        <label htmlFor="plan-exclusiones">Exclusiones</label>
+        <textarea id="plan-exclusiones" className="input" name="exclusiones" rows={2} maxLength={2000} defaultValue={plan?.exclusiones ?? ''} />
+      </div>
+      <div className="campo ancho">
+        <label htmlFor="plan-terminos">Enlace a los términos y condiciones</label>
+        <input
+          id="plan-terminos"
+          className="input"
+          name="terminos_url"
+          aria-describedby="plan-terminos-ayuda"
+          type="url"
+          pattern="https://.*"
+          placeholder="https://"
+          defaultValue={plan?.terminos_url ?? ''}
+        />
+        <span className="campo-ayuda" id="plan-terminos-ayuda">Solo https. Vacío: el registro no enlaza ningún documento.</span>
+      </div>
+    </fieldset>
   )
 }
 
@@ -250,7 +294,12 @@ export function EditarPlan({ plan, onCerrar }: { plan: PlanRead; onCerrar: () =>
           }
           setAviso(null)
           try {
-            await actualizar.mutateAsync({ id: plan.id, nombre: String(d.get('nombre')).trim(), color: String(d.get('color')) as ColorPlan })
+            await actualizar.mutateAsync({
+              id: plan.id,
+              nombre: String(d.get('nombre')).trim(),
+              color: String(d.get('color')) as ColorPlan,
+              ...leerCondiciones(d),
+            })
             await guardarCiudades.mutateAsync({ id: plan.id, ciudades: datos.ciudades })
             await guardarTarifas.mutateAsync({ id: plan.id, tarifas: datos.tarifas })
             await guardarBeneficios.mutateAsync({ id: plan.id, beneficios })
@@ -267,6 +316,7 @@ export function EditarPlan({ plan, onCerrar }: { plan: PlanRead; onCerrar: () =>
           </label>
           <CampoColor actual={plan.color} />
           <CamposPlan plan={plan} />
+          <CamposCondiciones plan={plan} />
         </div>
         <h4 className="subtitulo">Beneficios</h4>
         {beneficios.map((b, i) => (
