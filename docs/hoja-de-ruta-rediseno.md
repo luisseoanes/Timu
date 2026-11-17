@@ -37,18 +37,21 @@ Al cierre de `R2-PAN-10` (2026-11-15) el panel del equipo está rediseñado ente
 con `R3-PUB-03` (2026-11-17), la encuesta y la verificación del carnet. Con `R3-PUB-02` (2026-11-17), el
 registro en línea: **R3 está completa**.
 
-### Dónde se retoma (2026-11-17)
+### Dónde se retoma (2026-11-17, tras `DEU-8`)
 
 Para la sesión siguiente, que no tiene la conversación anterior: todo lo decidido está en esta
 hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
 
 - **El techo del revisor (`DEU-28`–`DEU-70`) y la deuda decidida están hechos**, salvo lo que la
-  tabla de [deuda decidida](rediseno/deuda.md) marca como pendiente: `DEU-8` (editor de reglas por
-  campos), `DEU-14` (terminar la siembra gruesa), `DEU-15` (plantillas de consulta, decidida, TODO)
-  y `DEU-27` (va en `R4-CIE-03`). `DEU-E` espera a TIMU.
+  tabla de [deuda decidida](rediseno/deuda.md) marca como pendiente: `DEU-14` (terminar la siembra
+  gruesa), `DEU-15` (plantillas de consulta, decidida, TODO) y `DEU-27` (va en `R4-CIE-03`). `DEU-E`
+  espera a TIMU. `DEU-8` (el editor de reglas por campos) se cerró el 2026-11-17.
 - **Lo siguiente lo decide el usuario: R3 está completa.** Del orden **confirmado por el usuario el
-  2026-11-16** quedan `DEU-8`, `DEU-14` y `DEU-15` (intercaladas, preguntando antes de empezar cada
-  una) y el cierre `R4` (recorrido, auditoría, documentación y umbrales). El usuario puede pedir
+  2026-11-16** quedan `DEU-14` y `DEU-15` (intercaladas, preguntando antes de empezar cada una) y el
+  cierre `R4` (recorrido, auditoría, documentación y umbrales). El 2026-11-17 el usuario eligió
+  `DEU-8` antes que la portada, recomendada por los requisitos (Sección 7, 6.3 y Sección 13): la
+  portada no la pide el documento de TIMU, sino el cambio de dominio, y TIMU aún no eligió entre A, B
+  y C. El usuario puede pedir
   antes algo distinto a la revisión visual: preguntarle antes de empezar nada.
 - **La portada pública de `timu.com.co` entra en el rediseño** (decidido con el usuario el
   2026-11-17): la plataforma reemplazará la web actual en ese dominio (decidido el 2026-11-16, ver

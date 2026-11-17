@@ -104,6 +104,17 @@ Reglas que atraviesan todo el backend:
   `describir_accion`, `campos`), y la API las da como `condicion_texto`, `accion_texto` y
   `campos_condicion`. Un campo, un estado o un evento nuevo lleva su nombre en `_CAMPOS`, `_VALORES` o
   `_NOMBRES_EVENTOS`: sin él, Administración lo enseña por su código.
+- **Lo que da cada evento a sus reglas es un tipo** (`reglas/contextos.py`, `DEU-8`): una dataclass por
+  evento (`CarteraAlerta`, `ServicioElegibilidad`…) que el módulo que evalúa construye y pasa a
+  `reglas.evaluar`; mypy rechaza un dato que falte o sobre. De ella salen los campos que ofrece el
+  editor de Administración (`GET /reglas/eventos`, con su tipo, sus comparaciones y los valores del
+  catálogo), y al guardar se rechaza una condición sobre un dato que el evento no da o un valor que
+  no está en el catálogo: antes se guardaba y la regla no aplicaba nunca, sin aviso. Las acciones de
+  cada evento, con sus parámetros, están en `reglas/acciones.py`. Los planes llegan a `reglas` por
+  `reglas.conectar_planes` (planes importa reglas). Una condición con grupos anidados solo se
+  escribe por la API: el editor la lee en palabras y la conserva. La clave de un aviso
+  (`notificar`) no la escribe el equipo: al crear sale del código de la regla y al editar se
+  conserva, porque dice qué avisos ya se enviaron.
 - **`tareas` no importa `servicios`** (que crea tareas): `servicios/service.py` le conecta al
   importarse cómo describir sus servicios (`tareas.conectar_servicios`) para nombrar cada tarea
   de la bandeja; sin conectar, el listado falla.

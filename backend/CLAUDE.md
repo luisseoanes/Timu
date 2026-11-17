@@ -53,10 +53,13 @@ los registros que agregan dominios (`app/models.py`, `app/transiciones.py`), en 
     `docs/flujo-de-la-visita.md`).
   - `cartera` ← `aliadas`: `cartera.conectar_al_cancelar` corta la vigencia de las remisiones por usar.
   - `catalogos` ← `clinica`: `catalogos.conectar_campos_de_la_consulta` (`lo_registra_la_consulta`).
+  - `reglas` ← `planes`: `reglas.conectar_planes` da los planes al editor de reglas y a su validación.
 - **La traza de mensajes tapa los tokens de un solo uso** (`MensajeRead`); un script que necesite uno
   lo lee de la base con `sesion_worker`.
-- **Las reglas se describen en palabras en `reglas/motor.py`**: un campo, estado o evento nuevo lleva
-  su nombre en `_CAMPOS`, `_VALORES` o `_NOMBRES_EVENTOS`.
+- **Cada evento de reglas declara lo que da y lo que admite**: su contexto es una dataclass en
+  `reglas/contextos.py` (quien evalúa la construye: `reglas.evaluar(db, CarteraAlerta(...))`) y sus
+  acciones, en `reglas/acciones.py`; un campo, estado o evento nuevo lleva además su nombre en
+  `_CAMPOS`, `_VALORES` o `_NOMBRES_EVENTOS` de `motor.py` (lo exige `test_reglas.py`).
 - **Las cadenas que la API devuelve para mostrarse llevan tildes**; los docstrings y comentarios, no.
   Los mensajes de error aún no las llevan (deuda, no norma).
 - **Un tercero con efectos (cobrar, enviar) se llama fuera de la transacción del lote**

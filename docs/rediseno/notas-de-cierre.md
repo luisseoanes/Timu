@@ -209,3 +209,22 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
   tocarla (con dos fichas abiertas la página mide unos 2.900 px a 390); la tarifa por número de
   peludos dicha como ganancia al añadir uno («con 2 peludos, cada plan baja»); y separar el verde
   del plan Mi Amigo Fiel del verde de la acción, que conviven llenos en la misma vista.
+
+### Lo que quedó del editor de reglas tras cerrar `DEU-8`
+
+- **Las plantillas de los avisos de mora no están en el catálogo** (`cuota_vencida`, `aviso_mora`,
+  `aviso_congelamiento`): las reglas sembradas las citan, Administración las nombra con un nombre
+  provisional («Aviso de mora · aún sin registrar») y, hasta que el equipo las registre con su texto
+  aprobado en Meta, esos avisos no se envían por ningún canal ([pendientes
+  externos](../pendientes-externos.md#valores-provisionales)). Es anterior a esta unidad: el editor
+  lo hizo visible.
+- **Lo que pueden mirar las reglas lo fija el código**: cada evento declara sus datos
+  (`reglas/contextos.py`) y el editor solo ofrece esos. Un dato nuevo (la edad de la mascota, el
+  barrio) o un evento nuevo de la Sección 7 (respuestas, pagos, segmentación) siguen pidiendo un
+  cambio de código, aunque ya no de pantalla.
+- **Condiciones de un nivel**, decidido con el usuario: una regla con grupos anidados solo se
+  escribe por la API; el editor la lee en palabras y la conserva al guardar.
+- **Sugerencias del revisor, opcionales** (el «techo»): un conector «y» u «o» entre condiciones,
+  sobre el hilo que las separa, según la unión elegida; un hilo bajo la franja fija de la regla en
+  palabras cuando el cuerpo está desplazado; y la fecha nativa «dd/mm/yyyy», que es de todo el panel.
+

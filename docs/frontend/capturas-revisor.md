@@ -149,6 +149,12 @@ for (const [n, lote] of (ELEGIDOS.length ? ELEGIDOS : Object.keys(LOTES)).entrie
 await navegador.close()
 ```
 
+**Una ventana larga desplaza solo su cuerpo**: la página completa no la recorre. Antes de capturar
+se quita el foco (`document.activeElement.blur()`, si no el cuerpo queda desplazado hasta el último
+campo escrito) y se captura el cuerpo arriba, en tramos intermedios y al fondo, con solape
+(`.modal-cuerpo`, `scrollTo`), para que el revisor vea todo sin huecos. Lo aprendido con el editor
+de reglas (`DEU-8`): el revisor rechazó la primera serie porque no se veía el principio.
+
 Un resultado que sale más abajo del primer viewport (el de «Probar» en una regla) se captura a página
 completa: con `soloViewport` queda fuera. Antes de mandar una captura, comprueba que es posterior al
 último cambio del fichero que enseña (`ls --time-style=+%T`): el revisor lo mira y pide recapturar.

@@ -117,7 +117,11 @@ Administración, Planes (`?plan=`) y Reglas (`?regla=`) siguen el mismo patrón.
 cada peludo, el pago por periodo, sus beneficios y dónde se vende, con «Editar plan» en verde. Las
 reglas van agrupadas por el evento que las evalúa, y la abierta dice en palabras cuándo aplica y qué
 hace (lo genera el motor del backend) y se prueba ahí mismo, con un campo por cada dato que mira la
-condición. Una regla de un evento retirado se lee pero no se edita.
+condición. Una regla de un evento retirado se lee pero no se edita. «Editar regla» y «Nueva regla»
+(`DEU-8`) abren la misma ventana (`EditorRegla.tsx`), que escribe la regla por campos con lo que la
+API declara de cada evento (`GET /reglas/eventos`) y la dice en palabras arriba mientras se escribe
+(`POST /reglas/describir`, cada 300 ms sin cambios y solo con la regla completa). La lógica de leer y
+armar la condición vive en `admin/reglas.ts`; el panel no conoce los campos de ningún evento.
 
 ## La consulta guiada — `.consulta` (Clínica)
 

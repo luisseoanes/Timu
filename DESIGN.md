@@ -668,6 +668,11 @@ Firmes y planos; el color dice la jerarquía, no la forma.
 - Por debajo de 600 px es una hoja que sube desde abajo: todo el ancho, hasta el 92 % del alto,
   esquinas de panel solo arriba y relleno para el área segura. `recorridos.spec.ts` comprueba
   que el pie queda a la vista.
+- **Con una franja fija arriba del cuerpo** (solo el editor de reglas, `DEU-8`): lo que resume lo
+  que se está escribiendo (la regla en palabras, en una caja `superficie-hundida`) se queda fijo
+  arriba del cuerpo desde 600 px, sobre una franja blanca de 12 px que corta en limpio lo que pasa
+  por detrás; el resto del cuerpo se desplaza bajo ella. En la hoja inferior (menos de 600 px) no se
+  fija: ocuparía media hoja.
 
 ### Tabla apilable
 - **Escritorio:** cabeceras en etiqueta (12 px, mayúsculas espaciadas, texto suave), celdas con
@@ -991,7 +996,8 @@ pasar a la etapa siguiente que dice la API (`siguiente_etapa`; el panel no copia
 ### Aliadas y Administración (R2-PAN-10)
 Lo que se toca poco, con los dos patrones ya construidos: lo que hay por resolver en bandeja y cada
 registro en listado con ficha, abierto en la URL (`?clinica=`, `?plan=`, `?regla=`). Como en
-Comercial, «Nueva clínica» y «Nuevo plan» son verdes solo sin ficha abierta.
+Comercial, «Nueva clínica», «Nuevo plan» y «Nueva regla» son verdes solo sin ficha abierta (con
+ella, suaves).
 - **Remisiones:** bandeja con «Por usar» (la de entrada, la que vence antes primero),
   «Utilizadas», «Anuladas» y «Todas», con su recuento de la API; «Emitir remisión» es el verde.
   Cada fila: el titular y la mascota («Jorge Ramirez · Rocky», enlace a la familia) con el código y
@@ -1025,11 +1031,47 @@ Comercial, «Nueva clínica» y «Nuevo plan» son verdes solo sin ficha abierta
   tabla apilable («2 al año», «Ilimitado») y «Se vende en 12 ciudades» con las ciudades en una línea
   separadas por «·».
 - **Reglas:** el listado agrupado por evento con el rótulo de los días de Servicios («AVISOS
-  ESCALONADOS DE MORA · 4»); cada fila dice en palabras cuándo aplica (`condicion_texto`). La ficha:
+  ESCALONADOS DE MORA · 4»); cada fila dice en palabras cuándo aplica (`condicion_texto`). «Nueva
+  regla», con el icono «mas», va en la cabecera del listado; sin reglas, «Aún no hay reglas. Crea la
+  primera con «Nueva regla».». La ficha:
   el nombre, el evento, «Editar regla» como verde y activar o desactivar en el menú; «Cuándo aplica»
-  y «Qué hace» (`accion_texto`) a todo el ancho, prioridad y «Si aplica» como datos. El JSON solo
-  aparece en la ventana de editar. Una regla de un evento retirado lleva la insignia «Retirada» y
-  una nota que dice por qué; no tiene acciones ni «Probar»: se lee, no se edita.
+  y «Qué hace» (`accion_texto`) a todo el ancho, prioridad y «Si aplica» como datos. Ni la ficha ni
+  la ventana muestran JSON: la regla se escribe por campos (abajo). Una regla de un evento retirado
+  lleva la insignia «Retirada» y una nota que dice por qué; no tiene acciones ni «Probar»: se lee,
+  no se edita.
+- **Editor de reglas (DEU-8):** una sola ventana para crear y editar, con la franja fija de
+  Ventanas. Título «Nueva regla» (descripción «Elige cuándo se revisa, cuándo aplica y qué hace.»)
+  o «Editar «Aviso de mora a los 25 días»» con el evento como descripción; el pie, «Crear regla» o
+  «Guardar». De arriba abajo, en el formulario de dos columnas (una por debajo de 900 px):
+  - **La regla en palabras:** una caja hundida (`superficie-hundida`, esquina de tarjeta, relleno
+    de 12 por 16 px) con dos datos, «CUÁNDO APLICA» y «QUÉ HACE» en etiqueta (12 px, 600,
+    mayúsculas espaciadas, texto suave) y su frase debajo en 600 marino, 12 px entre uno y otro. La
+    API la rehace con el borrador 300 ms después del último cambio; mientras falta algo dice
+    «Completa cada condición y lo que hace para leer la regla entera.», al pedirla «Leyendo la
+    regla…» en apagado, y si la API la objeta, su error en rojo.
+  - **«Cuándo se revisa»** (el evento, solo al crear, con su ayuda debajo) y **«Nombre»**, a lo ancho.
+  - **«Cuándo aplica»:** la leyenda en 14 px, 600, marino. Desde dos condiciones, «Aplica si se
+    cumplen» con «Todas las condiciones» o «Al menos una», en una lista de hasta 16rem. Cada
+    condición es una fila de lista con hilo arriba (y abajo la última), 12 px de relleno vertical,
+    en dos filas en todos los anchos: «Dato» en dos columnas con el «quitar» a su derecha (botón
+    plano de icono «cerrar», columna de 44 px); debajo «Comparación» y «Valor», o, para «es uno de»,
+    las casillas «Valores» a todo el ancho en columnas de 9rem como mínimo (leyenda de 13 px). Cada
+    control lleva su etiqueta visible y un nombre accesible con su número («Dato de la condición
+    2»). Debajo, «Añadir una condición» u «Otra condición» en botón secundario con el icono «mas»;
+    sin condiciones, la nota «Sin condiciones: aplica siempre.». Una condición con grupos dentro de
+    grupos no se edita: se lee su frase y una nota dice que se escribió fuera del panel y que al
+    guardar se conserva.
+  - **«Qué hace»:** la «Acción» en lista si el evento admite varias; si admite una, como dato
+    («Acción» en 13 px, 600, marino, como etiqueta de campo, y «Avisar por WhatsApp» debajo en
+    texto), no como otro título. Sus parámetros siguen en el formulario; un texto libre o una lista
+    con algún nombre de más de 24 caracteres («Aviso de mora · aún sin registrar») van a todo el
+    ancho.
+  - **«Orden y vigencia»:** «Prioridad» (con la ayuda «Las de un mismo evento se evalúan de menor a
+    mayor.»), «Si aplica» («Sigue con las siguientes» o «No evalúa las siguientes»), «Planes» a lo
+    ancho si el evento lo admite («Todos los planes» o «Solo <plan>»), «Vale desde» y «Vale hasta».
+  - **«Para qué sirve»:** un área de texto de dos líneas, a lo ancho.
+
+  Al crear, se abre la ficha de la regla creada (`?regla=`): lo siguiente es probarla.
 - **Probar esta regla:** un bloque dentro de la ficha con un campo con nombre por dato que mira la
   condición («Días de mora»; ninguno si aplica siempre, y lo dice) y «Probar» suave. El resultado,
   en un recuadro hundido con esquina de tarjeta: «Esta regla aplica.» o «no aplica con estos
@@ -1053,6 +1095,12 @@ cuyo efecto alcanza a otros (anular una remisión, desactivar a alguien o cambia
 cierran sus sesiones, apagar una ciudad), se confirma en una ventana que dice ese efecto: en
 `btn-peligro` si quita algo, en verde si es el camino normal. Deshacerlo (activar, encender) es
 directo.
+
+**La regla de la regla leída antes de guardarla.** Quien escribe una regla la lee como la leerá
+el equipo antes de guardarla: la frase de arriba del editor la arma la API con el borrador
+(`/reglas/describir`), no el panel, y queda a la vista mientras se escribe. El control y la frase
+dicen lo mismo («al menos», «como mucho», «igual a», «más de», «menos de», «distinto de»), y un dato
+del catálogo se nombra, nunca por su código.
 
 **La regla de las palabras de la API.** El panel no muestra códigos del backend: la API dice cada
 cosa en palabras (`condicion_texto`, `accion_texto`, `retirada`, los grupos de usuarios, de quién

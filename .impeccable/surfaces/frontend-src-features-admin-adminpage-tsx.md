@@ -2,7 +2,7 @@
 version: 1
 slug: "frontend-src-features-admin-adminpage-tsx"
 primary_target: "frontend/src/features/admin/AdminPage.tsx"
-related_targets: ["frontend/src/features/admin/Usuarios.tsx","frontend/src/features/admin/Planes.tsx","frontend/src/features/admin/Reglas.tsx","frontend/src/features/admin/Catalogos.tsx","frontend/src/features/admin/InteligenciaArtificial.tsx","frontend/src/features/admin/Reportes.tsx"]
+related_targets: ["frontend/src/features/admin/Usuarios.tsx","frontend/src/features/admin/Planes.tsx","frontend/src/features/admin/Reglas.tsx","frontend/src/features/admin/EditorRegla.tsx","frontend/src/features/admin/ProbarRegla.tsx","frontend/src/features/admin/Catalogos.tsx","frontend/src/features/admin/InteligenciaArtificial.tsx","frontend/src/features/admin/Reportes.tsx"]
 ---
 
 # Panel del equipo · Administración (R2-PAN-10, segunda parte)
@@ -68,6 +68,36 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 - **Desactivar a alguien confirma en rojo**; activarlo de nuevo es directo. Desactivar un plan o
   una regla va en el menú: es reversible.
 - **Los nombres de las modalidades suben a `catalogos`**, compartidos con Servicios.
+
+## Editor de reglas por campos (DEU-8, 2026-11-17)
+
+Decidido por el usuario, cada punto con la opción recomendada (Sección 7 «crear automatizaciones»,
+6.3 «reglas modificables sin reconstruir», Sección 13 «personal no técnico»):
+
+- **Ventana con la regla en palabras arriba** («Ventana, regla en palabras»): la ficha sigue de
+  lectura con «Probar», y «Editar regla» abre la ventana, como Planes y Usuarios. Arriba, cuándo
+  aplica y qué hace en palabras, que la API rehace con cada cambio (`POST /reglas/describir`).
+- **Editar y crear**: «Nueva regla» en la cabecera del listado (verde solo sin una regla abierta);
+  primero se elige cuándo se revisa (el evento). El código interno y la clave del aviso no se
+  piden: los pone la API.
+- **Un nivel: todas o alguna**: una lista de comparaciones (dato, comparación y valor). Una regla
+  con grupos anidados, escrita por la API, se lee en palabras y se conserva al guardar.
+- **La API declara y valida los campos de cada evento**: `GET /reglas/eventos` da sus campos con
+  tipo, comparaciones y valores del catálogo, sus acciones con sus parámetros y los planes; una
+  condición sobre un dato que el evento no da, o un valor que no está en el catálogo, se rechaza.
+
+Desviaciones del boceto tomadas al construir (aceptadas por el revisor final):
+
+- **Cada condición en dos filas**, en todos los anchos: el dato a lo ancho con su «quitar», y debajo
+  la comparación y el valor (o las casillas de «es uno de», a todo el ancho). Con tres listas en una
+  fila, la ventana de 560 px cortaba el nombre del dato («Ciudad de la famil»).
+- **La frase fija arriba del cuerpo desde 600 px**, sobre una franja blanca que tapa lo que pasa por
+  detrás; en el celular no se fija, para no ocupar la mitad de la hoja.
+- **La acción como dato cuando el evento solo admite una** («Acción: Avisar por WhatsApp»), sin lista.
+- **El control y la frase dicen lo mismo**: «al menos», «como mucho», «igual a», «más de», «menos
+  de» y «distinto de» en la comparación y en la regla en palabras.
+- **Las plantillas de mora que aún no están en el catálogo** se nombran con un nombre provisional
+  («Aviso de mora · aún sin registrar»), nunca por su código.
 
 ## Pendiente
 
