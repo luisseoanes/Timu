@@ -1,7 +1,7 @@
 # ruff: noqa: E501  (datos congelados de app/core/permisos_db.py: expresiones SQL largas)
 """rls: politicas por perfil en todas las tablas
 
-Fase 4 de docs/plan-persistencia.md. Toda tabla tiene RLS y cuatro politicas (una por
+Fase 4 de docs/registros/plan-persistencia.md. Toda tabla tiene RLS y cuatro politicas (una por
 operacion) para el rol de la aplicacion: cada perfil del contexto (app.rol) solo ve y escribe
 lo que le da la matriz de app/core/permisos_db.py, y familia y aliada solo sus filas. Sin
 politica que lo admita, la base niega: una transaccion sin contexto no ve nada.

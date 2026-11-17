@@ -1,6 +1,6 @@
 """baja de familia sin contrato vigente
 
-Al desenredar los dominios (docs/deuda-ciclos-dominios.md), la baja de una familia pasa a
+Al desenredar los dominios (docs/registros/deuda-ciclos-dominios.md), la baja de una familia pasa a
 orquestarse en afiliaciones.ciclo: cancela el contrato vigente y despues marca la ficha con
 familias.dar_de_baja. Esa funcion ya no cancela el contrato por su cuenta, asi que la regla
 pasa a la base: una familia dada de baja no tiene contrato vigente, lo haga quien lo haga.

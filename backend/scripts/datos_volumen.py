@@ -1,4 +1,5 @@
-"""Volumen sintetico para las pruebas de carga (F4-QAA-02, fase 5 de docs/plan-persistencia.md).
+"""Volumen sintetico para las pruebas de carga (F4-QAA-02, fase 5 de
+docs/registros/plan-persistencia.md).
 
 Genera el volumen proyectado a 12 meses: 5.000 familias con sus mascotas, contratos, un ano
 de cuotas, pagos aplicados, servicios, mensajes y tareas. La bitacora sale sola, de los

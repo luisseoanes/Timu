@@ -1,6 +1,6 @@
 """auditoria e inmutabilidad en la base
 
-Fases 2f y 2g de docs/plan-persistencia.md.
+Fases 2f y 2g de docs/registros/plan-persistencia.md.
 
 Auditoria: la escribia un listener de SQLAlchemy, asi que un UPDATE por SQL, un script o una
 migracion no dejaban rastro, y la tabla se podia editar y borrar. Ahora la escribe auditar(),

@@ -36,7 +36,7 @@ class Plan(Base, UUIDMixin, TimestampMixin, Auditable):
     color: Mapped[ColorPlan] = mapped_column(EnumDb(ColorPlan), default=ColorPlan.VERDE)
 
     # Solo los beneficios vigentes. Los reemplazados quedan con activo = False: lo que cubria
-    # el plan antes no se borra (fase 3 de docs/plan-persistencia.md).
+    # el plan antes no se borra (fase 3 de docs/registros/plan-persistencia.md).
     beneficios: Mapped[list["Beneficio"]] = relationship(
         back_populates="plan",
         primaryjoin="and_(Plan.id == Beneficio.plan_id, Beneficio.activo.is_(True))",

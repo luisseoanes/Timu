@@ -1,7 +1,7 @@
 # ruff: noqa: E501  (datos congelados de app/core/permisos_db.py: expresiones SQL largas)
 """rls: publico solo ve las filas de quien declara la peticion
 
-Fase 4 de docs/plan-persistencia.md, mejora pendiente. El perfil `publico` (peticiones sin
+Fase 4 de docs/registros/plan-persistencia.md, mejora pendiente. El perfil `publico` (peticiones sin
 sesion y el comienzo de cada peticion autenticada) leia las tablas de autenticacion y de los
 formularios publicos sin condicion de fila. Ahora solo admite las filas que casan con las
 llaves que la peticion fija con `acotar_publico` (`app.llaves` del contexto, leidas con

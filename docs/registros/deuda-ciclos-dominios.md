@@ -5,7 +5,7 @@
 impidiendo que aparezca uno nuevo. Este documento queda como registro: el diagnóstico y el
 plan, tal como se ejecutaron, y al final lo que hubo que hacer además.
 
-Registrado el 2026-11-09, en la auditoría de [estándares de calidad](estandares-calidad.md);
+Registrado el 2026-11-09, en la auditoría de [estándares de calidad](../estandares-calidad.md);
 plan revisado el 2026-11-10 contra el código (ver «Correcciones» al final).
 
 ## Resultado
@@ -161,7 +161,7 @@ misma ruta.
 
 ### Al cerrar
 
-Borrar la entrada de deuda de modularidad en [estándares de calidad](estandares-calidad.md)
+Borrar la entrada de deuda de modularidad en [estándares de calidad](../estandares-calidad.md)
 y dejar este documento como registro con la fecha de cierre, o borrarlo.
 
 ## Lo que hay que vigilar

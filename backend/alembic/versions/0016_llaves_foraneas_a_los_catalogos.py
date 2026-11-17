@@ -1,6 +1,6 @@
 """llaves foraneas a los catalogos
 
-Fase 2b de docs/plan-persistencia.md. Lo que la aplicacion validaba contra los catalogos
+Fase 2b de docs/registros/plan-persistencia.md. Lo que la aplicacion validaba contra los catalogos
 ("ciudad tomada del catalogo", especie, plantilla, plan, regla) lo garantiza ahora la base.
 Las ciudades se guardan por nombre canonico, asi que ciudades.nombre pasa a ser unico y las
 llaves van con ON UPDATE CASCADE: corregir el nombre en el catalogo se propaga. Quedan fuera

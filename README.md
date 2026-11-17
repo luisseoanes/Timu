@@ -170,8 +170,8 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [docs/portal-familias.md](docs/portal-familias.md) | Qué ve y qué hace la familia en el portal, de dónde sale cada dato y las reglas del backend que el panel copia |
 | [docs/indicadores.md](docs/indicadores.md) | Definición de cada indicador del dashboard y de los exportables |
 | [docs/datos-de-demostracion.md](docs/datos-de-demostracion.md) | Qué siembran `datos_demo` y `operacion_demo`, cómo se hizo la operación (por la API y corrida al pasado), sus límites y cómo ampliarlos |
-| [docs/plan-persistencia.md](docs/plan-persistencia.md) | Registro (cerrado): por qué la base garantiza integridad y permisos, decisiones y verificación de cada fase |
-| [docs/deuda-ciclos-dominios.md](docs/deuda-ciclos-dominios.md) | Registro (cerrado): cómo se eliminaron los ciclos entre dominios del backend |
+| [docs/registros/plan-persistencia.md](docs/registros/plan-persistencia.md) | Registro (cerrado): por qué la base garantiza integridad y permisos, decisiones y verificación de cada fase |
+| [docs/registros/deuda-ciclos-dominios.md](docs/registros/deuda-ciclos-dominios.md) | Registro (cerrado): cómo se eliminaron los ciclos entre dominios del backend |
 | [DESIGN.md](DESIGN.md) | Sistema de diseño de la interfaz, escrito desde lo construido: roles de color, tipografía, medidas, componentes y sus reglas |
 | [PRODUCT.md](PRODUCT.md) | Contexto de producto para diseñar: quién usa cada espacio, desde qué dispositivo y para qué |
 | [docs/manual-de-marca.md](docs/manual-de-marca.md) | Identidad de TIMU (color, tipografía, logo y voz) y su ampliación para la plataforma: roles, contrastes, reglas de uso |

@@ -1,6 +1,6 @@
 """sin borrado fisico y anonimizacion
 
-Fase 3 de docs/plan-persistencia.md.
+Fase 3 de docs/registros/plan-persistencia.md.
 
 - La aplicacion pierde DELETE en todas las tablas salvo las de estado tecnico (BORRABLES en
   app/core/database.py). Los dos sitios que borraban pasan a estados: reactivar los envios

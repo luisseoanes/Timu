@@ -1,4 +1,4 @@
-"""Permisos por perfil en la base: la matriz de RLS (fase 4 de docs/plan-persistencia.md).
+"""Permisos por perfil en la base: la matriz de RLS (fase 4 de docs/registros/plan-persistencia.md).
 
 Cada perfil (`app.rol` del contexto de la transaccion) solo ve y escribe las tablas y
 operaciones que tiene aqui; la migracion 0023 genera de esta matriz una politica por tabla y

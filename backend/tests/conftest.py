@@ -87,7 +87,7 @@ PASSWORD = "secreto123"
 # --- Registro de accesos por perfil (para derivar la matriz de RLS) ------------------------
 # Con TIMU_REGISTRO_ACCESOS=<ruta>, cada (perfil, operacion, tabla) distinto que ejecuta la
 # suite se anota en esa ruta, una linea JSON por combinacion. Es la evidencia de que lee y
-# escribe cada perfil; docs/plan-persistencia.md (fase 4) explica como se usa.
+# escribe cada perfil; docs/registros/plan-persistencia.md (fase 4) explica como se usa.
 
 _RUTA_ACCESOS = os.getenv("TIMU_REGISTRO_ACCESOS")
 if _RUTA_ACCESOS:

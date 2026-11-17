@@ -1,6 +1,6 @@
 """indices en llaves foraneas y limites de tiempo
 
-Fase 5 de docs/plan-persistencia.md.
+Fase 5 de docs/registros/plan-persistencia.md.
 
 - Indice en las 52 llaves foraneas que no tenian: sin el, cruzar por esa llave (y las
   politicas de RLS que consultan por ella) recorre la tabla entera. test_persistencia falla

@@ -1,6 +1,6 @@
 """restricciones check: invariantes de cada fila
 
-Fase 2c de docs/plan-persistencia.md. Lo que el codigo garantizaba en Python y la base no
+Fase 2c de docs/registros/plan-persistencia.md. Lo que el codigo garantizaba en Python y la base no
 (rangos, formatos, importes no negativos, campos que exige un estado, el CHECK perdido de
 usuarios) lo garantiza ahora la base. Cada expresion se valido contra los datos existentes
 antes de escribirse; si un dato la viola, la migracion falla en vez de dejarlo pasar.

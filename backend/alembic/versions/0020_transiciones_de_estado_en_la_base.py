@@ -1,6 +1,7 @@
 """transiciones de estado en la base
 
-Fase 2e de docs/plan-persistencia.md. Cada servicio validaba sus cambios de estado en Python;
+Fase 2e de docs/registros/plan-persistencia.md. Cada servicio validaba sus cambios de estado
+en Python;
 ahora un trigger los valida en la base contra la tabla transiciones_estado, asi que ni un
 UPDATE por SQL ni un error de codigo pueden saltarse el grafo (por ejemplo, reabrir una
 historia clinica firmada o descompletar un servicio). La tabla solo la escribe el dueno del

@@ -4,7 +4,8 @@ el contrato (cartera, planes), los preventivos y el embudo comercial.
 `familias` es la ficha y no conoce a ningun dominio de arriba; estos casos de uso la
 orquestan con el resto en la misma transaccion. Van sincronos a proposito, no por eventos
 del outbox: validar el plan tiene que poder rechazar el alta en la misma peticion, y la baja
-cancela el contrato en la misma transaccion que la marca (ver docs/deuda-ciclos-dominios.md).
+cancela el contrato en la misma transaccion que la marca (ver
+docs/registros/deuda-ciclos-dominios.md).
 """
 
 from uuid import UUID

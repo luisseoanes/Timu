@@ -1,4 +1,5 @@
-"""Lo que la base garantiza por si misma, sin depender de Python (docs/plan-persistencia.md).
+"""Lo que la base garantiza por si misma, sin depender de Python
+(docs/registros/plan-persistencia.md).
 
 Base de todo lo demas: la aplicacion y las pruebas se conectan con un rol sin privilegios,
 y cada transaccion lleva el contexto de quien la hace. Sin eso, las restricciones de la base

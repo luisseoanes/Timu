@@ -20,4 +20,4 @@ peticiones: con una sesión compartida se mediría el límite de 120 peticiones 
 por usuario, no la aplicación. El CI corre una versión reducida (10 % del volumen, 4
 usuarios, 1 minuto) en el job del stack.
 
-Resultados y decisiones de la puesta a punto (umbrales, volumen, por qué un usuario por usuario virtual) en el registro de la fase 5 de [plan-persistencia.md](plan-persistencia.md).
+Resultados y decisiones de la puesta a punto (umbrales, volumen, por qué un usuario por usuario virtual) en el registro de la fase 5 de [plan-persistencia.md](registros/plan-persistencia.md).

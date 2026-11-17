@@ -55,7 +55,8 @@ class EstadoPago(StrEnum):
 # --- Conjuntos cerrados de la base -------------------------------------------------------------
 # Cada StrEnum que tipa una columna tiene un enum de PostgreSQL con su nombre en snake_case
 # (`EnumDb` en app/core/database.py). Anadir un valor exige la migracion que lo anada a la
-# base: `test_persistencia` compara las dos listas. Ver docs/plan-persistencia.md (fase 2a).
+# base: `test_persistencia` compara las dos listas. Ver docs/registros/plan-persistencia.md
+# (fase 2a).
 
 
 class EstadoAltaPeludo(StrEnum):

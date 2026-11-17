@@ -1,4 +1,4 @@
-// Prueba de carga (F4-QAA-02, fase 5 de docs/plan-persistencia.md).
+// Prueba de carga (F4-QAA-02, fase 5 de docs/registros/plan-persistencia.md).
 //
 // Usuarios simultaneos del equipo y del portal recorren listados, fichas y el dashboard sobre
 // el volumen de scripts.datos_volumen. Falla si con ese volumen se superan los tiempos

@@ -1,6 +1,6 @@
 """indices de los caminos calientes
 
-Fase 5 de docs/plan-persistencia.md. Los que pidio el guarda de EXPLAIN
+Fase 5 de docs/registros/plan-persistencia.md. Los que pidio el guarda de EXPLAIN
 (test_los_caminos_calientes_no_recorren_tablas_enteras) sobre los listados del panel y las
 tareas periodicas: afiliaciones por periodo del dashboard, embudo de interesados, pendientes
 y la bandeja de tareas, que ahora ordena por el enum de prioridad para poder usar el indice.

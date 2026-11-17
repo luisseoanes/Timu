@@ -223,7 +223,7 @@ Dashboard, apoyo de IA, migración y estabilización.
 | ID | Trabajo | Criterio de aceptación | Req. | Estado |
 | --- | --- | --- | --- | --- |
 | `F4-DAS-01` | Definición de indicadores | Afiliaciones, retiros, recaudo, mora, cumplimiento de rutas, servicios por tipo y satisfacción, con fórmula acordada y documentada. | Sección 8 | Hecho |
-| `F4-DAS-02` | Consultas del dashboard | Las agregaciones responden en menos de dos segundos sobre volumen real, con caché y filtros por período y ciudad. | Sección 8 | Parcial: caché y filtros listos. La prueba de carga con el volumen a 12 meses (2026-11-05) dio un p95 de 7,85 ms en el dashboard (registro de la fase 5 de `plan-persistencia.md`), pero es anterior a la serie de 12 meses del Inicio (`/dashboard/evolucion`, 2026-11-13): falta repetir la completa con ella para darlo por hecho. |
+| `F4-DAS-02` | Consultas del dashboard | Las agregaciones responden en menos de dos segundos sobre volumen real, con caché y filtros por período y ciudad. | Sección 8 | Parcial: caché y filtros listos. La prueba de carga con el volumen a 12 meses (2026-11-05) dio un p95 de 7,85 ms en el dashboard (registro de la fase 5 de `registros/plan-persistencia.md`), pero es anterior a la serie de 12 meses del Inicio (`/dashboard/evolucion`, 2026-11-13): falta repetir la completa con ella para darlo por hecho. |
 | `F4-DAS-03` | Exportables y reportes programados | Cualquier vista se descarga en Excel o CSV, y los reportes definidos llegan por correo en su periodicidad. | Sección 8 | Hecho |
 
 ### Apoyo de inteligencia artificial

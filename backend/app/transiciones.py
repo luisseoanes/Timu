@@ -1,4 +1,4 @@
-"""Grafos de estados que la base hace cumplir (fase 2e de docs/plan-persistencia.md).
+"""Grafos de estados que la base hace cumplir (fase 2e de docs/registros/plan-persistencia.md).
 
 Cada servicio sigue validando sus transiciones antes, para devolver un mensaje claro; el
 trigger `validar_transicion` rechaza en la base cualquier cambio de estado que no este

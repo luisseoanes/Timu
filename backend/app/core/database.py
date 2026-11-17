@@ -131,7 +131,7 @@ LLAVES_PUBLICAS = frozenset(
 
 # Las unicas tablas en las que la aplicacion puede borrar: estado tecnico, sin valor de
 # negocio ni de rastro. En el resto, las bajas y anulaciones son estados, y el unico borrado
-# es la funcion anonimizar_familia() (fase 3 de docs/plan-persistencia.md).
+# es la funcion anonimizar_familia() (fase 3 de docs/registros/plan-persistencia.md).
 BORRABLES = frozenset(
     {"sesiones", "tokens_uso_unico", "distancias_cache", "consumo_mapas", "eventos_salientes"}
 )

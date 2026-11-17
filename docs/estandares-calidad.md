@@ -36,7 +36,7 @@ Las reglas detalladas viven junto al código ([`backend/CLAUDE.md`](../backend/C
 | Un dominio nuevo es un directorio en `app/modules/` y otro en `src/features/`, su router en `app/api/v1/router.py` y sus modelos en `app/models.py`; no toca la base. | Las guardas de capas y de persistencia (`test_persistencia.py`) |
 
 Cerrada el 2026-11-10 la deuda de los ciclos: en la auditoría 11 dominios formaban un solo
-ciclo y no queda ninguno. Cómo se hizo, en [`deuda-ciclos-dominios.md`](deuda-ciclos-dominios.md).
+ciclo y no queda ninguno. Cómo se hizo, en [`deuda-ciclos-dominios.md`](registros/deuda-ciclos-dominios.md).
 
 ## Escalabilidad
 

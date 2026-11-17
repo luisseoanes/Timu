@@ -186,13 +186,13 @@ sesión, para las pruebas que alternan usuarios.
 
 ## Persistencia: la base garantiza, Python explica
 
-Cada regla nueva entra en una o dos frases; el detalle va en `docs/plan-persistencia.md`.
+Cada regla nueva entra en una o dos frases; el detalle va en `docs/registros/plan-persistencia.md`.
 
 Toda regla que PostgreSQL puede hacer cumplir se hace cumplir en PostgreSQL. Python valida
 antes para devolver un mensaje claro, pero la regla definitiva está en la base: si Python se
 equivoca, o alguien escribe por SQL, la base rechaza la operación. Solo se quedan
 exclusivamente en Python las reglas que dependen de un servicio externo o de la hora actual.
-El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/plan-persistencia.md).
+El plan completo y su avance están en [`docs/registros/plan-persistencia.md`](../docs/registros/plan-persistencia.md).
 
 - **Dos roles de base de datos.** `timu` (`POSTGRES_USER`) es el dueño del esquema: solo lo
   usan Alembic y `inicializar`. `timu_app` lo crea la migración `0013`, sin superusuario ni

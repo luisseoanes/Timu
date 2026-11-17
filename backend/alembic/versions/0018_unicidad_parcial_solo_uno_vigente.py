@@ -1,6 +1,6 @@
 """unicidad parcial: solo uno vigente
 
-Fase 2d de docs/plan-persistencia.md. Las reglas de "solo uno" que el codigo comprobaba
+Fase 2d de docs/registros/plan-persistencia.md. Las reglas de "solo uno" que el codigo comprobaba
 consultando antes de insertar (un contrato vigente por familia, una version activa de cada
 prompt y de cada plantilla, un arbol de conversacion publicado, un medio de pago activo por
 familia, una encuesta por servicio y tipo, un acceso de portal por familia, un servicio por

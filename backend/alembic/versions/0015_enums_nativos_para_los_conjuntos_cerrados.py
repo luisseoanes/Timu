@@ -1,6 +1,6 @@
 """enums nativos para los conjuntos cerrados
 
-Fase 2a de docs/plan-persistencia.md. Cada columna que guarda un conjunto cerrado definido
+Fase 2a de docs/registros/plan-persistencia.md. Cada columna que guarda un conjunto cerrado definido
 por el codigo (estados, roles, canales, prioridades...) pasa de varchar libre a un enum de
 PostgreSQL: la base rechaza cualquier valor fuera del conjunto, lo escriba quien lo escriba.
 Los valores estan escritos aqui y no importados de la aplicacion: la migracion tiene que
