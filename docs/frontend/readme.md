@@ -20,6 +20,7 @@
 | [layouts.md](layouts.md) | Plantillas de página: estructura del panel, listado con ficha, inicio, bandejas, ventanas, ingreso y portal, con los cortes de pantalla. |
 | [conventions.md](conventions.md) | Estructura por dominio, nombres, datos, sesión, pruebas, accesibilidad, tokens y su guarda, qué revisar antes de empujar y la deuda conocida. |
 | [capturas-revisor.md](capturas-revisor.md) | Cómo se capturan las pantallas para el revisor final de la skill: anchos, sesiones y cupos, estados simulados y el esqueleto del script. |
+| [e2e-stack.md](e2e-stack.md) | Los recorridos contra el stack real: límites de ingreso y de peticiones por perfil, y cómo buscar los datos de `datos_demo` con la operación sembrada. |
 
 El diseño lo gobierna la skill del repositorio (`/impeccable`): una superficie con identidad
 propia empieza con un sorteo de direcciones y se cierra con su revisor final hasta el `ship`
