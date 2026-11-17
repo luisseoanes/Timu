@@ -183,3 +183,14 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
   `pg_stat_statements` dice si fue el JIT (`jit_functions`, `jit_*_time`).
 - **Sugerencias del revisor, opcionales** (el «techo»): la lista de lo atendido con el importe que
   cubrió TIMU en su propia columna, alineado a la derecha, en lugar de dentro de la línea de texto.
+
+### Lo que quedó de la encuesta y el carnet tras cerrar `R3-PUB-03`
+
+- **El barrido contra el stack mide la encuesta solo con un enlace inexistente**: su token vive en
+  la base y la traza de mensajes lo tapa. El formulario (satisfacción y seguimiento) se mide sin
+  desborde ni fallos de contraste en `e2e/publicas.spec.ts`, con la API interceptada.
+- **Sugerencias del revisor, opcionales** (el «techo»): una rejilla compartida entre las tablas del
+  carnet para que Producto, Lote, Próxima y Aplicó caigan en la misma columna en las tres secciones,
+  como en el PDF (hoy cada tabla reparte su ancho y «Dosis 1, refuerzo» o «Dra. Sara Martínez»
+  parten la fila); y la línea de marca del acceso, que en la encuesta resalta «Visita en casa» sea
+  cual sea la atención (viene de `R3-PUB-01`).

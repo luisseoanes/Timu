@@ -248,12 +248,20 @@ líneas antes de apretar el texto.
 Botones en fila con icono y texto (inicio del panel). Nunca más de cuatro: es un atajo, no un
 menú.
 
-## Avisos — `.aviso`, `.aviso-error`, `.aviso-ok`
+## Avisos — `.aviso`, `.aviso-error`, `.aviso-ok`, `.aviso-alerta`
 
 Bloque informativo dentro de una tarjeta, o resultado de una acción en las páginas de acceso.
+`.aviso-alerta` es lo que pide actuar sin ser un error (en la encuesta: qué hacer si es urgente).
 Una condición que exige acción va con su botón. El icono no encoge (`flex-shrink: 0`) y el texto va
 en un solo elemento: el aviso es flex, y un `span` suelto (un teléfono con `.sin-cortes`) pasaría a
 ser otra columna.
+
+## Calificación — `.calificacion` y `.calificacion-seguimiento` (encuesta)
+
+Opciones de radio en tarjetas: el `input` se oculta y se marca pulsando la etiqueta (por eso se
+prueba en `e2e/publicas.spec.ts`, no en jsdom). `.calificacion`, cinco en fila con número y
+palabra; `.calificacion-seguimiento`, tres filas de 48 px con icono y frase, y la novedad elegida
+con el tinte de alerta. El `legend` va sin relleno, alineado con las etiquetas de los campos.
 
 ## Indicadores — `.indicadores` / `.indicador`
 

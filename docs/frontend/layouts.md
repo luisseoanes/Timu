@@ -186,7 +186,9 @@ ningún espacio. Si el servidor no responde, una tarjeta con su título, la expl
 
 ## Acceso — `.ingreso` (`AccesoLayout`, R3-PUB-01)
 
-La misma plantilla sirve al ingreso, la recuperación, el restablecimiento y la activación.
+La misma plantilla sirve al ingreso, la recuperación, el restablecimiento y la activación, y a la
+encuesta (`R3-PUB-03`), la otra página a la que la familia llega desde un enlace. Vive en
+`src/components/AccesoLayout.tsx`: es solo presentación y la usan `auth` y `publico`.
 
 ```
 ≥ 900 px                                        < 900 px
@@ -220,9 +222,38 @@ La misma plantilla sirve al ingreso, la recuperación, el restablecimiento y la 
 - **Recuperación**: al enviar, el título pasa a «Revisa tu correo o tu WhatsApp» y nombra el dato
   escrito, sin decir si la cuenta existe.
 
-Las páginas públicas sencillas (encuesta, verificación del carnet, registro) usan `.publica` +
-`.publica-tarjeta`: el logo arriba y una tarjeta centrada. Se rehacen en sus unidades (R3-PUB-02 y
-R3-PUB-03).
+- **Encuesta** (`/encuesta/:token`, `arriba`): el formulario se ancla arriba desde 900 px en vez
+  de centrarse, para que el aviso que aparece al elegir «Algo no va bien» no mueva la opción
+  tocada. La frase del panel depende del tipo («Tu opinión nos ayuda a cuidar mejor a Nina.»,
+  «Seguimos pendientes de Nina.»). La satisfacción se califica del 1 al 5 (`.calificacion`); el
+  seguimiento (6.21), con tres respuestas en fila (`.calificacion-seguimiento`). «¡Gracias!» dice
+  qué pasa después según `te_contactamos`.
+
+El registro en línea sigue en `.publica` + `.publica-tarjeta` (el logo arriba y una tarjeta
+centrada) hasta su unidad (`R3-PUB-02`).
+
+## Verificación del carnet — `.verificacion` (R3-PUB-03)
+
+Un documento para un tercero (clínica, guardería, aerolínea) que tecleó la dirección impresa en el
+PDF: una columna de 760 px sobre el lienzo, sin tarjeta.
+
+```
+TIMU (compacto)
+⛨ Carnet auténtico                         ← h1: el veredicto
+Carnet preventivo emitido por TIMU.
+MASCOTA Coco · Canino · Pug   CÓDIGO …   EMITIDO …
+─────────────────────────────────────────
+Vacunación                (h2, tabla-apilable con las columnas del PDF)
+Desparasitación interna
+Desparasitación externa   («Sin aplicaciones registradas.»)
+Pendiente al emitirse     (fecha; «Vencido» solo en lo vencido)
+─────────────────────────────────────────
+Certifica que TIMU emitió este carnet el … · huella SHA-256 entera
+```
+
+- Dice lo mismo que el PDF el día que se emitió: la API guarda lo pendiente al emitir y devuelve
+  las secciones (`CarnetVerificadoRead`). Un carnet emitido antes lo dice en una frase.
+- Un código que no existe: «No encontramos este carnet» y un campo para corregirlo.
 
 ## Mi clínica — `.aliada` (clínica aliada, R3-ALI-01)
 

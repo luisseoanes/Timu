@@ -25,6 +25,10 @@ condicionan cómo se escribe un recorrido. Las rutas son relativas a `frontend/`
   nombre), nunca el primero del listado: la primera remisión emitida, por ejemplo, puede ser una
   ya vencida. La suite pasa con los dos sembrados (así se verificó) y en el CI solo con
   `datos_demo`, porque la operación corre después.
+- **Lo que la prueba crea a propósito**: el barrido emite un carnet (con `gerencia@timu.co`, de la
+  mascota de `datos_demo` con un preventivo aplicado) para medir la verificación pública con sus
+  tablas; emitir es lo que hace el equipo desde el panel. La encuesta no se puede abrir con un
+  token real (solo está en la base): se mide con uno inexistente, y su formulario en `e2e/`.
 - **Datos del día**: la ruta de prueba de la médica no siempre es de hoy (va en el primer día
   con cupo): los recorridos la buscan con `rutaDemo` (`e2e-stack/datos.ts`). Si `datos_demo` se
   sembró otro día, en local fallan con «datos_demo no dejó ninguna ruta en la próxima semana»:

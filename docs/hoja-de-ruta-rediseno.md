@@ -28,14 +28,15 @@ actualiza aquí, igual que en el backlog.
 | R0 — Preparación | 4 | 4 | 0 | 0 |
 | R1 — Fundaciones | 7 | 5 | 2 | 0 |
 | R2 — Panel del equipo | 10 | 10 | 0 | 0 |
-| R3 — Familias, aliada y páginas públicas | 6 | 4 | 0 | 2 |
+| R3 — Familias, aliada y páginas públicas | 6 | 5 | 0 | 1 |
 | R4 — Cierre | 4 | 0 | 0 | 4 |
-| **Total** | **31** | **23** | **2** | **6** |
+| **Total** | **31** | **24** | **2** | **5** |
 
 Al cierre de `R2-PAN-10` (2026-11-15) el panel del equipo está rediseñado entero, y con `R3-PUB-01`
-(el mismo día) también el acceso. Con `R3-ALI-01` (2026-11-16), el espacio de la clínica aliada.
+(el mismo día) también el acceso. Con `R3-ALI-01` (2026-11-16), el espacio de la clínica aliada, y
+con `R3-PUB-03` (2026-11-17), la encuesta y la verificación del carnet.
 
-### Dónde se retoma (2026-11-16)
+### Dónde se retoma (2026-11-17)
 
 Para la sesión siguiente, que no tiene la conversación anterior: todo lo decidido está en esta
 hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
@@ -44,17 +45,18 @@ hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
   tabla de [deuda decidida](rediseno/deuda.md) marca como pendiente: `DEU-8` (editor de reglas por
   campos), `DEU-14` (terminar la siembra gruesa), `DEU-15` (plantillas de consulta, decidida, TODO)
   y `DEU-27` (va en `R4-CIE-03`). `DEU-E` espera a TIMU.
-- **Siguiente unidad: `R3-PUB-03`, pero solo cuando el usuario lo diga.** Orden **confirmado por el
-  usuario el 2026-11-16**: `R3-ALI-01` (hecha ese día), `R3-PUB-03`, `R3-PUB-02` (con los precios
-  provisionales de TIMU dichos como tales); `DEU-8`, `DEU-14` y `DEU-15` intercaladas, preguntando
-  antes de empezar cada una; y el cierre `R4` (recorrido, auditoría, documentación y umbrales).
-  **Al cerrar la sesión del 2026-11-16 el usuario avisó que lo siguiente puede ser algo distinto a la
-  revisión visual y que lo dirá él**: preguntarle antes de empezar nada.
-- **La plataforma reemplazará la web actual en `timu.com.co`** (decidido con el usuario el
-  2026-11-16, al preparar las integraciones con TIMU). Por eso la portada pública, que estaba fuera
-  de alcance, hace falta antes de cambiar el dominio: cuánto de ella y cuándo lo decide TIMU con las
-  opciones del documento de integraciones (ver [integraciones](integraciones.md#decisiones-del-2026-11-16)).
-  Si entra al rediseño, es una unidad nueva: se le pregunta al usuario.
+- **Siguiente unidad: `R3-PUB-02`, pero solo cuando el usuario lo diga.** Orden **confirmado por el
+  usuario el 2026-11-16**: `R3-ALI-01` (hecha ese día), `R3-PUB-03` (hecha el 2026-11-17),
+  `R3-PUB-02` (con los precios provisionales de TIMU dichos como tales); `DEU-8`, `DEU-14` y `DEU-15`
+  intercaladas, preguntando antes de empezar cada una; y el cierre `R4` (recorrido, auditoría,
+  documentación y umbrales). El usuario puede pedir antes algo distinto a la revisión visual:
+  preguntarle antes de empezar nada.
+- **La portada pública de `timu.com.co` entra en el rediseño, después de `R3-PUB-02`** (decidido
+  con el usuario el 2026-11-17): la plataforma reemplazará la web actual en ese dominio (decidido
+  el 2026-11-16, ver [integraciones](integraciones.md#decisiones-del-2026-11-16)), y la portada
+  reutiliza la presentación del plan que se diseñe en el registro. **Su alcance se conversa al
+  cerrar `R3-PUB-02`**, con las opciones A, B y C del documento de integraciones para TIMU (sección
+  4.3); entonces se le da su ID y su fila.
 - **Los push van al cerrar cada unidad o lote**, no por commit (decidido con el usuario el
   2026-11-16), después de la batería local completa.
 - **`R1-CMP-02` y `R1-CMP-03` siguen parciales** y se cierran con R3 y R4 (paginación, filtros y
@@ -208,7 +210,7 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 | `R3-POR-01` | Portal: estructura y mascotas | Navegación del portal en el móvil, inicio, mascotas, carnet y «Agregar un peludo». | Hecho (2026-11-12): sorteo de superficie en modo Operate, elegida «Hoy, estás aquí» (contrato en `.impeccable/surfaces/frontend-src-features-portal-inicioportal-tsx.md`, boceto en `docs/rediseno/boceto-portal-hoy-estas-aqui.html`). El portal toma la estructura del panel (barra marina y, en el celular, barra inferior de cinco destinos). El inicio es la línea de la familia abierta en «hoy», servida por `GET /portal/linea`: lo hecho plegado, lo vencido agrupado (cuotas y preventivos, con el reparto por peludo), una sola acción verde (pagar lo vencido, agendar los preventivos o pagar la próxima cuota), el próximo cobro aunque su cuota no exista y un cierre que dice qué viene. El plan se dice en una frase («En pausa» para la familia) y solo ofrece agendar si el backend lo permitiría. Cada peludo tiene su ficha con su propia línea, su carnet sin contradicciones, su historia y su plan con los cupos de frente (desaparece «ilimitado»). También: las listas y los campos de fecha de todo el sistema dejan de mostrar el control del navegador, decidido con el usuario. Cerrado con el veredicto `ship` del revisor final tras tres pasadas. |
 | `R3-POR-02` | Portal: citas, pagos y datos | Citas, pagos, datos y documentos. Se aplica la voz del manual: desaparece «ilimitado» (`PortalPages.tsx`), sustituido por lo que sí aplica, como «sin tope de usos al mes». | Hecho (2026-11-13), sin sorteo: hereda los patrones de `R3-POR-01` («ilimitado» ya había desaparecido allí). **Citas**: agendar es el verde solo si el plan lo permite (si no, dice por qué y lleva a pagos); pestañas Próximas y Pasadas; cada cita con su día en la zona de Colombia, su estado dicho a la familia («Confirmada», «Por autorizar», «En camino») y solo las acciones que el backend acepta (antes se ofrecían en citas que rechazaba); la cancelación se confirma en rojo. **Pagos**: un solo verde por todo lo pendiente y, con varias cuotas, cada una se paga sola; las cuotas se nombran por su mes (la descripción del backend es técnica); el historial dice «No se cobró» en un rechazo, y al volver de la pasarela un aviso dice qué pasó con ese pago, preguntando mientras siga pendiente (antes esa ruta lo ignoraba). **Datos**: titular y documento de solo lectura, el contrato solo si hay uno vigente y los documentos en su panel. `PortalPages.tsx` desaparece, repartido por pantalla. Cerrado con el veredicto `ship` del revisor final. |
 | `R3-PUB-02` | Registro en línea | Sorteo de superficie en modo persuasivo para `/afiliacion`, el resultado y el formulario posterior. El plan es protagonista, con su color y con sus condiciones y carencias dichas de frente. Precios y coberturas salen del catálogo. | Pendiente |
-| `R3-PUB-03` | Encuesta y carnet | Encuesta de satisfacción y verificación pública del carnet. | Pendiente |
+| `R3-PUB-03` | Encuesta y carnet | Encuesta de satisfacción y verificación pública del carnet. | Hecho (2026-11-17), sin sorteo, con su contrato (`.impeccable/surfaces/frontend-src-features-publico-encuestapage-tsx.md`). **La encuesta hereda el acceso** (decidido con el usuario): `AccesoLayout` pasa a `src/components/`, con el panel marino y una frase que habla de la mascota («Tu opinión nos ayuda a cuidar mejor a Nina.»), y el formulario anclado arriba para que lo que aparece al elegir no mueva la opción tocada. «¡Gracias!» dice qué pasa después: si la respuesta dejó tarea (la API lo dice con `te_contactamos`), que alguien del equipo la va a contactar, sin prometer una hora que la plataforma no puede asegurar (decidido con el usuario). Un enlace que no sirve, un fallo del servidor, una encuesta ya respondida o respondida en otra pestaña se dicen en palabras propias, sin el texto del servidor. **El seguimiento post atención (6.21) tiene su pregunta propia** (decidido con el usuario): antes abría la misma escala del 1 al 5 («¿Cómo te fue?») y su puntaje se mezclaba con el de satisfacción; ahora pregunta cómo sigue la mascota («Sigue bien», «Tenemos una duda», «Algo no va bien»), guardado en `como_sigue` (migración `0050`, que pasa lo ya respondido); una duda o una novedad dejan tarea de servicio al cliente con su título, la novedad recuerda qué hacer si es urgente y un número por WhatsApp solo responde la satisfacción. El panel (Campañas, Encuestas) dice la respuesta del seguimiento en vez de «null / 5». **La verificación del carnet, veredicto y aplicaciones** (decidido con el usuario): una columna sobre el lienzo con «Carnet auténtico» como `h1`, la mascota, el código y la emisión, y lo que decía el PDF sección por sección, en tablas apilables (antes, a 390 la tabla se cortaba). **Con las próximas fechas** (decidido con el usuario, 6.15): al emitirse, el carnet guarda también lo pendiente, y la API devuelve las secciones del PDF con la próxima fecha de cada aplicación y lo pendiente; solo lo vencido lleva distintivo (decidido con el usuario). Un carnet emitido antes lo dice en vez de inventarlo, el pie dice qué certifica con la huella entera, y un código mal escrito se corrige ahí mismo. También: `datos_demo` deja una vacuna aplicada a Nala para que el barrido mida la verificación de un carnet real, y `e2e/publicas.spec.ts` mide el formulario de la encuesta, cuyo token solo está en la base. Cerrado con el veredicto `ship` del revisor final tras tres pasadas. |
 | `R3-ALI-01` | Mi clínica | Validación de remisiones y reporte de la atención de la clínica aliada. | Hecho (2026-11-16), sin sorteo: el usuario eligió «Mostrador con historial» (contrato en `.impeccable/surfaces/frontend-src-features-aliadas-miclinicapage-tsx.md`). **Estructura**: la barra marina del portal con el logo compacto, el nombre de la clínica y la cuenta, sin destinos; a la izquierda, el código y la remisión abierta con su reporte; a la derecha, lo atendido en el mes. En el celular se apilan. **Un solo verde**: «Validar» sin remisión abierta y «Reportar atención» con una que se puede usar (antes eran verdes los dos). **La remisión, en palabras**: por usar con hasta cuándo, vencida con cuándo venció y qué hacer, atendida y anulada; la mascota con la especie en palabras, el titular con los últimos dígitos del documento y la cobertura; un código ajeno dice con qué revisarlo. **Lo que cubre TIMU y lo que paga la familia se ve antes de reportar** (decidido con el usuario): la API lo calcula con la misma cuenta del reporte (`/cobertura`). **Lo atendido** (decidido con el usuario): el mes en curso y los 12 anteriores, con sus totales y la lista, para cuadrar con la liquidación. **La clínica no ve sus remisiones por usar** (decidido con el usuario): el código es la prueba de que la familia se presentó. **La barra dice la clínica** (decidido con el usuario): la aliada lee su propia fila y el catálogo de especies (migración `0049`; sin el catálogo, la especie salía como código sin ningún error). También: tras reportar el código se vacía y recupera el foco, y las ayudas de los campos salen del `label`, donde un lector de pantalla las leía dos veces. Cerrado con el veredicto `ship` del revisor final tras tres pasadas. |
 
 ## R4 — Cierre
@@ -227,8 +229,7 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
   arregla en el cambio que lo trae.
 - **Nada vuelve a la paleta menta.** La guarda lo impide desde `R1-TOK-01`.
 - Cada fase se entrega por separado y deja la aplicación usable. Hasta cerrar R3 conviven pantallas
-  con la línea nueva y con la antigua (el registro, la encuesta, el carnet y la aliada); es lo
-  esperado.
+  con la línea nueva y con la antigua (queda el registro); es lo esperado.
 - **Una pantalla con pestañas que se cierra activa `pestanas: true`** en su ruta del barrido
   (`e2e-stack/responsive.spec.ts`), como la ficha de familia: si no, el barrido solo mide la
   pestaña inicial.
@@ -247,7 +248,7 @@ Viven en dos anexos de `docs/rediseno/`, separados de esta hoja el 2026-11-16:
 
 ### Orden de lo que sigue
 
-El orden vigente está en [«Dónde se retoma»](#dónde-se-retoma-2026-11-16). El primero, confirmado por
+El orden vigente está en [«Dónde se retoma»](#dónde-se-retoma-2026-11-17). El primero, confirmado por
 el usuario el 2026-11-12, empezaba por lo que más se usa desde el celular (Rutas, Clínica y el portal)
 y ya está hecho.
 
@@ -300,8 +301,8 @@ Confirmadas por el usuario el 2026-11-10 y el 2026-11-11, cada una escrita donde
 - **PWA de familias.** Es una fase posterior, según la propuesta.
 - **Portada pública (index).** Una página de inicio pública de TIMU se construirá aparte,
   cuando TIMU entregue los recursos gráficos (pendientes externos). **Revisado el 2026-11-16:** como
-  la plataforma reemplazará la web en `timu.com.co`, hace falta antes del cambio de dominio; si entra
-  en el rediseño lo decide el usuario (ver «Dónde se retoma»). Las demás páginas públicas
+  la plataforma reemplazará la web en `timu.com.co`, hace falta antes del cambio de dominio. **El
+  2026-11-17 el usuario decidió que entra**, después de `R3-PUB-02` (ver «Dónde se retoma»). Las demás páginas públicas
   sí entran: ingreso, registro en línea, encuesta y verificación de carnet.
 - **Contenidos de la web pública timu.com.co.** Es de TIMU; sus contradicciones con el manual
   están en pendientes externos.

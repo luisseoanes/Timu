@@ -235,10 +235,12 @@ Administración (las remisiones y los usuarios en bandeja; las clínicas, los pl
 listado con ficha). El portal de familias está rediseñado entero: la
 estructura, el inicio y los peludos (R3-POR-01) y las citas, los pagos y los datos (R3-POR-02).
 De las páginas públicas, el acceso (R3-PUB-01): ingreso, recuperación, restablecimiento y
-activación de la cuenta. La clínica aliada tiene su espacio rediseñado: Mi clínica (R3-ALI-01),
-el mostrador donde valida el código de una remisión, reporta la atención y ve lo atendido en el mes.
-El resto de módulos del panel y las demás páginas públicas (el registro en línea, la encuesta y la
-verificación del carnet) todavía usan la maqueta anterior y adoptan este sistema en sus unidades de
+activación de la cuenta; y las dos a las que se llega desde un enlace (R3-PUB-03): la encuesta
+que recibe la familia por WhatsApp y la verificación del carnet preventivo para un tercero. La
+clínica aliada tiene su espacio rediseñado: Mi clínica (R3-ALI-01), el mostrador donde valida el
+código de una remisión, reporta la atención y ve lo atendido en el mes.
+El resto de módulos del panel y el registro en línea todavía usan la maqueta anterior y adoptan
+este sistema en sus unidades de
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md): lo que se ve hoy en ellos no
 es el sistema. El color, la tipografía, el logo y la voz los fija el
 [manual de marca](docs/manual-de-marca.md); aquí se dice cómo se aplican en la interfaz y se
@@ -408,7 +410,15 @@ de 900 px se ve uno u otro: el listado sin registro abierto, la ficha (con botó
 (`100dvh`), el panel de marca marino a la izquierda y el formulario sobre blanco a la derecha,
 centrado en una columna de 400 px. Por debajo de 900 px, una franja marina arriba y el formulario
 debajo, alineado arriba con 24 px de relleno (16 a los lados), para que el verde quede en la
-primera pantalla del celular.
+primera pantalla del celular. La encuesta hereda el acceso entero (`AccesoLayout`, en
+`src/components/`) con `arriba`: desde 900 px el formulario se ancla arriba, a 80 px del borde
+(`.ingreso-contenido-arriba`), en vez de centrarse; por debajo de 900 px ya lo está.
+
+**La verificación del carnet.** Sin barra, sin panel de marca ni tarjeta: una columna de hasta
+760 px centrada sobre el lienzo (`.verificacion`: 24 px arriba, 16 a los lados y 40 abajo), con
+32 px entre bloques. Arriba, el logo compacto a color de 32 px de alto; debajo, el veredicto,
+cerrado por un hilo; las secciones del carnet; y el pie, abierto por otro hilo. Es la misma
+columna en el escritorio y en el celular: las tablas se apilan por su contenedor.
 
 **La ruta propia (Rutas).** Quien solo sale a campo no ve listado: su ruta del día ocupa una
 columna de hasta 760 px, que se lee igual en el escritorio que en el celular. Encima, una línea
@@ -458,6 +468,11 @@ contenedor, no la ventana: junto al listado, la ficha es estrecha en un escritor
 `tabla-apilable` se apila con una container query por debajo de 640 px de su `.scroll-x`, y la
 línea de la familia pasa a vertical cuando mide que sus paradas no caben con su rótulo (y
 siempre por debajo de 600 px de ventana).
+
+**La regla del formulario anclado arriba.** Un formulario cuyo contenido crece al elegir (un aviso
+que aparece, una etiqueta que cambia) se ancla arriba, no se centra en el alto: centrado, lo que
+aparece debajo empuja hacia arriba la opción que se acaba de tocar. En el acceso es `arriba`, que
+usa la encuesta; el ingreso, de alto fijo, sigue centrado.
 
 **La regla de sin desborde.** Ninguna ruta desborda en horizontal a 375, 768, 900 ni 1280 px, ni
 tiene texto con contraste insuficiente según axe-core; las rutas con pestañas se comprueban
@@ -570,10 +585,11 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   suave y azul de foco al enfocar; el campo sube a 48 px. Una acción dentro del campo (ver la
   contraseña, `CampoClave`) es un botón redondo de 36 px a la derecha, con `aria-pressed` y su
   nombre («Mostrar contraseña»).
-- **Avisos** (`aviso-ok`, `aviso-error`): recuadro tintado del tono de estado con esquina de
-  campo, 12 × 16 px de relleno, 13 px e icono de 16 px delante. El icono no encoge
+- **Avisos** (`aviso-ok`, `aviso-error`, `aviso-alerta`): recuadro tintado del tono de estado con
+  esquina de campo, 12 × 16 px de relleno, 13 px e icono de 16 px delante. El icono no encoge
   (`flex-shrink: 0`) y se alinea con la primera línea: con dos líneas de texto, un icono
-  aplastado deja de leerse.
+  aplastado deja de leerse. `aviso-alerta` (tinte de aviso) es para lo que pide actuar sin ser un
+  error: en la encuesta, «Si es una urgencia, no esperes…» con el icono del mensaje.
 - **Listas y fechas:** con la forma del sistema, no la del navegador. Una lista (`select`) no
   muestra el control nativo: su flecha son dos `linear-gradient` de 5 px que dibujan una «v» en
   el rol de texto suave (`--flecha-lista`), a 13–18 px del borde derecho, y el relleno derecho
@@ -1160,6 +1176,80 @@ antes de reportar, no al terminar: lo calcula la API con la misma cuenta del rep
 valor que se está escribiendo. El panel no copia la regla de cobertura ni el tope para adelantar
 una cifra; si la API no respondió, lo dice en vez de estimar.
 
+### La encuesta y la verificación del carnet (R3-PUB-03)
+Las dos páginas públicas a las que se llega desde un enlace: la familia, desde el WhatsApp de la
+encuesta; un tercero (clínica, guardería, aerolínea), desde el código impreso en el carnet.
+- **La encuesta hereda el acceso:** el panel de marca con la frase según el tipo («Tu opinión nos
+  ayuda a cuidar mejor a Nina.»; en el seguimiento, «Seguimos pendientes de Nina.»; sin mascota,
+  la del acceso) y el formulario de 400 px anclado arriba (ver Layout). El `h1` hace la pregunta
+  («¿Cómo te fue en la atención de Nina?», «¿Cómo sigue Nina después de la atención?») y debajo,
+  en texto suave, de qué atención se pregunta («Consulta domiciliaria del martes, 27 de
+  octubre.»). El verde es «Enviar respuesta», a todo el ancho y de 48 px (`btn-grande`),
+  deshabilitado hasta elegir.
+- **La calificación** (`.calificacion`, satisfacción, 6.20): un `fieldset` con su `legend` («Califica
+  la atención», 13 px y 700, sin relleno) y cinco opciones iguales en fila; cada una, el número en
+  20 px y la palabra debajo (Muy mala, Mala, Regular, Buena, Excelente), con borde de control y
+  el radio oculto. Al pasar, borde de control hover y texto marino; elegida, borde y fondo de
+  selección; con el foco, anillo azul de 2 px.
+- **El seguimiento** (`.calificacion-seguimiento`, 6.21): tres respuestas apiladas, una por fila de
+  48 px, con su icono de 20 px a la izquierda y la frase entera en 16 px: «Sigue bien» (check, en
+  ok), «Tenemos una duda» (ayuda, en info) y «Algo no va bien» (el triángulo, en alerta). Elegida,
+  toma la selección del sistema; «Algo no va bien» elegida toma el tinte de alerta (borde y fondo
+  de alerta) y abre debajo un `aviso-alerta`: «Si es una urgencia, no esperes: escríbenos ya por el
+  chat de WhatsApp en el que te llegó este enlace.». La etiqueta del comentario cambia con la
+  respuesta («¿Cuál es tu duda? (opcional)», «¿Qué notaste? (opcional)»).
+- **«¡Gracias!»** dice qué pasa ahora según lo que devuelve la API (`te_contactamos`): «Alguien del
+  equipo TIMU te va a contactar para saber más y ayudarte con Nina.» o «Tu respuesta nos ayuda a
+  cuidar mejor a Nina.». No deduce del puntaje si habrá contacto, ni promete una hora que la
+  plataforma no puede asegurar (decidido con el usuario).
+- **Un error al enviar** se dice en palabras propias: «Esta encuesta ya tenía una respuesta.» (422),
+  «Intenta de nuevo en un momento» si es pasajero, y si no, que abra otra vez el enlace.
+- **Los estados de la encuesta:** mientras abre, el esqueleto de tres líneas del acceso con «Abriendo
+  la encuesta…» para lectores de pantalla. Un enlace que no sirve: «Esta encuesta no está
+  disponible» y qué hacer («Ábrelo de nuevo desde el mensaje de WhatsApp…»), sin aviso ni botón.
+  Si el servidor no respondió: «No pudimos abrir la encuesta», el aviso con su causa y
+  «Reintentar» como verde. Ya respondida: «Ya nos respondiste». Respondida en otra pestaña con
+  esta abierta (422): el aviso «Esta encuesta ya tenía una respuesta.» y el verde deshabilitado.
+- **En el panel** (Campañas, Encuestas): la respuesta del seguimiento se dice con un distintivo
+  en palabras («Sigue bien» ok, «Tiene una duda» info, «Algo no va bien» alerta) y la fila dice
+  «Seguimiento ·» antes de la fecha; la de satisfacción sigue con su puntaje («4 / 5»).
+- **El veredicto del carnet:** el `h1` es el veredicto: «Carnet auténtico» (34 px, GeosansLight)
+  con el escudo de 32 px delante en el texto de ok. Debajo, en texto suave, «Carnet preventivo
+  emitido por TIMU.» y una ficha de pares en fila que se parte (`.verificacion-datos`: Mascota
+  «Coco · Canino · Pug», Código y Emitido, en `.numero`), etiqueta de 12 px en mayúsculas
+  espaciadas en 700 y valor marino en 600.
+- **Lo que decía el carnet:** las secciones del PDF en el mismo orden y con sus títulos
+  (Vacunación, Desparasitación interna, Desparasitación externa), cada una un `h2` de 16 px en la
+  fuente de texto y una `tabla-apilable` con las columnas del PDF: las vacunas, Vacuna, Dosis y
+  Aplicada; las desparasitaciones, Aplicada y Peso; y todas, Producto, Lote, Próxima y Aplicó. Los
+  encabezados no se parten. Sin aplicaciones, «Sin aplicaciones registradas.». Después, «Pendiente
+  al emitirse»: Preventivo y Programado para; la columna Estado solo sale si algo está vencido, y
+  solo lo vencido lleva distintivo («Vencido», alerta): lo próximo dice su fecha y nada más
+  (decidido con el usuario); sin nada, «No había nada pendiente.»; un carnet emitido antes de guardarse lo
+  pendiente lo dice en una frase («Este carnet se emitió antes de que la verificación guardara lo
+  pendiente.»). No hay datos de la familia.
+- **El pie** (`.verificacion-pie`, 13 px suave): qué certifica («Certifica que TIMU emitió este
+  carnet el … y que lo de arriba es lo que decía ese día. Lo aplicado después no aparece: pide a la
+  familia un carnet nuevo.») y la huella SHA-256 del PDF entera, en texto normal, cifras tabulares
+  y partida en cualquier carácter (`overflow-wrap: anywhere`) antes que recortada.
+- **Código que no existe:** el `h1` «No encontramos este carnet», la frase que nombra el código en
+  `.numero` y dice cómo es («son diez letras y números») y, debajo, «Código del carnet» con
+  «Verificar» al lado (hasta 440 px), que lleva a la verificación del código corregido en
+  mayúsculas. Si el servidor no respondió: «No pudimos verificar el carnet», el aviso con su causa
+  y «Reintentar».
+
+**La regla del veredicto como título.** Lo que una verificación concluye es el `h1` de la página,
+con su icono, no una etiqueta ni un distintivo encima de otro título: quien verifica lee primero
+la respuesta. Lo que la sostiene (de quién es, el código, cuándo se emitió) va debajo como ficha.
+
+**La regla de la huella entera.** Un código, una huella o un número que alguien compara con otro
+documento se muestra entero: se parte de línea si no cabe, nunca se recorta con «…» ni se abrevia.
+
+**La regla del enlace en palabras propias.** Una página a la que se llega desde un enlace dice lo
+que pasó con sus palabras y qué hacer («Esta encuesta no está disponible», «No encontramos este
+carnet»), nunca el `detail` del servidor: quien llega no pidió nada todavía y no sabe qué es un
+token. Solo un fallo pasajero muestra su causa, junto a «Reintentar».
+
 ## Do's and Don'ts
 
 ### Do:
@@ -1200,6 +1290,12 @@ una cifra; si la API no respondió, lo dice en vez de estimar.
   `aria-describedby`.
 - **Do** en un mostrador que atiende a una persona tras otra, al terminar vacía el campo de
   entrada y devuélvele el foco.
+- **Do** haz del veredicto de una verificación el `h1`, con su icono, y deja debajo lo que lo
+  sostiene.
+- **Do** ancla arriba un formulario que crece al elegir, para que lo que aparece no mueva la
+  opción tocada.
+- **Do** tras una respuesta, di qué pasa ahora según lo que devuelve la API («Alguien del equipo
+  TIMU te va a contactar…»), sin prometer una hora.
 
 ### Don't:
 - **Don't** escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.
@@ -1236,3 +1332,8 @@ una cifra; si la API no respondió, lo dice en vez de estimar.
   sin cuatro cifras a cero.
 - **Don't** le listes a la clínica aliada las remisiones por usar: abre solo la del código que trae
   la familia.
+- **Don't** recortes ni abrevies una huella o un código que se compara con otro documento: se
+  muestra entero, aunque se parta de línea.
+- **Don't** muestres el `detail` del servidor en una página a la que se llega desde un enlace: di
+  lo que pasó en palabras propias y qué hacer.
+- **Don't** pongas el veredicto de una verificación como etiqueta o distintivo sobre otro título.
