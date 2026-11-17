@@ -86,7 +86,11 @@ comercial de Wompi (`F1-CAR-08`).
 ## WhatsApp Business (Meta Cloud API)
 
 Variables: `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_VERIFY_TOKEN`,
-`WHATSAPP_API_VERSION` y `WHATSAPP_APP_SECRET`.
+`WHATSAPP_API_VERSION` y `WHATSAPP_APP_SECRET`. Aparte, `WHATSAPP_CONTACTO_PUBLICO` es el número al
+que escribe quien se afilia y tiene una duda (el registro en línea y su pago rechazado, R3-PUB-02):
+lo lógico es que sea el número que TIMU elija en la sección 3.1 del documento de integraciones. En
+local va uno ficticio; un ambiente desplegado se niega a arrancar con él, y vacío el registro no
+ofrece contacto ([pendientes externos](pendientes-externos.md#valores-provisionales)).
 
 - **Envío** por cola, con reintentos y traza por destinatario (`comunicaciones.encolar_*`).
   Fuera de la ventana de 24 horas que abre un mensaje de la persona solo salen plantillas

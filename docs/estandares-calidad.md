@@ -38,6 +38,11 @@ Las reglas detalladas viven junto al código ([`backend/CLAUDE.md`](../backend/C
 Cerrada el 2026-11-10 la deuda de los ciclos: en la auditoría 11 dominios formaban un solo
 ciclo y no queda ninguno. Cómo se hizo, en [`deuda-ciclos-dominios.md`](registros/deuda-ciclos-dominios.md).
 
+**Deuda**: el formateador de pesos está repetido. `planes` no puede importar `cartera` (`cartera`
+depende de `planes` y cerraría un ciclo), así que `planes.service._pesos` copia
+`cartera.periodos.formato_cop` (R3-PUB-02). Se cierra subiendo `formato_cop` a `app/core` y
+haciendo que los dos lo usen.
+
 ## Escalabilidad
 
 | Regla | Guarda |

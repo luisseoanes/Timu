@@ -211,7 +211,7 @@ Portal de familias, comercial automatizado, campañas y encuestas.
 | --- | --- | --- | --- | --- |
 | `F3-ENC-01` | Encuesta al cierre de la atención | Al completarse un servicio la encuesta sale sola, con la demora configurada por tipo de atención. | 6.20 | Hecho |
 | `F3-ENC-02` | Captura de respuestas | La familia responde por WhatsApp o enlace y el puntaje queda asociado al servicio y al responsable. | 6.20 | Hecho |
-| `F3-ENC-03` | Seguimiento post atención | Cada tipo de atención define su seguimiento y el sistema lo ejecuta en el plazo configurado. | 6.21 | Hecho |
+| `F3-ENC-03` | Seguimiento post atención | Cada tipo de atención define su seguimiento y el sistema lo ejecuta en el plazo configurado. | 6.21 | Hecho. Desde el 2026-11-17 (R3-PUB-03) el seguimiento no se califica del 1 al 5: pregunta cómo sigue la mascota (bien, con una duda o con una novedad, migración `0050`), y una duda o una novedad dejan tarea; un número por WhatsApp solo responde la satisfacción. |
 | `F3-ENC-04` | Alerta por calificación baja | Un puntaje bajo genera tarea inmediata de servicio al cliente con el contexto de la atención. | 6.20 · 6.21 | Hecho |
 | `F3-ENC-05` | Exportar las encuestas | Las respuestas de las encuestas, con su familia, mascota, servicio, fecha, profesional y puntaje, se descargan en Excel o CSV desde el panel. | 6.20 | Pendiente |
 
