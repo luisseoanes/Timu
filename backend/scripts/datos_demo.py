@@ -598,6 +598,31 @@ def main() -> None:
 
     print("Clínica")
     medico = Cliente("medico@timu.co", CLAVE_EQUIPO)
+
+    # Una vacuna aplicada a la mascota de Laura Gómez (Nala), para que la verificación pública
+    # del carnet (e2e-stack/responsive.spec.ts) se mida con sus tablas. Ningún otro recorrido
+    # mira sus preventivos.
+    nala = familias[2]["mascotas"][0]
+    if c.get("/preventivos", mascota_id=nala["id"], estado="aplicado", limit=1)["total"] == 0:
+        vacunas = [
+            e
+            for e in c.get("/preventivos", mascota_id=nala["id"], estado="programado", limit=50)[
+                "items"
+            ]
+            if e["tipo"] == "vacuna"
+        ]
+        if vacunas:
+            vacuna = vacunas[0]
+            if vacuna["requiere_autorizacion"] and not vacuna["autorizado"]:
+                c.post(f"/preventivos/{vacuna['id']}/autorizacion", {"medio": "telefono"})
+            medico.post(
+                f"/preventivos/{vacuna['id']}/aplicacion",
+                {
+                    "fecha": (hoy - timedelta(days=10)).isoformat(),
+                    "producto": "Nobivac Rabia",
+                    "lote": "NR2611",
+                },
+            )
     luna = familias[0]["mascotas"][0]
     if not medico.get(f"/clinica/mascotas/{luna['id']}/historia"):
         entrada = medico.post(

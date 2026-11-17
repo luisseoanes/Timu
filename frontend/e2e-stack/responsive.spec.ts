@@ -77,15 +77,34 @@ async function entradaClinica(page: Page): Promise<{ mascota: string; entrada: s
   throw new Error('datos_demo no dejó ninguna entrada de historia clínica')
 }
 
+/**
+ * Emite un carnet de una mascota de datos_demo con algo aplicado, para medir la verificación con
+ * sus tablas (R3-PUB-03). Es lo que hace el equipo desde el panel; la página es pública y se abre
+ * igual con la sesión de quien lo emitió.
+ */
+async function carnetEmitido(page: Page): Promise<string> {
+  const { items } = await pedir<{ items: Familia[] }>(page, '/familias?limit=50')
+  for (const familia of items) {
+    for (const { id } of familia.mascotas ?? []) {
+      const { aplicados } = await pedir<{ aplicados: unknown[] }>(page, `/preventivos/mascotas/${id}/carnet`)
+      if (aplicados.length === 0) continue
+      const emitido = await page.request.post(`/api/v1/preventivos/mascotas/${id}/carnet/pdf`)
+      expect(emitido.ok(), `emitir el carnet respondió ${emitido.status()}`).toBeTruthy()
+      return `/verificar/${((await emitido.json()) as { codigo: string }).codigo}`
+    }
+  }
+  throw new Error('datos_demo no dejó ninguna mascota con un preventivo aplicado')
+}
+
 const RUTAS: Ruta[] = [
   // Páginas públicas. Las que necesitan un enlace válido se abren con uno inexistente: se
-  // mide el estado de «enlace no válido», que es lo que ve quien llega con uno vencido.
+  // mide el estado de «enlace no válido», que es lo que ve quien llega con uno vencido. La
+  // encuesta con su formulario se mide en e2e/publicas.spec.ts: su token solo está en la base.
   { app: '/login', perfil: null, url: '/login' },
   { app: '/recuperar', perfil: null, url: '/recuperar' },
   { app: '/restablecer', perfil: null, url: '/restablecer' },
   { app: '/activar', perfil: null, url: '/activar' },
   { app: '/encuesta/:token', perfil: null, url: '/encuesta/enlace-inexistente' },
-  { app: '/verificar/:codigo', perfil: null, url: '/verificar/CODIGO-INEXISTENTE' },
   { app: '/afiliacion', perfil: null, url: '/afiliacion' },
   { app: '/afiliacion/resultado', perfil: null, url: '/afiliacion/resultado' },
   { app: '/afiliacion/completar', perfil: null, url: '/afiliacion/completar' },
@@ -133,6 +152,8 @@ const RUTAS: Ruta[] = [
   { app: 'comercial', perfil: 'admin', url: '/comercial', pestanas: true },
   // Con sus seis pestañas (R2-PAN-10).
   { app: 'admin', perfil: 'admin', url: '/admin', pestanas: true },
+  // La verificación pública de un carnet de verdad (R3-PUB-03): emitirlo pide una sesión del equipo.
+  { app: '/verificar/:codigo', perfil: 'admin', url: carnetEmitido },
 
   // Portal de familias.
   { app: 'index:portal', perfil: 'familia', url: '/portal' },
