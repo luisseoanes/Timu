@@ -662,6 +662,30 @@
 @media (max-width: 899px) {
   .publica-tarjeta { padding: var(--e5); }
 }
+
+/* Verificación del carnet (R3-PUB-03): una columna sobre el lienzo para un tercero. Arriba el
+   veredicto, debajo lo que decía el carnet impreso, sección por sección, y al pie qué certifica. */
+.verificacion { min-height: 100vh; background: var(--superficie-lienzo); padding: var(--e6) var(--e4) var(--e8); }
+.verificacion-columna { width: min(760px, 100%); margin-inline: auto; display: grid; gap: var(--e7); }
+.verificacion-marca .marca { height: 32px; }
+.verificacion-veredicto { display: grid; gap: var(--e3); padding-bottom: var(--e6); border-bottom: 1px solid var(--borde); }
+.verificacion-veredicto:last-child { padding-bottom: 0; border-bottom: 0; }
+.verificacion-veredicto h1 { margin: 0; }
+.verificacion-autentico { display: flex; align-items: center; gap: var(--e3); }
+.verificacion-autentico svg { flex-shrink: 0; color: var(--estado-ok-texto); }
+.verificacion-veredicto > p { margin: 0; color: var(--texto-suave); }
+.verificacion-datos { display: flex; flex-wrap: wrap; gap: var(--e2) var(--e6); margin: 0; }
+.verificacion-datos div { display: grid; gap: 2px; }
+.verificacion-datos dt { font-size: var(--t-etiqueta); letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; color: var(--texto-suave); font-weight: 700; }
+.verificacion-datos dd { margin: 0; color: var(--texto-titulo); font-weight: 600; }
+.verificacion-seccion { display: grid; gap: var(--e3); }
+.verificacion-seccion h2 { margin: 0; font-family: var(--fuente); font-size: var(--t-seccion); color: var(--texto-titulo); }
+.verificacion-seccion > p { margin: 0; color: var(--texto-suave); }
+.verificacion-pie { display: grid; gap: var(--e2); padding-top: var(--e5); border-top: 1px solid var(--borde); color: var(--texto-suave); font-size: var(--t-menor); }
+.verificacion-pie p { margin: 0; text-wrap: pretty; }
+.verificacion-huella { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; color: var(--texto); }
+.verificacion th { white-space: nowrap; }
+.verificacion-buscar { display: grid; grid-template-columns: 1fr auto; gap: var(--e3); align-items: end; max-width: 440px; }
 @media (max-width: 899px) {
   .ingreso { grid-template-columns: 1fr; align-content: start; }
   .ingreso-marca { gap: var(--e5); padding: var(--e5) var(--e4); }

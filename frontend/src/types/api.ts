@@ -796,6 +796,45 @@ export interface RespuestaEncuestaRead {
   te_contactamos: boolean
 }
 
+export interface CarnetVerificadoRead {
+  codigo: string
+  emitido_en: string
+  sha256: string
+  mascota: MascotaVerificada
+  secciones: SeccionVerificada[]
+  pendientes: PendienteVerificado[] | null
+}
+
+export interface MascotaVerificada {
+  nombre: string
+  especie: string | null
+  raza: string | null
+}
+
+export interface SeccionVerificada {
+  tipo: 'vacuna' | 'desparasitacion_interna' | 'desparasitacion_externa'
+  titulo: string
+  aplicados: AplicacionVerificada[]
+}
+
+export interface AplicacionVerificada {
+  nombre: string
+  dosis: string | null
+  fecha_aplicacion: string | null
+  producto: string | null
+  lote: string | null
+  peso_kg: number | null
+  aplicado_por: string | null
+  proxima_fecha: string | null
+}
+
+export interface PendienteVerificado {
+  nombre: string
+  dosis: string | null
+  fecha_programada: string
+  vencido: boolean
+}
+
 export interface ClinicaRead {
   nombre: string
   nit?: string | null

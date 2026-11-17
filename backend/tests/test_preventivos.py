@@ -10,7 +10,7 @@ from app.core.enums import Rol
 from app.core.tiempo import hoy
 from app.modules.comunicaciones.models import Mensaje, PlantillaWhatsApp
 from app.modules.preventivos import documento, service
-from app.modules.preventivos.models import EventoPreventivo
+from app.modules.preventivos.models import CarnetEmitido, EventoPreventivo
 from app.modules.servicios.models import Franja
 from tests import fabricas
 from tests.conftest import crear_usuario, login
@@ -573,7 +573,11 @@ async def test_el_carnet_dice_quien_aplico_cada_preventivo(db, admin, almacenami
     assert documento.filas_seccion("desparasitacion_interna", [fila])[0][-1] == "Dra. Paula Gómez"
     registro = await db.run_sync(service.emitir_carnet, mascota.id, admin.id)
     verificado = await db.run_sync(service.verificar_carnet, registro.codigo)
-    assert verificado["aplicados"][0]["aplicado_por"] == "Dra. Paula Gómez"
+    interna = verificado["secciones"][1]
+    assert (interna["titulo"], interna["aplicados"][0]["aplicado_por"]) == (
+        "Desparasitación interna",
+        "Dra. Paula Gómez",
+    )
 
 
 def test_el_carnet_pdf_lleva_las_fuentes_de_la_marca():
@@ -617,9 +621,16 @@ async def test_carnet_pdf_verificable_sin_datos_de_la_familia(
     publico = await client.get(f"/api/v1/verificacion/carnets/{codigo.lower()}")
     assert publico.status_code == 200
     cuerpo = publico.text
-    assert publico.json()["aplicados"][0]["lote"] == "R1"
+    vacunas = publico.json()["secciones"][0]
+    assert [s["tipo"] for s in publico.json()["secciones"]] == [
+        "vacuna",
+        "desparasitacion_interna",
+        "desparasitacion_externa",
+    ]
+    (rabia,) = vacunas["aplicados"]
+    assert (rabia["lote"], rabia["dosis"]) == ("R1", "Dosis 1")
     # El peso es de la mascota: lo ve el tercero que verifica (aqui no se anoto).
-    assert publico.json()["aplicados"][0]["peso_kg"] is None
+    assert rabia["peso_kg"] is None
     assert titular not in cuerpo and documento not in cuerpo
     assert (await client.get("/api/v1/verificacion/carnets/NOEXISTE00")).status_code == 404
 
@@ -635,7 +646,51 @@ async def test_carnet_emitido_no_cambia_si_luego_se_aplica_algo(db, admin):
         )
     )
     verificado = await db.run_sync(service.verificar_carnet, registro.codigo)
-    assert verificado["aplicados"] == []
+    assert all(s["aplicados"] == [] for s in verificado["secciones"])
+
+
+async def test_la_verificacion_dice_lo_pendiente_como_el_carnet_impreso(db, admin):
+    """6.15: el carnet dice las proximas fechas, y la verificacion dice lo mismo que el PDF el
+    dia que se emitio: lo vencido y lo proximo, y la proxima fecha de cada aplicacion."""
+    _, mascota = await _cachorro(db)
+    rabia = (await _eventos(db, mascota, "can_rabia"))[0]
+    await _autorizado(db, rabia, admin.id)
+    await db.run_sync(
+        lambda s: service.aplicar(
+            s, rabia, fecha=HOY, producto="Rabisin", lote="R1", usuario_id=admin.id
+        )
+    )
+    externa = (await _eventos(db, mascota, "can_desp_externa"))[0]
+    externa.fecha_programada = HOY - timedelta(days=3)
+    await db.flush()
+    datos = await db.run_sync(service.carnet, mascota.id)
+    registro = await db.run_sync(service.emitir_carnet, mascota.id, admin.id)
+
+    verificado = await db.run_sync(service.verificar_carnet, registro.codigo)
+    (aplicada,) = verificado["secciones"][0]["aplicados"]
+    assert aplicada["proxima_fecha"] == datos["aplicados"][0]["proxima_fecha"]
+    pendientes = verificado["pendientes"]
+    assert len(pendientes) == len(datos["vencidos"]) + len(datos["proximos"])
+    vencida = next(p for p in pendientes if p["vencido"])
+    assert vencida["fecha_programada"] == (HOY - timedelta(days=3)).isoformat()
+    assert vencida["dosis"] is None  # las desparasitaciones no dicen dosis, como en el PDF
+
+
+async def test_un_carnet_emitido_antes_no_inventa_lo_pendiente(db, admin):
+    _, mascota = await _cachorro(db)
+    nuevo = await db.run_sync(service.emitir_carnet, mascota.id, admin.id)
+    # Un carnet de antes guardaba solo la mascota y lo aplicado (la fila no cambia: inmutable).
+    antiguo = CarnetEmitido(
+        codigo="ANTIGUO234",
+        mascota_id=mascota.id,
+        archivo_id=nuevo.archivo_id,
+        sha256=nuevo.sha256,
+        contenido={k: nuevo.contenido[k] for k in ("mascota", "aplicados")},
+        emitido_por_id=admin.id,
+    )
+    db.add(antiguo)
+    await db.flush()
+    assert (await db.run_sync(service.verificar_carnet, "ANTIGUO234"))["pendientes"] is None
 
 
 def test_fechas_esquema_respeta_la_edad_minima():

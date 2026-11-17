@@ -283,7 +283,51 @@ async def emitir_carnet(db: DbSession, usuario: Equipo, mascota_id: UUID) -> Car
     )
 
 
-@verificacion_router.get("/carnets/{codigo}", dependencies=[Depends(publico)])
+class MascotaVerificada(BaseModel):
+    nombre: str
+    especie: str | None
+    raza: str | None
+
+
+class AplicacionVerificada(BaseModel):
+    nombre: str
+    dosis: str | None  # «Dosis 2, refuerzo»; solo las vacunas
+    fecha_aplicacion: date | None
+    producto: str | None
+    lote: str | None
+    peso_kg: float | None
+    aplicado_por: str | None
+    proxima_fecha: date | None
+
+
+class SeccionVerificada(BaseModel):
+    tipo: Literal["vacuna", "desparasitacion_interna", "desparasitacion_externa"]
+    titulo: str
+    aplicados: list[AplicacionVerificada]
+
+
+class PendienteVerificado(BaseModel):
+    nombre: str
+    dosis: str | None
+    fecha_programada: date
+    vencido: bool  # ya debia aplicarse el dia que se emitio el carnet
+
+
+class CarnetVerificadoRead(BaseModel):
+    """F2-PRE-06 Lo que decia el carnet al emitirse: las secciones del PDF y lo pendiente.
+    `pendientes` es None en un carnet emitido antes de guardarlo."""
+
+    codigo: str
+    emitido_en: datetime
+    sha256: str
+    mascota: MascotaVerificada
+    secciones: list[SeccionVerificada]
+    pendientes: list[PendienteVerificado] | None
+
+
+@verificacion_router.get(
+    "/carnets/{codigo}", response_model=CarnetVerificadoRead, dependencies=[Depends(publico)]
+)
 async def verificar_carnet(db: DbSession, codigo: str) -> dict[str, Any]:
     """Publico a proposito: un tercero confirma que el carnet es autentico con el codigo
     impreso. Solo devuelve lo que el carnet ya mostraba, sin datos de la familia."""

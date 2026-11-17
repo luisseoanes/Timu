@@ -651,7 +651,8 @@ def emitir_carnet(db: Session, mascota_id: UUID, usuario_id: UUID | None) -> Car
         mascota_id=mascota_id,
         archivo_id=archivo.id,
         sha256=hashlib.sha256(contenido).hexdigest(),
-        contenido={"mascota": datos["mascota"], "aplicados": datos["aplicados"]},
+        # Lo que dice el PDF, para que la verificacion diga lo mismo (6.15: tambien lo pendiente).
+        contenido={k: datos[k] for k in ("mascota", "aplicados", "vencidos", "proximos")},
         emitido_por_id=usuario_id,
     )
     db.add(registro)
@@ -659,35 +660,69 @@ def emitir_carnet(db: Session, mascota_id: UUID, usuario_id: UUID | None) -> Car
     return registro
 
 
+def _dosis(fila: dict[str, Any]) -> str | None:
+    """La dosis en palabras, como en el carnet impreso: solo las vacunas la llevan."""
+    if fila.get("tipo") != "vacuna" or not fila.get("dosis"):
+        return None
+    return f"Dosis {fila['dosis']}{', refuerzo' if fila.get('refuerzo') else ''}"
+
+
 def verificar_carnet(db: Session, codigo: str) -> dict[str, Any]:
-    """Lo que ve un tercero con el codigo: la mascota y lo aplicado al emitir, sin datos
-    de la familia. Mismo 404 para codigo inexistente que para mal escrito."""
+    """Lo que ve un tercero con el codigo: lo mismo que decia el carnet al emitirse (lo
+    aplicado por tipo, con su proxima fecha, y lo pendiente), sin datos de la familia. Mismo 404
+    para codigo inexistente que para mal escrito. Un carnet emitido antes de guardar lo
+    pendiente lo devuelve como `None`: no se sabe, no es que no hubiera."""
     codigo = codigo.strip().upper()
     acotar_publico(db, carnet=codigo)
     registro = db.scalar(select(CarnetEmitido).where(CarnetEmitido.codigo == codigo))
     if registro is None:
         raise NoEncontrado("Carnet no encontrado")
-    mascota = registro.contenido["mascota"]
+    contenido = registro.contenido
+    mascota = contenido["mascota"]
+    pendientes = None
+    if "vencidos" in contenido:
+        pendientes = [
+            {
+                "nombre": f["nombre"],
+                "dosis": _dosis(f),
+                "fecha_programada": f["fecha_programada"],
+                "vencido": vencido,
+            }
+            for vencido, filas in ((True, contenido["vencidos"]), (False, contenido["proximos"]))
+            for f in filas
+        ]
     return {
         "codigo": registro.codigo,
         "emitido_en": registro.created_at,
         "sha256": registro.sha256,
         "mascota": {k: mascota.get(k) for k in ("nombre", "especie", "raza")},
-        "aplicados": [
+        "secciones": [
             {
-                k: a.get(k)
-                for k in (
-                    "nombre",
-                    "dosis",
-                    "fecha_aplicacion",
-                    "producto",
-                    "lote",
-                    "peso_kg",
-                    "aplicado_por",
-                )
+                "tipo": tipo,
+                "titulo": titulo,
+                "aplicados": [
+                    {
+                        "nombre": a["nombre"],
+                        "dosis": _dosis(a),
+                        **{
+                            k: a.get(k)
+                            for k in (
+                                "fecha_aplicacion",
+                                "producto",
+                                "lote",
+                                "peso_kg",
+                                "aplicado_por",
+                                "proxima_fecha",
+                            )
+                        },
+                    }
+                    for a in contenido["aplicados"]
+                    if a.get("tipo") == tipo
+                ],
             }
-            for a in registro.contenido["aplicados"]
+            for tipo, titulo, _ in documento.SECCIONES
         ],
+        "pendientes": pendientes,
     }
 
 

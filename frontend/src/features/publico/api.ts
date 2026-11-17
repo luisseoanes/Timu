@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
+import type { CarnetVerificadoRead } from '@/types'
 
 /** Lo que ve quien abre el enlace de una encuesta (F3-ENC-02). */
 export interface ContextoEncuesta {
@@ -9,23 +10,6 @@ export interface ContextoEncuesta {
   fecha: string | null
   mascota: string | null
   respondida: boolean
-}
-
-/** Lo que muestra la verificación pública de un carnet (F2-PRE-06). */
-export interface CarnetVerificado {
-  codigo: string
-  emitido_en: string
-  sha256: string
-  mascota: { nombre: string; especie: string; raza: string | null }
-  aplicados: {
-    nombre: string
-    dosis: string | null
-    fecha_aplicacion: string | null
-    producto: string | null
-    lote: string | null
-    peso_kg?: number | null
-    aplicado_por?: string | null
-  }[]
 }
 
 export function useContextoEncuesta(token: string) {
@@ -43,10 +27,11 @@ export function useResponderEncuesta(token: string) {
   })
 }
 
+/** Lo que decía el carnet al emitirse (F2-PRE-06): sus secciones y lo pendiente. */
 export function useCarnetVerificado(codigo: string) {
   return useQuery({
     queryKey: ['carnet-verificado', codigo],
-    queryFn: async () => (await api.get<CarnetVerificado>(`/verificacion/carnets/${codigo}`)).data,
+    queryFn: async () => (await api.get<CarnetVerificadoRead>(`/verificacion/carnets/${codigo}`)).data,
     retry: false,
   })
 }
