@@ -115,6 +115,8 @@ PERMISOS: dict[str, dict[str, str]] = {
     },
     "aliada": {
         "bajas_comunicaciones": "S",
+        "clinicas_aliadas": "S",
+        "especies": "S",
         "eventos_salientes": "SI",
         "familias": "S",
         "mascotas": "S",
@@ -453,6 +455,8 @@ CONDICIONES: dict[str, dict[str, str | dict[str, str]]] = {
     "operaciones": {"sesiones": "usuario_id = app_usuario()"},
     "medico": {"sesiones": "usuario_id = app_usuario()"},
     "aliada": {
+        # Su propia clinica: el espacio de la aliada dice en cual esta (R3-ALI-01).
+        "clinicas_aliadas": "id = app_clinica()",
         "remisiones_aliadas": "clinica_id = app_clinica()",
         "servicios": f"id IN {_REMISIONES}",
         "servicio_pasos": f"servicio_id IN {_REMISIONES}",

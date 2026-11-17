@@ -206,6 +206,140 @@ async def test_aliada_ve_lo_minimo_y_reporta(client, db, headers, escenario, ali
     assert otra_vez.status_code == 422
 
 
+async def test_la_vista_dice_si_sirve_entre_que_fechas_y_la_especie_en_palabras(
+    client, db, headers, escenario, aliada
+):
+    remision = (await _remitir(client, headers, escenario)).json()
+    url = f"/api/v1/aliadas/mi-clinica/remisiones/{remision['codigo']}"
+
+    datos = (await client.get(url, headers=aliada)).json()
+    assert datos["vencida"] is False and datos["emitida_en"] == str(HOY)
+    assert datos["atencion_desde"] == str(HOY) and datos["atencion_hasta"] == str(HOY)
+    assert datos["mascota"]["especie_nombre"] != datos["mascota"]["especie"]
+    assert datos["fecha_atencion"] is None and datos["valor_familia"] is None
+
+    await db.execute(
+        update(RemisionAliada)
+        .where(RemisionAliada.codigo == remision["codigo"])
+        .values(vence_en=HOY - timedelta(days=1))
+    )
+    await db.commit()
+    vencida = (await client.get(url, headers=aliada)).json()
+    assert vencida["vigente"] is False and vencida["vencida"] is True
+    assert vencida["atencion_desde"] is None and vencida["atencion_hasta"] is None
+
+
+async def test_la_cobertura_se_ve_antes_de_reportar_y_es_la_que_se_reporta(
+    client, headers, escenario, aliada
+):
+    remision = (await _remitir(client, headers, escenario)).json()
+    url = f"/api/v1/aliadas/mi-clinica/remisiones/{remision['codigo']}"
+
+    # 80 % de 100.000, por debajo del tope de 100.000.
+    sin_tope = (
+        await client.get(f"{url}/cobertura", params={"valor_atencion": "100000"}, headers=aliada)
+    ).json()
+    assert Decimal(sin_tope["valor_cubierto"]) == Decimal("80000")
+    assert Decimal(sin_tope["valor_familia"]) == Decimal("20000")
+    assert sin_tope["con_tope"] is False
+
+    # 80 % de 150.000 serian 120.000: el tope deja 100.000 y la familia asume 50.000.
+    con_tope = (
+        await client.get(f"{url}/cobertura", params={"valor_atencion": "150000"}, headers=aliada)
+    ).json()
+    assert Decimal(con_tope["valor_cubierto"]) == Decimal("100000")
+    assert Decimal(con_tope["valor_familia"]) == Decimal("50000")
+    assert con_tope["con_tope"] is True
+
+    cero = await client.get(f"{url}/cobertura", params={"valor_atencion": "0"}, headers=aliada)
+    assert cero.status_code == 422
+
+    reporte = (
+        await client.post(
+            f"{url}/atencion",
+            json={"fecha": str(HOY), "valor_atencion": "150000", "resumen": "Ecografia normal"},
+            headers=aliada,
+        )
+    ).json()
+    assert reporte["estado"] == "utilizada" and reporte["fecha_atencion"] == str(HOY)
+    assert Decimal(reporte["valor_cubierto"]) == Decimal(con_tope["valor_cubierto"])
+    assert Decimal(reporte["valor_familia"]) == Decimal(con_tope["valor_familia"])
+
+
+async def test_la_aliada_ve_su_clinica_y_lo_que_atendio(client, db, headers, escenario, aliada):
+    clinica = (await client.get("/api/v1/aliadas/mi-clinica", headers=aliada)).json()
+    assert clinica == {"nombre": "Clinica Norte", "ciudad": "Cali"}
+
+    remision = (await _remitir(client, headers, escenario)).json()
+    await client.post(
+        f"/api/v1/aliadas/mi-clinica/remisiones/{remision['codigo']}/atencion",
+        json={"fecha": str(HOY), "valor_atencion": "100000", "resumen": "Consulta"},
+        headers=aliada,
+    )
+    mes = {"desde": str(HOY.replace(day=1)), "hasta": str(HOY)}
+    atendidas = (
+        await client.get("/api/v1/aliadas/mi-clinica/atendidas", params=mes, headers=aliada)
+    ).json()
+    assert atendidas["atenciones"] == 1
+    assert Decimal(atendidas["valor_atenciones"]) == Decimal("100000")
+    assert Decimal(atendidas["valor_cubierto"]) == Decimal("80000")
+    assert Decimal(atendidas["valor_familias"]) == Decimal("20000")
+    (fila,) = atendidas["items"]
+    assert fila["codigo"] == remision["codigo"] and fila["titular"] == escenario["titular"]
+    assert "telefono" not in fila and "documento" not in fila
+
+    # Lo mismo que liquida TIMU para esa clinica en el periodo.
+    (liquidada,) = (
+        await client.get("/api/v1/aliadas/liquidacion", params=mes, headers=headers)
+    ).json()
+    assert Decimal(liquidada["valor_cubierto"]) == Decimal(atendidas["valor_cubierto"])
+
+    antes = {"desde": str(HOY - timedelta(days=60)), "hasta": str(HOY - timedelta(days=31))}
+    vacio = (
+        await client.get("/api/v1/aliadas/mi-clinica/atendidas", params=antes, headers=aliada)
+    ).json()
+    assert vacio["atenciones"] == 0 and vacio["items"] == []
+
+    al_reves = {"desde": str(HOY), "hasta": str(HOY - timedelta(days=1))}
+    malo = await client.get("/api/v1/aliadas/mi-clinica/atendidas", params=al_reves, headers=aliada)
+    assert malo.status_code == 422
+
+
+async def test_la_aliada_no_ve_lo_atendido_por_otra_clinica(client, db, headers, escenario):
+    from uuid import UUID
+
+    remision = (await _remitir(client, headers, escenario)).json()
+    duena = UUID(escenario["clinica_id"])
+    await crear_usuario(db, "recepcion@norte.co", Rol.ALIADA, clinica_aliada_id=duena)
+    await client.post(
+        f"/api/v1/aliadas/mi-clinica/remisiones/{remision['codigo']}/atencion",
+        json={"fecha": str(HOY), "valor_atencion": "100000", "resumen": "Consulta"},
+        headers=await login(client, "recepcion@norte.co"),
+    )
+    otra = (
+        await client.post(
+            "/api/v1/aliadas", json={"nombre": "Otra clinica", "ciudad": "Cali"}, headers=headers
+        )
+    ).json()
+    await crear_usuario(db, "recepcion@otra.co", Rol.ALIADA, clinica_aliada_id=UUID(otra["id"]))
+    ajena = await login(client, "recepcion@otra.co")
+
+    mes = {"desde": str(HOY.replace(day=1)), "hasta": str(HOY)}
+    vista = (
+        await client.get("/api/v1/aliadas/mi-clinica/atendidas", params=mes, headers=ajena)
+    ).json()
+    assert vista["atenciones"] == 0
+    assert (await client.get("/api/v1/aliadas/mi-clinica", headers=ajena)).json()[
+        "nombre"
+    ] == "Otra clinica"
+    cobertura = await client.get(
+        f"/api/v1/aliadas/mi-clinica/remisiones/{remision['codigo']}/cobertura",
+        params={"valor_atencion": "1000"},
+        headers=ajena,
+    )
+    assert cobertura.status_code == 404
+
+
 async def test_aliada_no_ve_remisiones_de_otra_clinica(client, db, headers, escenario, aliada):
     otra = (
         await client.post(

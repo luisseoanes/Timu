@@ -16,6 +16,7 @@ from app.core.tiempo import ZONA_NEGOCIO, ahora, con_zona, hoy
 from app.modules.aliadas.models import ClinicaAliada, ConvenioAliada, RemisionAliada
 from app.modules.cartera import contratos
 from app.modules.cartera.periodos import dinero
+from app.modules.catalogos.models import Especie
 from app.modules.familias.models import Familia, Mascota
 from app.modules.planes.models import Plan
 from app.modules.servicios import service as servicios
@@ -217,28 +218,73 @@ def _de_la_clinica(db: Session, codigo: str, clinica_id: UUID) -> RemisionAliada
     return remision
 
 
+def cubre(remision: RemisionAliada, valor_atencion: Decimal) -> tuple[Decimal, Decimal]:
+    """Lo que cubre TIMU de una atencion (porcentaje y tope de la remision) y lo que asume la
+    familia. La misma cuenta al reportar y al mostrarla antes, para que no se digan dos cifras."""
+    valor = dinero(valor_atencion)
+    cubierto = dinero(valor * remision.cobertura_pct / 100)
+    if remision.tope_cubierto is not None:
+        cubierto = min(cubierto, dinero(remision.tope_cubierto))
+    return cubierto, valor - cubierto
+
+
 def vista_aliada(db: Session, codigo: str, clinica_id: UUID) -> dict[str, Any]:
     """Lo minimo para atender: a quien (nombre del titular y ultimos digitos del documento
     para verificar identidad), que mascota y que cubre. Nada de contacto, direccion,
-    cartera ni historia clinica."""
+    cartera ni historia clinica. Dice si sirve y, si sirve, entre que fechas se puede
+    reportar la atencion; si ya se uso, cuando y cuanto."""
     remision = _de_la_clinica(db, codigo, clinica_id)
     familia = db.get(Familia, remision.familia_id)
     mascota = db.get(Mascota, remision.mascota_id)
     assert familia is not None and mascota is not None
+    especie = db.scalar(select(Especie.nombre).where(Especie.codigo == mascota.especie))
+    emitida = con_zona(remision.created_at).astimezone(ZONA_NEGOCIO).date()
     vigente = remision.estado == "emitida" and remision.vence_en >= hoy()
+    familia_asume = (
+        remision.valor_atencion - remision.valor_cubierto
+        if remision.valor_atencion is not None and remision.valor_cubierto is not None
+        else None
+    )
     return {
         "codigo": remision.codigo,
         "estado": remision.estado,
         "vigente": vigente,
+        "vencida": remision.estado == "emitida" and not vigente,
         "vence_en": remision.vence_en,
+        "emitida_en": emitida,
+        "atencion_desde": emitida if vigente else None,
+        "atencion_hasta": min(remision.vence_en, hoy()) if vigente else None,
         "titular": familia.titular_nombre,
         "documento_ultimos": familia.documento[-4:],
-        "mascota": {"nombre": mascota.nombre, "especie": mascota.especie, "raza": mascota.raza},
+        "mascota": {
+            "nombre": mascota.nombre,
+            "especie": mascota.especie,
+            "especie_nombre": especie or mascota.especie,
+            "raza": mascota.raza,
+        },
         "motivo": remision.motivo,
         "beneficio": remision.beneficio_aplicado,
         "cobertura_pct": remision.cobertura_pct,
         "tope_cubierto": remision.tope_cubierto,
+        "fecha_atencion": remision.fecha_atencion,
+        "valor_atencion": remision.valor_atencion,
         "valor_cubierto": remision.valor_cubierto,
+        "valor_familia": familia_asume,
+    }
+
+
+def cobertura_de(
+    db: Session, codigo: str, clinica_id: UUID, valor_atencion: Decimal
+) -> dict[str, Any]:
+    """Lo que cubriria TIMU de `valor_atencion` con esta remision, antes de reportarla."""
+    remision = _de_la_clinica(db, codigo, clinica_id)
+    cubierto, familia = cubre(remision, valor_atencion)
+    return {
+        "valor_atencion": dinero(valor_atencion),
+        "valor_cubierto": cubierto,
+        "valor_familia": familia,
+        "con_tope": remision.tope_cubierto is not None
+        and cubierto == dinero(remision.tope_cubierto),
     }
 
 
@@ -263,9 +309,7 @@ def reportar_atencion(
     emitida = con_zona(remision.created_at).astimezone(ZONA_NEGOCIO).date()
     if fecha > remision.vence_en or fecha < emitida:
         raise ReglaNegocio("La atencion esta fuera de la vigencia de la remision")
-    cubierto = dinero(dinero(valor_atencion) * remision.cobertura_pct / 100)
-    if remision.tope_cubierto is not None:
-        cubierto = min(cubierto, dinero(remision.tope_cubierto))
+    cubierto, _ = cubre(remision, valor_atencion)
     remision.estado = "utilizada"
     remision.fecha_atencion = fecha
     remision.valor_atencion = dinero(valor_atencion)
@@ -279,6 +323,55 @@ def reportar_atencion(
     servicios.cambiar_estado(db, servicio, EstadoServicio.COMPLETADO, actor_id=usuario_id)
     db.flush()
     return remision
+
+
+def mi_clinica(db: Session, clinica_id: UUID) -> ClinicaAliada:
+    """La clinica de quien ingresa: el espacio de la aliada dice en cual esta."""
+    return obtener_clinica(db, clinica_id)
+
+
+def atendidas(db: Session, clinica_id: UUID, desde: date, hasta: date) -> dict[str, Any]:
+    """Lo que la clinica reporto en el periodo, de lo mas reciente a lo mas antiguo, con lo
+    que cubrio TIMU y lo que asumieron las familias: lo mismo que suma la liquidacion."""
+    if hasta < desde:
+        raise ReglaNegocio("El periodo termina antes de empezar")
+    filas = db.execute(
+        select(RemisionAliada, Familia.titular_nombre, Mascota.nombre)
+        .join(Familia, Familia.id == RemisionAliada.familia_id)
+        .join(Mascota, Mascota.id == RemisionAliada.mascota_id)
+        .where(
+            RemisionAliada.clinica_id == clinica_id,
+            RemisionAliada.estado == "utilizada",
+            RemisionAliada.fecha_atencion >= desde,
+            RemisionAliada.fecha_atencion <= hasta,
+        )
+        .order_by(RemisionAliada.fecha_atencion.desc(), RemisionAliada.id.desc())
+    ).tuples()
+    items = []
+    for remision, titular, mascota in filas:
+        assert remision.valor_atencion is not None and remision.valor_cubierto is not None
+        items.append(
+            {
+                "codigo": remision.codigo,
+                "fecha_atencion": remision.fecha_atencion,
+                "titular": titular,
+                "mascota": mascota,
+                "motivo": remision.motivo,
+                "beneficio": remision.beneficio_aplicado,
+                "valor_atencion": remision.valor_atencion,
+                "valor_cubierto": remision.valor_cubierto,
+                "valor_familia": remision.valor_atencion - remision.valor_cubierto,
+            }
+        )
+    return {
+        "desde": desde,
+        "hasta": hasta,
+        "atenciones": len(items),
+        "valor_atenciones": dinero(sum((i["valor_atencion"] for i in items), Decimal(0))),
+        "valor_cubierto": dinero(sum((i["valor_cubierto"] for i in items), Decimal(0))),
+        "valor_familias": dinero(sum((i["valor_familia"] for i in items), Decimal(0))),
+        "items": items,
+    }
 
 
 # --- F2-ALI-04 Liquidacion --------------------------------------------------------------------

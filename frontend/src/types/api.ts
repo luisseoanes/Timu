@@ -830,6 +830,69 @@ export interface RemisionRead {
   vencida: boolean
 }
 
+export interface MascotaRemitida {
+  nombre: string
+  especie: string
+  especie_nombre: string
+  raza: string | null
+}
+
+export interface RemisionVistaAliada {
+  codigo: string
+  estado: string
+  vigente: boolean
+  vencida: boolean
+  vence_en: string
+  emitida_en: string
+  atencion_desde: string | null
+  atencion_hasta: string | null
+  titular: string
+  documento_ultimos: string
+  mascota: MascotaRemitida
+  motivo: string
+  beneficio: string | null
+  cobertura_pct: number
+  tope_cubierto: string | null
+  fecha_atencion: string | null
+  valor_atencion: string | null
+  valor_cubierto: string | null
+  valor_familia: string | null
+}
+
+export interface CoberturaAliada {
+  valor_atencion: string
+  valor_cubierto: string
+  valor_familia: string
+  con_tope: boolean
+}
+
+export interface MiClinica {
+  nombre: string
+  ciudad: string
+}
+
+export interface AtendidaAliada {
+  codigo: string
+  fecha_atencion: string
+  titular: string
+  mascota: string
+  motivo: string
+  beneficio: string | null
+  valor_atencion: string
+  valor_cubierto: string
+  valor_familia: string
+}
+
+export interface AtendidasAliada {
+  desde: string
+  hasta: string
+  atenciones: number
+  valor_atenciones: string
+  valor_cubierto: string
+  valor_familias: string
+  items: AtendidaAliada[]
+}
+
 export interface ReporteRead {
   id: string
   nombre: string

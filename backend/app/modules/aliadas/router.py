@@ -8,7 +8,7 @@ from decimal import Decimal
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field
 from sqlalchemy import select
 
@@ -129,6 +129,75 @@ class AtencionIn(BaseModel):
     fecha: date
     valor_atencion: Decimal = Field(gt=0)
     resumen: str = Field(min_length=5, max_length=4000)
+
+
+class MascotaRemitida(BaseModel):
+    nombre: str
+    especie: str
+    especie_nombre: str
+    raza: str | None
+
+
+class RemisionVistaAliada(BaseModel):
+    """Lo que ve la clinica aliada al validar un codigo (F2-ALI-03): lo minimo para atender."""
+
+    codigo: str
+    estado: str
+    vigente: bool
+    vencida: bool
+    vence_en: date
+    emitida_en: date
+    # Entre que fechas se puede reportar la atencion; sin valor si la remision no sirve.
+    atencion_desde: date | None
+    atencion_hasta: date | None
+    titular: str
+    documento_ultimos: str
+    mascota: MascotaRemitida
+    motivo: str
+    beneficio: str | None
+    cobertura_pct: int
+    tope_cubierto: Decimal | None
+    fecha_atencion: date | None
+    valor_atencion: Decimal | None
+    valor_cubierto: Decimal | None
+    valor_familia: Decimal | None
+
+
+class CoberturaAliada(BaseModel):
+    valor_atencion: Decimal
+    valor_cubierto: Decimal
+    valor_familia: Decimal
+    # Lo cubierto llego al tope de la remision: la familia asume el resto.
+    con_tope: bool
+
+
+class MiClinica(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    nombre: str
+    ciudad: str
+
+
+class AtendidaAliada(BaseModel):
+    codigo: str
+    fecha_atencion: date
+    titular: str
+    mascota: str
+    motivo: str
+    beneficio: str | None
+    valor_atencion: Decimal
+    valor_cubierto: Decimal
+    valor_familia: Decimal
+
+
+class AtendidasAliada(BaseModel):
+    desde: date
+    hasta: date
+    atenciones: int
+    valor_atenciones: Decimal
+    valor_cubierto: Decimal
+    valor_familias: Decimal
+    items: list[AtendidaAliada]
 
 
 # --- F2-ALI-01 Directorio y convenios ---------------------------------------------------------
@@ -254,13 +323,34 @@ def _clinica(usuario: Usuario) -> UUID:
     return usuario.clinica_aliada_id
 
 
-@router.get("/mi-clinica/remisiones/{codigo}")
+@router.get("/mi-clinica", response_model=MiClinica)
+async def mi_clinica(db: DbSession, usuario: Aliada) -> ClinicaAliada:
+    """En que clinica esta quien ingresa (R3-ALI-01)."""
+    return await db.run_sync(service.mi_clinica, _clinica(usuario))
+
+
+@router.get("/mi-clinica/atendidas", response_model=AtendidasAliada)
+async def atendidas(db: DbSession, usuario: Aliada, desde: date, hasta: date) -> dict[str, Any]:
+    """Lo que la clinica reporto en el periodo y lo que cubrio TIMU, para cuadrar la
+    liquidacion (R3-ALI-01)."""
+    return await db.run_sync(service.atendidas, _clinica(usuario), desde, hasta)
+
+
+@router.get("/mi-clinica/remisiones/{codigo}", response_model=RemisionVistaAliada)
 async def validar_remision(db: DbSession, usuario: Aliada, codigo: str) -> dict[str, Any]:
     """La aliada valida el beneficio con el codigo que presenta la familia."""
     return await db.run_sync(service.vista_aliada, codigo, _clinica(usuario))
 
 
-@router.post("/mi-clinica/remisiones/{codigo}/atencion")
+@router.get("/mi-clinica/remisiones/{codigo}/cobertura", response_model=CoberturaAliada)
+async def cobertura(
+    db: DbSession, usuario: Aliada, codigo: str, valor_atencion: Annotated[Decimal, Query(gt=0)]
+) -> dict[str, Any]:
+    """Lo que cubre TIMU de un valor y lo que paga la familia, antes de reportar (R3-ALI-01)."""
+    return await db.run_sync(service.cobertura_de, codigo, _clinica(usuario), valor_atencion)
+
+
+@router.post("/mi-clinica/remisiones/{codigo}/atencion", response_model=RemisionVistaAliada)
 async def reportar_atencion(
     db: DbSession, usuario: Aliada, codigo: str, data: AtencionIn
 ) -> dict[str, Any]:
