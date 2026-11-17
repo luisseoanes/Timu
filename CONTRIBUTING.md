@@ -93,6 +93,21 @@ el último queda idéntico a la copia de trabajo, `git update-ref refs/heads/mai
 <sha-anterior>` y `git reset` dejan `main` en él sin tocar los ficheros. La columna 72 se
 mide en caracteres: `awk length` cuenta bytes, y una tilde vale dos.
 
+Las trampas del worktree:
+
+- **Vitest necesita `ln -s <repo>/frontend/node_modules`.** El enlace aparece como no rastreado:
+  añade rutas explícitas (nunca `git add -A`) y bórralo antes de `git worktree remove --force`.
+- **El backend se prueba con el entorno del repositorio principal**
+  (`<repo>/backend/.venv/bin/pytest`): la base de pruebas no necesita `.env`.
+- **Un fichero con cambios de dos commits** se copia al worktree en su versión intermedia (sin
+  el bloque del segundo, generada con un script), y cada commit se verifica sobre su propio
+  estado.
+- **Si dos commits cambian schemas**, cada uno regenera `frontend/src/types/api.ts` en el
+  worktree con `generar_tipos_frontend.py` (desde su `backend/`): la copia de trabajo solo tiene
+  el final.
+- **Un fallo de Vitest que no es del cambio** (la máquina cargada agota tiempos) se confirma con
+  `npx vitest run --coverage --maxWorkers=2` antes de darlo por bueno o por malo.
+
 ## 3. Formato del mensaje
 
 Seguimos [Conventional Commits 1.0.0](https://www.conventionalcommits.org/es/v1.0.0/):

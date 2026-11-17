@@ -238,14 +238,9 @@ cómo `semantic-release` decide la versión. `commits-sin-convencion.mjs` no mid
 caracteres: compruébalo con un comando que falle (exit ≠ 0) encadenado con `&&` antes de
 `git push`.
 
-En el worktree de commits, Vitest necesita `ln -s <repo>/frontend/node_modules`. Ese enlace
-aparece como no rastreado: añade rutas explícitas (nunca `git add -A`) y bórralo antes de
-`git worktree remove --force`. El backend se prueba en el worktree con el entorno del
-repositorio principal (`<repo>/backend/.venv/bin/pytest`): la base de pruebas no necesita `.env`.
-Un fichero con cambios de dos commits se copia al worktree en su versión intermedia (sin el
-bloque del segundo, generada con un script), y cada commit se verifica sobre su propio estado.
-Si dos commits cambian schemas, cada uno regenera `frontend/src/types/api.ts` en el worktree con
-`generar_tipos_frontend.py` (desde su `backend/`): la copia de trabajo solo tiene el final.
+Con mucho trabajo sin commit, los commits se construyen en un worktree aparte: cómo, con sus
+trampas (el enlace a `node_modules`, las versiones intermedias, los tipos por commit), en
+[`CONTRIBUTING.md` §2](CONTRIBUTING.md#tamaño).
 
 ## Convenciones de escritura
 
