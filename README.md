@@ -170,6 +170,7 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [docs/prueba-de-carga.md](docs/prueba-de-carga.md) | Cómo correr la prueba de carga con el volumen a 12 meses |
 | [docs/flujo-de-la-visita.md](docs/flujo-de-la-visita.md) | Cómo se atiende una visita en casa: estados de la parada y del servicio, pasos de cada tipo y la consulta como registro |
 | [docs/portal-familias.md](docs/portal-familias.md) | Qué ve y qué hace la familia en el portal, de dónde sale cada dato y lo que dice la API para que el panel no copie reglas del backend |
+| [docs/registro-en-linea.md](docs/registro-en-linea.md) | Cómo se afilia una familia sola, de la ciudad al portal: pantallas, rutas de la API, estados, token y plazos, y lo que sigue provisional |
 | [docs/indicadores.md](docs/indicadores.md) | Definición de cada indicador del dashboard y de los exportables |
 | [docs/datos-de-demostracion.md](docs/datos-de-demostracion.md) | Qué siembran `datos_demo` y `operacion_demo`, cómo se hizo la operación (por la API y corrida al pasado), sus límites y cómo ampliarlos |
 | [docs/backend/](docs/backend/) | El detalle de las reglas del backend: [arquitectura](docs/backend/arquitectura.md), [persistencia](docs/backend/persistencia.md) y [pruebas](docs/backend/pruebas.md) |
