@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Josefin+Sans:wght@300&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { width: 390px; height: 844px; overflow: hidden; background: #F5F6F1; font-family: Inter, sans-serif; color: #41445F; }
+  .franja { background: #111537; padding: 16px; }
+  .logo { font: 700 22px Inter; color: #fff; }
+  .logo b { color: #98B833 } .logo i { color: #D48200; font-style: normal } .logo u { color: #477095; text-decoration: none }
+  h1 { font: 300 30px/1.15 "Josefin Sans", sans-serif; color: #111537; padding: 20px 16px 4px; }
+  .sub { padding: 0 16px 14px; font-size: 14px; color: #5F6275; }
+  .ficha { margin: 0 16px 12px; background: #fff; border: 1px solid #E2E3E7; border-radius: 12px; padding: 14px; }
+  .quien { display: flex; justify-content: space-between; align-items: baseline; }
+  .quien strong { font-size: 18px; color: #111537; }
+  .quien span { font-size: 13px; color: #5F6275; }
+  .pastillas { display: flex; gap: 6px; margin: 12px 0; flex-wrap: wrap; }
+  .p { font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 999px; border: 2px solid; color: #111537; background: #fff; }
+  .pn { border-color: #D48200; } .pv { border-color: #98B833; background: #98B833; } .pa { border-color: #477095; }
+  .cubre { border-top: 1px solid #E2E3E7; padding-top: 10px; display: grid; gap: 6px; font-size: 14px; }
+  .cubre div { display: flex; justify-content: space-between; }
+  .cubre b { color: #111537; font-weight: 600; }
+  .letra { font-size: 12px; color: #5F6275; margin-top: 8px; line-height: 1.4; }
+  .otra { margin: 0 16px; border: 1.5px dashed #707387; border-radius: 12px; padding: 14px; text-align: center; font-weight: 600; color: #111537; }
+  .mini { margin: 12px 16px 0; background: #fff; border: 1px solid #E2E3E7; border-radius: 12px; padding: 12px 14px; display: flex; justify-content: space-between; font-size: 14px; }
+  .mini b { color: #111537; }
+  .barra { position: absolute; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid #E2E3E7; padding: 12px 16px 18px; }
+  .barra p { font-size: 13px; margin-bottom: 8px; } .barra strong { color: #111537; }
+  .btn { display: block; text-align: center; background: #98B833; color: #111537; font-weight: 700; font-size: 16px; padding: 14px; border-radius: 10px; }
+</style>
+</head>
+<body>
+  <div class="franja"><span class="logo"><b>TI</b><i>M</i><u>U</u></span></div>
+  <h1>¿Quiénes se unen a la manada?</h1>
+  <p class="sub">Medellín · cada peludo con su plan.</p>
+  <div class="ficha">
+    <div class="quien"><strong>Toby</strong><span>Perro</span></div>
+    <div class="pastillas"><span class="p pn">Colita Feliz</span><span class="p pv">Mi Amigo Fiel</span><span class="p pa">Amigos por Siempre</span></div>
+    <div class="cubre">
+      <div>Consulta en casa <b>1 al mes</b></div>
+      <div>Clínica aliada <b>40 %</b></div>
+      <div>Orientación por chat <b>24/7</b></div>
+      <div>Carencia <b>Sin carencia</b></div>
+    </div>
+    <p class="letra">Excluye preexistencias; los topes aplican por episodio.</p>
+  </div>
+  <div class="mini"><span><b>Mishi</b> · Gato</span><span>Colita Feliz</span></div>
+  <div style="height:12px"></div>
+  <div class="otra">+ Otro peludo</div>
+  <div class="barra">
+    <p>2 peludos · tarifa de 2 · <strong>$ 91.500 al mes</strong></p>
+    <span class="btn">Elegir cómo pagar</span>
+  </div>
+</body>
+</html>
