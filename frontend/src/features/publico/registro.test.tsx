@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { Route, Routes } from 'react-router-dom'
@@ -15,19 +15,35 @@ const API = '*/api/v1'
 const REGISTRO = `${API}/afiliaciones/registro`
 const TOKEN = 'tk-0123456789abcdefghij'
 
-const plan = (id: string, nombre: string, especies: string[], valor: string) => ({
+const beneficio = (tipo_servicio_codigo: string, nombre: string, texto: string) => ({
+  tipo_servicio_codigo,
+  nombre,
+  cupo: 1,
+  periodo_cupo: 'mensual',
+  cobertura_pct: 100,
+  copago: '0.00',
+  texto,
+})
+const plan = (id: string, nombre: string, especies: string[], valor: string, color: string, beneficios = [] as unknown[]) => ({
   id,
   codigo: id,
   nombre,
   descripcion: null,
   especies,
-  tarifas: [{ peludos: 1, valor }],
+  color,
+  tarifas: [
+    { peludos: 1, valor },
+    { peludos: 2, valor: String(Number(valor) - 5000) },
+  ],
   tarifas_periodicidad: [],
-  beneficios: [],
+  beneficios,
+  carencia: null,
+  exclusiones: null,
+  terminos_url: null,
 })
 const PLANES = [
-  plan('p-gato', 'Colita Feliz', ['felino'], '35500.00'),
-  plan('p-perro', 'Mi Amigo Fiel', ['canino'], '71000.00'),
+  plan('p-gato', 'Colita Feliz', ['felino'], '35500.00', 'naranja'),
+  plan('p-perro', 'Mi Amigo Fiel', ['canino'], '71000.00', 'verde'),
 ]
 const PELUDOS_COTIZADOS = [
   { especie: 'felino', plan_id: 'p-gato', plan_nombre: 'Colita Feliz', valor_mensual: '30500.00' },
@@ -60,6 +76,9 @@ const REGISTRO_PAGADO = {
   ],
 }
 
+/** El WhatsApp de TIMU que ofrece el registro a quien tiene una duda. */
+const CONTACTO = http.get(`${REGISTRO}/contacto`, () => HttpResponse.json({ whatsapp: '+573001112233' }))
+
 let asignar: ReturnType<typeof vi.fn>
 
 beforeEach(() => {
@@ -71,12 +90,13 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('Registro en línea', () => {
-  function catalogo() {
+  function catalogo(planes: unknown[] = PLANES) {
     const cotizaciones: unknown[] = []
     server.use(
       sinSesion,
+      CONTACTO,
       http.get(`${REGISTRO}/ciudades`, () => HttpResponse.json(['Bogotá', 'Medellín'])),
-      http.get(`${REGISTRO}/planes`, () => HttpResponse.json(PLANES)),
+      http.get(`${REGISTRO}/planes`, () => HttpResponse.json(planes)),
       http.post(`${REGISTRO}/cotizacion`, async ({ request }) => {
         cotizaciones.push(await request.json())
         return HttpResponse.json(COTIZACION)
@@ -85,15 +105,25 @@ describe('Registro en línea', () => {
     return cotizaciones
   }
 
-  async function hastaLosPeludos(user: ReturnType<typeof userEvent.setup>) {
+  /** La ciudad, la confirmación de la especie y la primera ficha abierta. */
+  async function hastaLaManada(user: ReturnType<typeof userEvent.setup>) {
     renderizar(<RegistroPage />, { ruta: '/afiliacion' })
     await screen.findByRole('option', { name: 'Medellín' })
     await user.selectOptions(screen.getByLabelText('¿En qué ciudad vives?'), 'Medellín')
-    await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await user.click(await screen.findByRole('button', { name: 'Confirmo que solo voy a afiliar perros o gatos' }))
+    return screen.findByRole('region', { name: /^Peludo 1/ })
   }
 
-  it('lleva de la ciudad al pago con un plan por peludo y el precio del backend', async () => {
+  async function pagar(user: ReturnType<typeof userEvent.setup>) {
+    await user.type(screen.getByLabelText('Tu nombre'), 'Ana Ruiz')
+    await user.type(screen.getByLabelText('Celular (WhatsApp)'), '3001234567')
+    await user.type(screen.getByLabelText('Correo'), 'ana@correo.co')
+    await user.click(screen.getByLabelText(/acepto las condiciones/i))
+    await user.click(screen.getByLabelText(/autorizo el tratamiento/i))
+    await user.click(screen.getByRole('button', { name: /^pagar/i }))
+  }
+
+  it('arma la manada con un plan por peludo, ve el total de la familia y paga lo que cobra el backend', async () => {
     const cotizaciones = catalogo()
     let enviado: Record<string, unknown> | null = null
     server.use(
@@ -106,21 +136,21 @@ describe('Registro en línea', () => {
       }),
     )
     const user = userEvent.setup()
-    await hastaLosPeludos(user)
-
-    await user.type(screen.getByLabelText('Nombre'), 'Luna')
-    await user.selectOptions(screen.getByLabelText('Especie'), 'felino')
-    await user.click(screen.getByRole('button', { name: /otro peludo/i }))
-    await user.type(screen.getAllByLabelText('Nombre')[1]!, 'Max')
-    await user.click(screen.getByRole('button', { name: 'Elegir planes' }))
-
+    const primero = await hastaLaManada(user)
+    await user.type(within(primero).getByLabelText('Nombre'), 'Luna')
+    await user.click(within(primero).getByRole('radio', { name: 'Gato' }))
     // Cada peludo solo ve los planes de su especie.
-    const luna = await screen.findByLabelText(/Luna · Gato/)
-    expect(screen.queryByRole('option', { name: /Mi Amigo Fiel/ })).toBeInTheDocument()
-    expect(luna.querySelectorAll('option:not([disabled])')).toHaveLength(1)
-    await user.selectOptions(luna, 'p-gato')
-    await user.selectOptions(screen.getByLabelText(/Max · Perro/), 'p-perro')
-    expect(await screen.findByText(/cada uno paga la tarifa de 2/)).toBeInTheDocument()
+    expect(within(primero).getAllByRole('radio', { name: /Colita Feliz|Mi Amigo Fiel/ })).toHaveLength(1)
+    await user.click(within(primero).getByRole('radio', { name: /Colita Feliz/ }))
+    expect(screen.getByRole('button', { name: 'Elegir cómo pagar' })).toBeEnabled()
+
+    await user.click(screen.getByRole('button', { name: 'Otro peludo' }))
+    const segundo = screen.getByRole('region', { name: /^Peludo 2/ })
+    await user.type(within(segundo).getByLabelText('Nombre'), 'Max')
+    // Con dos peludos, cada plan dice la tarifa de dos.
+    await user.click(within(segundo).getByRole('radio', { name: /Mi Amigo Fiel.*66\.000/ }))
+    const resumen = screen.getByRole('complementary', { name: 'Tu afiliación' })
+    await waitFor(() => expect(resumen).toHaveTextContent(/2 peludos · tarifa de 2\s*\$\s91\.500 al mes/))
     expect(cotizaciones.at(-1)).toEqual({
       ciudad: 'Medellín',
       peludos: [
@@ -128,16 +158,12 @@ describe('Registro en línea', () => {
         { especie: 'canino', plan_id: 'p-perro' },
       ],
     })
-    await user.click(screen.getByRole('button', { name: 'Elegir forma de pago' }))
+    await user.click(screen.getByRole('button', { name: 'Elegir cómo pagar' }))
 
+    expect(await screen.findByRole('heading', { level: 1, name: '¿Cómo quieres pagar?' })).toBeInTheDocument()
     await user.click(screen.getByRole('radio', { name: /trimestral/i }))
-    expect(screen.getByRole('list', { name: 'Resumen de la afiliación' })).toHaveTextContent('Luna · Colita Feliz')
-    await user.type(screen.getByLabelText('Tu nombre'), 'Ana Ruiz')
-    await user.type(screen.getByLabelText('Celular (WhatsApp)'), '3001234567')
-    await user.type(screen.getByLabelText('Correo'), 'ana@correo.co')
-    await user.click(screen.getByLabelText(/acepto las condiciones/i))
-    await user.click(screen.getByLabelText(/autorizo el tratamiento/i))
-    await user.click(screen.getByRole('button', { name: /^pagar/i }))
+    expect(resumen).toHaveTextContent('Luna')
+    await pagar(user)
 
     await waitFor(() => expect(asignar).toHaveBeenCalledWith('https://checkout.wompi.co/p/?reference=AFI-1'))
     expect(enviado).toEqual({
@@ -155,6 +181,66 @@ describe('Registro en línea', () => {
     expect(window.sessionStorage.getItem('timu-registro')).toBe(TOKEN)
   })
 
+  it('el plan elegido dice lo que cubre y sus condiciones, y el comparador pone los planes lado a lado', async () => {
+    const CONSULTA = beneficio('consulta_domiciliaria', 'Consulta domiciliaria', '1 al mes')
+    const ALIADA = beneficio('atencion_aliada', 'Atención en clínica aliada', 'Sin tope de usos · cubre el 40\u00a0%')
+    catalogo([
+      { ...plan('p-basico', 'Colita Feliz', [], '35500.00', 'naranja', [CONSULTA]), exclusiones: 'Excluye preexistencias.' },
+      {
+        ...plan('p-fiel', 'Mi Amigo Fiel', [], '69000.00', 'verde', [ALIADA, CONSULTA]),
+        carencia: 'Sin periodo de carencia.',
+        exclusiones: 'Excluye preexistencias.',
+        terminos_url: 'https://timu.com.co/terminos',
+      },
+    ])
+    const user = userEvent.setup()
+    const ficha = await hastaLaManada(user)
+    expect(within(ficha).getByText('Elige un plan para ver todo lo que cubre y sus condiciones.')).toBeInTheDocument()
+    await user.click(within(ficha).getByRole('radio', { name: /Mi Amigo Fiel/ }))
+    expect(within(ficha).getByText('Atención en clínica aliada')).toBeInTheDocument()
+    expect(within(ficha).getByText(/^Sin tope de usos · cubre el 40\s%$/)).toBeInTheDocument()
+    expect(within(ficha).getByText('Sin periodo de carencia.')).toBeInTheDocument()
+    expect(within(ficha).getByRole('link', { name: 'Términos y condiciones de Mi Amigo Fiel' })).toHaveAttribute(
+      'href',
+      'https://timu.com.co/terminos',
+    )
+
+    await user.click(within(ficha).getByRole('button', { name: 'Comparar los 2 planes' }))
+    const tabla = within(ficha).getByRole('table', { name: /Lo que cubre cada plan/ })
+    const fila = within(tabla).getByRole('row', { name: /Atención en clínica aliada/ })
+    // Un servicio que el plan no trae se dice, no se deja en blanco.
+    // Cada valor lleva su plan (visible al apilarse en el celular): se compara el valor.
+    const valor = (c: HTMLElement) => c.querySelector(':scope > span:last-child')?.textContent ?? c.textContent
+    expect(within(fila).getAllByRole('cell').map(valor)).toEqual([
+      'Atención en clínica aliada',
+      'No incluye',
+      'Sin tope de usos · cubre el 40\u00a0%',
+    ])
+    expect(within(tabla).getByRole('row', { name: /Carencia/ })).toHaveTextContent('—')
+    // Lo que es igual en los planes se dice una vez.
+    expect(within(tabla).getByRole('row', { name: /Consulta domiciliaria/ })).toHaveTextContent('1 al mes · igual en los 2')
+  })
+
+  it('promete ahorro solo cuando algún periodo lo da', async () => {
+    catalogo()
+    // Con un peludo, el trimestral de TIMU trae descuento: la frase lo dice y la opción, cuánto.
+    server.use(
+      http.post(`${REGISTRO}/cotizacion`, () =>
+        HttpResponse.json([
+          opcion('mensual', 1, '69000.00'),
+          { ...opcion('trimestral', 3, '201800.00'), descuento: true, ahorro: '5200.00' },
+        ]),
+      ),
+    )
+    const user = userEvent.setup()
+    const ficha = await hastaLaManada(user)
+    await user.type(within(ficha).getByLabelText('Nombre'), 'Toby')
+    await user.click(within(ficha).getByRole('radio', { name: /Mi Amigo Fiel/ }))
+    await user.click(await screen.findByRole('button', { name: 'Elegir cómo pagar' }))
+    expect(await screen.findByText(/Pagando por varios meses ahorras\./)).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /Trimestral/ }).closest('label')).toHaveTextContent(/Ahorras\s\$\s5\.200/)
+  })
+
   it('sin cobertura en la ciudad solo informa', async () => {
     catalogo()
     const user = userEvent.setup()
@@ -162,37 +248,44 @@ describe('Registro en línea', () => {
     await screen.findByRole('option', { name: 'Medellín' })
     await user.selectOptions(screen.getByLabelText('¿En qué ciudad vives?'), 'otra')
     expect(screen.getByRole('status')).toHaveTextContent('Por ahora solo atendemos en Bogotá y Medellín')
-    expect(screen.getByRole('button', { name: 'Continuar' })).toBeDisabled()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: /^Peludo 1/ })).not.toBeInTheDocument()
   })
 
-  it('pide un nombre distinto para cada peludo', async () => {
+  it('pide un nombre distinto para cada peludo y no deja seguir', async () => {
     catalogo()
     const user = userEvent.setup()
-    await hastaLosPeludos(user)
-    await user.type(screen.getByLabelText('Nombre'), 'Luna')
-    await user.click(screen.getByRole('button', { name: /otro peludo/i }))
-    await user.type(screen.getAllByLabelText('Nombre')[1]!, ' luna')
-    expect(screen.getByRole('alert')).toHaveTextContent('Cada peludo necesita un nombre distinto')
-    await user.click(screen.getByRole('button', { name: 'Elegir planes' }))
-    expect(screen.queryByLabelText(/Luna · Gato/)).not.toBeInTheDocument()
+    const primero = await hastaLaManada(user)
+    await user.type(within(primero).getByLabelText('Nombre'), 'Luna')
+    await user.click(within(primero).getByRole('radio', { name: /Mi Amigo Fiel/ }))
+    await user.click(screen.getByRole('button', { name: 'Otro peludo' }))
+    const segundo = screen.getByRole('region', { name: /^Peludo 2/ })
+    await user.type(within(segundo).getByLabelText('Nombre'), ' luna')
+    await user.click(within(segundo).getByRole('radio', { name: /Mi Amigo Fiel/ }))
+    expect(within(segundo).getByLabelText('Nombre')).toHaveAccessibleDescription('Otro peludo ya se llama así: cada uno necesita su nombre.')
+    expect(screen.getByRole('button', { name: 'Elegir cómo pagar' })).toBeDisabled()
+  })
+
+  it('cambiar de ciudad limpia los planes elegidos: cada ciudad vende los suyos', async () => {
+    catalogo()
+    const user = userEvent.setup()
+    const ficha = await hastaLaManada(user)
+    await user.click(within(ficha).getByRole('radio', { name: /Mi Amigo Fiel/ }))
+    await user.selectOptions(screen.getByLabelText('¿En qué ciudad vives?'), 'Bogotá')
+    await waitFor(() => expect(within(screen.getByRole('region', { name: /^Peludo 1/ })).getByRole('radio', { name: /Mi Amigo Fiel/ })).not.toBeChecked())
+    expect(screen.getByRole('complementary', { name: 'Tu afiliación' })).toHaveTextContent('Tu manada en Bogotá')
   })
 
   it('el error del backend se muestra y no lleva a la pasarela', async () => {
     catalogo()
     server.use(http.post(REGISTRO, () => HttpResponse.json({ detail: 'Por ahora no tenemos cobertura' }, { status: 422 })))
     const user = userEvent.setup()
-    await hastaLosPeludos(user)
-    await user.type(screen.getByLabelText('Nombre'), 'Max')
-    await user.click(screen.getByRole('button', { name: 'Elegir planes' }))
-    await user.selectOptions(await screen.findByLabelText(/Max · Perro/), 'p-perro')
-    await user.click(screen.getByRole('button', { name: 'Elegir forma de pago' }))
+    const ficha = await hastaLaManada(user)
+    await user.type(within(ficha).getByLabelText('Nombre'), 'Max')
+    await user.click(within(ficha).getByRole('radio', { name: /Mi Amigo Fiel/ }))
+    await user.click(await screen.findByRole('button', { name: 'Elegir cómo pagar' }))
     await screen.findByRole('radio', { name: /mensual/i })
-    await user.type(screen.getByLabelText('Tu nombre'), 'Ana Ruiz')
-    await user.type(screen.getByLabelText('Celular (WhatsApp)'), '3001234567')
-    await user.type(screen.getByLabelText('Correo'), 'ana@correo.co')
-    await user.click(screen.getByLabelText(/acepto las condiciones/i))
-    await user.click(screen.getByLabelText(/autorizo el tratamiento/i))
-    await user.click(screen.getByRole('button', { name: /^pagar/i }))
+    await pagar(user)
     expect(await screen.findByRole('alert')).toHaveTextContent('Por ahora no tenemos cobertura')
     expect(asignar).not.toHaveBeenCalled()
   })
@@ -213,6 +306,7 @@ describe('Regreso de la pasarela', () => {
     const tokens: unknown[] = []
     server.use(
       sinSesion,
+      CONTACTO,
       http.post(`${REGISTRO}/consulta`, async ({ request }) => {
         tokens.push(await request.json())
         return HttpResponse.json(respuesta)
@@ -231,7 +325,8 @@ describe('Regreso de la pasarela', () => {
     window.sessionStorage.setItem('timu-registro', TOKEN)
     const tokens = consulta({ ...REGISTRO_PAGADO, estado: 'pendiente_pago', estado_pago: 'pendiente' })
     abrir()
-    expect(await screen.findByRole('status')).toHaveTextContent('La pasarela aún no confirma el pago')
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('La pasarela aún no confirma el pago'))
+    expect(screen.getByRole('heading', { level: 1, name: 'Estamos confirmando tu pago' })).toBeInTheDocument()
     expect(tokens).toEqual([{ token: TOKEN }])
   })
 
@@ -255,11 +350,15 @@ describe('Regreso de la pasarela', () => {
     const user = userEvent.setup()
     abrir()
     expect(await screen.findByRole('alert')).toHaveTextContent('La pasarela no aprobó el pago')
+    // El título dice lo que pasó (antes decía «Estamos confirmando tu pago» también aquí).
+    expect(screen.getByRole('heading', { level: 1, name: 'Tu pago no se aprobó' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /intentar de nuevo/i }))
     await waitFor(() => expect(asignar).toHaveBeenCalledWith('https://checkout.wompi.co/p/?reference=AFI-2'))
     expect(enviado).toEqual({ token: TOKEN })
     // El token sigue en la pestaña: al volver se consulta el pago nuevo.
     expect(window.sessionStorage.getItem('timu-registro')).toBe(TOKEN)
+    // Si el problema sigue, hay a quién escribir.
+    expect(screen.getByRole('link', { name: /Si el problema sigue, escríbenos por WhatsApp/ })).toHaveAttribute('href', 'https://wa.me/573001112233')
   })
 
   it('si ya no se puede reintentar, ofrece empezar de nuevo', async () => {
@@ -283,7 +382,7 @@ describe('Regreso de la pasarela', () => {
     window.sessionStorage.setItem('timu-registro', TOKEN)
     consulta({ ...REGISTRO_PAGADO, estado: 'cancelada', estado_pago: 'anulado' })
     abrir()
-    expect(await screen.findByRole('status')).toHaveTextContent('se cerró porque no recibimos el pago')
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Se cerró porque no recibimos el pago'))
     expect(screen.queryByText(/Recibimos tu pago/)).not.toBeInTheDocument()
   })
 })
@@ -351,6 +450,9 @@ describe('Formulario posterior al pago', () => {
     await user.type(screen.getByLabelText('Celular del contacto 1'), '3109876543')
     const [fotoLuna] = screen.getAllByLabelText('Foto (opcional)')
     await user.upload(fotoLuna!, new File(['foto'], 'luna.jpg', { type: 'image/jpeg' }))
+    // El botón propio dice el archivo elegido y pasa a «Cambiar foto».
+    expect(screen.getByText('luna.jpg')).toBeInTheDocument()
+    expect(screen.getAllByText('Cambiar foto')).toHaveLength(1)
     await user.click(screen.getByRole('button', { name: 'Activar mi afiliación' }))
 
     await waitFor(() => expect(asignar).toHaveBeenCalledWith('/portal'))
@@ -406,7 +508,8 @@ describe('Formulario posterior al pago', () => {
     window.sessionStorage.setItem('timu-registro', TOKEN)
     consulta({ ...REGISTRO_PAGADO, estado: 'completada' })
     abrir('/afiliacion/completar')
-    expect(await screen.findByRole('status')).toHaveTextContent('Tu afiliación ya está activa')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Tu afiliación ya está activa' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ir al ingreso' })).toBeInTheDocument()
     expect(screen.queryByLabelText('Nombre completo')).not.toBeInTheDocument()
   })
 
@@ -416,6 +519,8 @@ describe('Formulario posterior al pago', () => {
       http.post(`${REGISTRO}/consulta`, () => HttpResponse.json({ detail: 'El enlace no es valido' }, { status: 404 })),
     )
     abrir()
-    expect(await screen.findByRole('alert')).toHaveTextContent('El enlace no es valido')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Este enlace no sirve' })).toBeInTheDocument()
+    // En palabras propias, no con el texto del servidor.
+    expect(screen.getByRole('alert')).toHaveTextContent('El enlace no es válido o ya se usó.')
   })
 })

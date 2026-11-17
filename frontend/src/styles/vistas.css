@@ -649,20 +649,212 @@
 .aviso-ok { background: var(--estado-ok-fondo); color: var(--estado-ok-texto); }
 .aviso-alerta { background: var(--estado-alerta-fondo); color: var(--estado-alerta-texto); }
 
-/* Página pública sencilla: afiliación (la encuesta hereda el acceso y el carnet tiene la suya) */
-.publica { min-height: 100vh; display: grid; place-items: start center; align-content: start; gap: var(--e5); padding: var(--e8) var(--e4); background: var(--superficie-lienzo); }
-.publica-tarjeta {
-  width: min(560px, 100%);
-  display: grid; gap: var(--e5);
-  padding: var(--e7);
-  background: var(--superficie);
-  border-radius: var(--r-panel);
-  box-shadow: var(--sombra-3);
+
+/* Registro en línea (R3-PUB-02, «Cada peludo, su plan»): la familia arma su manada, una ficha por
+   peludo con su plan en su color y lo que cubre de frente, y el total de la familia a la vista: en
+   escritorio, el resumen fijo a la derecha; en el celular, una barra fija abajo. */
+.registro { min-height: 100vh; background: var(--superficie-lienzo); }
+.registro-franja { background: var(--superficie-marca); padding: var(--e4); }
+.registro-franja .marca { height: 28px; display: block; }
+.registro-cuerpo {
+  width: min(1120px, 100%); margin-inline: auto; padding: var(--e7) var(--e4) var(--e8);
+  display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--e7); align-items: start;
 }
-.publica-ancha { width: min(760px, 100%); }
+.registro-manada, .registro-pago { display: grid; gap: var(--e5); width: min(680px, 100%); }
+.registro-titulo { display: grid; gap: var(--e2); }
+.registro-titulo h1 { margin: 0; }
+.registro-titulo p { margin: 0; color: var(--texto-suave); text-wrap: pretty; max-width: 60ch; }
+.registro-nota { margin: 0; font-size: var(--t-menor); color: var(--texto-suave); }
+.registro-ciudad { display: grid; gap: var(--e3); max-width: 320px; }
+
+.registro-ficha {
+  container-type: inline-size;
+  display: grid; gap: var(--e4); padding: var(--e5);
+  background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--r-panel);
+}
+.registro-ficha-cabeza { display: flex; justify-content: space-between; align-items: center; gap: var(--e3); }
+.registro-ficha-cabeza h2 { margin: 0; overflow-wrap: anywhere; }
+.registro-ficha-especie { color: var(--texto-suave); }
+.registro-ficha-datos { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--e4); align-items: start; }
+.registro-ficha-nota { margin: 0; color: var(--texto-suave); font-size: var(--t-menor); }
+.registro-especie, .registro-planes, .registro-periodos, .registro-contacto { border: 0; margin: 0; padding: 0; min-width: 0; }
+.registro-especie legend, .registro-planes legend, .registro-periodos legend, .registro-contacto legend {
+  padding: 0; margin-bottom: var(--e2); font-size: var(--t-menor); font-weight: 600; color: var(--texto-titulo);
+}
+.registro-especie { display: flex; }
+.registro-segmento { position: relative; }
+.registro-segmento input, .registro-plan input, .registro-periodo input { position: absolute; opacity: 0; pointer-events: none; }
+.registro-segmento span {
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 var(--e4);
+  border: 1px solid var(--borde-control); background: var(--superficie); color: var(--texto); cursor: pointer;
+}
+.registro-segmento:first-of-type span { border-radius: var(--r-campo) 0 0 var(--r-campo); }
+.registro-segmento:last-of-type span { border-radius: 0 var(--r-campo) var(--r-campo) 0; margin-left: -1px; }
+.registro-segmento span:hover { border-color: var(--borde-control-hover); }
+.registro-segmento input:checked + span { background: var(--superficie-marca); border-color: var(--superficie-marca); color: var(--texto-sobre-marca); font-weight: 600; }
+.registro-segmento input:focus-visible + span { box-shadow: 0 0 0 2px var(--foco); }
+@media (max-width: 899px), (pointer: coarse) { .registro-segmento span { min-height: 44px; } }
+
+/* Los planes, en su color (manual de marca, sección 4): borde del color y, elegido, lleno. */
+.registro-planes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e2); }
+.registro-plan {
+  position: relative; display: grid; gap: 2px; min-height: 56px; padding: var(--e3) var(--e4);
+  border: 2px solid var(--plan-verde); border-radius: var(--r-campo); background: var(--superficie); cursor: pointer;
+}
+.registro-plan[data-color="naranja"] { border-color: var(--plan-naranja); }
+.registro-plan[data-color="azul"] { border-color: var(--plan-azul); }
+.registro-plan-nombre { font-weight: 600; color: var(--texto-titulo); }
+.registro-plan-valor { font-size: var(--t-menor); color: var(--texto-suave); }
+.registro-plan:hover { background: var(--superficie-lienzo); }
+.registro-plan:has(input:checked) { background: var(--plan-verde); }
+.registro-plan[data-color="naranja"]:has(input:checked) { background: var(--plan-naranja); }
+.registro-plan[data-color="azul"]:has(input:checked) { background: var(--plan-azul); }
+.registro-plan:has(input:checked) :is(.registro-plan-nombre, .registro-plan-valor) { color: var(--plan-verde-texto); }
+.registro-plan[data-color="naranja"]:has(input:checked) :is(.registro-plan-nombre, .registro-plan-valor) { color: var(--plan-naranja-texto); }
+.registro-plan[data-color="azul"]:has(input:checked) :is(.registro-plan-nombre, .registro-plan-valor) { color: var(--plan-azul-texto); }
+.registro-plan:has(input:focus-visible) { box-shadow: 0 0 0 2px var(--superficie), 0 0 0 4px var(--foco); }
+/* En el celular, las tres en una fila estrecha (nombre y precio debajo): la cobertura del plan
+   elegido sube a la primera pantalla, por encima de la barra fija. */
+@container (max-width: 359px) {
+  .registro-plan { min-height: 64px; padding: var(--e2); gap: 0; }
+  .registro-plan-nombre { font-size: var(--t-menor); line-height: 1.25; }
+  .registro-plan-valor { font-size: var(--t-etiqueta); }
+}
+
+.registro-cobertura { border: 1px solid var(--borde); border-radius: var(--r-campo); overflow: hidden; }
+.registro-cobertura-cabeza { margin: 0; padding: var(--e2) var(--e4); font-weight: 600; background: var(--plan-verde); color: var(--plan-verde-texto); }
+.registro-cobertura[data-color="naranja"] .registro-cobertura-cabeza { background: var(--plan-naranja); color: var(--plan-naranja-texto); }
+.registro-cobertura[data-color="azul"] .registro-cobertura-cabeza { background: var(--plan-azul); color: var(--plan-azul-texto); }
+.registro-filas, .registro-condiciones { margin: 0; }
+.registro-filas div { display: flex; justify-content: space-between; gap: var(--e4); padding: var(--e3) var(--e4); border-top: 1px solid var(--borde); }
+.registro-filas div:first-child { border-top: 0; }
+.registro-filas dt { color: var(--texto); }
+.registro-filas dd { margin: 0; font-weight: 600; color: var(--texto-titulo); text-align: right; font-variant-numeric: tabular-nums; }
+.registro-condiciones { display: grid; gap: var(--e3); padding: var(--e4); background: var(--superficie-lienzo); border-top: 1px solid var(--borde); }
+.registro-condiciones div { display: grid; gap: 2px; }
+.registro-condiciones dt { font-size: var(--t-etiqueta); letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; font-weight: 700; color: var(--texto-suave); }
+.registro-condiciones dd { margin: 0; color: var(--texto); text-wrap: pretty; }
+.registro-comparar { justify-self: start; }
+.registro-comparador th[data-color] { background: var(--plan-verde); color: var(--plan-verde-texto); text-transform: none; letter-spacing: 0; font-size: var(--t-cuerpo); }
+.registro-comparador th[data-color="naranja"] { background: var(--plan-naranja); color: var(--plan-naranja-texto); }
+.registro-comparador th[data-color="azul"] { background: var(--plan-azul); color: var(--plan-azul-texto); }
+.registro-comparador { container-type: inline-size; }
+.registro-comparador td { vertical-align: top; }
+.registro-comparador-nota { color: var(--texto-suave); }
+.registro-comparador-plan { display: none; }
+/* El comparador se lee lado a lado mientras quepan las columnas (también en la ficha de 600 px del
+   escritorio); por debajo de 480 px se apila como la tabla apilable (componentes.css): cada
+   servicio es un bloque y cada plan, un par etiqueta y valor. */
+@container (max-width: 479px) {
+  .registro-comparador table, .registro-comparador tbody, .registro-comparador tr { display: block; }
+  .registro-comparador thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .registro-comparador tr { padding-block: var(--e3); }
+  .registro-comparador tr + tr { border-top: 1px solid var(--borde); }
+  .registro-comparador td { display: flex; justify-content: space-between; align-items: baseline; gap: var(--e3); padding: var(--e1) 0; border: 0; text-align: left; overflow-wrap: anywhere; }
+  .registro-comparador td::before {
+    content: attr(data-etiqueta); flex: none; max-width: 45%;
+    color: var(--texto-suave); font-size: var(--t-etiqueta); font-weight: 700;
+    letter-spacing: var(--tracking-etiqueta); text-transform: uppercase;
+  }
+  .registro-comparador td:first-child { padding-bottom: var(--e2); color: var(--texto-titulo); font-weight: 700; }
+  .registro-comparador td:first-child::before { content: none; }
+  /* Apilado, la columna de color ya no se ve: cada valor lleva su plan con su color a la izquierda,
+     y lo que es igual en todos ocupa el ancho entero. */
+  .registro-comparador :is(.registro-comparador-valor, .registro-comparador-igual)::before { content: none; }
+  .registro-comparador-plan { display: inline-flex; align-items: center; gap: var(--e2); flex: none; max-width: 50%; color: var(--texto-suave); }
+  .registro-comparador-valor > span:last-child { text-align: right; }
+  .registro-comparador-igual { display: block; }
+  .registro-comparador tbody tr:hover td { background: none; }
+}
+
+.registro-otro {
+  display: flex; align-items: center; justify-content: center; gap: var(--e2); min-height: 56px;
+  border: 1.5px dashed var(--borde-control-hover); border-radius: var(--r-panel); background: transparent;
+  font: inherit; font-weight: 600; color: var(--texto-titulo); cursor: pointer;
+}
+.registro-otro:hover { background: var(--superficie); border-style: solid; }
+.registro-otro:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+
+.registro-resumen {
+  position: sticky; top: var(--e6); display: grid; gap: var(--e4); padding: var(--e5);
+  background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--r-panel);
+}
+.registro-resumen-titulo { margin: 0; font-family: var(--fuente); font-size: var(--t-seccion); font-weight: 600; color: var(--texto-titulo); }
+.registro-resumen-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e3); }
+.registro-resumen-lista li { display: grid; gap: 2px; }
+.registro-resumen-quien { font-weight: 600; color: var(--texto-titulo); }
+.registro-resumen-plan { display: inline-flex; align-items: center; gap: var(--e2); font-size: var(--t-menor); color: var(--texto-suave); }
+.registro-total { margin: 0; display: grid; gap: 2px; padding-top: var(--e4); border-top: 1px solid var(--borde); color: var(--texto-suave); font-size: var(--t-menor); }
+.registro-total strong { font-size: var(--t-cifra); color: var(--texto-titulo); }
+
+.registro-volver { justify-self: start; }
+.registro-periodos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e3); }
+.registro-periodo {
+  position: relative; display: grid; gap: 2px; padding: var(--e3) var(--e4);
+  border: 1px solid var(--borde-control); border-radius: var(--r-campo); background: var(--superficie); cursor: pointer;
+}
+.registro-periodo:hover { border-color: var(--borde-control-hover); }
+.registro-periodo:has(input:checked) { border-color: var(--indicador-seleccion); background: var(--superficie-seleccion); box-shadow: inset 0 0 0 1px var(--indicador-seleccion); }
+.registro-periodo:has(input:focus-visible) { box-shadow: 0 0 0 2px var(--foco); }
+.registro-periodo-nombre { font-weight: 600; color: var(--texto-titulo); }
+.registro-periodo-valor { color: var(--texto); }
+.registro-periodo-ahorro { font-size: var(--t-menor); font-weight: 600; color: var(--estado-ok-texto); }
+.registro-contacto { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e4); }
+.registro-contacto > .campo:first-of-type, .registro-contacto > .registro-nota { grid-column: 1 / -1; }
+.registro-aceptar { display: grid; gap: var(--e3); }
+.registro-casilla { display: flex; gap: var(--e3); align-items: flex-start; color: var(--texto); cursor: pointer; }
+.registro-casilla input { margin-top: 3px; flex: none; }
+.registro-modelo { justify-self: start; }
+.registro-confianza { display: grid; gap: var(--e2); }
+.registro-confianza .registro-nota, .registro-whatsapp { display: inline-flex; align-items: center; gap: var(--e2); }
+.registro-solo-celular { display: none; }
+.registro-foto { position: relative; justify-self: start; }
+.registro-foto:has(input:focus-visible) { box-shadow: 0 0 0 2px var(--foco); }
+.registro-foto-etiqueta { font-size: var(--t-menor); font-weight: 600; color: var(--texto-titulo); }
+/* Esperando a la pasarela: un pulso que dice que la página sigue preguntando. */
+.registro-espera { display: flex; gap: var(--e3); align-items: flex-start; }
+.registro-espera p { margin: 0; color: var(--texto); text-wrap: pretty; }
+.registro-espera-pulso {
+  flex: none; width: 12px; height: 12px; margin-top: 5px; border-radius: var(--r-pastilla);
+  background: var(--accion-fondo); animation: registro-pulso 1.4s var(--curva) infinite alternate;
+}
+@keyframes registro-pulso { from { opacity: .35; transform: scale(.8); } to { opacity: 1; transform: scale(1); } }
+
+/* El formulario de la familia, por bloques: titular, contactos, cada peludo y el acceso. */
+.registro-formulario { display: grid; gap: var(--e5); }
+.registro-bloque {
+  margin: 0; padding: var(--e5); background: var(--superficie);
+  border: 1px solid var(--borde); border-radius: var(--r-panel); min-width: 0;
+}
+.registro-bloque > legend {
+  float: left; width: 100%; padding: 0; margin-bottom: var(--e2);
+  font-size: var(--t-seccion); font-weight: 600; color: var(--texto-titulo);
+}
+.registro-bloque-detalle { font-weight: 400; color: var(--texto-suave); }
 
 @media (max-width: 899px) {
-  .publica-tarjeta { padding: var(--e5); }
+  .registro-cuerpo { grid-template-columns: minmax(0, 1fr); padding: var(--e5) var(--e4) 180px; }
+  .registro-manada, .registro-pago { width: 100%; }
+  .registro-contacto { grid-template-columns: minmax(0, 1fr); }
+  .registro-solo-celular { display: block; }
+  .registro-resumen:not(.registro-resumen-quieto) .registro-confianza { display: none; }
+  /* La barra fija tapa lo que el navegador trae a la vista o lo que recibe el foco (WCAG 2.4.11):
+     el desplazamiento deja su alto libre abajo. */
+  :root:has(.registro-resumen:not(.registro-resumen-quieto)) { scroll-padding-bottom: 160px; }
+  /* En el celular el total va en una barra fija abajo, con el verde a mano. */
+  .registro-resumen {
+    position: fixed; top: auto; left: 0; right: 0; bottom: 0; z-index: var(--capa-barra);
+    gap: var(--e3); padding: var(--e3) var(--e4) calc(var(--e4) + env(safe-area-inset-bottom));
+    border-radius: 0; border-width: 1px 0 0;
+  }
+  .registro-resumen-titulo, .registro-resumen-lista { display: none; }
+  .registro-total { padding-top: 0; border-top: 0; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; }
+  .registro-total strong { font-size: var(--t-seccion); }
+  /* Después del pago no hay verde en el resumen: la manada va al final, como un bloque. */
+  .registro-resumen-quieto { position: static; border-width: 1px; border-radius: var(--r-panel); padding: var(--e5); }
+  .registro-resumen-quieto :is(.registro-resumen-titulo, .registro-resumen-lista) { display: revert; }
+  .registro-resumen-quieto .registro-resumen-lista { display: grid; }
+  .registro-resumen-quieto .registro-total { padding-top: var(--e4); border-top: 1px solid var(--borde); }
 }
 
 /* Verificación del carnet (R3-PUB-03): una columna sobre el lienzo para un tercero. Arriba el

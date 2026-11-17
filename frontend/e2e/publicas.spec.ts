@@ -86,3 +86,69 @@ test('la verificación del carnet apila sus tablas en el celular sin desbordar',
   await expect(page.getByRole('heading', { level: 1, name: 'Carnet auténtico' })).toBeVisible()
   await medir(page)
 })
+
+// El registro en línea (R3-PUB-02): las fichas de la manada, el comparador y el pago, con el
+// catálogo interceptado. Las pastillas de plan y las formas de pago esconden su `input`.
+const BENEFICIOS = [
+  { tipo_servicio_codigo: 'atencion_aliada', nombre: 'Atención en clínica aliada', cupo: 2, periodo_cupo: 'anual', cobertura_pct: 40, copago: '0.00', texto: '2 al año · cubre el 40 %' },
+  { tipo_servicio_codigo: 'consulta_domiciliaria', nombre: 'Consulta domiciliaria', cupo: 1, periodo_cupo: 'mensual', cobertura_pct: 100, copago: '0.00', texto: '1 al mes' },
+  { tipo_servicio_codigo: 'orientacion_virtual', nombre: 'Orientación veterinaria virtual', cupo: null, periodo_cupo: 'anual', cobertura_pct: 100, copago: '0.00', texto: 'Sin tope de usos' },
+]
+const PLAN_REGISTRO = (id: string, nombre: string, color: string, valor: string) => ({
+  id,
+  codigo: id,
+  nombre,
+  descripcion: null,
+  especies: ['canino', 'felino'],
+  color,
+  tarifas: [{ peludos: 1, valor }],
+  tarifas_periodicidad: [],
+  beneficios: BENEFICIOS,
+  carencia: 'Sin periodo de carencia.',
+  exclusiones: 'Excluye preexistencias. Los beneficios no se acumulan y los topes aplican por episodio.',
+  terminos_url: null,
+})
+const COTIZACION_REGISTRO = ['mensual', 'trimestral', 'semestral', 'anual'].map((periodicidad, i) => ({
+  periodicidad,
+  meses: [1, 3, 6, 12][i],
+  tarifa_de: 1,
+  peludos: [{ especie: 'canino', plan_id: 'fiel', plan_nombre: 'Mi Amigo Fiel', valor_mensual: '69000.00' }],
+  valor_mensual: '69000.00',
+  valor_periodo: String(69000 * [1, 3, 6, 12][i]!),
+  descuento: false,
+  ahorro: '0.00',
+}))
+
+test('el registro arma la manada, compara y paga sin desbordar ni perder contraste', async ({ page }) => {
+  await page.route('**/api/v1/**', (ruta) => ruta.fulfill({ status: 401, json: { detail: 'Sin sesión' } }))
+  await page.route('**/api/v1/afiliaciones/registro/ciudades', (ruta) => ruta.fulfill({ json: ['Bogotá', 'Medellín'] }))
+  await page.route('**/api/v1/afiliaciones/registro/planes**', (ruta) =>
+    ruta.fulfill({
+      json: [
+        PLAN_REGISTRO('colita', 'Colita Feliz', 'naranja', '35500.00'),
+        PLAN_REGISTRO('fiel', 'Mi Amigo Fiel', 'verde', '69000.00'),
+        PLAN_REGISTRO('siempre', 'Amigos por Siempre', 'azul', '98000.00'),
+      ],
+    }),
+  )
+  await page.route('**/api/v1/afiliaciones/registro/cotizacion', (ruta) => ruta.fulfill({ json: COTIZACION_REGISTRO }))
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto('/afiliacion')
+  await page.getByLabel('¿En qué ciudad vives?').selectOption('Medellín')
+  await page.getByRole('button', { name: 'Confirmo que solo voy a afiliar perros o gatos' }).click()
+  await page.getByRole('region', { name: /^Peludo 1/ }).getByLabel('Nombre').fill('Toby')
+  // La ficha toma el nombre del peludo en cuanto se escribe.
+  const ficha = page.getByRole('region', { name: /^Toby/ })
+  // La pastilla se elige pulsando su etiqueta: el radio va escondido.
+  await ficha.getByText('Mi Amigo Fiel', { exact: true }).click()
+  await expect(ficha.getByRole('radio', { name: /Mi Amigo Fiel/ })).toBeChecked()
+  await ficha.getByRole('button', { name: 'Comparar los 3 planes' }).click()
+  await expect(ficha.getByRole('table')).toBeVisible()
+  await medir(page)
+
+  await page.getByRole('button', { name: 'Elegir cómo pagar' }).click()
+  await page.getByText('Trimestral', { exact: true }).click()
+  await expect(page.getByRole('radio', { name: /Trimestral/ })).toBeChecked()
+  await expect(page.getByRole('button', { name: /^Pagar \$\s207\.000$/ })).toBeVisible()
+  await medir(page)
+})

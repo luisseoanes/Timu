@@ -377,3 +377,35 @@ test.describe('clínica aliada', () => {
     await expect(page.getByRole('region', { name: 'Atendidas' })).toBeVisible()
   })
 })
+
+test.describe('una familia que se afilia', () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+
+  test('arma su manada con el catálogo real y llega al pago con lo que cobra el backend', async ({ page }) => {
+    // R3-PUB-02: los planes, lo que cubren y el precio salen de la API de verdad. No se paga: la
+    // pasarela de pruebas de Wompi sigue pendiente de TIMU.
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/afiliacion')
+    await page.getByLabel('¿En qué ciudad vives?').selectOption('Medellín')
+    await page.getByRole('button', { name: 'Confirmo que solo voy a afiliar perros o gatos' }).click()
+    await page.getByRole('region', { name: /^Peludo 1/ }).getByLabel('Nombre').fill('Toby')
+    // La ficha toma el nombre del peludo en cuanto se escribe.
+    const ficha = page.getByRole('region', { name: /^Toby/ })
+    await ficha.getByText('Mi Amigo Fiel', { exact: true }).click()
+    // Lo que cubre, dicho por la API en palabras, y las condiciones del plan.
+    await expect(ficha.getByText('Lo que cubre Mi Amigo Fiel')).toBeVisible()
+    await expect(ficha.getByText('Consulta domiciliaria')).toBeVisible()
+    await ficha.getByRole('button', { name: /^Comparar los \d planes$/ }).click()
+    await expect(ficha.getByRole('table', { name: /Lo que cubre cada plan para Toby/ })).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true)
+
+    // El total de la familia es el que cobra el pago mensual (precios provisionales: no se fijan aquí).
+    const resumen = page.getByRole('complementary', { name: 'Tu afiliación' })
+    const total = resumen.locator('.registro-total strong')
+    await expect(total).toHaveText(/^\$\s[\d.]+ al mes$/)
+    const valor = (await total.textContent())!.replace(' al mes', '')
+    await resumen.getByRole('button', { name: 'Elegir cómo pagar' }).click()
+    await expect(page.getByRole('heading', { level: 1, name: '¿Cómo quieres pagar?' })).toBeVisible()
+    await expect(page.getByRole('button', { name: `Pagar ${valor}` })).toBeVisible()
+  })
+})

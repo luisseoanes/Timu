@@ -2,102 +2,136 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Icono } from '@/components/Icono'
-import { MarcaTimu } from '@/components/MarcaTimu'
 import { Modal } from '@/components/Modal'
 import { mensajeError } from '@/lib/errores'
 import { moneda } from '@/lib/formato'
 import type { CotizacionRead, Periodicidad, PlanPublico } from '@/types'
 
-import {
-  ESPECIES_REGISTRO,
-  guardarToken,
-  useCiudadesRegistro,
-  useCotizacionRegistro,
-  useIniciarRegistro,
-  usePlanesRegistro,
-  type PeludoRegistro,
-} from './registro'
+import { FichaPeludo } from './FichaPeludo'
+import { MarcoRegistro } from './MarcoRegistro'
+import { PagoRegistro } from './PagoRegistro'
+import { Contacto } from './Contacto'
+import { useCiudadesRegistro, useCotizacionRegistro, usePlanesRegistro, type PeludoRegistro } from './registro'
 
 const MAX_PELUDOS = 10
-const PERIODOS: Record<Periodicidad, string> = {
-  mensual: 'Mensual',
-  trimestral: 'Trimestral',
-  semestral: 'Semestral',
-  anual: 'Anual',
-}
-const nombreEspecie = (codigo: string) => ESPECIES_REGISTRO.find((e) => e.codigo === codigo)?.nombre ?? codigo
-
-type Paso = 'ciudad' | 'peludos' | 'planes' | 'pago'
+const PELUDO_NUEVO: PeludoRegistro = { nombre: '', especie: 'canino', plan_id: '' }
 
 /**
- * 6.1 Registro en línea: ciudad, peludos, un plan para cada uno, forma de pago y pago. Los
- * datos de la familia se piden después del pago. Todo precio sale del backend.
+ * 6.1 / 6.12 Registro en línea (R3-PUB-02, «Cada peludo, su plan»): la familia arma su manada,
+ * una ficha por peludo con su plan, y ve el total de la familia mientras la arma; después elige
+ * cómo pagar, paga en Wompi y completa sus datos. Todo precio y toda condición salen del backend.
  */
 export function RegistroPage() {
-  const [paso, setPaso] = useState<Paso>('ciudad')
   const [ciudad, setCiudad] = useState('')
-  const [confirmando, setConfirmando] = useState(false)
-  const [peludos, setPeludos] = useState<PeludoRegistro[]>([{ nombre: '', especie: 'canino', plan_id: '' }])
+  const [confirmando, setConfirmando] = useState<string | null>(null)
+  const [pagando, setPagando] = useState(false)
+  const [peludos, setPeludos] = useState<PeludoRegistro[]>([PELUDO_NUEVO])
   const [periodicidad, setPeriodicidad] = useState<Periodicidad>('mensual')
+  const planes = usePlanesRegistro(ciudad)
   const cotizacion = useCotizacionRegistro(
     ciudad,
     peludos.map(({ especie, plan_id }) => ({ especie, plan_id })),
   )
   const opciones = cotizacion.data ?? []
-  const elegida = opciones.find((o) => o.periodicidad === periodicidad)
+  const mensual = opciones.find((o) => o.periodicidad === 'mensual')
+
+  const nombres = peludos.map((p) => p.nombre.trim().toLowerCase())
+  const repetido = (i: number) => Boolean(nombres[i]) && nombres.indexOf(nombres[i]!) !== i
+  const lista = peludos.every((p, i) => p.nombre.trim() && p.plan_id && !repetido(i))
 
   return (
-    <div className="publica">
-      <MarcaTimu />
-      <section className="publica-tarjeta publica-ancha">
-        <div className="ingreso-titulo">
-          <h1>Afilia a tus peludos</h1>
-          <p>Consultas a domicilio, preventivos y orientación virtual. Al final pagas en línea y completas tus datos.</p>
-        </div>
-        {paso === 'ciudad' && (
-          <PasoCiudad
-            ciudad={ciudad}
-            onElegir={(c) => {
-              setCiudad(c)
-              setConfirmando(true)
-            }}
-          />
-        )}
-        {paso === 'peludos' && (
-          <PasoPeludos
-            peludos={peludos}
-            onCambio={setPeludos}
-            onAtras={() => setPaso('ciudad')}
-            onSeguir={() => setPaso('planes')}
-          />
-        )}
-        {paso === 'planes' && (
-          <PasoPlanes
+    <>
+      <MarcoRegistro
+        aparte={
+          <Resumen
             ciudad={ciudad}
             peludos={peludos}
-            cotizacion={opciones.find((o) => o.periodicidad === 'mensual')}
-            onCambio={setPeludos}
-            onAtras={() => setPaso('peludos')}
-            onSeguir={() => setPaso('pago')}
+            planes={planes.data ?? []}
+            mensual={mensual}
+            pagando={pagando}
+            lista={lista}
+            calculando={cotizacion.isFetching}
+            onPagar={() => setPagando(true)}
           />
-        )}
-        {paso === 'pago' && (
-          <PasoPago
+        }
+      >
+        {pagando ? (
+          <PagoRegistro
             ciudad={ciudad}
             peludos={peludos}
+            planes={planes.data ?? []}
             opciones={opciones}
             cargando={cotizacion.isFetching}
             error={cotizacion.error}
             periodicidad={periodicidad}
-            elegida={elegida}
             onPeriodicidad={setPeriodicidad}
-            onAtras={() => setPaso('planes')}
+            onVolver={() => setPagando(false)}
           />
+        ) : (
+          <div className="registro-manada">
+            <div className="registro-titulo">
+              <h1>¿Quiénes se unen a la manada?</h1>
+              <p>
+                Plan de salud prepagado para perros y gatos. Tres pasos: tu manada, el pago y los datos de la familia.
+              </p>
+            </div>
+            <Ciudad
+              ciudad={ciudad}
+              onElegir={(c) => {
+                if (!ciudad) return setConfirmando(c)
+                // Cada ciudad vende sus planes: los ya elegidos pueden no estar en la nueva.
+                setCiudad(c)
+                setPeludos(peludos.map((p) => ({ ...p, plan_id: '' })))
+              }}
+            />
+            {ciudad && planes.isError && (
+              <p className="aviso-error" role="alert">
+                <Icono nombre="alerta" size={16} /> {mensajeError(planes.error, 'No pudimos cargar los planes.')}
+              </p>
+            )}
+            {ciudad && planes.isPending && (
+              <div className="esqueleto" role="status">
+                <span className="sr-only">Cargando los planes de {ciudad}…</span>
+                <span className="esqueleto-linea" aria-hidden="true" />
+                <span className="esqueleto-linea" aria-hidden="true" />
+                <span className="esqueleto-linea" aria-hidden="true" />
+              </div>
+            )}
+            {ciudad && planes.data && (
+              <>
+                {peludos.map((p, i) => (
+                  <FichaPeludo
+                    key={i}
+                    indice={i}
+                    peludo={p}
+                    planes={planes.data}
+                    totalPeludos={peludos.length}
+                    nombreRepetido={repetido(i)}
+                    onCambio={(cambio) => setPeludos(peludos.map((x, j) => (j === i ? { ...x, ...cambio } : x)))}
+                    onQuitar={peludos.length > 1 ? () => setPeludos(peludos.filter((_, j) => j !== i)) : undefined}
+                  />
+                ))}
+                {peludos.length < MAX_PELUDOS && (
+                  <button className="registro-otro" type="button" onClick={() => setPeludos([...peludos, PELUDO_NUEVO])}>
+                    <Icono nombre="mas" size={18} /> Otro peludo
+                  </button>
+                )}
+              </>
+            )}
+            <p className="registro-nota">
+              ¿Ya estás afiliado? Agrega tu peludo desde <Link to="/portal/mascotas/nueva">tu portal</Link>.
+            </p>
+            {/* En el celular el resumen es una barra: el contacto va aquí, al final de la manada. */}
+            <div className="registro-solo-celular">
+              <Contacto />
+            </div>
+          </div>
         )}
-      </section>
+      </MarcoRegistro>
+
       <Modal
-        abierto={confirmando}
-        onCambio={(v) => !v && setConfirmando(false)}
+        abierto={confirmando !== null}
+        onCambio={(v) => !v && setConfirmando(null)}
         titulo="Antes de seguir"
         descripcion="Por ahora afiliamos solo perros y gatos."
         pie={
@@ -105,8 +139,8 @@ export function RegistroPage() {
             className="btn btn-primario"
             type="button"
             onClick={() => {
-              setConfirmando(false)
-              setPaso('peludos')
+              setCiudad(confirmando ?? '')
+              setConfirmando(null)
             }}
           >
             Confirmo que solo voy a afiliar perros o gatos
@@ -115,25 +149,29 @@ export function RegistroPage() {
       >
         <p>Si tienes otra especie, escríbenos por WhatsApp y te contamos cuándo la incluimos.</p>
       </Modal>
-    </div>
+    </>
   )
 }
 
-function PasoCiudad({ ciudad, onElegir }: { ciudad: string; onElegir: (ciudad: string) => void }) {
+/** Dónde vive la familia: de la ciudad dependen los planes y sus precios. */
+function Ciudad({ ciudad, onElegir }: { ciudad: string; onElegir: (ciudad: string) => void }) {
   const ciudades = useCiudadesRegistro()
   const [elegida, setElegida] = useState(ciudad)
   const sinCobertura = elegida === 'otra'
   return (
-    <form
-      className="formulario"
-      onSubmit={(e) => {
-        e.preventDefault()
-        if (elegida && !sinCobertura) onElegir(elegida)
-      }}
-    >
-      <label className="campo ancho">
-        <span>¿En qué ciudad vives?</span>
-        <select className="input" value={elegida} onChange={(e) => setElegida(e.target.value)} required disabled={ciudades.isPending}>
+    <div className="registro-ciudad">
+      <div className="campo">
+        <label htmlFor="registro-ciudad">¿En qué ciudad vives?</label>
+        <select
+          id="registro-ciudad"
+          className="input"
+          value={elegida}
+          disabled={ciudades.isPending}
+          onChange={(e) => {
+            setElegida(e.target.value)
+            if (e.target.value && e.target.value !== 'otra') onElegir(e.target.value)
+          }}
+        >
           <option value="" disabled>
             {ciudades.isPending ? 'Cargando ciudades…' : 'Elige tu ciudad'}
           </option>
@@ -144,315 +182,97 @@ function PasoCiudad({ ciudad, onElegir }: { ciudad: string; onElegir: (ciudad: s
           ))}
           <option value="otra">Otra ciudad</option>
         </select>
-      </label>
+      </div>
       {ciudades.isError && (
-        <p className="aviso-error ancho" role="alert">
-          {mensajeError(ciudades.error, 'No pudimos cargar las ciudades.')}
+        <p className="aviso-error" role="alert">
+          <Icono nombre="alerta" size={16} /> {mensajeError(ciudades.error, 'No pudimos cargar las ciudades.')}
         </p>
       )}
       {sinCobertura && (
-        <p className="aviso-error ancho" role="status">
-          Por ahora solo atendemos en {ciudades.data?.join(' y ') || 'Medellín y Bogotá'}. Pronto llegaremos a más ciudades.
+        <p className="aviso-alerta" role="status">
+          <Icono nombre="info" size={16} />{' '}
+          {/* Las ciudades salen del catálogo: sin él, no se nombran de memoria. */}
+          {ciudades.data?.length
+            ? `Por ahora solo atendemos en ${ciudades.data.join(' y ')}. Pronto llegaremos a más ciudades.`
+            : 'Por ahora no tenemos cobertura en otras ciudades. Pronto llegaremos a más.'}
         </p>
       )}
-      <button className="btn btn-primario btn-grande ancho" type="submit" disabled={!elegida || sinCobertura}>
-        Continuar
-      </button>
-      <p className="apagado ancho">
-        ¿Ya estás afiliado? Agrega tu peludo desde <Link to="/portal/mascotas/nueva">tu portal</Link>.
-      </p>
-    </form>
+    </div>
   )
 }
 
-function PasoPeludos({
-  peludos,
-  onCambio,
-  onAtras,
-  onSeguir,
-}: {
-  peludos: PeludoRegistro[]
-  onCambio: (peludos: PeludoRegistro[]) => void
-  onAtras: () => void
-  onSeguir: () => void
-}) {
-  const cambiar = (i: number, cambio: Partial<PeludoRegistro>) =>
-    onCambio(peludos.map((p, j) => (j === i ? { ...p, ...cambio, plan_id: cambio.especie ? '' : p.plan_id } : p)))
-  const nombres = peludos.map((p) => p.nombre.trim().toLowerCase())
-  const repetido = nombres.some((n, i) => n && nombres.indexOf(n) !== i)
-  return (
-    <form
-      className="formulario"
-      onSubmit={(e) => {
-        e.preventDefault()
-        if (!repetido) onSeguir()
-      }}
-    >
-      <p className="ancho">¿A quiénes vas a afiliar? El nombre nos ayuda a saber qué plan es de quién.</p>
-      {peludos.map((p, i) => (
-        <fieldset key={i} className="ancho formulario">
-          <legend className="ancho">Peludo {i + 1}</legend>
-          <label className="campo">
-            <span>Nombre</span>
-            <input className="input" value={p.nombre} onChange={(e) => cambiar(i, { nombre: e.target.value })} required maxLength={120} />
-          </label>
-          <label className="campo">
-            <span>Especie</span>
-            <select className="input" value={p.especie} onChange={(e) => cambiar(i, { especie: e.target.value })}>
-              {ESPECIES_REGISTRO.map((e) => (
-                <option key={e.codigo} value={e.codigo}>
-                  {e.nombre}
-                </option>
-              ))}
-            </select>
-          </label>
-          {peludos.length > 1 && (
-            <button className="btn btn-plano" type="button" onClick={() => onCambio(peludos.filter((_, j) => j !== i))}>
-              Quitar
-            </button>
-          )}
-        </fieldset>
-      ))}
-      {repetido && (
-        <p className="aviso-error ancho" role="alert">
-          Cada peludo necesita un nombre distinto.
-        </p>
-      )}
-      <div className="acciones ancho">
-        <button className="btn btn-plano" type="button" onClick={onAtras}>
-          Atrás
-        </button>
-        {peludos.length < MAX_PELUDOS && (
-          <button
-            className="btn btn-suave"
-            type="button"
-            onClick={() => onCambio([...peludos, { nombre: '', especie: 'canino', plan_id: '' }])}
-          >
-            <Icono nombre="mas" size={16} /> Otro peludo
-          </button>
-        )}
-        <button className="btn btn-primario" type="submit">
-          Elegir planes
-        </button>
-      </div>
-    </form>
-  )
-}
-
-function PasoPlanes({
+/**
+ * El total de la familia, que se recalcula al sumar un peludo o cambiar un plan («2 peludos ·
+ * tarifa de 2»). En el celular es una barra fija abajo; en escritorio, el resumen a la derecha.
+ */
+function Resumen({
   ciudad,
   peludos,
-  cotizacion,
-  onCambio,
-  onAtras,
-  onSeguir,
+  planes,
+  mensual,
+  pagando,
+  lista,
+  calculando,
+  onPagar,
 }: {
   ciudad: string
   peludos: PeludoRegistro[]
-  cotizacion: CotizacionRead | undefined
-  onCambio: (peludos: PeludoRegistro[]) => void
-  onAtras: () => void
-  onSeguir: () => void
+  planes: PlanPublico[]
+  mensual: CotizacionRead | undefined
+  pagando: boolean
+  lista: boolean
+  calculando: boolean
+  onPagar: () => void
 }) {
-  const planes = usePlanesRegistro(ciudad)
-  const paraEspecie = (especie: string): PlanPublico[] =>
-    (planes.data ?? []).filter((p) => p.especies.length === 0 || p.especies.includes(especie))
-  const completos = peludos.every((p) => p.plan_id)
+  if (!ciudad) return null
+  const cuantos = `${peludos.length} ${peludos.length === 1 ? 'peludo' : 'peludos'}`
   return (
-    <form
-      className="formulario"
-      onSubmit={(e) => {
-        e.preventDefault()
-        if (completos) onSeguir()
-      }}
-    >
-      {planes.isError && (
-        <p className="aviso-error ancho" role="alert">
-          {mensajeError(planes.error, 'No pudimos cargar los planes.')}
-        </p>
-      )}
-      {peludos.map((p, i) => (
-        <label key={i} className="campo ancho">
-          <span>
-            {p.nombre} · {nombreEspecie(p.especie)}
-            {cotizacion?.peludos[i] && ` · ${moneda(cotizacion.peludos[i]!.valor_mensual)} al mes`}
-          </span>
-          <select
-            className="input"
-            value={p.plan_id}
-            required
-            onChange={(e) => onCambio(peludos.map((x, j) => (j === i ? { ...x, plan_id: e.target.value } : x)))}
-          >
-            <option value="" disabled>
-              {planes.isPending ? 'Cargando planes…' : 'Elige el plan'}
-            </option>
-            {paraEspecie(p.especie).map((plan) => (
-              <option key={plan.id} value={plan.id}>
-                {plan.nombre} · desde {moneda(plan.tarifas.find((t) => t.peludos === 1)?.valor)} al mes
-              </option>
-            ))}
-          </select>
-        </label>
-      ))}
-      {peludos.length > 1 && cotizacion && (
-        <p className="apagado ancho">
-          Con {peludos.length} peludos cada uno paga la tarifa de {cotizacion.tarifa_de}, aunque estén en planes
-          distintos.
-        </p>
-      )}
-      <div className="acciones ancho">
-        <button className="btn btn-plano" type="button" onClick={onAtras}>
-          Atrás
-        </button>
-        <button className="btn btn-primario" type="submit" disabled={!completos}>
-          Elegir forma de pago
-        </button>
-      </div>
-    </form>
-  )
-}
-
-function PasoPago({
-  ciudad,
-  peludos,
-  opciones,
-  cargando,
-  error,
-  periodicidad,
-  elegida,
-  onPeriodicidad,
-  onAtras,
-}: {
-  ciudad: string
-  peludos: PeludoRegistro[]
-  opciones: CotizacionRead[]
-  cargando: boolean
-  error: Error | null
-  periodicidad: Periodicidad
-  elegida: CotizacionRead | undefined
-  onPeriodicidad: (periodicidad: Periodicidad) => void
-  onAtras: () => void
-}) {
-  const iniciar = useIniciarRegistro()
-
-  function enviar(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const d = new FormData(e.currentTarget)
-    const texto = (c: string) => String(d.get(c) ?? '').trim()
-    iniciar.mutate(
-      {
-        ciudad,
-        peludos: peludos.map((p) => ({ ...p, nombre: p.nombre.trim() })),
-        periodicidad,
-        contacto: {
-          nombre: texto('contacto_nombre'),
-          telefono: texto('contacto_telefono'),
-          email: texto('contacto_email'),
-        },
-        acepta_condiciones: d.get('acepta_condiciones') === 'on',
-        acepta_tratamiento_datos: d.get('acepta_datos') === 'on',
-        sitio_web: texto('sitio_web') || undefined,
-      },
-      {
-        onSuccess: (r) => {
-          guardarToken(r.token)
-          window.location.assign(r.enlace_pago)
-        },
-      },
-    )
-  }
-
-  return (
-    <form className="formulario" onSubmit={enviar}>
-      {error && (
-        <p className="aviso-error ancho" role="alert">
-          {mensajeError(error, 'No pudimos calcular el precio.')}
-        </p>
-      )}
-      {!error && opciones.length === 0 && (
-        <p className="apagado ancho">{cargando ? 'Calculando el precio…' : 'Elige el plan de cada peludo.'}</p>
-      )}
-      {opciones.length > 0 && (
-        <fieldset className="ancho formulario">
-          <legend className="ancho">¿Cada cuánto quieres pagar?</legend>
-          {opciones.map((o) => (
-            <label key={o.periodicidad} className="ancho acciones">
-              <input
-                type="radio"
-                name="periodicidad"
-                value={o.periodicidad}
-                checked={periodicidad === o.periodicidad}
-                onChange={() => onPeriodicidad(o.periodicidad)}
-              />
-              {PERIODOS[o.periodicidad]}: <strong className="numero">{moneda(o.valor_periodo)}</strong>
-              {o.meses === 1 ? ' al mes' : ` cada ${o.meses} meses`}
-              {o.descuento && <span className="apagado"> · ahorras {moneda(o.ahorro)}</span>}
-            </label>
-          ))}
-        </fieldset>
-      )}
-      {elegida && (
-        <ul className="ancho" aria-label="Resumen de la afiliación">
-          {peludos.map((p, i) => (
+    // Pagando, el verde es «Pagar»: en el celular la manada deja de ser barra fija y va al final.
+    <aside className={pagando ? 'registro-resumen registro-resumen-quieto' : 'registro-resumen'} aria-label="Tu afiliación">
+      <h2 className="registro-resumen-titulo">Tu manada en {ciudad}</h2>
+      <ul className="registro-resumen-lista">
+        {peludos.map((p, i) => {
+          const plan = planes.find((x) => x.id === p.plan_id)
+          return (
             <li key={i}>
-              {p.nombre.trim()} · {elegida.peludos[i]?.plan_nombre} · {moneda(elegida.peludos[i]?.valor_mensual)} al
-              mes
+              <span className="registro-resumen-quien">{p.nombre.trim() || `Peludo ${i + 1}`}</span>
+              {plan ? (
+                <span className="registro-resumen-plan">
+                  <span className="marcador-plan" data-color={plan.color} aria-hidden="true" />
+                  {plan.nombre}
+                  {mensual?.peludos[i] && <span className="numero"> · {moneda(mensual.peludos[i]!.valor_mensual)}</span>}
+                </span>
+              ) : (
+                <span className="registro-resumen-plan apagado">Sin plan todavía</span>
+              )}
             </li>
-          ))}
-        </ul>
-      )}
-      <fieldset className="ancho formulario">
-        <legend className="ancho">¿A quién le enviamos el comprobante?</legend>
-        <label className="campo ancho">
-          <span>Tu nombre</span>
-          <input className="input" name="contacto_nombre" required minLength={2} maxLength={160} autoComplete="name" />
-        </label>
-        <label className="campo">
-          <span>Celular (WhatsApp)</span>
-          <input className="input" name="contacto_telefono" required inputMode="tel" autoComplete="tel" />
-        </label>
-        <label className="campo">
-          <span>Correo</span>
-          <input className="input" name="contacto_email" type="email" required autoComplete="email" />
-        </label>
-        <p className="apagado ancho">
-          Después del pago te pedimos los datos de la familia. Si cierras el navegador, te enviamos el enlace por
-          correo y WhatsApp.
-        </p>
-      </fieldset>
-      {/* Trampa para bots: invisible y fuera del orden de tabulación. */}
-      <input name="sitio_web" tabIndex={-1} autoComplete="off" className="sr-only" aria-hidden="true" />
-      <label className="ancho acciones">
-        <input type="checkbox" name="acepta_condiciones" required />
-        Acepto las condiciones de los planes y del contrato de afiliación.
-      </label>
-      <label className="ancho acciones">
-        <input type="checkbox" name="acepta_datos" required />
-        Autorizo el tratamiento de mis datos personales según la Ley 1581 de 2012.
-      </label>
-      {iniciar.isError && (
-        <p className="aviso-error ancho" role="alert">
-          {mensajeError(iniciar.error, 'No pudimos iniciar la afiliación.')}
-        </p>
-      )}
-      {iniciar.isSuccess && (
-        <p className="aviso-ok ancho" role="status">
-          Te llevamos a la pasarela para pagar {moneda(iniciar.data.valor)}…
-        </p>
-      )}
-      <div className="acciones ancho">
-        <button className="btn btn-plano" type="button" onClick={onAtras}>
-          Atrás
+          )
+        })}
+      </ul>
+      <p className="registro-total" aria-live="polite">
+        {mensual ? (
+          <>
+            <span>
+              {cuantos}
+              {peludos.length > 1 && ` · tarifa de ${mensual.tarifa_de}`}
+            </span>
+            <strong className="numero">{moneda(mensual.valor_mensual)} al mes</strong>
+          </>
+        ) : (
+          <span>{calculando ? 'Calculando…' : 'Elige un plan para cada peludo y ves el total.'}</span>
+        )}
+      </p>
+      {!pagando && (
+        <button className="btn btn-primario btn-bloque btn-grande" type="button" disabled={!lista || !mensual} onClick={onPagar}>
+          Elegir cómo pagar
         </button>
-        <button
-          className="btn btn-primario btn-grande"
-          type="submit"
-          disabled={!elegida || iniciar.isPending || iniciar.isSuccess}
-        >
-          <Icono nombre="pago" size={18} />{' '}
-          {iniciar.isPending ? 'Registrando…' : elegida ? `Pagar ${moneda(elegida.valor_periodo)}` : 'Pagar'}
-        </button>
+      )}
+      <div className="registro-confianza">
+        <p className="registro-nota">
+          <Icono nombre="candado" size={14} /> El pago lo procesa Wompi.
+        </p>
+        <Contacto />
       </div>
-    </form>
+    </aside>
   )
 }

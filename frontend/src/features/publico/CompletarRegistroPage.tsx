@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { Icono } from '@/components/Icono'
-import { mensajeError } from '@/lib/errores'
-import { hoyISO } from '@/lib/formato'
+import { esErrorPasajero, mensajeError } from '@/lib/errores'
+import { hoyISO, moneda } from '@/lib/formato'
 import type { RegistroRead } from '@/types'
 
 import {
@@ -12,11 +12,12 @@ import {
   leerToken,
   olvidarToken,
   subirFotos,
+  tituloDe,
   useCompletarRegistro,
   useConsultaRegistro,
   type FormularioRegistro,
 } from './registro'
-import { EstadoRegistro, Publica, SinEnlace } from './ResultadoRegistroPage'
+import { EstadoRegistro, PaginaRegistro, SinEnlace } from './ResultadoRegistroPage'
 
 const MAX_CONTACTOS = 3
 const nombreEspecie = (codigo: string) => ESPECIES_REGISTRO.find((e) => e.codigo === codigo)?.nombre ?? codigo
@@ -40,33 +41,42 @@ export function CompletarRegistroPage() {
 
   if (!token) {
     return (
-      <Publica titulo="Completa tu afiliación">
+      <PaginaRegistro titulo="Completa tu afiliación">
         <SinEnlace />
-      </Publica>
+      </PaginaRegistro>
     )
   }
   if (consulta.isPending) {
     return (
-      <Publica titulo="Completa tu afiliación">
-        <p className="apagado">Cargando tu afiliación…</p>
-      </Publica>
+      <PaginaRegistro titulo="Completa tu afiliación">
+        <div className="esqueleto" role="status">
+          <span className="sr-only">Cargando tu afiliación…</span>
+          <span className="esqueleto-linea" aria-hidden="true" />
+          <span className="esqueleto-linea" aria-hidden="true" />
+          <span className="esqueleto-linea" aria-hidden="true" />
+        </div>
+      </PaginaRegistro>
     )
   }
   if (consulta.isError) {
     return (
-      <Publica titulo="Completa tu afiliación">
+      <PaginaRegistro titulo="Este enlace no sirve">
         <p className="aviso-error" role="alert">
-          {mensajeError(consulta.error, 'El enlace no es válido.')}
+          <Icono nombre="alerta" size={16} />{' '}
+          {esErrorPasajero(consulta.error)
+            ? mensajeError(consulta.error, 'El servidor no respondió. Intenta de nuevo en un momento.')
+            : 'El enlace no es válido o ya se usó.'}
         </p>
-      </Publica>
+        <SinEnlace />
+      </PaginaRegistro>
     )
   }
   const registro = consulta.data
   if (registro.estado !== 'pagada') {
     return (
-      <Publica titulo="Completa tu afiliación">
+      <PaginaRegistro titulo={tituloDe(registro)} registro={registro}>
         <EstadoRegistro token={token} registro={registro} />
-      </Publica>
+      </PaginaRegistro>
     )
   }
   return <Formulario token={token} registro={registro} />
@@ -143,28 +153,31 @@ function Formulario({ token, registro }: { token: string; registro: RegistroRead
 
   if (final) {
     return (
-      <Publica titulo={final.fotosFallaron ? 'Bienvenidos a TIMU' : 'Recibimos tus datos'}>
+      <PaginaRegistro titulo={final.fotosFallaron ? 'Te damos la bienvenida a la manada TIMU' : 'Recibimos tus datos'} registro={registro}>
         <p className="aviso-ok" role="status">
-          {final.mensaje}
+          <Icono nombre="check" size={16} /> {final.mensaje}
         </p>
         {final.fotosFallaron && (
           <>
-            <p className="apagado">No pudimos subir las fotos de tus peludos: puedes subirlas desde el portal.</p>
-            <a href="/portal" className="btn btn-primario">
+            <p className="registro-nota">No pudimos subir las fotos de tus peludos: puedes subirlas desde el portal.</p>
+            <a href="/portal" className="btn btn-primario btn-bloque btn-grande">
               Ir a mi portal
             </a>
           </>
         )}
-      </Publica>
+      </PaginaRegistro>
     )
   }
 
   const enviando = completar.isPending || completar.isSuccess
   return (
-    <Publica titulo="Completa tu afiliación">
-      <p className="apagado">Recibimos tu pago. Con estos datos activamos la afiliación y tu acceso al portal.</p>
-      <form className="formulario" onSubmit={enviar}>
-        <fieldset className="ancho formulario">
+    <PaginaRegistro
+      titulo="Completa tu afiliación"
+      texto={`Recibimos tu pago de ${moneda(registro.valor_inicial)}. Con estos datos activamos la afiliación y tu acceso al portal.`}
+      registro={registro}
+    >
+      <form className="registro-formulario" onSubmit={enviar}>
+        <fieldset className="registro-bloque formulario">
           <legend className="ancho">Titular</legend>
           <label className="campo ancho">
             <span>Nombre completo</span>
@@ -238,9 +251,9 @@ function Formulario({ token, registro }: { token: string; registro: RegistroRead
           </label>
         </fieldset>
 
-        <fieldset className="ancho formulario">
+        <fieldset className="registro-bloque formulario">
           <legend className="ancho">Otros contactos (opcional)</legend>
-          <p className="apagado ancho">Personas a quienes podemos llamar si no te encontramos. No reciben mensajes.</p>
+          <p className="registro-nota ancho">Personas a quienes podemos llamar si no te encontramos. No reciben mensajes.</p>
           {contactos.map((c, i) => (
             <div key={i} className="ancho formulario">
               <label className="campo">
@@ -299,9 +312,9 @@ function Formulario({ token, registro }: { token: string; registro: RegistroRead
         </fieldset>
 
         {registro.peludos.map((p) => (
-          <fieldset key={p.posicion} className="ancho formulario">
+          <fieldset key={p.posicion} className="registro-bloque formulario">
             <legend className="ancho">
-              {p.nombre} · {nombreEspecie(p.especie)}
+              {p.nombre} <span className="registro-bloque-detalle">· {nombreEspecie(p.especie)}</span>
             </legend>
             <label className="campo">
               <span>Nombre</span>
@@ -342,27 +355,35 @@ function Formulario({ token, registro }: { token: string; registro: RegistroRead
                 inputMode="decimal"
               />
             </label>
-            <label className="campo">
-              <span>Foto (opcional)</span>
-              <input
-                className="input"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(e) => {
-                  const foto = e.target.files?.[0]
-                  setFotos((previas) => {
-                    const nuevas = new Map(previas)
-                    if (foto) nuevas.set(p.posicion, foto)
-                    else nuevas.delete(p.posicion)
-                    return nuevas
-                  })
-                }}
-              />
-            </label>
+            {/* El control del navegador dice «Choose File» en su idioma: un botón propio con la palabra nuestra. */}
+            <div className="campo">
+              <span className="registro-foto-etiqueta" id={`foto-${p.posicion}`}>
+                Foto (opcional)
+              </span>
+              <label className="btn btn-secundario registro-foto">
+                <Icono nombre="subir" size={16} /> {fotos.get(p.posicion) ? 'Cambiar foto' : 'Elegir foto'}
+                <input
+                  className="sr-only"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  aria-labelledby={`foto-${p.posicion}`}
+                  onChange={(e) => {
+                    const foto = e.target.files?.[0]
+                    setFotos((previas) => {
+                      const nuevas = new Map(previas)
+                      if (foto) nuevas.set(p.posicion, foto)
+                      else nuevas.delete(p.posicion)
+                      return nuevas
+                    })
+                  }}
+                />
+              </label>
+              {fotos.get(p.posicion) && <span className="campo-ayuda">{fotos.get(p.posicion)!.name}</span>}
+            </div>
           </fieldset>
         ))}
 
-        <fieldset className="ancho formulario">
+        <fieldset className="registro-bloque formulario">
           <legend className="ancho">Tu acceso al portal</legend>
           <label className="campo">
             <span>Contraseña</span>
@@ -388,14 +409,14 @@ function Formulario({ token, registro }: { token: string; registro: RegistroRead
         </fieldset>
 
         {completar.isError && (
-          <p className="aviso-error ancho" role="alert">
-            {mensajeError(completar.error, 'No pudimos completar la afiliación.')}
+          <p className="aviso-error" role="alert">
+            <Icono nombre="alerta" size={16} /> {mensajeError(completar.error, 'No pudimos completar la afiliación.')}
           </p>
         )}
-        <button className="btn btn-primario btn-grande ancho" type="submit" disabled={enviando}>
+        <button className="btn btn-primario btn-bloque btn-grande" type="submit" disabled={enviando}>
           {enviando ? 'Activando tu afiliación…' : 'Activar mi afiliación'}
         </button>
       </form>
-    </Publica>
+    </PaginaRegistro>
   )
 }

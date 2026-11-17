@@ -2,28 +2,42 @@ import { useState, type ReactNode } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 
 import { Icono } from '@/components/Icono'
-import { MarcaTimu } from '@/components/MarcaTimu'
-import { mensajeError } from '@/lib/errores'
-import { moneda } from '@/lib/formato'
+import { esErrorPasajero, mensajeError } from '@/lib/errores'
+import { hora, moneda } from '@/lib/formato'
 import type { RegistroRead } from '@/types'
 
-import { esperandoPago, leerToken, olvidarToken, useConsultaRegistro, useReintentarRegistro } from './registro'
+import { Contacto } from './Contacto'
+import { ManadaPagada, MarcoRegistro } from './MarcoRegistro'
+import { esperandoPago, leerToken, olvidarToken, tituloDe, useConsultaRegistro, useReintentarRegistro } from './registro'
 
-export function Publica({ titulo, children }: { titulo: string; children: ReactNode }) {
+/** Una página del registro después de la pasarela: título, lo que pasó y, si se sabe, la manada. */
+export function PaginaRegistro({
+  titulo,
+  texto,
+  registro,
+  children,
+}: {
+  titulo: string
+  texto?: ReactNode
+  registro?: RegistroRead
+  children?: ReactNode
+}) {
   return (
-    <div className="publica">
-      <MarcaTimu />
-      <section className="publica-tarjeta publica-ancha">
-        <h1>{titulo}</h1>
+    <MarcoRegistro aparte={registro && <ManadaPagada registro={registro} />}>
+      <div className="registro-pago">
+        <div className="registro-titulo">
+          <h1>{titulo}</h1>
+          {texto && <p>{texto}</p>}
+        </div>
         {children}
-      </section>
-    </div>
+      </div>
+    </MarcoRegistro>
   )
 }
 
 export function SinEnlace() {
   return (
-    <p className="apagado">
+    <p className="registro-nota">
       Si ya pagaste, te enviamos un enlace por correo y WhatsApp para completar los datos de tu familia.{' '}
       <Link to="/afiliacion">Empezar una afiliación</Link>
     </p>
@@ -36,33 +50,34 @@ function PagoRechazado({ token }: { token: string }) {
   return (
     <>
       <p className="aviso-error" role="alert">
-        La pasarela no aprobó el pago. No se hizo ningún cobro.
+        <Icono nombre="alerta" size={16} /> La pasarela no aprobó el pago. No se hizo ningún cobro: puedes intentarlo otra
+        vez con lo que ya elegiste.
       </p>
       {reintentar.isError && (
         <p className="aviso-error" role="alert">
-          {mensajeError(reintentar.error, 'No pudimos generar otro intento de pago.')}{' '}
-          <Link to="/afiliacion" onClick={olvidarToken}>
-            Empezar de nuevo
-          </Link>
+          <Icono nombre="alerta" size={16} />
+          <span>
+            {mensajeError(reintentar.error, 'No pudimos generar otro intento de pago.')}{' '}
+            <Link to="/afiliacion" onClick={olvidarToken}>
+              Empezar de nuevo
+            </Link>
+          </span>
         </p>
       )}
       <button
-        className="btn btn-primario"
+        className="btn btn-primario btn-bloque btn-grande"
         type="button"
         disabled={reintentar.isPending || reintentar.isSuccess}
         onClick={() => reintentar.mutate(token, { onSuccess: (r) => window.location.assign(r.enlace_pago) })}
       >
         <Icono nombre="pago" size={18} /> {reintentar.isPending ? 'Preparando el pago…' : 'Intentar de nuevo'}
       </button>
+      {/* Otra forma de pago u otra manada es otra afiliación: lo elegido aquí se descarta. */}
+      <Link to="/afiliacion" className="btn btn-plano registro-volver" onClick={olvidarToken}>
+        Empezar de nuevo con otra forma de pago
+      </Link>
+      <Contacto texto="Si el problema sigue, escríbenos por WhatsApp" />
     </>
-  )
-}
-
-function EnRevision() {
-  return (
-    <p className="aviso-ok" role="status">
-      Recibimos tu pago. Nuestro equipo revisa tu afiliación y te escribe pronto por WhatsApp.
-    </p>
   )
 }
 
@@ -77,42 +92,69 @@ export function RegistroResultadoPage() {
 
   if (!token) {
     return (
-      <Publica titulo="Gracias por afiliarte">
+      <PaginaRegistro titulo="Gracias por afiliarte">
         <SinEnlace />
-      </Publica>
+      </PaginaRegistro>
     )
   }
   if (registro?.estado === 'pagada') return <Navigate to="/afiliacion/completar" replace />
+  if (consulta.isPending) {
+    return (
+      <PaginaRegistro titulo="Consultando tu pago">
+        <div className="esqueleto" role="status">
+          <span className="sr-only">Consultando tu pago…</span>
+          <span className="esqueleto-linea" aria-hidden="true" />
+          <span className="esqueleto-linea" aria-hidden="true" />
+        </div>
+      </PaginaRegistro>
+    )
+  }
+  if (consulta.isError) {
+    return (
+      <PaginaRegistro titulo="No encontramos tu afiliación">
+        <p className="aviso-error" role="alert">
+          <Icono nombre="alerta" size={16} />{' '}
+          {esErrorPasajero(consulta.error)
+            ? mensajeError(consulta.error, 'El servidor no respondió. Intenta de nuevo en un momento.')
+            : 'El enlace no sirve o ya se usó.'}
+        </p>
+        <SinEnlace />
+      </PaginaRegistro>
+    )
+  }
   return (
-    <Publica titulo="Estamos confirmando tu pago">
-      {consulta.isPending && <p className="apagado">Consultando tu pago…</p>}
-      {consulta.isError && (
-        <>
-          <p className="aviso-error" role="alert">
-            {mensajeError(consulta.error, 'No encontramos tu afiliación.')}
-          </p>
-          <SinEnlace />
-        </>
-      )}
-      {registro && <EstadoRegistro token={token} registro={registro} />}
-    </Publica>
+    <PaginaRegistro titulo={tituloDe(consulta.data)} registro={consulta.data}>
+      <EstadoRegistro token={token} registro={consulta.data} consultadoEn={consulta.dataUpdatedAt} />
+    </PaginaRegistro>
   )
 }
 
-export function EstadoRegistro({ token, registro }: { token: string; registro: RegistroRead }) {
+export function EstadoRegistro({
+  token,
+  registro,
+  consultadoEn,
+}: {
+  token: string
+  registro: RegistroRead
+  consultadoEn?: number
+}) {
   if (esperandoPago(registro)) {
     return (
-      <p className="apagado" role="status">
-        La pasarela aún no confirma el pago de {moneda(registro.valor_inicial)}. Esta página se actualiza sola; si la
-        cierras, te enviamos el enlace por correo y WhatsApp cuando se confirme.
-      </p>
+      <div className="registro-espera" role="status">
+        <span className="registro-espera-pulso" aria-hidden="true" />
+        <p>
+          La pasarela aún no confirma el pago de {moneda(registro.valor_inicial)}. Volvemos a preguntar cada pocos
+          segundos{consultadoEn ? ` (última vez a las ${hora(new Date(consultadoEn).toISOString())})` : ''}; si cierras
+          la página, te enviamos el enlace por correo y WhatsApp cuando se confirme.
+        </p>
+      </div>
     )
   }
   if (registro.estado === 'pendiente_pago') return <PagoRechazado token={token} />
   if (registro.estado === 'cancelada') {
     return (
-      <p className="apagado" role="status">
-        Este registro se cerró porque no recibimos el pago.{' '}
+      <p className="registro-nota" role="status">
+        Se cerró porque no recibimos el pago, y no se hizo ningún cobro.{' '}
         <Link to="/afiliacion" onClick={olvidarToken}>
           Empezar una afiliación
         </Link>
@@ -123,13 +165,18 @@ export function EstadoRegistro({ token, registro }: { token: string; registro: R
     return (
       <>
         <p className="aviso-ok" role="status">
-          <Icono nombre="check" size={16} /> Tu afiliación ya está activa.
+          <Icono nombre="check" size={16} /> Ya puedes entrar a tu portal con tu correo o tu celular.
         </p>
-        <Link to="/login" className="btn btn-suave">
+        <Link to="/login" className="btn btn-primario btn-bloque btn-grande">
           Ir al ingreso
         </Link>
       </>
     )
   }
-  return <EnRevision />
+  return (
+    <p className="aviso-ok" role="status">
+      <Icono nombre="check" size={16} /> Recibimos tu pago. Nuestro equipo revisa tu afiliación y te escribe pronto por
+      WhatsApp.
+    </p>
+  )
 }
