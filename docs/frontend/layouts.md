@@ -246,7 +246,7 @@ lo ya hecho a la derecha.
 
 - **Estructura** (`MiClinicaPage`, `.shell.aliada`): la barra marina del panel y el portal con el
   logo compacto, el nombre de la clínica (`.aliada-barra-clinica`, que la API da en
-  `/aliadas/mi-clinica`) y la cuenta; sin destinos ni barra inferior, porque hay uno solo. El
+  `/aliadas/mi-clinica`) y la cuenta (`MenuCuenta`); sin destinos ni barra inferior, porque hay uno solo. El
   contenido (`.aliada-contenido`) llega a 1120 px.
 - **Dos columnas desde 900 px** (`.aliada-mostrador`): la de trabajo y una de 300 a 380 px para lo
   atendido; por debajo se apilan, el código primero. Cada una es un panel blanco
@@ -257,7 +257,8 @@ lo ya hecho a la derecha.
 - **La remisión abierta** (`.aliada-remision`, bajo un hilo): su estado en una línea
   (`.aliada-remision-estado`: distintivo y una frase), la mascota como `h2` de 24 px con la especie
   y la raza en texto suave, el titular con los últimos dígitos del documento, y la ficha de datos.
-  Si se puede usar, el reporte (`.aliada-reporte`) en el formulario de dos columnas, con el reparto
+  Vencida y sin usar, un botón plano abre el mismo reporte para lo atendido hasta el día en que
+  venció, con «Validar» todavía de verde. Si se puede usar, el reporte (`.aliada-reporte`) en el formulario de dos columnas, con el reparto
   (`.aliada-cifras`, dos celdas separadas por hilos) entre el valor y el resumen y el verde abajo a
   la derecha (a todo el ancho y de 48 px en el celular).
 - **Lo atendido** (`Atendidas`): el título con el mes al lado (`?mes=` en la URL), cuatro cifras

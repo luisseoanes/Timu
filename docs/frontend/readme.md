@@ -39,8 +39,8 @@ frontend/src/
     index.css        Índice que impone el orden de la cascada
   assets/            El logo en SVG y GeosansLight, con la receta para regenerarlos
   components/        Piezas compartidas sin lógica de dominio (Modal, Consulta, Pestanas,
-                     Paginacion, Distintivo e Insignia, Icono, MarcaTimu, AnilloProgreso,
-                     FotoEditable)
+                     Paginacion, Distintivo e Insignia, Icono, MarcaTimu, MenuCuenta,
+                     AnilloProgreso, FotoEditable)
   features/<dominio>/  Pantallas y consultas por dominio (auth, familias, dashboard, …)
   layouts/           AppLayout: barra marina, barra inferior en el celular y cabecera
   lib/               errores, permisos, formato, estados y descargas

@@ -30,7 +30,7 @@ el código, se anota la fecha y quién lo confirmó, y solo entonces se tacha.
 | Fotos originales para las páginas públicas | Las páginas públicas van sin fotos | — | PENDIENTE |
 | Sandbox de Wompi de TIMU | No admite valor provisional: sin credenciales no hay prueba de punta a punta | — | PENDIENTE |
 | Cómo recibe la familia el código de una remisión | Ninguno: la plataforma no lo envía ni lo muestra en el portal; se lo dice el equipo ([detalle](#remisiones-a-clínicas-aliadas-requisito-622)) | `aliadas/service.py` (`emitir`) | PENDIENTE |
-| Si una remisión emitida sigue sirviendo cuando la familia cae en mora, se congela o se da de baja | Sirve hasta que vence, 30 días después de emitirse, pase lo que pase con la cartera ([detalle](#remisiones-a-clínicas-aliadas-requisito-622)) | `REMISION_VIGENCIA_DIAS` (`core/config.py`); `aliadas/service.py` (`reportar_atencion`) y `cartera/service.py` (`cancelar`) | PENDIENTE |
+| Si una remisión emitida sigue sirviendo cuando la familia cae en mora, se congela o se da de baja (**delicado**) | La baja o la cancelación del contrato cortan su vigencia ese día: lo atendido hasta entonces se sigue reportando y cobrando (decidido con el usuario el 2026-11-16, mientras lo precisa TIMU). La mora y la congelación la dejan servir hasta que vence, 30 días después de emitirse ([detalle](#remisiones-a-clínicas-aliadas-requisito-622)) | `REMISION_VIGENCIA_DIAS` (`core/config.py`); `aliadas/service.py` (`cortar_vigencia_al_cancelar`, `reportar_atencion`) | PENDIENTE |
 
 ## Requisito 6.1 (con el 6.12)
 
@@ -134,7 +134,10 @@ proceso quede registrado. TIMU tiene que decidir por dónde le llega:
 - en el portal, en la ficha del peludo o en sus citas;
 - o las dos.
 
-**2. Una remisión emitida sigue sirviendo pase lo que pase con la cartera.** Al emitirla se valida
+**2. Qué pasa con una remisión emitida si la cartera de la familia cambia. Es delicado** (lo
+subrayó el usuario): toca a la vez lo que TIMU paga, la relación con las clínicas aliadas y la
+atención de un peludo que puede estar hospitalizado. Sigue **PENDIENTE** de resolverse con TIMU
+aunque ya haya un comportamiento provisional. Al emitirla se valida
 el plan vigente, la cartera al día y el beneficio disponible (`F2-ALI-02`). Después no se vuelve a
 mirar nada: la clínica la valida y reporta la atención hasta que vence, 30 días después. Esto
 implica que:
@@ -144,9 +147,12 @@ implica que:
   la demostración; en una hospitalización, el 40 % o el 80 % según el plan). El portal, en cambio,
   ya no le deja a esa familia agendar nada: la misma familia tiene cobertura en la aliada y no la
   tiene en TIMU.
-- **Si la familia se da de baja** (o se cancela su contrato), cancelar anula las cuotas futuras y
-  desactiva la tarjeta, pero no toca las remisiones emitidas ni sus servicios. Una familia que ya
-  no es de TIMU puede usarla durante el resto de su vigencia, y TIMU la paga.
+- **Si la familia se da de baja** (o se cancela su contrato): hasta el 2026-11-16 la remisión
+  seguía sirviendo el resto de su vigencia y TIMU la pagaba aunque la familia ya no fuera de TIMU.
+  **Provisional desde ese día** (decidido con el usuario mientras lo precisa TIMU): la baja corta
+  la vigencia ese mismo día. No la anula: una atención hecha hasta la baja y reportada después se
+  sigue cobrando, y la clínica la reporta desde su pantalla con «Reportar una atención hecha hasta
+  el …». Lo atendido después de la baja ya no.
 - **Por el otro lado, la remisión es la autorización con la que la clínica atiende.** La atención
   se reporta después de hacerla, así que comprobar la cartera al reportar es el peor momento: la
   clínica ya atendió y TIMU le negaría el pago. Si se comprueba algo, tiene que ser al validar el
@@ -158,10 +164,13 @@ Opciones para TIMU:
   riesgo se acota con la vigencia (hoy 30 días) y el tope de cada convenio.
 - **Condicionada a seguir al día**: al validar, una familia en mora o congelada no tiene cobertura
   y la clínica lo ve antes de atender; la familia recibe el aviso de pagar.
-- **Intermedia** (recomendación de Claude): la baja o la cancelación del contrato anulan siempre
-  las remisiones por usar (con el mismo efecto que anularlas a mano: el servicio se cancela y el
-  cupo vuelve), y la mora o la congelación las deja servir hasta que vencen, porque la familia
-  sigue siendo de TIMU y puede ponerse al día.
+- **Intermedia** (recomendación de Claude, y lo provisional de hoy): la baja o la cancelación del
+  contrato cortan la vigencia de las remisiones por usar ese día, y la mora o la congelación las
+  dejan servir hasta que vencen, porque la familia sigue siendo de TIMU y puede ponerse al día.
+
+Lo que TIMU tiene que confirmar: si la baja corta la vigencia (lo provisional) o anula del todo;
+qué pasa con la mora y la congelación; si la vigencia de 30 días es la que quiere; y si una
+atención hecha antes de la baja y reportada después se paga siempre.
 
 ## Recomendación de plan del bot comercial (`F1-PLA-04`, `F3-COM-03`)
 

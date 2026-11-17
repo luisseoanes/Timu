@@ -165,16 +165,21 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
 - **La familia no recibe el código de la remisión por ningún canal** y **una remisión emitida
   sigue sirviendo con la familia en mora, congelada o dada de baja**: el usuario los pasó al equipo
   de TIMU el 2026-11-16. Están en [pendientes externos](../pendientes-externos.md#remisiones-a-clínicas-aliadas-requisito-622),
-  con lo que implica cada opción.
-- **`datos_demo` escribe sin tildes** la clínica («Clinica Veterinaria del Norte»), su usuario
-  («Recepcion Clinica del Norte») y la remisión («Radiografia de cadera por cojera»), que el
-  recorrido de la aliada busca por ese texto. Corregirlo exige cambiar a la vez la prueba, y
-  `datos_demo` solo crea lo que falta: en un stack ya sembrado quedarían los dos nombres.
-- **El menú de la cuenta está repetido** en `AppLayout`, `PortalLayout` y `MiClinicaPage`: un
-  componente común en `src/components/` lo dejaría en un sitio.
-- **Encontrado de paso, en el arreglo del CI (`perf(dashboard)`, 2026-11-16)**: las políticas de RLS
-  inflan el coste estimado de las consultas y PostgreSQL las compila con JIT, que en «Mora al
-  cierre» costaba más que la consulta. Se arregló reescribiendo esa consulta; apagar el JIT para
-  `timu_app` aliviaría cualquier otra, pero cambia todas. Decisión abierta con el usuario.
+  con lo que implica cada opción. Mientras se precisa con TIMU (es delicado), el usuario decidió
+  el 2026-11-16 que la baja corte la vigencia ese día sin anularla: lo atendido hasta la baja se
+  sigue reportando, también desde la pantalla de la clínica con una remisión ya vencida.
+- **Una remisión que vence sin usarse deja su servicio agendado para siempre**, y con él ocupado el
+  cupo del beneficio: ninguna tarea lo cierra (anularla a mano sí lo cancela). Encontrado el
+  2026-11-16 al revisar la baja; es anterior a esta unidad. Decisión abierta con el usuario.
+- ~~**`datos_demo` escribe sin tildes**~~ Resuelto el 2026-11-16: los nombres y textos que ve el
+  equipo llevan sus tildes (la clínica, su usuario, la remisión, las familias, el equipo, la
+  historia de Luna), con la e2e ajustada y la base local recreada.
+- ~~**El menú de la cuenta está repetido**~~ Resuelto el 2026-11-16: `MenuCuenta`
+  (`src/components/`), común al panel, el portal y la clínica aliada.
+- ~~**El JIT de PostgreSQL para `timu_app`**~~ Medido el 2026-11-16 con la prueba de carga completa
+  (5.000 familias, 20 usuarios, 5 minutos; PostgreSQL 18.6): ninguna de las 34.212 sentencias de la
+  aplicación se compiló con JIT; el único caso era «Mora al cierre», ya reescrita. Se deja
+  encendido: apagarlo no cambia nada medible. Si una consulta vuelve a pasar de su umbral,
+  `pg_stat_statements` dice si fue el JIT (`jit_functions`, `jit_*_time`).
 - **Sugerencias del revisor, opcionales** (el «techo»): la lista de lo atendido con el importe que
   cubrió TIMU en su propia columna, alineado a la derecha, en lugar de dentro de la línea de texto.

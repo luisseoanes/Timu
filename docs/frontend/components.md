@@ -126,6 +126,13 @@ rechaza un número suelto.
 afiliación». `.menu-item-peligro` para una entrada destructiva, tras un `.menu-separador`.
 Lo raro o destructivo va en un menú, no junto a la acción principal.
 
+## Menú de la cuenta — `MenuCuenta`
+
+El de la barra marina de los tres espacios (`AppLayout`, `PortalLayout` y `MiClinicaPage`):
+`nombre`, `detalle` (el perfil, «Portal de familias» o la clínica y su ciudad) y `alSalir`. Pinta
+las iniciales en `.cuenta` y el menú con quién es y «Cerrar sesión». Una opción nueva de la cuenta
+se añade aquí, no en cada layout.
+
 ## Logo — `MarcaTimu`
 
 `src/components/MarcaTimu.tsx` pinta el SVG del vector de TIMU: completo (con lema y

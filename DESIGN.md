@@ -602,6 +602,9 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   de la clínica en 13 px y 600, marino claro (`texto-sobre-marca-suave`), en una línea que se corta
   con puntos suspensivos: en un computador compartido de recepción dice en qué clínica se está. El
   menú de la cuenta lleva el nombre del usuario, «Clínica · ciudad» debajo y «Cerrar sesión».
+- **El menú de la cuenta es uno** (`MenuCuenta`, en `src/components/`) en los tres espacios: las
+  iniciales en la pastilla translúcida y, al abrirlo, el nombre, un detalle (el perfil en el panel,
+  «Portal de familias», la clínica y su ciudad) y «Cerrar sesión».
 
 ### Tabs
 - Sobre Radix Tabs (`Pestanas`): 13 px en 700, texto suave, subrayado de 3 px verde hondo en la
@@ -1107,7 +1110,12 @@ y la mascota.
   suelto, y el dato que se verifica no se corta. Después, la ficha
   de datos: Motivo a todo el ancho; Beneficio, Cobertura (`cobertura()`: «80 % hasta $ 200.000») y
   Código.
-- **El reporte** (solo con la remisión por usar): bajo un hilo, el `h3` «Reportar la atención» y el
+- **La vencida sin usar:** bajo la ficha, un botón plano de acción «Reportar una atención hecha
+  hasta el 6 nov» (la fecha es `atencion_hasta`): una atención hecha dentro de su vigencia se
+  reporta después, también si la vigencia la cortó la baja de la familia. Abre el mismo reporte con
+  el foco en la fecha y su envío en secundario: «Validar» sigue siendo el verde, porque lo normal
+  ante una vencida es no atender, y el formulario no queda abierto invitando a reportar.
+- **El reporte** (con la remisión por usar, o abierto a propósito sobre una vencida): bajo un hilo, el `h3` «Reportar la atención» y el
   formulario de dos columnas: la fecha, limitada a las fechas que dice la API (`atencion_desde`,
   `atencion_hasta`, y con la última por defecto), y el valor, numérico, que se escribe y se ve con
   formato («$ 180.000»). Debajo, a todo el ancho y en `aria-live`, el reparto que calcula la API
