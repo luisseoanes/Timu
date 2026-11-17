@@ -2,13 +2,13 @@
 
 Desglose del trabajo de servidor comprometido en la propuesta técnica (`docs/propuesta-timu-puntos-15-19.md`): los 23 requisitos funcionales del documento base ([`docs/documento-requerimientos-funcionales.md`](documento-requerimientos-funcionales.md)) más los cinco módulos de escalabilidad incorporados desde la Fase 1.
 
-**106 unidades de trabajo.** Los IDs siguen el patrón `fase-módulo-consecutivo`.
+**107 unidades de trabajo.** Los IDs siguen el patrón `fase-módulo-consecutivo`.
 
 Versión navegable con filtros: [https://claude.ai/code/artifact/15e07e31-e456-40c7-a743-e503b84a2681](https://claude.ai/code/artifact/15e07e31-e456-40c7-a743-e503b84a2681)
 
 ## Estado
 
-Revisado el 2026-11-04 contra el código de `main`; `F1-FAM-06` a `F1-FAM-09` se añadieron el 2026-11-09 al revisar el requisito 6.1, `F1-PLA-01` a `F1-PLA-03` y `F1-CAR-02` se reescribieron el 2026-11-10 con el modelo de precios de TIMU, y `F1-AFI-01`, el mismo día, con el registro en línea por pasos. Lo que queda pendiente de terceros vive en [pendientes externos](pendientes-externos.md). Cada unidad lleva uno de tres estados:
+Revisado el 2026-11-04 contra el código de `main`; `F1-FAM-06` a `F1-FAM-09` se añadieron el 2026-11-09 al revisar el requisito 6.1, `F1-PLA-01` a `F1-PLA-03` y `F1-CAR-02` se reescribieron el 2026-11-10 con el modelo de precios de TIMU, y `F1-AFI-01`, el mismo día, con el registro en línea por pasos. `F3-ENC-05` se añadió el 2026-11-16, al revisar las integraciones con TIMU (el 6.20 pide exportar las encuestas). Lo que queda pendiente de terceros vive en [pendientes externos](pendientes-externos.md). Cada unidad lleva uno de tres estados:
 
 - **Hecho**: implementado y cubierto por pruebas automáticas que corren en el CI. Las integraciones externas (Wompi, Meta, Google Maps, Claude, correo) se prueban contra dobles: ninguna se ha validado desde el repositorio contra el proveedor real, y `F1-CAR-08` sigue dependiendo de la habilitación comercial de la pasarela.
 - **Parcial**: hay implementación, pero el criterio de aceptación no se cumple entero. La celda dice qué falta.
@@ -21,9 +21,9 @@ Revisado el 2026-11-04 contra el código de `main`; `F1-FAM-06` a `F1-FAM-09` se
 | Base técnica transversal | 12 | 11 | 1 | 0 |
 | Fase 1 — Núcleo operativo | 40 | 40 | 0 | 0 |
 | Fase 2 — Operación y clínica | 22 | 22 | 0 | 0 |
-| Fase 3 — Portal, pagos y autogestión | 20 | 20 | 0 | 0 |
-| Fase 4 — Inteligencia y cierre | 12 | 7 | 3 | 2 |
-| **Total** | **106** | **100** | **4** | **2** |
+| Fase 3 — Portal, pagos y autogestión | 21 | 20 | 0 | 1 |
+| Fase 4 — Inteligencia y cierre | 12 | 8 | 2 | 2 |
+| **Total** | **107** | **101** | **3** | **3** |
 
 ## Base técnica transversal
 
@@ -213,6 +213,7 @@ Portal de familias, comercial automatizado, campañas y encuestas.
 | `F3-ENC-02` | Captura de respuestas | La familia responde por WhatsApp o enlace y el puntaje queda asociado al servicio y al responsable. | 6.20 | Hecho |
 | `F3-ENC-03` | Seguimiento post atención | Cada tipo de atención define su seguimiento y el sistema lo ejecuta en el plazo configurado. | 6.21 | Hecho |
 | `F3-ENC-04` | Alerta por calificación baja | Un puntaje bajo genera tarea inmediata de servicio al cliente con el contexto de la atención. | 6.20 · 6.21 | Hecho |
+| `F3-ENC-05` | Exportar las encuestas | Las respuestas de las encuestas, con su familia, mascota, servicio, fecha, profesional y puntaje, se descargan en Excel o CSV desde el panel. | 6.20 | Pendiente |
 
 ## Fase 4 — Inteligencia y cierre
 
@@ -223,8 +224,8 @@ Dashboard, apoyo de IA, migración y estabilización.
 | ID | Trabajo | Criterio de aceptación | Req. | Estado |
 | --- | --- | --- | --- | --- |
 | `F4-DAS-01` | Definición de indicadores | Afiliaciones, retiros, recaudo, mora, cumplimiento de rutas, servicios por tipo y satisfacción, con fórmula acordada y documentada. | Sección 8 | Hecho |
-| `F4-DAS-02` | Consultas del dashboard | Las agregaciones responden en menos de dos segundos sobre volumen real, con caché y filtros por período y ciudad. | Sección 8 | Parcial: caché y filtros listos. La prueba de carga con el volumen a 12 meses (2026-11-05) dio un p95 de 7,85 ms en el dashboard (registro de la fase 5 de `registros/plan-persistencia.md`), pero es anterior a la serie de 12 meses del Inicio (`/dashboard/evolucion`, 2026-11-13): falta repetir la completa con ella para darlo por hecho. |
-| `F4-DAS-03` | Exportables y reportes programados | Cualquier vista se descarga en Excel o CSV, y los reportes definidos llegan por correo en su periodicidad. | Sección 8 | Hecho |
+| `F4-DAS-02` | Consultas del dashboard | Las agregaciones responden en menos de dos segundos sobre volumen real, con caché y filtros por período y ciudad. | Sección 8 | Hecho (2026-11-16): la prueba de carga completa, ya con la serie de 12 meses del Inicio (`/dashboard/evolucion`), dio un p95 de 9 ms en el dashboard y un máximo de 1,33 s en frío (5.000 familias, 20 usuarios, 5 minutos; [prueba de carga](prueba-de-carga.md)). Antes hubo que reescribir «Mora al cierre», que llevaba la serie en frío a 2,4 s con el 10 % del volumen. |
+| `F4-DAS-03` | Exportables y reportes programados | Cualquier vista del dashboard se descarga en Excel o CSV, y los reportes definidos llegan por correo en su periodicidad. | Sección 8 | Hecho. Exportar las encuestas (6.20) es `F3-ENC-05`. |
 
 ### Apoyo de inteligencia artificial
 
