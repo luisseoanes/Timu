@@ -120,12 +120,12 @@ existen en los planes empresariales.
 | WhatsApp Business (Meta) | US$ 0,0008 por mensaje de utilidad o autenticación, US$ 0,0125 por marketing | US$ 7,98 | US$ 73,34 |
 | Google Maps | Dentro de los 10.000 elementos gratis al mes; a 12 meses con rutas por zonas y caché | US$ 0,00 | US$ 52,55 |
 | IA: Gemini 3.1 Flash-Lite (capa paga) | Bot comercial y borradores de orientación virtual | US$ 0,33 | US$ 2,99 |
-| Correo transaccional (Amazon SES o similar) | Reserva para enlaces y avisos | US$ 1,00 | US$ 1,00 |
+| Correo (Google Workspace, que TIMU ya tiene) | Cuenta de envío del dominio (decidido el 2026-11-16); una licencia más si se crea un usuario dedicado | US$ 0,00 | US$ 0,00 |
 | Sentry | Plan Developer gratuito hoy; plan Team al crecer | US$ 0,00 | US$ 26,00 |
 | GitHub Actions | Dentro de los minutos del plan actual | US$ 0,00 | US$ 0,00 |
-| **Subtotal** | | **US$ 9,32** | **US$ 155,88** |
+| **Subtotal** | | **US$ 8,32** | **US$ 154,88** |
 
-**Wompi (variable, aparte).** 2,65 % + $700 + IVA por pago aprobado (plan general publicado).
+**Wompi (variable, aparte; la pasarela decidida el 2026-11-16).** 2,65 % + $700 + IVA por pago aprobado (plan general publicado).
 Con una cuota promedio supuesta de $ 60.000, cada pago cuesta unos $ 2.725, el 4,5 % del
 recaudo:
 
@@ -137,7 +137,9 @@ Es el costo más grande, entre 3 y 10 veces el de la nube con sus integraciones.
 tarifas menores para otros medios (QR al 1 % desde septiembre de 2026), y conviene negociar
 según el volumen.
 
-**Google Maps.** La matriz de distancias crece con el cuadrado de las visitas que se
+**Google Maps.** La matriz de distancias que usa hoy el código es la Distance Matrix API, que Google
+dejó como «legacy»: un proyecto nuevo de TIMU pasará a la Routes API (`computeRouteMatrix`), que se
+factura con su propio concepto, así que esta cifra se revisa al migrar. La matriz crece con el cuadrado de las visitas que se
 planifican juntas: sin planificar por zonas pediría unos 145.000 elementos al mes a 12 meses.
 El código la acota con `MAPS_TOPE_DIARIO` (2.000 elementos al día, unos 60.000 al mes), así
 que el gasto no pasa de unos **US$ 250 al mes**. Pasado el tope, el sistema estima las
@@ -154,9 +156,9 @@ decisión de usar Gemini y lo que falta para hacerlo están en
 | Gemini 3.1 Flash-Lite | Google | US$ 0,25 | US$ 1,50 | US$ 0,33 | US$ 2,99 | Recomendado |
 | Gemini 2.5 Flash-Lite | Google | US$ 0,10 | US$ 0,40 | US$ 0,11 | US$ 0,94 | Generación anterior, riesgo de retiro |
 | Gemini 3.8 Flash | Google | US$ 0,75 | US$ 3,75 | US$ 0,90 | US$ 8,02 | Más calidad; precio se duplica el 1-ene-2027 |
-| Claude Haiku 5.5 | Anthropic | US$ 0,10 | US$ 0,50 | US$ 0,12 | US$ 1,07 | Ya integrado: solo cambiar `IA_MODELO` |
+| Claude Haiku 5.5 | Anthropic | US$ 0,10 | US$ 0,50 | US$ 0,12 | US$ 1,07 | Configurado por defecto desde el 2026-11-15 (valor provisional) |
 | Claude Sonnet 5.5 | Anthropic | US$ 2,00 | US$ 10,00 | US$ 2,39 | US$ 21,38 | Calidad alta |
-| Claude Opus 5.5 | Anthropic | US$ 4,00 | US$ 20,00 | US$ 4,79 | US$ 42,75 | Configurado hoy por defecto: sobredimensionado |
+| Claude Opus 5.5 | Anthropic | US$ 4,00 | US$ 20,00 | US$ 4,79 | US$ 42,75 | Sobredimensionado (era el valor por defecto hasta el 2026-11-15) |
 | GPT-6 Luna | OpenAI | US$ 0,10 | US$ 0,50 | US$ 0,12 | US$ 1,07 | Otro conector por desarrollar |
 | GPT-5 nano | OpenAI | US$ 0,05 | US$ 0,40 | US$ 0,08 | US$ 0,72 | Generación anterior con retiro anunciado |
 

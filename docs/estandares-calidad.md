@@ -102,7 +102,8 @@ migración `0036` no se reprocesaron: si producción tiene alguna, se limpia a m
 **Deuda**: no hay acceso para sistemas (credenciales de servicio o claves de API) ni
 webhooks salientes; la API solo admite sesiones de personas. Es lo que pedirían la página
 web, las hojas de cálculo, Google Calendar o las «APIs externas» de la Sección 9. Hay una
-sola pasarela de pagos (`PAYMENTS_PROVIDER` solo admite `wompi`). Ninguna integración se ha
+sola pasarela de pagos (`PAYMENTS_PROVIDER` solo admite `wompi`), y ya no es deuda: Wompi es la
+pasarela decidida con el usuario el 2026-11-16. Ninguna integración se ha
 validado contra el proveedor real desde el repositorio ([integraciones](integraciones.md); lo
 que falta, en [pendientes externos](pendientes-externos.md)).
 
