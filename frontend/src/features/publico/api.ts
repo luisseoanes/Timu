@@ -1,29 +1,26 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { CarnetVerificadoRead } from '@/types'
+import type { CarnetVerificadoRead, ContextoEncuestaRead, RespuestaEncuestaRead } from '@/types'
+
+/** Lo que responde la familia: la satisfacción con un puntaje y el seguimiento (6.21) con cómo sigue. */
+export type RespuestaEncuesta =
+  | { puntaje: number; comentario?: string }
+  | { como_sigue: 'bien' | 'duda' | 'novedad'; comentario?: string }
 
 /** Lo que ve quien abre el enlace de una encuesta (F3-ENC-02). */
-export interface ContextoEncuesta {
-  tipo: 'satisfaccion' | 'seguimiento' | string
-  atencion: string | null
-  fecha: string | null
-  mascota: string | null
-  respondida: boolean
-}
-
 export function useContextoEncuesta(token: string) {
   return useQuery({
     queryKey: ['encuesta-publica', token],
-    queryFn: async () => (await api.get<ContextoEncuesta>(`/encuestas/respuesta/${token}`)).data,
+    queryFn: async () => (await api.get<ContextoEncuestaRead>(`/encuestas/respuesta/${token}`)).data,
     retry: false,
   })
 }
 
 export function useResponderEncuesta(token: string) {
   return useMutation({
-    mutationFn: async (respuesta: { puntaje: number; comentario?: string }) =>
-      (await api.post<{ detail: string }>(`/encuestas/respuesta/${token}`, respuesta)).data,
+    mutationFn: async (respuesta: RespuestaEncuesta) =>
+      (await api.post<RespuestaEncuestaRead>(`/encuestas/respuesta/${token}`, respuesta)).data,
   })
 }
 

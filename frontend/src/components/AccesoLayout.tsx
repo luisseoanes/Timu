@@ -12,16 +12,20 @@ const ESTACIONES: { nombre: string; tipo: 'hecha' | 'proxima' | 'programada' }[]
 ]
 
 /**
- * Pantallas de acceso (ingreso, recuperación, restablecimiento y activación). Desde 900 px,
+ * Pantallas de acceso (ingreso, recuperación, restablecimiento y activación) y la encuesta, la
+ * otra página a la que la familia llega desde un enlace (R3-PUB-03). Desde 900 px,
  * el panel marino con el logo, la frase de la pantalla y la línea a la izquierda, y el
  * formulario a la derecha; por debajo, una franja marina arriba y el formulario debajo.
  * La frase le habla a quien llega: la activación, a la familia.
  */
 export function AccesoLayout({
   frase = 'Tu peludito, bien cuidado.',
+  arriba = false,
   children,
 }: {
   frase?: string
+  /** Ancla el formulario arriba en lugar de centrarlo: lo que aparece al elegir no lo mueve. */
+  arriba?: boolean
   children: ReactNode
 }) {
   return (
@@ -40,7 +44,7 @@ export function AccesoLayout({
         <NotaDatos />
       </aside>
 
-      <main className="ingreso-contenido">
+      <main className={arriba ? 'ingreso-contenido ingreso-contenido-arriba' : 'ingreso-contenido'}>
         <div className="ingreso-panel">
           {children}
           <NotaDatos />

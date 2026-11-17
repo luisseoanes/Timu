@@ -429,7 +429,7 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 
 /* --- Calificación de 1 a 5 (encuestas) ------------------------- */
 .calificacion { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--e2); }
-.calificacion legend { font-weight: 700; color: var(--texto-titulo); margin-bottom: var(--e2); font-size: var(--t-menor); }
+.calificacion legend { padding: 0; font-weight: 700; color: var(--texto-titulo); margin-bottom: var(--e2); font-size: var(--t-menor); }
 .calificacion-opcion {
   display: grid; justify-items: center; gap: 4px;
   padding: var(--e3) var(--e1);
@@ -438,8 +438,20 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 }
 .calificacion-opcion input { position: absolute; opacity: 0; pointer-events: none; }
 .calificacion-numero { font-family: var(--fuente); font-size: var(--t-titulo); color: var(--texto-titulo); }
+.calificacion-opcion:hover { border-color: var(--borde-control-hover); color: var(--texto-titulo); }
 .calificacion-opcion:has(input:checked) { border-color: var(--indicador-seleccion); background: var(--superficie-seleccion); color: var(--texto-titulo); }
 .calificacion-opcion:has(input:focus-visible) { box-shadow: 0 0 0 2px var(--foco); }
+/* El seguimiento (6.21): tres respuestas en fila, con su icono y su frase completa. */
+.calificacion-seguimiento { grid-template-columns: 1fr; }
+.calificacion-seguimiento .calificacion-opcion {
+  grid-template-columns: auto 1fr; justify-items: start; align-items: center; gap: var(--e3);
+  min-height: 48px; padding: var(--e3) var(--e4);
+  font-size: var(--t-cuerpo); color: var(--texto); text-align: left;
+}
+.calificacion-seguimiento [data-valor="bien"] svg { color: var(--estado-ok-texto); }
+.calificacion-seguimiento [data-valor="duda"] svg { color: var(--estado-info-texto); }
+.calificacion-seguimiento [data-valor="novedad"] svg { color: var(--estado-alerta-texto); }
+.calificacion-seguimiento [data-valor="novedad"]:has(input:checked) { border-color: var(--estado-alerta-texto); background: var(--estado-alerta-fondo); }
 
 /* --- Indicadores (dashboard) ----------------------------------- */
 .indicadores { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--e3); }
