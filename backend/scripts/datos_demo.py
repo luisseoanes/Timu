@@ -61,7 +61,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "plan": "mi_amigo_fiel",
     },
     {
-        "titular_nombre": "Carlos Perez",
+        "titular_nombre": "Carlos Pérez",
         "documento": "79123456",
         "telefono": "3104445566",
         "ciudad": "Bogotá",
@@ -80,7 +80,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "plan": "colita_feliz",
     },
     {
-        "titular_nombre": "Laura Gomez",
+        "titular_nombre": "Laura Gómez",
         "documento": "52987654",
         "telefono": "3157778899",
         "ciudad": "Bogotá",
@@ -98,7 +98,7 @@ FAMILIAS: list[dict[str, Any]] = [
         "plan": "colita_feliz",
     },
     {
-        "titular_nombre": "Jorge Ramirez",
+        "titular_nombre": "Jorge Ramírez",
         "documento": "80456123",
         "telefono": "3209990011",
         "email": "jorge@example.com",
@@ -145,9 +145,9 @@ FAMILIAS: list[dict[str, Any]] = [
 ]
 
 INTERESADOS = [
-    ("Paula Diaz", "3005551234", "whatsapp"),
-    ("Andres Mejia", "3112223344", "referido"),
-    ("Sofia Herrera", "3206667788", "evento"),
+    ("Paula Díaz", "3005551234", "whatsapp"),
+    ("Andrés Mejía", "3112223344", "referido"),
+    ("Sofía Herrera", "3206667788", "evento"),
     ("Camilo Rojas", "3013334455", "formulario"),
 ]
 
@@ -199,10 +199,10 @@ def _clave_beneficio(b: dict[str, Any]) -> tuple[Any, ...]:
 EQUIPO = [
     # Administrador propio de los recorridos e2e: el limite de peticiones es por usuario, y
     # admin@timu.co lo gasta creando estos datos justo antes (frontend/e2e-stack/sesiones.ts).
-    ("gerencia@timu.co", "Laura Gomez", "admin"),
-    ("medico@timu.co", "Dra. Sara Martinez", "medico"),
-    ("operaciones@timu.co", "Carlos Pena", "operaciones"),
-    ("comercial@timu.co", "Valentina Rios", "comercial"),
+    ("gerencia@timu.co", "Laura Gómez", "admin"),
+    ("medico@timu.co", "Dra. Sara Martínez", "medico"),
+    ("operaciones@timu.co", "Carlos Peña", "operaciones"),
+    ("comercial@timu.co", "Valentina Ríos", "comercial"),
 ]
 CLAVE_EQUIPO = "demo12345"
 
@@ -284,7 +284,7 @@ def conversacion_de_prueba(c: Cliente) -> None:
             )
     [interesado] = c.get("/comercial/interesados", q=NUMERO_CONVERSACION[-7:])["items"]
     # El bot no pregunta el nombre: lo anota quien la atiende.
-    c.http.patch(f"/comercial/interesados/{interesado['id']}", json={"nombre": "Natalia Gomez"})
+    c.http.patch(f"/comercial/interesados/{interesado['id']}", json={"nombre": "Natalia Gómez"})
 
 
 def proximo_habil(desde: date, dias: int) -> date:
@@ -300,9 +300,9 @@ def proximo_habil(desde: date, dias: int) -> date:
 # De Jorge va Kira (Colita Feliz): Rocky esta en Mi Amigo Fiel, con una consulta al mes, y al
 # repetir datos_demo en el mismo mes se quedaria sin cupo.
 VISITAS = [
-    (1, 0, "Revisar oido izquierdo. Porteria: anunciarse como TIMU."),
+    (1, 0, "Revisar oído izquierdo. Portería: anunciarse como TIMU."),
     (2, 0, "Control de peso"),
-    (3, 1, "Vomito desde ayer; llevar suero"),
+    (3, 1, "Vómito desde ayer; llevar suero"),
 ]
 DIAS_DE_RUTA = 7
 # El outbox se drena una vez por minuto y la optimizacion busca un par de segundos: se pregunta
@@ -421,7 +421,7 @@ def ruta_de_prueba(c: Cliente, familias: list[dict[str, Any]], hoy: date) -> Non
         if len(horas) >= len(VISITAS):
             break
     else:
-        print("  ! sin cupo para la ruta de prueba en los proximos dias")
+        print("  ! sin cupo para la ruta de prueba en los próximos días")
         return
 
     # Si una pasada anterior agendo las visitas y no llego a planear, no se agendan otra vez.
@@ -454,7 +454,7 @@ def ruta_de_prueba(c: Cliente, familias: list[dict[str, Any]], hoy: date) -> Non
         time.sleep(INTERVALO_PLANIFICACION)
         plan = c.get(f"/rutas/planificaciones/{plan['id']}")
     if plan is None or plan["estado"] != "lista":
-        print(f"  ! la planificacion no termino: {plan and plan.get('error')}")
+        print(f"  ! la planificación no terminó: {plan and plan.get('error')}")
 
 
 def main() -> None:
@@ -533,7 +533,7 @@ def main() -> None:
     print("Servicios")
     if c.get("/servicios", limit=1)["total"] == 0:
         agenda = [
-            (0, "consulta_domiciliaria", "Revisar oido izquierdo"),
+            (0, "consulta_domiciliaria", "Revisar oído izquierdo"),
             (0, "vacunacion", None),
             (1, "consulta_domiciliaria", "Control de peso"),
             (1, "desparasitacion", None),
@@ -564,9 +564,9 @@ def main() -> None:
     print("Tareas")
     if c.get("/tareas", limit=1)["total"] == 0:
         tareas = [
-            ("Confirmar direccion de la visita", "operaciones", "alta", 0),
+            ("Confirmar dirección de la visita", "operaciones", "alta", 0),
             ("Llamar por cuota vencida", "cartera", "alta", -2),
-            ("Enviar cotizacion del plan familiar", "comercial", "media", 3),
+            ("Enviar cotización del plan familiar", "comercial", "media", 3),
             ("Revisar resultado de laboratorio", "medico", "media", 1),
         ]
         for i, (titulo, area, prioridad, dias) in enumerate(tareas):
@@ -596,7 +596,7 @@ def main() -> None:
             if c.get("/preventivos", mascota_id=mascota["id"], limit=1)["total"] == 0:
                 c.post(f"/preventivos/mascotas/{mascota['id']}/calendario", permitir=(422,))
 
-    print("Clinica")
+    print("Clínica")
     medico = Cliente("medico@timu.co", CLAVE_EQUIPO)
     luna = familias[0]["mascotas"][0]
     if not medico.get(f"/clinica/mascotas/{luna['id']}/historia"):
@@ -606,11 +606,11 @@ def main() -> None:
                 "mascota_id": luna["id"],
                 "tipo": "domiciliaria",
                 "fecha": (hoy - timedelta(days=20)).isoformat(),
-                "motivo": "Rasca el oido izquierdo desde hace una semana",
-                "anamnesis": "Sin cambios en alimentacion. Bano hace 10 dias.",
+                "motivo": "Se rasca el oído izquierdo desde hace una semana",
+                "anamnesis": "Sin cambios en la alimentación. Baño hace 10 días.",
                 "examen_fisico": "Conducto auditivo izquierdo eritematoso, cerumen oscuro.",
                 "diagnostico": "Otitis externa izquierda",
-                "tratamiento": "Limpieza otica y gotas cada 12 horas por 7 dias.",
+                "tratamiento": "Limpieza ótica y gotas cada 12 horas por 7 días.",
             },
         )
         if entrada:
@@ -632,8 +632,8 @@ def main() -> None:
                 "codigo": "control_alimentacion",
                 "titulo": "Cambio de alimento",
                 "cuerpo": (
-                    "Para {{1}} recomendamos hacer el cambio de alimento en 7 dias, mezclando "
-                    "cada dia un poco mas del nuevo. Si hay vomito o diarrea, escribenos."
+                    "Para {{1}} recomendamos hacer el cambio de alimento en 7 días, mezclando "
+                    "cada día un poco más del nuevo. Si hay vómito o diarrea, escríbenos."
                 ),
                 "variables": ["mascota"],
             },
@@ -644,12 +644,12 @@ def main() -> None:
             "/clinica/virtual",
             {
                 "mascota_id": familias[1]["mascotas"][0]["id"],
-                "motivo": "Queremos cambiarle el concentrado, como lo hacemos?",
+                "motivo": "Queremos cambiarle el concentrado, ¿cómo lo hacemos?",
                 "prioridad": "baja",
             },
         )
 
-    print("Ruta de la medica")
+    print("Ruta de la médica")
     ruta_de_prueba(c, familias, hoy)
 
     print("Comercial")
@@ -666,7 +666,7 @@ def main() -> None:
     print("Conversación de WhatsApp")
     conversacion_de_prueba(c)
 
-    print("Campanas")
+    print("Campañas")
     plantillas = {p["nombre"]: p for p in c.get("/comunicaciones/plantillas")}
     if "recordatorio_renovacion" not in plantillas:
         nueva = c.post(
@@ -699,19 +699,19 @@ def main() -> None:
         clinica = c.post(
             "/aliadas",
             {
-                "nombre": "Clinica Veterinaria del Norte",
+                "nombre": "Clínica Veterinaria del Norte",
                 "nit": "900123456",
                 "ciudad": "Bogotá",
                 "direccion": "Calle 127 # 15-30",
                 "telefono": "6017654321",
-                "servicios": "Rayos X, ecografia, hospitalizacion y cirugia",
+                "servicios": "Rayos X, ecografía, hospitalización y cirugía",
             },
         )
         if clinica:
             c.post(
                 f"/aliadas/{clinica['id']}/convenios",
                 {
-                    "beneficio": "Radiografia",
+                    "beneficio": "Radiografía",
                     "cobertura_pct": 80,
                     "tarifa": "120000",
                     "tope_cubierto": "200000",
@@ -722,7 +722,7 @@ def main() -> None:
                 "/auth/usuarios",
                 {
                     "email": "aliada@timu.co",
-                    "nombre": "Recepcion Clinica del Norte",
+                    "nombre": "Recepción Clínica del Norte",
                     "rol": "aliada",
                     "password": CLAVE_EQUIPO,
                     "clinica_aliada_id": clinica["id"],
@@ -735,14 +735,14 @@ def main() -> None:
             {
                 "clinica_id": clinicas[0]["id"],
                 "mascota_id": familias[3]["mascotas"][0]["id"],
-                "motivo": "Radiografia de cadera por cojera",
+                "motivo": "Radiografía de cadera por cojera",
             },
         )
 
     # Dos familias en el portal: Ana, con el plan en pausa por cuotas vencidas, y Jorge, al dia
     # (DEU-14). A Jorge se le paga lo vencido en cada pasada, para que siga al dia aunque el
     # stack lleve semanas arriba.
-    print("Portal de Ana Ruiz y de Jorge Ramirez")
+    print("Portal de Ana Ruiz y de Jorge Ramírez")
     pagar_lo_vencido(c, familias[3])
     for familia in (familias[0], familias[3]):
         acceso_portal(c, familia["id"])
@@ -750,8 +750,8 @@ def main() -> None:
     print("Listo. Ingresa a http://localhost:5173 con admin@timu.co / cambiar123")
     print(f"Equipo de prueba (clave {CLAVE_EQUIPO}): " + ", ".join(e for e, _, _ in EQUIPO))
     print(
-        "Clinica aliada: aliada@timu.co · Portal: ana@example.com (en pausa) y "
-        f"jorge@example.com (al dia), clave {CLAVE_EQUIPO}"
+        "Clínica aliada: aliada@timu.co · Portal: ana@example.com (en pausa) y "
+        f"jorge@example.com (al día), clave {CLAVE_EQUIPO}"
     )
 
 

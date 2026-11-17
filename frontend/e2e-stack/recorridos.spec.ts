@@ -232,7 +232,7 @@ test.describe('gerencia en comercial', () => {
   test('la conversación que espera a un asesor lleva a la ficha del interesado, con sus mensajes', async ({ page }) => {
     await page.goto('/comercial')
     await page.getByRole('tab', { name: 'Conversaciones' }).click()
-    // datos_demo deja a Natalia Gomez pidiendo un asesor por WhatsApp.
+    // datos_demo deja a Natalia Gómez pidiendo un asesor por WhatsApp.
     await page.getByRole('link', { name: 'Abrir conversación' }).first().click()
     const ficha = page.getByRole('region', { name: 'Interesado abierto' })
     await expect(ficha.getByRole('list', { name: /^Mensajes con / })).toBeVisible()
@@ -352,7 +352,7 @@ test.describe('clínica aliada', () => {
     // La de datos_demo, por su motivo: con la operación sembrada hay otras emitidas, y la primera
     // del listado (la que vence antes) puede ser una ya vencida, que la clínica no valida.
     const vigente = remisiones.find(
-      (r: { motivo: string; vencida: boolean }) => r.motivo === 'Radiografia de cadera por cojera' && !r.vencida,
+      (r: { motivo: string; vencida: boolean }) => r.motivo === 'Radiografía de cadera por cojera' && !r.vencida,
     )
     expect(vigente, 'datos_demo debe dejar una remisión emitida y vigente').toBeTruthy()
     const codigo: string = vigente.codigo
@@ -360,11 +360,11 @@ test.describe('clínica aliada', () => {
     await page.goto('/')
     await expect(page).toHaveURL(/\/aliada/)
     // La barra dice en qué clínica se está: la aliada lee su propia fila (migración 0049).
-    await expect(page.getByRole('banner')).toContainText('Clinica Veterinaria del Norte')
+    await expect(page.getByRole('banner')).toContainText('Clínica Veterinaria del Norte')
     await page.getByLabel('Código de la remisión').fill(codigo.toLowerCase())
     await page.getByRole('button', { name: 'Validar' }).click()
     await expect(page.getByText(/Se puede atender hasta el/)).toBeVisible()
-    await expect(page.getByText('Radiografia de cadera por cojera')).toBeVisible()
+    await expect(page.getByText('Radiografía de cadera por cojera')).toBeVisible()
     // La especie en palabras: la aliada lee el catálogo (antes salía «canino»).
     await expect(page.getByRole('heading', { name: /Rocky · Canino/ })).toBeVisible()
 

@@ -1117,10 +1117,10 @@ def main() -> None:
     c = Cliente()
     hoy = datetime.now(BOGOTA).date()
     if c.get("/familias", q=FAMILIAS[0]["documento"])["total"]:
-        print("La operacion ya estaba sembrada: no se hace nada.")
+        print("La operación ya estaba sembrada: no se hace nada.")
         return
 
-    print("Medico de Medellín")
+    print("Médico de Medellín")
     usuarios = {u["email"]: u for u in c.get("/auth/usuarios", limit=200)["items"]}
     email, nombre = MEDICO_MEDELLIN
     if email not in usuarios:
@@ -1143,11 +1143,11 @@ def main() -> None:
     # Con operaciones, no con gerencia@timu.co: ese administrador es el de los recorridos e2e, y
     # el cupo de peticiones es por usuario (frontend/e2e-stack/sesiones.ts).
     op = operar_dias(Cliente("operaciones@timu.co", CLAVE_EQUIPO), medicos, hoy)
-    print("Fechas de la operacion")
+    print("Fechas de la operación")
     fechar(motor, op)
     print("Encuestas")
     encuestas_respondidas(c, op, motor)
-    print("Comercial, tareas, remisiones, clinica virtual y una campana")
+    print("Comercial, tareas, remisiones, clínica virtual y una campaña")
     comercial(c, motor)
     tareas(c, motor)
     remisiones(c, motor, hoy)
@@ -1214,7 +1214,7 @@ def comprobar(op: Operacion) -> None:
         }
     faltan = [f"{k}: {hechos[k]} de {v}" for k, v in MINIMOS.items() if hechos[k] < v]
     if faltan:
-        sys.exit("La operacion quedo corta: " + "; ".join(faltan))
+        sys.exit("La operación quedó corta: " + "; ".join(faltan))
 
 
 if __name__ == "__main__":
