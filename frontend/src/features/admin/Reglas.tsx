@@ -5,12 +5,12 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { Consulta } from '@/components/Consulta'
 import { Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
-import { Modal } from '@/components/Modal'
 import { mensajeError } from '@/lib/errores'
 import { fechaCompacta } from '@/lib/formato'
 import type { ReglaRead } from '@/types'
 
 import { useActualizarRegla, useReglas } from './api'
+import { EditorRegla } from './EditorRegla'
 import { ProbarRegla } from './ProbarRegla'
 
 /** Reglas de negocio configurables (F0-12) en listado con ficha (R2-PAN-10): agrupadas por el
@@ -35,6 +35,7 @@ export function Reglas() {
 function ReglasLista({ seleccionada }: { seleccionada: string | null }) {
   const [params] = useSearchParams()
   const reglas = useReglas()
+  const [nueva, setNueva] = useState(false)
   const enlace = (id: string) => {
     const siguiente = new URLSearchParams(params)
     siguiente.set('regla', id)
@@ -47,8 +48,13 @@ function ReglasLista({ seleccionada }: { seleccionada: string | null }) {
         <h2 id="reglas-titulo">
           Reglas {reglas.data && <span className="apagado numero">{reglas.data.length}</span>}
         </h2>
+        {/* Verde solo sin una regla abierta: con la ficha a la vista, el verde es de ella. */}
+        <button className={`btn ${seleccionada ? 'btn-suave' : 'btn-primario'}`} type="button" onClick={() => setNueva(true)}>
+          <Icono nombre="mas" size={16} /> Nueva regla
+        </button>
       </div>
-      <Consulta consulta={reglas} cargando="Cargando las reglas…" error="No fue posible cargar las reglas." vacio="No hay reglas configuradas." estaVacio={(d) => d.length === 0}>
+      {nueva && <EditorRegla onCerrar={() => setNueva(false)} />}
+      <Consulta consulta={reglas} cargando="Cargando las reglas…" error="No fue posible cargar las reglas." vacio="Aún no hay reglas. Crea la primera con «Nueva regla»." estaVacio={(d) => d.length === 0}>
         {(d) => (
           <ul className="listado-filas" aria-label="Reglas por evento">
             {porEvento(d).map(([evento, del]) => (
@@ -191,67 +197,7 @@ function Ficha({ regla: r }: { regla: ReglaRead }) {
       </dl>
       <p className="admin-nota">Las reglas de un mismo evento se evalúan de menor a mayor prioridad.</p>
       {!r.retirada && <ProbarRegla regla={r} />}
-      {editando && <EditarRegla regla={r} onCerrar={() => setEditando(false)} />}
+      {editando && <EditorRegla regla={r} onCerrar={() => setEditando(false)} />}
     </>
-  )
-}
-
-function EditarRegla({ regla, onCerrar }: { regla: ReglaRead; onCerrar: () => void }) {
-  const actualizar = useActualizarRegla()
-  const [errorJson, setErrorJson] = useState<string | null>(null)
-
-  return (
-    <Modal
-      abierto
-      onCambio={(v) => !v && onCerrar()}
-      titulo={regla.nombre}
-      descripcion="Condición y acción en JSON. El backend las valida antes de guardar."
-      pie={
-        <button className="btn btn-primario" type="submit" form="editar-regla" disabled={actualizar.isPending}>
-          Guardar
-        </button>
-      }
-    >
-      <form
-        id="editar-regla"
-        className="pila"
-        onSubmit={(e) => {
-          e.preventDefault()
-          setErrorJson(null)
-          const d = new FormData(e.currentTarget)
-          try {
-            actualizar.mutate(
-              {
-                id: regla.id,
-                prioridad: Number(d.get('prioridad')),
-                condicion: JSON.parse(String(d.get('condicion'))),
-                accion: JSON.parse(String(d.get('accion'))),
-              },
-              { onSuccess: onCerrar },
-            )
-          } catch {
-            setErrorJson('La condición o la acción no es un JSON válido.')
-          }
-        }}
-      >
-        <label className="campo">
-          <span>Prioridad (menor se evalúa primero)</span>
-          <input className="input" name="prioridad" type="number" defaultValue={regla.prioridad} />
-        </label>
-        <label className="campo">
-          <span>Condición</span>
-          <textarea className="input codigo" name="condicion" rows={5} spellCheck={false} defaultValue={JSON.stringify(regla.condicion, null, 2)} />
-        </label>
-        <label className="campo">
-          <span>Acción</span>
-          <textarea className="input codigo" name="accion" rows={5} spellCheck={false} defaultValue={JSON.stringify(regla.accion, null, 2)} />
-        </label>
-        {(errorJson || actualizar.isError) && (
-          <p className="error" role="alert">
-            {errorJson ?? mensajeError(actualizar.error, 'La regla no es válida.')}
-          </p>
-        )}
-      </form>
-    </Modal>
   )
 }

@@ -2,10 +2,13 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 
 import { api } from '@/api/client'
 import type {
+  BorradorRegla,
   CasoRead,
   ColorPlan,
   ConsultaRead,
+  EnPalabras,
   EsquemaPreventivoRead,
+  EventoDeReglas,
   EventoPasarelaRead,
   Page,
   PlanRead,
@@ -236,12 +239,53 @@ export function useGuardarBeneficios() {
   )
 }
 
+/** Lo que se guarda de una regla desde el editor por campos (DEU-8). */
+export interface DatosRegla {
+  nombre?: string
+  descripcion?: string | null
+  condicion?: Record<string, unknown>
+  accion?: Record<string, unknown>
+  prioridad?: number
+  detener?: boolean
+  plan_id?: string | null
+  vigente_desde?: string | null
+  vigente_hasta?: string | null
+  activa?: boolean
+}
+
 export function useActualizarRegla() {
   return useMutacion(
-    async ({ id, ...datos }: { id: string; activa?: boolean; condicion?: unknown; accion?: unknown; prioridad?: number }) =>
-      (await api.patch<ReglaRead>(`/reglas/${id}`, datos)).data,
+    async ({ id, ...datos }: { id: string } & DatosRegla) => (await api.patch<ReglaRead>(`/reglas/${id}`, datos)).data,
     'reglas',
   )
+}
+
+/** El código interno no se pide: la API lo saca del nombre. */
+export function useCrearRegla() {
+  return useMutacion(
+    async (datos: DatosRegla & { nombre: string; evento: string; accion: Record<string, unknown> }) =>
+      (await api.post<ReglaRead>('/reglas', datos)).data,
+    'reglas',
+  )
+}
+
+/** Cada evento con los datos que da a sus reglas y lo que pueden hacer, con sus opciones. */
+export function useEventosReglas() {
+  return useQuery({
+    queryKey: ['reglas', 'eventos'],
+    queryFn: async () => (await api.get<EventoDeReglas[]>('/reglas/eventos')).data,
+  })
+}
+
+/** La regla a medio escribir, en palabras y validada como al guardarla (sin guardar nada). */
+export function useReglaEnPalabras(borrador: BorradorRegla | null) {
+  return useQuery({
+    queryKey: ['reglas', 'en-palabras', borrador],
+    queryFn: async () => (await api.post<EnPalabras>('/reglas/describir', borrador)).data,
+    enabled: borrador !== null,
+    placeholderData: keepPreviousData,
+    retry: false,
+  })
 }
 
 /** Lo que aplicaría a un contexto (reglas/router.py: `probar`), sin ejecutar nada. */

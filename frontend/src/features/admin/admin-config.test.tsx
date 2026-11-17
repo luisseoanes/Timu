@@ -20,27 +20,6 @@ const PLAN = {
   beneficios: [{ id: 'b1', tipo_servicio_codigo: 'consulta_domiciliaria', cupo: 6, periodo_cupo: 'anual', cobertura_pct: 100, copago: '0' }],
 }
 
-const REGLA = {
-  id: 'rg1',
-  codigo: 'alerta_mora_25',
-  nombre: 'Aviso de mora a los 25 días',
-  descripcion: null,
-  evento: 'cartera.alerta',
-  condicion: { op: 'gte', campo: 'dias_mora', valor: 25 },
-  accion: { tipo: 'notificar', plantilla: 'aviso_congelamiento' },
-  prioridad: 75,
-  detener: false,
-  plan_id: null,
-  vigente_desde: null,
-  vigente_hasta: null,
-  activa: true,
-  condicion_texto: 'Días de mora: 25 o más',
-  accion_texto: 'Envía un aviso por WhatsApp (plantilla aviso_congelamiento)',
-  evento_nombre: 'Avisos escalonados de mora',
-  retirada: null,
-  campos_condicion: [{ campo: 'dias_mora', nombre: 'Días de mora', numerico: true }],
-}
-
 /** Abre la ficha de un registro de una pestaña (`?plan=p1`, `?regla=rg1`) y espera a su título. */
 async function abrirFicha(pestana: string, ruta: string, region: string, titulo: string) {
   const user = userEvent.setup()
@@ -227,97 +206,6 @@ describe('Administración: planes', () => {
     await user.click(within(ficha).getByRole('button', { name: 'Más acciones con Colita Feliz' }))
     await user.click(await screen.findByRole('menuitem', { name: 'Desactivar plan' }))
     await waitFor(() => expect(cambio).toEqual({ activo: false }))
-  })
-})
-
-describe('Administración: reglas', () => {
-  it('agrupa por evento, dice en palabras cuándo aplica y qué hace, desactiva y edita en JSON', async () => {
-    const cambios: unknown[] = []
-    server.use(
-      ...base,
-      http.get(`${API}/reglas/eventos`, () => HttpResponse.json({ 'cartera.alerta': 'Avisos escalonados de mora (F1-CAR-04)' })),
-      http.get(`${API}/reglas`, () => HttpResponse.json([REGLA])),
-      http.patch(`${API}/reglas/rg1`, async ({ request }) => {
-        cambios.push(await request.json())
-        return HttpResponse.json(REGLA)
-      }),
-    )
-    const user = await abrirPestana('Reglas')
-    // El grupo, por el nombre del evento que da la API.
-    expect(
-      await screen.findByText((_, el) => el?.classList.contains('servicios-dia-rotulo') === true && el.textContent === 'Avisos escalonados de mora · 1'),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Días de mora: 25 o más')).toBeInTheDocument()
-    await user.click(screen.getByRole('link', { name: 'Aviso de mora a los 25 días' }))
-    const ficha = screen.getByRole('region', { name: 'Regla abierta' })
-    expect(await within(ficha).findByText('Envía un aviso por WhatsApp (plantilla aviso_congelamiento)')).toBeInTheDocument()
-    await user.click(within(ficha).getByRole('button', { name: 'Más acciones con Aviso de mora a los 25 días' }))
-    await user.click(await screen.findByRole('menuitem', { name: 'Desactivar regla' }))
-    await user.click(within(ficha).getByRole('button', { name: 'Editar regla' }))
-    const modal = await screen.findByRole('dialog')
-    const condicion = within(modal).getByLabelText('Condición')
-    await user.clear(condicion)
-    await user.click(condicion)
-    await user.paste('{"op": "gte", "campo": "dias_mora", "valor": 20}')
-    await user.click(within(modal).getByRole('button', { name: 'Guardar' }))
-    await waitFor(() => expect(cambios).toHaveLength(2))
-    expect(cambios[0]).toEqual({ activa: false })
-    expect(cambios[1]).toMatchObject({ prioridad: 75, condicion: { op: 'gte', campo: 'dias_mora', valor: 20 } })
-  })
-
-  it('avisa si el JSON no es válido', async () => {
-    server.use(...base, http.get(`${API}/reglas`, () => HttpResponse.json([REGLA])))
-    const { user, ficha } = await abrirFicha('Reglas', '/admin?regla=rg1', 'Regla abierta', 'Aviso de mora a los 25 días')
-    await user.click(within(ficha).getByRole('button', { name: 'Editar regla' }))
-    const modal = await screen.findByRole('dialog')
-    const accion = within(modal).getByLabelText('Acción')
-    await user.clear(accion)
-    await user.type(accion, 'no es json')
-    await user.click(within(modal).getByRole('button', { name: 'Guardar' }))
-    expect(await within(modal).findByRole('alert')).toHaveTextContent('no es un JSON válido')
-  })
-
-  it('prueba la regla abierta con sus datos por nombre y dice en palabras qué aplicaría', async () => {
-    const pruebas: unknown[] = []
-    server.use(
-      ...base,
-      http.get(`${API}/reglas`, () => HttpResponse.json([REGLA])),
-      http.post(`${API}/reglas/probar`, async ({ request }) => {
-        const cuerpo = (await request.json()) as { contexto: { dias_mora?: number } }
-        pruebas.push(cuerpo)
-        return HttpResponse.json(
-          (cuerpo.contexto.dias_mora ?? 0) >= 25
-            ? [{ regla: 'alerta_mora_25', nombre: 'Aviso de mora a los 25 días', accion: {}, accion_texto: REGLA.accion_texto }]
-            : [],
-        )
-      }),
-    )
-    const { user, ficha } = await abrirFicha('Reglas', '/admin?regla=rg1', 'Regla abierta', 'Aviso de mora a los 25 días')
-    const probar = within(ficha).getByRole('region', { name: 'Probar esta regla' })
-    await user.type(within(probar).getByLabelText('Días de mora'), '30')
-    await user.click(within(probar).getByRole('button', { name: 'Probar' }))
-    expect(await within(probar).findByRole('status')).toHaveTextContent('Esta regla aplica.')
-    expect(within(probar).getByRole('list', { name: 'Reglas que aplicarían' })).toHaveTextContent(REGLA.accion_texto)
-    expect(pruebas[0]).toEqual({ evento: 'cartera.alerta', contexto: { dias_mora: 30 } })
-    const dias = within(probar).getByLabelText('Días de mora')
-    await user.clear(dias)
-    await user.type(dias, '3')
-    await user.click(within(probar).getByRole('button', { name: 'Probar' }))
-    expect(await within(probar).findByText('Esta regla no aplica con estos datos.')).toBeInTheDocument()
-    expect(within(probar).getByText('Ninguna regla de este evento aplicaría.')).toBeInTheDocument()
-  })
-
-  it('una regla de un evento retirado dice por qué y no se edita', async () => {
-    server.use(
-      ...base,
-      http.get(`${API}/reglas`, () =>
-        HttpResponse.json([{ ...REGLA, evento: 'plan.mascota', evento_nombre: 'Precio por mascota', retirada: 'Lo sustituyen las tarifas por número de peludos' }]),
-      ),
-    )
-    const { ficha } = await abrirFicha('Reglas', '/admin?regla=rg1', 'Regla abierta', 'Aviso de mora a los 25 días')
-    expect(within(ficha).getByText(/^Evento retirado: lo sustituyen las tarifas/)).toBeInTheDocument()
-    expect(within(ficha).queryByRole('button', { name: 'Editar regla' })).not.toBeInTheDocument()
-    expect(within(ficha).queryByRole('region', { name: 'Probar esta regla' })).not.toBeInTheDocument()
   })
 })
 

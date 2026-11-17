@@ -165,6 +165,35 @@ test.describe('gerencia en el inicio', () => {
   })
 })
 
+test.describe('gerencia en reglas', () => {
+  // Con el perfil de administración: solo él edita reglas. No guarda nada: una regla creada en
+  // cada pasada cambiaría la operación que recorren los demás.
+  test.use({ storageState: sesion('admin') })
+
+  test('una regla nueva se escribe por campos y la API la dice en palabras antes de guardar', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/admin')
+    await page.getByRole('tab', { name: 'Reglas' }).click()
+    await page.getByRole('button', { name: 'Nueva regla' }).click()
+    const ventana = page.getByRole('dialog', { name: 'Nueva regla' })
+    await ventana.getByLabel('Cuándo se revisa').selectOption('servicio.elegibilidad')
+    await ventana.getByRole('button', { name: 'Añadir una condición' }).click()
+    // Las ciudades salen del catálogo de la base, con sus tildes.
+    await ventana.getByRole('combobox', { name: 'Valor de la condición 1' }).selectOption('Medellín')
+    const descrita = page.waitForResponse((r) => r.url().includes('/api/v1/reglas/describir'))
+    await ventana.getByLabel('Motivo que se le dice al equipo').fill('Sin domicilio por ahora')
+    expect((await descrita).status()).toBe(200)
+    const palabras = ventana.getByRole('region', { name: 'La regla en palabras' })
+    await expect(palabras).toContainText('Ciudad de la familia: Medellín')
+    await expect(palabras).toContainText('No lo permite: Sin domicilio por ahora')
+    const crear = ventana.getByRole('button', { name: 'Crear regla' })
+    const [boton, caja] = [await crear.boundingBox(), await ventana.boundingBox()]
+    expect(boton!.y + boton!.height, 'el botón principal se ve entero').toBeLessThanOrEqual(caja!.y + caja!.height)
+    await ventana.getByRole('button', { name: 'Cerrar' }).click()
+    await expect(ventana).toBeHidden()
+  })
+})
+
 test.describe('gerencia en servicios', () => {
   // Con el perfil de administración: el de equipo no tiene cupo de peticiones para uno más.
   test.use({ storageState: sesion('admin') })
