@@ -137,6 +137,10 @@ def test_los_campos_de_una_condicion_salen_una_vez_con_su_nombre():
             {"tipo": "tarea", "titulo": "Renovar", "area": "servicio_cliente", "vence_en_dias": 1},
             "Crea la tarea «Renovar» para servicio al cliente, prioridad media, que vence en 1 día",
         ),
+        (
+            {"tipo": "tarea", "titulo": "Autorizar", "area": "medico", "prioridad": "alta"},
+            "Crea la tarea «Autorizar» para médico, prioridad alta, que vence en 2 días",
+        ),
         ({"tipo": "prorrateo", "modo": "sin_cargo"}, "Cambia de plan sin cobrar la diferencia"),
         ({"tipo": "rechazar", "motivo": "Tiene mora"}, "No lo permite: Tiene mora"),
         (

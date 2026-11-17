@@ -234,6 +234,7 @@ _VALORES = {
     "congelada": "congelada",
     "cancelada": "cancelada",
     "servicio_cliente": "servicio al cliente",
+    "medico": "médico",
 }
 
 # El nombre de cada evento, sin la referencia al backlog que lleva su descripcion.
