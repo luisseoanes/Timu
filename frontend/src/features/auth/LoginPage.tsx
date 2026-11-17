@@ -4,13 +4,13 @@ import { useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 
 import { api } from '@/api/client'
+import { AccesoLayout } from '@/components/AccesoLayout'
 import { Icono } from '@/components/Icono'
 import { mensajeError } from '@/lib/errores'
 import { telefono as formatoTelefono } from '@/lib/formato'
 import { inicioDeRol } from '@/lib/permisos'
 import type { Usuario } from '@/types'
 
-import { AccesoLayout } from './AccesoLayout'
 import { useAuth } from './AuthContext'
 import { CampoClave } from './CampoClave'
 
