@@ -51,6 +51,7 @@ docker compose up -d --build -V       # tras traer dependencias nuevas: el códi
                                       # van en la imagen, y -V renueva el node_modules anónimo de `web`
                                       # `exec api` trabaja en /app, que es backend/ montado: un script de prueba
                                       # copiado ahí aparece en el repositorio; cópialo al /tmp del contenedor
+                                      # y córrelo con `exec -T -w /app -e PYTHONPATH=/app api python /tmp/x.py`
 
 # Backend sin Docker
 cd backend && pip install -r requirements-dev.txt

@@ -110,6 +110,9 @@ Reglas que atraviesan todo el backend:
   conecta al importarse qué hacer cuando la visita de un preventivo se autoriza, se completa o se
   cancela (`servicios.conectar_al_cambiar_estado`, ver `docs/flujo-de-la-visita.md`); sin
   conectar, `cambiar_estado` falla.
+- **`cartera` no importa `aliadas`** (que valida la cartera al remitir): `aliadas/service.py` le conecta al
+  importarse qué hacer al cancelar un contrato (`cartera.conectar_al_cancelar`: corta la vigencia de las
+  remisiones por usar); sin conectar, cancelar falla.
 - **`catalogos` no importa `clinica`** (que lee el catálogo): `clinica/service.py` le conecta al
   importarse qué campos llena la consulta firmada (`catalogos.conectar_campos_de_la_consulta`), y el
   catálogo de tipos dice en cada paso si lo registra la consulta (`lo_registra_la_consulta`), para
@@ -319,7 +322,8 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
   matriz (`CONDICIONES` admite una expresión por operación). Ojo: una lectura que la base
   filtra no da error, devuelve menos filas, y el código que trata ese dato como opcional sigue
   adelante con un resultado peor (así se detectó la encuesta que nombraba al profesional como
-  «sin asignar»). Para buscarlos: contar cada `SELECT` de `publico` también como `sistema` en
+  «sin asignar»). Vale también para los catálogos: un perfil acotado (`aliada`) que no tiene la tabla en
+  `PERMISOS` la lee vacía (pasó con `especies`). Para buscarlos: contar cada `SELECT` de `publico` también como `sistema` en
   la misma transacción (`SAVEPOINT`, `set_config('app.rol', 'sistema', true)`, `ROLLBACK TO`)
   y anotar las sentencias en que `publico` ve menos filas. Lo que necesite ver lo de todos,
   como el reparto por carga de los comerciales, va en una función `SECURITY DEFINER` que solo
@@ -332,7 +336,8 @@ El plan completo y su avance están en [`docs/plan-persistencia.md`](../docs/pla
   todas las tareas del beat, captura cada sentencia y la analiza con
   `EXPLAIN (GENERIC_PLAN)` y `enable_seqscan = off`. Si aun así una tabla que crece con el
   negocio se recorre entera, ningún índice sirve esa consulta y la prueba falla. Un listado
-  o una tarea nueva se añade a `_LISTADOS`, o entra sola si es del beat. Para ordenar de lo más reciente a
+  o una tarea nueva se añade a `_LISTADOS` (uno de la clínica aliada, a `_LISTADOS_DE_ALIADA`, que se
+  recorre con una sesión de aliada), o entra sola si es del beat. Para ordenar de lo más reciente a
   lo más antiguo sin índice en `created_at`, se ordena por `id`: es UUIDv7, sigue el orden de creación y
   usa la clave primaria (la bandeja de remisiones). Las tablas acotadas
   por naturaleza van en `_ACOTADAS`, y los procesos por lotes que leen casi toda la tabla a
@@ -393,6 +398,7 @@ destructiva. La primera migración no tiene ese problema porque parte de una bas
   `alter_column(..., server_default=None)` después; el valor por defecto lo declara el modelo.
 - Lo que corre dentro de una función plpgsql no lo ve la guarda de caminos calientes (analiza
   `SELECT f()`): dentro, filtra `auditoria` por `entidad` para usar `ix_auditoria_entidad`.
+- Una política de `SELECT` no lleva `WITH CHECK`: copia el `_alterar` de la `0049`, que admite `None`.
 - Un `CHECK` se crea con `op.execute("ALTER TABLE … ADD CONSTRAINT ck_<tabla>_<nombre> …")`,
   no con `op.create_check_constraint`, que le añade otra vez el prefijo de la convención.
 

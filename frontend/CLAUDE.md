@@ -145,6 +145,8 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   `width: min(<máx>, 100%)`.
 - `verificar` muestra un aviso previo de ESLint en `AuthContext.tsx`
   (`react-refresh/only-export-components`): no es de tu cambio.
+- Una ayuda dentro del `<label>` entra en el nombre accesible del campo («Valor de la atención Lo que…») y
+  `getByLabelText` no lo encuentra: el campo con ayuda va en `div.campo` con `<label htmlFor>`.
 - El `onSuccess` que se pasa a `mutate(datos, { onSuccess })` no se ejecuta si el componente que
   llamó se desmonta antes (al reportar una remisión, el formulario desaparece porque la remisión
   pasa a «Atendida»). Lo que tiene que pasar sí o sí va en el `onSuccess` del propio `useMutation`
