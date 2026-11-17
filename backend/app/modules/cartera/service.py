@@ -539,10 +539,28 @@ def cancelar(db: Session, contrato: Contrato, motivo: str) -> Contrato:
         medio.activo = False
     db.flush()
 
+    if _al_cancelar is None:
+        # Sin conectar, la familia que se va conservaria sus remisiones por usar sin avisar.
+        raise RuntimeError("cartera sin conectar: falta conectar_al_cancelar()")
+    _al_cancelar(db, contrato)
     familia = db.get(Familia, contrato.familia_id)
     assert familia is not None
     familias.cambiar_estado(db, familia, EstadoAfiliacion.CANCELADA, motivo)
     return contrato
+
+
+# --- Lo que sigue a la cancelacion en otro dominio ----------------------------------------------
+# aliadas importa cartera (valida la cartera al remitir), asi que cartera no puede importar
+# aliadas: aliadas le conecta, al importar aliadas/service.py (que la API carga siempre), que
+# hacer con lo que la familia tenia emitido cuando su contrato se cancela.
+AlCancelar = Callable[[Session, Contrato], None]
+
+_al_cancelar: AlCancelar | None = None
+
+
+def conectar_al_cancelar(seguir: AlCancelar) -> None:
+    global _al_cancelar
+    _al_cancelar = seguir
 
 
 def url_documento(db: Session, contrato: Contrato) -> dict[str, str]:

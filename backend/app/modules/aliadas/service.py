@@ -15,6 +15,8 @@ from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ZONA_NEGOCIO, ahora, con_zona, hoy
 from app.modules.aliadas.models import ClinicaAliada, ConvenioAliada, RemisionAliada
 from app.modules.cartera import contratos
+from app.modules.cartera import service as cartera
+from app.modules.cartera.models import Contrato
 from app.modules.cartera.periodos import dinero
 from app.modules.catalogos.models import Especie
 from app.modules.familias.models import Familia, Mascota
@@ -218,6 +220,25 @@ def _de_la_clinica(db: Session, codigo: str, clinica_id: UUID) -> RemisionAliada
     return remision
 
 
+def cortar_vigencia_al_cancelar(db: Session, contrato: Contrato) -> None:
+    """Sin contrato no hay cobertura: las remisiones por usar de la familia dejan de servir el
+    dia en que se cancela (decidido con el usuario el 2026-11-16). No se anulan: una atencion
+    hecha hasta ese dia y aun sin reportar se sigue pudiendo reportar y cobrar. Que pasa con la
+    mora o la congelacion lo decide TIMU (docs/pendientes-externos.md)."""
+    for remision in db.scalars(
+        select(RemisionAliada).where(
+            RemisionAliada.familia_id == contrato.familia_id,
+            RemisionAliada.estado == "emitida",
+            RemisionAliada.vence_en > hoy(),
+        )
+    ):
+        remision.vence_en = hoy()
+    db.flush()
+
+
+cartera.conectar_al_cancelar(cortar_vigencia_al_cancelar)
+
+
 def cubre(remision: RemisionAliada, valor_atencion: Decimal) -> tuple[Decimal, Decimal]:
     """Lo que cubre TIMU de una atencion (porcentaje y tope de la remision) y lo que asume la
     familia. La misma cuenta al reportar y al mostrarla antes, para que no se digan dos cifras."""
@@ -231,8 +252,8 @@ def cubre(remision: RemisionAliada, valor_atencion: Decimal) -> tuple[Decimal, D
 def vista_aliada(db: Session, codigo: str, clinica_id: UUID) -> dict[str, Any]:
     """Lo minimo para atender: a quien (nombre del titular y ultimos digitos del documento
     para verificar identidad), que mascota y que cubre. Nada de contacto, direccion,
-    cartera ni historia clinica. Dice si sirve y, si sirve, entre que fechas se puede
-    reportar la atencion; si ya se uso, cuando y cuanto."""
+    cartera ni historia clinica. Dice si sirve y entre que fechas se puede reportar la
+    atencion (sin usar, tambien vencida); si ya se uso, cuando y cuanto."""
     remision = _de_la_clinica(db, codigo, clinica_id)
     familia = db.get(Familia, remision.familia_id)
     mascota = db.get(Mascota, remision.mascota_id)
@@ -240,6 +261,9 @@ def vista_aliada(db: Session, codigo: str, clinica_id: UUID) -> dict[str, Any]:
     especie = db.scalar(select(Especie.nombre).where(Especie.codigo == mascota.especie))
     emitida = con_zona(remision.created_at).astimezone(ZONA_NEGOCIO).date()
     vigente = remision.estado == "emitida" and remision.vence_en >= hoy()
+    # Sin usar, tambien vencida: una atencion hecha dentro de su vigencia se reporta despues.
+    hasta = min(remision.vence_en, hoy())
+    reportable = remision.estado == "emitida" and hasta >= emitida
     familia_asume = (
         remision.valor_atencion - remision.valor_cubierto
         if remision.valor_atencion is not None and remision.valor_cubierto is not None
@@ -252,8 +276,8 @@ def vista_aliada(db: Session, codigo: str, clinica_id: UUID) -> dict[str, Any]:
         "vencida": remision.estado == "emitida" and not vigente,
         "vence_en": remision.vence_en,
         "emitida_en": emitida,
-        "atencion_desde": emitida if vigente else None,
-        "atencion_hasta": min(remision.vence_en, hoy()) if vigente else None,
+        "atencion_desde": emitida if reportable else None,
+        "atencion_hasta": hasta if reportable else None,
         "titular": familia.titular_nombre,
         "documento_ultimos": familia.documento[-4:],
         "mascota": {

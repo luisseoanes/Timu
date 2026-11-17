@@ -147,7 +147,9 @@ class RemisionVistaAliada(BaseModel):
     vencida: bool
     vence_en: date
     emitida_en: date
-    # Entre que fechas se puede reportar la atencion; sin valor si la remision no sirve.
+    # Entre que fechas se puede reportar la atencion: con la remision sin usar, tambien vencida
+    # (una atencion hecha dentro de su vigencia se reporta despues); sin valor si ya se uso o se
+    # anulo.
     atencion_desde: date | None
     atencion_hasta: date | None
     titular: str

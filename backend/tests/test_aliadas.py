@@ -226,6 +226,7 @@ async def test_la_vista_dice_si_sirve_entre_que_fechas_y_la_especie_en_palabras(
     await db.commit()
     vencida = (await client.get(url, headers=aliada)).json()
     assert vencida["vigente"] is False and vencida["vencida"] is True
+    # Vencio antes de emitirse (la fecha se forzo): no hay ningun dia que reportar.
     assert vencida["atencion_desde"] is None and vencida["atencion_hasta"] is None
 
 
@@ -338,6 +339,75 @@ async def test_la_aliada_no_ve_lo_atendido_por_otra_clinica(client, db, headers,
         headers=ajena,
     )
     assert cobertura.status_code == 404
+
+
+@pytest.mark.parametrize("como", ["baja", "cancelacion"])
+async def test_cancelar_el_contrato_corta_la_vigencia_de_las_remisiones_por_usar(
+    client, db, headers, escenario, aliada, monkeypatch, como
+):
+    """Sin contrato no hay cobertura: la remision deja de servir el dia de la baja, pero una
+    atencion hecha hasta ese dia se sigue pudiendo reportar (decidido con el usuario)."""
+    remision = (await _remitir(client, headers, escenario)).json()
+    url = f"/api/v1/aliadas/mi-clinica/remisiones/{remision['codigo']}"
+    if como == "baja":
+        resp = await client.post(
+            f"/api/v1/familias/{escenario['familia_id']}/baja",
+            json={"motivo": "Se muda de ciudad"},
+            headers=headers,
+        )
+    else:
+        resp = await client.post(
+            f"/api/v1/cartera/contratos/{escenario['contrato_id']}/cancelar",
+            json={"motivo": "Se muda de ciudad"},
+            headers=headers,
+        )
+    assert resp.status_code == 200, resp.text
+    await db.commit()
+    corte = (await client.get(url, headers=aliada)).json()
+    assert corte["estado"] == "emitida" and corte["vence_en"] == str(HOY)
+    assert corte["atencion_hasta"] == str(HOY)
+
+    # Al dia siguiente ya vencio: lo atendido despues de la baja no se reporta...
+    monkeypatch.setattr("app.modules.aliadas.service.hoy", lambda: HOY + timedelta(days=1))
+    vencida = (await client.get(url, headers=aliada)).json()
+    assert vencida["vencida"] is True and vencida["atencion_hasta"] == str(HOY)
+    despues = await client.post(
+        f"{url}/atencion",
+        json={
+            "fecha": str(HOY + timedelta(days=1)),
+            "valor_atencion": "100000",
+            "resumen": "Radiografia",
+        },
+        headers=aliada,
+    )
+    assert despues.status_code == 422
+    assert "fuera de la vigencia" in despues.json()["detail"]
+    # ...pero lo atendido hasta ese dia, si.
+    antes = await client.post(
+        f"{url}/atencion",
+        json={"fecha": str(HOY), "valor_atencion": "100000", "resumen": "Rx de cadera"},
+        headers=aliada,
+    )
+    assert antes.status_code == 200, antes.text
+    assert antes.json()["estado"] == "utilizada"
+
+
+async def test_la_baja_no_toca_las_remisiones_ya_usadas(client, db, headers, escenario, aliada):
+    remision = (await _remitir(client, headers, escenario)).json()
+    url = f"/api/v1/aliadas/mi-clinica/remisiones/{remision['codigo']}"
+    await client.post(
+        f"{url}/atencion",
+        json={"fecha": str(HOY), "valor_atencion": "100000", "resumen": "Consulta"},
+        headers=aliada,
+    )
+    await client.post(
+        f"/api/v1/familias/{escenario['familia_id']}/baja",
+        json={"motivo": "Se muda de ciudad"},
+        headers=headers,
+    )
+    await db.commit()
+    usada = (await client.get(url, headers=aliada)).json()
+    assert usada["estado"] == "utilizada" and usada["vence_en"] == remision["vence_en"]
 
 
 async def test_aliada_no_ve_remisiones_de_otra_clinica(client, db, headers, escenario, aliada):
