@@ -128,8 +128,9 @@ empuje a `main` y bloquea el release si falla, pero para entonces el commit ya e
 Este fichero es lo transversal. Las reglas de cada lado viven junto a su código y se
 cargan al trabajar allí:
 
-- [`backend/CLAUDE.md`](backend/CLAUDE.md): arquitectura del backend, migraciones y cómo
-  se prueba contra PostgreSQL.
+- [`backend/CLAUDE.md`](backend/CLAUDE.md): las reglas del backend en una línea cada una
+  (arquitectura, persistencia, migraciones y pruebas); el porqué y el detalle de cada una, en
+  [`docs/backend/`](docs/backend/).
 - [`frontend/CLAUDE.md`](frontend/CLAUDE.md): arquitectura del panel, sesión en el
   navegador, estilos y pruebas con MSW.
 
