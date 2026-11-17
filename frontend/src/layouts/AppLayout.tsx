@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { Icono, type NombreIcono } from '@/components/Icono'
 import { MarcaTimu } from '@/components/MarcaTimu'
+import { MenuCuenta } from '@/components/MenuCuenta'
 import { useAuth } from '@/features/auth'
 import { NOMBRE_ROL, puede, type Accion } from '@/lib/permisos'
 import type { Rol } from '@/types'
@@ -107,12 +108,6 @@ export function AppLayout() {
   const visibles = NAV.filter((n) => !n.permiso || puede(usuario, n.permiso))
   const actual = visibles.find((n) => esActual(n, pathname)) ?? NAV[0]
   const movil = capacidad === 0
-  const iniciales = (usuario?.nombre ?? '')
-    .split(' ')
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join('')
-    .toUpperCase()
 
   const enBarra = visibles.slice(0, capacidad)
   const enMas = visibles.slice(capacidad)
@@ -155,24 +150,7 @@ export function AppLayout() {
             </label>
           </form>
         )}
-        <Menu.Root>
-          <Menu.Trigger className="cuenta" aria-label={`Cuenta de ${usuario?.nombre ?? 'usuario'}`}>
-            {iniciales || '—'}
-          </Menu.Trigger>
-          <Menu.Portal>
-            <Menu.Content className="menu" align="end" sideOffset={8}>
-              <Menu.Label className="menu-etiqueta">
-                <strong>{usuario?.nombre}</strong>
-                <span>{usuario ? NOMBRE_ROL[usuario.rol] : ''}</span>
-              </Menu.Label>
-              <Menu.Separator className="menu-separador" />
-              <Menu.Item className="menu-item" onSelect={logout}>
-                <Icono nombre="salir" size={18} />
-                Cerrar sesión
-              </Menu.Item>
-            </Menu.Content>
-          </Menu.Portal>
-        </Menu.Root>
+        <MenuCuenta nombre={usuario?.nombre} detalle={usuario ? NOMBRE_ROL[usuario.rol] : ''} alSalir={logout} />
       </header>
 
       <main className="contenido">

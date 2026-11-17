@@ -1,9 +1,9 @@
-import * as Menu from '@radix-ui/react-dropdown-menu'
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 
 import { Icono, type NombreIcono } from '@/components/Icono'
 import { MarcaTimu } from '@/components/MarcaTimu'
+import { MenuCuenta } from '@/components/MenuCuenta'
 import { useAuth } from '@/features/auth'
 
 const NAV: { to: string; label: string; icono: NombreIcono; end?: boolean }[] = [
@@ -40,12 +40,6 @@ function useMovil(): boolean {
 export function PortalLayout() {
   const { usuario, logout } = useAuth()
   const movil = useMovil()
-  const iniciales = (usuario?.nombre ?? '')
-    .split(' ')
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join('')
-    .toUpperCase()
 
   const destinos = NAV.map((n) => (
     <NavLink key={n.to} to={n.to} end={n.end}>
@@ -63,24 +57,7 @@ export function PortalLayout() {
             {destinos}
           </nav>
         )}
-        <Menu.Root>
-          <Menu.Trigger className="cuenta" aria-label={`Cuenta de ${usuario?.nombre ?? 'tu familia'}`}>
-            {iniciales || '—'}
-          </Menu.Trigger>
-          <Menu.Portal>
-            <Menu.Content className="menu" align="end" sideOffset={8}>
-              <Menu.Label className="menu-etiqueta">
-                <strong>{usuario?.nombre}</strong>
-                <span>Portal de familias</span>
-              </Menu.Label>
-              <Menu.Separator className="menu-separador" />
-              <Menu.Item className="menu-item" onSelect={logout}>
-                <Icono nombre="salir" size={18} />
-                Cerrar sesión
-              </Menu.Item>
-            </Menu.Content>
-          </Menu.Portal>
-        </Menu.Root>
+        <MenuCuenta nombre={usuario?.nombre} detalle="Portal de familias" alSalir={logout} />
       </header>
       <main className="contenido portal-contenido">
         <Outlet />

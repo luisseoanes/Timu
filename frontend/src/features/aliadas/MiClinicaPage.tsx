@@ -1,7 +1,5 @@
-import * as Menu from '@radix-ui/react-dropdown-menu'
-
-import { Icono } from '@/components/Icono'
 import { MarcaTimu } from '@/components/MarcaTimu'
+import { MenuCuenta } from '@/components/MenuCuenta'
 import { useAuth } from '@/features/auth'
 
 import { useMiClinica } from './api'
@@ -18,12 +16,6 @@ import { ValidarRemision } from './ValidarRemision'
 export function MiClinicaPage() {
   const { usuario, logout } = useAuth()
   const clinica = useMiClinica()
-  const iniciales = (usuario?.nombre ?? '')
-    .split(' ')
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join('')
-    .toUpperCase()
 
   return (
     <div className="shell aliada">
@@ -31,24 +23,11 @@ export function MiClinicaPage() {
         <MarcaTimu claro compacta />
         {/* En un computador compartido de recepción, en qué clínica se está. */}
         <p className="aliada-barra-clinica">{clinica.data?.nombre}</p>
-        <Menu.Root>
-          <Menu.Trigger className="cuenta" aria-label={`Cuenta de ${usuario?.nombre ?? 'la clínica'}`}>
-            {iniciales || '—'}
-          </Menu.Trigger>
-          <Menu.Portal>
-            <Menu.Content className="menu" align="end" sideOffset={8}>
-              <Menu.Label className="menu-etiqueta">
-                <strong>{usuario?.nombre}</strong>
-                <span>{clinica.data ? `${clinica.data.nombre} · ${clinica.data.ciudad}` : 'Clínica aliada'}</span>
-              </Menu.Label>
-              <Menu.Separator className="menu-separador" />
-              <Menu.Item className="menu-item" onSelect={logout}>
-                <Icono nombre="salir" size={18} />
-                Cerrar sesión
-              </Menu.Item>
-            </Menu.Content>
-          </Menu.Portal>
-        </Menu.Root>
+        <MenuCuenta
+          nombre={usuario?.nombre}
+          detalle={clinica.data ? `${clinica.data.nombre} · ${clinica.data.ciudad}` : 'Clínica aliada'}
+          alSalir={logout}
+        />
       </header>
       <main className="contenido aliada-contenido">
         <div className="aliada-mostrador">
