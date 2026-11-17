@@ -5,9 +5,9 @@
 > [hoja de ruta](../hoja-de-ruta-rediseno.md) («Dónde se retoma»). La unidad siguiente no se
 > empieza sin que el usuario lo diga. El panel del equipo está rediseñado entero (R2) y
 > el portal de familias también, igual que el acceso (ingreso, recuperación y activación). El
-> espacio de la clínica aliada está rediseñado desde `R3-ALI-01`, y la encuesta y la verificación
-> del carnet desde `R3-PUB-03`. Queda con su composición anterior, aunque ya con la paleta, la
-> tipografía y el logo nuevos, el registro en línea (`R3-PUB-02`).
+> espacio de la clínica aliada está rediseñado desde `R3-ALI-01`, la encuesta y la verificación
+> del carnet desde `R3-PUB-03`, y el registro en línea desde `R3-PUB-02`: no queda ninguna pantalla
+> con la composición anterior.
 
 ## Qué leer antes de escribir una pantalla
 

@@ -194,3 +194,18 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
   como en el PDF (hoy cada tabla reparte su ancho y «Dosis 1, refuerzo» o «Dra. Sara Martínez»
   parten la fila); y la línea de marca del acceso, que en la encuesta resalta «Visita en casa» sea
   cual sea la atención (viene de `R3-PUB-01`).
+
+### Lo que quedó del registro en línea tras cerrar `R3-PUB-02`
+
+- **Sin pasarela de pruebas de Wompi** (pendiente de TIMU), el resultado del pago y el formulario de
+  la familia se revisaron con la consulta del registro simulada; el recorrido contra el stack llega
+  hasta «¿Cómo quieres pagar?» sin pagar.
+- **Valores provisionales nuevos**, anotados en [pendientes externos](../pendientes-externos.md):
+  la carencia y las exclusiones de cada plan, el WhatsApp de contacto (ficticio en local) y las
+  condiciones generales del contrato (pedirle a TIMU sus contratos reales).
+- **Sugerencias del revisor, opcionales** (el «techo»): el color del plan en el filete de la ficha
+  entera, no solo en la cabecera de su cobertura (un borde lateral de color está vetado por el piso
+  de oficio; tendría que ser otra forma); el segundo peludo plegado en una línea que se abre al
+  tocarla (con dos fichas abiertas la página mide unos 2.900 px a 390); la tarifa por número de
+  peludos dicha como ganancia al añadir uno («con 2 peludos, cada plan baja»); y separar el verde
+  del plan Mi Amigo Fiel del verde de la acción, que conviven llenos en la misma vista.

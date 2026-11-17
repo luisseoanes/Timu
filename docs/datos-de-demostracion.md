@@ -21,7 +21,7 @@ actualiza lo ya sembrado, así que un stack viejo conserva los datos de cuando s
 | Clínica aliada | «Clínica Veterinaria del Norte», con un convenio y el usuario `aliada@timu.co`. |
 | Portal de familias | `ana@example.com`, con el plan en pausa por cuotas vencidas, y `jorge@example.com`, al día: en cada pasada se le paga lo vencido. |
 | Familias | Cinco, en Bogotá y Medellín, con sus mascotas y contratos (una sin plan). |
-| Planes | Los beneficios provisionales: lo que dice el plegable 2026 donde lo dice y cupos de prueba en lo demás (`BENEFICIOS` y `DEL_PLEGABLE`; ver [pendientes externos](pendientes-externos.md)). |
+| Planes | Los beneficios provisionales: lo que dice el plegable 2026 donde lo dice y cupos de prueba en lo demás (`BENEFICIOS` y `DEL_PLEGABLE`), y la carencia y las exclusiones provisionales que dice el registro (`CONDICIONES`); ver [pendientes externos](pendientes-externos.md). |
 | Agenda | Franjas de lunes a sábado, a domicilio y preventivas, en Bogotá y Medellín. |
 | Lo demás | Servicios, tareas, calendarios de preventivos (con una vacuna aplicada a Nala, de Laura Gómez, para que el barrido mida la verificación de un carnet real), una consulta firmada y un borrador, una respuesta virtual aprobada, interesados, una conversación de WhatsApp que pide asesor, una plantilla y una campaña, y una remisión. |
 | Ruta de la médica | En el primer día con cupo de la semana (no siempre hoy): los recorridos la buscan con `rutaDemo` (`e2e-stack/datos.ts`). |

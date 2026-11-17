@@ -229,8 +229,32 @@ encuesta (`R3-PUB-03`), la otra página a la que la familia llega desde un enlac
   seguimiento (6.21), con tres respuestas en fila (`.calificacion-seguimiento`). «¡Gracias!» dice
   qué pasa después según `te_contactamos`.
 
-El registro en línea sigue en `.publica` + `.publica-tarjeta` (el logo arriba y una tarjeta
-centrada) hasta su unidad (`R3-PUB-02`).
+## Registro en línea — `.registro` (`MarcoRegistro`, R3-PUB-02)
+
+El registro (`/afiliacion`), el resultado del pago y el formulario de la familia comparten el marco:
+la franja marina con el logo compacto y, debajo, el contenido con la manada a la derecha.
+
+```
+≥ 900 px                                           < 900 px
+┌ TIMU ─────────────────────────────────────────┐ ┌ TIMU ───────────────┐
+│ ¿Quiénes se unen a la manada?   │ Tu manada    │ │ ¿Quiénes se unen…   │
+│ Ciudad [Medellín ▾]             │ Toby ■ Fiel  │ │ ┌ Toby · Perro ────┐ │
+│ ┌ Toby · Perro ───────────────┐ │ 1 peludo     │ │ │[Colita][Fiel][Pr]│ │
+│ │ Nombre [Toby] [Perro|Gato]  │ │ $ 69.000/mes │ │ │ Lo que cubre…    │ │
+│ │ [Colita] [Fiel] [Siempre]   │ │ [Elegir cómo │ │ └──────────────────┘ │
+│ │ Lo que cubre Mi Amigo Fiel  │ │   pagar]     │ ├──────────────────────┤
+│ │ Comparar los 3 planes       │ │ Wompi · ¿Du… │ │ 1 peludo  $ 69.000   │ barra fija
+│ └─────────────────────────────┘ │              │ │ [ Elegir cómo pagar ]│
+└─────────────────────────────────┴──────────────┘ └──────────────────────┘
+```
+
+- **Desde 900 px**, la columna de 680 px y el resumen de 340 px fijo al bajar. **Por debajo**, una
+  columna y el resumen como barra fija (total y verde); `scroll-padding-bottom` deja libre su alto
+  para que nada que se trae a la vista o recibe el foco quede debajo.
+- **En el pago y después del pago** el verde no está en el resumen: la manada va como bloque al
+  final (`.registro-resumen-quieto`).
+- **El resultado** se titula por lo que pasó y **el formulario** va por bloques blancos (titular,
+  otros contactos, cada peludo y el acceso). La plantilla pública antigua (`.publica`) se retiró.
 
 ## Verificación del carnet — `.verificacion` (R3-PUB-03)
 

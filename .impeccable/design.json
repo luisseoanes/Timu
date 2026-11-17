@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-16T00:00:00Z",
+  "generatedAt": "2026-11-17T00:00:00Z",
   "title": "Design System: TIMU",
   "extensions": {
     "colorMeta": {
@@ -693,6 +693,21 @@
           "#C4C4CD",
           "#E2E3E7"
         ]
+      },
+      "plan-verde-texto": {
+        "role": "neutral",
+        "displayName": "Texto sobre plan verde",
+        "canonical": "var(--marino-900)"
+      },
+      "plan-naranja-texto": {
+        "role": "neutral",
+        "displayName": "Texto sobre plan naranja",
+        "canonical": "var(--marino-900)"
+      },
+      "plan-azul-texto": {
+        "role": "neutral",
+        "displayName": "Texto sobre plan azul",
+        "canonical": "var(--blanco)"
       }
     },
     "typographyMeta": {
@@ -1040,6 +1055,14 @@
       "description": "El veredicto es el h1 con el escudo de 32 px en ok; debajo, la frase y la ficha de pares; la huella al pie, entera.",
       "html": "<section class=\"ds-veredicto\"><h1><svg width=\"32\" height=\"32\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z\"/><path d=\"m9 12 2 2 4-4\"/></svg>Carnet auténtico</h1><p>Carnet preventivo emitido por TIMU.</p><dl><div><dt>Mascota</dt><dd>Coco · Canino · Pug</dd></div><div><dt>Código</dt><dd>YCAHP9D98N</dd></div><div><dt>Emitido</dt><dd>16/11/2026, 11:21 p. m.</dd></div></dl></section><p class=\"ds-huella\">Huella SHA-256 del PDF, para compararla con el documento: <span>527933b4387a9e0278e7e585b0ca4032ec697e846e733cff36fdad04d4c27732</span></p>",
       "css": ".ds-veredicto { display: grid; gap: var(--e3); padding-bottom: var(--e6); border-bottom: 1px solid var(--borde); font-family: var(--fuente); } .ds-veredicto h1 { display: flex; align-items: center; gap: var(--e3); margin: 0; font-family: var(--fuente-titulos); font-weight: 400; font-size: var(--t-display); color: var(--texto-titulo); } .ds-veredicto h1 svg { flex-shrink: 0; color: var(--estado-ok-texto); } .ds-veredicto > p { margin: 0; color: var(--texto-suave); } .ds-veredicto dl { display: flex; flex-wrap: wrap; gap: var(--e2) var(--e6); margin: 0; } .ds-veredicto dl div { display: grid; gap: 2px; } .ds-veredicto dt { font-size: var(--t-etiqueta); font-weight: 600; letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; color: var(--texto-suave); } .ds-veredicto dd { margin: 0; font-weight: 600; color: var(--texto-titulo); font-variant-numeric: tabular-nums; } .ds-huella { margin: var(--e5) 0 0; font-family: var(--fuente); font-size: var(--t-menor); color: var(--texto-suave); } .ds-huella span { color: var(--texto); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }"
+    },
+    {
+      "name": "Opción de plan y lo que cubre",
+      "kind": "custom",
+      "refersTo": "registro-plan",
+      "description": "Los planes como tres opciones iguales con borde de 2 px de su color; la elegida, llena con su par de texto, abre lo que cubre: cabecera del color, una fila por servicio con el texto de la API y las condiciones que trae el catálogo.",
+      "html": "<fieldset class=\"ds-planes\"><legend>Su plan</legend><label class=\"ds-plan\" data-color=\"naranja\"><input type=\"radio\" name=\"ds-plan\"><span class=\"ds-plan-nombre\">Colita Feliz</span><span class=\"ds-plan-valor\">$ 35.500 al mes</span></label><label class=\"ds-plan\" data-color=\"verde\"><input type=\"radio\" name=\"ds-plan\" checked><span class=\"ds-plan-nombre\">Mi Amigo Fiel</span><span class=\"ds-plan-valor\">$ 69.000 al mes</span></label><label class=\"ds-plan\" data-color=\"azul\"><input type=\"radio\" name=\"ds-plan\"><span class=\"ds-plan-nombre\">Amigos por Siempre</span><span class=\"ds-plan-valor\">$ 98.000 al mes</span></label></fieldset><div class=\"ds-cobertura\" data-color=\"verde\"><p class=\"ds-cobertura-cabeza\">Lo que cubre Mi Amigo Fiel</p><dl class=\"ds-filas\"><div><dt>Consulta domiciliaria</dt><dd>1 al mes</dd></div><div><dt>Atención en clínica aliada</dt><dd>2 al año · cubre el 40 %</dd></div></dl><dl class=\"ds-condiciones\"><div><dt>Carencia</dt><dd>Sin carencia.</dd></div></dl></div>",
+      "css": ".ds-planes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e2); margin: 0; padding: 0; border: 0; font-family: var(--fuente); } .ds-planes legend { padding: 0; margin-bottom: var(--e2); font-size: var(--t-menor); font-weight: 600; color: var(--texto-titulo); } .ds-plan { position: relative; display: grid; gap: 2px; min-height: 56px; padding: var(--e3) var(--e4); border: 2px solid var(--plan-verde); border-radius: var(--r-campo); background: var(--superficie); cursor: pointer; } .ds-plan input { position: absolute; opacity: 0; pointer-events: none; } .ds-plan[data-color=naranja] { border-color: var(--plan-naranja); } .ds-plan[data-color=azul] { border-color: var(--plan-azul); } .ds-plan-nombre { font-weight: 600; color: var(--texto-titulo); } .ds-plan-valor { font-size: var(--t-menor); color: var(--texto-suave); font-variant-numeric: tabular-nums; } .ds-plan:hover { background: var(--superficie-lienzo); } .ds-plan:has(input:checked) { background: var(--plan-verde); } .ds-plan[data-color=naranja]:has(input:checked) { background: var(--plan-naranja); } .ds-plan[data-color=azul]:has(input:checked) { background: var(--plan-azul); } .ds-plan:has(input:checked) span { color: var(--plan-verde-texto); } .ds-plan[data-color=naranja]:has(input:checked) span { color: var(--plan-naranja-texto); } .ds-plan[data-color=azul]:has(input:checked) span { color: var(--plan-azul-texto); } .ds-plan:has(input:focus-visible) { box-shadow: 0 0 0 2px var(--superficie), 0 0 0 4px var(--foco); } .ds-cobertura { margin-top: var(--e4); border: 1px solid var(--borde); border-radius: var(--r-campo); overflow: hidden; font-family: var(--fuente); } .ds-cobertura-cabeza { margin: 0; padding: var(--e2) var(--e4); font-weight: 600; background: var(--plan-verde); color: var(--plan-verde-texto); } .ds-filas, .ds-condiciones { margin: 0; } .ds-filas div { display: flex; justify-content: space-between; gap: var(--e4); padding: var(--e3) var(--e4); border-top: 1px solid var(--borde); } .ds-filas div:first-child { border-top: 0; } .ds-filas dt { color: var(--texto); } .ds-filas dd { margin: 0; font-weight: 600; color: var(--texto-titulo); text-align: right; font-variant-numeric: tabular-nums; } .ds-condiciones { display: grid; gap: var(--e3); padding: var(--e4); background: var(--superficie-lienzo); border-top: 1px solid var(--borde); } .ds-condiciones div { display: grid; gap: 2px; } .ds-condiciones dt { font-size: var(--t-etiqueta); letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; font-weight: 700; color: var(--texto-suave); } .ds-condiciones dd { margin: 0; color: var(--texto); }"
     }
   ],
   "narrative": {
@@ -1193,6 +1216,31 @@
         "name": "La regla del enlace en palabras propias",
         "section": "components",
         "body": "Una página a la que se llega desde un enlace dice lo que pasó con sus palabras y qué hacer («Esta encuesta no está disponible», «No encontramos este carnet»), nunca el `detail` del servidor: quien llega no pidió nada todavía y no sabe qué es un token. Solo un fallo pasajero muestra su causa, junto a «Reintentar»."
+      },
+      {
+        "name": "La regla de la barra que deja su alto",
+        "section": "layout",
+        "body": "Una barra fija abajo que tapa el contenido le reserva su alto al desplazar: `scroll-padding-bottom` en la raíz mientras la barra está (160 px en el registro), además del relleno inferior del contenido, para que lo que el navegador trae a la vista o recibe el foco no quede debajo (WCAG 2.4.11). Si la vista ya no necesita la barra, la barra deja de ser fija."
+      },
+      {
+        "name": "La regla del plan de frente",
+        "section": "components",
+        "body": "El plan se elige en su color y con todo lo que cubre a la vista antes de pagar: opciones del color del catálogo, la elegida abierta con cada servicio, su carencia y lo que no cubre, y la comparación a un toque dentro de la misma ficha. Nunca un `<select>` de planes, ni las condiciones en letra pequeña al final o detrás de un enlace."
+      },
+      {
+        "name": "La regla de lo que el catálogo no dice",
+        "section": "components",
+        "body": "Lo que se le muestra a quien se afilia (precio, lo que cubre cada servicio, carencia, exclusiones, términos, el número de WhatsApp) sale de la API; si la API no lo da, no se muestra: ni un texto por defecto, ni «ilimitado», ni un enlace vacío. Para que aparezca, TIMU lo escribe en el catálogo (Administración → Planes)."
+      },
+      {
+        "name": "La regla del ahorro que se sostiene",
+        "section": "components",
+        "body": "Una promesa de ahorro (en la frase, en una opción) solo se dice si el dato de la API la sostiene para lo que se está eligiendo: sin descuento en ningún periodo, la frase no habla de ahorrar y ninguna opción dice «Ahorras»."
+      },
+      {
+        "name": "La regla de lo igual una vez",
+        "section": "components",
+        "body": "En una comparación, lo que es igual en todas las opciones se dice una sola vez, a todo el ancho y con «igual en los N»; las columnas quedan para lo que cambia, y la diferencia salta a la vista."
       }
     ],
     "dos": [
@@ -1218,7 +1266,11 @@
       "Do en un mostrador que atiende a una persona tras otra, al terminar vacía el campo de entrada y devuélvele el foco.",
       "Do haz del veredicto de una verificación el `h1`, con su icono, y deja debajo lo que lo sostiene.",
       "Do ancla arriba un formulario que crece al elegir, para que lo que aparece no mueva la opción tocada.",
-      "Do tras una respuesta, di qué pasa ahora según lo que devuelve la API («Alguien del equipo TIMU te va a contactar…»), sin prometer una hora."
+      "Do tras una respuesta, di qué pasa ahora según lo que devuelve la API («Alguien del equipo TIMU te va a contactar…»), sin prometer una hora.",
+      "Do deja elegir un plan con opciones en su color y abre la elegida con todo lo que cubre, su carencia y lo que no cubre antes de pedir el pago; la comparación, dentro de la misma ficha.",
+      "Do en una comparación, di una vez lo que es igual en todas las opciones («igual en los 3») y deja las columnas para lo que cambia; apilada, cada valor lleva su opción con su marcador.",
+      "Do a una barra fija abajo resérvale su alto al desplazar (`scroll-padding-bottom`) y quítala de fija cuando la vista ya no la necesita.",
+      "Do muestra a quien se afilia solo lo que da el catálogo de la API; lo que falta se escribe en Administración → Planes, no en la pantalla."
     ],
     "donts": [
       "Don't escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.",
@@ -1241,7 +1293,11 @@
       "Don't le listes a la clínica aliada las remisiones por usar: abre solo la del código que trae la familia.",
       "Don't recortes ni abrevies una huella o un código que se compara con otro documento: se muestra entero, aunque se parta de línea.",
       "Don't muestres el `detail` del servidor en una página a la que se llega desde un enlace: di lo que pasó en palabras propias y qué hacer.",
-      "Don't pongas el veredicto de una verificación como etiqueta o distintivo sobre otro título."
+      "Don't pongas el veredicto de una verificación como etiqueta o distintivo sobre otro título.",
+      "Don't pongas los planes en un `<select>` ni las condiciones (carencia, exclusiones) en letra pequeña al final: se ven con el plan, antes de pagar.",
+      "Don't inventes lo que la API no da (una condición por defecto, «ilimitado», un enlace de términos vacío, un número de contacto): sin el dato, no se muestra.",
+      "Don't prometas ahorro si ningún periodo lo trae: la frase y las opciones solo hablan de ahorrar cuando el dato lo sostiene.",
+      "Don't describas la plantilla pública anterior (`.publica`, `.publica-tarjeta`) ni la uses: se retiró con el registro en línea; las páginas públicas usan el acceso, la columna de la verificación o el marco del registro."
     ]
   }
 }

@@ -49,6 +49,9 @@ colors:
   plan-naranja: "#D48200"
   plan-azul: "#477095"
   plan-ninguno: "#A0A1AF"
+  plan-verde-texto: "#111537"
+  plan-naranja-texto: "#111537"
+  plan-azul-texto: "#FFFFFF"
   ruta-recorrida: "#111537"
   ruta-pendiente: "#85889D"
   serie-1: "#769116"
@@ -236,10 +239,13 @@ listado con ficha). El portal de familias está rediseñado entero: la
 estructura, el inicio y los peludos (R3-POR-01) y las citas, los pagos y los datos (R3-POR-02).
 De las páginas públicas, el acceso (R3-PUB-01): ingreso, recuperación, restablecimiento y
 activación de la cuenta; y las dos a las que se llega desde un enlace (R3-PUB-03): la encuesta
-que recibe la familia por WhatsApp y la verificación del carnet preventivo para un tercero. La
+que recibe la familia por WhatsApp y la verificación del carnet preventivo para un tercero; y el
+registro en línea (R3-PUB-02): la familia arma su manada, elige el plan de cada peludo, paga y
+completa sus datos. La plantilla pública anterior (`.publica`, `.publica-tarjeta`) se retiró:
+ninguna pantalla la usa. La
 clínica aliada tiene su espacio rediseñado: Mi clínica (R3-ALI-01), el mostrador donde valida el
 código de una remisión, reporta la atención y ve lo atendido en el mes.
-El resto de módulos del panel y el registro en línea todavía usan la maqueta anterior y adoptan
+El resto de módulos del panel todavía usan la maqueta anterior y adoptan
 este sistema en sus unidades de
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md): lo que se ve hoy en ellos no
 es el sistema. El color, la tipografía, el logo y la voz los fija el
@@ -337,7 +343,9 @@ el principal es la acción de la próxima estación y nombra lo que hace.
 **La regla de plan contra estado.** El plan es identidad: un cuadrado de 12 px del color del
 plan (`marcador-plan`) y el nombre al lado en texto, o la línea de la familia. El estado es una
 pastilla tintada con texto oscuro e icono. El color del plan sale del campo `color` del
-catálogo (`data-color`), nunca del nombre del plan.
+catálogo (`data-color`), nunca del nombre del plan. Donde el plan se elige (el registro en línea),
+la opción lleva el borde de 2 px del color del plan y, elegida, se llena de él con su par de texto
+(`plan-verde-texto` y `plan-naranja-texto` marino, `plan-azul-texto` blanco, en `@pares` a 4.5).
 
 **La regla de la señal doble.** El estado nunca se comunica solo con color (WCAG 1.4.1): el
 distintivo lleva icono por tono (`check`, `alerta`, `info`, `cerrar`, `menos`), la estación
@@ -420,6 +428,20 @@ primera pantalla del celular. La encuesta hereda el acceso entero (`AccesoLayout
 cerrado por un hilo; las secciones del carnet; y el pie, abierto por otro hilo. Es la misma
 columna en el escritorio y en el celular: las tablas se apilan por su contenedor.
 
+**El registro en línea (`MarcoRegistro`).** El registro, el resultado del pago y el formulario de
+la familia comparten marco: es el mismo viaje. Sin barra de módulos: una franja marina
+(`superficie-marca`, 16 px de relleno) con el logo compacto en blanco de 28 px, y debajo, sobre el
+lienzo, `.registro-cuerpo` hasta 1120 px (32 px arriba, 16 a los lados, 40 abajo) en dos columnas
+separadas 32 px: el contenido en una columna de hasta 680 px (`.registro-manada`,
+`.registro-pago`, 20 px entre bloques) y el resumen de la manada en una de 340 px, fijo al bajar
+(`position: sticky`, 24 px del borde). Por debajo de 900 px, una columna (20 px arriba y 180 abajo)
+y el resumen se vuelve una barra fija abajo (`--capa-barra`, borde arriba, sin esquina ni sombra,
+con el área segura) que solo dice el total y el verde; la lista de la manada y la confianza se
+ocultan, y el contacto baja al final del contenido (`.registro-solo-celular`). Cuando el verde de
+la vista es otro (en el pago) o ya no lo hay (después del pago), el resumen deja de ser barra y va
+como bloque al final (`.registro-resumen-quieto`: panel blanco con esquina de panel y la lista
+entera).
+
 **La ruta propia (Rutas).** Quien solo sale a campo no ve listado: su ruta del día ocupa una
 columna de hasta 760 px, que se lee igual en el escritorio que en el celular. Encima, una línea
 con el avance («1 de 3 paradas · 22,3 km · hasta las 1:15 p. m.») y el día, un botón compacto
@@ -473,6 +495,12 @@ siempre por debajo de 600 px de ventana).
 que aparece, una etiqueta que cambia) se ancla arriba, no se centra en el alto: centrado, lo que
 aparece debajo empuja hacia arriba la opción que se acaba de tocar. En el acceso es `arriba`, que
 usa la encuesta; el ingreso, de alto fijo, sigue centrado.
+
+**La regla de la barra que deja su alto.** Una barra fija abajo que tapa el contenido le reserva
+su alto al desplazar: `scroll-padding-bottom` en la raíz mientras la barra está (160 px en el
+registro), además del relleno inferior del contenido, para que lo que el navegador trae a la vista
+o recibe el foco no quede debajo (WCAG 2.4.11). Si la vista ya no necesita la barra, la barra deja
+de ser fija.
 
 **La regla de sin desborde.** Ninguna ruta desborda en horizontal a 375, 768, 900 ni 1280 px, ni
 tiene texto con contraste insuficiente según axe-core; las rutas con pestañas se comprueban
@@ -1250,6 +1278,109 @@ que pasó con sus palabras y qué hacer («Esta encuesta no está disponible», 
 carnet»), nunca el `detail` del servidor: quien llega no pidió nada todavía y no sabe qué es un
 token. Solo un fallo pasajero muestra su causa, junto a «Reintentar».
 
+### El registro en línea (R3-PUB-02)
+«Cada peludo, su plan»: una familia que no está afiliada dice quiénes son sus peludos, elige un plan
+para cada uno, paga en Wompi y después completa sus datos (`/afiliacion`, `/afiliacion/resultado`,
+`/afiliacion/completar`), en el marco del registro (ver Layout). Precios, coberturas y condiciones
+salen del catálogo público de la API; el panel no escribe ninguno.
+- **La manada:** el `h1` «¿Quiénes se unen a la manada?» y debajo, en texto suave, «Plan de salud
+  prepagado para perros y gatos. Tres pasos: tu manada, el pago y los datos de la familia.»;
+  después la ciudad («¿En qué ciudad vives?», una lista de hasta 320 px). La primera ciudad abre
+  una ventana «Antes de seguir» («Por ahora afiliamos solo perros y gatos.») cuyo verde nombra lo
+  que se confirma («Confirmo que solo voy a afiliar perros o gatos»); cambiarla después limpia los
+  planes elegidos, porque cada ciudad vende los suyos. Debajo, una ficha por peludo y, al final,
+  «Otro peludo» (`.registro-otro`): 56 px, borde discontinuo de 1,5 px en `borde-control-hover`,
+  esquina de panel y sin fondo; al pasar, blanco y borde continuo. Es la única caja discontinua del
+  sistema: dice «aquí cabe otro», no es un panel.
+- **La ficha de un peludo** (`FichaPeludo`, `.registro-ficha`): panel blanco con hilo, esquina de
+  panel, 20 px de relleno y 16 entre bloques; es contenedor (`container-type: inline-size`). El
+  `h2` es el nombre y la especie («Toby · Perro», la especie en texto suave) con «Quitar a Toby» en
+  plano a la derecha si hay más de uno. Nombre y especie van en una fila: el campo y, al lado, el
+  segmentado «Es» Perro / Gato (`.registro-segmento`, los dos segmentos pegados con borde de
+  control, 40 px y 44 en pantallas táctiles; el elegido, lleno de marino con texto blanco y 600).
+  Cambiar la especie limpia el plan.
+  Un nombre repetido en la manada es un error bajo el campo.
+- **Los planes como opciones en su color** (`.registro-planes`, fieldset «Su plan»): tres columnas
+  iguales a 8 px, también en el celular. Cada opción, esquina de campo, 56 px, borde de 2 px del
+  color del plan (`data-color` del catálogo), el nombre en 600 y debajo el precio con la tarifa por
+  número de peludos («$ 35.500 al mes», «al mes» sin partirse). Al pasar, lienzo; elegida, llena
+  del color del plan con su par de texto (ver Colors); con el foco, doble anillo blanco y azul. En
+  una ficha de menos de 360 px, 64 px de alto, 8 de relleno, nombre a 13 px y precio a 12, para que
+  lo que cubre el plan elegido suba a la primera pantalla por encima de la barra.
+- **Lo que cubre** (`.registro-cobertura`): el plan elegido se abre debajo, con borde de hilo y
+  esquina de campo. La cabecera «Lo que cubre Mi Amigo Fiel» va llena del color del plan con su par
+  de texto. Después, una fila por servicio con hilo entre ellas: el servicio a la izquierda y lo que
+  dice la API (`texto` del beneficio: «1 al mes», «2 al año · cubre el 40 %») a la derecha en 600,
+  marino y cifras tabulares. Al pie, sobre el lienzo, las condiciones como pares de etiqueta en
+  mayúsculas y valor: Carencia, No cubre y Términos (enlace «Términos y condiciones de <plan>»).
+  Cada una solo si el catálogo la trae; sin ninguna, no hay pie. Sin plan elegido, una nota: «Elige
+  un plan para ver todo lo que cubre y sus condiciones.».
+- **Comparar los planes** (botón plano con la flecha, «Comparar los 3 planes» / «Cerrar la
+  comparación», `aria-expanded`): despliega dentro de la ficha una `tabla` con las mismas filas para
+  todos los planes, en el orden del catálogo: «Al mes», cada servicio que trae alguno (el que un plan
+  no trae dice «No incluye») y, si alguno las tiene, Carencia y No cubre. Las cabeceras de plan van
+  llenas de su color, sin mayúsculas. Una fila igual en todos ocupa todas las columnas y se dice una
+  vez: «4 al año · igual en los 3» (la nota en texto suave). En un contenedor de menos de 480 px se
+  apila: cada servicio es un bloque con hilo y cada valor lleva delante su plan con su marcador de
+  color (`.registro-comparador-plan`), porque la columna de color ya no se ve; lo igual va a todo el
+  ancho.
+- **El resumen de la manada** (`.registro-resumen`, `aside` «Tu afiliación»): panel blanco, 20 px
+  de relleno y 16 entre bloques. «Tu manada en Medellín» (16 px, Inter 600); cada peludo con su
+  nombre en 600 y debajo el marcador de plan, el plan y su valor («Mi Amigo Fiel · $ 69.000»), o
+  «Sin plan todavía» apagado. Bajo un hilo, el total en `aria-live`: «2 peludos · tarifa de 2» en
+  13 px suave y la cifra en 24 px y 600 («$ 91.500 al mes»); en la barra del celular, la cifra a
+  16 px en la misma fila. Antes de poder calcular, «Elige un plan para cada peludo y ves el total.».
+  El verde «Elegir cómo pagar», a todo el ancho y de 48 px (`btn-grande`), deshabilitado hasta que
+  cada peludo tiene un nombre propio en la manada y un plan. Debajo, la confianza: «El pago lo procesa Wompi.» con el candado
+  y «¿Dudas? Escríbenos por WhatsApp» (`Contacto`), que solo aparece si la API da el número.
+- **El pago** (`PagoRegistro`): «Volver a la manada» en plano arriba; el `h1` «¿Cómo quieres
+  pagar?» y la frase, que solo promete ahorro si algún periodo lo trae («Pagando por varios meses
+  ahorras.»; si no, «Puedes pagar varios meses de una vez.»). Las periodicidades en 2 × 2
+  (`.registro-periodos`, fieldset «Cada cuánto»): cada una con borde de control, el nombre en 600 y
+  el valor del periodo; elegida, el tono de selección (borde e hilo interior de
+  `indicador-seleccion` sobre `superficie-seleccion`); «Ahorras $ X» en 13 px, 600 y texto de ok solo
+  en la que lo da la API. Después, «¿A quién le enviamos el comprobante?» (nombre a todo el ancho;
+  celular y correo en dos columnas, una por debajo de 900 px) con la nota de que el enlace llega por
+  correo y WhatsApp; las casillas de aceptación, con «Leer el contrato con lo que elegiste (PDF)» en
+  plano (el modelo que genera la API con lo elegido); y el verde «Pagar $ X» a todo el ancho y de
+  48 px. El resumen va al final como bloque, sin verde.
+- **El resultado del pago** (`ResultadoRegistroPage`): el `h1` dice lo que pasó («Estamos
+  confirmando tu pago», «Tu pago no se aprobó», «Este registro se cerró», «Tu afiliación ya está
+  activa»), sacado del estado que da la API. La espera es un pulso verde de 12 px
+  (`.registro-espera-pulso`, `accion-fondo`, 1,4 s de ida y vuelta, apagado sin movimiento) junto a
+  la frase con el importe y la hora de la última consulta («última vez a las 3:42 p. m.»), en
+  `role="status"`. El rechazo: «Intentar de nuevo» (otro enlace de pago para lo mismo elegido),
+  «Empezar de nuevo con otra forma de pago» en plano y el contacto. La manada pagada va al final
+  (`ManadaPagada`), con «Pagaste» o «Por pagar» y la cifra.
+- **Los datos de la familia** (`CompletarRegistroPage`): el formulario por bloques
+  (`.registro-bloque`: `fieldset` blanco con hilo, esquina de panel, 20 px de relleno y la `legend`
+  en 16 px y 600): Titular, Otros contactos (opcional), uno por peludo («Toby · Perro», la especie
+  suave) y Tu acceso al portal. La foto de cada peludo se elige con un botón secundario propio
+  («Elegir foto» / «Cambiar foto», icono de subir) sobre el `input` de archivo oculto, con el foco
+  visible en el botón.
+- **En Administración → Planes:** «Condiciones que ve quien se afilia» (Carencia, Exclusiones y el
+  enlace a los términos, solo `https`) en la ficha del plan y en la ventana de editar; cada ayuda
+  dice qué pasa vacío («Vacío: el registro no dice nada de la carencia.»), y la ficha dice «Sin
+  escribir: el registro no la muestra.».
+
+**La regla del plan de frente.** El plan se elige en su color y con todo lo que cubre a la vista
+antes de pagar: opciones del color del catálogo, la elegida abierta con cada servicio, su carencia y
+lo que no cubre, y la comparación a un toque dentro de la misma ficha. Nunca un `<select>` de planes,
+ni las condiciones en letra pequeña al final o detrás de un enlace.
+
+**La regla de lo que el catálogo no dice.** Lo que se le muestra a quien se afilia (precio, lo que
+cubre cada servicio, carencia, exclusiones, términos, el número de WhatsApp) sale de la API; si la
+API no lo da, no se muestra: ni un texto por defecto, ni «ilimitado», ni un enlace vacío. Para que
+aparezca, TIMU lo escribe en el catálogo (Administración → Planes).
+
+**La regla del ahorro que se sostiene.** Una promesa de ahorro (en la frase, en una opción) solo se
+dice si el dato de la API la sostiene para lo que se está eligiendo: sin descuento en ningún
+periodo, la frase no habla de ahorrar y ninguna opción dice «Ahorras».
+
+**La regla de lo igual una vez.** En una comparación, lo que es igual en todas las opciones se dice
+una sola vez, a todo el ancho y con «igual en los N»; las columnas quedan para lo que cambia, y la
+diferencia salta a la vista.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -1296,6 +1427,14 @@ token. Solo un fallo pasajero muestra su causa, junto a «Reintentar».
   opción tocada.
 - **Do** tras una respuesta, di qué pasa ahora según lo que devuelve la API («Alguien del equipo
   TIMU te va a contactar…»), sin prometer una hora.
+- **Do** deja elegir un plan con opciones en su color y abre la elegida con todo lo que cubre,
+  su carencia y lo que no cubre antes de pedir el pago; la comparación, dentro de la misma ficha.
+- **Do** en una comparación, di una vez lo que es igual en todas las opciones («igual en los 3»)
+  y deja las columnas para lo que cambia; apilada, cada valor lleva su opción con su marcador.
+- **Do** a una barra fija abajo resérvale su alto al desplazar (`scroll-padding-bottom`) y quítala
+  de fija cuando la vista ya no la necesita.
+- **Do** muestra a quien se afilia solo lo que da el catálogo de la API; lo que falta se escribe en
+  Administración → Planes, no en la pantalla.
 
 ### Don't:
 - **Don't** escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.
@@ -1337,3 +1476,12 @@ token. Solo un fallo pasajero muestra su causa, junto a «Reintentar».
 - **Don't** muestres el `detail` del servidor en una página a la que se llega desde un enlace: di
   lo que pasó en palabras propias y qué hacer.
 - **Don't** pongas el veredicto de una verificación como etiqueta o distintivo sobre otro título.
+- **Don't** pongas los planes en un `<select>` ni las condiciones (carencia, exclusiones) en letra
+  pequeña al final: se ven con el plan, antes de pagar.
+- **Don't** inventes lo que la API no da (una condición por defecto, «ilimitado», un enlace de
+  términos vacío, un número de contacto): sin el dato, no se muestra.
+- **Don't** prometas ahorro si ningún periodo lo trae: la frase y las opciones solo hablan de
+  ahorrar cuando el dato lo sostiene.
+- **Don't** describas la plantilla pública anterior (`.publica`, `.publica-tarjeta`) ni la uses: se
+  retiró con el registro en línea; las páginas públicas usan el acceso, la columna de la
+  verificación o el marco del registro.
