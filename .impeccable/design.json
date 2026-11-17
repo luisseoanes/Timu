@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-15T00:00:00Z",
+  "generatedAt": "2026-11-16T00:00:00Z",
   "title": "Design System: TIMU",
   "extensions": {
     "colorMeta": {
@@ -1008,6 +1008,22 @@
       "description": "Recuadro tintado del tono de estado con esquina de campo y el icono de 16 px delante, que no encoge; un teléfono va en una sola pieza (.sin-cortes).",
       "html": "<p class=\"ds-aviso ds-aviso-ok\" role=\"status\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z\"/></svg><span>Enviamos un código por WhatsApp al <span class=\"ds-sin-cortes\">300 123 4567</span>.</span></p><p class=\"ds-aviso ds-aviso-error\" role=\"alert\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 4 2.5 20h19z\"/><path d=\"M12 10v4\"/><path d=\"M12 17h.01\"/></svg><span>El correo o la contraseña no coinciden. Intenta de nuevo.</span></p>",
       "css": ".ds-aviso { display: flex; gap: var(--e2); align-items: flex-start; margin: 0 0 var(--e2); padding: var(--e3) var(--e4); border-radius: var(--r-campo); font-family: var(--fuente); font-size: var(--t-menor); max-width: 400px; } .ds-aviso > svg { flex-shrink: 0; margin-top: 2px; } .ds-aviso-ok { background: var(--estado-ok-fondo); color: var(--estado-ok-texto); } .ds-aviso-error { background: var(--estado-peligro-fondo); color: var(--estado-peligro-texto); } .ds-sin-cortes { white-space: nowrap; }"
+    },
+    {
+      "name": "Cifras de una atención",
+      "kind": "card",
+      "refersTo": "aliada-cifras",
+      "description": "Importes que se leen juntos (lo que cuesta, lo que cubre TIMU, lo que paga la familia) en celdas iguales separadas por hilos; por debajo de 480 px de contenedor, filas de libro de cuentas.",
+      "html": "<dl class=\"ds-cifras\"><div><dt>Valor de la atención</dt><dd>$ 180.000</dd></div><div><dt>TIMU cubrió</dt><dd>$ 144.000</dd></div><div><dt>Pagó la familia</dt><dd>$ 36.000</dd></div></dl>",
+      "css": ".ds-cifras { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 1px; margin: 0; background: var(--borde); border: 1px solid var(--borde); border-radius: var(--r-tarjeta); overflow: hidden; font-family: var(--fuente); } .ds-cifras > div { padding: var(--e3); background: var(--superficie); } .ds-cifras dt { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; color: var(--texto-suave); } .ds-cifras dd { margin: var(--e1) 0 0; font-size: var(--t-cifra); font-weight: 600; color: var(--texto-titulo); font-variant-numeric: tabular-nums; } @media (max-width: 479px) { .ds-cifras { grid-auto-flow: row; grid-auto-columns: auto; } .ds-cifras > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e3); } .ds-cifras dd { margin: 0; font-size: var(--t-titulo); } }"
+    },
+    {
+      "name": "Código de la remisión",
+      "kind": "input",
+      "refersTo": "aliada-codigo",
+      "description": "El campo del código en 20 px, centrado, espaciado ancho y en mayúsculas, de 48 px, con «Validar» del mismo alto y la ayuda debajo de los dos, fuera del label.",
+      "html": "<form class=\"ds-codigo\"><label class=\"ds-campo\"><span>Código de la remisión</span><input class=\"ds-input-codigo\" value=\"2hpk5nwr\" aria-describedby=\"ds-codigo-ayuda\"></label><button class=\"ds-btn-validar\" type=\"button\">Validar</button><span id=\"ds-codigo-ayuda\" class=\"ds-ayuda\">El que trae la familia. Da igual en mayúsculas o en minúsculas.</span></form>",
+      "css": ".ds-codigo { display: grid; grid-template-columns: minmax(0, 320px) auto; justify-content: start; align-items: end; gap: var(--e2) var(--e3); font-family: var(--fuente); } .ds-campo { display: grid; gap: var(--e1); font-size: var(--t-menor); font-weight: 600; color: var(--texto-titulo); } .ds-input-codigo { height: 48px; padding: 0 var(--e3); border: 1px solid var(--borde-control); border-radius: var(--r-campo); background: var(--superficie); font-family: var(--fuente); font-size: var(--t-titulo); letter-spacing: .5em; text-align: center; text-transform: uppercase; color: var(--texto-titulo); } .ds-input-codigo:focus-visible { outline: none; border-color: var(--foco); box-shadow: 0 0 0 1px var(--foco); } .ds-btn-validar { height: 48px; padding: 0 var(--e5); border: 0; border-radius: var(--r-campo); background: var(--accion-fondo); color: var(--accion-texto); font: 600 var(--t-cuerpo) var(--fuente); cursor: pointer; transition: background-color var(--duracion) var(--curva); } .ds-btn-validar:hover { background: var(--accion-fondo-hover); } .ds-btn-validar:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; } .ds-ayuda { grid-column: 1 / -1; font-size: var(--t-etiqueta); color: var(--texto-suave); }"
     }
   ],
   "narrative": {
@@ -1131,6 +1147,16 @@
         "name": "La regla de la frase que le habla a quien llega",
         "section": "components",
         "body": "El panel de marca dice una frase a la persona que llega, no vende la plataforma: ni funciones con icono, ni antetítulo. La frase cambia con la pantalla (la activación le da la bienvenida a la familia) y el título del formulario la saluda por su nombre cuando la API lo sabe."
+      },
+      {
+        "name": "La regla del código como prueba",
+        "body": "La clínica no ve las remisiones por usar, ni las busca: solo abre la que la familia trae, por su código. El código es la prueba de que la familia se presentó, y lo que se ve de ella es lo justo para atenderla (titular, últimos dígitos del documento, la mascota): ni contacto, ni dirección, ni cartera, ni historia.",
+        "section": "components"
+      },
+      {
+        "name": "La regla de la cifra antes del compromiso",
+        "body": "Lo que cubre TIMU y lo que paga la familia se ve antes de reportar, no al terminar: lo calcula la API con la misma cuenta del reporte, sobre el valor que se está escribiendo. El panel no copia la regla de cobertura ni el tope para adelantar una cifra; si la API no respondió, lo dice en vez de estimar.",
+        "section": "components"
       }
     ],
     "dos": [
@@ -1150,7 +1176,10 @@
       "Do lleva lo reversible al menú de tres puntos, y en una confirmación nombra en el botón de cancelar lo que se conserva («Mantenerla», «Mantener el acceso», «Dejarlo activo»).",
       "Do muestra lo que la API dice en palabras (`condicion_texto`, `accion_texto`, estados con nombre) y los importes en dólares con `dolares()`.",
       "Do en un aviso o una frase que nombra un teléfono, escríbelo con `telefono()` y envuélvelo en `.sin-cortes`: «300 123 4567» no se parte entre dos líneas.",
-      "Do en el acceso, pregunta a la API si un enlace sirve antes de pedir la contraseña, y ante uno que no sirve ofrece «Pedir un enlace nuevo» como el verde."
+      "Do en el acceso, pregunta a la API si un enlace sirve antes de pedir la contraseña, y ante uno que no sirve ofrece «Pedir un enlace nuevo» como el verde.",
+      "Do muestra lo que cuesta algo a quien se compromete antes de que se comprometa, con la cifra que calcula la API para lo que escribió (en la aliada, lo que cubre TIMU y lo que paga la familia antes de «Reportar atención»).",
+      "Do deja la ayuda de un campo fuera de su `label`, como hermana enlazada con `aria-describedby`.",
+      "Do en un mostrador que atiende a una persona tras otra, al terminar vacía el campo de entrada y devuélvele el foco."
     ],
     "donts": [
       "Don't escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.",
@@ -1167,7 +1196,10 @@
       "Don't muestres un código del backend a la vista (`dias_mora gte 25`, `borrador`, `aliada`): si la API no lo dice en palabras, se arregla en la API.",
       "Don't confirmes en verde lo que anula o desactiva, ni pongas un interruptor o una casilla suelta que apague algo sin decir qué deja de pasar.",
       "Don't pongas en el panel de marca un antetítulo en pastilla, una tarjeta de vidrio (`backdrop-filter`) ni sombra, ni una lista de funciones con icono: es marino plano con el logo, la frase y la línea.",
-      "Don't pidas una contraseña con un enlace del que no sabes si sirve, ni digas que venció después de que la persona la escribió dos veces."
+      "Don't pidas una contraseña con un enlace del que no sabes si sirve, ni digas que venció después de que la persona la escribió dos veces.",
+      "Don't metas la ayuda de un campo dentro de su `label`: se vuelve parte de su nombre.",
+      "Don't pintes ceros sobre un vacío: un mes sin atenciones dice que no las hubo en una frase, sin cuatro cifras a cero.",
+      "Don't le listes a la clínica aliada las remisiones por usar: abre solo la del código que trae la familia."
     ]
   }
 }

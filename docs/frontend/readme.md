@@ -6,7 +6,8 @@
 > empieza sin que el usuario lo diga. El panel del equipo está rediseñado entero (R2) y
 > el portal de familias también, igual que el acceso (ingreso, recuperación y activación). Quedan
 > con su composición anterior, aunque ya con la paleta, la tipografía y el logo nuevos, el
-> registro en línea, la encuesta, la verificación del carnet y el portal de la clínica aliada (R3).
+> registro en línea, la encuesta y la verificación del carnet (R3). El espacio de la clínica aliada
+> está rediseñado desde `R3-ALI-01`.
 
 ## Qué leer antes de escribir una pantalla
 

@@ -235,9 +235,10 @@ Administración (las remisiones y los usuarios en bandeja; las clínicas, los pl
 listado con ficha). El portal de familias está rediseñado entero: la
 estructura, el inicio y los peludos (R3-POR-01) y las citas, los pagos y los datos (R3-POR-02).
 De las páginas públicas, el acceso (R3-PUB-01): ingreso, recuperación, restablecimiento y
-activación de la cuenta. El resto de módulos del panel y las demás páginas públicas (el registro
-en línea, la encuesta y la verificación del carnet), y la clínica aliada, todavía usan la maqueta
-anterior y adoptan este sistema en sus unidades de
+activación de la cuenta. La clínica aliada tiene su espacio rediseñado: Mi clínica (R3-ALI-01),
+el mostrador donde valida el código de una remisión, reporta la atención y ve lo atendido en el mes.
+El resto de módulos del panel y las demás páginas públicas (el registro en línea, la encuesta y la
+verificación del carnet) todavía usan la maqueta anterior y adoptan este sistema en sus unidades de
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md): lo que se ve hoy en ellos no
 es el sistema. El color, la tipografía, el logo y la voz los fija el
 [manual de marca](docs/manual-de-marca.md); aquí se dice cómo se aplican en la interfaz y se
@@ -431,6 +432,15 @@ abajo, esquina de panel).
   su propia línea, sin cuotas, que son de la familia; y un panel con las pestañas Carnet,
   Historia clínica y Su plan.
 
+**La clínica aliada (Mi clínica).** La estructura del portal (`.shell`, barra marina con la marca
+compacta y la cuenta) sin destinos ni barra inferior: la aliada tiene una sola pantalla. Entre la
+marca y la cuenta, el nombre de la clínica (ver Navigation). El contenido llega hasta 1120 px, como
+el portal, y es un mostrador (`.aliada-mostrador`): desde 900 px, dos columnas alineadas arriba y
+separadas 20 px, el trabajo en el resto (el código, la remisión abierta y su reporte) y lo atendido
+en una de 300–380 px. Por debajo de 900 px se apilan separadas 16 px, el código primero y lo
+atendido debajo. Cada columna es un panel blanco plano (`.aliada-panel`: esquina de panel, 24 px de
+relleno y 20 px entre bloques; 16 y 16 por debajo de 900 px).
+
 **Ritmo.** Escala de 4 px (`--e1` a `--e8`). Entre bloques de página 16 px; entre columnas 20
 px; dentro de un panel 20–24 px; entre filas de un listado 12 px de relleno con un hilo
 (`borde`) entre ellas. Los pares etiqueta/valor se separan 2 px; las fichas de datos van en
@@ -588,6 +598,10 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   destinos (Inicio, Peludos, Citas, Pagos, Mis datos) que caben siempre: no hay «Más». A la
   derecha, el avatar de la cuenta con su menú (cerrar sesión). Por debajo de 900 px los destinos
   bajan a la barra inferior.
+- **Clínica aliada:** la barra del portal sin destinos y sin barra inferior. En su lugar, el nombre
+  de la clínica en 13 px y 600, marino claro (`texto-sobre-marca-suave`), en una línea que se corta
+  con puntos suspensivos: en un computador compartido de recepción dice en qué clínica se está. El
+  menú de la cuenta lleva el nombre del usuario, «Clínica · ciudad» debajo y «Cerrar sesión».
 
 ### Tabs
 - Sobre Radix Tabs (`Pestanas`): 13 px en 700, texto suave, subrayado de 3 px verde hondo en la
@@ -1060,6 +1074,84 @@ que llega, no vende la plataforma: ni funciones con icono, ni antetítulo. La fr
 pantalla (la activación le da la bienvenida a la familia) y el título del formulario la saluda
 por su nombre cuando la API lo sabe.
 
+### Mi clínica (R3-ALI-01)
+El espacio de la clínica aliada (`/aliada`) es un mostrador: a la izquierda, el código que trae la
+familia y la remisión que abre, con su reporte; a la derecha, lo atendido en el mes (ver Layout).
+De la familia solo se ve lo necesario para atender: el titular, los últimos dígitos de su documento
+y la mascota.
+- **El código:** el `h1` «Validar una remisión» y debajo una fila con el campo y «Validar»,
+  alineados por el campo. El campo del código (`.codigo-input`, el mismo del ingreso por WhatsApp)
+  va en 20 px, centrado y con espaciado ancho (0,5 em), en mayúsculas aunque se escriba en
+  minúsculas (se ve como se valida), en una columna de hasta 320 px y de 48 px de alto; «Validar»
+  se iguala a ese alto. Por debajo de 600 px el campo toma el ancho que deja el botón. La ayuda
+  («El que trae la familia. Da igual en mayúsculas o en minúsculas.») va debajo de los dos.
+- **Un solo verde que se mueve:** sin remisión abierta, o con una que no se puede usar, el verde
+  es «Validar». Con una remisión por usar, «Validar» pasa a secundario y el verde es «Reportar
+  atención», a la derecha al pie del reporte; por debajo de 900 px, a todo el ancho, de 48 px y en
+  16 px.
+- **Mientras valida y si falla:** un esqueleto de tres líneas con «Validando la remisión…» para
+  lectores de pantalla. Un código que no existe en esta clínica es un aviso de error con icono que
+  nombra el código en `.numero` y dice qué hacer («Revisa el código con la familia: si está bien
+  escrito, la remisión es de otra clínica o TIMU no la ha emitido»); otro error, el aviso con su
+  causa y «Reintentar» si es pasajero.
+- **La línea de estado:** la remisión abierta empieza bajo un hilo, con 20 px arriba y 16 entre
+  bloques. Primero el distintivo y debajo, a 8 px, la frase, con el mismo ritmo en todos los
+  estados y anchos: «Por usar» (ok) «Se puede atender hasta el 16 dic.»; «Vencida» (peligro, con
+  icono) «Venció el … y ya no se puede usar. La familia puede pedirle una nueva a TIMU.»;
+  «Atendida» (neutro, con el check) «Ya se reportó: la atención fue el …»; «Anulada» (neutro)
+  «TIMU la anuló y ya no se puede usar.». La línea es `role="status"`.
+- **La remisión abierta:** la mascota como `h2` de 24 px (GeosansLight, marino) con «· Canino,
+  Labrador» en el mismo renglón, en la fuente de texto a 14 px y suave. Debajo, el titular en prosa
+  («Jorge Ramírez, documento terminado en 6123»), con «documento terminado en 6123» en
+  `.sin-cortes` y los dígitos en `.numero`: si la línea se parte, la cierra la coma, no un «·»
+  suelto, y el dato que se verifica no se corta. Después, la ficha
+  de datos: Motivo a todo el ancho; Beneficio, Cobertura (`cobertura()`: «80 % hasta $ 200.000») y
+  Código.
+- **El reporte** (solo con la remisión por usar): bajo un hilo, el `h3` «Reportar la atención» y el
+  formulario de dos columnas: la fecha, limitada a las fechas que dice la API (`atencion_desde`,
+  `atencion_hasta`, y con la última por defecto), y el valor, numérico, que se escribe y se ve con
+  formato («$ 180.000»). Debajo, a todo el ancho y en `aria-live`, el reparto que calcula la API
+  para ese valor, unos 300 ms después de dejar de escribir: «TIMU cubre» y «Paga la familia» en
+  cifras. Solo se pinta cuando la respuesta corresponde al valor escrito; antes, una nota dice qué
+  falta («Escribe el valor para ver cuánto cubre TIMU y cuánto le cobras a la familia.»,
+  «Calculando cuánto cubre TIMU…»). Si el valor llega al tope, una nota lo dice («Llega al tope de
+  $ 200.000 de esta remisión: el resto lo paga la familia.»). Al final, el resumen clínico (hasta
+  75 ch) con su ayuda, que nombra a la mascota.
+- **Tras reportar:** la remisión pasa a «Atendida», el código se vacía y el campo recupera el foco:
+  el mostrador queda listo para la siguiente familia.
+- **Lo reportado:** en una remisión atendida, bajo un hilo, «Lo que se reportó» (`h3` en la fuente
+  de texto, 600) con tres cifras en pasado: «Valor de la atención», «TIMU cubrió» y «Pagó la
+  familia».
+- **Lo atendido:** el `h2` «Atendidas» y, al lado, el mes como lista (el mes en curso y los doce
+  anteriores, «noviembre de 2026»), guardado en la URL (`?mes=2026-10`; el mes en curso no lleva
+  parámetro). Debajo, cuatro cifras («Atenciones», «Facturado», «TIMU cubrió», «Pagaron las
+  familias») y la lista con hilo, sin tabla: el titular y la mascota en marino a 14 px; debajo,
+  en 13 px suave, la fecha y el motivo, y el valor, lo que cubrió TIMU y el código. Sin atenciones,
+  una frase sola: «Todavía no hay atenciones reportadas este mes. Al reportar una, aparece aquí con
+  lo que cubre TIMU.», o «No se reportaron atenciones en octubre de 2026.» en un mes pasado.
+- **Las cifras** (`.aliada-cifras`): dos a cuatro importes que se leen juntos, en celdas blancas
+  iguales en fila, separadas por hilos de 1 px (el fondo `borde` asoma por el hueco), con borde de
+  1 px y esquina de tarjeta. Cada celda, 12 px de relleno: la etiqueta de 12 px en mayúsculas
+  espaciadas y suave, y la cifra en 24 px y 600, marino, `.numero`. Ocupan el ancho de lo que
+  acompañan, así el hilo del reparto cae en el hueco entre las dos columnas del formulario. En un
+  contenedor de menos de 480 px (el celular, la columna de lo atendido) cada cifra es una fila de
+  libro de cuentas: la etiqueta a la izquierda y el importe a la derecha en 20 px, en columna para
+  cuadrar. Sin datos no se pintan: un mes sin atenciones no lleva cuatro ceros.
+- **Las ayudas, fuera del label:** la ayuda de un campo es hermana de su etiqueta, no está dentro
+  de ella: el `.campo` es un `div` con `label` (`htmlFor`), control y ayuda enlazada con
+  `aria-describedby`; la del código va en el formulario, debajo del campo y del botón. Dentro del
+  `label`, la ayuda entraría en el nombre del campo para un lector de pantalla.
+
+**La regla del código como prueba.** La clínica no ve las remisiones por usar, ni las busca: solo
+abre la que la familia trae, por su código. El código es la prueba de que la familia se presentó,
+y lo que se ve de ella es lo justo para atenderla (titular, últimos dígitos del documento, la
+mascota): ni contacto, ni dirección, ni cartera, ni historia.
+
+**La regla de la cifra antes del compromiso.** Lo que cubre TIMU y lo que paga la familia se ve
+antes de reportar, no al terminar: lo calcula la API con la misma cuenta del reporte, sobre el
+valor que se está escribiendo. El panel no copia la regla de cobertura ni el tope para adelantar
+una cifra; si la API no respondió, lo dice en vez de estimar.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -1093,6 +1185,13 @@ por su nombre cuando la API lo sabe.
   en `.sin-cortes`: «300 123 4567» no se parte entre dos líneas.
 - **Do** en el acceso, pregunta a la API si un enlace sirve antes de pedir la contraseña, y ante
   uno que no sirve ofrece «Pedir un enlace nuevo» como el verde.
+- **Do** muestra lo que cuesta algo a quien se compromete antes de que se comprometa, con la cifra
+  que calcula la API para lo que escribió (en la aliada, lo que cubre TIMU y lo que paga la
+  familia antes de «Reportar atención»).
+- **Do** deja la ayuda de un campo fuera de su `label`, como hermana enlazada con
+  `aria-describedby`.
+- **Do** en un mostrador que atiende a una persona tras otra, al terminar vacía el campo de
+  entrada y devuélvele el foco.
 
 ### Don't:
 - **Don't** escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.
@@ -1124,3 +1223,8 @@ por su nombre cuando la API lo sabe.
   la frase y la línea.
 - **Don't** pidas una contraseña con un enlace del que no sabes si sirve, ni digas que venció
   después de que la persona la escribió dos veces.
+- **Don't** metas la ayuda de un campo dentro de su `label`: se vuelve parte de su nombre.
+- **Don't** pintes ceros sobre un vacío: un mes sin atenciones dice que no las hubo en una frase,
+  sin cuatro cifras a cero.
+- **Don't** le listes a la clínica aliada las remisiones por usar: abre solo la del código que trae
+  la familia.

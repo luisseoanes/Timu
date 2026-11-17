@@ -28,12 +28,12 @@ actualiza aquí, igual que en el backlog.
 | R0 — Preparación | 4 | 4 | 0 | 0 |
 | R1 — Fundaciones | 7 | 5 | 2 | 0 |
 | R2 — Panel del equipo | 10 | 10 | 0 | 0 |
-| R3 — Familias, aliada y páginas públicas | 6 | 3 | 0 | 3 |
+| R3 — Familias, aliada y páginas públicas | 6 | 4 | 0 | 2 |
 | R4 — Cierre | 4 | 0 | 0 | 4 |
-| **Total** | **31** | **22** | **2** | **7** |
+| **Total** | **31** | **23** | **2** | **6** |
 
 Al cierre de `R2-PAN-10` (2026-11-15) el panel del equipo está rediseñado entero, y con `R3-PUB-01`
-(el mismo día) también el acceso.
+(el mismo día) también el acceso. Con `R3-ALI-01` (2026-11-16), el espacio de la clínica aliada.
 
 ### Dónde se retoma (2026-11-16)
 
@@ -44,11 +44,10 @@ hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
   tabla de [deuda decidida](rediseno/deuda.md) marca como pendiente: `DEU-8` (editor de reglas por
   campos), `DEU-14` (terminar la siembra gruesa), `DEU-15` (plantillas de consulta, decidida, TODO)
   y `DEU-27` (va en `R4-CIE-03`). `DEU-E` espera a TIMU.
-- **Siguiente unidad: `R3-ALI-01`, pero solo cuando el usuario lo diga** (lo dejó para otra
-  sesión). Orden que Claude propuso y el usuario **aún no confirmó**: `R3-ALI-01`, `R3-PUB-03`,
-  `R3-PUB-02` (con los precios provisionales de TIMU dichos como tales); `DEU-8`, `DEU-14` y `DEU-15`
-  intercaladas, porque no dependen de decisiones de diseño; y el cierre `R4` (recorrido,
-  auditoría, documentación y umbrales). Se le pregunta antes de empezar.
+- **Siguiente unidad: `R3-PUB-03`, pero solo cuando el usuario lo diga.** Orden **confirmado por el
+  usuario el 2026-11-16**: `R3-ALI-01` (hecha ese día), `R3-PUB-03`, `R3-PUB-02` (con los precios
+  provisionales de TIMU dichos como tales); `DEU-8`, `DEU-14` y `DEU-15` intercaladas, preguntando
+  antes de empezar cada una; y el cierre `R4` (recorrido, auditoría, documentación y umbrales).
 - **`R1-CMP-02` y `R1-CMP-03` siguen parciales** y se cierran con R3 y R4 (paginación, filtros y
   orden comunes; vacíos que orientan en las pantallas de R3).
 - **Datos**: `datos_demo` y luego `operacion_demo` (ocho semanas de operación). La base local se
@@ -201,7 +200,7 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 | `R3-POR-02` | Portal: citas, pagos y datos | Citas, pagos, datos y documentos. Se aplica la voz del manual: desaparece «ilimitado» (`PortalPages.tsx`), sustituido por lo que sí aplica, como «sin tope de usos al mes». | Hecho (2026-11-13), sin sorteo: hereda los patrones de `R3-POR-01` («ilimitado» ya había desaparecido allí). **Citas**: agendar es el verde solo si el plan lo permite (si no, dice por qué y lleva a pagos); pestañas Próximas y Pasadas; cada cita con su día en la zona de Colombia, su estado dicho a la familia («Confirmada», «Por autorizar», «En camino») y solo las acciones que el backend acepta (antes se ofrecían en citas que rechazaba); la cancelación se confirma en rojo. **Pagos**: un solo verde por todo lo pendiente y, con varias cuotas, cada una se paga sola; las cuotas se nombran por su mes (la descripción del backend es técnica); el historial dice «No se cobró» en un rechazo, y al volver de la pasarela un aviso dice qué pasó con ese pago, preguntando mientras siga pendiente (antes esa ruta lo ignoraba). **Datos**: titular y documento de solo lectura, el contrato solo si hay uno vigente y los documentos en su panel. `PortalPages.tsx` desaparece, repartido por pantalla. Cerrado con el veredicto `ship` del revisor final. |
 | `R3-PUB-02` | Registro en línea | Sorteo de superficie en modo persuasivo para `/afiliacion`, el resultado y el formulario posterior. El plan es protagonista, con su color y con sus condiciones y carencias dichas de frente. Precios y coberturas salen del catálogo. | Pendiente |
 | `R3-PUB-03` | Encuesta y carnet | Encuesta de satisfacción y verificación pública del carnet. | Pendiente |
-| `R3-ALI-01` | Mi clínica | Validación de remisiones y reporte de la atención de la clínica aliada. | Pendiente |
+| `R3-ALI-01` | Mi clínica | Validación de remisiones y reporte de la atención de la clínica aliada. | Hecho (2026-11-16), sin sorteo: el usuario eligió «Mostrador con historial» (contrato en `.impeccable/surfaces/frontend-src-features-aliadas-miclinicapage-tsx.md`). **Estructura**: la barra marina del portal con el logo compacto, el nombre de la clínica y la cuenta, sin destinos; a la izquierda, el código y la remisión abierta con su reporte; a la derecha, lo atendido en el mes. En el celular se apilan. **Un solo verde**: «Validar» sin remisión abierta y «Reportar atención» con una que se puede usar (antes eran verdes los dos). **La remisión, en palabras**: por usar con hasta cuándo, vencida con cuándo venció y qué hacer, atendida y anulada; la mascota con la especie en palabras, el titular con los últimos dígitos del documento y la cobertura; un código ajeno dice con qué revisarlo. **Lo que cubre TIMU y lo que paga la familia se ve antes de reportar** (decidido con el usuario): la API lo calcula con la misma cuenta del reporte (`/cobertura`). **Lo atendido** (decidido con el usuario): el mes en curso y los 12 anteriores, con sus totales y la lista, para cuadrar con la liquidación. **La clínica no ve sus remisiones por usar** (decidido con el usuario): el código es la prueba de que la familia se presentó. **La barra dice la clínica** (decidido con el usuario): la aliada lee su propia fila y el catálogo de especies (migración `0049`; sin el catálogo, la especie salía como código sin ningún error). También: tras reportar el código se vacía y recupera el foco, y las ayudas de los campos salen del `label`, donde un lector de pantalla las leía dos veces. Cerrado con el veredicto `ship` del revisor final tras tres pasadas. |
 
 ## R4 — Cierre
 

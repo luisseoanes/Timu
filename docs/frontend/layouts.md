@@ -7,7 +7,7 @@ superficie (`.impeccable/surfaces/`).
 
 > En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)). **Rediseñado:** la estructura
 > del panel, el listado con ficha (Familias, Rutas y Clínica), la ruta propia del médico, la
-> consulta guiada, el inicio del panel, las bandejas (Tareas, Cartera y Preventivos), Comercial y Campañas, Aliadas y Administración, las ventanas, la espera de sesión, el portal de familias entero y el acceso. **Aún con la composición anterior** (aunque ya con la paleta, la
+> consulta guiada, el inicio del panel, las bandejas (Tareas, Cartera y Preventivos), Comercial y Campañas, Aliadas y Administración, las ventanas, la espera de sesión, el portal de familias entero, el acceso y el espacio de la clínica aliada. **Aún con la composición anterior** (aunque ya con la paleta, la
 > tipografía y el logo): el detalle de un registro y las
 > páginas públicas. Cada uno se rehace en su
 > unidad.
@@ -220,8 +220,48 @@ La misma plantilla sirve al ingreso, la recuperación, el restablecimiento y la 
 - **Recuperación**: al enviar, el título pasa a «Revisa tu correo o tu WhatsApp» y nombra el dato
   escrito, sin decir si la cuenta existe.
 
-Las páginas públicas sencillas (encuesta, verificación del carnet, registro, clínica aliada)
-usan `.publica` + `.publica-tarjeta`: el logo arriba y una tarjeta centrada.
+Las páginas públicas sencillas (encuesta, verificación del carnet, registro) usan `.publica` +
+`.publica-tarjeta`: el logo arriba y una tarjeta centrada. Se rehacen en sus unidades (R3-PUB-02 y
+R3-PUB-03).
+
+## Mi clínica — `.aliada` (clínica aliada, R3-ALI-01)
+
+El espacio de la clínica aliada (`/aliada`) es un mostrador: lo que se hace ahora a la izquierda y
+lo ya hecho a la derecha.
+
+```
+┌ TIMU  Clínica Veterinaria del Norte ─────────────────────────── (RC) ┐  barra marina, sin destinos
+│ Validar una remisión  (h1)         │ Atendidas      [noviembre ▾]    │
+│ [ 2HPK5NWR ] [Validar]             │ ATENCIONES 1 │ FACTURADO $ …    │
+│ ✓ Por usar · Se puede atender…     │ TIMU CUBRIÓ  │ PAGARON LAS …    │
+│ Rocky · Canino, Labrador  (h2)     │ Jorge Ramírez · Rocky            │
+│ Motivo · Beneficio · TIMU cubre    │ 16 nov · Radiografía de cadera   │
+│ Reportar la atención (h3)          │ $ 180.000 · TIMU cubrió … · cód. │
+│ Fecha [  ]  Valor [$ 180.000]      │                                  │
+│ TIMU CUBRE $ 144.000 │ PAGA … $ 36 │                                  │
+│ Resumen clínico [        ]         │                                  │
+│                 [Reportar atención]│                                  │
+└────────────────────────────────────┴──────────────────────────────────┘
+```
+
+- **Estructura** (`MiClinicaPage`, `.shell.aliada`): la barra marina del panel y el portal con el
+  logo compacto, el nombre de la clínica (`.aliada-barra-clinica`, que la API da en
+  `/aliadas/mi-clinica`) y la cuenta; sin destinos ni barra inferior, porque hay uno solo. El
+  contenido (`.aliada-contenido`) llega a 1120 px.
+- **Dos columnas desde 900 px** (`.aliada-mostrador`): la de trabajo y una de 300 a 380 px para lo
+  atendido; por debajo se apilan, el código primero. Cada una es un panel blanco
+  (`.aliada-panel`, 24 px de relleno; 16 en el celular).
+- **El código** (`.aliada-codigo`): el campo de 20 px con espaciado ancho y en mayúsculas, y
+  «Validar» del mismo alto (48 px) a su lado; la ayuda debajo de los dos. «Validar» es el verde
+  hasta que se abre una remisión que se puede usar; entonces pasa a secundario.
+- **La remisión abierta** (`.aliada-remision`, bajo un hilo): su estado en una línea
+  (`.aliada-remision-estado`: distintivo y una frase), la mascota como `h2` de 24 px con la especie
+  y la raza en texto suave, el titular con los últimos dígitos del documento, y la ficha de datos.
+  Si se puede usar, el reporte (`.aliada-reporte`) en el formulario de dos columnas, con el reparto
+  (`.aliada-cifras`, dos celdas separadas por hilos) entre el valor y el resumen y el verde abajo a
+  la derecha (a todo el ancho y de 48 px en el celular).
+- **Lo atendido** (`Atendidas`): el título con el mes al lado (`?mes=` en la URL), cuatro cifras
+  en 2×2 (`.aliada-cifras-mes`) y la lista con hilo (`.aliada-atendidas-lista`).
 
 ## Inicio — `.inicio` («La línea de hoy», R2-PAN-04)
 

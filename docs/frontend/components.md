@@ -254,6 +254,15 @@ Tarjetas de cifra: título en versalitas, valor grande (`--t-cifra`, números ta
 línea de detalle. La fórmula va en `title`. Con dos o tres cifras sueltas, `.indicadores-pocos`
 las deja a su medida (hasta 260 px) en vez de estirarlas a todo el ancho.
 
+## Cifras de una atención — `.aliada-cifras` (Mi clínica)
+
+Dos o tres importes que se leen juntos (lo que cuesta, lo que cubre TIMU y lo que paga la familia,
+o los totales del mes): celdas blancas iguales en una fila, separadas por hilos, con la etiqueta en
+versalitas y la cifra a 24 px. Ocupan el ancho de lo que acompañan, para que cada hilo caiga en el
+hueco de sus columnas. En un contenedor de menos de 480 px pasan a filas de libro de cuentas: la
+etiqueta a la izquierda y el importe a la derecha, en columna. Sin datos (un mes sin atenciones) no
+se pintan ceros: basta la frase del vacío.
+
 ## Anillo de progreso — `AnilloProgreso` y barras — `.barras`
 
 El anillo resume un porcentaje (`role="img"` con su etiqueta) y se acompaña de `.metricas`.

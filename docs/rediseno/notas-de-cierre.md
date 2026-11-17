@@ -159,3 +159,25 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
   «Afiliación» se encienda al guardar la contraseña antes de llevar al portal, y anclar a 1440 el
   título del formulario a la altura de la frase del panel. A 900 px las estaciones de la línea no
   quedan a la misma distancia (sus columnas toman el ancho del rótulo).
+
+### Lo que quedó de Mi clínica tras cerrar `R3-ALI-01`
+
+- **La familia no recibe el código de la remisión por ningún canal**: la remisión no envía ningún
+  mensaje y el portal no la muestra, así que hoy se lo dice el equipo. La clínica valida justo ese
+  código. Decisión abierta con el usuario: enviarlo por WhatsApp al emitir, mostrarlo en el portal o
+  las dos.
+- **Al reportar no se vuelve a comprobar la cartera**: el plan, el pago y el cupo se validan al
+  emitir la remisión (`F2-ALI-02`), no el día de la atención. Si la familia entra en mora entre una
+  fecha y otra, la remisión sigue sirviendo hasta que vence. Decisión abierta con el usuario.
+- **`datos_demo` escribe sin tildes** la clínica («Clinica Veterinaria del Norte»), su usuario
+  («Recepcion Clinica del Norte») y la remisión («Radiografia de cadera por cojera»), que el
+  recorrido de la aliada busca por ese texto. Corregirlo exige cambiar a la vez la prueba, y
+  `datos_demo` solo crea lo que falta: en un stack ya sembrado quedarían los dos nombres.
+- **El menú de la cuenta está repetido** en `AppLayout`, `PortalLayout` y `MiClinicaPage`: un
+  componente común en `src/components/` lo dejaría en un sitio.
+- **Encontrado de paso, en el arreglo del CI (`perf(dashboard)`, 2026-11-16)**: las políticas de RLS
+  inflan el coste estimado de las consultas y PostgreSQL las compila con JIT, que en «Mora al
+  cierre» costaba más que la consulta. Se arregló reescribiendo esa consulta; apagar el JIT para
+  `timu_app` aliviaría cualquier otra, pero cambia todas. Decisión abierta con el usuario.
+- **Sugerencias del revisor, opcionales** (el «techo»): la lista de lo atendido con el importe que
+  cubrió TIMU en su propia columna, alineado a la derecha, en lugar de dentro de la línea de texto.
