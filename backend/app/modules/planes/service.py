@@ -17,6 +17,7 @@ from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
 from app.modules.catalogos.models import TipoServicioCatalogo
 from app.modules.planes.models import Beneficio, CiudadPlan, Plan, TarifaPeriodicidad, TarifaPlan
 from app.modules.reglas import service as reglas
+from app.modules.reglas.contextos import LosPeludos, PlanRecomendacion
 
 
 def obtener(db: Session, plan_id: UUID) -> Plan:
@@ -233,15 +234,16 @@ def validar_para_familia(plan: Plan, ciudad: str, especies: list[str]) -> None:
 def recomendar(db: Session, ciudad: str, especies: list[str]) -> tuple[Plan, str, str]:
     """Devuelve (plan, motivo, regla). Si el plan recomendado no aplica en la ciudad o para
     las especies, se prueba la siguiente regla que se cumpla."""
-    contexto = {
-        "ciudad": ciudad,
-        "mascotas": {
-            "total": len(especies),
-            **{f"{e}s": especies.count(e) for e in set(especies)},
-            "especies": sorted(set(especies)),
-        },
-    }
-    for resultado in reglas.evaluar(db, "plan.recomendacion", contexto):
+    contexto = PlanRecomendacion(
+        ciudad=ciudad,
+        mascotas=LosPeludos(
+            total=len(especies),
+            caninos=especies.count("canino"),
+            felinos=especies.count("felino"),
+            especies=sorted(set(especies)),
+        ),
+    )
+    for resultado in reglas.evaluar(db, contexto):
         plan = db.scalar(select(Plan).where(Plan.codigo == resultado.accion["plan_codigo"]))
         if plan is None:
             continue
@@ -330,3 +332,12 @@ def publicos(db: Session, planes: list[Plan]) -> list[dict[str, Any]]:
         }
         for plan in planes
     ]
+
+
+def _planes_para_reglas(db: Session) -> list[tuple[UUID, str, str]]:
+    """Los planes que ofrece el editor de reglas: (id, codigo, nombre), por nombre."""
+    consulta = select(Plan.id, Plan.codigo, Plan.nombre).order_by(Plan.nombre)
+    return list(db.execute(consulta).tuples().all())
+
+
+reglas.conectar_planes(_planes_para_reglas)

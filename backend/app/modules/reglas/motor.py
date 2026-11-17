@@ -8,16 +8,26 @@ Condiciones (JSON), sin codigo ejecutable:
 Operadores: eq, ne, gt, gte, lt, lte, in, nin, contiene, existe.
 `campo` es una ruta con puntos dentro del contexto que entrega el modulo que evalua.
 
-Acciones: cada evento declara que acciones admite y con que parametros (ver
-`EVENTOS`), de modo que una regla mal formada se rechaza al guardarla y no en operacion.
+Acciones: cada evento declara que acciones admite y con que parametros (`acciones.py`), y que
+datos da a sus reglas (`contextos.py`).
 """
 
 import operator
 from collections.abc import Callable, Mapping
 from datetime import date
-from typing import Annotated, Any, Literal, Union
+from typing import Any
 
-from pydantic import BaseModel, Field, TypeAdapter, ValidationError
+from pydantic import ValidationError
+
+from app.modules.reglas.acciones import EVENTOS
+from app.modules.reglas.contextos import (
+    CONTEXTOS,
+    OPERADORES,
+    PLANES,
+    CampoDeclarado,
+    Opciones,
+    campos_del_evento,
+)
 
 _FALTANTE = object()
 
@@ -70,7 +80,9 @@ def cumple(condicion: dict[str, Any], contexto: dict[str, Any]) -> bool:
         return False
 
 
-def validar_condicion(condicion: dict[str, Any]) -> None:
+def validar_condicion(condicion: dict[str, Any], evento: str | None = None) -> None:
+    """La forma de la condicion y, con `evento`, que cada campo sea uno de los que da ese evento,
+    comparado como admite su tipo y con un valor de ese tipo."""
     if not isinstance(condicion, dict):
         raise CondicionInvalida("La condicion debe ser un objeto")
     if not condicion:
@@ -81,10 +93,10 @@ def validar_condicion(condicion: dict[str, Any]) -> None:
         if not isinstance(condicion[clave], list) or not condicion[clave]:
             raise CondicionInvalida(f"'{clave}' debe ser una lista no vacia")
         for c in condicion[clave]:
-            validar_condicion(c)
+            validar_condicion(c, evento)
         return
     if "no" in condicion:
-        validar_condicion(condicion["no"])
+        validar_condicion(condicion["no"], evento)
         return
     if not isinstance(condicion.get("campo"), str) or not condicion["campo"]:
         raise CondicionInvalida("Cada comparacion necesita 'campo'")
@@ -95,80 +107,49 @@ def validar_condicion(condicion: dict[str, Any]) -> None:
         raise CondicionInvalida(f"El operador '{op}' necesita 'valor'")
     if op in ("in", "nin") and not isinstance(condicion["valor"], list):
         raise CondicionInvalida(f"El operador '{op}' necesita una lista en 'valor'")
+    if evento is not None:
+        _validar_contra_el_evento(condicion, evento)
 
 
-# --- Acciones por evento ----------------------------------------------------------------------
+def _validar_contra_el_evento(c: dict[str, Any], evento: str) -> None:
+    declarado = campos_del_evento(evento).get(c["campo"])
+    if declarado is None:
+        raise CondicionInvalida(f"{nombre_evento(evento)} no da el dato «{c['campo']}»")
+    nombre = nombre_campo(c["campo"])
+    if c["op"] not in OPERADORES[declarado.tipo]:
+        raise CondicionInvalida(f"«{nombre}» no se compara con '{c['op']}'")
+    valor = c["valor"]
+    if declarado.tipo == "numero":
+        valido = isinstance(valor, int | float) and not isinstance(valor, bool)
+    elif declarado.tipo == "si_no":
+        valido = isinstance(valor, bool)
+    elif c["op"] in ("in", "nin"):
+        valido = bool(valor) and all(isinstance(v, str) and v for v in valor)
+    else:
+        valido = isinstance(valor, str) and bool(valor)
+    if not valido:
+        raise CondicionInvalida(f"Valor no valido para «{nombre}»")
 
 
-class AccionEstadoCartera(BaseModel):
-    tipo: Literal["estado"]
-    estado: Literal["activa", "en_mora", "congelada"]
+def valores_con_opciones(condicion: dict[str, Any], evento: str) -> list[tuple[Opciones, str]]:
+    """Cada valor de la condicion que sale de un catalogo, con su fuente: el router comprueba con
+    la base que exista (un plan o una ciudad mal escritos no aplicarian nunca)."""
+    declarados = campos_del_evento(evento)
+    salida: list[tuple[Opciones, str]] = []
 
+    def recorrer(c: dict[str, Any]) -> None:
+        if "no" in c:
+            recorrer(c["no"])
+        for clave in ("todas", "alguna"):
+            for sub in c.get(clave, []):
+                recorrer(sub)
+        declarado = declarados.get(c.get("campo", ""))
+        if declarado is not None and declarado.opciones is not None:
+            valores = c["valor"] if isinstance(c["valor"], list) else [c["valor"]]
+            salida.extend((declarado.opciones, v) for v in valores)
 
-class AccionNotificar(BaseModel):
-    tipo: Literal["notificar"]
-    plantilla: str
-    clave: str = Field(description="Identifica el aviso para no repetirlo en el mismo periodo")
-
-
-class AccionTarea(BaseModel):
-    tipo: Literal["tarea"]
-    titulo: str
-    area: Literal["comercial", "operaciones", "medico", "cartera", "servicio_cliente"]
-    prioridad: Literal["baja", "media", "alta"] = "media"
-    vence_en_dias: int = Field(default=2, ge=0)
-
-
-class AccionProrrateo(BaseModel):
-    tipo: Literal["prorrateo"]
-    modo: Literal["diario", "sin_cargo", "proximo_ciclo"]
-
-
-class AccionRechazar(BaseModel):
-    tipo: Literal["rechazar"]
-    motivo: str
-
-
-class AccionRecomendar(BaseModel):
-    tipo: Literal["recomendar"]
-    plan_codigo: str
-    motivo: str
-
-
-def _union(*modelos: type[BaseModel]) -> TypeAdapter[Any]:
-    if len(modelos) == 1:
-        return TypeAdapter(modelos[0])
-    union = Union[modelos]  # type: ignore[valid-type]  # noqa: UP007
-    return TypeAdapter(Annotated[union, Field(discriminator="tipo")])
-
-
-EVENTOS: dict[str, tuple[str, TypeAdapter[Any]]] = {
-    "cartera.estado": (
-        "Estado de cartera segun dias de mora (F1-CAR-03)",
-        _union(AccionEstadoCartera),
-    ),
-    "cartera.alerta": ("Avisos escalonados de mora (F1-CAR-04)", _union(AccionNotificar)),
-    "cartera.renovacion": (
-        "Tarea comercial por contrato proximo a vencer (F1-CAR-07)",
-        _union(AccionTarea),
-    ),
-    "plan.cambio": (
-        "Cobro al cambiar de plan (F1-PLA-02)",
-        _union(AccionProrrateo, AccionRechazar),
-    ),
-    "plan.recomendacion": (
-        "Plan sugerido por ciudad y familia (F1-PLA-04)",
-        _union(AccionRecomendar),
-    ),
-    "servicio.transicion": (
-        "Disparadores al cambiar de estado un servicio (F1-SER-03)",
-        _union(AccionTarea, AccionNotificar),
-    ),
-    "servicio.elegibilidad": (
-        "Restricciones adicionales para agendar (F1-SER-05)",
-        _union(AccionRechazar),
-    ),
-}
+    recorrer(condicion)
+    return salida
 
 
 # Eventos que el motor ya no evalua pero siguen en la base (EventoRegla) por las reglas y los
@@ -187,7 +168,7 @@ def validar_accion(evento: str, accion: dict[str, Any]) -> dict[str, Any]:
     except ValidationError as e:
         tipos = e.errors()[0]
         raise CondicionInvalida(f"Accion invalida para {evento}: {tipos['msg']}") from e
-    return dict(modelo.model_dump())
+    return dict(modelo.model_dump(exclude_none=True))
 
 
 # --- Las reglas en palabras -------------------------------------------------------------------
@@ -214,6 +195,10 @@ _CAMPOS = {
     "estado_nuevo": "Nuevo estado del servicio",
     "plan_anterior.codigo": "Plan anterior",
     "plan_nuevo.codigo": "Plan nuevo",
+    "plan_anterior.valor": "Valor del plan anterior",
+    "plan_nuevo.valor": "Valor del plan nuevo",
+    "mascotas.caninos": "Perros",
+    "mascotas.felinos": "Gatos",
     "sube": "Sube de valor",
 }
 
@@ -235,6 +220,11 @@ _VALORES = {
     "cancelada": "cancelada",
     "servicio_cliente": "servicio al cliente",
     "medico": "médico",
+    # Modalidades de servicio (enums.TipoServicio), como las nombra el panel.
+    "domiciliario": "a domicilio",
+    "preventivo": "preventiva",
+    "clinico": "en la clínica",
+    "aliada": "clínica aliada",
 }
 
 # El nombre de cada evento, sin la referencia al backlog que lleva su descripcion.
@@ -247,6 +237,37 @@ _NOMBRES_EVENTOS = {
     "servicio.transicion": "Al cambiar de estado un servicio",
     "servicio.elegibilidad": "Restricciones para agendar",
     "plan.mascota": "Precio por mascota",
+}
+
+
+# Cuando se revisan las reglas de cada evento y que se hace con las que se cumplen, para quien
+# crea una regla.
+CUANDO = {
+    "cartera.estado": (
+        "Cada día, en cada contrato: la primera regla que se cumple fija su estado de cartera."
+    ),
+    "cartera.alerta": (
+        "Cada día, en cada contrato con una cuota vencida: se envía el aviso más avanzado que "
+        "se cumpla y aún no se haya enviado por esa cuota."
+    ),
+    "cartera.renovacion": (
+        "Cada día, en cada contrato que renueva en los próximos 90 días: cada regla que se "
+        "cumple crea su tarea una vez por renovación."
+    ),
+    "plan.cambio": (
+        "Al cambiar el plan de un peludo: la primera regla que se cumple dice cómo se cobra o "
+        "si no se permite."
+    ),
+    "plan.recomendacion": (
+        "Al pedir el plan sugerido para una ciudad y unos peludos: gana la primera regla que se "
+        "cumple y cuyo plan se vende allí."
+    ),
+    "servicio.transicion": (
+        "Cada vez que un servicio cambia de estado: aplican todas las que se cumplen."
+    ),
+    "servicio.elegibilidad": (
+        "Al agendar un servicio: cada regla que se cumple lo impide y dice su motivo."
+    ),
 }
 
 
@@ -282,41 +303,60 @@ def campos(condicion: dict[str, Any]) -> list[dict[str, Any]]:
     return list(vistos.values())
 
 
-def _valor(v: Any) -> str:
+# El nombre de cada valor de un catalogo, por su fuente («planes» → {«mi_amigo_fiel»: «Mi Amigo
+# Fiel»}): lo arma `reglas.service.nombres` con la base.
+Nombres = Mapping[str, Mapping[str, str]]
+
+
+def _valor(v: Any, tabla: Mapping[str, str] | None = None) -> str:
     if isinstance(v, bool):
         return "sí" if v else "no"
     if isinstance(v, str):
+        if tabla and v in tabla:
+            return tabla[v]
         return _VALORES.get(v, v.replace("_", " "))
     return str(v)
 
 
-def _lista(valores: list[Any], y: str) -> str:
-    textos = [_valor(v) for v in valores]
+def _es_numero(v: Any) -> bool:
+    return isinstance(v, int | float) and not isinstance(v, bool)
+
+
+def _lista(valores: list[Any], y: str, tabla: Mapping[str, str] | None) -> str:
+    textos = [_valor(v, tabla) for v in valores]
     return textos[0] if len(textos) == 1 else f"{', '.join(textos[:-1])} {y} {textos[-1]}"
 
 
-def _simple(c: dict[str, Any]) -> str:
+def _simple(c: dict[str, Any], declarados: Mapping[str, CampoDeclarado], nombres: Nombres) -> str:
     nombre = nombre_campo(str(c["campo"]))
     op = c["op"]
     valor: Any = c.get("valor")
+    declarado = declarados.get(c["campo"])
+    fuente = declarado.opciones.fuente if declarado and declarado.opciones else None
+    tabla = nombres.get(fuente) if fuente else None
     frase = {
-        "eq": lambda: _valor(valor),
-        "ne": lambda: f"distinto de {_valor(valor)}",
+        # Las mismas palabras que la comparacion en el editor (contextos.OPERADORES).
+        "eq": lambda: f"igual a {valor}" if _es_numero(valor) else _valor(valor, tabla),
+        "ne": lambda: f"distinto de {_valor(valor, tabla)}",
         "gt": lambda: f"más de {_valor(valor)}",
-        "gte": lambda: f"{_valor(valor)} o más",
+        "gte": lambda: f"al menos {_valor(valor)}",
         "lt": lambda: f"menos de {_valor(valor)}",
-        "lte": lambda: f"{_valor(valor)} o menos",
-        "in": lambda: _lista(valor, "o"),
-        "nin": lambda: f"ninguno de {_lista(valor, 'y')}",
-        "contiene": lambda: f"incluye {_valor(valor)}",
+        "lte": lambda: f"como mucho {_valor(valor)}",
+        "in": lambda: _lista(valor, "o", tabla),
+        "nin": lambda: f"ninguno de {_lista(valor, 'y', tabla)}",
+        "contiene": lambda: f"incluye {_valor(valor, tabla)}",
         "existe": lambda: "registrado",
     }[op]()
     return f"{nombre}: {frase}"
 
 
-def describir_condicion(condicion: dict[str, Any]) -> str:
+def describir_condicion(
+    condicion: dict[str, Any], evento: str | None = None, nombres: Nombres | None = None
+) -> str:
     """«Días de mora: 25 o más»; las compuestas, unidas con «y» u «o», entre parentesis dentro de
-    otra."""
+    otra. Con el evento y `nombres`, un valor de catalogo se dice por su nombre («Mi Amigo
+    Fiel», no «mi_amigo_fiel»)."""
+    declarados = campos_del_evento(evento) if evento in CONTEXTOS else {}
 
     def texto(c: dict[str, Any], dentro: bool) -> str:
         if not c:
@@ -327,7 +367,7 @@ def describir_condicion(condicion: dict[str, Any]) -> str:
             if clave in c:
                 partes = union.join(texto(sub, True) for sub in c[clave])
                 return f"({partes})" if dentro and len(c[clave]) > 1 else partes
-        return _simple(c)
+        return _simple(c, declarados, nombres or {})
 
     return texto(condicion, False)
 
@@ -339,9 +379,14 @@ _PRORRATEO = {
 }
 
 
-def describir_accion(accion: dict[str, Any], titulos: Mapping[str, str] | None = None) -> str:
+def describir_accion(
+    accion: dict[str, Any],
+    titulos: Mapping[str, str] | None = None,
+    nombres: Nombres | None = None,
+) -> str:
     """Lo que hace la regla cuando se cumple, en una frase. `titulos` nombra cada plantilla de
-    WhatsApp como la llama el equipo (`comunicaciones.titulos_plantillas`)."""
+    WhatsApp como la llama el equipo (`comunicaciones.titulos_plantillas`), y `nombres`, el plan
+    que recomienda."""
     tipo = accion.get("tipo")
     if tipo == "estado":
         return f"Pasa el contrato a «{_valor(accion['estado'])}»"
@@ -363,7 +408,8 @@ def describir_accion(accion: dict[str, Any], titulos: Mapping[str, str] | None =
     if tipo == "rechazar":
         return f"No lo permite: {accion['motivo']}"
     if tipo == "recomendar":
-        return f"Recomienda el plan «{accion['plan_codigo']}»: {accion['motivo']}"
+        plan = _valor(accion["plan_codigo"], (nombres or {}).get(PLANES.fuente))
+        return f"Recomienda el plan «{plan}»: {accion['motivo']}"
     return _valor(str(tipo))
 
 

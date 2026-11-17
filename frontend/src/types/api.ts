@@ -1058,11 +1058,65 @@ export interface ReglaRead {
   vigente_desde: string | null
   vigente_hasta: string | null
   activa: boolean
+  condicion_texto?: string
   accion_texto?: string
-  condicion_texto: string
   evento_nombre: string
   retirada: string | null
   campos_condicion: CampoCondicion[]
+}
+
+export interface OpcionRegla {
+  valor: string
+  nombre: string
+}
+
+export interface CampoEvento {
+  campo: string
+  nombre: string
+  tipo: 'numero' | 'opcion' | 'lista' | 'si_no'
+  operadores: OpcionRegla[]
+  opciones: OpcionRegla[] | null
+}
+
+export interface ParametroAccion {
+  nombre: string
+  etiqueta: string
+  tipo: 'texto' | 'numero' | 'opcion'
+  requerido: boolean
+  por_defecto: string | number | null
+  opciones: OpcionRegla[] | null
+}
+
+export interface AccionEvento {
+  tipo: string
+  nombre: string
+  parametros: ParametroAccion[]
+}
+
+export interface PlanDeRegla {
+  id: string
+  nombre: string
+}
+
+export interface EventoDeReglas {
+  evento: string
+  nombre: string
+  cuando: string
+  admite_plan: boolean
+  campos: CampoEvento[]
+  acciones: AccionEvento[]
+  planes: PlanDeRegla[]
+}
+
+export interface BorradorRegla {
+  evento: string
+  condicion?: Record<string, unknown>
+  accion?: Record<string, unknown> | null
+}
+
+export interface EnPalabras {
+  condicion_texto: string
+  accion_texto: string | null
 }
 
 export interface BajaRead {

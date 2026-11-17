@@ -9,6 +9,16 @@ def _desde(campo: str, n: int) -> dict[str, Any]:
     return {"campo": campo, "op": "gte", "valor": n}
 
 
+# Valor provisional (docs/pendientes-externos.md): las plantillas de WhatsApp que citan los avisos
+# de mora aun no estan en el catalogo (esperan su registro en Meta). Hasta que el equipo las
+# registre con su titulo, Administracion las nombra asi, no por su codigo. Se muestran tal cual:
+# llevan tildes.
+PLANTILLAS_DE_LAS_REGLAS = {
+    "cuota_vencida": "Cuota vencida",
+    "aviso_mora": "Aviso de mora",
+    "aviso_congelamiento": "Aviso de congelamiento",
+}
+
 REGLAS: list[dict[str, Any]] = [
     # F1-CAR-03 Estado de cartera por dias de mora de la cuota mas antigua sin pagar.
     {

@@ -20,6 +20,14 @@ from app.modules.familias.models import Familia, Mascota
 from app.modules.planes import service as planes
 from app.modules.planes.models import Beneficio
 from app.modules.reglas import service as reglas
+from app.modules.reglas.contextos import (
+    DeLaFamilia,
+    DeLaMascota,
+    DelPlan,
+    DelServicio,
+    ServicioElegibilidad,
+    ServicioTransicion,
+)
 from app.modules.servicios.models import (
     BloqueoAgenda,
     EstadoPendiente,
@@ -120,13 +128,13 @@ def elegibilidad(
             periodo = "mes" if beneficio.periodo_cupo == "mensual" else "ano"
             motivos.append(f"Se agoto el cupo de {tipo.nombre} ({beneficio.cupo} por {periodo})")
 
-    contexto = {
-        "familia": {"ciudad": familia.ciudad, "estado": familia.estado},
-        "plan": {"codigo": plan.codigo},
-        "servicio": {"tipo": tipo.codigo, "modalidad": tipo.modalidad},
-        "mascota": {"especie": mascota.especie if mascota else None},
-    }
-    for r in reglas.evaluar(db, "servicio.elegibilidad", contexto, plan_id=plan.id):
+    contexto = ServicioElegibilidad(
+        familia=DeLaFamilia(ciudad=familia.ciudad, estado=familia.estado),
+        plan=DelPlan(codigo=plan.codigo),
+        servicio=DelServicio(tipo=tipo.codigo, modalidad=tipo.modalidad),
+        mascota=DeLaMascota(especie=mascota.especie if mascota else None),
+    )
+    for r in reglas.evaluar(db, contexto, plan_id=plan.id):
         motivos.append(r.accion["motivo"])
     return Elegibilidad(not motivos, motivos)
 
@@ -482,13 +490,13 @@ def _disparadores(
 ) -> None:
     familia = db.get(Familia, servicio.familia_id)
     assert familia is not None
-    contexto = {
-        "estado_anterior": anterior.value,
-        "estado_nuevo": destino.value,
-        "servicio": {"tipo": servicio.tipo_codigo, "modalidad": servicio.tipo},
-        "familia": {"ciudad": familia.ciudad, "estado": familia.estado},
-    }
-    for r in reglas.evaluar(db, "servicio.transicion", contexto):
+    contexto = ServicioTransicion(
+        estado_anterior=anterior.value,
+        estado_nuevo=destino.value,
+        servicio=DelServicio(tipo=servicio.tipo_codigo, modalidad=servicio.tipo),
+        familia=DeLaFamilia(ciudad=familia.ciudad, estado=familia.estado),
+    )
+    for r in reglas.evaluar(db, contexto):
         if r.accion["tipo"] == "tarea":
             tareas.desde_accion(
                 db,

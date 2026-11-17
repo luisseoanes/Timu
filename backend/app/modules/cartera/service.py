@@ -42,6 +42,7 @@ from app.modules.familias import service as familias
 from app.modules.familias.models import Familia, Mascota
 from app.modules.planes.models import Plan
 from app.modules.reglas import service as reglas
+from app.modules.reglas.contextos import CarteraAlerta, CarteraEstado, CarteraRenovacion
 from app.modules.tareas import service as tareas
 
 logger = structlog.get_logger(__name__)
@@ -265,15 +266,13 @@ def reevaluar_estado(db: Session, contrato: Contrato, dia: date | None = None) -
     dias = _dias_mora(abiertas, dia)
     for c in abiertas:
         c.dias_mora = max((dia - c.fecha_vencimiento).days, 0)
-    contexto = {
-        "dias_mora": dias,
-        "cuotas_vencidas": sum(1 for c in abiertas if c.fecha_vencimiento < dia),
-        "saldo_pendiente": float(sum(dinero(c.valor) - dinero(c.valor_pagado) for c in abiertas)),
-        "estado_actual": contrato.estado,
-    }
-    resultado = reglas.primera(
-        db, "cartera.estado", contexto, planes=contratos.planes_del_contrato(db, contrato)
+    contexto = CarteraEstado(
+        dias_mora=dias,
+        cuotas_vencidas=sum(1 for c in abiertas if c.fecha_vencimiento < dia),
+        saldo_pendiente=float(sum(dinero(c.valor) - dinero(c.valor_pagado) for c in abiertas)),
+        estado_actual=contrato.estado,
     )
+    resultado = reglas.primera(db, contexto, planes=contratos.planes_del_contrato(db, contrato))
     if resultado is None:
         return "sin_cambio"
     nuevo = EstadoAfiliacion(resultado.accion["estado"])
@@ -331,7 +330,7 @@ def avisar_mora(db: Session, contrato: Contrato, dia: date | None = None) -> str
         return None
     cuota = abiertas[0]
     dias = (dia - cuota.fecha_vencimiento).days
-    aplicables = reglas.evaluar(db, "cartera.alerta", {"dias_mora": dias})
+    aplicables = reglas.evaluar(db, CarteraAlerta(dias_mora=dias))
     enviadas = set(db.scalars(select(AvisoCartera.clave).where(AvisoCartera.cuota_id == cuota.id)))
     pendientes = [r for r in aplicables if r.accion["clave"] not in enviadas]
     if not pendientes:
@@ -491,14 +490,11 @@ def detectar_renovaciones(db: Session, dia: date | None = None) -> int:
 
 
 def _tareas_renovacion(db: Session, contrato: Contrato, dia: date) -> int:
-    contexto = {
-        "dias_para_renovacion": (contrato.fecha_renovacion - dia).days,
-        "estado": contrato.estado,
-    }
+    contexto = CarteraRenovacion(
+        dias_para_renovacion=(contrato.fecha_renovacion - dia).days, estado=contrato.estado
+    )
     creadas = 0
-    for r in reglas.evaluar(
-        db, "cartera.renovacion", contexto, planes=contratos.planes_del_contrato(db, contrato)
-    ):
+    for r in reglas.evaluar(db, contexto, planes=contratos.planes_del_contrato(db, contrato)):
         tarea = tareas.desde_accion(
             db,
             r.accion,

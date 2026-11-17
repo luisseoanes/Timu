@@ -1,7 +1,7 @@
 """F0-12 Administracion de reglas: una regla nueva opera en cuanto se guarda."""
 
 from datetime import date
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
@@ -11,8 +11,8 @@ from sqlalchemy import String, cast, select
 from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import Rol
 from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
-from app.modules.comunicaciones import service as comunicaciones
-from app.modules.reglas import motor, service
+from app.modules.reglas import acciones, motor, service
+from app.modules.reglas.contextos import CONTEXTOS, OPERADORES, TipoCampo, campos_del_evento
 from app.modules.reglas.models import Regla
 
 router = APIRouter(prefix="/reglas", tags=["reglas"])
@@ -28,8 +28,10 @@ class _Validada(BaseModel):
         condicion = getattr(self, "condicion", None)
         accion = getattr(self, "accion", None)
         try:
+            if evento is not None and evento not in motor.EVENTOS:
+                raise motor.CondicionInvalida(f"Evento desconocido: {evento}")
             if condicion is not None:
-                motor.validar_condicion(condicion)
+                motor.validar_condicion(condicion, evento)
             if evento is not None and accion is not None:
                 motor.validar_accion(evento, accion)
         except motor.CondicionInvalida as e:
@@ -38,7 +40,8 @@ class _Validada(BaseModel):
 
 
 class ReglaCreate(_Validada):
-    codigo: str = Field(pattern=r"^[a-z0-9_]{2,60}$")
+    # Sin codigo, la API lo saca del nombre (`service.codigo_libre`).
+    codigo: str | None = Field(default=None, pattern=r"^[a-z0-9_]{2,60}$")
     nombre: str = Field(min_length=2, max_length=160)
     descripcion: str | None = None
     evento: str
@@ -59,6 +62,8 @@ class ReglaUpdate(BaseModel):
     accion: dict[str, Any] | None = None
     prioridad: int | None = Field(default=None, ge=0, le=10_000)
     detener: bool | None = None
+    # Vacio: la regla vale para todos los planes.
+    plan_id: UUID | None = None
     vigente_desde: date | None = None
     vigente_hasta: date | None = None
     activa: bool | None = None
@@ -87,18 +92,16 @@ class ReglaRead(BaseModel):
     vigente_hasta: date | None
     activa: bool
 
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def condicion_texto(self) -> str:
-        """Cuando aplica, en palabras: el panel no descifra el JSON del motor."""
-        return motor.describir_condicion(self.condicion)
-
-    # Lo que hace, en palabras. Lo llena `_leidas` con el nombre que da el equipo a cada
-    # plantilla; sin ese contexto, el validador lo dice con el codigo de Meta.
+    # Cuando aplica y lo que hace, en palabras: el panel no descifra el JSON del motor. Los
+    # llena `_leidas` con el nombre de cada valor de catalogo y de cada plantilla; sin ese
+    # contexto, el validador los dice con sus codigos.
+    condicion_texto: str = ""
     accion_texto: str = ""
 
     @model_validator(mode="after")
-    def _accion_en_palabras(self) -> "ReglaRead":
+    def _en_palabras(self) -> "ReglaRead":
+        if not self.condicion_texto:
+            self.condicion_texto = motor.describir_condicion(self.condicion, self.evento)
         if not self.accion_texto:
             self.accion_texto = motor.describir_accion(self.accion)
         return self
@@ -127,18 +130,148 @@ class Prueba(BaseModel):
     plan_id: UUID | None = None
 
 
-@router.get("/eventos", dependencies=[EQUIPO])
-async def eventos() -> dict[str, str]:
-    """Puntos del sistema donde se evaluan reglas y para que sirve cada uno."""
-    return {evento: descripcion for evento, (descripcion, _) in motor.EVENTOS.items()}
+class OpcionRegla(BaseModel):
+    valor: str
+    nombre: str
+
+
+class CampoEvento(BaseModel):
+    campo: str
+    nombre: str
+    tipo: TipoCampo
+    # Las comparaciones que admite, la primera es la que se propone.
+    operadores: list[OpcionRegla]
+    opciones: list[OpcionRegla] | None
+
+
+class ParametroAccion(BaseModel):
+    nombre: str
+    etiqueta: str
+    tipo: Literal["texto", "numero", "opcion"]
+    requerido: bool
+    por_defecto: str | int | None
+    opciones: list[OpcionRegla] | None
+
+
+class AccionEvento(BaseModel):
+    tipo: str
+    nombre: str
+    parametros: list[ParametroAccion]
+
+
+class PlanDeRegla(BaseModel):
+    id: UUID
+    nombre: str
+
+
+class EventoDeReglas(BaseModel):
+    """Lo que el editor necesita de un evento: cuando se revisa, que datos da a sus reglas y que
+    pueden hacer."""
+
+    evento: str
+    nombre: str
+    cuando: str
+    admite_plan: bool
+    campos: list[CampoEvento]
+    acciones: list[AccionEvento]
+    planes: list[PlanDeRegla]
+
+
+class BorradorRegla(BaseModel):
+    evento: str
+    condicion: dict[str, Any] = Field(default_factory=dict)
+    accion: dict[str, Any] | None = None
+
+
+class EnPalabras(BaseModel):
+    condicion_texto: str
+    accion_texto: str | None
+
+
+def _lista(valores: dict[str, str] | None) -> list[OpcionRegla] | None:
+    return None if valores is None else [OpcionRegla(valor=v, nombre=n) for v, n in valores.items()]
+
+
+@router.get("/eventos", response_model=list[EventoDeReglas], dependencies=[EQUIPO])
+async def eventos(db: DbSession) -> list[EventoDeReglas]:
+    """Los puntos del sistema donde se evaluan reglas, con los datos que da cada uno y lo que
+    puede hacer una regla en el (los eventos retirados no salen: no se crean ni se editan)."""
+    opciones = await db.run_sync(service.opciones)
+    planes = [PlanDeRegla(id=i, nombre=n) for i, _, n in await db.run_sync(service.planes)]
+    salida = []
+    for evento, (_, modelos) in acciones.ACCIONES_POR_EVENTO.items():
+        campos = [
+            CampoEvento(
+                campo=c.campo,
+                nombre=motor.nombre_campo(c.campo),
+                tipo=c.tipo,
+                operadores=_lista(OPERADORES[c.tipo]) or [],
+                opciones=_lista(opciones[c.opciones.fuente]) if c.opciones else None,
+            )
+            for c in campos_del_evento(evento).values()
+        ]
+        de_accion = [
+            AccionEvento(
+                tipo=acciones.tipo_de_accion(m),
+                nombre=acciones.NOMBRES_ACCIONES[acciones.tipo_de_accion(m)],
+                parametros=[
+                    ParametroAccion(
+                        nombre=p.nombre,
+                        etiqueta=p.etiqueta,
+                        tipo=p.tipo,
+                        requerido=p.requerido,
+                        por_defecto=p.por_defecto,
+                        opciones=_lista(opciones[p.fuente.fuente] if p.fuente else p.valores),
+                    )
+                    for p in acciones.parametros_de_accion(m)
+                ],
+            )
+            for m in modelos
+        ]
+        salida.append(
+            EventoDeReglas(
+                evento=evento,
+                nombre=motor.nombre_evento(evento),
+                cuando=motor.CUANDO[evento],
+                admite_plan=CONTEXTOS[evento].admite_plan,
+                campos=campos,
+                acciones=de_accion,
+                planes=planes if CONTEXTOS[evento].admite_plan else [],
+            )
+        )
+    return salida
+
+
+@router.post("/describir", response_model=EnPalabras, dependencies=[EQUIPO])
+async def describir(db: DbSession, data: BorradorRegla) -> EnPalabras:
+    """Una regla a medio escribir, en palabras y validada como al guardarla, sin guardar nada:
+    el editor la dice mientras se escribe."""
+    try:
+        if data.evento not in motor.EVENTOS:
+            raise motor.CondicionInvalida(f"Evento desconocido: {data.evento}")
+        motor.validar_condicion(data.condicion, data.evento)
+        accion = motor.validar_accion(data.evento, data.accion) if data.accion else None
+    except motor.CondicionInvalida as e:
+        raise ReglaNegocio(str(e)) from e
+    nombres = await db.run_sync(service.nombres)
+    titulos = await db.run_sync(service.titulos_plantillas)
+    return EnPalabras(
+        condicion_texto=motor.describir_condicion(data.condicion, data.evento, nombres),
+        accion_texto=motor.describir_accion(accion, titulos, nombres) if accion else None,
+    )
 
 
 async def _leidas(db: DbSession, reglas: list[Regla]) -> list[ReglaRead]:
-    """Cada regla con su accion en palabras, nombrando las plantillas como el equipo."""
-    titulos = await db.run_sync(comunicaciones.titulos_plantillas)
+    """Cada regla en palabras, nombrando los valores de catalogo y las plantillas como el
+    equipo."""
+    titulos = await db.run_sync(service.titulos_plantillas)
+    nombres = await db.run_sync(service.nombres)
     return [
         ReglaRead.model_validate(r).model_copy(
-            update={"accion_texto": motor.describir_accion(r.accion, titulos)}
+            update={
+                "condicion_texto": motor.describir_condicion(r.condicion, r.evento, nombres),
+                "accion_texto": motor.describir_accion(r.accion, titulos, nombres),
+            }
         )
         for r in reglas
     ]
@@ -156,10 +289,16 @@ async def listar(db: DbSession, evento: str | None = None) -> list[ReglaRead]:
     "", response_model=ReglaRead, status_code=status.HTTP_201_CREATED, dependencies=[ADMIN]
 )
 async def crear(db: DbSession, data: ReglaCreate) -> ReglaRead:
-    if await db.scalar(select(Regla.id).where(Regla.codigo == data.codigo)):
+    if data.codigo and await db.scalar(select(Regla.id).where(Regla.codigo == data.codigo)):
         raise Conflicto(f"Ya existe una regla con codigo {data.codigo}")
     datos = data.model_dump()
+    datos["codigo"] = data.codigo or await db.run_sync(service.codigo_libre, data.nombre)
     datos["accion"] = motor.validar_accion(data.evento, data.accion)
+    if datos["accion"]["tipo"] == "notificar":
+        datos["accion"].setdefault("clave", datos["codigo"])
+    await db.run_sync(
+        service.comprobar_valores, data.evento, data.condicion, datos["accion"], data.plan_id
+    )
     regla = Regla(**datos)
     db.add(regla)
     await db.flush()
@@ -171,14 +310,28 @@ async def actualizar(db: DbSession, regla_id: UUID, data: ReglaUpdate) -> ReglaR
     regla = await db.get(Regla, regla_id)
     if regla is None:
         raise NoEncontrado("Regla no encontrada")
+    if regla.evento in motor.EVENTOS_RETIRADOS:
+        raise ReglaNegocio("Una regla de un evento retirado no se edita")
     cambios = data.model_dump(exclude_unset=True)
     try:
         if "condicion" in cambios:
-            motor.validar_condicion(cambios["condicion"])
+            motor.validar_condicion(cambios["condicion"], regla.evento)
         if "accion" in cambios:
             cambios["accion"] = motor.validar_accion(regla.evento, cambios["accion"])
     except motor.CondicionInvalida as e:
         raise ReglaNegocio(str(e)) from e
+    nueva = cambios.get("accion")
+    if nueva and nueva["tipo"] == "notificar" and "clave" not in nueva:
+        # La clave dice que avisos ya se enviaron: cambiarla los repetiria.
+        anterior = regla.accion.get("clave") if regla.accion.get("tipo") == "notificar" else None
+        nueva["clave"] = anterior or regla.codigo
+    await db.run_sync(
+        service.comprobar_valores,
+        regla.evento,
+        cambios.get("condicion", {}),
+        nueva,
+        cambios.get("plan_id"),
+    )
     for campo, valor in cambios.items():
         setattr(regla, campo, valor)
     await db.flush()
@@ -190,10 +343,14 @@ async def probar(db: DbSession, data: Prueba) -> list[dict[str, Any]]:
     """Evalua sin ejecutar nada: muestra que reglas aplicarian a un contexto."""
     if data.evento not in motor.EVENTOS:
         raise ReglaNegocio(f"Evento desconocido: {data.evento}")
+    declarados = campos_del_evento(data.evento)
+    sobran = [c for c in _rutas(data.contexto) if c not in declarados]
+    if sobran:
+        raise ReglaNegocio(f"{motor.nombre_evento(data.evento)} no da: {', '.join(sobran)}")
     resultados = await db.run_sync(
-        service.evaluar, data.evento, data.contexto, plan_id=data.plan_id
+        service.evaluar_datos, data.evento, data.contexto, plan_id=data.plan_id
     )
-    titulos = await db.run_sync(comunicaciones.titulos_plantillas)
+    titulos = await db.run_sync(service.titulos_plantillas)
     return [
         {
             "regla": r.regla,
@@ -203,3 +360,14 @@ async def probar(db: DbSession, data: Prueba) -> list[dict[str, Any]]:
         }
         for r in resultados
     ]
+
+
+def _rutas(datos: dict[str, Any], prefijo: str = "") -> list[str]:
+    """Las rutas con puntos de los datos de una prueba («familia.ciudad»)."""
+    salida = []
+    for clave, valor in datos.items():
+        if isinstance(valor, dict):
+            salida.extend(_rutas(valor, f"{prefijo}{clave}."))
+        else:
+            salida.append(f"{prefijo}{clave}")
+    return salida

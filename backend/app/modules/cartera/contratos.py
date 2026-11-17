@@ -24,6 +24,7 @@ from app.modules.planes import service as planes
 from app.modules.planes.models import CambioPlan, Plan
 from app.modules.planes.service import Cotizacion
 from app.modules.reglas import service as reglas
+from app.modules.reglas.contextos import DeLaFamilia, PlanCambio, PlanDelCambio
 
 VIGENTES = (EstadoAfiliacion.ACTIVA, EstadoAfiliacion.EN_MORA, EstadoAfiliacion.CONGELADA)
 
@@ -354,16 +355,13 @@ def cambiar_plan(
 
     anterior = dinero(contrato.valor_periodo)
     nuevo = dinero(cot.valor_periodo)
-    contexto = {
-        "familia": {"ciudad": familia.ciudad, "estado": familia.estado},
-        "plan_anterior": {"codigo": plan_anterior.codigo, "valor": float(linea.valor_mensual)},
-        "plan_nuevo": {
-            "codigo": plan_nuevo.codigo,
-            "valor": float(cot.peludos[posicion].valor_mensual),
-        },
-        "sube": nuevo > anterior,
-    }
-    resultado = reglas.primera(db, "plan.cambio", contexto, plan_id=plan_nuevo.id)
+    contexto = PlanCambio(
+        familia=DeLaFamilia(ciudad=familia.ciudad, estado=familia.estado),
+        plan_anterior=PlanDelCambio(plan_anterior.codigo, float(linea.valor_mensual)),
+        plan_nuevo=PlanDelCambio(plan_nuevo.codigo, float(cot.peludos[posicion].valor_mensual)),
+        sube=nuevo > anterior,
+    )
+    resultado = reglas.primera(db, contexto, plan_id=plan_nuevo.id)
     if resultado is None:
         raise ReglaNegocio("No hay una regla que defina como cobrar el cambio de plan")
     if resultado.accion["tipo"] == "rechazar":
