@@ -31,6 +31,8 @@ los registros que agregan dominios (`app/models.py`, `app/transiciones.py`), en 
 - **Los listados devuelven `Page[T]`** (`app/schemas/common.py`), con filtros combinables.
 - **Los schemas de lectura no revalidan formatos** (`EmailStr`, `DocumentoCO`, `TelefonoCO` son `str`
   al leer); se valida al escribir. Referencia: `FamiliaRead` y `UsuarioRead`.
+- **Un tope de Pydantic (`max_length`, `pattern`) va sobre el `str` de un opcional**: sobre
+  `str | None` falla con `None` y da 500 (`planes/router.py`, `Texto2000`).
 - **Toda consulta pasa por `restringir()`** (`app/core/scope.py`) con un `Alcance`; cada modelo
   visible desde el portal declara `__columna_familia__`. Se falla cerrado.
 - **Ningún `tarea.delay()` dentro de una transacción**: se publica con `app.core.outbox.publicar()`,
@@ -76,6 +78,8 @@ los registros que agregan dominios (`app/models.py`, `app/transiciones.py`), en 
   llevan nombre explícito (`cartera.revisar_mora`).
 - **Configuración** con `Settings` (`pydantic-settings`): `DATABASE_URL` y `DATABASE_URL_PROPIETARIO`
   salen de `POSTGRES_*` y `APP_DB_PASSWORD`; los `*_OVERRIDE` las sustituyen.
+- **Un valor de `.env.example` que solo vale en local** (token, número ficticio) se rechaza desplegado
+  en `Settings._validar_ambiente`, con su caso en `test_produccion_con_valores_inseguros_no_arranca`.
 
 ## Persistencia: la base garantiza, Python explica
 

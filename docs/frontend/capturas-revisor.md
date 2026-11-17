@@ -51,6 +51,29 @@ lo aprendido al cerrar Familias, Rutas, Clínica, el portal, el Inicio y Servici
   usuario, y una carga del panel gasta de 8 a 12. No captures con `comercial@timu.co` justo
   antes del e2e contra el stack, que lo deja sin cupo (429).
 
+## Páginas públicas (sin sesión)
+
+Lo aprendido con la encuesta, el carnet y el registro en línea (`R3-PUB-03` y `R3-PUB-02`), y lo
+que necesitará la portada:
+
+- **Sin sesión y sin gastar el cupo de ingresos**: un `page.route` que responde 401 a
+  `/api/v1/auth/*` (cada carga pregunta por `/auth/me` y prueba una renovación).
+- **En español, también lo que pinta el navegador**: `newContext({ locale: 'es-CO' })` y
+  `chromium.launch({ args: ['--lang=es-CO'] })`. Sin `--lang`, Chromium sin interfaz escribe
+  «Choose File» en un campo de archivo aunque el `locale` sea `es-CO`.
+- **Lo que la página guarda en la pestaña** (el token del registro en `sessionStorage`) se pone
+  antes de cargar con `context.addInitScript(() => sessionStorage.setItem('timu-registro', '…'))`.
+- **Lo que necesita un pago real** (el resultado del registro, el formulario de la familia) se
+  simula interceptando `POST /afiliaciones/registro/consulta` con un registro realista; sin la
+  pasarela de pruebas de Wompi no hay otro camino, y se le dice al revisor qué capturas son
+  simuladas.
+- **Un enlace con token que solo está en la base** (una encuesta) se lee de la base para capturar
+  en local (`psql` sobre `db`); el barrido contra el stack no puede abrirlo y lo mide `e2e/` con
+  la API interceptada.
+- **Un recorrido que pasa por varios pasos** (el registro) se escribe como un script que pulsa por
+  rol y etiqueta, con una captura tras cada paso; una opción con el `input` escondido se pulsa por
+  su texto (`getByText('Mi Amigo Fiel', { exact: true })`).
+
 ## Estados que los datos no tienen
 
 - **Los que gastan datos** (una parada que se cierra, una consulta que se firma) se capturan en el
@@ -150,3 +173,9 @@ se le piden puntuados (resolved, partial o unresolved) al mismo revisor.
   payload de la página de decisión la da `serve-question --schema`.
 - `serve-question --wait --key <k>` sale con 3 cada 60 s sin respuesta: se repite en bucle en
   segundo plano hasta que salga 0.
+- **Sin generación de imágenes** (este entorno), un sorteo de superficie se presenta con un boceto
+  HTML por carta: la primera pantalla, autocontenida, con contenido real del producto y sin
+  JavaScript, declarada como `html` en el payload (con `"htmlFrame": "390x844"` si la superficie se
+  piensa primero para el celular) y sin `toggle` en `buildPath`. La página se abre con
+  `xdg-open <url>`. El boceto elegido se copia a `docs/rediseno/boceto-<superficie>.html`:
+  `.impeccable/mocks/` no se versiona.

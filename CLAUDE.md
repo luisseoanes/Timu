@@ -47,6 +47,8 @@ docker compose exec api python -m scripts.datos_demo   # usuarios, familias, rut
 docker compose exec api python -m scripts.operacion_demo   # después: ocho semanas de operación (~5 min; si ya sembró, nada)
                                       # Qué deja cada uno, cómo se amplían y sus límites: docs/datos-de-demostracion.md
 docker compose run --rm inicializar   # tras traer una migración nueva, sin reiniciar el stack
+docker compose up -d api              # tras cambiar backend/.env.example: el entorno se lee al crear el contenedor;
+                                      # --reload no lo recarga (worker y beat, si leen la variable)
 docker compose up -d --build -V       # tras traer dependencias nuevas: el código va montado, las librerías
                                       # van en la imagen, y -V renueva el node_modules anónimo de `web`
                                       # `exec api` trabaja en /app, que es backend/ montado: un script de prueba
@@ -76,6 +78,7 @@ npm run test:e2e:stack              # recorridos contra el stack real: docker co
 # CI: log de un job (`gh run view --log-failed` a veces sale vacío)
 gh api --allow-escape-sequences repos/{owner}/{repo}/actions/jobs/<id>/logs | sed 's/\x1b\[[0-9;]*m//g'
 gh run watch <id> --exit-status --interval 60 && gh run view <id> --json jobs --jq '.jobs[] | "\(.name): \(.conclusion)"'
+# `gh run watch` puede salir con 1 a mitad del run: confírmalo con `gh run view <id> --json status,conclusion`
 ```
 
 - `npm run verificar 2>&1 | tail` o `pytest | tail` devuelven el código de `tail`, no el de la prueba:

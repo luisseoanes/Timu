@@ -44,3 +44,7 @@ Trampas conocidas:
 - **`POST /auth/restablecer` abre la sesión** de quien activa o restablece (desde `R3-PUB-01`): un script que lo llame con el cliente del administrador se queda con las cookies de la familia, y sus peticiones siguientes dan 404 o 403. `datos_demo` lo hace con una petición aparte, sin cookies.
 - **Los scripts de datos no escriben por debajo de la API**, salvo dos excepciones con su motivo en el código: `datos_demo` lee de la base el token de activación (la API lo tapa), y `operacion_demo` corre al pasado las fechas de lo que creó, con la conexión del dueño del esquema (la única que puede fechar una consulta firmada). Lo que la API no permite hacer (llevar un interesado a «afiliado» sin pasarela) no se fuerza por SQL.
 - **`operacion_demo` drena el outbox y llama a tareas del beat en el propio proceso** (`outbox.drenar`, `cartera.generar_cuotas`, `revisar_mora`, `encuestas.enviar_pendientes`, `campanas.lanzar_programadas` y `despachar`): por eso importa al arrancar los mismos módulos de tareas que el worker (`celery_app.conf.include`); sin ellos, un evento sin declarar hace fallar el drenado.
+- **Lo que dice un PDF** no se lee de sus bytes (fpdf2 comprime el texto): se envuelve
+  `marca.parrafo` (o la pieza de `marca_pdf` que lo escribe) con `monkeypatch` y se comprueba lo
+  recogido, como `test_el_modelo_del_contrato_dice_lo_elegido_y_las_condiciones_del_plan`
+  (`tests/test_documentos.py`). Para mirarlo a mano en local, `pdftotext -layout fichero.pdf -`.

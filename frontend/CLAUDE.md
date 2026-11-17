@@ -89,14 +89,8 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
 - **GeosansLight (`--fuente-titulos`) solo en `h1` y `h2` de 20 px o más**; uno más pequeño
   vuelve a Inter. El logo es `MarcaTimu` (completo o `compacta`), con la receta de sus SVG en
   `src/assets/marca/README.md`.
-- **Para mirar una pantalla**: un script de Playwright desde `frontend/` contra :5173, con el
-  ingreso por `request.post('/api/v1/auth/login', { form: { username, password } })` (en JSON da
-  422). La renovación rota el token: tras cada contexto, guarda otra vez su `storageState`, o el
-  siguiente reusa uno rotado y el backend cierra la sesión. El script vive en el scratchpad y se
-  copia a `frontend/` solo para ejecutarlo: `eslint .` lo recoge y `verificar` falla.
-  Con una sesión guardada hace más de 30 min, `page.request` da 401: carga antes una pantalla y
-  espera a `networkidle` para que se renueve. Un estado que depende de la hora se captura con
-  `page.clock.setFixedTime`.
+- **Para mirar una pantalla** (un script de Playwright contra :5173, con sesión o sin ella, y sus
+  trampas de sesiones, cupos, hora e idioma): [`docs/frontend/capturas-revisor.md`](../docs/frontend/capturas-revisor.md).
 - [`docs/frontend/`](../docs/frontend/) (components, layouts, conventions) describe lo
   construido: qué pieza y qué plantilla reutilizar. `conventions.md` incluye la checklist de revisión y la deuda
   conocida (tema oscuro).
@@ -122,8 +116,9 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
 - Con una ventana de Radix abierta, el `body` lleva `pointer-events: none` y `elementFromPoint` se lo salta: quítalo mientras mides qué hay pintado encima.
 - Una regla con `display:` le gana al atributo `hidden`, y jsdom no aplica el CSS: un pliegue que
   no pliega pasa en Vitest. Se prueba en Playwright (`e2e/`) con `toBeHidden()`.
-- `moneda()` separa con espacio duro (`$ 225.000`): búscalo con `\s` en la expresión, no con un
-  espacio. Si el nombre accesible de un título no casa, compara su `toHaveTextContent`.
+- `moneda()` separa con espacio duro (`$ 225.000`), y lo mismo cualquier `\u00a0` (el «40 %»
+  que da la API): Testing Library lo normaliza a espacio, así que búscalo con `\s` en la expresión.
+  Si el nombre accesible de un título no casa, compara su `toHaveTextContent`.
 - En `e2e/`, `page.route` da prioridad al último registrado: el comodín (`**/api/v1/**`) primero
   y las rutas de la prueba después.
 - Un handler de MSW que ignora los parámetros contesta igual a dos consultas de la misma ruta: si
@@ -153,4 +148,13 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   (`useReportarAtencion(codigo, alReportar)`). En Vitest puede pasar por los tiempos y fallar en el
   navegador.
 - Un bloque nuevo de `vistas.css` insertado antes de `.filtros` o `.listado .filtros > .input`
-  pierde contra ellos: sube la especificidad (`.listado .filtros.mi-clase`) o ponlo detrás.
+  pierde contra ellos: sube la especificidad (`.listado .filtros.mi-clase`) o ponlo detrás. Igual un
+  `@container` o `@media` escrito antes de la regla base del mismo selector: con la misma
+  especificidad, gana la que va después.
+- `role="status"` en o dentro de un `h1` deja el encabezado sin nombre accesible en Chromium; jsdom
+  sí lo calcula, así que Vitest pasa y Playwright no lo encuentra.
+- `.tabla-apilable` usa `td::before` para la etiqueta y apila bajo 640 px de contenedor, también en
+  una ficha estrecha de escritorio: una tabla que debe seguir en columnas lleva su propio corte
+  (`.registro-comparador`).
+- Exportar funciones o constantes desde un `.tsx` de componentes dispara
+  `react-refresh/only-export-components`: van a un `.ts` del dominio (`registro.ts`, `admin/planes.ts`).
