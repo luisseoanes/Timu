@@ -21,8 +21,9 @@ verificación de carnets.
 | Tareas programadas | Celery + Redis (`worker` ejecuta, `beat` programa) |
 | Adjuntos | S3 compatible (SeaweedFS en desarrollo), siempre con URL firmada |
 | Sesión | Cookies httpOnly: acceso corto y renovación que rota en cada uso |
-| WhatsApp | Meta Cloud API oficial |
+| WhatsApp | Meta Cloud API oficial, con el número actual de TIMU |
 | Pagos | Wompi (webhooks firmados para la conciliación) |
+| Correo | Google Workspace de TIMU, por SMTP |
 | Rutas | Google OR-Tools + Google Maps Platform |
 | IA | Claude hoy (decidido pasar a Gemini), con prompts versionados que se evalúan antes de activarse |
 | Infraestructura | Docker / Docker Compose |
@@ -163,20 +164,21 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [docs/backlog.md](docs/backlog.md) | Backlog funcional: 107 unidades con criterio de aceptación y estado, por fase |
 | [docs/pendientes-externos.md](docs/pendientes-externos.md) | Lo que falta fuera del código para cerrar un requisito: sandbox de Wompi, plantillas de Meta, decisiones de TIMU |
 | [docs/estandares-calidad.md](docs/estandares-calidad.md) | Cada estándar de calidad pedido (Secciones 3 y 4) traducido a reglas, con la prueba que las hace cumplir y la deuda que queda |
-| [docs/integraciones.md](docs/integraciones.md) | Cada servicio externo: qué hace, variables, dónde vive en el código y estado de validación |
+| [docs/integraciones.md](docs/integraciones.md) | Cada servicio externo: qué hace, variables, dónde vive en el código, estado de validación y lo decidido con TIMU |
+| [docs/integraciones-timu.md](docs/integraciones-timu.md) | Para la cliente: qué tiene que hacer TIMU en cada integración decidida y las opciones de las que faltan |
 | [docs/costos-infraestructura.md](docs/costos-infraestructura.md) | Estimación de costos de tres nubes, integraciones e IA (10 de noviembre de 2026) |
 | [docs/prueba-de-carga.md](docs/prueba-de-carga.md) | Cómo correr la prueba de carga con el volumen a 12 meses |
 | [docs/flujo-de-la-visita.md](docs/flujo-de-la-visita.md) | Cómo se atiende una visita en casa: estados de la parada y del servicio, pasos de cada tipo y la consulta como registro |
-| [docs/portal-familias.md](docs/portal-familias.md) | Qué ve y qué hace la familia en el portal, de dónde sale cada dato y las reglas del backend que el panel copia |
+| [docs/portal-familias.md](docs/portal-familias.md) | Qué ve y qué hace la familia en el portal, de dónde sale cada dato y lo que dice la API para que el panel no copie reglas del backend |
 | [docs/indicadores.md](docs/indicadores.md) | Definición de cada indicador del dashboard y de los exportables |
 | [docs/datos-de-demostracion.md](docs/datos-de-demostracion.md) | Qué siembran `datos_demo` y `operacion_demo`, cómo se hizo la operación (por la API y corrida al pasado), sus límites y cómo ampliarlos |
-| [docs/registros/plan-persistencia.md](docs/registros/plan-persistencia.md) | Registro (cerrado): por qué la base garantiza integridad y permisos, decisiones y verificación de cada fase |
-| [docs/registros/deuda-ciclos-dominios.md](docs/registros/deuda-ciclos-dominios.md) | Registro (cerrado): cómo se eliminaron los ciclos entre dominios del backend |
+| [docs/backend/](docs/backend/) | El detalle de las reglas del backend: [arquitectura](docs/backend/arquitectura.md), [persistencia](docs/backend/persistencia.md) y [pruebas](docs/backend/pruebas.md) |
+| [docs/registros/](docs/registros/) | Registros de trabajos cerrados: el [plan de persistencia](docs/registros/plan-persistencia.md) (por qué la base garantiza integridad y permisos) y la [deuda de ciclos entre dominios](docs/registros/deuda-ciclos-dominios.md) |
 | [DESIGN.md](DESIGN.md) | Sistema de diseño de la interfaz, escrito desde lo construido: roles de color, tipografía, medidas, componentes y sus reglas |
 | [PRODUCT.md](PRODUCT.md) | Contexto de producto para diseñar: quién usa cada espacio, desde qué dispositivo y para qué |
 | [docs/manual-de-marca.md](docs/manual-de-marca.md) | Identidad de TIMU (color, tipografía, logo y voz) y su ampliación para la plataforma: roles, contrastes, reglas de uso |
 | [docs/hoja-de-ruta-rediseno.md](docs/hoja-de-ruta-rediseno.md) | Rediseño de la interfaz con la marca: unidades, estado, dónde se retoma, decisiones y siguiente paso |
 | [docs/rediseno/](docs/rediseno/) | Anexos de la hoja: la [deuda decidida](docs/rediseno/deuda.md), las [notas de cierre](docs/rediseno/notas-de-cierre.md) de cada unidad y los bocetos de cada superficie |
-| [docs/frontend/](docs/frontend/) | Cómo se construye el panel: componentes, plantillas de página, convenciones y cómo se capturan las pantallas para el revisor final |
+| [docs/frontend/](docs/frontend/) | Cómo se construye el panel: componentes, plantillas de página, convenciones, la e2e contra el stack y cómo se capturan las pantallas para el revisor final |
 | [infra/respaldos/README.md](infra/respaldos/README.md) | Respaldo y restauración de la base |
-| `CLAUDE.md`, `backend/CLAUDE.md`, `frontend/CLAUDE.md` | Reglas de arquitectura para Claude Code; también sirven de guía técnica |
+| `CLAUDE.md`, `backend/CLAUDE.md`, `frontend/CLAUDE.md` | Reglas para Claude Code, una línea cada una; también sirven de guía técnica, con el detalle en `docs/` |
