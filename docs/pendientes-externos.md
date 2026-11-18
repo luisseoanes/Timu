@@ -131,6 +131,13 @@ A este volumen (unas 300 consultas al bot y 14 borradores al mes) la diferencia 
 modelos económicos es de centavos al mes ([costos](costos-infraestructura.md)): la decisión
 pesa por calidad de los borradores, tratamiento de los datos y trabajo de integración.
 
+**Un modelo por uso** (pregunta de TIMU, respondida el 2026-11-18): se puede tener uno económico
+para el bot comercial y otro de más capacidad para los borradores clínicos. Hoy hay un único
+`IA_MODELO` para los dos usos; separarlo es ligar el modelo a cada versión del prompt, para que
+cambiarlo pase por los casos de evaluación como cualquier cambio del prompt. Lo decide esa
+evaluación, con casos clínicos que escriba y revise un veterinario de TIMU: si el económico los
+pasa, no hace falta el otro. El costo no lo impide (unos pocos dólares al mes con 14 borradores).
+
 ## Remisiones a clínicas aliadas (requisito 6.22)
 
 Apuntado el 2026-11-16, al cerrar `R3-ALI-01` (el espacio de la clínica aliada). Las dos cosas son
