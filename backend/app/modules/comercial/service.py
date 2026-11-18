@@ -10,10 +10,13 @@ from sqlalchemy.orm import Session
 
 from app.core.database import acotar_publico
 from app.core.errores import NoEncontrado, ReglaNegocio
+from app.core.eventos import EventoDominio, declarar_evento
+from app.core.outbox import publicar
 from app.core.tiempo import ZONA_NEGOCIO, ahora
 from app.core.validaciones import normalizar_telefono
 from app.modules.comercial.models import ConversacionComercial, Interesado
 from app.modules.comunicaciones.models import Mensaje
+from app.modules.tareas import service as tareas
 
 ETAPAS = ("nuevo", "contactado", "cotizado", "en_afiliacion", "afiliado")
 ABIERTAS = ("nuevo", "contactado", "cotizado", "en_afiliacion")
@@ -189,3 +192,70 @@ def conversacion_de(
         )
     )
     return conversacion, recientes[::-1]
+
+
+# --- R3-PUB-04 El formulario de contacto de la portada -----------------------------------------
+
+# El worker deja la tarea de responder: `publico`, que envia el formulario, no crea tareas.
+EVENTO_CONTACTO_WEB = declarar_evento("comercial.contacto_web")
+
+# Lo que la persona autoriza al enviar el formulario (Ley 1581): se guarda tal cual con su fecha.
+AUTORIZACION_CONTACTO = (
+    "Autorizo a TIMU a usar estos datos para responder mi mensaje y contarme de sus planes."
+)
+
+
+def contacto_web(
+    db: Session,
+    *,
+    nombre: str,
+    telefono: str | None,
+    email: str | None,
+    ciudad: str | None,
+    mascota: str | None,
+    especie: str | None,
+    mensaje: str,
+) -> Interesado:
+    """Quien escribe desde la portada entra al embudo como interesado (6.11, F3-COM-01) con su
+    mensaje, y el equipo comercial recibe una tarea para responderle."""
+    interesado = registrar(
+        db, origen="web", telefono=telefono, nombre=nombre, email=email, ciudad=ciudad
+    )
+    cuando = ahora().isoformat()
+    mensajes = list((interesado.datos or {}).get("mensajes_web", []))
+    mensajes.append({"fecha": cuando, "mascota": mascota, "especie": especie, "mensaje": mensaje})
+    interesado.datos = {
+        **(interesado.datos or {}),
+        # Los ultimos veinte: un formulario abierto no puede crecer sin fin una fila.
+        "mensajes_web": mensajes[-20:],
+        "autorizacion_datos": {"texto": AUTORIZACION_CONTACTO, "aceptada_en": cuando},
+    }
+    db.flush()
+    publicar(
+        db,
+        EventoDominio(EVENTO_CONTACTO_WEB, {"interesado_id": str(interesado.id), "fecha": cuando}),
+    )
+    return interesado
+
+
+def tarea_contacto_web(db: Session, interesado_id: UUID, fecha: str) -> None:
+    """La tarea de responder un mensaje de la portada, una por mensaje."""
+    interesado = db.get(Interesado, interesado_id)
+    if interesado is None:
+        return
+    mensaje = next(
+        (m for m in interesado.datos.get("mensajes_web", []) if m["fecha"] == fecha), None
+    )
+    if mensaje is None:
+        return
+    quien = interesado.nombre or interesado.telefono or interesado.email
+    tareas.crear(
+        db,
+        titulo=f"Responder el mensaje de la web de {quien}",
+        area="comercial",
+        vence_en_dias=1,
+        descripcion=mensaje["mensaje"],
+        familia_id=interesado.familia_id,
+        origen="web",
+        clave=f"contacto_web:{interesado.id}:{fecha}",
+    )

@@ -8,10 +8,12 @@ from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field
 from sqlalchemy import func, or_, select
 
-from app.api.deps import DbSession, requiere
+from app.api.deps import DbSession, publico, requiere
 from app.core.enums import Rol
-from app.core.errores import NoEncontrado
+from app.core.errores import NoEncontrado, ReglaNegocio
+from app.core.validaciones import TelefonoCO
 from app.modules.auth.models import Usuario
+from app.modules.catalogos import service as catalogos
 from app.modules.comercial import conversacion, service
 from app.modules.comercial.models import ArbolConversacion, ConversacionComercial, Interesado
 from app.modules.comunicaciones import service as comunicaciones
@@ -341,3 +343,53 @@ async def publicar_arbol(db: DbSession, data: ArbolIn) -> dict[str, Any]:
     db.add(nuevo)
     await db.flush()
     return {"version": nuevo.version}
+
+
+# --- R3-PUB-04 El formulario de contacto de la portada -----------------------------------------
+
+
+class ContactoWeb(BaseModel):
+    nombre: str = Field(min_length=2, max_length=160)
+    telefono: TelefonoCO | None = None
+    email: EmailStr | None = None
+    ciudad: str | None = Field(default=None, max_length=80)
+    mascota: str | None = Field(default=None, max_length=80)
+    especie: Literal["canino", "felino"] | None = None
+    mensaje: str = Field(min_length=2, max_length=2000)
+    # Ley 1581: sin la autorizacion no se guarda nada.
+    acepta_datos: Literal[True]
+    # Trampa para robots: una persona no ve este campo y lo deja vacio.
+    sitio_web: str = Field(default="", max_length=200)
+
+
+class ContactoRecibido(BaseModel):
+    recibido: bool
+
+
+@router.post(
+    "/contacto",
+    response_model=ContactoRecibido,
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(publico)],
+)
+async def contacto(db: DbSession, data: ContactoWeb) -> ContactoRecibido:
+    """Quien escribe desde la portada entra al embudo comercial con su mensaje (6.11)."""
+    if data.sitio_web.strip():
+        # Un robot: se le responde lo mismo, para que no aprenda, y no se guarda nada.
+        return ContactoRecibido(recibido=True)
+    if not data.telefono and not data.email:
+        raise ReglaNegocio("Escribe un celular o un correo para poder responderte")
+    ciudad = await db.run_sync(catalogos.ciudad_valida, data.ciudad) if data.ciudad else None
+    await db.run_sync(
+        lambda s: service.contacto_web(
+            s,
+            nombre=data.nombre.strip(),
+            telefono=data.telefono,
+            email=str(data.email).lower() if data.email else None,
+            ciudad=ciudad,
+            mascota=(data.mascota or "").strip() or None,
+            especie=data.especie,
+            mensaje=data.mensaje.strip(),
+        )
+    )
+    return ContactoRecibido(recibido=True)

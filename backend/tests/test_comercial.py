@@ -1,13 +1,15 @@
 """F3-COM-01..04 Embudo comercial, conversacion automatizada, recomendacion de plan y
 paso a asesor."""
 
+from uuid import UUID
+
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.core.config import settings
 from app.core.enums import Rol
-from app.modules.comercial import conversacion
+from app.modules.comercial import conversacion, service
 from app.modules.comercial.models import ConversacionComercial, Interesado
 from app.modules.comunicaciones import service as comunicaciones
 from app.modules.comunicaciones.models import Mensaje
@@ -447,3 +449,78 @@ async def test_la_bandeja_de_conversaciones_nombra_al_interesado(
     await db.commit()
     [conv] = (await client.get("/api/v1/comercial/conversaciones", headers=headers)).json()
     assert (conv["telefono"], conv["interesado_nombre"]) == (TEL, "Natalia Gomez")
+
+
+# --- R3-PUB-04 El formulario de contacto de la portada -----------------------------------------
+
+CONTACTO = {
+    "nombre": "Marta Gil",
+    "telefono": "300 555 1234",
+    "ciudad": "medellin",
+    "mascota": "Rocky",
+    "especie": "canino",
+    "mensaje": "¿El plan cubre cirugías?",
+    "acepta_datos": True,
+}
+
+
+async def test_quien_escribe_desde_la_portada_entra_al_embudo_con_su_mensaje(
+    client: AsyncClient, db, comerciales, tareas
+):
+    resp = await client.post("/api/v1/comercial/contacto", json=CONTACTO)
+    assert resp.status_code == 202, resp.text
+    interesado = await db.scalar(select(Interesado).where(Interesado.telefono == "+573005551234"))
+    assert (interesado.origen, interesado.etapa, interesado.ciudad) == ("web", "nuevo", "Medellín")
+    assert interesado.responsable_id is not None
+    [mensaje] = interesado.datos["mensajes_web"]
+    assert (mensaje["mascota"], mensaje["especie"], mensaje["mensaje"]) == (
+        "Rocky",
+        "canino",
+        "¿El plan cubre cirugías?",
+    )
+    assert interesado.datos["autorizacion_datos"]["texto"] == service.AUTORIZACION_CONTACTO
+    # El worker deja la tarea de responder: una por mensaje.
+    [(interesado_id, fecha)] = await tareas.de("comercial.tarea_contacto_web")
+    await db.run_sync(lambda s: service.tarea_contacto_web(s, UUID(interesado_id), fecha))
+    await db.run_sync(lambda s: service.tarea_contacto_web(s, UUID(interesado_id), fecha))
+    [tarea] = (await db.scalars(select(Tarea).where(Tarea.origen == "web"))).all()
+    assert (tarea.titulo, tarea.area, tarea.descripcion) == (
+        "Responder el mensaje de la web de Marta Gil",
+        "comercial",
+        "¿El plan cubre cirugías?",
+    )
+
+
+async def test_un_segundo_mensaje_se_suma_sin_hacer_retroceder_al_interesado(
+    client: AsyncClient, db, comerciales
+):
+    await client.post("/api/v1/comercial/contacto", json=CONTACTO)
+    interesado = await db.scalar(select(Interesado).where(Interesado.telefono == "+573005551234"))
+    interesado.etapa = "cotizado"
+    await db.commit()
+    otro = {**CONTACTO, "mensaje": "¿Y para gatos?"}
+    assert (await client.post("/api/v1/comercial/contacto", json=otro)).status_code == 202
+    await db.refresh(interesado)
+    assert interesado.etapa == "cotizado"
+    assert [m["mensaje"] for m in interesado.datos["mensajes_web"]] == [
+        "¿El plan cubre cirugías?",
+        "¿Y para gatos?",
+    ]
+
+
+async def test_el_formulario_exige_autorizacion_y_como_responder(client: AsyncClient):
+    for malo in (
+        {**CONTACTO, "acepta_datos": False},
+        {k: v for k, v in CONTACTO.items() if k != "acepta_datos"},
+        {**CONTACTO, "telefono": None},
+        {**CONTACTO, "mensaje": ""},
+    ):
+        assert (await client.post("/api/v1/comercial/contacto", json=malo)).status_code == 422
+
+
+async def test_un_robot_que_llena_la_trampa_no_deja_nada(client: AsyncClient, db):
+    resp = await client.post(
+        "/api/v1/comercial/contacto", json={**CONTACTO, "sitio_web": "http://spam.example"}
+    )
+    assert resp.status_code == 202
+    assert await db.scalar(select(func.count()).select_from(Interesado)) == 0

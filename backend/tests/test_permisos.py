@@ -96,6 +96,7 @@ PUBLICAS_ESPERADAS = {
     # R3-PUB-04: lo institucional y de contacto de TIMU que dice la portada.
     "GET /api/v1/institucional",
     "GET /api/v1/aliadas/publicas",
+    "POST /api/v1/comercial/contacto",  # el formulario de la portada
     "GET /api/v1/webhooks/whatsapp",
     "POST /api/v1/webhooks/whatsapp",  # autorizada por firma de Meta
     "POST /api/v1/webhooks/pagos",  # autorizada por firma de la pasarela

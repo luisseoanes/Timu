@@ -74,7 +74,9 @@ app.add_middleware(
             "codigo",
             "codigo/verificacion",
         )
-    ),
+    )
+    # El formulario de contacto de la portada (R3-PUB-04): abierto a cualquiera, como el ingreso.
+    + (f"{settings.API_V1_PREFIX}/comercial/contacto",),
     exentas=("/health", "/health/live"),
 )
 app.add_middleware(LimiteCargaMiddleware, max_bytes=settings.MAX_TAMANO_CARGA_MB * 1024 * 1024)

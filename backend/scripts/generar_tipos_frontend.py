@@ -118,6 +118,8 @@ ESQUEMAS = [
     "TipoAliada",
     "ClinicaRead",
     "AliadaPublica",
+    "ContactoWeb",
+    "ContactoRecibido",
     "ConvenioRead",
     "RemisionRead",
     "MascotaRemitida",

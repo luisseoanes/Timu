@@ -937,6 +937,22 @@ export interface AliadaPublica {
   logo_url: string | null
 }
 
+export interface ContactoWeb {
+  nombre: string
+  telefono?: string | null
+  email?: string | null
+  ciudad?: string | null
+  mascota?: string | null
+  especie?: 'canino' | 'felino' | null
+  mensaje: string
+  acepta_datos: 'True'
+  sitio_web?: string
+}
+
+export interface ContactoRecibido {
+  recibido: boolean
+}
+
 export interface ConvenioRead {
   plan_id?: string | null
   beneficio: string

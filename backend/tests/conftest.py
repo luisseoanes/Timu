@@ -33,6 +33,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine  # noqa: E4
 
 import app.workers.tasks.campanas  # noqa: E402, F401
 import app.workers.tasks.cartera  # noqa: E402, F401  registra los manejadores del outbox
+import app.workers.tasks.comercial  # noqa: E402, F401
 import app.workers.tasks.comunicaciones  # noqa: E402, F401
 import app.workers.tasks.dashboard  # noqa: E402, F401
 import app.workers.tasks.encuestas  # noqa: E402, F401
