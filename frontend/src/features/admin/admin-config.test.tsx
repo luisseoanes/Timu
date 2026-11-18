@@ -18,6 +18,10 @@ const base = [
 const PLAN = {
   ...PLAN_TIMU,
   beneficios: [{ id: 'b1', tipo_servicio_codigo: 'consulta_domiciliaria', cupo: 6, periodo_cupo: 'anual', cobertura_pct: 100, copago: '0' }],
+  adicionales: [
+    { id: 'a1', nombre: 'Servicio fúnebre', cubre: '100 %', detalle: null, carencia_dias: 30, tercero: false },
+    { id: 'a2', nombre: 'Baño y peluquería', cubre: '30 %', detalle: 'Con un tercero.', carencia_dias: null, tercero: true },
+  ],
 }
 
 /** Abre la ficha de un registro de una pestaña (`?plan=p1`, `?regla=rg1`) y espera a su título. */
@@ -102,7 +106,10 @@ describe('Administración: planes', () => {
     await user.clear(within(modal).getByLabelText('Anual'))
     await user.click(within(modal).getByRole('button', { name: 'Quitar beneficio' }))
     await user.selectOptions(within(modal).getByLabelText('Agregar beneficio'), 'vacunacion')
-    await user.type(within(modal).getByLabelText('Cupo (vacío = ilimitado)'), '4')
+    await user.type(within(modal).getByLabelText('Cupo (vacío = sin tope de usos)'), '4')
+    // R3-PUB-04: hasta cuánto cubre por episodio y desde cuándo aplica.
+    await user.type(within(modal).getByLabelText('Tope por episodio (COP, vacío = sin tope)'), '850000')
+    await user.type(within(modal).getByLabelText('Aplica desde (días de afiliada)'), '30')
     expect(within(modal).getByLabelText('Color del plan')).toHaveValue('naranja')
     await user.selectOptions(within(modal).getByLabelText('Color del plan'), 'azul')
     // Las condiciones que el registro dice de frente (R3-PUB-02).
@@ -123,7 +130,21 @@ describe('Administración: planes', () => {
       ],
       ['ciudades', ['Bogotá']],
       ['tarifas', { por_peludos: ['36000', '30500', '26000', '24000'], trimestral: '103800', semestral: '202350' }],
-      ['beneficios', [{ tipo_servicio_codigo: 'vacunacion', cupo: 4, periodo_cupo: 'anual', cobertura_pct: 100, copago: '0' }]],
+      [
+        'beneficios',
+        [
+          {
+            tipo_servicio_codigo: 'vacunacion',
+            cupo: 4,
+            periodo_cupo: 'anual',
+            cobertura_pct: 100,
+            copago: '0',
+            tope_episodio: '850000',
+            carencia_dias: 30,
+            detalle: null,
+          },
+        ],
+      ],
     ])
   })
 

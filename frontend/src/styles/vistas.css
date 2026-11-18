@@ -1560,6 +1560,17 @@
 .admin-tarifa-unica { color: var(--texto-titulo); }
 .ficha.plan-tarifas { grid-template-columns: repeat(2, minmax(0, 220px)); }
 .plan-beneficios td:last-child, .plan-beneficios th:last-child { text-align: right; }
+/* Los beneficios adicionales de un plan (R3-PUB-04): como los leerá la familia, con hilo entre
+   ellos; en su ventana, cada uno es un bloque de campos con sus botones de orden al pie. */
+.plan-adicionales { list-style: none; margin: 0; padding: 0; display: grid; }
+.plan-adicionales li { display: grid; gap: 2px; padding-block: var(--e3); border-top: 1px solid var(--borde); font-size: var(--t-menor); }
+.plan-adicionales li:first-child { border-top: 0; padding-top: 0; }
+.plan-adicional-cabeza { font-size: var(--t-cuerpo); color: var(--texto); }
+.plan-adicional-cabeza strong { color: var(--texto-titulo); }
+.plan-adicionales-edicion { list-style: none; margin: 0; padding: 0; display: grid; }
+.plan-adicional-fila { padding-block: var(--e4); border-top: 1px solid var(--borde); }
+.plan-adicional-fila:last-child { border-bottom: 1px solid var(--borde); }
+.plan-adicional-mover { justify-content: flex-end; }
 .indicador .barra-presupuesto { margin-top: var(--e2); }
 .admin-quien { color: var(--texto); font-size: var(--t-cuerpo); }
 .admin-ciudades { max-width: 70ch; color: var(--texto); line-height: 1.6; }

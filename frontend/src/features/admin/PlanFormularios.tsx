@@ -259,6 +259,9 @@ export function EditarPlan({ plan, onCerrar }: { plan: PlanRead; onCerrar: () =>
       periodo_cupo: b.periodo_cupo ?? 'anual',
       cobertura_pct: b.cobertura_pct ?? 100,
       copago: String(b.copago ?? '0'),
+      tope_episodio: b.tope_episodio ?? null,
+      carencia_dias: b.carencia_dias ?? null,
+      detalle: b.detalle ?? null,
     })),
   )
   const disponibles = tipos.data?.filter((t) => !beneficios.some((b) => b.tipo_servicio_codigo === t.codigo)) ?? []
@@ -323,7 +326,7 @@ export function EditarPlan({ plan, onCerrar }: { plan: PlanRead; onCerrar: () =>
           <fieldset key={b.tipo_servicio_codigo} className="formulario">
             <legend className="ancho">{tipos.data?.find((t) => t.codigo === b.tipo_servicio_codigo)?.nombre ?? b.tipo_servicio_codigo}</legend>
             <label className="campo">
-              <span>Cupo (vacío = ilimitado)</span>
+              <span>Cupo (vacío = sin tope de usos)</span>
               <input
                 className="input"
                 type="number"
@@ -347,6 +350,30 @@ export function EditarPlan({ plan, onCerrar }: { plan: PlanRead; onCerrar: () =>
               <span>Copago (COP)</span>
               <input className="input" type="number" min={0} value={b.copago} onChange={(e) => cambiar(i, { copago: e.target.value })} />
             </label>
+            <label className="campo">
+              <span>Tope por episodio (COP, vacío = sin tope)</span>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                value={b.tope_episodio ?? ''}
+                onChange={(e) => cambiar(i, { tope_episodio: e.target.value || null })}
+              />
+            </label>
+            <label className="campo">
+              <span>Aplica desde (días de afiliada)</span>
+              <input
+                className="input"
+                type="number"
+                min={0}
+                value={b.carencia_dias ?? ''}
+                onChange={(e) => cambiar(i, { carencia_dias: e.target.value === '' ? null : Number(e.target.value) })}
+              />
+            </label>
+            <label className="campo ancho">
+              <span>Detalle (lo que la familia lee debajo)</span>
+              <textarea className="input" rows={2} maxLength={2000} value={b.detalle ?? ''} onChange={(e) => cambiar(i, { detalle: e.target.value || null })} />
+            </label>
             <button className="btn btn-plano" type="button" onClick={() => setBeneficios((a) => a.filter((_, j) => j !== i))}>
               Quitar beneficio
             </button>
@@ -359,7 +386,10 @@ export function EditarPlan({ plan, onCerrar }: { plan: PlanRead; onCerrar: () =>
             aria-label="Agregar beneficio"
             onChange={(e) =>
               e.target.value &&
-              setBeneficios((a) => [...a, { tipo_servicio_codigo: e.target.value, cupo: null, periodo_cupo: 'anual', cobertura_pct: 100, copago: '0' }])
+              setBeneficios((a) => [
+                ...a,
+                { tipo_servicio_codigo: e.target.value, cupo: null, periodo_cupo: 'anual', cobertura_pct: 100, copago: '0', tope_episodio: null, carencia_dias: null, detalle: null },
+              ])
             }
           >
             <option value="">Agregar beneficio…</option>

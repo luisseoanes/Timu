@@ -11,6 +11,7 @@ import { moneda } from '@/lib/formato'
 import type { PlanRead } from '@/types'
 
 import { useActualizarPlan, usePlanesAdmin } from './api'
+import { BloqueAdicionales } from './PlanAdicionales'
 import { EditarPlan, NuevoPlan } from './PlanFormularios'
 import { COLORES, ETIQUETA_PELUDOS, PERIODOS, tarifa } from './planes'
 
@@ -211,6 +212,7 @@ function Ficha({ plan: p }: { plan: PlanRead }) {
                 <tr>
                   <th>Servicio</th>
                   <th>Cupo</th>
+                  <th>Cobertura</th>
                 </tr>
               </thead>
               <tbody>
@@ -222,6 +224,12 @@ function Ficha({ plan: p }: { plan: PlanRead }) {
                     <td data-etiqueta="Cupo">
                       <span className="numero sin-cortes">{b.cupo ? `${b.cupo} al ${b.periodo_cupo === 'anual' ? 'año' : 'mes'}` : `Sin tope al ${b.periodo_cupo === 'anual' ? 'año' : 'mes'}`}</span>
                     </td>
+                    <td data-etiqueta="Cobertura">
+                      <span className="numero">
+                        {b.cobertura_pct} %{b.tope_episodio ? ` · hasta ${moneda(b.tope_episodio)} por episodio` : ''}
+                        {b.carencia_dias ? ` · desde los ${b.carencia_dias} días` : ''}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -231,6 +239,8 @@ function Ficha({ plan: p }: { plan: PlanRead }) {
           <p className="admin-nota">Sin beneficios: agrégalos con «Editar plan».</p>
         )}
       </section>
+
+      <BloqueAdicionales plan={p} />
 
       <section className="bloque" aria-labelledby="plan-condiciones">
         <h3 id="plan-condiciones">Condiciones que ve quien se afilia</h3>

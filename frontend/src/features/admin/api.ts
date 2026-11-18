@@ -42,6 +42,20 @@ export interface Beneficio {
   periodo_cupo: 'mensual' | 'anual'
   cobertura_pct: number
   copago: string
+  /** R3-PUB-04: hasta cuánto cubre por episodio (vacío = sin tope), desde cuántos días de
+   * afiliada aplica y su detalle, que dicen la portada, el registro y el contrato. */
+  tope_episodio: string | null
+  carencia_dias: number | null
+  detalle: string | null
+}
+
+/** Lo que el plan da sin ser un tipo de servicio que se agenda (R3-PUB-04). */
+export interface Adicional {
+  nombre: string
+  cubre: string
+  detalle: string | null
+  carencia_dias: number | null
+  tercero: boolean
 }
 
 // --- Lecturas ---------------------------------------------------------------------------------
@@ -235,6 +249,14 @@ export function useGuardarBeneficios() {
   return useMutacion(
     async ({ id, beneficios }: { id: string; beneficios: Beneficio[] }) =>
       (await api.put<PlanRead>(`/planes/${id}/beneficios`, beneficios)).data,
+    'planes',
+  )
+}
+
+export function useGuardarAdicionales() {
+  return useMutacion(
+    async ({ id, adicionales }: { id: string; adicionales: Adicional[] }) =>
+      (await api.put<PlanRead>(`/planes/${id}/adicionales`, adicionales)).data,
     'planes',
   )
 }
