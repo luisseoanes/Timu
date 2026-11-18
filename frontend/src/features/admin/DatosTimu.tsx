@@ -30,7 +30,7 @@ export function DatosTimu() {
   return (
     <Consulta consulta={datos} cargando="Cargando los datos de TIMU…" error="No fue posible consultar los datos de TIMU.">
       {(d) => (
-        <section className="tarjeta pila" aria-labelledby="datos-timu">
+        <section className="tarjeta pila datos-timu" aria-labelledby="datos-timu">
           <div className="tarjeta-cabeza">
             <h3 id="datos-timu">Lo que dice la portada de TIMU</h3>
             <button className="btn btn-primario" type="button" onClick={() => setEditando(true)}>
@@ -63,7 +63,12 @@ export function DatosTimu() {
             <dl className="ficha">
               <Dato titulo="WhatsApp">{d.whatsapp ? <span className="numero">{telefono(d.whatsapp)}</span> : sinEscribir('ofrece escribir por WhatsApp')}</Dato>
               <Dato titulo="Teléfonos">
-                {d.telefonos.length ? <span className="numero">{d.telefonos.map(telefono).join(' · ')}</span> : sinEscribir('los muestra')}
+                {d.telefonos.length ? (
+                  // Cada número entero: con espacios duros no se parte al cambiar de renglón.
+                  <span className="numero">{d.telefonos.map((t) => telefono(t).replace(/ /g, '\u00a0')).join(' · ')}</span>
+                ) : (
+                  sinEscribir('los muestra')
+                )}
               </Dato>
               <Dato titulo="Correo">{d.correo ?? sinEscribir('lo muestra')}</Dato>
               <Dato titulo="Horario de atención" ancho>{d.horario_atencion ?? sinEscribir('lo dice')}</Dato>

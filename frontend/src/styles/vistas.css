@@ -1579,6 +1579,8 @@
 .plan-adicional-mover { justify-content: flex-end; }
 /* Cada red de «Datos de TIMU»: nombre y enlace en fila, y su botón de quitar al final. */
 .datos-timu-red { align-items: end; }
+/* Los textos largos (presentación, misión, visión) se leen como párrafo, no como dato en negrita. */
+.datos-timu .ficha .ancho dd { font-weight: 400; max-width: 75ch; }
 /* Lo que una persona escribió en la portada (R3-PUB-04): cada mensaje con su fecha encima y un hilo
    entre ellos, a la medida de lectura. */
 .comercial-mensajes-web { list-style: none; margin: 0; padding: 0; display: grid; }
