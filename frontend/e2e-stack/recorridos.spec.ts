@@ -437,4 +437,28 @@ test.describe('una familia que se afilia', () => {
     await expect(page.getByRole('heading', { level: 1, name: '¿Cómo quieres pagar?' })).toBeVisible()
     await expect(page.getByRole('button', { name: `Pagar ${valor}` })).toBeVisible()
   })
+
+  test('llega desde la portada con su manada armada y ve todo lo que cubre un plan', async ({ page }) => {
+    // R3-PUB-04: los planes, las aliadas y los datos de TIMU los dejó `datos_demo` por la API.
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    await expect(page.getByRole('heading', { level: 1, name: 'Tu peludito, bien cuidado.' })).toBeVisible()
+    const arma = page.getByRole('form', { name: 'Arma tu plan' })
+    await arma.getByLabel('¿Dónde vives?').selectOption('Medellín')
+    await arma.getByRole('button', { name: 'Un gato más' }).click()
+    await expect(arma.getByText(/^2 peludos, desde/)).toBeVisible()
+    // La red sale de Administración → Aliadas, con la clínica de TIMU en su estación.
+    await expect(page.getByRole('list', { name: 'Estaciones de la red TIMU' }).getByText("The Dog's Club", { exact: true })).toBeAttached()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true)
+
+    await arma.getByRole('link', { name: 'Ver mis planes' }).click()
+    await expect(page).toHaveURL(/\/afiliacion\?ciudad=Medell%C3%ADn&perros=1&gatos=1$/)
+    await expect(page.getByRole('region', { name: /^Peludo 2/ }).getByRole('radio', { name: 'Gato' })).toBeChecked()
+
+    await page.goto('/service/plan-mi-amigo-fiel/')
+    await expect(page).toHaveURL(/\/planes\/mi-amigo-fiel$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Mi Amigo Fiel' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Además' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Afiliar a mi peludo con Mi Amigo Fiel' })).toHaveAttribute('href', /plan=/)
+  })
 })

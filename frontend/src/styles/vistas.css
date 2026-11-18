@@ -1948,3 +1948,68 @@
 @media (max-width: 899px) { .publica-pie-cuerpo { grid-template-columns: repeat(2, minmax(0, 1fr)); } .publica-pie-marca { grid-column: 1 / -1; } }
 @media (max-width: 479px) { .publica-pie-cuerpo { grid-template-columns: minmax(0, 1fr); } }
 
+/* La página de un plan: cabeza marina con la franja del color del plan, lo que cubre a la
+   izquierda y el precio y las condiciones a la derecha, fijos al desplazarse. */
+.plan-cabeza {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--e2);
+  padding: 56px max(var(--e5), calc((100% - 1200px) / 2)) 0; border-bottom: 10px solid var(--plan-verde);
+  background: var(--superficie-marca); color: var(--texto-sobre-marca);
+}
+.plan-cabeza[data-color="naranja"] { border-bottom-color: var(--plan-naranja); }
+.plan-cabeza[data-color="azul"] { border-bottom-color: var(--plan-azul); }
+.plan-cabeza-texto { display: grid; gap: var(--e4); padding-bottom: var(--e7); }
+.plan-cabeza-titulo { margin: 0; font-size: var(--t-portada); line-height: 1.02; color: var(--texto-sobre-marca); }
+.plan-cabeza-frase { margin: 0; max-width: 56ch; font-size: var(--t-seccion); line-height: 1.55; color: var(--texto-sobre-marca-suave); }
+.plan-cabeza-precio { margin: 0; color: var(--texto-sobre-marca-suave); }
+.plan-cabeza-precio strong { font-size: var(--t-cifra); color: var(--texto-sobre-marca); }
+.plan-cabeza-acciones { display: flex; flex-wrap: wrap; gap: var(--e3); }
+/* El plan como su línea: 8 px del color del plan, una estación de 24 px por servicio. */
+.plan-linea {
+  --color-plan: var(--plan-verde);
+  grid-column: 1 / -1; position: relative; list-style: none; margin: 0; padding: 0 0 var(--e8);
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--e2);
+}
+.plan-linea[data-color="naranja"] { --color-plan: var(--plan-naranja); }
+.plan-linea[data-color="azul"] { --color-plan: var(--plan-azul); }
+.plan-linea li { position: relative; display: grid; gap: var(--e3); justify-items: start; }
+/* Cada estación dibuja el tramo hasta la siguiente: la línea empieza y acaba en una estación. */
+.plan-linea li:not(:last-child)::before {
+  content: ""; position: absolute; left: 12px; top: 8px; width: calc(100% + var(--e2)); height: 8px; background: var(--color-plan);
+}
+.plan-linea-estacion { position: relative; z-index: var(--capa-elevada); }
+.plan-linea-estacion { width: 24px; height: 24px; border: 6px solid var(--color-plan); border-radius: var(--r-pastilla); background: var(--superficie-marca); }
+.plan-linea-nombre { font-size: var(--t-menor); font-weight: 600; line-height: 1.3; color: var(--texto-sobre-marca); text-wrap: balance; }
+.plan-cuerpo {
+  display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--e5) var(--e8); align-items: start;
+  padding: var(--e8) max(var(--e5), calc((100% - 1200px) / 2)) calc(var(--e8) * 2);
+}
+.plan-bloque { grid-column: 1; display: grid; gap: var(--e4); }
+.plan-lista { list-style: none; margin: 0; padding: 0; }
+.plan-lista li { display: grid; gap: 2px; padding-block: var(--e4); border-top: 1px solid var(--borde); }
+.plan-lista-nombre { font-weight: 600; color: var(--texto-titulo); }
+.plan-lista-valor { color: var(--texto); }
+.plan-lista-detalle { max-width: 65ch; font-size: var(--t-menor); color: var(--texto-suave); text-wrap: pretty; }
+.plan-lado { grid-column: 2; grid-row: 1 / span 3; position: sticky; top: calc(var(--alto-barra) + var(--e4)); display: grid; gap: var(--e5); }
+.plan-precios, .plan-condiciones { display: grid; gap: var(--e3); padding: var(--e5); border: 1px solid var(--borde); border-radius: var(--r-panel); background: var(--superficie); }
+.plan-lado-titulo { margin: 0; font-family: var(--fuente); font-size: var(--t-seccion); font-weight: 600; color: var(--texto-titulo); }
+.plan-lado-nota { margin: 0; font-size: var(--t-menor); color: var(--texto-suave); }
+.plan-precio-filas { margin: 0; }
+.plan-precio-filas div { display: flex; justify-content: space-between; gap: var(--e3); padding-block: var(--e2); border-top: 1px solid var(--borde); }
+.plan-precio-filas dd { margin: 0; font-weight: 600; color: var(--texto-titulo); text-align: right; }
+.plan-precio-filas dd .apagado { font-weight: 400; }
+.plan-lado .registro-condiciones { padding: 0; background: none; border: 0; }
+.plan-vacio { display: grid; gap: var(--e4); }
+.plan-vacio p { margin: 0; }
+@media (max-width: 899px) {
+  .plan-cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .plan-lado { grid-column: 1; grid-row: auto; position: static; }
+}
+@media (max-width: 599px) {
+  .plan-cabeza { padding: var(--e7) var(--e4) 0; }
+  .plan-cabeza-texto { padding-bottom: var(--e6); }
+  /* En el celular la línea baja en vertical: seis servicios no caben en fila. */
+  .plan-linea { grid-auto-flow: row; grid-auto-columns: auto; gap: var(--e3); padding-bottom: var(--e7); }
+  .plan-linea li:not(:last-child)::before { left: 8px; top: 12px; width: 8px; height: calc(100% + var(--e3)); }
+  .plan-linea li { grid-template-columns: 24px minmax(0, 1fr); align-items: center; }
+  .plan-cuerpo { padding: var(--e7) var(--e4) var(--e8); }
+}

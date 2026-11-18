@@ -2,6 +2,7 @@
 // (App, layouts) importan de aquí. Lo demás es interno (ver docs/frontend/conventions.md).
 export { CompletarRegistroPage } from './CompletarRegistroPage'
 export { EncuestaPage } from './EncuestaPage'
+export { PlanPage } from './PlanPage'
 export { PortadaPage } from './PortadaPage'
 export { RegistroPage } from './RegistroPage'
 export { RegistroResultadoPage } from './ResultadoRegistroPage'

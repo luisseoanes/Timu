@@ -101,6 +101,7 @@ const RUTAS: Ruta[] = [
   // mide el estado de «enlace no válido», que es lo que ve quien llega con uno vencido. La
   // encuesta con su formulario se mide en e2e/publicas.spec.ts: su token solo está en la base.
   { app: 'index:portada', perfil: null, url: '/' },
+  { app: '/planes/:plan', perfil: null, url: '/planes/mi-amigo-fiel' },
   { app: '/login', perfil: null, url: '/login' },
   { app: '/recuperar', perfil: null, url: '/recuperar' },
   { app: '/restablecer', perfil: null, url: '/restablecer' },

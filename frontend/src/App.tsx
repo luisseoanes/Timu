@@ -24,6 +24,7 @@ import { GestionarPreventivo, PreventivosPage } from '@/features/preventivos'
 import {
   CompletarRegistroPage,
   EncuestaPage,
+  PlanPage,
   PortadaPage,
   RegistroPage,
   RegistroResultadoPage,
@@ -35,8 +36,9 @@ import { TareasPage } from '@/features/tareas'
 import { AppLayout } from '@/layouts/AppLayout'
 import { PERMISOS } from '@/lib/permisos'
 import { AlPanel } from '@/routes/AlPanel'
-import { MODULOS_DEL_PANEL } from '@/routes/modulos'
+import { DIRECCIONES_VIEJAS, MODULOS_DEL_PANEL } from '@/routes/modulos'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
+import { DeLaWebVieja } from '@/routes/WebVieja'
 import type { Rol } from '@/types'
 
 // El panel es del equipo interno; las familias y las aliadas tienen su propio espacio.
@@ -63,6 +65,7 @@ export default function App() {
             <Route path="/afiliacion/completar" element={<CompletarRegistroPage />} />
             {/* La portada pública (R3-PUB-04): el punto de acceso a todo. El panel vive en /panel. */}
             <Route index element={<PortadaPage />} />
+            <Route path="/planes/:plan" element={<PlanPage />} />
 
             <Route path="panel" element={<ProtectedRoute roles={EQUIPO} />}>
               <Route element={<AppLayout />}>
@@ -110,6 +113,9 @@ export default function App() {
             {/* Las direcciones del panel antes de que la portada ocupara la raíz (R3-PUB-04). */}
             {MODULOS_DEL_PANEL.map((m) => (
               <Route key={m} path={`${m}/*`} element={<AlPanel />} />
+            ))}
+            {DIRECCIONES_VIEJAS.map((d) => (
+              <Route key={d} path={d} element={<DeLaWebVieja />} />
             ))}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

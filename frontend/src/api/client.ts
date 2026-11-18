@@ -27,7 +27,7 @@ const SIN_RENOVACION = [
 ]
 
 // Páginas que se abren sin sesión: un 401 ahí no debe mandar al ingreso.
-const PAGINAS_PUBLICAS = ['/login', '/recuperar', '/restablecer', '/activar', '/encuesta', '/verificar', '/afiliacion']
+const PAGINAS_PUBLICAS = ['/login', '/recuperar', '/restablecer', '/activar', '/encuesta', '/verificar', '/afiliacion', '/planes']
 
 /** La portada (`/`) es pública, pero como prefijo lo sería todo: se compara entera. */
 const esPublica = (ruta: string) => ruta === '/' || PAGINAS_PUBLICAS.some((p) => ruta.startsWith(p))

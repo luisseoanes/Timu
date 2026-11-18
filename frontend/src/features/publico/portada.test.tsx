@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
+import { Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { sinSesion, USUARIO_ADMIN } from '@/test/handlers'
@@ -8,6 +9,7 @@ import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { AliadaPublica, DatosTimuRead, PlanPublico } from '@/types'
 
+import { PlanPage } from './PlanPage'
 import { desdeMensual, enlaceAfiliacion, redTimu, rutaDePlan } from './portada'
 import { PortadaPage } from './PortadaPage'
 
@@ -299,5 +301,57 @@ describe('Contacto de la portada', () => {
     await user.click(within(form).getByLabelText(/Autorizo a TIMU/))
     await user.click(within(form).getByRole('button', { name: 'Enviar mensaje' }))
     expect(await within(form).findByRole('alert')).toHaveTextContent('Telefono no valido')
+  })
+})
+
+describe('Página de un plan', () => {
+  function abrir(ruta: string) {
+    renderizar(
+      <Routes>
+        <Route path="/planes/:plan" element={<PlanPage />} />
+      </Routes>,
+      { ruta },
+    )
+  }
+
+  it('dice todo lo que cubre, los adicionales, lo que paga por peludos y sus condiciones', async () => {
+    abrir('/planes/mi-amigo-fiel')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Mi Amigo Fiel' })).toBeInTheDocument()
+    expect(within(screen.getByRole('list', { name: 'Los servicios de Mi Amigo Fiel' })).getAllByRole('listitem').map((l) => l.textContent)).toEqual(['Cirugía'])
+    const cubre = screen.getByRole('heading', { name: 'Lo que cubre' }).parentElement!
+    expect(cubre).toHaveTextContent('Cirugía')
+    expect(cubre).toHaveTextContent('Desde los 30 días. Con anestesia.')
+    const ademas = screen.getByRole('heading', { name: 'Además' }).parentElement!
+    expect(ademas).toHaveTextContent('Servicio fúnebre')
+    expect(ademas).toHaveTextContent('Desde los 30 días. Traslado las 24 horas.')
+    const pagas = screen.getByRole('heading', { name: 'Lo que pagas' }).parentElement!
+    expect(pagas).toHaveTextContent(/2 peludos\s*\$\s61\.000 al mes cada uno/)
+    expect(pagas).toHaveTextContent(/4 o más peludos/)
+    expect(pagas).toHaveTextContent(/3 meses/)
+    expect(screen.getByText('Sin periodo de carencia.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Afiliar a mi peludo con Mi Amigo Fiel' })).toHaveAttribute(
+      'href',
+      '/afiliacion?ciudad=Medell%C3%ADn&plan=id-mi_amigo_fiel',
+    )
+  })
+
+  it('cambia de ciudad y pide sus precios', async () => {
+    const user = userEvent.setup()
+    abrir('/planes/colita-feliz')
+    await screen.findByRole('heading', { level: 1, name: 'Colita Feliz' })
+    await user.selectOptions(screen.getByLabelText('Ciudad'), 'Bogotá')
+    await waitFor(() => expect(pedidas).toContain('Bogotá'))
+  })
+
+  it('un plan que no se vende lo dice y lleva a los planes', async () => {
+    abrir('/planes/plan-viejo')
+    expect(await screen.findByRole('heading', { name: 'Este plan no está a la venta en Medellín' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Mira los planes de TIMU' })).toHaveAttribute('href', '/#planes')
+  })
+
+  it('dice si no pudo cargar el plan', async () => {
+    server.use(http.get(`${REGISTRO}/planes`, () => new HttpResponse(null, { status: 503 })))
+    abrir('/planes/colita-feliz')
+    expect(await screen.findByText(/No pudimos cargar el plan/)).toBeInTheDocument()
   })
 })
