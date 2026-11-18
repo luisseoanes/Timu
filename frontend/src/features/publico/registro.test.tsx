@@ -229,6 +229,17 @@ describe('Registro en línea', () => {
     ])
   })
 
+  it('arranca con la manada y el plan que trae de la portada (R3-PUB-04)', async () => {
+    catalogo([plan('p-todos', 'Mi Amigo Fiel', [], '69000.00', 'verde')])
+    renderizar(<RegistroPage />, { ruta: '/afiliacion?ciudad=Medell%C3%ADn&perros=1&gatos=1&plan=p-todos' })
+    const perro = await screen.findByRole('region', { name: /^Peludo 1/ })
+    const gato = screen.getByRole('region', { name: /^Peludo 2/ })
+    expect(await within(perro).findByRole('radio', { name: /Mi Amigo Fiel/ })).toBeChecked()
+    expect(within(gato).getByRole('radio', { name: /Mi Amigo Fiel/ })).toBeChecked()
+    expect(within(gato).getByRole('radio', { name: 'Gato' })).toBeChecked()
+    expect(screen.getByLabelText('¿En qué ciudad vives?')).toHaveValue('Medellín')
+  })
+
   it('promete ahorro solo cuando algún periodo lo da', async () => {
     catalogo()
     // Con un peludo, el trimestral de TIMU trae descuento: la frase lo dice y la opción, cuánto.

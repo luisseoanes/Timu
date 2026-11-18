@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
@@ -16,16 +16,30 @@ import { useCiudadesRegistro, useCotizacionRegistro, usePlanesRegistro, type Pel
 const MAX_PELUDOS = 10
 const PELUDO_NUEVO: PeludoRegistro = { nombre: '', especie: 'canino', plan_id: '' }
 
+/** La manada que trae desde la portada (R3-PUB-04): `?perros=1&gatos=1&plan=<id>`. */
+function manadaInicial(params: URLSearchParams): PeludoRegistro[] {
+  const cuantos = (n: string) => Math.max(0, Math.floor(Number(params.get(n)) || 0))
+  const perros = Math.min(cuantos('perros'), MAX_PELUDOS)
+  const gatos = Math.min(cuantos('gatos'), MAX_PELUDOS - perros)
+  const plan_id = params.get('plan') ?? ''
+  const manada = [
+    ...Array.from({ length: perros }, () => ({ ...PELUDO_NUEVO, plan_id })),
+    ...Array.from({ length: gatos }, () => ({ ...PELUDO_NUEVO, especie: 'felino', plan_id })),
+  ]
+  return manada.length ? manada : [{ ...PELUDO_NUEVO, plan_id }]
+}
+
 /**
  * 6.1 / 6.12 Registro en línea (R3-PUB-02, «Cada peludo, su plan»): la familia arma su manada,
  * una ficha por peludo con su plan, y ve el total de la familia mientras la arma; después elige
  * cómo pagar, paga en Wompi y completa sus datos. Todo precio y toda condición salen del backend.
  */
 export function RegistroPage() {
-  const [ciudad, setCiudad] = useState('')
+  const [params] = useSearchParams()
+  const [ciudad, setCiudad] = useState(() => params.get('ciudad') ?? '')
   const [confirmando, setConfirmando] = useState<string | null>(null)
   const [pagando, setPagando] = useState(false)
-  const [peludos, setPeludos] = useState<PeludoRegistro[]>([PELUDO_NUEVO])
+  const [peludos, setPeludos] = useState<PeludoRegistro[]>(() => manadaInicial(params))
   const [periodicidad, setPeriodicidad] = useState<Periodicidad>('mensual')
   const planes = usePlanesRegistro(ciudad)
   const cotizacion = useCotizacionRegistro(
