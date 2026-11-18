@@ -74,6 +74,17 @@ que necesitará la portada:
   rol y etiqueta, con una captura tras cada paso; una opción con el `input` escondido se pulsa por
   su texto (`getByText('Mi Amigo Fiel', { exact: true })`).
 
+Y lo aprendido con la portada (`R3-PUB-04`):
+
+- **Una sección larga se mira sola**: `page.locator('#aliadas').screenshot(...)`, con la barra sacada
+  del flujo (`page.addStyleTag({ content: '.publica-barra { position: static !important; }' })`);
+  si no, la barra pegada arriba sale pintada encima de la sección.
+- **Las imágenes de abajo van con `loading="lazy"`**: antes de la página completa, se fuerzan
+  (`for (const img of document.images) { img.loading = 'eager'; await img.decode() }`) o salen en
+  blanco.
+- **Cada color de plan se captura**: la línea del plan y las pastillas cambian con `color`, y el
+  revisor pide verlas en los tres.
+
 ## Estados que los datos no tienen
 
 - **Los que gastan datos** (una parada que se cierra, una consulta que se firma) se capturan en el

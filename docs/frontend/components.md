@@ -269,9 +269,11 @@ El plan se elige como pastilla en su color (borde del color; elegida, llena con 
 `--plan-*-texto`), nunca en un desplegable, en tres columnas también en el celular. El elegido se
 abre con «Lo que cubre <plan>»: cabecera del color del plan, cada beneficio con su texto de la API
 (`texto`: «1 al mes», «2 al año · cubre el 40 %») y sus condiciones (carencia, lo que no cubre y
-términos) solo si el catálogo las tiene. El comparador (`.registro-comparador`) dice una vez lo que
-es igual en todos y se apila bajo 480 px de contenedor con el plan en color en cada valor. Viven en
-`features/publico/FichaPeludo.tsx`: si la portada los necesita, suben a `src/components/`.
+términos) solo si el catálogo las tiene. El comparador (`.registro-comparador`, `features/publico/Comparador.tsx`)
+pone el precio, cada servicio, los beneficios adicionales y las condiciones lado a lado; lo que es
+igual en todos lo dice una vez, centrado sobre las columnas con fondo hundido, y se apila bajo 480 px
+de contenedor con el plan en color en cada valor. Lo usan el registro y la portada (`R3-PUB-04`), los
+dos en `publico`: por eso no sube a `src/components/`.
 
 ## Indicadores — `.indicadores` / `.indicador`
 

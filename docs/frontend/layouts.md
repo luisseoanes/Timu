@@ -258,7 +258,39 @@ la franja marina con el logo compacto y, debajo, el contenido con la manada a la
 - **En el pago y después del pago** el verde no está en el resumen: la manada va como bloque al
   final (`.registro-resumen-quieto`).
 - **El resultado** se titula por lo que pasó y **el formulario** va por bloques blancos (titular,
-  otros contactos, cada peludo y el acceso). La plantilla pública antigua (`.publica`) se retiró.
+  otros contactos, cada peludo y el acceso). La plantilla pública antigua se retiró; el nombre
+  `.publica` lo usa ahora el marco de la portada (abajo).
+
+## Portada y página de cada plan — `.publica` (`MarcoPublico`, R3-PUB-04)
+
+La portada (`/`) y cada plan (`/planes/<plan>`) comparten el marco: la barra marina pegada arriba
+(logo completo desde 1024 px y compacto debajo, las secciones, «Ingresar» —o «Ir a mi espacio» con la
+sesión abierta— y «Afiliar a mi peludo» con borde; por debajo de 1024 px las secciones van en el menú
+de puntos), el contenido y el pie marino con la razón social, los enlaces y el contacto. Cada sección
+ocupa todo el ancho con su fondo y centra el contenido a 1200 px (`.seccion`); el ancla deja libre el
+alto de la barra (`scroll-margin-top`).
+
+```
+≥ 1100 px                                          < 720 px
+┌ TIMU  Planes Aliadas …   Ingresar [Afiliar] ┐   ┌ TIMU   [Afiliar] ⋯ ┐
+│ ┌ médica ──┐┌ recepción ┐│ Tu peludito,     │   │ ┌ médica ────────┐ │
+│ │          │└───────────┘│ bien cuidado.    │   │ └ pie ───────────┘ │
+│ │          │┌ equipo ───┐│ [Colita][Fiel][…]│   │ Tu peludito,       │
+│ └ pie ─────┘└ pie ──────┘│ ┌ Arma tu plan ┐ │   │ [Colita][Fiel][…]  │
+│                          │ │ [Ver planes] │ │   │ ┌ Arma tu plan ──┐ │
+└──────────────────────────┴─────────────────┘   └────────────────────┘
+```
+
+- **El álbum** (`.album`): dos tercios de mosaico y un tercio de panel desde 1100 px; hasta 720 px,
+  el mosaico arriba y el panel en dos columnas (texto y «Arma tu plan»); en el celular, una foto
+  ancha y el panel debajo. «Arma tu plan» es el único verde lleno de la portada y abre la afiliación
+  con la ciudad, los perros y los gatos puestos (`?ciudad=…&perros=…&gatos=…`, y `&plan=<id>` desde
+  la página de un plan).
+- **La red** (`.red`): la línea verde (`--linea-aliadas`) con una fila por estación y el recuadro de
+  servicios fijo a la derecha; por debajo de 1100 px, el recuadro baja.
+- **La página del plan** (`.plan-cabeza`, `.plan-cuerpo`): la cabecera marina con el plan como su
+  línea (horizontal; vertical por debajo de 600 px) y, debajo, lo que cubre a la izquierda y el precio
+  y las condiciones a la derecha, fijos al bajar; por debajo de 900 px, una columna.
 
 ## Verificación del carnet — `.verificacion` (R3-PUB-03)
 

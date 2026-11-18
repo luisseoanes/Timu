@@ -228,3 +228,18 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
   sobre el hilo que las separa, según la unión elegida; un hilo bajo la franja fija de la regla en
   palabras cuando el cuerpo está desplazado; y la fecha nativa «dd/mm/yyyy», que es de todo el panel.
 
+### Lo que quedó de la portada tras cerrar `R3-PUB-04`
+
+- **No se publica en el dominio sin lo de TIMU** ([pendientes externos](../pendientes-externos.md)):
+  confirmar los valores provisionales sacados de la web vieja (misión cortada, horario del sábado
+  contradictorio, aliadas vigentes, adicionales y topes), el permiso de las personas de las fotos del
+  equipo, la licencia de las fotos de las piezas impresas, el WhatsApp de contacto y volver a alojar
+  la política de datos, cuyo enlace actual muere con WordPress.
+- **Lo que el revisor no vio**: ningún estado en movimiento, y el envío real del contacto (sus dos
+  capturas se simularon para no crear un interesado en la base local; lo cubren las pruebas).
+- **Sin usar del material**: el logo con animales en color y los patrones de siluetas del `.ai` y
+  los recortes de perro y gato no entraron en la portada; no están en el repositorio.
+- **Detalles menores que el revisor dio por aceptables**: el «·» cierra el renglón cuando un horario
+  largo de la red hace salto, y a 390 la pastilla «24 horas» deja el final del nombre de la aliada
+  en un renglón propio. En el celular la portada es larga, sobre todo por el comparador apilado.
+

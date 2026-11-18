@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-17T00:00:00Z",
+  "generatedAt": "2026-11-18T00:00:00Z",
   "title": "Design System: TIMU",
   "extensions": {
     "colorMeta": {
@@ -708,9 +708,28 @@
         "role": "neutral",
         "displayName": "Texto sobre plan azul",
         "canonical": "var(--blanco)"
+      },
+      "linea-aliadas": {
+        "role": "primary",
+        "displayName": "Verde de la red",
+        "canonical": "var(--verde-500)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
       }
     },
     "typographyMeta": {
+      "portada": {
+        "displayName": "Portada (--t-portada)",
+        "purpose": "Solo el h1 de la web pública: el titular del álbum y el nombre del plan en su cabecera, en blanco sobre marino. Crece de 40 a 58 px con la ventana; única excepción a la escala fija."
+      },
       "display": {
         "displayName": "Display (--t-display)",
         "purpose": "Nombre de la familia abierta, saludo, título del acceso. Uno por pantalla; en el acceso, la frase del panel de marca va también a 34 px en blanco."
@@ -765,6 +784,11 @@
         "name": "halo-proxima-sobre-marca",
         "value": "0 0 0 3px var(--indicador-sobre-marca)",
         "purpose": "Estación próxima de la línea de marca del acceso, sobre marino."
+      },
+      {
+        "name": "halo-intercambio",
+        "value": "0 0 0 6px var(--accion-suave-fondo-hover)",
+        "purpose": "La estación de la clínica de TIMU en «La red TIMU», la única de intercambio, de la que sale el ramal a casa."
       }
     ],
     "motion": [
@@ -801,9 +825,24 @@
         "purpose": "La tabla se apila según el ancho de su contenedor."
       },
       {
+        "name": "album-celular",
+        "value": "720px",
+        "purpose": "Web pública: por debajo, el álbum deja una sola foto ancha (16:10) y el panel en una columna; en la red, cada estación en dos columnas y sin logos."
+      },
+      {
         "name": "movil",
         "value": "900px",
         "purpose": "Barra inferior; listado o ficha; formularios a una columna; controles de 44 px. En el acceso, el panel de marca pasa a franja con el logo compacto y la línea sin rótulos, y el formulario baja debajo."
+      },
+      {
+        "name": "barra-publica",
+        "value": "1024px",
+        "purpose": "Web pública: desde aquí, el logo completo y las secciones e «Ingresar» en la barra; por debajo, el logo compacto y el menú de tres puntos."
+      },
+      {
+        "name": "album",
+        "value": "1100px",
+        "purpose": "Web pública: desde aquí, dos tercios de mosaico y un tercio de panel; por debajo, mosaico arriba y panel en dos columnas. También el recuadro de servicios de la red, fijo al lado o debajo."
       },
       {
         "name": "barra-6",
@@ -1071,6 +1110,30 @@
       "description": "Los planes como tres opciones iguales con borde de 2 px de su color; la elegida, llena con su par de texto, abre lo que cubre: cabecera del color, una fila por servicio con el texto de la API y las condiciones que trae el catálogo.",
       "html": "<fieldset class=\"ds-planes\"><legend>Su plan</legend><label class=\"ds-plan\" data-color=\"naranja\"><input type=\"radio\" name=\"ds-plan\"><span class=\"ds-plan-nombre\">Colita Feliz</span><span class=\"ds-plan-valor\">$ 35.500 al mes</span></label><label class=\"ds-plan\" data-color=\"verde\"><input type=\"radio\" name=\"ds-plan\" checked><span class=\"ds-plan-nombre\">Mi Amigo Fiel</span><span class=\"ds-plan-valor\">$ 69.000 al mes</span></label><label class=\"ds-plan\" data-color=\"azul\"><input type=\"radio\" name=\"ds-plan\"><span class=\"ds-plan-nombre\">Amigos por Siempre</span><span class=\"ds-plan-valor\">$ 98.000 al mes</span></label></fieldset><div class=\"ds-cobertura\" data-color=\"verde\"><p class=\"ds-cobertura-cabeza\">Lo que cubre Mi Amigo Fiel</p><dl class=\"ds-filas\"><div><dt>Consulta domiciliaria</dt><dd>1 al mes</dd></div><div><dt>Atención en clínica aliada</dt><dd>2 al año · cubre el 40 %</dd></div></dl><dl class=\"ds-condiciones\"><div><dt>Carencia</dt><dd>Sin carencia.</dd></div></dl></div>",
       "css": ".ds-planes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e2); margin: 0; padding: 0; border: 0; font-family: var(--fuente); } .ds-planes legend { padding: 0; margin-bottom: var(--e2); font-size: var(--t-menor); font-weight: 600; color: var(--texto-titulo); } .ds-plan { position: relative; display: grid; gap: 2px; min-height: 56px; padding: var(--e3) var(--e4); border: 2px solid var(--plan-verde); border-radius: var(--r-campo); background: var(--superficie); cursor: pointer; } .ds-plan input { position: absolute; opacity: 0; pointer-events: none; } .ds-plan[data-color=naranja] { border-color: var(--plan-naranja); } .ds-plan[data-color=azul] { border-color: var(--plan-azul); } .ds-plan-nombre { font-weight: 600; color: var(--texto-titulo); } .ds-plan-valor { font-size: var(--t-menor); color: var(--texto-suave); font-variant-numeric: tabular-nums; } .ds-plan:hover { background: var(--superficie-lienzo); } .ds-plan:has(input:checked) { background: var(--plan-verde); } .ds-plan[data-color=naranja]:has(input:checked) { background: var(--plan-naranja); } .ds-plan[data-color=azul]:has(input:checked) { background: var(--plan-azul); } .ds-plan:has(input:checked) span { color: var(--plan-verde-texto); } .ds-plan[data-color=naranja]:has(input:checked) span { color: var(--plan-naranja-texto); } .ds-plan[data-color=azul]:has(input:checked) span { color: var(--plan-azul-texto); } .ds-plan:has(input:focus-visible) { box-shadow: 0 0 0 2px var(--superficie), 0 0 0 4px var(--foco); } .ds-cobertura { margin-top: var(--e4); border: 1px solid var(--borde); border-radius: var(--r-campo); overflow: hidden; font-family: var(--fuente); } .ds-cobertura-cabeza { margin: 0; padding: var(--e2) var(--e4); font-weight: 600; background: var(--plan-verde); color: var(--plan-verde-texto); } .ds-filas, .ds-condiciones { margin: 0; } .ds-filas div { display: flex; justify-content: space-between; gap: var(--e4); padding: var(--e3) var(--e4); border-top: 1px solid var(--borde); } .ds-filas div:first-child { border-top: 0; } .ds-filas dt { color: var(--texto); } .ds-filas dd { margin: 0; font-weight: 600; color: var(--texto-titulo); text-align: right; font-variant-numeric: tabular-nums; } .ds-condiciones { display: grid; gap: var(--e3); padding: var(--e4); background: var(--superficie-lienzo); border-top: 1px solid var(--borde); } .ds-condiciones div { display: grid; gap: 2px; } .ds-condiciones dt { font-size: var(--t-etiqueta); letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; font-weight: 700; color: var(--texto-suave); } .ds-condiciones dd { margin: 0; color: var(--texto); }"
+    },
+    {
+      "name": "Pastillas de los planes",
+      "kind": "chip",
+      "refersTo": "pastilla-plan",
+      "description": "En el panel marino del álbum: cada plan del catálogo, lleno de su color con su par de texto, enlaza a su página con lo que paga cada peludo al mes.",
+      "html": "<ul class=\"ds-pastillas\"><li><a class=\"ds-pastilla\" data-color=\"naranja\" href=\"#\"><span>Colita Feliz</span><strong>$ 35.500</strong></a></li><li><a class=\"ds-pastilla\" data-color=\"verde\" href=\"#\"><span>Mi Amigo Fiel</span><strong>$ 69.000</strong></a></li><li><a class=\"ds-pastilla\" data-color=\"azul\" href=\"#\"><span>Amigos por Siempre</span><strong>$ 98.000</strong></a></li></ul>",
+      "css": ".ds-pastillas { list-style: none; margin: 0; padding: var(--e5); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e2); background: var(--superficie-marca); font-family: var(--fuente); } .ds-pastilla { display: grid; align-content: space-between; gap: 2px; min-height: 56px; padding: var(--e2) var(--e3); border-radius: var(--r-campo); background: var(--plan-verde); color: var(--plan-verde-texto); font-size: var(--t-menor); font-weight: 600; text-decoration: none; } .ds-pastilla[data-color=naranja] { background: var(--plan-naranja); color: var(--plan-naranja-texto); } .ds-pastilla[data-color=azul] { background: var(--plan-azul); color: var(--plan-azul-texto); } .ds-pastilla strong { font-size: var(--t-seccion); font-variant-numeric: tabular-nums; } .ds-pastilla:hover span { text-decoration: underline; text-underline-offset: 3px; } .ds-pastilla:focus-visible { outline: 2px solid var(--foco-sobre-marca); outline-offset: 2px; }"
+    },
+    {
+      "name": "Foto del álbum con su pie",
+      "kind": "card",
+      "refersTo": "pie-de-foto",
+      "description": "Foto real del equipo de TIMU con esquina de tarjeta y su pie en pastilla marina; las de banco van sin pie.",
+      "html": "<figure class=\"ds-foto\"><div class=\"ds-foto-img\"></div><figcaption>Consulta en nuestra clínica</figcaption></figure>",
+      "css": ".ds-foto { position: relative; margin: 0; width: 280px; height: 200px; overflow: hidden; border-radius: var(--r-tarjeta); background: var(--pista); font-family: var(--fuente); } .ds-foto-img { width: 100%; height: 100%; } .ds-foto figcaption { position: absolute; left: var(--e4); bottom: var(--e3); padding: 6px var(--e3); border-radius: var(--r-pastilla); background: var(--superficie-marca); color: var(--texto-sobre-marca); font-size: var(--t-menor); font-weight: 600; }"
+    },
+    {
+      "name": "La red TIMU",
+      "kind": "custom",
+      "refersTo": "estacion-red",
+      "description": "Las aliadas como el plano de una línea de metro verde de 8 px: una estación de 24 px por barrio, la de la clínica de TIMU de intercambio (36 px, marino con halo) y el ramal punteado a casa.",
+      "html": "<ol class=\"ds-red\"><li class=\"ds-est\"><span class=\"ds-punto\"></span><h3>Bello</h3><span class=\"ds-aliada\"><b>Clínica Veterinaria Cabañitas</b> · Clínica veterinaria</span></li><li class=\"ds-est\" data-intercambio><span class=\"ds-punto\"></span><h3>Laureles<small>Medellín</small></h3><span class=\"ds-aliada\"><b>TIMU clínica veterinaria</b> · <em>Nuestra clínica</em></span><p class=\"ds-ramal\"><span class=\"ds-ramal-punto\"></span><span><b>Tu casa</b> · Consulta domiciliaria en los 3 planes</span></p></li><li class=\"ds-est\"><span class=\"ds-punto\"></span><h3>Aguacatala<small>Medellín</small></h3><span class=\"ds-aliada\"><b>Clínica veterinaria Integral Vet</b> · Clínica veterinaria</span></li></ol>",
+      "css": ".ds-red { position: relative; list-style: none; margin: 0; padding: 0; font-family: var(--fuente); font-size: var(--t-cuerpo); color: var(--texto-suave); } .ds-red::before { content: \"\"; position: absolute; left: 14px; top: 16px; bottom: 16px; width: 8px; border-radius: var(--r-pastilla); background: var(--linea-aliadas); } .ds-est { position: relative; display: grid; grid-template-columns: 36px 150px minmax(0, 1fr); column-gap: var(--e4); row-gap: var(--e2); padding-block: var(--e3); border-top: 1px solid var(--borde); } .ds-est:first-child { border-top: 0; } .ds-punto { position: relative; z-index: 1; width: 24px; height: 24px; margin: 2px 0 0 6px; box-sizing: border-box; border: 6px solid var(--linea-aliadas); border-radius: var(--r-pastilla); background: var(--superficie); } .ds-est[data-intercambio] .ds-punto { width: 36px; height: 36px; margin: -4px 0 0; border: 9px solid var(--ruta-recorrida); box-shadow: 0 0 0 6px var(--accion-suave-fondo-hover); } .ds-est h3 { margin: 0; display: grid; font-size: var(--t-seccion); font-weight: 600; line-height: 1.3; color: var(--texto-titulo); } .ds-est small { font-size: var(--t-menor); font-weight: 400; color: var(--texto-suave); } .ds-aliada b { color: var(--texto-titulo); } .ds-aliada em { font-style: normal; font-weight: 600; color: var(--accion-suave-texto); } .ds-ramal { grid-column: 2 / -1; margin: var(--e1) 0 0; display: flex; align-items: center; gap: var(--e3); font-size: var(--t-menor); color: var(--texto); } .ds-ramal b { color: var(--texto-titulo); } .ds-ramal-punto { width: 16px; height: 16px; box-sizing: border-box; border: 3px dashed var(--linea-aliadas); border-radius: var(--r-pastilla); }"
     }
   ],
   "narrative": {
@@ -1087,93 +1150,103 @@
     "rules": [
       {
         "name": "La regla de los roles",
-        "body": "Fuera de `tokens.css` no se escribe un color ni se nombra un paso de la paleta: solo roles. Un rol nuevo llega con su par en `@pares`. Lo hace cumplir `frontend/src/test/tokens.test.ts` (sin `#hex`, `rgb()`, `oklch()` ni nombres de color en `src`, también en `style={{}}` y atributos SVG; ninguna `var(--…)` sin definir; cada par llega a su mínimo).",
-        "section": "colors"
+        "section": "colors",
+        "body": "Fuera de `tokens.css` no se escribe un color ni se nombra un paso de la paleta: solo roles. Un rol nuevo llega con su par en `@pares`. Lo hace cumplir `frontend/src/test/tokens.test.ts` (sin `#hex`, `rgb()`, `oklch()` ni nombres de color en `src`, también en `style={{}}` y atributos SVG; ninguna `var(--…)` sin definir; cada par llega a su mínimo)."
       },
       {
         "name": "La regla del verde único",
-        "body": "Un solo botón principal (verde lleno) por vista; el resto son suaves, secundarias o planas (regla 2 de la sección 11 del manual). En la ficha de una familia, el principal es la acción de la próxima estación y nombra lo que hace.",
-        "section": "colors"
+        "section": "colors",
+        "body": "Un solo botón principal (verde lleno) por vista; el resto son suaves, secundarias o planas (regla 2 de la sección 11 del manual). En la ficha de una familia, el principal es la acción de la próxima estación y nombra lo que hace."
       },
       {
         "name": "La regla de plan contra estado",
-        "body": "El plan es identidad: un cuadrado de 12 px del color del plan (`marcador-plan`) y el nombre al lado en texto, o la línea de la familia. El estado es una pastilla tintada con texto oscuro e icono. El color del plan sale del campo `color` del catálogo (`data-color`), nunca del nombre del plan.",
-        "section": "colors"
+        "section": "colors",
+        "body": "El plan es identidad: un cuadrado de 12 px del color del plan (`marcador-plan`) y el nombre al lado en texto, o la línea de la familia. El estado es una pastilla tintada con texto oscuro e icono. El color del plan sale del campo `color` del catálogo (`data-color`), nunca del nombre del plan. Donde el plan se elige (el registro en línea), la opción lleva el borde de 2 px del color del plan y, elegida, se llena de él con su par de texto (`plan-verde-texto` y `plan-naranja-texto` marino, `plan-azul-texto` blanco, en `@pares` a 4.5)."
       },
       {
         "name": "La regla de la señal doble",
-        "body": "El estado nunca se comunica solo con color (WCAG 1.4.1): el distintivo lleva icono por tono (`check`, `alerta`, `info`, `cerrar`, `menos`), la estación vencida lleva el icono de alerta, y la fila del listado dice «N vencidas» en texto junto a la miniatura.",
-        "section": "colors"
+        "section": "colors",
+        "body": "El estado nunca se comunica solo con color (WCAG 1.4.1): el distintivo lleva icono por tono (`check`, `alerta`, `info`, `cerrar`, `menos`), la estación vencida lleva el icono de alerta, y la fila del listado dice «N vencidas» en texto junto a la miniatura."
       },
       {
         "name": "La regla de la escala fija",
-        "body": "El tipo se mide en rem con los siete pasos de `tokens.css`; una interfaz de trabajo no escala el tipo con la ventana (nada de `clamp()` ni `vw` en tamaños de letra). En pantallas táctiles o de 900 px o menos, campos y buscadores suben a 1rem para que iOS no amplíe la página al enfocar.",
-        "section": "typography"
+        "section": "typography",
+        "body": "El tipo se mide en rem con los siete pasos de `tokens.css`; una interfaz de trabajo no escala el tipo con la ventana (nada de `clamp()` ni `vw` en tamaños de letra). En pantallas táctiles o por debajo de 900 px, campos y buscadores suben a 1rem para que iOS no amplíe la página al enfocar. La única excepción es `--t-portada`, el titular de la web pública, que se presenta en vez de trabajar: crece de 40 a 58 px con la ventana. Ningún otro tamaño de la web pública escala, y nada del panel, el portal ni la clínica aliada usa `--t-portada`."
       },
       {
         "name": "La regla de las cifras tabulares",
-        "body": "Importes, fechas, totales y contadores llevan `.numero` (`font-variant-numeric: tabular-nums`) donde se comparan en columna o se actualizan.",
-        "section": "typography"
+        "section": "typography",
+        "body": "Importes, fechas, totales y contadores llevan `.numero` (`font-variant-numeric: tabular-nums`) donde se comparan en columna o se actualizan."
       },
       {
         "name": "La regla de la etiqueta que nombra",
-        "body": "La etiqueta en mayúsculas nombra un dato o un bloque de datos; es el título de lo que tiene debajo, nunca una línea decorativa encima de otro título.",
-        "section": "typography"
+        "section": "typography",
+        "body": "La etiqueta en mayúsculas nombra un dato o un bloque de datos; es el título de lo que tiene debajo, nunca una línea decorativa encima de otro título. Vale también en la web pública, donde más tienta (decidido con el usuario el 2026-11-18): ni el álbum, ni las secciones, ni la cabecera de un plan llevan antetítulo; lo que diría pasa al título o a la frase. Sí nombran lo de debajo las etiquetas de Misión y Visión, las de cada dato de contacto, las de las condiciones de un plan y las de cada grupo de enlaces del pie."
       },
       {
         "name": "La regla del contenedor",
-        "body": "Lo que cambia de forma según el sitio que tiene lo decide su contenedor, no la ventana: junto al listado, la ficha es estrecha en un escritorio ancho. La `tabla-apilable` se apila con una container query por debajo de 640 px de su `.scroll-x`, y la línea de la familia pasa a vertical cuando mide que sus paradas no caben con su rótulo (y siempre por debajo de 600 px de ventana).",
-        "section": "layout"
+        "section": "layout",
+        "body": "Lo que cambia de forma según el sitio que tiene lo decide su contenedor, no la ventana: junto al listado, la ficha es estrecha en un escritorio ancho. La `tabla-apilable` se apila con una container query por debajo de 640 px de su `.scroll-x`, y la línea de la familia pasa a vertical cuando mide que sus paradas no caben con su rótulo (y siempre por debajo de 600 px de ventana)."
+      },
+      {
+        "name": "La regla del formulario anclado arriba",
+        "section": "layout",
+        "body": "Un formulario cuyo contenido crece al elegir (un aviso que aparece, una etiqueta que cambia) se ancla arriba, no se centra en el alto: centrado, lo que aparece debajo empuja hacia arriba la opción que se acaba de tocar. En el acceso es `arriba`, que usa la encuesta; el ingreso, de alto fijo, sigue centrado."
+      },
+      {
+        "name": "La regla de la barra que deja su alto",
+        "section": "layout",
+        "body": "Una barra fija abajo que tapa el contenido le reserva su alto al desplazar: `scroll-padding-bottom` en la raíz mientras la barra está (160 px en el registro), además del relleno inferior del contenido, para que lo que el navegador trae a la vista o recibe el foco no quede debajo (WCAG 2.4.11). Si la vista ya no necesita la barra, la barra deja de ser fija."
       },
       {
         "name": "La regla de sin desborde",
-        "body": "Ninguna ruta desborda en horizontal a 375, 768 ni 1280 px, ni tiene texto con contraste insuficiente según axe-core; las rutas con pestañas se comprueban pestaña por pestaña. Lo vigila `frontend/e2e-stack/responsive.spec.ts`, cuya lista `PENDIENTES` (deuda de los módulos sin rediseñar) solo puede encoger.",
-        "section": "layout"
+        "section": "layout",
+        "body": "Ninguna ruta desborda en horizontal a 375, 768, 900 ni 1280 px, ni tiene texto con contraste insuficiente según axe-core; las rutas con pestañas se comprueban pestaña por pestaña. Lo vigila `frontend/e2e-stack/responsive.spec.ts`, cuya lista `PENDIENTES` (deuda de los módulos sin rediseñar) solo puede encoger."
       },
       {
         "name": "La regla de lo que flota",
-        "body": "Sombra solo para lo que tapa a otra cosa y desaparece al cerrarse. Un panel, una tarjeta o una barra nunca la llevan.",
-        "section": "elevation"
+        "section": "elevation",
+        "body": "Sombra solo para lo que tapa a otra cosa y desaparece al cerrarse. Un panel, una tarjeta o una barra nunca la llevan."
       },
       {
         "name": "La regla de las capas",
-        "body": "Todo `z-index` sale de `--capa-*`; lo comprueba `tokens.test.ts`, y `frontend/e2e-stack/recorridos.spec.ts` comprueba que menús y ventanas abiertas quedan por encima de las barras fijas.",
-        "section": "elevation"
+        "section": "elevation",
+        "body": "Todo `z-index` sale de `--capa-*`; lo comprueba `tokens.test.ts`, y `frontend/e2e-stack/recorridos.spec.ts` comprueba que menús y ventanas abiertas quedan por encima de las barras fijas."
       },
       {
         "name": "La regla del estado dicho",
-        "body": "El estado del plan se le dice a la familia con sus palabras: una pastilla (Activo, Cuotas vencidas, «En pausa» con tono de aviso, Cancelado) y al lado una frase que explica por qué y qué hacer («Tus 3 cuotas vencidas pausaron el plan. Al pagar, Luna y Michi recuperan sus beneficios.»). La pastilla y la frase usan la misma palabra; el panel conserva la del equipo («congelada»). Los cupos del plan se dicen de frente («le quedan 4 de 6 este año», «sin tope de usos este mes»), nunca «ilimitado». Si se puede agendar o no lo decide el plan, y la línea dice por qué antes de ofrecerlo.",
-        "section": "components"
+        "section": "components",
+        "body": "El estado del plan se le dice a la familia con sus palabras: una pastilla (Activo, Cuotas vencidas, «En pausa» con tono de aviso, Cancelado) y al lado una frase que explica por qué y qué hacer («Tus 3 cuotas vencidas pausaron el plan. Al pagar, Luna y Michi recuperan sus beneficios.»). La pastilla y la frase usan la misma palabra; el panel conserva la del equipo («congelada»). Los cupos del plan se dicen de frente («le quedan 4 de 6 este año», «sin tope de usos este mes»), nunca «ilimitado». Si se puede agendar o no lo decide el plan, y la línea dice por qué antes de ofrecerlo."
       },
       {
         "name": "La regla de hoy a la vista",
-        "body": "En el portal, «Hoy» está en la primera pantalla del celular: lo hecho se pliega y lo vencido se agrupa en vez de crecer una estación por cuota o por vacuna.",
-        "section": "components"
+        "section": "components",
+        "body": "En el portal, «Hoy» está en la primera pantalla del celular: lo hecho se pliega y lo vencido se agrupa en vez de crecer una estación por cuota o por vacuna."
       },
       {
         "name": "La regla del número de casa",
-        "body": "En una dirección colombiana, «# 100-12» se lee como una unidad: no se parte entre dos líneas (`partirDireccion` y `.sin-cortes`); si no cabe, baja entero. Leído a pleno sol, «100-» arriba y «12» abajo parecen dos cifras.",
-        "section": "components"
+        "section": "components",
+        "body": "En una dirección colombiana, «# 100-12» se lee como una unidad: no se parte entre dos líneas (`partirDireccion` y `.sin-cortes`); si no cabe, baja entero. Leído a pleno sol, «100-» arriba y «12» abajo parecen dos cifras."
       },
       {
         "name": "La regla de la acción de quien recorre",
-        "body": "La acción de estado de una parada es verde solo para quien hace la ruta. Quien coordina también puede avanzarla, pero como secundaria: en su vista la acción principal es planear.",
-        "section": "components"
+        "section": "components",
+        "body": "La acción de estado de una parada es verde solo para quien hace la ruta. Quien coordina también puede avanzarla, pero como secundaria: en su vista la acción principal es planear."
       },
       {
         "name": "La regla de las series que se distinguen",
-        "body": "El manual pone el azul en segundo lugar: verde, azul, naranja y marino. Antes del 2026-11-15 las series 1 y 2 eran el verde-600 y el naranja-600, casi iguales para quien no distingue el rojo del verde (ΔE 2,7, medido con el validador de la skill `dataviz`), y el Inicio usaba la 1 y la 3 como excepción. Ahora un gráfico de dos series usa la 1 y la 2 (verde y azul, ΔE 20,4) sin excepción; uno de una serie, la 1. El rojo nunca es una serie.",
-        "section": "components"
+        "section": "components",
+        "body": "El manual pone el azul en segundo lugar: verde, azul, naranja y marino. Antes del 2026-11-15 las series 1 y 2 eran el verde-600 y el naranja-600, casi iguales para quien no distingue el rojo del verde (ΔE 2,7, medido con el validador de la skill `dataviz`), y el Inicio usaba la 1 y la 3 como excepción. Ahora un gráfico de dos series usa la 1 y la 2 (verde y azul, ΔE 20,4) sin excepción; uno de una serie, la 1. El rojo nunca es una serie."
       },
       {
         "name": "La regla de una sola redacción",
-        "body": "Un preventivo se escribe igual en la bandeja, la estación y la autorización: «Luna · Antirrábica canina, refuerzo» (`pedido`). La dosis es «dosis N» en la serie inicial y «refuerzo» después, sin número: «dosis 1, refuerzo» se leía como dos cosas a la vez.",
-        "section": "components"
+        "section": "components",
+        "body": "Un preventivo se escribe igual en la bandeja, la estación y la autorización: «Luna · Antirrábica canina, refuerzo» (`pedido`). La dosis es «dosis N» en la serie inicial y «refuerzo» después, sin número: «dosis 1, refuerzo» se leía como dos cosas a la vez."
       },
       {
         "name": "La regla del verde de quien espera",
-        "body": "En la ficha de un interesado, si su conversación espera a un asesor, el verde es «Enviar» (contestarle) y «Pasar a <etapa>» queda suave; si no, el verde es pasar a la etapa siguiente que dice la API (`siguiente_etapa`; el panel no copia el embudo) y «Enviar» queda secundario.",
-        "section": "components"
+        "section": "components",
+        "body": "En la ficha de un interesado, si su conversación espera a un asesor, el verde es «Enviar» (contestarle) y «Pasar a <etapa>» queda suave; si no, el verde es pasar a la etapa siguiente que dice la API (`siguiente_etapa`; el panel no copia el embudo) y «Enviar» queda secundario."
       },
       {
         "name": "La regla de lo que se deshace",
@@ -1202,18 +1275,13 @@
       },
       {
         "name": "La regla del código como prueba",
-        "body": "La clínica no ve las remisiones por usar, ni las busca: solo abre la que la familia trae, por su código. El código es la prueba de que la familia se presentó, y lo que se ve de ella es lo justo para atenderla (titular, últimos dígitos del documento, la mascota): ni contacto, ni dirección, ni cartera, ni historia.",
-        "section": "components"
+        "section": "components",
+        "body": "La clínica no ve las remisiones por usar, ni las busca: solo abre la que la familia trae, por su código. El código es la prueba de que la familia se presentó, y lo que se ve de ella es lo justo para atenderla (titular, últimos dígitos del documento, la mascota): ni contacto, ni dirección, ni cartera, ni historia."
       },
       {
         "name": "La regla de la cifra antes del compromiso",
-        "body": "Lo que cubre TIMU y lo que paga la familia se ve antes de reportar, no al terminar: lo calcula la API con la misma cuenta del reporte, sobre el valor que se está escribiendo. El panel no copia la regla de cobertura ni el tope para adelantar una cifra; si la API no respondió, lo dice en vez de estimar.",
-        "section": "components"
-      },
-      {
-        "name": "La regla del formulario anclado arriba",
-        "section": "layout",
-        "body": "Un formulario cuyo contenido crece al elegir (un aviso que aparece, una etiqueta que cambia) se ancla arriba, no se centra en el alto: centrado, lo que aparece debajo empuja hacia arriba la opción que se acaba de tocar. En el acceso es `arriba`, que usa la encuesta; el ingreso, de alto fijo, sigue centrado."
+        "section": "components",
+        "body": "Lo que cubre TIMU y lo que paga la familia se ve antes de reportar, no al terminar: lo calcula la API con la misma cuenta del reporte, sobre el valor que se está escribiendo. El panel no copia la regla de cobertura ni el tope para adelantar una cifra; si la API no respondió, lo dice en vez de estimar."
       },
       {
         "name": "La regla del veredicto como título",
@@ -1229,11 +1297,6 @@
         "name": "La regla del enlace en palabras propias",
         "section": "components",
         "body": "Una página a la que se llega desde un enlace dice lo que pasó con sus palabras y qué hacer («Esta encuesta no está disponible», «No encontramos este carnet»), nunca el `detail` del servidor: quien llega no pidió nada todavía y no sabe qué es un token. Solo un fallo pasajero muestra su causa, junto a «Reintentar»."
-      },
-      {
-        "name": "La regla de la barra que deja su alto",
-        "section": "layout",
-        "body": "Una barra fija abajo que tapa el contenido le reserva su alto al desplazar: `scroll-padding-bottom` en la raíz mientras la barra está (160 px en el registro), además del relleno inferior del contenido, para que lo que el navegador trae a la vista o recibe el foco no quede debajo (WCAG 2.4.11). Si la vista ya no necesita la barra, la barra deja de ser fija."
       },
       {
         "name": "La regla del plan de frente",
@@ -1254,6 +1317,21 @@
         "name": "La regla de lo igual una vez",
         "section": "components",
         "body": "En una comparación, lo que es igual en todas las opciones se dice una sola vez, a todo el ancho y con «igual en los N»; las columnas quedan para lo que cambia, y la diferencia salta a la vista."
+      },
+      {
+        "name": "La regla de la foto con pie",
+        "section": "components",
+        "body": "Solo las fotos reales del equipo de TIMU llevan pie, y el pie dice lo que se ve («Consulta en nuestra clínica»). Una foto de banco (las de Nosotros) va sin pie y no se le atribuye nada a TIMU: un pie sobre ella diría que es TIMU sin serlo. Nunca imágenes de plantilla ni de la web anterior."
+      },
+      {
+        "name": "La regla del plano",
+        "section": "components",
+        "body": "Lo que la web pública dibuja como sistema (la red de aliadas, los servicios de un plan) se dibuja como una línea de metro del sistema: 8 px, estaciones de 24 px, tramo que empieza y acaba en una estación, y una sola de intercambio con halo. El color dice de quién es la línea: el del plan para un plan, `linea-aliadas` para la red."
+      },
+      {
+        "name": "La regla del verde que arma",
+        "section": "components",
+        "body": "En la portada el único verde lleno es el de «Arma tu plan» («Ver mis planes»); en la página de un plan, «Afiliar a mi peludo con <plan>». La afiliación de la barra va en contorno y el envío del contacto en secundario."
       }
     ],
     "dos": [
@@ -1283,7 +1361,10 @@
       "Do deja elegir un plan con opciones en su color y abre la elegida con todo lo que cubre, su carencia y lo que no cubre antes de pedir el pago; la comparación, dentro de la misma ficha.",
       "Do en una comparación, di una vez lo que es igual en todas las opciones («igual en los 3») y deja las columnas para lo que cambia; apilada, cada valor lleva su opción con su marcador.",
       "Do a una barra fija abajo resérvale su alto al desplazar (`scroll-padding-bottom`) y quítala de fija cuando la vista ya no la necesita.",
-      "Do muestra a quien se afilia solo lo que da el catálogo de la API; lo que falta se escribe en Administración → Planes, no en la pantalla."
+      "Do muestra a quien se afilia solo lo que da el catálogo de la API; lo que falta se escribe en Administración → Planes, no en la pantalla.",
+      "Do en la web pública, pon un pie en pastilla marina solo a las fotos reales del equipo de TIMU, y deja sin pie las de banco.",
+      "Do dibuja la red de aliadas y los servicios de un plan como una línea de metro de 8 px con estaciones de 24 px, con una sola estación de intercambio.",
+      "Do en la web pública, centra el contenido de cada sección a 1200 px con la sección a todo el ancho, y deja el verde lleno a «Arma tu plan» o a la afiliación del plan."
     ],
     "donts": [
       "Don't escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.",
@@ -1310,7 +1391,10 @@
       "Don't pongas los planes en un `<select>` ni las condiciones (carencia, exclusiones) en letra pequeña al final: se ven con el plan, antes de pagar.",
       "Don't inventes lo que la API no da (una condición por defecto, «ilimitado», un enlace de términos vacío, un número de contacto): sin el dato, no se muestra.",
       "Don't prometas ahorro si ningún periodo lo trae: la frase y las opciones solo hablan de ahorrar cuando el dato lo sostiene.",
-      "Don't describas la plantilla pública anterior (`.publica`, `.publica-tarjeta`) ni la uses: se retiró con el registro en línea; las páginas públicas usan el acceso, la columna de la verificación o el marco del registro."
+      "Don't uses la plantilla pública anterior (`.publica-tarjeta`): se retiró con el registro en línea; las páginas públicas usan el marco de la web pública (`MarcoPublico`, `.publica`), el acceso, la columna de la verificación o el marco del registro.",
+      "Don't pongas un antetítulo en mayúsculas sobre el titular del álbum, una sección o la cabecera de un plan: lo que diría va al título o a la frase.",
+      "Don't pongas un pie a una foto de banco ni uses fotos de plantilla o de la web anterior.",
+      "Don't uses `--t-portada` ni un tamaño que escale con la ventana fuera del titular de la web pública."
     ]
   }
 }

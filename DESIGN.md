@@ -54,11 +54,18 @@ colors:
   plan-azul-texto: "#FFFFFF"
   ruta-recorrida: "#111537"
   ruta-pendiente: "#85889D"
+  linea-aliadas: "#98B833"
   serie-1: "#769116"
   serie-2: "#477095"
   serie-3: "#BE7700"
   serie-4: "#111537"
 typography:
+  portada:
+    fontFamily: "GeosansLight, Inter Variable, Inter, system-ui, sans-serif"
+    fontSize: "clamp(2.5rem, 1.75rem + 2.2vw, 3.625rem)"
+    fontWeight: 400
+    lineHeight: 1.02
+    letterSpacing: "-0.01em"
   display:
     fontFamily: "GeosansLight, Inter Variable, Inter, system-ui, sans-serif"
     fontSize: "2.125rem"
@@ -223,6 +230,43 @@ components:
     textColor: "{colors.peligro-accion-texto}"
     rounded: "{rounded.pastilla}"
     size: "24px"
+  barra-publica:
+    backgroundColor: "{colors.superficie-marca}"
+    textColor: "{colors.texto-sobre-marca}"
+    height: "64px"
+    padding: "0 40px"
+  pie-de-foto:
+    backgroundColor: "{colors.superficie-marca}"
+    textColor: "{colors.texto-sobre-marca}"
+    typography: "{typography.body-menor}"
+    rounded: "{rounded.pastilla}"
+    padding: "6px 12px"
+  pastilla-plan:
+    backgroundColor: "{colors.plan-verde}"
+    textColor: "{colors.plan-verde-texto}"
+    typography: "{typography.body-menor}"
+    rounded: "{rounded.campo}"
+    padding: "8px 12px"
+    height: "56px"
+  pastilla-plan-naranja:
+    backgroundColor: "{colors.plan-naranja}"
+    textColor: "{colors.plan-naranja-texto}"
+  pastilla-plan-azul:
+    backgroundColor: "{colors.plan-azul}"
+    textColor: "{colors.plan-azul-texto}"
+  arma-tu-plan:
+    backgroundColor: "{colors.superficie}"
+    textColor: "{colors.texto}"
+    rounded: "{rounded.panel}"
+    padding: "24px"
+  estacion-red:
+    backgroundColor: "{colors.superficie}"
+    rounded: "{rounded.pastilla}"
+    size: "24px"
+  estacion-intercambio:
+    backgroundColor: "{colors.superficie}"
+    rounded: "{rounded.pastilla}"
+    size: "36px"
 ---
 
 # Design System: TIMU
@@ -241,8 +285,10 @@ De las páginas públicas, el acceso (R3-PUB-01): ingreso, recuperación, restab
 activación de la cuenta; y las dos a las que se llega desde un enlace (R3-PUB-03): la encuesta
 que recibe la familia por WhatsApp y la verificación del carnet preventivo para un tercero; y el
 registro en línea (R3-PUB-02): la familia arma su manada, elige el plan de cada peludo, paga y
-completa sus datos. La plantilla pública anterior (`.publica`, `.publica-tarjeta`) se retiró:
-ninguna pantalla la usa. La
+completa sus datos; y la portada de timu.com.co con la página de cada plan (R3-PUB-04, «Álbum de
+la manada»), con lo que de ella se edita en Administración. La plantilla pública anterior
+(`.publica-tarjeta`) se retiró; `.publica` nombra ahora el marco de la web pública
+(`MarcoPublico`). La
 clínica aliada tiene su espacio rediseñado: Mi clínica (R3-ALI-01), el mostrador donde valida el
 código de una remisión, reporta la atención y ve lo atendido en el mes.
 El resto de módulos del panel todavía usan la maqueta anterior y adoptan
@@ -304,6 +350,9 @@ texto, 3 controles e indicadores, 7 para los distintivos de estado).
   indicador de selección sobre claro: pestaña activa, borde de la fila seleccionada, casillas.
 - **Verde tenue** (`accion-suave-fondo`, `superficie-seleccion`): fondo de las acciones suaves y
   de la fila o el elemento seleccionado; también el halo de la estación próxima.
+- **Verde de la red** (`linea-aliadas`, el mismo verde-500): la línea y las estaciones de «La red
+  TIMU» en la portada. Es dibujo, no plan ni estado: la red no es de ningún plan, por eso tiene rol
+  propio en vez de tomar `plan-verde`.
 
 ### Secondary
 - **Azul TIMU** (`foco`, `texto-enlace`): anillo de foco y enlaces. Es el color de la
@@ -365,9 +414,14 @@ de tamaño y peso 600/700. Un `h1` o `h2` que se reduce por debajo de 20 px vuel
 Las cifras siguen en Inter por sus números tabulares (sección 12 del manual).
 
 ### Hierarchy
+- **Portada** (GeosansLight 400, `--t-portada` de 2.5rem a 3.625rem / 40 a 58 px según el ancho,
+  1.02, −0.01em, `text-wrap: balance`): solo el `h1` de la web pública, «Tu peludito, bien
+  cuidado.» en el panel del álbum y el nombre del plan en la cabecera de su página, en blanco sobre
+  marino. Uno por página.
 - **Display** (GeosansLight 400, `--t-display` 2.125rem / 34 px, 1.2, −0.01em en la ficha): el
   nombre de la familia abierta, el saludo y el título del acceso («Hola de nuevo», «Hola, Ana»,
-  «Este enlace venció»). Uno por pantalla. En el portal todo `h1` va a este tamaño: «Hola, Ana»,
+  «Este enlace venció»). Uno por pantalla; en la web pública es el `h2` de cada sección, con 1.1
+  de interlineado («La red TIMU», «Quiénes somos», «Lo que cubre»). En el portal todo `h1` va a este tamaño: «Hola, Ana»,
   «Tus peludos» y el nombre de cada peludo. En el acceso, la frase del panel de marca va también
   a 34 px, en blanco sobre marino; no es un título (`p`), y por debajo de 900 px desaparece.
 - **Cifra** (600, `--t-cifra` 1.5rem / 24 px): cifras destacadas de indicadores.
@@ -387,13 +441,19 @@ Las cifras siguen en Inter por sus números tabulares (sección 12 del manual).
 **La regla de la escala fija.** El tipo se mide en rem con los siete pasos de `tokens.css`; una
 interfaz de trabajo no escala el tipo con la ventana (nada de `clamp()` ni `vw` en tamaños de
 letra). En pantallas táctiles o por debajo de 900 px, campos y buscadores suben a 1rem para que
-iOS no amplíe la página al enfocar.
+iOS no amplíe la página al enfocar. La única excepción es `--t-portada`, el titular de la web
+pública, que se presenta en vez de trabajar: crece de 40 a 58 px con la ventana. Ningún otro tamaño
+de la web pública escala, y nada del panel, el portal ni la clínica aliada usa `--t-portada`.
 
 **La regla de las cifras tabulares.** Importes, fechas, totales y contadores llevan `.numero`
 (`font-variant-numeric: tabular-nums`) donde se comparan en columna o se actualizan.
 
 **La regla de la etiqueta que nombra.** La etiqueta en mayúsculas nombra un dato o un bloque de
 datos; es el título de lo que tiene debajo, nunca una línea decorativa encima de otro título.
+Vale también en la web pública, donde más tienta (decidido con el usuario el 2026-11-18): ni el
+álbum, ni las secciones, ni la cabecera de un plan llevan antetítulo; lo que diría pasa al título o
+a la frase. Sí nombran lo de debajo las etiquetas de Misión y Visión, las de cada dato de contacto,
+las de las condiciones de un plan y las de cada grupo de enlaces del pie.
 
 ## Layout
 
@@ -441,6 +501,38 @@ ocultan, y el contacto baja al final del contenido (`.registro-solo-celular`). C
 la vista es otro (en el pago) o ya no lo hay (después del pago), el resumen deja de ser barra y va
 como bloque al final (`.registro-resumen-quieto`: panel blanco con esquina de panel y la lista
 entera).
+
+**La web pública (`MarcoPublico`: la portada en `/` y cada plan en `/planes/<plan>`).** Sin
+`.shell`: una barra marina pegada arriba (`position: sticky`, 64 px, `--capa-barra`, 40 px de
+relleno a los lados) con el logo, las cuatro secciones (Planes, Aliadas, Nosotros, Contacto, que son
+anclas de la portada también desde cada plan), «Ingresar» y «Afiliar a mi peludo»; debajo, el
+contenido sobre el lienzo; al final, el pie marino. Desde 1024 px el logo es el completo, con su
+fila de animales, a 40 px de alto; por debajo, el compacto a 30 px, las secciones e «Ingresar»
+pasan a un menú de tres puntos y la barra deja 16 px a los lados. Las secciones van a todo el
+ancho con su fondo y centran su contenido a 1200 px (`padding-inline: max(20px, (100% − 1200px) /
+2)`), con 80 px arriba y abajo (40 y 16 a los lados por debajo de 600 px) y `scroll-margin-top`
+del alto de la barra para que el ancla no quede debajo de ella. Los fondos alternan: lienzo en
+Planes y Nosotros, blanco en Aliadas y Contacto. La cabecera de una sección es el `h2` y su frase,
+hasta 680 px, con 32 px hasta el contenido. Un enlace «Saltar al contenido» aparece con el foco
+antes de la barra.
+
+**El álbum (la primera pantalla de la portada).** Desde 1100 px, dos tercios de mosaico y un
+tercio de panel marino (`2fr` y `minmax(420px, 1fr)`), de alto `min(100vh − 64 px, 860 px)`. El
+mosaico va sobre el lienzo con 10 px de hueco y de marco (sin marco hacia el panel): la foto
+principal ocupa las dos filas de la izquierda y dos fotos se apilan a la derecha (columnas y filas
+en 1,6 : 1). El panel deja 56 px arriba y 40 a los lados, con 20 px entre el titular, la frase, las
+pastillas de los planes y «Arma tu plan». Entre 720 y 1099 px, una columna: el mosaico arriba con
+dos filas de 200 px y el panel debajo en dos columnas separadas 32 px, el texto y las pastillas a
+la izquierda y «Arma tu plan» a la derecha (300–400 px), arriba. Por debajo de 720 px, una sola
+foto ancha (la principal, 16 : 10) y el panel en una columna (24 px arriba, 16 a los lados, 16 entre
+bloques), con el titular y «Arma tu plan» en la primera pantalla.
+
+**La página de un plan.** La cabecera es una sección marina a todo el ancho (56 px arriba, el
+contenido a 1200 px) que cierra con una franja de 10 px del color del plan; dentro, el texto y la
+línea del plan (ver Components). Debajo, sobre el lienzo, dos columnas separadas 40 px: lo que
+cubre y los adicionales a la izquierda, y a la derecha una de 360 px con el precio y las
+condiciones, fija al bajar a 16 px de la barra. Por debajo de 900 px, una columna y lo de la
+derecha deja de ser fijo; por debajo de 600, la línea del plan pasa a vertical.
 
 **La ruta propia (Rutas).** Quien solo sale a campo no ve listado: su ruta del día ocupa una
 columna de hasta 760 px, que se lee igual en el escritorio que en el celular. Encima, una línea
@@ -527,6 +619,9 @@ una ventana quede por encima de ella.
   arriba.
 - **Halo de la próxima** (`box-shadow: 0 0 0 3px var(--indicador-seleccion)`): la estación
   próxima de la línea. Sobre marino (la línea del acceso), el halo es `indicador-sobre-marca`.
+- **Halo de intercambio** (`box-shadow: 0 0 0 6px var(--accion-suave-fondo-hover)`): la estación de
+  la clínica de TIMU en «La red TIMU», la única de intercambio. No es estado: marca de dónde sale
+  el ramal a casa.
 
 ### Named Rules
 **La regla de lo que flota.** Sombra solo para lo que tapa a otra cosa y desaparece al cerrarse.
@@ -543,7 +638,10 @@ Campos, botones, botones de icono e iconos de fila llevan esquina de campo (6 px
 interiores, menús e indicadores, de tarjeta (8 px); paneles del listado y la ficha, ventanas y
 la espera de sesión, de panel (12 px; la hoja del celular solo arriba). La pastilla (999 px) es
 para distintivos de estado, la línea, sus estaciones, el botón del tramo plegado y el avatar de
-la cuenta. Dos radios menores para lo que no es contenedor: `--r-fino` (2 px) en las marcas de
+la cuenta; en la web pública, también el pie de foto y los valores de Nosotros, que son rótulos y
+no se tocan. Las fotos de la web pública llevan esquina de tarjeta (8 px) y las pastillas de los
+planes, pese al nombre, esquina de campo (6 px): son enlaces, no señales. Dos radios menores para
+lo que no es contenedor: `--r-fino` (2 px) en las marcas de
 «Hoy», las claves de un gráfico y el marcador de plan, que es un cuadrado (el plan es identidad, no
 estado), y `--r-barra` (4 px) en las barras del esqueleto y del Inicio. Ningún radio se escribe a
 mano: lo comprueba `tokens.test.ts`. Los bordes son
@@ -1429,6 +1527,129 @@ periodo, la frase no habla de ahorrar y ninguna opción dice «Ahorras».
 una sola vez, a todo el ancho y con «igual en los N»; las columnas quedan para lo que cambia, y la
 diferencia salta a la vista.
 
+### La portada pública y la página de cada plan (R3-PUB-04)
+«Álbum de la manada»: la portada abre con la gente y los peludos reales de TIMU y deja la oferta a
+un toque; cada plan tiene su página con todo lo que cubre (ver Layout). Lo que dice de un plan sale
+del catálogo, de las aliadas lo que decide Administración → Aliadas y de TIMU lo que se escribe en
+Administración → «Datos de TIMU»: la portada no escribe ninguno.
+- **La barra:** marino plano, sin borde ni sombra. Las secciones en blanco y 600, subrayadas al
+  pasar; «Ingresar» igual (con la sesión abierta dice «Ir a mi espacio» y lleva al de su perfil).
+  «Afiliar a mi peludo» es un botón de contorno sobre la marca (`publica-btn-marca`: sin fondo,
+  borde `borde-sobre-marca`, texto blanco; al pasar, `superficie-sobre-marca`), nunca verde: el
+  verde de la vista está más abajo. Sobre marino (barra, panel del álbum, pie y cabecera de un
+  plan) el foco es `foco-sobre-marca`, salvo dentro de «Arma tu plan», que es blanco y conserva el
+  azul.
+- **Las fotos del álbum** (`.album-foto`): esquina de tarjeta, `object-fit: cover`, dos anchos en
+  `srcset` y la principal con carga prioritaria. Cada una lleva su pie (`figcaption`) en pastilla
+  marina, 13 px, 600 y blanco, a 16 px del borde izquierdo y 12 del inferior: «Consulta en nuestra
+  clínica», «Te recibimos en la clínica», «El equipo de TIMU». La del equipo junto al logo se
+  encuadra desde el logo para que se lea «TIMU» y la persona; donde la celda no da para los dos,
+  manda la cara.
+- **El panel del álbum:** el `h1` en `--t-portada` y blanco; debajo, la frase en 16 px y
+  marino-200 (`texto-sobre-marca-suave`, hasta 46 ch) que dice qué es TIMU; las pastillas de los
+  planes; y «Arma tu plan».
+- **Las pastillas de los planes** (`.pastillas-planes`): los planes del catálogo en tres columnas
+  iguales a 8 px, también en el celular. Cada una es un enlace a la página del plan, llena del
+  color del plan con su par de texto (ver Colors), esquina de campo, 56 px de alto como mínimo, 8 ×
+  12 px de relleno: el nombre arriba en 13 px y 600 y abajo lo que paga cada peludo al mes con los
+  peludos que dice «Arma tu plan», en 16 px y cifras tabulares. Al pasar, el nombre se subraya.
+- **«Arma tu plan»** (`ArmaTuPlan`): un formulario en un recuadro blanco con esquina de panel y 24
+  px de relleno (20 por debajo de 720 px), 16 px entre bloques. El título en 16 px y 600 (Inter),
+  «¿Dónde vives?» (la lista de ciudades donde se vende; abre en la de la clínica de TIMU), y dos
+  contadores en fila, Perros y Gatos: el número en 16 px y 600 entre «−» y «+» planos de icono,
+  dentro de un borde de control de 44 px; entre los dos, al menos un peludo. Al pie, «Tu peludo,
+  desde» / «2 peludos, desde» con la cifra en 24 px y 600 y «al mes» o «al mes cada uno», en
+  `aria-live`, con el menor precio que da la API para esa manada; y a su derecha «Ver mis
+  planes», el verde de la portada (48 px de alto), que abre el registro con la ciudad y los peludos
+  ya elegidos. En una ciudad sin planes: «Aún no vendemos planes en esta ciudad.».
+- **Planes:** el `h2` cuenta los planes y nombra la ciudad («Tres planes en Medellín, lado a
+  lado»), la frase dice cómo leer el precio, y debajo la misma comparación del registro
+  (`Comparador`), con una fila por adicional además de los servicios, y la regla de lo igual una
+  vez. Al pie, un enlace por plan, «Todo lo que cubre Mi Amigo Fiel», con su cuadrado de 12 px del
+  color del plan delante y 44 px de alto.
+- **La red TIMU** (`RedTimu`): las aliadas como el plano de una línea de metro, en el orden que fija
+  Administración. La línea es vertical, de 8 px, esquina de pastilla y verde (`linea-aliadas`). Cada
+  estación es un barrio y una fila con hilo encima: el punto, el barrio en 16 px y 600 (Inter) con
+  la ciudad en 13 px suave debajo, y sus aliadas, una por renglón (36 px | hasta 150 px | el resto,
+  16 px entre columnas). El punto es una estación de 24 px con borde de 6 px verde y centro blanco.
+  La de la clínica de TIMU es la de **intercambio**: 36 px, borde de 9 px marino
+  (`ruta-recorrida`) y el halo de intercambio (ver Elevation); su primer renglón es la clínica, con
+  «Nuestra clínica» en verde oscuro y 600. De ella sale el **ramal a casa** si algún plan trae
+  consulta domiciliaria: un círculo de 16 px con borde punteado de 3 px verde y «**Tu casa** ·
+  Consulta domiciliaria en los 3 planes» en 13 px. Cada aliada: el nombre en 600 y marino, «·» y lo
+  que es en suave; debajo, en 13 px, horario, dirección y teléfono (el «·» va pegado al dato de
+  delante y nunca abre renglón; teléfono y hora no se parten); el logo, si lo hay, en 32 px con
+  hilo y esquina de campo (se oculta por debajo de 720 px); y «Más de <aliada>» como `details` en
+  color de enlace si hay presentación. Un horario corto va a la derecha como distintivo: «24 horas»
+  ok y otro corto («12 horas») neutro, con su icono. Lo que no tiene sede abierta (especialistas,
+  farmacia, funeraria) va aparte, en «Especialistas y servicios de la red»: un recuadro sobre el
+  lienzo con esquina de panel y 24 px de relleno, fijo al bajar desde 1100 px y debajo de la línea
+  por debajo. Por debajo de 720 px, la estación queda en dos columnas: el punto y, debajo del
+  barrio, sus aliadas.
+- **Nosotros:** dos fotos de banco sin pie (4 : 5 y 1 : 1, 10 px entre ellas, alineadas abajo) al
+  lado del texto («Quiénes somos», la presentación en 16 px y hasta 60 ch, Misión y Visión como
+  pares de etiqueta y texto) y los valores en pastillas de verde tenue con texto verde oscuro, 13
+  px y 600. Por debajo de 900 px, apilado. Lo que Administración no escribió no se pinta.
+- **Contacto** («Hablemos de tu peludo»): a la izquierda, cómo llegar sin escribir, con
+  «Escríbenos por WhatsApp» y el número en un recuadro de verde tenue (esquina de panel, icono de
+  mensaje; al pasar, su hover) y debajo los pares Llámanos, Correo, la clínica con su dirección y
+  horario, Cuándo te atendemos y Redes; a la derecha, «Déjanos un mensaje» en un panel blanco con
+  hilo. El envío, «Enviar mensaje», es secundario. Sin celular ni correo, el error «Escribe tu
+  celular o tu correo para poder responderte.»; la casilla de autorización en 13 px dice para qué
+  se usan los datos. Enviado, el panel dice «Recibimos tu mensaje» con el check verde y cómo se
+  responde. El mensaje entra a Comercial como interesado con origen web.
+- **El pie:** marino, el logo completo de 40 px con la razón social y el NIT en 13 px, y tres
+  grupos de enlaces blancos (TIMU, Ingresar, Escríbenos), cada uno con su etiqueta en mayúsculas en
+  verde-500 (`texto-sobre-marca-acento`). Ingresar lista Familias afiliadas, Clínicas aliadas y
+  Equipo TIMU, que llevan al mismo ingreso. El correo se parte tras la arroba si no cabe. Cuatro
+  columnas; dos por debajo de 900 px y una por debajo de 480.
+- **La cabecera de un plan:** el nombre del plan en `--t-portada`; la frase del catálogo en 16 px y
+  marino-200 (hasta 56 ch); «Desde $ 69.000 al mes por peludo en Medellín» con la cifra en 24 px y
+  blanco; y el verde de la página, «Afiliar a mi peludo con Mi Amigo Fiel», que abre el registro
+  con el plan elegido. Debajo, **el plan como su línea** (`.plan-linea`): una estación por servicio
+  del catálogo, en su orden, en columnas iguales; tramos de 8 px y estaciones de 24 px huecas
+  (borde de 6 px y centro marino), todo del color del plan; bajo cada estación el servicio en 13 px,
+  600 y blanco. La línea empieza y acaba en una estación. Es dibujo con nombre para los lectores
+  de pantalla («Los servicios de Mi Amigo Fiel»); por debajo de 600 px baja en vertical.
+  **El azul sobre el marino es gráfico, nunca texto**: la línea y la franja de un plan azul van en
+  azul-500 sobre marino (3.39:1, por encima del 3:1 de WCAG para lo que no es texto), que la regla 6
+  del manual admite para un gráfico; el nombre de cada servicio va en blanco.
+- **El cuerpo de un plan:** «Lo que cubre» y «Además» (los adicionales) como listas con hilo
+  entre filas (16 px): el servicio en 600 y marino, lo que dice la API debajo, y en 13 px suave
+  la carencia y el detalle, cada uno una frase con su punto («Lo presta un tercero» si es de un
+  tercero). A la derecha, «Lo que pagas»: un panel blanco con hilo, esquina de panel y 20 px de
+  relleno, con la ciudad, una fila por número de peludos («2 peludos · $ 61.000 al mes cada uno») y
+  los pagos por adelantado si los hay; y «Condiciones» (Carencia, No cubre y los términos) solo si
+  el catálogo trae alguna. Cierra un enlace «Compararlo con los otros planes». Un plan que no se
+  vende en la ciudad: «Este plan no está a la venta en Medellín» con el camino a los planes.
+- **En Administración:** lo que dice la portada se edita como lectura con su ventana, y cada vacío
+  dice qué deja de mostrar la portada («Sin escribir: la portada no la muestra.»). «Datos de TIMU»
+  es una pestaña con la tarjeta «Lo que dice la portada de TIMU» en cuatro bloques (Quiénes somos,
+  La clínica, Contacto, La empresa, al pie de la portada) y «Editar», que abre «Editar los datos
+  de TIMU» con los mismos bloques. En la ficha de un plan, cada beneficio dice su tope por episodio
+  y desde qué día aplica, y el bloque «Beneficios adicionales» lista nombre y lo que cubre (con su
+  carencia y si lo presta un tercero, apagado) y abre con «Editar adicionales» (secundario) una
+  ventana de filas ordenables (subir y bajar con botones de icono, «Quitar» plano). En la ficha de
+  una aliada, el bloque «En la portada» (qué es, con «24 horas» si atiende siempre; lugar en la red;
+  barrio; horario; presentación; logo), o la nota «No sale en la portada…», y «Editar cómo sale en
+  la portada», separado de sus datos internos. Un `fieldset` que es él mismo la rejilla del
+  formulario (`fieldset.formulario`, los bloques de una ventana) no lleva la caja del navegador:
+  sin borde, relleno ni margen, con su `legend` como subtítulo.
+
+**La regla de la foto con pie.** Solo las fotos reales del equipo de TIMU llevan pie, y el pie dice
+lo que se ve («Consulta en nuestra clínica»). Una foto de banco (las de Nosotros) va sin pie y no
+se le atribuye nada a TIMU: un pie sobre ella diría que es TIMU sin serlo. Nunca imágenes de
+plantilla ni de la web anterior.
+
+**La regla del plano.** Lo que la web pública dibuja como sistema (la red de aliadas, los servicios
+de un plan) se dibuja como una línea de metro del sistema: 8 px, estaciones de 24 px, tramo que
+empieza y acaba en una estación, y una sola de intercambio con halo. El color dice de quién es la
+línea: el del plan para un plan, `linea-aliadas` para la red.
+
+**La regla del verde que arma.** En la portada el único verde lleno es el de «Arma tu plan» («Ver
+mis planes»); en la página de un plan, «Afiliar a mi peludo con <plan>». La afiliación de la barra
+va en contorno y el envío del contacto en secundario.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -1483,6 +1704,12 @@ diferencia salta a la vista.
   de fija cuando la vista ya no la necesita.
 - **Do** muestra a quien se afilia solo lo que da el catálogo de la API; lo que falta se escribe en
   Administración → Planes, no en la pantalla.
+- **Do** en la web pública, pon un pie en pastilla marina solo a las fotos reales del equipo de TIMU,
+  y deja sin pie las de banco.
+- **Do** dibuja la red de aliadas y los servicios de un plan como una línea de metro de 8 px con
+  estaciones de 24 px, con una sola estación de intercambio.
+- **Do** en la web pública, centra el contenido de cada sección a 1200 px con la sección a todo el
+  ancho, y deja el verde lleno a «Arma tu plan» o a la afiliación del plan.
 
 ### Don't:
 - **Don't** escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.
@@ -1530,6 +1757,11 @@ diferencia salta a la vista.
   términos vacío, un número de contacto): sin el dato, no se muestra.
 - **Don't** prometas ahorro si ningún periodo lo trae: la frase y las opciones solo hablan de
   ahorrar cuando el dato lo sostiene.
-- **Don't** describas la plantilla pública anterior (`.publica`, `.publica-tarjeta`) ni la uses: se
-  retiró con el registro en línea; las páginas públicas usan el acceso, la columna de la
-  verificación o el marco del registro.
+- **Don't** uses la plantilla pública anterior (`.publica-tarjeta`): se retiró con el registro en
+  línea; las páginas públicas usan el marco de la web pública (`MarcoPublico`, `.publica`), el
+  acceso, la columna de la verificación o el marco del registro.
+- **Don't** pongas un antetítulo en mayúsculas sobre el titular del álbum, una sección o la cabecera
+  de un plan: lo que diría va al título o a la frase.
+- **Don't** pongas un pie a una foto de banco ni uses fotos de plantilla o de la web anterior.
+- **Don't** uses `--t-portada` ni un tamaño que escale con la ventana fuera del titular de la web
+  pública.
