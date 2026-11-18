@@ -4,8 +4,9 @@ import type { PlanPublico } from '@/types'
 import { tarifaCon } from './registro'
 
 /**
- * Los planes lado a lado (R3-PUB-02): el precio, cada servicio y sus condiciones, con cada plan en
- * su color. Lo que es igual en todos se dice una vez. Lo usan el registro y la portada (R3-PUB-04).
+ * Los planes lado a lado (R3-PUB-02): el precio, cada servicio, los adicionales y sus condiciones,
+ * con cada plan en su color. Lo que es igual en todos se dice una vez. Lo usan el registro y la
+ * portada (R3-PUB-04).
  */
 export function Comparador({
   id,
@@ -32,6 +33,10 @@ export function Comparador({
       ],
     ),
   ]
+  // Lo que dan sin ser un servicio que se agenda (R3-PUB-04): el servicio fúnebre, lo de terceros.
+  const adicionales = [...new Set(planes.flatMap((p) => p.adicionales.map((a) => a.nombre)))]
+  for (const nombre of adicionales)
+    filas.push([`adicional:${nombre}`, nombre, (p) => p.adicionales.find((a) => a.nombre === nombre)?.cubre ?? 'No incluye'])
   if (planes.some((p) => p.carencia)) filas.push(['carencia', 'Carencia', (p) => p.carencia ?? '—'])
   if (planes.some((p) => p.exclusiones)) filas.push(['exclusiones', 'No cubre', (p) => p.exclusiones ?? '—'])
   return (

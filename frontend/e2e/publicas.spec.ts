@@ -104,6 +104,8 @@ const PLAN_REGISTRO = (id: string, nombre: string, color: string, valor: string)
   tarifas: [{ peludos: 1, valor }],
   tarifas_periodicidad: [],
   beneficios: BENEFICIOS,
+  // R3-PUB-04: la API dice los adicionales de cada plan, y el comparador tiene sus filas.
+  adicionales: [{ nombre: 'Servicio fúnebre', cubre: '100 %', detalle: null, carencia: 'Desde los 30 días', tercero: false }],
   carencia: 'Sin periodo de carencia.',
   exclusiones: 'Excluye preexistencias. Los beneficios no se acumulan y los topes aplican por episodio.',
   terminos_url: null,

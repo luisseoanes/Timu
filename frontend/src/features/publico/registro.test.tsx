@@ -37,6 +37,7 @@ const plan = (id: string, nombre: string, especies: string[], valor: string, col
   ],
   tarifas_periodicidad: [],
   beneficios,
+  adicionales: [] as unknown[],
   carencia: null,
   exclusiones: null,
   terminos_url: null,
@@ -191,6 +192,7 @@ describe('Registro en línea', () => {
         carencia: 'Sin periodo de carencia.',
         exclusiones: 'Excluye preexistencias.',
         terminos_url: 'https://timu.com.co/terminos',
+        adicionales: [{ nombre: 'Servicio fúnebre', cubre: '100\u00a0%', detalle: null, carencia: 'Desde los 30 días', tercero: false }],
       },
     ])
     const user = userEvent.setup()
@@ -219,6 +221,12 @@ describe('Registro en línea', () => {
     expect(within(tabla).getByRole('row', { name: /Carencia/ })).toHaveTextContent('—')
     // Lo que es igual en los planes se dice una vez.
     expect(within(tabla).getByRole('row', { name: /Consulta domiciliaria/ })).toHaveTextContent('1 al mes · igual en los 2')
+    // Los adicionales (R3-PUB-04) también se comparan: el que no lo trae lo dice.
+    expect(within(within(tabla).getByRole('row', { name: /Servicio fúnebre/ })).getAllByRole('cell').map(valor)).toEqual([
+      'Servicio fúnebre',
+      'No incluye',
+      '100\u00a0%',
+    ])
   })
 
   it('promete ahorro solo cuando algún periodo lo da', async () => {

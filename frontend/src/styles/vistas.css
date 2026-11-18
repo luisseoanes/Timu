@@ -741,6 +741,8 @@
 .registro-comparador { container-type: inline-size; }
 .registro-comparador td { vertical-align: top; }
 .registro-comparador-nota { color: var(--texto-suave); }
+/* Lo igual en todos los planes cruza sus columnas: centrado sobre el tramo, no bajo el primero. */
+.registro-comparador-igual { text-align: center; background: var(--superficie-hundida); }
 .registro-comparador-plan { display: none; }
 /* El comparador se lee lado a lado mientras quepan las columnas (también en la ficha de 600 px del
    escritorio); por debajo de 480 px se apila como la tabla apilable (componentes.css): cada
