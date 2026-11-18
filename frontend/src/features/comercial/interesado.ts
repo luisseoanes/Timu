@@ -33,3 +33,16 @@ export function mascotasDe(datos: Record<string, unknown>): string | null {
   const partes = [perros && `${perros} ${perros === 1 ? 'perro' : 'perros'}`, gatos && `${gatos} ${gatos === 1 ? 'gato' : 'gatos'}`]
   return partes.filter(Boolean).join(' y ') || `${especies.length} mascotas`
 }
+
+/** Un mensaje del formulario de contacto de la portada (R3-PUB-04, `comercial.contacto_web`). */
+export interface MensajeWeb {
+  fecha: string
+  mascota: string | null
+  especie: 'canino' | 'felino' | null
+  mensaje: string
+}
+
+/** Los mensajes que dejó en la portada, del más reciente al más viejo (el backend guarda veinte). */
+export function mensajesWebDe(datos: Record<string, unknown>): MensajeWeb[] {
+  return Array.isArray(datos.mensajes_web) ? [...(datos.mensajes_web as MensajeWeb[])].reverse() : []
+}

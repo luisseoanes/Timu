@@ -1579,6 +1579,13 @@
 .plan-adicional-mover { justify-content: flex-end; }
 /* Cada red de «Datos de TIMU»: nombre y enlace en fila, y su botón de quitar al final. */
 .datos-timu-red { align-items: end; }
+/* Lo que una persona escribió en la portada (R3-PUB-04): cada mensaje con su fecha encima y un hilo
+   entre ellos, a la medida de lectura. */
+.comercial-mensajes-web { list-style: none; margin: 0; padding: 0; display: grid; }
+.comercial-mensajes-web li { display: grid; gap: var(--e1); padding-block: var(--e3); border-top: 1px solid var(--borde); }
+.comercial-mensajes-web li:first-child { border-top: 0; padding-top: 0; }
+.comercial-mensajes-web span { font-size: var(--t-menor); }
+.comercial-mensajes-web p { margin: 0; max-width: 65ch; white-space: pre-line; }
 .indicador .barra-presupuesto { margin-top: var(--e2); }
 .admin-quien { color: var(--texto); font-size: var(--t-cuerpo); }
 .admin-ciudades { max-width: 70ch; color: var(--texto); line-height: 1.6; }

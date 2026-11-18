@@ -21,7 +21,7 @@ import {
   useReactivarInteresado,
   useResponderConversacion,
 } from './api'
-import { mascotasDe, nombreDe, nombreEtapa, nombreOrigen } from './interesado'
+import { mascotasDe, mensajesWebDe, nombreDe, nombreEtapa, nombreOrigen } from './interesado'
 
 /** El interesado abierto: dónde va en el embudo, qué toca y su conversación de WhatsApp. */
 export function FichaInteresado({ id }: { id: string }) {
@@ -161,9 +161,33 @@ function Ficha({
         )}
       </dl>
 
+      <MensajesWeb interesado={i} />
       <Conversacion interesado={i} conversacion={conversacion} cargando={conversacionCargando} error={conversacionError} esperaAsesor={esperaAsesor} />
       <PerdidaModal interesado={perdiendo ? i : null} onCerrar={() => setPerdiendo(false)} />
     </>
+  )
+}
+
+/** Lo que escribió en el formulario de contacto de la portada (R3-PUB-04): se responde por
+ * WhatsApp o al correo, y la tarea «Responder el mensaje de la web» lo recuerda. */
+function MensajesWeb({ interesado: i }: { interesado: InteresadoRead }) {
+  const mensajes = mensajesWebDe(i.datos)
+  if (mensajes.length === 0) return null
+  return (
+    <section className="bloque" aria-labelledby="mensajes-web-titulo">
+      <h3 id="mensajes-web-titulo">Lo que escribió en la página web</h3>
+      <ol className="comercial-mensajes-web" aria-label={`Mensajes de la web de ${nombreDe(i)}`}>
+        {mensajes.map((m) => (
+          <li key={m.fecha}>
+            <span className="apagado numero">
+              {fechaHora(m.fecha)}
+              {m.mascota && ` · ${m.mascota}${m.especie ? `, ${m.especie === 'canino' ? 'perro' : 'gato'}` : ''}`}
+            </span>
+            <p>{m.mensaje}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
   )
 }
 

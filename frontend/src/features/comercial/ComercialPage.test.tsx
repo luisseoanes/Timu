@@ -276,6 +276,29 @@ describe('ficha del interesado', () => {
     expect(await screen.findByText('Sin celular: no hay conversación de WhatsApp.')).toBeInTheDocument()
   })
 
+  it('dice lo que escribió en la portada, lo más reciente primero (R3-PUB-04)', async () => {
+    const mensajes_web = [
+      { fecha: '2026-11-10T15:00:00Z', mascota: null, especie: null, mensaje: '¿Atienden en Envigado?' },
+      { fecha: '2026-11-17T15:00:00Z', mascota: 'Tomás', especie: 'felino', mensaje: 'Quiero el plan para mi gato.' },
+    ]
+    server.use(
+      http.get(`${API}/comercial/interesados/:id`, () => HttpResponse.json(interesado({ origen: 'web', datos: { mensajes_web } }))),
+    )
+    abrir()
+    const lista = await screen.findByRole('list', { name: 'Mensajes de la web de Paula Díaz' })
+    const [reciente, viejo] = within(lista).getAllByRole('listitem')
+    expect(reciente).toHaveTextContent('Tomás, gato')
+    expect(reciente).toHaveTextContent('Quiero el plan para mi gato.')
+    expect(viejo).toHaveTextContent('¿Atienden en Envigado?')
+    expect(screen.getByText('Página web')).toBeInTheDocument()
+  })
+
+  it('sin mensajes de la web no muestra el bloque', async () => {
+    abrir()
+    await screen.findByRole('heading', { level: 2, name: 'Paula Díaz' })
+    expect(screen.queryByRole('heading', { name: 'Lo que escribió en la página web' })).not.toBeInTheDocument()
+  })
+
   it('explica por qué no se pudo cargar o cambiar la etapa', async () => {
     server.use(
       http.patch(`${API}/comercial/interesados/:id`, () => HttpResponse.json({ detail: 'Etapa inválida' }, { status: 422 })),
