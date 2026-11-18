@@ -899,6 +899,8 @@ export interface PendienteVerificado {
   vencido: boolean
 }
 
+export type TipoAliada = 'clinica' | 'especialista' | 'peluqueria' | 'farmacia' | 'hospedaje' | 'funeraria' | 'otro'
+
 export interface ClinicaRead {
   nombre: string
   nit?: string | null
@@ -907,8 +909,32 @@ export interface ClinicaRead {
   telefono?: string | null
   email?: string | null
   servicios?: string | null
+  tipo?: TipoAliada
+  en_portada?: boolean
+  atiende_24h?: boolean
+  barrio?: string | null
+  horario?: string | null
+  presentacion?: string | null
+  orden_portada?: number
   id: string
   activa: boolean
+  tipo_nombre?: string
+  logo_url?: string | null
+}
+
+export interface AliadaPublica {
+  id: string
+  nombre: string
+  tipo: TipoAliada
+  tipo_nombre: string
+  atiende_24h: boolean
+  ciudad: string
+  barrio: string | null
+  direccion: string | null
+  telefono: string | null
+  horario: string | null
+  presentacion: string | null
+  logo_url: string | null
 }
 
 export interface ConvenioRead {

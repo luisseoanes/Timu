@@ -361,11 +361,13 @@ PERMISOS: dict[str, dict[str, str]] = {
     },
     "publico": {
         "afiliaciones_mascota": "S",
+        "archivos": "S",
         "beneficios_plan": "S",
         "beneficios_adicionales_plan": "S",
         "carnets_emitidos": "S",
         "ciudades": "S",
         "ciudades_plan": "S",
+        "clinicas_aliadas": "S",
         "configuraciones_encuesta": "S",
         "contratos": "S",
         "datos_timu": "S",
@@ -540,6 +542,13 @@ CONDICIONES: dict[str, dict[str, str | dict[str, str]]] = {
         "servicios": f"id IN {_ATENCION_ENCUESTADA}",
         "tareas": f"servicio_id IN {_ATENCION_ENCUESTADA}",
         "carnets_emitidos": "codigo = app_llave('carnet')",
+        # La red de aliadas de la portada (R3-PUB-04): las que se muestran y su logo.
+        "clinicas_aliadas": "en_portada AND activa",
+        "archivos": (
+            # Como texto: el valor se anadio en la misma migracion que la politica (0054).
+            "proposito::text = 'logo_aliada' AND id IN"
+            " (SELECT logo_archivo_id FROM clinicas_aliadas WHERE en_portada AND activa)"
+        ),
     },
 }
 

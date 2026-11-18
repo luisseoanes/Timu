@@ -42,6 +42,7 @@ POLITICAS: dict[str, Politica] = {
     "adjunto_clinico": Politica(
         tipos=frozenset({"image/jpeg", "image/png", "image/webp", "application/pdf"}), max_mb=10
     ),
+    "logo_aliada": Politica(tipos=frozenset({"image/jpeg", "image/png", "image/webp"}), max_mb=2),
     "documento_familia": Politica(
         tipos=frozenset({"image/jpeg", "image/png", "image/webp", "application/pdf"}), max_mb=10
     ),

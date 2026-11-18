@@ -7,13 +7,15 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.auditoria import Auditable
 from app.core.database import Base, EnumDb, TimestampMixin, UUIDMixin
-from app.core.enums import EstadoRemision
+from app.core.enums import EstadoRemision, TipoAliada
 
 
 class ClinicaAliada(Base, UUIDMixin, TimestampMixin, Auditable):
-    """6.22 Clinica aliada: atiende lo que TIMU no hace en casa, con convenio por plan."""
+    """6.22 Clinica aliada: atiende lo que TIMU no hace en casa, con convenio por plan. Las que
+    `en_portada` las muestra la portada publica en la red de TIMU (R3-PUB-04), en su `orden`."""
 
     __tablename__ = "clinicas_aliadas"
+    __checks__ = {"orden_no_negativo": "orden_portada >= 0"}
 
     nombre: Mapped[str] = mapped_column(String(160))
     nit: Mapped[str | None] = mapped_column(String(20), unique=True)
@@ -25,6 +27,15 @@ class ClinicaAliada(Base, UUIDMixin, TimestampMixin, Auditable):
     email: Mapped[str | None] = mapped_column(String(255))
     servicios: Mapped[str | None] = mapped_column(Text)  # especialidades, horario
     activa: Mapped[bool] = mapped_column(Boolean, default=True)
+    # R3-PUB-04 Lo que dice de ella la portada.
+    tipo: Mapped[str] = mapped_column(EnumDb(TipoAliada), default=TipoAliada.CLINICA)
+    en_portada: Mapped[bool] = mapped_column(Boolean, default=False)
+    atiende_24h: Mapped[bool] = mapped_column(Boolean, default=False)
+    barrio: Mapped[str | None] = mapped_column(String(120))
+    horario: Mapped[str | None] = mapped_column(String(255))
+    presentacion: Mapped[str | None] = mapped_column(Text)
+    orden_portada: Mapped[int] = mapped_column(Integer, default=0)
+    logo_archivo_id: Mapped[UUID | None] = mapped_column(ForeignKey("archivos.id"), index=True)
 
 
 class ConvenioAliada(Base, UUIDMixin, TimestampMixin, Auditable):

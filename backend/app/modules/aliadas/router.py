@@ -8,16 +8,17 @@ from decimal import Decimal
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response, status
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field
+from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, status
+from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr, Field, computed_field
 from sqlalchemy import select
 
-from app.api.deps import INTERNOS, DbSession, requiere
-from app.core.enums import Rol
+from app.api.deps import INTERNOS, Admin, DbSession, publico, requiere
+from app.core.enums import Rol, TipoAliada
 from app.core.errores import Prohibido
 from app.core.tiempo import hoy
 from app.modules.aliadas import service
 from app.modules.aliadas.models import ClinicaAliada, ConvenioAliada, RemisionAliada
+from app.modules.archivos import service as archivos
 from app.modules.auth.models import Usuario
 from app.modules.catalogos import service as catalogos
 
@@ -31,6 +32,14 @@ Emisor = Annotated[
 Aliada = Annotated[Usuario, Depends(requiere(Rol.ALIADA))]
 
 
+def _vacio_es_nada(v: Any) -> Any:
+    return (v.strip() or None) if isinstance(v, str) else v
+
+
+Linea = Annotated[Annotated[str, Field(max_length=255)] | None, BeforeValidator(_vacio_es_nada)]
+Texto = Annotated[Annotated[str, Field(max_length=2000)] | None, BeforeValidator(_vacio_es_nada)]
+
+
 class ClinicaIn(BaseModel):
     nombre: str = Field(min_length=3, max_length=160)
     nit: str | None = Field(default=None, max_length=20)
@@ -39,6 +48,14 @@ class ClinicaIn(BaseModel):
     telefono: str | None = Field(default=None, max_length=32)
     email: EmailStr | None = None
     servicios: str | None = None
+    # R3-PUB-04 Lo que dice de ella la portada.
+    tipo: TipoAliada = TipoAliada.CLINICA
+    en_portada: bool = False
+    atiende_24h: bool = False
+    barrio: Linea = None
+    horario: Linea = None
+    presentacion: Texto = None
+    orden_portada: int = Field(default=0, ge=0, le=1000)
 
 
 class ClinicaUpdate(BaseModel):
@@ -48,6 +65,13 @@ class ClinicaUpdate(BaseModel):
     email: EmailStr | None = None
     servicios: str | None = None
     activa: bool | None = None
+    tipo: TipoAliada | None = None
+    en_portada: bool | None = None
+    atiende_24h: bool | None = None
+    barrio: Linea = None
+    horario: Linea = None
+    presentacion: Texto = None
+    orden_portada: int | None = Field(default=None, ge=0, le=1000)
 
 
 class ClinicaRead(ClinicaIn):
@@ -56,6 +80,26 @@ class ClinicaRead(ClinicaIn):
     id: UUID
     email: str | None = None  # type: ignore[assignment]
     activa: bool
+    tipo_nombre: str = ""
+    logo_url: str | None = None
+
+
+class AliadaPublica(BaseModel):
+    """Lo que la portada dice de una aliada de la red: nada interno (ni NIT, ni correo, ni
+    convenios)."""
+
+    id: UUID
+    nombre: str
+    tipo: TipoAliada
+    tipo_nombre: str
+    atiende_24h: bool
+    ciudad: str
+    barrio: str | None
+    direccion: str | None
+    telefono: str | None
+    horario: str | None
+    presentacion: str | None
+    logo_url: str | None
 
 
 class ConvenioIn(BaseModel):
@@ -205,37 +249,87 @@ class AtendidasAliada(BaseModel):
 # --- F2-ALI-01 Directorio y convenios ---------------------------------------------------------
 
 
+async def _leida(db: DbSession, clinica: ClinicaAliada) -> ClinicaRead:
+    return ClinicaRead.model_validate(clinica).model_copy(
+        update={
+            "tipo_nombre": service.NOMBRES_TIPO[TipoAliada(clinica.tipo)],
+            "logo_url": await db.run_sync(service.logo_url, clinica),
+        }
+    )
+
+
 @router.get("", response_model=list[ClinicaRead], dependencies=[EQUIPO])
 async def listar(
     db: DbSession, ciudad: str | None = None, incluir_inactivas: bool = False
-) -> list[ClinicaAliada]:
+) -> list[ClinicaRead]:
     stmt = select(ClinicaAliada).order_by(ClinicaAliada.nombre)
     if ciudad:
         stmt = stmt.where(ClinicaAliada.ciudad == ciudad)
     if not incluir_inactivas:
         stmt = stmt.where(ClinicaAliada.activa.is_(True))
-    return list(await db.scalars(stmt))
+    return [await _leida(db, c) for c in await db.scalars(stmt)]
+
+
+@router.get("/publicas", response_model=list[AliadaPublica], dependencies=[Depends(publico)])
+async def publicas(db: DbSession) -> list[AliadaPublica]:
+    """R3-PUB-04 La red de aliadas que muestra la portada, en su orden: la lee cualquiera."""
+    return [
+        AliadaPublica(
+            id=c.id,
+            nombre=c.nombre,
+            tipo=TipoAliada(c.tipo),
+            tipo_nombre=service.NOMBRES_TIPO[TipoAliada(c.tipo)],
+            atiende_24h=c.atiende_24h,
+            ciudad=c.ciudad,
+            barrio=c.barrio,
+            direccion=c.direccion,
+            telefono=c.telefono,
+            horario=c.horario,
+            presentacion=c.presentacion,
+            logo_url=url,
+        )
+        for c, url in await db.run_sync(service.de_la_portada)
+    ]
 
 
 @router.post(
     "", response_model=ClinicaRead, status_code=status.HTTP_201_CREATED, dependencies=[ADMIN]
 )
-async def crear(db: DbSession, data: ClinicaIn) -> ClinicaAliada:
+async def crear(db: DbSession, data: ClinicaIn) -> ClinicaRead:
     datos = data.model_dump()
     datos["ciudad"] = await db.run_sync(catalogos.ciudad_valida, data.ciudad)
     clinica = ClinicaAliada(**datos)
     db.add(clinica)
     await db.flush()
-    return clinica
+    return await _leida(db, clinica)
 
 
 @router.patch("/{clinica_id}", response_model=ClinicaRead, dependencies=[ADMIN])
-async def actualizar(db: DbSession, clinica_id: UUID, data: ClinicaUpdate) -> ClinicaAliada:
+async def actualizar(db: DbSession, clinica_id: UUID, data: ClinicaUpdate) -> ClinicaRead:
     clinica = await db.run_sync(service.obtener_clinica, clinica_id)
     for campo, valor in data.model_dump(exclude_unset=True).items():
         setattr(clinica, campo, valor)
     await db.flush()
-    return clinica
+    return await _leida(db, clinica)
+
+
+@router.put("/{clinica_id}/logo", response_model=ClinicaRead)
+async def subir_logo(
+    db: DbSession,
+    usuario: Admin,
+    clinica_id: UUID,
+    logo: Annotated[UploadFile, File(description="JPG, PNG o WEBP de hasta 2 MB")],
+) -> ClinicaRead:
+    clinica = await db.run_sync(service.obtener_clinica, clinica_id)
+    contenido = await archivos.leer(logo, "logo_aliada")
+    clinica = await db.run_sync(service.subir_logo, clinica, contenido, logo.filename, usuario.id)
+    return await _leida(db, clinica)
+
+
+@router.delete("/{clinica_id}/logo", response_model=ClinicaRead, dependencies=[ADMIN])
+async def quitar_logo(db: DbSession, clinica_id: UUID) -> ClinicaRead:
+    clinica = await db.run_sync(service.obtener_clinica, clinica_id)
+    return await _leida(db, await db.run_sync(service.quitar_logo, clinica))
 
 
 @router.get("/{clinica_id}/convenios", response_model=list[ConvenioRead], dependencies=[EQUIPO])

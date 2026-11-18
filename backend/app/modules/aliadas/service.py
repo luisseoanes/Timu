@@ -10,10 +10,12 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.enums import EstadoServicio, TipoServicio
+from app.core.enums import EstadoServicio, TipoAliada, TipoServicio
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ZONA_NEGOCIO, ahora, con_zona, hoy
 from app.modules.aliadas.models import ClinicaAliada, ConvenioAliada, RemisionAliada
+from app.modules.archivos import service as archivos
+from app.modules.archivos.models import Archivo
 from app.modules.cartera import contratos
 from app.modules.cartera import service as cartera
 from app.modules.cartera.models import Contrato
@@ -32,6 +34,55 @@ def obtener_clinica(db: Session, clinica_id: UUID) -> ClinicaAliada:
     if clinica is None:
         raise NoEncontrado("Clinica aliada no encontrada")
     return clinica
+
+
+# --- R3-PUB-04 La red de aliadas de la portada -------------------------------------------------
+
+# Lo que es cada aliada, como lo dice la portada.
+NOMBRES_TIPO = {
+    TipoAliada.CLINICA: "Clínica veterinaria",
+    TipoAliada.ESPECIALISTA: "Especialista",
+    TipoAliada.PELUQUERIA: "Peluquería y spa",
+    TipoAliada.FARMACIA: "Farmacia veterinaria",
+    TipoAliada.HOSPEDAJE: "Hotel y guardería",
+    TipoAliada.FUNERARIA: "Transporte y funeraria",
+    TipoAliada.OTRO: "Aliada",
+}
+
+
+def subir_logo(
+    db: Session, clinica: ClinicaAliada, contenido: bytes, nombre: str | None, usuario_id: UUID
+) -> ClinicaAliada:
+    archivo = archivos.subir(
+        db, contenido, nombre=nombre, proposito="logo_aliada", usuario_id=usuario_id
+    )
+    clinica.logo_archivo_id = archivo.id
+    db.flush()
+    return clinica
+
+
+def quitar_logo(db: Session, clinica: ClinicaAliada) -> ClinicaAliada:
+    """La aliada queda sin logo; el fichero se conserva como constancia."""
+    clinica.logo_archivo_id = None
+    db.flush()
+    return clinica
+
+
+def logo_url(db: Session, clinica: ClinicaAliada) -> str | None:
+    if clinica.logo_archivo_id is None:
+        return None
+    archivo = db.get(Archivo, clinica.logo_archivo_id)
+    return archivos.url(archivo) if archivo else None
+
+
+def de_la_portada(db: Session) -> list[tuple[ClinicaAliada, str | None]]:
+    """Las aliadas que muestra la portada, en el orden de la red, con la URL de su logo."""
+    clinicas = db.scalars(
+        select(ClinicaAliada)
+        .where(ClinicaAliada.en_portada.is_(True), ClinicaAliada.activa.is_(True))
+        .order_by(ClinicaAliada.orden_portada, ClinicaAliada.nombre)
+    )
+    return [(c, logo_url(db, c)) for c in clinicas]
 
 
 # --- F2-ALI-01 Convenios ----------------------------------------------------------------------

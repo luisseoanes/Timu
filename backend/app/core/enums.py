@@ -111,6 +111,7 @@ class PropositoArchivo(StrEnum):
     FORMULA = "formula"
     CARNET = "carnet"
     DOCUMENTO_FAMILIA = "documento_familia"
+    LOGO_ALIADA = "logo_aliada"
 
 
 class CategoriaDocumento(StrEnum):
@@ -340,6 +341,18 @@ class MedioAutorizacion(StrEnum):
     PORTAL = "portal"
     FORMULARIO = "formulario"
     CORREO = "correo"
+
+
+class TipoAliada(StrEnum):
+    """R3-PUB-04 Que es cada aliada en la red que muestra la portada: no todas son clinicas."""
+
+    CLINICA = "clinica"
+    ESPECIALISTA = "especialista"
+    PELUQUERIA = "peluqueria"
+    FARMACIA = "farmacia"
+    HOSPEDAJE = "hospedaje"
+    FUNERARIA = "funeraria"
+    OTRO = "otro"
 
 
 class EstadoRemision(StrEnum):

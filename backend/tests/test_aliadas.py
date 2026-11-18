@@ -7,7 +7,7 @@ from uuid import uuid4
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import update
+from sqlalchemy import text, update
 
 from app.core.enums import Rol
 from app.core.tiempo import hoy
@@ -483,3 +483,95 @@ async def test_la_aliada_tiene_sesion_reconocible_y_la_cierra(client, aliada):
     assert me.status_code == 200
     assert me.json()["rol"] == "aliada"
     assert (await client.post("/api/v1/auth/logout", headers=aliada)).status_code == 200
+
+
+# --- R3-PUB-04 La red de aliadas de la portada ----------------------------------------------------
+
+PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 32
+
+
+async def _clinica(client: AsyncClient, headers, **extra) -> dict:
+    datos = {"nombre": "Vida Animal", "ciudad": "Envigado", **extra}
+    resp = await client.post("/api/v1/aliadas", json=datos, headers=headers)
+    assert resp.status_code == 201, resp.text
+    return resp.json()
+
+
+async def test_la_portada_muestra_solo_las_aliadas_que_se_eligen_en_su_orden(
+    client: AsyncClient, headers, almacenamiento
+):
+    await _clinica(client, headers, nombre="Kahuana", en_portada=True, orden_portada=2)
+    vida = await _clinica(
+        client,
+        headers,
+        en_portada=True,
+        orden_portada=1,
+        tipo="clinica",
+        atiende_24h=True,
+        barrio=" Alcalá ",
+        horario="24 horas",
+        presentacion="Clínica con atención las 24 horas.",
+        nit="900123456",
+        email="vida@example.com",
+    )
+    await _clinica(client, headers, nombre="Interna sin portada")
+    oculta = await _clinica(client, headers, nombre="Inactiva", en_portada=True)
+    await client.patch(f"/api/v1/aliadas/{oculta['id']}", json={"activa": False}, headers=headers)
+    resp = await client.put(
+        f"/api/v1/aliadas/{vida['id']}/logo",
+        files={"logo": ("vida.png", PNG, "image/png")},
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["logo_url"]
+
+    # Sin sesion: lo que lee la portada.
+    publicas = (await client.get("/api/v1/aliadas/publicas")).json()
+    assert [a["nombre"] for a in publicas] == ["Vida Animal", "Kahuana"]
+    primera = publicas[0]
+    assert (primera["tipo_nombre"], primera["atiende_24h"], primera["barrio"]) == (
+        "Clínica veterinaria",
+        True,
+        "Alcalá",
+    )
+    assert primera["logo_url"]
+    # Nada interno: ni el NIT, ni el correo, ni los convenios.
+    assert "nit" not in primera and "email" not in primera
+
+
+async def test_quitar_el_logo_lo_deja_sin_borrar_el_archivo(
+    client: AsyncClient, db, headers, almacenamiento
+):
+    vida = await _clinica(client, headers, en_portada=True)
+    await client.put(
+        f"/api/v1/aliadas/{vida['id']}/logo",
+        files={"logo": ("vida.png", PNG, "image/png")},
+        headers=headers,
+    )
+    resp = await client.delete(f"/api/v1/aliadas/{vida['id']}/logo", headers=headers)
+    assert resp.status_code == 200 and resp.json()["logo_url"] is None
+    assert (
+        await db.scalar(text("SELECT count(*) FROM archivos WHERE proposito = 'logo_aliada'")) == 1
+    )
+
+
+async def test_el_logo_solo_admite_una_imagen(client: AsyncClient, headers, almacenamiento):
+    vida = await _clinica(client, headers)
+    resp = await client.put(
+        f"/api/v1/aliadas/{vida['id']}/logo",
+        files={"logo": ("x.pdf", b"%PDF-1.4" + b"0" * 32, "application/pdf")},
+        headers=headers,
+    )
+    assert resp.status_code == 422
+
+
+async def test_solo_el_administrador_cambia_el_logo(
+    client: AsyncClient, db, headers, almacenamiento
+):
+    vida = await _clinica(client, headers)
+    await crear_usuario(db, "ventas@timu.co", Rol.COMERCIAL)
+    h = await login(client, "ventas@timu.co")
+    resp = await client.put(
+        f"/api/v1/aliadas/{vida['id']}/logo", files={"logo": ("v.png", PNG, "image/png")}, headers=h
+    )
+    assert resp.status_code == 403
