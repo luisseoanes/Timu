@@ -35,7 +35,11 @@ class ClinicaAliada(Base, UUIDMixin, TimestampMixin, Auditable):
     horario: Mapped[str | None] = mapped_column(String(255))
     presentacion: Mapped[str | None] = mapped_column(Text)
     orden_portada: Mapped[int] = mapped_column(Integer, default=0)
-    logo_archivo_id: Mapped[UUID | None] = mapped_column(ForeignKey("archivos.id"), index=True)
+    # use_alter: cierra el ciclo usuarios -> clinicas_aliadas -> archivos -> usuarios (quien lo
+    # subio). Sin el, no hay orden de creacion (test_los_modelos_se_ordenan_sin_ciclos).
+    logo_archivo_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("archivos.id", use_alter=True), index=True
+    )
 
 
 class ConvenioAliada(Base, UUIDMixin, TimestampMixin, Auditable):

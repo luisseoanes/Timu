@@ -86,8 +86,11 @@ class Servicio(Base, UUIDMixin, TimestampMixin, Auditable):
     autorizado: Mapped[bool] = mapped_column(Boolean, default=False)
     autorizado_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
     autorizado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # use_alter: pendientes tambien apunta a servicios (servicio_origen_id). Sin el, las dos
+    # tablas no tienen orden de creacion y SQLAlchemy lo avisa
+    # (test_los_modelos_se_ordenan_sin_ciclos).
     pendiente_origen_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("pendientes.id"), index=True
+        ForeignKey("pendientes.id", use_alter=True), index=True
     )
     observaciones: Mapped[str | None] = mapped_column(Text)
     motivo_estado: Mapped[str | None] = mapped_column(String(255))

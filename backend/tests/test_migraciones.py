@@ -5,12 +5,13 @@ las pruebas pasan porque el esquema se construye desde las migraciones... pero l
 migracion que falta no existe y produccion se queda sin esa columna.
 """
 
+import warnings
 from decimal import Decimal
 from uuid import uuid4
 
 import pytest
 from sqlalchemy import create_engine, make_url, text
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SAWarning
 
 from alembic import command
 from alembic.autogenerate import compare_metadata
@@ -42,6 +43,16 @@ def test_no_hay_deriva_entre_modelos_y_migraciones():
         "  alembic revision --autogenerate -m 'descripcion'\n"
         f"Diferencias: {diferencias}"
     )
+
+
+def test_los_modelos_se_ordenan_sin_ciclos():
+    """Dos tablas que se referencian entre si (directa o en cadena) no tienen orden de
+    creacion: SQLAlchemy lo avisa al comparar el modelo con la base ("Cannot correctly sort
+    tables") y anuncia que en una version futura sera un error. Cada ciclo se rompe con
+    `use_alter=True` en la llave que lo cierra; el esquema de la base no cambia."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", SAWarning)
+        assert Base.metadata.sorted_tables
 
 
 # --- 0014: UUIDv7 sobre datos existentes ------------------------------------------------------
