@@ -136,7 +136,9 @@ describe('interesados', () => {
     await user.selectOptions(within(ventana).getByLabelText('Cómo llegó'), 'referido')
     await user.click(within(ventana).getByRole('button', { name: 'Guardar interesado' }))
     await waitFor(() => expect(enviado).toEqual({ nombre: 'Laura', telefono: '3001234567', origen: 'referido' }))
-    expect(await screen.findByRole('region', { name: 'Interesado abierto' })).toBeInTheDocument()
+    // Cerrar la ventana, recargar el listado y abrir la ficha van encadenados: con la suite entera
+    // bajo cobertura, el segundo por defecto de findBy no siempre alcanza (frontend/CLAUDE.md).
+    expect(await screen.findByRole('region', { name: 'Interesado abierto' }, { timeout: 5000 })).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })
