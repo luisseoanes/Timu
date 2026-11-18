@@ -28,6 +28,7 @@ from app.core.config import settings
 from app.core.database import sesion_worker
 from app.modules.comunicaciones import service as comunicaciones
 from app.modules.comunicaciones.models import Mensaje
+from scripts.datos_portada import ADICIONALES, ALIADAS, DATOS_TIMU
 
 API = os.environ.get("DEMO_API", "http://localhost:8000/api/v1")
 BOGOTA = ZoneInfo("America/Bogota")
@@ -473,6 +474,24 @@ def ruta_de_prueba(c: Cliente, familias: list[dict[str, Any]], hoy: date) -> Non
         print(f"  ! la planificación no terminó: {plan and plan.get('error')}")
 
 
+def portada(c: Cliente) -> None:
+    """R3-PUB-04 Lo que dice la portada en local: los datos de TIMU, la red de aliadas y los
+    beneficios adicionales de cada plan, tal como los dice hoy la web de TIMU (provisionales)."""
+    actuales = c.get("/institucional")
+    if any(actuales.get(campo) != valor for campo, valor in DATOS_TIMU.items()):
+        c.put("/institucional", DATOS_TIMU)
+    existentes = {a["nombre"] for a in c.get("/aliadas", incluir_inactivas=True)}
+    for orden, aliada in enumerate(ALIADAS, start=1):
+        if aliada["nombre"] not in existentes:
+            c.post("/aliadas", {**aliada, "en_portada": True, "orden_portada": orden})
+    for plan in c.get("/planes"):
+        deseados = ADICIONALES.get(plan["codigo"])
+        if deseados and [(a["nombre"], a["cubre"]) for a in plan["adicionales"]] != [
+            (a["nombre"], a["cubre"]) for a in deseados
+        ]:
+            c.put(f"/planes/{plan['id']}/adicionales", deseados)
+
+
 def main() -> None:
     if settings.ENVIRONMENT != "local":
         sys.exit("datos_demo solo corre en ENVIRONMENT=local")
@@ -785,6 +804,9 @@ def main() -> None:
     # Dos familias en el portal: Ana, con el plan en pausa por cuotas vencidas, y Jorge, al dia
     # (DEU-14). A Jorge se le paga lo vencido en cada pasada, para que siga al dia aunque el
     # stack lleve semanas arriba.
+    print("Portada pública")
+    portada(c)
+
     print("Portal de Ana Ruiz y de Jorge Ramírez")
     pagar_lo_vencido(c, familias[3])
     for familia in (familias[0], familias[3]):
