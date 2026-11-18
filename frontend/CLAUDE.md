@@ -13,8 +13,10 @@ A `src/components/` sube lo que es solo presentación y no conoce ningún domini
 (base, `auth` y `catalogos`, dominios, espacios de entrada) y la prohibición de ciclos están
 en `docs/frontend/conventions.md` y las vigilan ESLint y `src/test/arquitectura.test.ts`.
 
-Hay tres espacios con su propio layout: el panel del equipo (`AppLayout`, menú según el
-perfil), el portal de familias (`/portal`) y el de la clínica aliada (`/aliada`);
+Hay tres espacios con sesión y su propio layout: el panel del equipo en `/panel` (`AppLayout`,
+menú según el perfil), el portal de familias (`/portal`) y el de la clínica aliada (`/aliada`);
+y la web pública sin sesión: la portada (`/`) y cada plan (`/planes/<plan>`) con `MarcoPublico`,
+y el registro, la encuesta y el carnet con sus marcos;
 `ProtectedRoute` lleva a cada perfil al suyo.
 
 - **`src/api/client.ts` es el único que habla con la API.** Ningún componente arma una
@@ -158,3 +160,9 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   (`.registro-comparador`).
 - Exportar funciones o constantes desde un `.tsx` de componentes dispara
   `react-refresh/only-export-components`: van a un `.ts` del dominio (`registro.ts`, `admin/planes.ts`).
+- `e2e/` no lo revisa `tsc`: sus datos simulados de la API se quedan atrás sin aviso (el comparador
+  se cayó por un plan sin `adicionales`). Al cambiar un schema, revísalos a mano.
+- Una página pública nueva va en `PAGINAS_PUBLICAS` (`src/api/client.ts`): si no, un 401 la manda
+  a `/login`. La portada (`/`) se compara entera, no como prefijo.
+- La guarda de tokens toma por color un nombre de variable con una palabra de color en inglés
+  (`--linea-red` falló): nómbralas en español.
