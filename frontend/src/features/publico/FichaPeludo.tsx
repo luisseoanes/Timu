@@ -4,6 +4,7 @@ import { Icono } from '@/components/Icono'
 import { moneda } from '@/lib/formato'
 import type { PlanPublico } from '@/types'
 
+import { Comparador } from './Comparador'
 import { ESPECIES_REGISTRO, planesPara, tarifaCon, type PeludoRegistro } from './registro'
 
 /**
@@ -124,7 +125,7 @@ export function FichaPeludo({
             <Icono nombre={comparando ? 'arriba' : 'abajo'} size={16} />
             {comparando ? 'Cerrar la comparación' : `Comparar los ${disponibles.length} planes`}
           </button>
-          {comparando && <Comparador id={`${id}-comparador`} planes={disponibles} nombre={nombre} totalPeludos={totalPeludos} />}
+          {comparando && <Comparador id={`${id}-comparador`} planes={disponibles} titulo={`Lo que cubre cada plan para ${nombre}`} totalPeludos={totalPeludos} />}
         </>
       )}
     </section>
@@ -177,86 +178,5 @@ function Condiciones({ plan }: { plan: PlanPublico }) {
         </div>
       )}
     </dl>
-  )
-}
-
-/**
- * Los planes lado a lado con las mismas filas, en el orden del catálogo que da la API: un
- * servicio que un plan no trae se dice «No incluye».
- */
-function Comparador({
-  id,
-  planes,
-  nombre,
-  totalPeludos,
-}: {
-  id: string
-  planes: PlanPublico[]
-  nombre: string
-  totalPeludos: number
-}) {
-  // Las filas: el precio, cada servicio que trae alguno de los planes y sus condiciones.
-  const servicios = new Map<string, string>()
-  for (const p of planes) for (const b of p.beneficios) if (!servicios.has(b.tipo_servicio_codigo)) servicios.set(b.tipo_servicio_codigo, b.nombre)
-  const filas: [string, string, (p: PlanPublico) => string][] = [
-    ['valor', 'Al mes', (p) => moneda(tarifaCon(p, totalPeludos))],
-    ...[...servicios].map(
-      ([codigo, servicio]): [string, string, (p: PlanPublico) => string] => [
-        codigo,
-        servicio,
-        (p) => p.beneficios.find((b) => b.tipo_servicio_codigo === codigo)?.texto ?? 'No incluye',
-      ],
-    ),
-  ]
-  if (planes.some((p) => p.carencia)) filas.push(['carencia', 'Carencia', (p) => p.carencia ?? '—'])
-  if (planes.some((p) => p.exclusiones)) filas.push(['exclusiones', 'No cubre', (p) => p.exclusiones ?? '—'])
-  return (
-    <div id={id} className="registro-comparador">
-      <table className="tabla">
-        <caption className="sr-only">Lo que cubre cada plan para {nombre}</caption>
-        <thead>
-          <tr>
-            <th>Servicio</th>
-            {planes.map((p) => (
-              <th key={p.id} data-color={p.color}>
-                {p.nombre}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {filas.map(([clave, servicio, valor]) => {
-            const valores = planes.map(valor)
-            // Lo que es igual en todos se dice una vez: la diferencia salta a la vista.
-            const igual = valores.every((v) => v === valores[0])
-            return (
-              <tr key={clave}>
-                <td className="principal" data-etiqueta="Servicio">
-                  {servicio}
-                </td>
-                {igual ? (
-                  <td colSpan={planes.length} className="registro-comparador-igual">
-                    <span>
-                      {valores[0]} <span className="registro-comparador-nota">· igual en los {planes.length}</span>
-                    </span>
-                  </td>
-                ) : (
-                  planes.map((p, i) => (
-                    <td key={p.id} className="registro-comparador-valor">
-                      {/* Apilado (en el celular), cada valor dice de qué plan es, con su color. */}
-                      <span className="registro-comparador-plan" aria-hidden="true">
-                        <span className="marcador-plan" data-color={p.color} />
-                        {p.nombre}
-                      </span>
-                      <span>{valores[i]}</span>
-                    </td>
-                  ))
-                )}
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
   )
 }
