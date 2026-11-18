@@ -18,7 +18,7 @@ test.describe('sesión', () => {
   test('sin sesión, cualquier ruta lleva al ingreso', async ({ page }) => {
     await page.route('**/api/v1/auth/me', (ruta) => ruta.fulfill({ status: 401, body: '' }))
     await sinRenovacion(page)
-    await page.goto('/familias')
+    await page.goto('/panel/familias')
     await expect(page).toHaveURL(/\/login/)
   })
 

@@ -60,7 +60,7 @@ describe('Administración: planes', () => {
         HttpResponse.json([{ ...PLAN, exclusiones: 'Excluye preexistencias.', terminos_url: 'https://timu.com.co/terminos' }]),
       ),
     )
-    const { ficha } = await abrirFicha('Planes', '/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
+    const { ficha } = await abrirFicha('Planes', '/panel/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
     const condiciones = within(ficha).getByRole('region', { name: 'Condiciones que ve quien se afilia' })
     expect(condiciones).toHaveTextContent('Sin escribir: el registro no la muestra.')
     expect(condiciones).toHaveTextContent('Excluye preexistencias.')
@@ -91,7 +91,7 @@ describe('Administración: planes', () => {
       http.put(`${API}/planes/p1/tarifas`, registrar('tarifas')),
       http.put(`${API}/planes/p1/beneficios`, registrar('beneficios')),
     )
-    const { user, ficha } = await abrirFicha('Planes', '/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
+    const { user, ficha } = await abrirFicha('Planes', '/panel/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
     await user.click(within(ficha).getByRole('button', { name: 'Editar plan' }))
     const modal = await screen.findByRole('dialog')
     expect(within(modal).getByLabelText('4 o más (c/u)')).toHaveValue(24000)
@@ -137,7 +137,7 @@ describe('Administración: planes', () => {
         return HttpResponse.json(PLAN)
       }),
     )
-    const { user, ficha } = await abrirFicha('Planes', '/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
+    const { user, ficha } = await abrirFicha('Planes', '/panel/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
     await user.click(within(ficha).getByRole('button', { name: 'Editar plan' }))
     const modal = await screen.findByRole('dialog')
     await user.click(within(modal).getByLabelText('Bogotá'))
@@ -202,7 +202,7 @@ describe('Administración: planes', () => {
         return HttpResponse.json({ ...PLAN, activo: false })
       }),
     )
-    const { user, ficha } = await abrirFicha('Planes', '/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
+    const { user, ficha } = await abrirFicha('Planes', '/panel/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
     await user.click(within(ficha).getByRole('button', { name: 'Más acciones con Colita Feliz' }))
     await user.click(await screen.findByRole('menuitem', { name: 'Desactivar plan' }))
     await waitFor(() => expect(cambio).toEqual({ activo: false }))
@@ -272,7 +272,7 @@ describe('Administración: reportes y pasarela', () => {
       }),
     )
     const user = userEvent.setup()
-    renderizar(<AdminPage />, { ruta: '/admin?eventos=procesado' })
+    renderizar(<AdminPage />, { ruta: '/panel/admin?eventos=procesado' })
     await user.click(await screen.findByRole('tab', { name: 'Reportes y pasarela' }))
     expect(await screen.findByRole('button', { name: 'Procesados 2' })).toHaveAttribute('aria-pressed', 'true')
     await waitFor(() => expect(estados).toContain('procesado'))

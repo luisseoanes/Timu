@@ -56,8 +56,8 @@ describe('TareasPage', () => {
     // Lo vencido no se dice solo en rojo: lleva la palabra y el icono.
     expect(vencida.querySelector('[data-etiqueta="Vence"]')).toHaveTextContent(/mar 20 oct ·\s*vencida$/)
     expect(within(vencida).getByText('Cartera')).toBeInTheDocument()
-    expect(within(vencida).getByRole('link', { name: 'Carlos Pérez' })).toHaveAttribute('href', '/familias/f1')
-    expect(await within(vencida).findByRole('link', { name: 'Consulta domiciliaria de Toby' })).toHaveAttribute('href', '/servicios/s1')
+    expect(within(vencida).getByRole('link', { name: 'Carlos Pérez' })).toHaveAttribute('href', '/panel/familias/f1')
+    expect(await within(vencida).findByRole('link', { name: 'Consulta domiciliaria de Toby' })).toHaveAttribute('href', '/panel/servicios/s1')
     const futura = screen.getByText('Revisar contrato').closest('tr')!
     expect(futura.querySelector('[data-etiqueta="Vence"]')).toHaveTextContent('jue 10 ene')
   })

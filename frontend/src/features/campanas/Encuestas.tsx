@@ -92,8 +92,8 @@ export function Encuestas() {
                     <strong>{e.comentario ?? 'Sin comentario'}</strong>
                     <span>
                       {e.tipo === 'seguimiento' ? 'Seguimiento · ' : ''}
-                      {fechaHora(e.respondida_en)} · <Link to={`/familias/${e.familia_id}`}>Ver familia</Link> ·{' '}
-                      <Link to={`/servicios/${e.servicio_id}`}>Ver servicio</Link>
+                      {fechaHora(e.respondida_en)} · <Link to={`/panel/familias/${e.familia_id}`}>Ver familia</Link> ·{' '}
+                      <Link to={`/panel/servicios/${e.servicio_id}`}>Ver servicio</Link>
                     </span>
                   </div>
                   {e.tarea_id && <Insignia tono="info">Con tarea de seguimiento</Insignia>}

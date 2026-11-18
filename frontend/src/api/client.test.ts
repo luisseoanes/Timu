@@ -69,7 +69,7 @@ describe('cliente de la API', () => {
 
     function enPantallaProtegida() {
       const asignar = vi.fn()
-      vi.stubGlobal('location', { ...window.location, pathname: '/familias', assign: asignar })
+      vi.stubGlobal('location', { ...window.location, pathname: '/panel/familias', assign: asignar })
       return asignar
     }
 

@@ -304,7 +304,7 @@ export function GestionarPreventivo({ familiaId, eventoIds, onCerrar }: Gestiona
   const [conVisita] = deLaEstacion
   return (
     <Modal abierto onCambio={(v) => !v && onCerrar()} titulo={titulo(conVisita)} descripcion="Ya tiene su visita agendada. Al completarla, el preventivo queda aplicado.">
-      <Link className="btn btn-secundario" to={`/servicios/${conVisita.servicio_id}`}>
+      <Link className="btn btn-secundario" to={`/panel/servicios/${conVisita.servicio_id}`}>
         Abrir la visita
       </Link>
     </Modal>

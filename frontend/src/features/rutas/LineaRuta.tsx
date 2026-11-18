@@ -163,7 +163,7 @@ function Estacion({
             </h3>
             {lugar && <p className="estacion-lugar">{lugar}</p>}
             <p className="estacion-quien">
-              <Link to={`/familias/${familia.id}`}>{familia.titular_nombre}</Link>
+              <Link to={`/panel/familias/${familia.id}`}>{familia.titular_nombre}</Link>
               {parada.mascota && <Mascota mascota={parada.mascota} />}
             </p>
             <p className="estacion-que">

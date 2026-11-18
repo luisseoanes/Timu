@@ -61,7 +61,7 @@ export function NuevaFamiliaModal({ abierto, onCambio }: { abierto: boolean; onC
         },
       ],
     }
-    crear.mutate(familia, { onSuccess: (creada) => navegar(`/familias/${creada.id}`) })
+    crear.mutate(familia, { onSuccess: (creada) => navegar(`/panel/familias/${creada.id}`) })
   }
 
   return (

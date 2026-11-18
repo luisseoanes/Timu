@@ -14,7 +14,7 @@ test.describe('equipo', () => {
   test.use({ storageState: sesion('equipo') })
 
   test('busca una familia en el panel y abre su ficha con sus mascotas', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/panel')
     // En el Inicio el h1 es el saludo: la cabecera del módulo no se repite.
     await expect(page.getByRole('heading', { level: 1, name: /^Hola, / })).toBeVisible()
     await page.getByRole('link', { name: 'Familias' }).first().click()
@@ -31,7 +31,7 @@ test.describe('equipo', () => {
     await page.setViewportSize({ width: 390, height: 844 })
     // Sin cargar antes el Inicio: la sesión del setup sigue vigente y cada pantalla gasta cupo.
     const familias = await (await page.request.get('/api/v1/familias', { params: { q: 'Ana Ruiz' } })).json()
-    await page.goto(`/familias/${familias.items[0].id}`)
+    await page.goto(`/panel/familias/${familias.items[0].id}`)
     await expect(page.locator('.parada-punto').first()).toBeVisible()
     await page.getByRole('tab', { name: 'Mascotas' }).click()
     await page.getByRole('button', { name: 'Ficha' }).first().click()
@@ -55,7 +55,7 @@ test.describe('equipo', () => {
 
   test('en un formulario cada control conserva su altura aunque el vecino lleve ayuda', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/familias')
+    await page.goto('/panel/familias')
     await page.getByRole('button', { name: 'Nueva familia' }).click()
     const ventana = page.getByRole('dialog', { name: 'Nueva familia' })
     await expect(ventana).toBeVisible()
@@ -67,7 +67,7 @@ test.describe('equipo', () => {
 
   test('el pie de una ventana larga se ve sin desplazarla', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/familias')
+    await page.goto('/panel/familias')
     await page.getByRole('button', { name: 'Nueva familia' }).click()
     const ventana = page.getByRole('dialog', { name: 'Nueva familia' })
     const guardar = ventana.getByRole('button', { name: 'Guardar familia' })
@@ -89,7 +89,7 @@ test.describe('equipo', () => {
     ).json()
     const conProxima = lineas.find((l: { estaciones: { estado: string }[] }) => l.estaciones.some((e) => e.estado === 'proxima'))
     expect(conProxima, 'datos_demo deja alguna familia con una estación próxima').toBeTruthy()
-    await page.goto(`/familias/${conProxima.familia_id}`)
+    await page.goto(`/panel/familias/${conProxima.familia_id}`)
     await expect(page.locator('.ficha-acciones .btn-primario')).toBeVisible()
     const verdes: Record<string, number> = {}
     for (const pestana of await page.getByRole('tab').allTextContents()) {
@@ -134,7 +134,7 @@ test.describe('equipo comercial', () => {
   test('la bandeja de conversaciones carga contra la API real', async ({ page }) => {
     // Con la API simulada esto pasaba aunque el panel pedía un estado que la API rechaza.
     const respuesta = page.waitForResponse((r) => r.url().includes('/api/v1/comercial/conversaciones'))
-    await page.goto('/comercial')
+    await page.goto('/panel/comercial')
     await page.getByRole('tab', { name: 'Conversaciones' }).click()
     expect((await respuesta).status()).toBe(200)
     await expect(page.getByRole('alert')).toHaveCount(0)
@@ -149,7 +149,7 @@ test.describe('gerencia en el inicio', () => {
   test('una cifra abre su serie de 12 meses servida por la API, con una sola acción verde', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     const serie = page.waitForResponse((r) => r.url().includes('/api/v1/dashboard/evolucion'))
-    await page.goto('/')
+    await page.goto('/panel')
     expect((await serie).status()).toBe(200)
     const cifras = page.getByRole('list', { name: 'Cifras del período' })
     await expect(cifras.getByRole('button')).toHaveCount(6)
@@ -172,7 +172,7 @@ test.describe('gerencia en reglas', () => {
 
   test('una regla nueva se escribe por campos y la API la dice en palabras antes de guardar', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto('/admin')
+    await page.goto('/panel/admin')
     await page.getByRole('tab', { name: 'Reglas' }).click()
     await page.getByRole('button', { name: 'Nueva regla' }).click()
     const ventana = page.getByRole('dialog', { name: 'Nueva regla' })
@@ -201,7 +201,7 @@ test.describe('gerencia en servicios', () => {
   test('el listado dice a quién se atiende y abre la ficha sin perder el listado', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     // Sin el filtro de fecha: los datos de demostración se siembran en otro día.
-    await page.goto('/servicios?desde=')
+    await page.goto('/panel/servicios?desde=')
     const listado = page.getByRole('list', { name: 'Servicios' })
     // El último del listado: abrirlo no puede dejar la ficha arriba, fuera de la pantalla.
     const ultimo = listado.getByRole('link').last()
@@ -229,7 +229,7 @@ test.describe('gerencia en cartera y preventivos', () => {
   test.use({ storageState: sesion('admin') })
 
   test('la cartera abre en lo que se debe y cobra desde la fila con las cuotas de la familia', async ({ page }) => {
-    await page.goto('/cartera')
+    await page.goto('/panel/cartera')
     await expect(page.getByRole('button', { name: /^En mora \d+$/ })).toHaveAttribute('aria-pressed', 'true')
     // datos_demo deja a Ana Ruiz con cuotas vencidas.
     await page.getByRole('button', { name: 'Registrar pago de Ana Ruiz' }).click()
@@ -241,7 +241,7 @@ test.describe('gerencia en cartera y preventivos', () => {
   })
 
   test('los preventivos se piden a cada familia de una vez y en «Todos» dicen su estado', async ({ page }) => {
-    await page.goto('/preventivos')
+    await page.goto('/panel/preventivos')
     const autorizar = page.getByRole('button', { name: /^Registrar autorización/ }).first()
     await autorizar.click()
     const ventana = page.getByRole('dialog', { name: /^Autorización de / })
@@ -259,7 +259,7 @@ test.describe('gerencia en comercial', () => {
   test.use({ storageState: sesion('admin') })
 
   test('la conversación que espera a un asesor lleva a la ficha del interesado, con sus mensajes', async ({ page }) => {
-    await page.goto('/comercial')
+    await page.goto('/panel/comercial')
     await page.getByRole('tab', { name: 'Conversaciones' }).click()
     // datos_demo deja a Natalia Gómez pidiendo un asesor por WhatsApp.
     await page.getByRole('link', { name: 'Abrir conversación' }).first().click()
@@ -276,7 +276,7 @@ test.describe('médico en el inicio', () => {
 
   test('entra a su jornada: lo que tiene sin firmar, Hoy y las paradas de su ruta', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto('/')
+    await page.goto('/panel')
     await expect(page.getByRole('heading', { level: 1, name: /^Hola, / })).toBeVisible()
     const jornada = page.getByRole('list', { name: 'Tu jornada' })
     await expect(jornada.getByText(/^Hoy · /)).toBeVisible()
@@ -317,7 +317,7 @@ test.describe('médico en clínica', () => {
   // Solo lectura, como en Rutas: firmar gastaría el borrador que deja datos_demo.
   test('abre en su trabajo pendiente y sigue un borrador en la consulta guiada', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto('/clinica')
+    await page.goto('/panel/clinica')
     const sinFirmar = page.getByRole('region', { name: 'Consultas sin firmar' })
     await sinFirmar.getByRole('link').first().click()
     const guia = page.getByRole('list', { name: 'Apartados de la consulta' })
@@ -352,7 +352,7 @@ test.describe('familia', () => {
   test.use({ storageState: sesion('familia') })
 
   test('entra a su portal, ve su línea abierta en hoy y sus peludos, y no llega al panel del equipo', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/panel')
     await expect(page).toHaveURL(/\/portal/)
     await expect(page.getByRole('heading', { level: 1, name: 'Hola, Ana' })).toBeVisible()
     // R3-POR-01: la línea de la familia, servida por /portal/linea, abre en «hoy».
@@ -365,7 +365,7 @@ test.describe('familia', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Tus pagos' })).toBeVisible()
     await expect(page.locator('.btn-primario')).toHaveCount(1)
     await expect(page.getByRole('button', { name: /^Pagar \$/ }).first()).toHaveClass(/btn-primario/)
-    await page.goto('/familias')
+    await page.goto('/panel/familias')
     await expect(page).toHaveURL(/\/portal/)
   })
 })
@@ -386,7 +386,7 @@ test.describe('clínica aliada', () => {
     expect(vigente, 'datos_demo debe dejar una remisión emitida y vigente').toBeTruthy()
     const codigo: string = vigente.codigo
 
-    await page.goto('/')
+    await page.goto('/panel')
     await expect(page).toHaveURL(/\/aliada/)
     // La barra dice en qué clínica se está: la aliada lee su propia fila (migración 0049).
     await expect(page.getByRole('banner')).toContainText('Clínica Veterinaria del Norte')

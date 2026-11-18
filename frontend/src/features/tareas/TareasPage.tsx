@@ -143,9 +143,9 @@ export function TareasPage() {
                           {/* A quién afecta: la familia y, si es de un servicio, cuál y de quién. */}
                           <div className="bandeja-detalle">
                             <span>{area}</span>
-                            {t.familia && <Link to={`/familias/${t.familia.id}`}>{t.familia.titular_nombre}</Link>}
+                            {t.familia && <Link to={`/panel/familias/${t.familia.id}`}>{t.familia.titular_nombre}</Link>}
                             {t.servicio && (
-                              <Link to={`/servicios/${t.servicio.id}`}>
+                              <Link to={`/panel/servicios/${t.servicio.id}`}>
                                 {nombreTipo(t.servicio.tipo_codigo)}
                                 {t.servicio.mascota_nombre && ` de ${t.servicio.mascota_nombre}`}
                               </Link>

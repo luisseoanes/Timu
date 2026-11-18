@@ -85,7 +85,7 @@ function TrabajoPendiente() {
               {visitas.map((p) => (
                 <li key={p.id} className="listado-fila">
                   <span className="listado-fila-cabeza">
-                    <Link className="listado-fila-enlace" to={`/clinica/mascotas/${p.mascota!.id}?servicio=${p.servicio_id}`}>
+                    <Link className="listado-fila-enlace" to={`/panel/clinica/mascotas/${p.mascota!.id}?servicio=${p.servicio_id}`}>
                       {p.mascota!.nombre} · {p.familia.titular_nombre}
                     </Link>
                     <span className="apagado numero">{p.estado === 'completada' ? 'Atendida' : hora(p.llegada_estimada)}</span>
@@ -111,7 +111,7 @@ function TrabajoPendiente() {
               {d.map((e) => (
                 <li key={e.id} className="listado-fila">
                   <span className="listado-fila-cabeza">
-                    <Link className="listado-fila-enlace" to={`/clinica/historias/${e.id}`}>
+                    <Link className="listado-fila-enlace" to={`/panel/clinica/historias/${e.id}`}>
                       {mascotas.get(e.mascota_id)?.nombre ?? 'Mascota'} · {fecha(e.fecha)}
                     </Link>
                     <Distintivo dominio="historia" valor={e.estado} />
@@ -138,7 +138,7 @@ function BuscarHistoria() {
       {familia && (
         <div className="mascotas" style={{ marginTop: 'var(--e4)' }}>
           {(familia.mascotas ?? []).map((m) => (
-            <Link key={m.id} to={`/clinica/mascotas/${m.id}`} className="acceso">
+            <Link key={m.id} to={`/panel/clinica/mascotas/${m.id}`} className="acceso">
               <Icono nombre="huella" />
               {m.nombre}
               <span className="apagado">{m.activa ? m.especie : 'De baja'}</span>
@@ -371,7 +371,7 @@ function AtenderSolicitud({
           <button className="btn btn-plano" type="button" disabled={cerrar.isPending} onClick={() => cerrar.mutate(s.id, { onSuccess: onCerrar })}>
             Cerrar solicitud
           </button>
-          {s.historia_id && <Link to={`/clinica/historias/${s.historia_id}`}>Ver en la historia</Link>}
+          {s.historia_id && <Link to={`/panel/clinica/historias/${s.historia_id}`}>Ver en la historia</Link>}
         </div>
         {cerrar.isError && (
           <p className="error" role="alert">

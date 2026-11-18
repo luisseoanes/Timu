@@ -76,7 +76,7 @@ async function abrirPestana(nombre: string) {
 describe('remisiones', () => {
   it('una utilizada dice cuándo se atendió y lo que cubrió, y ya no se anula', async () => {
     server.use(http.get(`${API}/aliadas/remisiones`, () => HttpResponse.json([REMISION])))
-    renderizar(<AliadasPage />, { ruta: '/aliadas?vista=utilizada' })
+    renderizar(<AliadasPage />, { ruta: '/panel/aliadas?vista=utilizada' })
     // Dice de quién es: el titular y la mascota llevan a la familia.
     const fila = (await screen.findByRole('link', { name: 'Ana Ruiz · Luna' })).closest('tr')!
     expect(within(fila).getByText('REM7K2Q')).toBeInTheDocument()
@@ -95,7 +95,7 @@ describe('remisiones', () => {
       }),
     )
     const user = userEvent.setup()
-    renderizar(<AliadasPage />, { ruta: '/aliadas?pestana=remisiones&vista=utilizada&remisiones_de=cl1' })
+    renderizar(<AliadasPage />, { ruta: '/panel/aliadas?pestana=remisiones&vista=utilizada&remisiones_de=cl1' })
     expect(await screen.findByText(/Solo las de Clínica Norte/)).toBeInTheDocument()
     await waitFor(() => expect(pedidas).toContain('cl1'))
     // En Utilizadas no se anula nada: la columna de acciones no existe (techo 61).
@@ -248,7 +248,7 @@ describe('remisiones', () => {
 describe('clínicas y convenios', () => {
   async function abrirClinica() {
     const user = userEvent.setup()
-    renderizar(<AliadasPage />, { ruta: '/aliadas?clinica=cl1' })
+    renderizar(<AliadasPage />, { ruta: '/panel/aliadas?clinica=cl1' })
     await user.click(await screen.findByRole('tab', { name: 'Clínicas y convenios' }))
     const ficha = await screen.findByRole('region', { name: 'Clínica abierta' })
     await within(ficha).findByRole('heading', { level: 2, name: 'Clínica Norte' })
@@ -269,14 +269,14 @@ describe('clínicas y convenios', () => {
     // Cada recuento lleva a sus remisiones en la bandeja, solo las de esta clínica (techo 59).
     expect(await within(ficha).findByRole('link', { name: '1 por usar' })).toHaveAttribute(
       'href',
-      `/aliadas?pestana=remisiones&vista=emitida&remisiones_de=${CLINICA.id}`,
+      `/panel/aliadas?pestana=remisiones&vista=emitida&remisiones_de=${CLINICA.id}`,
     )
     expect(within(ficha).getByRole('link', { name: '1 atendida' })).toHaveAttribute(
       'href',
-      `/aliadas?pestana=remisiones&vista=utilizada&remisiones_de=${CLINICA.id}`,
+      `/panel/aliadas?pestana=remisiones&vista=utilizada&remisiones_de=${CLINICA.id}`,
     )
     expect(within(ficha).getByRole('link', { name: '0 anuladas' })).toBeInTheDocument()
-    expect(within(ficha).getByRole('link', { name: 'Ana Ruiz · Luna' })).toHaveAttribute('href', '/familias/f1')
+    expect(within(ficha).getByRole('link', { name: 'Ana Ruiz · Luna' })).toHaveAttribute('href', '/panel/familias/f1')
   })
 
   it('la administración desactiva una clínica desde el menú', async () => {
@@ -420,7 +420,7 @@ describe('clínicas y convenios', () => {
 
   it('una clínica que no está en el listado lo dice', async () => {
     const user = userEvent.setup()
-    renderizar(<AliadasPage />, { ruta: '/aliadas?clinica=otra' })
+    renderizar(<AliadasPage />, { ruta: '/panel/aliadas?clinica=otra' })
     await user.click(await screen.findByRole('tab', { name: 'Clínicas y convenios' }))
     expect(await screen.findByText('Esta clínica ya no existe o no la puedes ver.')).toBeInTheDocument()
   })

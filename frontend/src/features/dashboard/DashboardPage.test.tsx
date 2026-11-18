@@ -208,7 +208,7 @@ describe('La línea del día', () => {
     expect(within(linea).getByText('Llamar a Jorge · venció el 5 nov')).toBeInTheDocument()
     expect(within(linea).getByRole('link', { name: 'Ver la mora' })).toHaveClass('btn-primario')
     expect(within(linea).getByRole('link', { name: 'Ver las tareas' })).toHaveClass('btn-secundario')
-    expect(within(linea).getByRole('link', { name: 'Ver la mora' })).toHaveAttribute('href', '/cartera?mora=1')
+    expect(within(linea).getByRole('link', { name: 'Ver la mora' })).toHaveAttribute('href', '/panel/cartera?mora=1')
   })
 
   it('un preventivo por autorizar que aún no llega va después de hoy', async () => {
@@ -259,7 +259,7 @@ describe('La línea del día', () => {
         'sáb 14 nov1 servicio agendadoConsulta domiciliariaVer la agenda',
         'Y 1 servicio agendado másVer la agenda',
       ])
-      expect(within(linea).getByRole('link', { name: 'Ver' })).toHaveAttribute('href', '/servicios/s1')
+      expect(within(linea).getByRole('link', { name: 'Ver' })).toHaveAttribute('href', '/panel/servicios/s1')
       for (const agenda of within(linea).getAllByRole('link', { name: 'Ver la agenda' })) {
         expect(agenda).toHaveClass('btn-secundario')
       }

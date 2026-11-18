@@ -98,7 +98,7 @@ describe('GestionarPreventivo (desde la estación de la línea de una familia)',
   it('con la visita ya agendada, lleva a ella', async () => {
     conBandeja([{ ...EVENTO, autorizado: true, servicio_id: 's1', siguiente: 'visita' }])
     renderizar(<GestionarPreventivo familiaId={FAMILIA.id} eventoIds={['e1']} onCerrar={() => {}} />)
-    expect(await screen.findByRole('link', { name: 'Abrir la visita' })).toHaveAttribute('href', '/servicios/s1')
+    expect(await screen.findByRole('link', { name: 'Abrir la visita' })).toHaveAttribute('href', '/panel/servicios/s1')
   })
 
   it('dice si los preventivos ya no están pendientes', async () => {

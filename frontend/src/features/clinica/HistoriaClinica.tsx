@@ -43,7 +43,7 @@ export function HistoriaClinica({
   const historia = useHistoria(mascotaId, verCorregidas)
   const completa = puede(usuario, 'clinico')
   const esMedico = puede(usuario, 'medico')
-  const volver = `/clinica/mascotas/${mascotaId}`
+  const volver = `/panel/clinica/mascotas/${mascotaId}`
   const entradas = historia.data ?? []
   const deLaVisita = servicioId ? entradas.find((e) => e.servicio_id === servicioId && e.estado !== 'corregida') : undefined
   const abierta = entrada ?? deLaVisita
@@ -102,8 +102,8 @@ export function HistoriaClinica({
         volver={volver}
         identidad={identidad}
         estacion={state?.estacion}
-        onCreada={servicioId ? undefined : (id, estacion) => navegar(`/clinica/historias/${id}`, { replace: true, state: { estacion } })}
-        onFirmada={(firmada) => navegar(`/clinica/historias/${firmada.id}`, { state: { recienFirmada: true } })}
+        onCreada={servicioId ? undefined : (id, estacion) => navegar(`/panel/clinica/historias/${id}`, { replace: true, state: { estacion } })}
+        onFirmada={(firmada) => navegar(`/panel/clinica/historias/${firmada.id}`, { state: { recienFirmada: true } })}
       />
     )
   }
@@ -114,7 +114,7 @@ export function HistoriaClinica({
         <header className="historia-mascota">
           <h2 id="historia-titulo">{mascota?.nombre ?? '…'}</h2>
           <p className="historia-mascota-datos">
-            {familia.data && <Link to={`/familias/${familia.data.id}`}>{familia.data.titular_nombre}</Link>}
+            {familia.data && <Link to={`/panel/familias/${familia.data.id}`}>{familia.data.titular_nombre}</Link>}
             {especie && (
               <span>
                 {especie.toLowerCase()}
@@ -170,7 +170,7 @@ export function HistoriaClinica({
                   <span className="listado-fila-cabeza">
                     {completa ? (
                       // El enlace es la fecha; ::after lo extiende a toda la fila.
-                      <Link className="listado-fila-enlace numero" to={`/clinica/historias/${e.id}`} aria-current={e.id === abierta?.id ? 'page' : undefined}>
+                      <Link className="listado-fila-enlace numero" to={`/panel/clinica/historias/${e.id}`} aria-current={e.id === abierta?.id ? 'page' : undefined}>
                         {fecha(e.fecha)}
                       </Link>
                     ) : (

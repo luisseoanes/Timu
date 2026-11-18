@@ -15,9 +15,9 @@ const API = '*/api/v1'
 function abrirFicha() {
   return renderizar(
     <Routes>
-      <Route path="/familias/:id" element={<FamiliaDetallePage />} />
+      <Route path="/panel/familias/:id" element={<FamiliaDetallePage />} />
     </Routes>,
-    { ruta: `/familias/${FAMILIA.id}` },
+    { ruta: `/panel/familias/${FAMILIA.id}` },
   )
 }
 
@@ -285,9 +285,9 @@ describe('FamiliaDetallePage', () => {
     const user = userEvent.setup()
     renderizar(
       <Routes>
-        <Route path="/familias/:id" element={<FamiliaDetallePage GestionarPreventivo={Gestionar} />} />
+        <Route path="/panel/familias/:id" element={<FamiliaDetallePage GestionarPreventivo={Gestionar} />} />
       </Routes>,
-      { ruta: `/familias/${FAMILIA.id}` },
+      { ruta: `/panel/familias/${FAMILIA.id}` },
     )
     await user.click(await screen.findByRole('button', { name: /^Vacuna rabia de Luna y Desparasitación interna de Michi/ }))
     expect(recibido.at(-1)).toEqual({ familiaId: FAMILIA.id, eventoIds: ['e1', 'e2'] })
@@ -308,8 +308,8 @@ describe('FamiliaDetallePage', () => {
     const user = userEvent.setup()
     renderizar(
       <Routes>
-        <Route path="/" element={<Link to={`/familias/${FAMILIA.id}`} state={{ seccion: 'cartera' }}>Ir</Link>} />
-        <Route path="/familias/:id" element={<FamiliaDetallePage />} />
+        <Route path="/" element={<Link to={`/panel/familias/${FAMILIA.id}`} state={{ seccion: 'cartera' }}>Ir</Link>} />
+        <Route path="/panel/familias/:id" element={<FamiliaDetallePage />} />
       </Routes>,
     )
     await user.click(screen.getByRole('link', { name: 'Ir' }))
@@ -840,8 +840,8 @@ describe('FamiliaDetallePage', () => {
     expect(await within(modal).findByText(/^Plan Esencial: paga .*89\.000 al mes\.$/)).toBeInTheDocument()
     expect(await within(modal).findByText(/Este mes: 1 pendientes y 0 utilizados/)).toBeInTheDocument()
     expect((consultado as URLSearchParams | null)?.get('mascota_id')).toBe(LUNA.id)
-    expect(within(modal).getByRole('link', { name: 'Historia clínica' })).toHaveAttribute('href', `/clinica/mascotas/${LUNA.id}`)
-    expect(within(modal).getByRole('link', { name: 'Carnet preventivo' })).toHaveAttribute('href', `/preventivos?mascota=${LUNA.id}`)
+    expect(within(modal).getByRole('link', { name: 'Historia clínica' })).toHaveAttribute('href', `/panel/clinica/mascotas/${LUNA.id}`)
+    expect(within(modal).getByRole('link', { name: 'Carnet preventivo' })).toHaveAttribute('href', `/panel/preventivos?mascota=${LUNA.id}`)
     expect(within(modal).getByLabelText('Peso (kg)')).toHaveValue(12.5)
     expect(within(modal).getByLabelText('Esterilizada (opcional)')).toHaveValue('si')
     expect(within(modal).getByText('Sin foto')).toBeInTheDocument()

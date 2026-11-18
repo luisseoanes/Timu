@@ -125,7 +125,7 @@ function describir(borradores: unknown[], respuesta = { condicion_texto: 'Días 
 }
 
 /** Abre la ficha de la regla (`?regla=rg1`) y espera a su título. */
-async function abrirFicha(ruta = '/admin?regla=rg1', titulo = REGLA.nombre) {
+async function abrirFicha(ruta = '/panel/admin?regla=rg1', titulo = REGLA.nombre) {
   const user = userEvent.setup()
   renderizar(<AdminPage />, { ruta })
   await user.click(await screen.findByRole('tab', { name: 'Reglas' }))

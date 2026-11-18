@@ -53,7 +53,7 @@ describe('FamiliasPage', () => {
   it('enlaza cada familia con su ficha', async () => {
     renderizar(<FamiliasPage />)
     const enlace = await screen.findByRole('link', { name: FAMILIA.titular_nombre })
-    expect(enlace).toHaveAttribute('href', `/familias/${FAMILIA.id}`)
+    expect(enlace).toHaveAttribute('href', `/panel/familias/${FAMILIA.id}`)
   })
 
   it('pagina cuando hay más familias que las de una página', async () => {

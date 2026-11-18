@@ -68,7 +68,7 @@ function detalle(
 /** La campaña abierta vive en la URL: se lee en su ficha, junto al listado. */
 async function abrirDetalle() {
   const user = userEvent.setup()
-  renderizar(<CampanasPage />, { ruta: '/campanas?campana=c1' })
+  renderizar(<CampanasPage />, { ruta: '/panel/campanas?campana=c1' })
   const ficha = await screen.findByRole('region', { name: 'Campaña abierta' })
   await within(ficha).findByRole('heading', { level: 2 })
   return { user, modal: ficha }
@@ -430,7 +430,7 @@ describe('encuestas', () => {
     )
     const user = await abrirPestana('Encuestas')
     expect(await screen.findByText('Sin comentario')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Ver familia' })).toHaveAttribute('href', '/familias/f1')
+    expect(screen.getByRole('link', { name: 'Ver familia' })).toHaveAttribute('href', '/panel/familias/f1')
     await user.click(screen.getByLabelText('Sólo calificaciones de 3 o menos'))
     await waitFor(() => expect(maximos).toEqual([null, '3']))
   })

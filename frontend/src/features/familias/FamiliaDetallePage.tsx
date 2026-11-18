@@ -108,7 +108,7 @@ function Ficha({
   const atender = (parada: Pick<Parada, 'estaciones'>) => {
     const [primera] = parada.estaciones
     const a = accion(primera)
-    if (a === 'abrir') navegar(`/servicios/${primera.referencia_id}`)
+    if (a === 'abrir') navegar(`/panel/servicios/${primera.referencia_id}`)
     else if (a === 'pagar') setPagando(primera.referencia_id)
     else if (a === 'agendar')
       setPreventivo({ familiaId: f.id, eventoIds: parada.estaciones.filter((e) => accion(e) === 'agendar').map((e) => e.referencia_id) })
@@ -119,7 +119,7 @@ function Ficha({
   return (
     <>
       <header className="ficha-cabeza">
-        <Link to={`/familias${params.toString() ? `?${params}` : ''}`} className="btn btn-plano ficha-volver" aria-label="Volver a familias">
+        <Link to={`/panel/familias${params.toString() ? `?${params}` : ''}`} className="btn btn-plano ficha-volver" aria-label="Volver a familias">
           <Icono nombre="volver" size={16} />
         </Link>
         <h2>{f.titular_nombre}</h2>

@@ -123,7 +123,7 @@ export function BandejaPreventivos() {
                       <tr className="preventivos-familia-cabeza">
                         <th scope="rowgroup" colSpan={conEstado ? 5 : 4}>
                           <span className="preventivos-familia-titulo">
-                            <Link to={`/familias/${g.familia_id}`}>{g.titular_nombre}</Link>
+                            <Link to={`/panel/familias/${g.familia_id}`}>{g.titular_nombre}</Link>
                             <span className="apagado">
                               {g.ciudad} · {g.eventos.length} {g.eventos.length === 1 ? 'preventivo' : 'preventivos'}
                             </span>
@@ -236,7 +236,7 @@ function FilaPreventivo({
         ) : e.visita ? (
           <span className="preventivo-visita">
             <Distintivo dominio="servicio" valor={e.visita.estado} />
-            <Link to={`/servicios/${e.visita.id}`} className="numero">
+            <Link to={`/panel/servicios/${e.visita.id}`} className="numero">
               {fechaCortaConDia(diaISO(e.visita.programado_para))} · {hora(e.visita.programado_para)}
             </Link>
           </span>

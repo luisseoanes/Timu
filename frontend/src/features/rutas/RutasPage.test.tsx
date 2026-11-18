@@ -123,7 +123,7 @@ describe('la ruta de quien sale a campo', () => {
     expect(pedido.rutas.get('fecha')).toBe(hoyISO())
     expect(resumenPropio('1 de 3 paradas · 13,8 km · hasta las 10:20 a. m.')).toBeInTheDocument()
     expect(screen.getByText('Apto 902 · Chapinero')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Carlos Perez' })).toHaveAttribute('href', '/familias/f2')
+    expect(screen.getByRole('link', { name: 'Carlos Perez' })).toHaveAttribute('href', '/panel/familias/f2')
     expect(screen.getByText(/Max, perro de \d+ años, 24 kg/)).toBeInTheDocument()
     // La franja acordada con la familia, en la parada que toca y en la que falta.
     expect(screen.getAllByText(/franja 10:00 – 11:00 a\.\sm\./)).toHaveLength(2)
@@ -246,7 +246,7 @@ describe('la ruta de quien sale a campo', () => {
     renderizar(<RutasPage />)
     const registrar = await screen.findByRole('link', { name: 'Registrar la atención' })
     // Los pasos de una consulta se registran al firmar su consulta clínica: abre la de esta visita.
-    expect(registrar).toHaveAttribute('href', '/clinica/mascotas/m1?servicio=s1')
+    expect(registrar).toHaveAttribute('href', '/panel/clinica/mascotas/m1?servicio=s1')
     expect(registrar).toHaveClass('btn-primario')
     expect(
       screen.getByText('Antes de terminar la visita falta registrar: Plan y recomendaciones. Se registran al firmar la consulta.'),
@@ -274,7 +274,7 @@ describe('la ruta de quien sale a campo', () => {
     )
     renderizar(<RutasPage />)
     // La ficha del servicio ofrece volver a la ruta.
-    expect(await screen.findByRole('link', { name: 'Registrar la atención' })).toHaveAttribute('href', '/servicios/s1?origen=ruta')
+    expect(await screen.findByRole('link', { name: 'Registrar la atención' })).toHaveAttribute('href', '/panel/servicios/s1?origen=ruta')
     expect(screen.getByText('Antes de terminar la visita falta registrar: Aplicación.')).toBeInTheDocument()
   })
 
@@ -283,7 +283,7 @@ describe('la ruta de quien sale a campo', () => {
     server.use(http.get(`${API}/servicios/s1/pasos`, () => HttpResponse.json([])))
     renderizar(<RutasPage />)
     // La ficha del servicio ofrece volver a la ruta.
-    expect(await screen.findByRole('link', { name: 'Registrar la atención' })).toHaveAttribute('href', '/servicios/s1?origen=ruta')
+    expect(await screen.findByRole('link', { name: 'Registrar la atención' })).toHaveAttribute('href', '/panel/servicios/s1?origen=ruta')
     expect(screen.getByText('Antes de terminar la visita falta registrar: Valoracion clinica, Plan y recomendaciones.')).toBeInTheDocument()
   })
 
@@ -353,8 +353,8 @@ describe('la ruta de quien sale a campo', () => {
     renderizar(<RutasPage />)
     await user.click(await screen.findByRole('button', { name: 'Más acciones con Ana Ruiz' }))
     expect(await screen.findByRole('menuitem', { name: 'Escribir por WhatsApp' })).toHaveAttribute('href', 'https://wa.me/573001112233')
-    expect(screen.getByRole('menuitem', { name: 'Ver el servicio' })).toHaveAttribute('href', '/servicios/s1')
-    expect(screen.getByRole('menuitem', { name: 'Historia clínica de Max' })).toHaveAttribute('href', '/clinica/mascotas/m1')
+    expect(screen.getByRole('menuitem', { name: 'Ver el servicio' })).toHaveAttribute('href', '/panel/servicios/s1')
+    expect(screen.getByRole('menuitem', { name: 'Historia clínica de Max' })).toHaveAttribute('href', '/panel/clinica/mascotas/m1')
     // Sin haber salido aún, llegar sin avisar no aplica.
     expect(screen.queryByRole('menuitem', { name: 'Ya llegué' })).not.toBeInTheDocument()
   })
@@ -405,14 +405,14 @@ describe('las rutas del día para quien coordina', () => {
     const pedido = conRutas([ruta([parada(1, 'completada'), parada(2, 'en_sitio')])], [POR_RUTEAR])
     renderizar(<RutasPage />)
 
-    expect(await screen.findByRole('link', { name: 'Dra. Sara' })).toHaveAttribute('href', '/rutas?ruta=r1')
+    expect(await screen.findByRole('link', { name: 'Dra. Sara' })).toHaveAttribute('href', '/panel/rutas?ruta=r1')
     expect(screen.getByText('1 de 2 paradas · 13,8 km · Bogotá')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: /^1 de 2 paradas hechas\. Sigue Carlos Perez/ })).toBeInTheDocument()
     // Sin ciudad elegida se piden las de todas, y cada domicilio dice la suya.
     expect(pedido.rutas.get('ciudad')).toBeNull()
     expect(pedido.rutas.get('responsable_id')).toBeNull()
     const porRutear = screen.getByRole('region', { name: /Por rutear/ })
-    expect(await within(porRutear).findByRole('link', { name: 'Marcela Torres · Simba' })).toHaveAttribute('href', '/servicios/s9')
+    expect(await within(porRutear).findByRole('link', { name: 'Marcela Torres · Simba' })).toHaveAttribute('href', '/panel/servicios/s9')
     expect(within(porRutear).getByText('Consulta domiciliaria · Calle 53 # 20-11, Galerías, Bogotá')).toBeInTheDocument()
     // La hora dice qué es: la agendada, no la de llegada (techo 31).
     expect(within(porRutear).getByText(/^agendado a las \d{1,2}:\d{2}\s[ap]\.\sm\.$/)).toBeInTheDocument()
@@ -439,7 +439,7 @@ describe('las rutas del día para quien coordina', () => {
   it('abre una ruta por su enlace: su línea a la derecha, y la de otra persona no le quita a planear la acción principal', async () => {
     conRutas([ruta([parada(1, 'completada'), parada(2, 'en_sitio')])])
     server.use(http.get(`${API}/servicios/s2/pasos`, () => HttpResponse.json(PASOS_HECHOS)))
-    renderizar(<RutasPage />, { ruta: '/rutas?ruta=r1' })
+    renderizar(<RutasPage />, { ruta: '/panel/rutas?ruta=r1' })
 
     expect(await screen.findByRole('heading', { name: 'Dra. Sara' })).toBeInTheDocument()
     const abierta = screen.getByRole('region', { name: 'Ruta abierta' })
@@ -450,12 +450,12 @@ describe('las rutas del día para quien coordina', () => {
     // persona, pero su principal es planear.
     expect(screen.getByRole('button', { name: /planear rutas/i })).toHaveClass('btn-primario')
     expect(await within(abierta).findByRole('button', { name: 'Terminar visita' })).toHaveClass('btn-secundario')
-    expect(within(abierta).getByRole('link', { name: 'Volver a las rutas' })).toHaveAttribute('href', '/rutas')
+    expect(within(abierta).getByRole('link', { name: 'Volver a las rutas' })).toHaveAttribute('href', '/panel/rutas')
   })
 
   it('con su propia ruta abierta, la acción principal es la de su parada y planear pasa a suave', async () => {
     conRutas([ruta([parada(1, 'en_camino')], { responsable_id: USUARIO_ADMIN.id })])
-    renderizar(<RutasPage />, { ruta: '/rutas?ruta=r1' })
+    renderizar(<RutasPage />, { ruta: '/panel/rutas?ruta=r1' })
     expect(await screen.findByRole('button', { name: 'Llegué' })).toHaveClass('btn-primario')
     expect(screen.getByRole('button', { name: /planear rutas/i })).toHaveClass('btn-suave')
     expect(screen.getByText(/tu ruta/)).toBeInTheDocument()
@@ -463,7 +463,7 @@ describe('las rutas del día para quien coordina', () => {
 
   it('quien coordina no arranca la ruta de otra persona', async () => {
     conRutas([ruta([parada(1, 'pendiente')], { estado: 'planificada' })])
-    renderizar(<RutasPage />, { ruta: '/rutas?ruta=r1' })
+    renderizar(<RutasPage />, { ruta: '/panel/rutas?ruta=r1' })
     await screen.findByRole('heading', { name: 'Calle 80 # 15-20' })
     expect(screen.queryByRole('button', { name: 'Iniciar ruta' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /planear rutas/i })).toHaveClass('btn-primario')
@@ -479,7 +479,7 @@ describe('las rutas del día para quien coordina', () => {
       }),
     )
     const user = userEvent.setup()
-    renderizar(<RutasPage />, { ruta: '/rutas?ruta=r1' })
+    renderizar(<RutasPage />, { ruta: '/panel/rutas?ruta=r1' })
     await user.click(await screen.findByRole('button', { name: 'Agregar un servicio' }))
     const opciones = await screen.findAllByRole('menuitem')
     expect(opciones).toHaveLength(1)
@@ -498,7 +498,7 @@ describe('las rutas del día para quien coordina', () => {
       }),
     )
     const user = userEvent.setup()
-    renderizar(<RutasPage />, { ruta: '/rutas?ruta=r1' })
+    renderizar(<RutasPage />, { ruta: '/panel/rutas?ruta=r1' })
     await user.click(await screen.findByRole('button', { name: 'Cancelar ruta' }))
     const modal = await screen.findByRole('dialog', { name: 'Cancelar la ruta' })
     expect(modal).toHaveTextContent('Sus 2 servicios vuelven a quedar por rutear')
@@ -510,7 +510,7 @@ describe('las rutas del día para quien coordina', () => {
 
   it('una ruta en curso ya no se cancela', async () => {
     conRutas([ruta([parada(1, 'en_camino')])])
-    renderizar(<RutasPage />, { ruta: '/rutas?ruta=r1' })
+    renderizar(<RutasPage />, { ruta: '/panel/rutas?ruta=r1' })
     await screen.findByRole('heading', { name: 'Dra. Sara' })
     expect(screen.queryByRole('button', { name: 'Cancelar ruta' })).not.toBeInTheDocument()
   })
@@ -575,7 +575,7 @@ describe('las rutas del día para quien coordina', () => {
     server.use(http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'comercial' })))
     conRutas([ruta([parada(1, 'pendiente')], { estado: 'planificada' })], [POR_RUTEAR])
     const user = userEvent.setup()
-    renderizar(<RutasPage />, { ruta: '/rutas?ruta=r1' })
+    renderizar(<RutasPage />, { ruta: '/panel/rutas?ruta=r1' })
     await screen.findByRole('heading', { name: 'Dra. Sara' })
     expect(screen.queryByRole('button', { name: /planear rutas/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Cancelar ruta' })).not.toBeInTheDocument()

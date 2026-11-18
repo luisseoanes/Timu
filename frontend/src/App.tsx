@@ -33,6 +33,8 @@ import { ServicioDetallePage, ServiciosPage } from '@/features/servicios'
 import { TareasPage } from '@/features/tareas'
 import { AppLayout } from '@/layouts/AppLayout'
 import { PERMISOS } from '@/lib/permisos'
+import { AlPanel } from '@/routes/AlPanel'
+import { MODULOS_DEL_PANEL } from '@/routes/modulos'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import type { Rol } from '@/types'
 
@@ -58,8 +60,10 @@ export default function App() {
             <Route path="/afiliacion" element={<RegistroPage />} />
             <Route path="/afiliacion/resultado" element={<RegistroResultadoPage />} />
             <Route path="/afiliacion/completar" element={<CompletarRegistroPage />} />
+            {/* Hasta que la portada pública ocupe la raíz (R3-PUB-04), la raíz lleva al panel. */}
+            <Route index element={<Navigate to="/panel" replace />} />
 
-            <Route element={<ProtectedRoute roles={EQUIPO} />}>
+            <Route path="panel" element={<ProtectedRoute roles={EQUIPO} />}>
               <Route element={<AppLayout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="familias" element={<FamiliasPage />} />
@@ -102,6 +106,10 @@ export default function App() {
               <Route path="aliada" element={<MiClinicaPage />} />
             </Route>
 
+            {/* Las direcciones del panel antes de que la portada ocupara la raíz (R3-PUB-04). */}
+            {MODULOS_DEL_PANEL.map((m) => (
+              <Route key={m} path={`${m}/*`} element={<AlPanel />} />
+            ))}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>

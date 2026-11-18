@@ -189,7 +189,7 @@ function RutasDelDia({
     const nuevos = new URLSearchParams(params)
     if (ruta) nuevos.set('ruta', ruta)
     else nuevos.delete('ruta')
-    return `/rutas${nuevos.toString() ? `?${nuevos}` : ''}`
+    return `/panel/rutas${nuevos.toString() ? `?${nuevos}` : ''}`
   }
 
   return (
@@ -269,7 +269,7 @@ function RutasDelDia({
                 {datos.map((s) => (
                   <li key={s.id} className="listado-fila">
                     <span className="listado-fila-cabeza">
-                      <Link className="listado-fila-enlace" to={`/servicios/${s.id}`}>
+                      <Link className="listado-fila-enlace" to={`/panel/servicios/${s.id}`}>
                         {s.familia.titular_nombre}
                         {s.mascota && ` · ${s.mascota.nombre}`}
                       </Link>

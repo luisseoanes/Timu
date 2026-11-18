@@ -73,7 +73,7 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
                     <button className="btn btn-plano" type="button" onClick={() => setAbiertaId(m.id)}>
                       Ficha
                     </button>
-                    <Link to={`/clinica/mascotas/${m.id}`} className="btn btn-plano">
+                    <Link to={`/panel/clinica/mascotas/${m.id}`} className="btn btn-plano">
                       Historia
                     </Link>
                     {m.activa && (

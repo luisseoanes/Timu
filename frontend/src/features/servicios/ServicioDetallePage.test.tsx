@@ -31,11 +31,11 @@ const SERVICIO: ServicioRead = {
   motivo_estado: null,
 }
 
-function abrir(cambios: Partial<ServicioRead> = {}, ruta = '/servicios/s1') {
+function abrir(cambios: Partial<ServicioRead> = {}, ruta = '/panel/servicios/s1') {
   server.use(http.get(`${API}/servicios/s1`, () => HttpResponse.json({ ...SERVICIO, ...cambios })))
   renderizar(
     <Routes>
-      <Route path="/servicios/:id" element={<ServicioDetallePage />} />
+      <Route path="/panel/servicios/:id" element={<ServicioDetallePage />} />
     </Routes>,
     { ruta },
   )
@@ -49,7 +49,7 @@ const tarjetaPasos = async () => (await screen.findByRole('heading', { name: 'Pa
 describe('ficha del servicio', () => {
   it('muestra familia, mascota, observaciones y el motivo del último cambio', async () => {
     abrir({ observaciones: 'Perro nervioso', motivo_estado: 'Reprogramado por lluvia' })
-    expect(await screen.findByRole('link', { name: 'Ana Ruiz' })).toHaveAttribute('href', `/familias/${FAMILIA.id}`)
+    expect(await screen.findByRole('link', { name: 'Ana Ruiz' })).toHaveAttribute('href', `/panel/familias/${FAMILIA.id}`)
     expect(await screen.findByText(/^Luna \(/)).toBeInTheDocument()
     expect(screen.getByText('Perro nervioso')).toBeInTheDocument()
     expect(screen.getByText('Motivo del último cambio: Reprogramado por lluvia')).toBeInTheDocument()
@@ -78,9 +78,9 @@ describe('ficha del servicio', () => {
     server.use(http.get(`${API}/servicios/s1`, () => HttpResponse.json({ detail: 'Servicio no encontrado' }, { status: 404 })))
     renderizar(
       <Routes>
-        <Route path="/servicios/:id" element={<ServicioDetallePage />} />
+        <Route path="/panel/servicios/:id" element={<ServicioDetallePage />} />
       </Routes>,
-      { ruta: '/servicios/s1' },
+      { ruta: '/panel/servicios/s1' },
     )
     expect(await screen.findByRole('alert')).toHaveTextContent('No fue posible cargar el servicio. Servicio no encontrado')
   })
@@ -352,15 +352,15 @@ describe('la acción que toca', () => {
   })
 
   it('llegando desde la ruta, ofrece volver a ella', async () => {
-    abrir({}, '/servicios/s1?origen=ruta')
+    abrir({}, '/panel/servicios/s1?origen=ruta')
     // La acción y el botón de volver de la cabecera (el del celular) llevan los dos a la ruta.
     const volver = await screen.findAllByRole('link', { name: 'Volver a mi ruta' })
     expect(volver).toHaveLength(2)
-    for (const v of volver) expect(v).toHaveAttribute('href', '/rutas')
+    for (const v of volver) expect(v).toHaveAttribute('href', '/panel/rutas')
   })
 
   it('cerrado, volver a la ruta pasa a ser la verde', async () => {
-    abrir({ estado: 'completado' }, '/servicios/s1?origen=ruta')
+    abrir({ estado: 'completado' }, '/panel/servicios/s1?origen=ruta')
     await screen.findByText('El servicio ya está cerrado.')
     const volver = screen.getAllByRole('link', { name: 'Volver a mi ruta' }).find((l) => l.textContent?.trim())
     expect(volver).toHaveClass('btn-primario')

@@ -231,15 +231,15 @@ function Ficha({ clinica: c }: { clinica: ClinicaRead }) {
         {recuentos.data && (
           <p className="aliada-nota">
             {/* Cada recuento lleva a sus remisiones en la bandeja, solo las de esta clínica. */}
-            <Link to={`/aliadas?pestana=remisiones&vista=emitida&remisiones_de=${c.id}`}>
+            <Link to={`/panel/aliadas?pestana=remisiones&vista=emitida&remisiones_de=${c.id}`}>
               <span className="numero">{recuentos.data.emitida}</span> por usar
             </Link>{' '}
             ·{' '}
-            <Link to={`/aliadas?pestana=remisiones&vista=utilizada&remisiones_de=${c.id}`}>
+            <Link to={`/panel/aliadas?pestana=remisiones&vista=utilizada&remisiones_de=${c.id}`}>
               <span className="numero">{recuentos.data.utilizada}</span> {recuentos.data.utilizada === 1 ? 'atendida' : 'atendidas'}
             </Link>{' '}
             ·{' '}
-            <Link to={`/aliadas?pestana=remisiones&vista=anulada&remisiones_de=${c.id}`}>
+            <Link to={`/panel/aliadas?pestana=remisiones&vista=anulada&remisiones_de=${c.id}`}>
               <span className="numero">{recuentos.data.anulada}</span> {recuentos.data.anulada === 1 ? 'anulada' : 'anuladas'}
             </Link>
           </p>
@@ -255,7 +255,7 @@ function Ficha({ clinica: c }: { clinica: ClinicaRead }) {
             <ul className="aliada-remisiones">
               {d.map((r) => (
                 <li key={r.id}>
-                  <Link to={`/familias/${r.familia_id}`}>
+                  <Link to={`/panel/familias/${r.familia_id}`}>
                     {r.titular}
                     {r.mascota && ` · ${r.mascota}`}
                   </Link>

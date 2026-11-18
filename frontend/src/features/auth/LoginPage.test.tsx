@@ -16,7 +16,7 @@ function abrirLogin(ruta: InitialEntry = '/login') {
   return renderizar(
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<p>Panel del equipo</p>} />
+      <Route path="/panel" element={<p>Panel del equipo</p>} />
       <Route path="/portal" element={<p>Portal de la familia</p>} />
     </Routes>,
     { ruta },

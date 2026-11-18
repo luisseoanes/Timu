@@ -77,10 +77,10 @@ export function FichaMascotaModal({
           <FotoMascota mascota={mascota} editable={editable} />
           <PlanYServicios familia={familia} mascota={mascota} editable={editable} />
           <div className="acciones">
-            <Link to={`/clinica/mascotas/${mascota.id}`} className="btn btn-suave">
+            <Link to={`/panel/clinica/mascotas/${mascota.id}`} className="btn btn-suave">
               Historia clínica
             </Link>
-            <Link to={`/preventivos?mascota=${mascota.id}`} className="btn btn-suave">
+            <Link to={`/panel/preventivos?mascota=${mascota.id}`} className="btn btn-suave">
               Carnet preventivo
             </Link>
           </div>

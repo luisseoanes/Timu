@@ -106,7 +106,7 @@ function Pendientes() {
                   <tr key={p.id}>
                     <td className="principal" data-etiqueta="Pendiente">{p.descripcion}</td>
                     <td data-etiqueta="Servicio de origen">
-                      <Link to={`/servicios/${p.servicio_origen_id}`}>Ver el servicio</Link>
+                      <Link to={`/panel/servicios/${p.servicio_origen_id}`}>Ver el servicio</Link>
                     </td>
                     <td data-etiqueta="Estado">
                       <Distintivo dominio="pendiente" valor={p.estado} />

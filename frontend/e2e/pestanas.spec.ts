@@ -12,7 +12,7 @@ test('la tira de pestañas que no cabe dice por dónde sigue', async ({ page }) 
   await page.route('**/api/v1/auth/me', (ruta) =>
     ruta.fulfill({ json: { id: 'u1', email: 'admin@timu.co', nombre: 'Admin', rol: 'admin', activo: true } }),
   )
-  await page.goto('/campanas')
+  await page.goto('/panel/campanas')
   const tira = page.getByRole('tablist', { name: 'Secciones de campañas' })
   await expect(tira).toHaveAttribute('data-desborda', 'derecha')
   await tira.evaluate((t) => t.scrollTo({ left: t.scrollWidth }))
@@ -24,7 +24,7 @@ test('la pestaña activa se ve entera aunque la tira no quepa', async ({ page })
   await page.route('**/api/v1/auth/me', (ruta) =>
     ruta.fulfill({ json: { id: 'u1', email: 'admin@timu.co', nombre: 'Admin', rol: 'admin', activo: true } }),
   )
-  await page.goto('/aliadas?pestana=liquidacion')
+  await page.goto('/panel/aliadas?pestana=liquidacion')
   const tira = page.getByRole('tablist', { name: 'Secciones de aliadas' })
   const activa = tira.getByRole('tab', { name: 'Liquidación' })
   await expect(activa).toHaveAttribute('data-state', 'active')

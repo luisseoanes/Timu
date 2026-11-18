@@ -243,7 +243,7 @@ function LineaEquipo({ rol }: { rol: Rol | undefined }) {
               estado: 'vencida',
               titulo: plural(mora.total, 'contrato en mora', 'contratos en mora'),
               detalle: mora.primero && `El más atrasado: ${mora.primero.titular}, ${plural(mora.primero.dias_mora, 'día', 'días')}`,
-              accion: { texto: 'Ver la mora', to: '/cartera?mora=1' },
+              accion: { texto: 'Ver la mora', to: '/panel/cartera?mora=1' },
             })
           }
           if (clave === 'tareas' && tareas.total > 0) {
@@ -252,7 +252,7 @@ function LineaEquipo({ rol }: { rol: Rol | undefined }) {
               estado: 'vencida',
               titulo: plural(tareas.total, 'tarea vencida', 'tareas vencidas'),
               detalle: tareas.primero && `${tareas.primero.titulo}${tareas.primero.vence_el ? ` · venció el ${fechaCorta(tareas.primero.vence_el)}` : ''}`,
-              accion: { texto: 'Ver las tareas', to: '/tareas?vencidas=1' },
+              accion: { texto: 'Ver las tareas', to: '/panel/tareas?vencidas=1' },
             })
           }
           if (clave === 'preventivos' && preventivos.total > 0) {
@@ -263,7 +263,7 @@ function LineaEquipo({ rol }: { rol: Rol | undefined }) {
               estado: atrasado ? 'vencida' : 'proxima',
               titulo: plural(preventivos.total, 'preventivo por autorizar', 'preventivos por autorizar'),
               detalle: preventivos.primero && `El primero, programado para el ${fechaCorta(preventivos.primero.fecha_programada)}`,
-              accion: { texto: 'Autorizar', to: '/preventivos?autorizacion=1' },
+              accion: { texto: 'Autorizar', to: '/panel/preventivos?autorizacion=1' },
             })
           }
         }
@@ -278,7 +278,7 @@ function LineaEquipo({ rol }: { rol: Rol | undefined }) {
             estado: 'vencida',
             titulo: plural(sinAtender.length, 'servicio de hoy sin atender', 'servicios de hoy sin atender'),
             detalle: `El primero estaba para las ${hora(sinAtender[0].programado_para)}`,
-            accion: { texto: 'Ver los servicios', to: '/servicios' },
+            accion: { texto: 'Ver los servicios', to: '/panel/servicios' },
           })
         }
         for (const s of deHoy.filter((s) => s.programado_para! >= ahora)) {
@@ -288,7 +288,7 @@ function LineaEquipo({ rol }: { rol: Rol | undefined }) {
             hora: hora(s.programado_para),
             titulo: s.mascota ? `${nombreTipo(s.tipo_codigo)} · ${s.mascota.nombre}` : nombreTipo(s.tipo_codigo),
             detalle: `${s.familia.titular_nombre} · ${s.ciudad} · ${medico(s.profesional_id)}`,
-            accion: { texto: 'Ver', to: `/servicios/${s.id}`, secundaria: true },
+            accion: { texto: 'Ver', to: `/panel/servicios/${s.id}`, secundaria: true },
           })
         }
         // Los días siguientes, uno por estación: cuántos servicios y de qué.
@@ -305,7 +305,7 @@ function LineaEquipo({ rol }: { rol: Rol | undefined }) {
             hora: fechaCortaConDia(dia),
             titulo: plural(delDia.length, 'servicio agendado', 'servicios agendados'),
             detalle: tipos.join(' · '),
-            accion: { texto: 'Ver la agenda', to: '/servicios', secundaria: true },
+            accion: { texto: 'Ver la agenda', to: '/panel/servicios', secundaria: true },
           })
         }
         if (total > items.length) {
@@ -313,7 +313,7 @@ function LineaEquipo({ rol }: { rol: Rol | undefined }) {
             clave: 'mas-servicios',
             estado: 'futura',
             titulo: `Y ${plural(total - items.length, 'servicio agendado más', 'servicios agendados más')}`,
-            accion: { texto: 'Ver la agenda', to: '/servicios', secundaria: true },
+            accion: { texto: 'Ver la agenda', to: '/panel/servicios', secundaria: true },
           })
         }
         return (
@@ -388,7 +388,7 @@ function LineaMedico() {
             estado: 'vencida',
             titulo: plural(borradores.length, 'consulta sin firmar', 'consultas sin firmar'),
             detalle: `La más antigua es del ${fechaCorta(antigua)}`,
-            accion: { texto: 'Firmar las consultas', to: '/clinica' },
+            accion: { texto: 'Firmar las consultas', to: '/panel/clinica' },
           })
         }
         if (vencidas.total > 0) {
@@ -397,7 +397,7 @@ function LineaMedico() {
             estado: 'vencida',
             titulo: plural(vencidas.total, 'tarea vencida', 'tareas vencidas'),
             detalle: vencidas.primero?.titulo,
-            accion: { texto: 'Ver las tareas', to: '/tareas?vencidas=1' },
+            accion: { texto: 'Ver las tareas', to: '/panel/tareas?vencidas=1' },
           })
         }
         const paradas = (rutas.data ?? [])
@@ -411,7 +411,7 @@ function LineaMedico() {
           hora: p.llegada_estimada ? hora(p.llegada_estimada) : undefined,
           titulo: p.mascota ? `${nombreTipo(p.tipo_codigo)} · ${p.mascota.nombre}` : nombreTipo(p.tipo_codigo),
           detalle: [p.familia.titular_nombre, p.familia.barrio ?? p.familia.direccion].filter(Boolean).join(' · '),
-          accion: i === 0 ? { texto: 'Abrir mi ruta', to: '/rutas' } : undefined,
+          accion: i === 0 ? { texto: 'Abrir mi ruta', to: '/panel/rutas' } : undefined,
         }))
         const hechas = paradas.length - faltan.length
         return (
@@ -440,7 +440,7 @@ function MisTareas() {
         <h2 id="inicio-tareas-titulo" className="inicio-panel-titulo">
           Tus tareas abiertas
         </h2>
-        <Link to="/tareas">Ver todas</Link>
+        <Link to="/panel/tareas">Ver todas</Link>
       </div>
       <Consulta
         consulta={pendientes}

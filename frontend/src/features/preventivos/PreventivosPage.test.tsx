@@ -70,7 +70,7 @@ describe('PreventivosPage', () => {
     )
     renderizar(<PreventivosPage />)
     const titular = await screen.findByRole('link', { name: FAMILIA.titular_nombre })
-    expect(titular).toHaveAttribute('href', `/familias/${FAMILIA.id}`)
+    expect(titular).toHaveAttribute('href', `/panel/familias/${FAMILIA.id}`)
     expect(consultas[0]).toContain('vista=por_autorizar')
     expect(screen.getByRole('button', { name: 'Registrar autorización (2)' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /escribir/i })).toHaveAttribute('href', 'https://wa.me/573001112233')
@@ -119,7 +119,7 @@ describe('PreventivosPage', () => {
       }),
     )
     const user = userEvent.setup()
-    renderizar(<PreventivosPage />, { ruta: '/preventivos?vista=por_agendar' })
+    renderizar(<PreventivosPage />, { ruta: '/panel/preventivos?vista=por_agendar' })
     // Sin nada por autorizar, el grupo sigue ofreciendo escribirle a la familia (techo 48).
     const agendar = await screen.findByRole('button', { name: 'Agendar Rabia de Luna' })
     const grupoFamilia = agendar.closest('tbody')!
@@ -141,8 +141,8 @@ describe('PreventivosPage', () => {
       visita: { id: 's1', programado_para: '2099-01-10T14:00:00Z', estado: 'agendado' },
     }
     server.use(http.get(`${API}/preventivos/bandeja`, () => HttpResponse.json(pagina([grupo([agendado, OTRO])]))))
-    renderizar(<PreventivosPage />, { ruta: '/preventivos?vista=todos' })
-    expect(await screen.findByRole('link', { name: /sáb 10 ene · 9:00 a\. m\./ })).toHaveAttribute('href', '/servicios/s1')
+    renderizar(<PreventivosPage />, { ruta: '/panel/preventivos?vista=todos' })
+    expect(await screen.findByRole('link', { name: /sáb 10 ene · 9:00 a\. m\./ })).toHaveAttribute('href', '/panel/servicios/s1')
     expect(screen.getByRole('columnheader', { name: 'Estado' })).toBeInTheDocument()
     // El otro preventivo sigue por autorizar: la vista y su fila lo dicen.
     expect(within(screen.getByText('Luna · Polivalente').closest('tr')!).getByText('Por autorizar')).toBeInTheDocument()
@@ -193,7 +193,7 @@ describe('PreventivosPage', () => {
 
   it('dice por qué la vista está vacía y muestra el error del servidor', async () => {
     server.use(http.get(`${API}/preventivos/bandeja`, () => HttpResponse.json(pagina([]))))
-    const { unmount } = renderizar(<PreventivosPage />, { ruta: '/preventivos?vista=agendados' })
+    const { unmount } = renderizar(<PreventivosPage />, { ruta: '/panel/preventivos?vista=agendados' })
     expect(await screen.findByText('Ningún preventivo tiene visita agendada.')).toBeInTheDocument()
     unmount()
     server.use(http.get(`${API}/preventivos/bandeja`, () => HttpResponse.json({ detail: 'Servicio no disponible' }, { status: 503 })))
@@ -245,7 +245,7 @@ describe('PreventivosPage', () => {
         })
       }),
     )
-    renderizar(<PreventivosPage />, { ruta: `/preventivos?mascota=${LUNA.id}` })
+    renderizar(<PreventivosPage />, { ruta: `/panel/preventivos?mascota=${LUNA.id}` })
     expect(await screen.findByRole('tab', { name: 'Carnet por mascota', selected: true })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Carnet de Luna' })).toBeInTheDocument()
     expect(pedido).toBe(LUNA.id)

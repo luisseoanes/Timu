@@ -51,7 +51,7 @@ describe('ServiciosPage', () => {
     renderizar(<ServiciosPage />)
     // La fila dice a quién se atiende: la mascota en el título y la familia debajo.
     const enlace = await screen.findByRole('link', { name: 'Luna · Consulta domiciliaria' })
-    expect(enlace).toHaveAttribute('href', '/servicios/s1')
+    expect(enlace).toHaveAttribute('href', '/panel/servicios/s1')
     const fila = enlace.closest('li')!
     expect(within(fila).getByText('Agendado')).toBeInTheDocument()
     expect(within(fila).getByText('Ana Ruiz')).toBeInTheDocument()
@@ -141,9 +141,9 @@ describe('ServicioDetallePage', () => {
   function abrir() {
     return renderizar(
       <Routes>
-        <Route path="/servicios/:id" element={<ServicioDetallePage />} />
+        <Route path="/panel/servicios/:id" element={<ServicioDetallePage />} />
       </Routes>,
-      { ruta: '/servicios/s1' },
+      { ruta: '/panel/servicios/s1' },
     )
   }
 

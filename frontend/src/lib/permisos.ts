@@ -33,7 +33,8 @@ export type Accion = keyof typeof PERMISOS
 export function inicioDeRol(rol: Rol): string {
   if (rol === 'familia') return '/portal'
   if (rol === 'aliada') return '/aliada'
-  return '/'
+  // La raíz es la portada pública (R3-PUB-04): el panel del equipo vive en /panel.
+  return '/panel'
 }
 
 export function puede(usuario: Usuario | null | undefined, accion: Accion): boolean {

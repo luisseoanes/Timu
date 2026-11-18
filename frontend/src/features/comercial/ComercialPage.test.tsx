@@ -142,7 +142,7 @@ describe('interesados', () => {
 })
 
 describe('ficha del interesado', () => {
-  const abrir = () => renderizar(<ComercialPage />, { ruta: '/comercial?interesado=i1' })
+  const abrir = () => renderizar(<ComercialPage />, { ruta: '/panel/comercial?interesado=i1' })
 
   it('dice dónde va en el embudo y lo pasa a la etapa siguiente que dice la API', async () => {
     let enviado: unknown = null
@@ -226,7 +226,7 @@ describe('ficha del interesado', () => {
     abrir()
     expect(await screen.findByText(/Se afilia desde Familias/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /pasar a/i })).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Abrir su ficha' })).toHaveAttribute('href', '/familias/f1')
+    expect(screen.getByRole('link', { name: 'Abrir su ficha' })).toHaveAttribute('href', '/panel/familias/f1')
   })
 
   it('muestra su conversación y, si espera a un asesor, contestarle es el verde', async () => {

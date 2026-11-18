@@ -155,7 +155,7 @@ function Ficha({
           <div>
             <dt>Familia</dt>
             <dd>
-              <Link to={`/familias/${i.familia_id}`}>Abrir su ficha</Link>
+              <Link to={`/panel/familias/${i.familia_id}`}>Abrir su ficha</Link>
             </dd>
           </div>
         )}

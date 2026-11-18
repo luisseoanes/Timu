@@ -36,8 +36,8 @@ function abrir(ruta: string, historia: EntradaHistoria[] = []) {
   )
   renderizar(
     <Routes>
-      <Route path="/clinica/mascotas/:mascotaId" element={<HistoriaMascotaPage />} />
-      <Route path="/clinica/historias/:id" element={<EntradaPage />} />
+      <Route path="/panel/clinica/mascotas/:mascotaId" element={<HistoriaMascotaPage />} />
+      <Route path="/panel/clinica/historias/:id" element={<EntradaPage />} />
     </Routes>,
     { ruta },
   )
@@ -46,7 +46,7 @@ function abrir(ruta: string, historia: EntradaHistoria[] = []) {
 
 describe('Historia clínica de una mascota', () => {
   it('muestra la mascota y sus consultas con estado y diagnóstico', async () => {
-    abrir(`/clinica/mascotas/${LUNA.id}`, [{ ...ENTRADA, estado: 'firmada' }])
+    abrir(`/panel/clinica/mascotas/${LUNA.id}`, [{ ...ENTRADA, estado: 'firmada' }])
     expect(await screen.findByRole('heading', { name: 'Luna' })).toBeInTheDocument()
     expect(await screen.findByText('Diagnóstico: Otitis externa')).toBeInTheDocument()
     expect(screen.getByText('Firmada')).toBeInTheDocument()
@@ -55,7 +55,7 @@ describe('Historia clínica de una mascota', () => {
 
   it('el resto del equipo ve el resumen y no puede crear consultas', async () => {
     server.use(http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'operaciones' })))
-    abrir(`/clinica/mascotas/${LUNA.id}`)
+    abrir(`/panel/clinica/mascotas/${LUNA.id}`)
     expect(await screen.findByText(/tu perfil ve el resumen/i)).toBeInTheDocument()
     expect(screen.getByText('Esta mascota todavía no tiene consultas registradas.')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /nueva consulta/i })).not.toBeInTheDocument()
@@ -75,7 +75,7 @@ describe('Historia clínica de una mascota', () => {
       http.get(`${API}/clinica/historias/h1`, () => HttpResponse.json({ ...ENTRADA, diagnostico: null, tratamiento: 'Limpieza ótica' })),
       http.get(`${API}/clinica/historias/h1/adjuntos`, () => HttpResponse.json([])),
     )
-    const user = abrir(`/clinica/mascotas/${LUNA.id}?nueva=1`)
+    const user = abrir(`/panel/clinica/mascotas/${LUNA.id}?nueva=1`)
     const consulta = await screen.findByRole('region', { name: 'Consulta de Luna' })
     await user.selectOptions(await within(consulta).findByLabelText('Plantilla'), 'otitis')
     // Sin motivo no se sigue: la historia lo exige para guardar.
@@ -94,7 +94,7 @@ describe('Historia clínica de una mascota', () => {
 })
 
 describe('La consulta de una visita', () => {
-  const VISITA = `/clinica/mascotas/${LUNA.id}?servicio=s1`
+  const VISITA = `/panel/clinica/mascotas/${LUNA.id}?servicio=s1`
 
   it('sin consulta todavía, empieza una domiciliaria enlazada al servicio', async () => {
     let enviado: Record<string, unknown> | null = null
@@ -168,7 +168,7 @@ describe('La consulta de una visita', () => {
     await waitFor(() => expect(firmada).toBe(true))
     expect(cambios).toEqual({ tratamiento: 'Gotas' })
     expect(await screen.findByText(/Los pasos del servicio quedaron registrados/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Volver a la ruta' })).toHaveAttribute('href', '/rutas')
+    expect(screen.getByRole('link', { name: 'Volver a la ruta' })).toHaveAttribute('href', '/panel/rutas')
   })
 
   it('si ya está firmada, la enseña en lugar de empezar otra', async () => {
@@ -187,7 +187,7 @@ describe('Consulta de la historia', () => {
       http.get(`${API}/clinica/historias/h1`, () => HttpResponse.json({ ...ENTRADA, ...entrada })),
       http.get(`${API}/clinica/historias/h1/adjuntos`, () => HttpResponse.json([])),
     )
-    return abrir('/clinica/historias/h1', [{ ...ENTRADA, ...entrada }])
+    return abrir('/panel/clinica/historias/h1', [{ ...ENTRADA, ...entrada }])
   }
 
   it('el médico firma su borrador desde el último apartado', async () => {
@@ -279,9 +279,9 @@ describe('El trabajo pendiente del médico', () => {
     const enlaces = await within(visitas).findAllByRole('link')
     expect(enlaces).toHaveLength(1)
     expect(enlaces[0]).toHaveTextContent('Luna · Ana Ruiz')
-    expect(enlaces[0]).toHaveAttribute('href', `/clinica/mascotas/${LUNA.id}?servicio=s1`)
+    expect(enlaces[0]).toHaveAttribute('href', `/panel/clinica/mascotas/${LUNA.id}?servicio=s1`)
     const borradores = screen.getByRole('region', { name: 'Consultas sin firmar' })
-    expect(await within(borradores).findByRole('link', { name: 'Luna · 04/10/2026' })).toHaveAttribute('href', '/clinica/historias/h1')
+    expect(await within(borradores).findByRole('link', { name: 'Luna · 04/10/2026' })).toHaveAttribute('href', '/panel/clinica/historias/h1')
     expect(within(borradores).getByText('Rasca el oído')).toBeInTheDocument()
   })
 

@@ -69,7 +69,7 @@ describe('AppLayout en escritorio', () => {
   })
 
   it('marca «Más» cuando el módulo abierto está dentro', async () => {
-    abrir('/aliadas')
+    abrir('/panel/aliadas')
     expect(await screen.findByRole('button', { name: 'Más' })).toHaveAttribute('data-activo', 'true')
   })
 
@@ -89,7 +89,7 @@ describe('AppLayout en escritorio', () => {
   })
 
   it('titula la página según el módulo activo', async () => {
-    abrir('/rutas')
+    abrir('/panel/rutas')
     expect(await screen.findByRole('heading', { name: 'Rutas' })).toBeInTheDocument()
   })
 
@@ -103,7 +103,7 @@ describe('AppLayout en escritorio', () => {
     const user = userEvent.setup()
     abrir()
     await user.type(await screen.findByRole('searchbox', { name: 'Buscar familias' }), 'Ana Ruiz{Enter}')
-    expect(await screen.findByText('En /familias?q=Ana%20Ruiz')).toBeInTheDocument()
+    expect(await screen.findByText('En /panel/familias?q=Ana%20Ruiz')).toBeInTheDocument()
   })
 })
 
@@ -111,7 +111,7 @@ describe('AppLayout en el celular', () => {
   it('lleva al médico su Inicio y sus tres módulos en la barra inferior y el resto en «Más»', async () => {
     enCelular()
     comoMedico()
-    abrir('/rutas')
+    abrir('/panel/rutas')
     const barra = await screen.findByRole('navigation', { name: 'Módulos principales' })
     // En el orden del menú, no en el de prioridad: la barra no se reordena según el perfil.
     expect(textos(within(barra).getAllByRole('link'))).toEqual(['Inicio', 'Servicios', 'Clínica', 'Rutas'])

@@ -82,13 +82,13 @@ export function AccionesParada({ ruta, parada, actual }: { ruta: RutaRead; parad
                 </a>
               </Menu.Item>
               <Menu.Item asChild>
-                <Link className="menu-item" to={`/servicios/${parada.servicio_id}`}>
+                <Link className="menu-item" to={`/panel/servicios/${parada.servicio_id}`}>
                   Ver el servicio
                 </Link>
               </Menu.Item>
               {mascota && puede(usuario, 'clinico') && (
                 <Menu.Item asChild>
-                  <Link className="menu-item" to={`/clinica/mascotas/${mascota.id}`}>
+                  <Link className="menu-item" to={`/panel/clinica/mascotas/${mascota.id}`}>
                     Historia clínica de {mascota.nombre}
                   </Link>
                 </Menu.Item>
@@ -154,7 +154,7 @@ function Terminar({ parada, clase, onTerminar }: { parada: ParadaRead; clase: st
     <>
       <Link
         className={clase}
-        to={porLaConsulta ? `/clinica/mascotas/${parada.mascota!.id}?servicio=${parada.servicio_id}` : `/servicios/${parada.servicio_id}?origen=ruta`}
+        to={porLaConsulta ? `/panel/clinica/mascotas/${parada.mascota!.id}?servicio=${parada.servicio_id}` : `/panel/servicios/${parada.servicio_id}?origen=ruta`}
       >
         Registrar la atención
       </Link>

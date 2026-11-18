@@ -110,31 +110,31 @@ const RUTAS: Ruta[] = [
   { app: '/afiliacion/completar', perfil: null, url: '/afiliacion/completar' },
 
   // Panel del equipo.
-  { app: 'index:panel', perfil: 'equipo', url: '/' },
-  { app: 'familias', perfil: 'equipo', url: '/familias' },
+  { app: 'index:panel', perfil: 'equipo', url: '/panel' },
+  { app: 'familias', perfil: 'equipo', url: '/panel/familias' },
   {
     app: 'familias/:id',
     perfil: 'equipo',
-    url: async (page) => `/familias/${(await familiaDemo(page)).id}`,
+    url: async (page) => `/panel/familias/${(await familiaDemo(page)).id}`,
     pestanas: true,
   },
-  { app: 'cartera', perfil: 'equipo', url: '/cartera' },
-  { app: 'servicios', perfil: 'equipo', url: '/servicios', pestanas: true },
+  { app: 'cartera', perfil: 'equipo', url: '/panel/cartera' },
+  { app: 'servicios', perfil: 'equipo', url: '/panel/servicios', pestanas: true },
   {
     app: 'servicios/:id',
     perfil: 'medico',
     url: async (page) => {
       const { items } = await pedir<{ items: { id: string }[] }>(page, '/servicios?limit=1')
       expect(items.length, 'datos_demo crea servicios').toBeGreaterThan(0)
-      return `/servicios/${items[0].id}`
+      return `/panel/servicios/${items[0].id}`
     },
   },
-  { app: 'tareas', perfil: 'equipo', url: '/tareas' },
+  { app: 'tareas', perfil: 'equipo', url: '/panel/tareas' },
   // Con sus dos pestañas (R2-PAN-08), y con administración: el perfil de equipo va al borde del cupo.
-  { app: 'preventivos', perfil: 'admin', url: '/preventivos', pestanas: true },
-  { app: 'clinica', perfil: 'medico', url: '/clinica', pestanas: true },
-  { app: 'clinica/mascotas/:mascotaId', perfil: 'medico', url: async (page) => `/clinica/mascotas/${(await entradaClinica(page)).mascota}` },
-  { app: 'clinica/historias/:id', perfil: 'medico', url: async (page) => `/clinica/historias/${(await entradaClinica(page)).entrada}` },
+  { app: 'preventivos', perfil: 'admin', url: '/panel/preventivos', pestanas: true },
+  { app: 'clinica', perfil: 'medico', url: '/panel/clinica', pestanas: true },
+  { app: 'clinica/mascotas/:mascotaId', perfil: 'medico', url: async (page) => `/panel/clinica/mascotas/${(await entradaClinica(page)).mascota}` },
+  { app: 'clinica/historias/:id', perfil: 'medico', url: async (page) => `/panel/clinica/historias/${(await entradaClinica(page)).entrada}` },
   {
     // La ruta de la médica, en el día en que datos_demo la dejó: sin ella se mediría el vacío.
     app: 'rutas',
@@ -145,13 +145,13 @@ const RUTAS: Ruta[] = [
     },
   },
   // Con sus pestañas (R2-PAN-09), y con administración: el perfil de equipo va al borde del cupo.
-  { app: 'campanas', perfil: 'admin', url: '/campanas', pestanas: true },
+  { app: 'campanas', perfil: 'admin', url: '/panel/campanas', pestanas: true },
   // Con sus pestañas (R2-PAN-10), y con administración, que también ve la liquidación.
-  { app: 'aliadas', perfil: 'admin', url: '/aliadas', pestanas: true },
+  { app: 'aliadas', perfil: 'admin', url: '/panel/aliadas', pestanas: true },
   // Con sus pestañas (R2-PAN-09), y con administración: el perfil de equipo va al borde del cupo.
-  { app: 'comercial', perfil: 'admin', url: '/comercial', pestanas: true },
+  { app: 'comercial', perfil: 'admin', url: '/panel/comercial', pestanas: true },
   // Con sus seis pestañas (R2-PAN-10).
-  { app: 'admin', perfil: 'admin', url: '/admin', pestanas: true },
+  { app: 'admin', perfil: 'admin', url: '/panel/admin', pestanas: true },
   // La verificación pública de un carnet de verdad (R3-PUB-03): emitirlo pide una sesión del equipo.
   { app: '/verificar/:codigo', perfil: 'admin', url: carnetEmitido },
 
@@ -306,11 +306,14 @@ for (const perfil of [null, 'equipo', 'medico', 'admin', 'familia', 'aliada'] as
 
 test('el recorrido cubre todas las rutas de App.tsx', () => {
   const app = readFileSync(path.resolve('src/App.tsx'), 'utf-8')
-  // Solo las pantallas: una ruta que envuelve a otras (`portal` con su PortalLayout) no cierra en `/>`.
-  const rutas = [...app.matchAll(/<Route\s+path="([^"]+)"\s+element=\{[^}]*\}\s*\/>/g)]
+  // Solo las pantallas: una ruta que envuelve a otras (`portal` con su PortalLayout) no cierra en `/>`,
+  // y una que solo redirige (`<Navigate>`) no pinta nada que medir.
+  const pantalla = (m: RegExpMatchArray) => !m[0].includes('<Navigate')
+  const rutas = [...app.matchAll(/<Route\s+path="([^"]+)"\s+element=\{<[^>]*\/>\}\s*\/>/g)]
+    .filter(pantalla)
     .map((m) => m[1])
     .filter((p) => p !== '*')
-  const indices = (app.match(/<Route\s+index\s+element=\{[^}]*\}\s*\/>/g) ?? []).length
+  const indices = [...app.matchAll(/<Route\s+index\s+element=\{<[^>]*\/>\}\s*\/>/g)].filter(pantalla).length
   const declaradas = RUTAS.map((r) => r.app)
   expect(declaradas.filter((r) => !r.startsWith('index:')).sort()).toEqual(rutas.sort())
   expect(declaradas.filter((r) => r.startsWith('index:'))).toHaveLength(indices)

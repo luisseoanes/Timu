@@ -122,11 +122,11 @@ describe('listado de servicios', () => {
             servicio({ id: 'b', programado_para: '2099-03-02T15:00:00Z' }),
           ]),
     )
-    renderizar(<ServiciosPage />, { ruta: '/servicios?estado=agendado' })
+    renderizar(<ServiciosPage />, { ruta: '/panel/servicios?estado=agendado' })
     expect(await screen.findByText(/^Hoy · /)).toBeInTheDocument()
     // Cada día dice cuántos servicios tiene.
     expect(screen.getByText(/^lun 2 mar ·/).closest('.servicios-dia-rotulo')).toHaveTextContent('lun 2 mar · 1')
-    expect(await screen.findByRole('link', { name: 'Luna · Consulta domiciliaria' })).toHaveAttribute('href', '/servicios/a?estado=agendado')
+    expect(await screen.findByRole('link', { name: 'Luna · Consulta domiciliaria' })).toHaveAttribute('href', '/panel/servicios/a?estado=agendado')
     expect(screen.getByLabelText('Estado')).toHaveValue('agendado')
   })
 
@@ -164,7 +164,7 @@ describe('listado de servicios', () => {
         return HttpResponse.json(pagina([]))
       }),
     )
-    renderizar(<ServiciosPage />, { ruta: '/servicios?estado=agendado' })
+    renderizar(<ServiciosPage />, { ruta: '/panel/servicios?estado=agendado' })
     await screen.findByText(/Ningún servicio coincide/)
     expect(pedidas.some((p) => p.has('abiertos'))).toBe(false)
   })
@@ -176,7 +176,7 @@ describe('listado de servicios', () => {
   })
 
   it('abre el formulario de agendar si la ruta lo pide', async () => {
-    renderizar(<ServiciosPage />, { ruta: '/servicios?nuevo=1' })
+    renderizar(<ServiciosPage />, { ruta: '/panel/servicios?nuevo=1' })
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
   })
 })
@@ -201,7 +201,7 @@ describe('pendientes', () => {
     expect(within(fila('Ecografía')).getByRole('button', { name: 'Gestionar' })).toBeInTheDocument()
     expect(within(fila('Radiografía')).queryByRole('button', { name: 'Gestionar' })).not.toBeInTheDocument()
     expect(within(fila('Cirugía')).queryByRole('button', { name: 'Gestionar' })).not.toBeInTheDocument()
-    expect(within(fila('Ecografía')).getByRole('link', { name: 'Ver el servicio' })).toHaveAttribute('href', '/servicios/s1')
+    expect(within(fila('Ecografía')).getByRole('link', { name: 'Ver el servicio' })).toHaveAttribute('href', '/panel/servicios/s1')
   })
 
   it('filtra por estado y muestra el vacío', async () => {

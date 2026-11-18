@@ -114,7 +114,7 @@ export function Conversaciones() {
                     <td className="tabla-acciones">
                       {/* La de un interesado se contesta en su ficha, con su historia; la de una familia, aquí. */}
                       {c.interesado_id ? (
-                        <Link className="btn btn-suave" to={`/comercial?interesado=${c.interesado_id}`}>
+                        <Link className="btn btn-suave" to={`/panel/comercial?interesado=${c.interesado_id}`}>
                           Abrir conversación
                         </Link>
                       ) : (

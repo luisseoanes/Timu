@@ -111,7 +111,7 @@ export function FamiliasLista({ seleccionada }: { seleccionada?: string }) {
                       {/* El enlace es solo el nombre; ::after lo extiende a toda la fila. */}
                       <Link
                         className="listado-fila-enlace"
-                        to={`/familias/${f.id}${sufijo}`}
+                        to={`/panel/familias/${f.id}${sufijo}`}
                         aria-current={f.id === seleccionada ? 'page' : undefined}
                       >
                         {f.titular_nombre}

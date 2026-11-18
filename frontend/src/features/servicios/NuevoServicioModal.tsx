@@ -58,7 +58,7 @@ export function NuevoServicioModal({
         inicio,
         observaciones: observaciones.trim() || undefined,
       },
-      { onSuccess: (s) => navegar(`/servicios/${s.id}`) },
+      { onSuccess: (s) => navegar(`/panel/servicios/${s.id}`) },
     )
   }
 

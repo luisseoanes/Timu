@@ -68,7 +68,7 @@ describe('historia clínica', () => {
     const user = userEvent.setup()
     renderizar(<ClinicaPage />)
     await elegirFamilia(user, document.body)
-    expect(await screen.findByRole('link', { name: /luna/i })).toHaveAttribute('href', `/clinica/mascotas/${LUNA.id}`)
+    expect(await screen.findByRole('link', { name: /luna/i })).toHaveAttribute('href', `/panel/clinica/mascotas/${LUNA.id}`)
     expect(screen.getByRole('link', { name: /tom/i })).toHaveTextContent('De baja')
   })
 })
@@ -226,7 +226,7 @@ describe('atender una solicitud', () => {
       solicitud({ asignada_a_id: USUARIO_ADMIN.id, respuesta: 'Ayuno de 6 horas', historia_id: 'h9' }),
     )
     expect(within(modal).getByRole('status')).toHaveTextContent('Respondida: Ayuno de 6 horas')
-    expect(within(modal).getByRole('link', { name: 'Ver en la historia' })).toHaveAttribute('href', '/clinica/historias/h9')
+    expect(within(modal).getByRole('link', { name: 'Ver en la historia' })).toHaveAttribute('href', '/panel/clinica/historias/h9')
     await user.click(within(modal).getByRole('button', { name: 'Cerrar solicitud' }))
     await waitFor(() => expect(cerrada).toBe(true))
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())

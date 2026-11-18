@@ -78,19 +78,19 @@ function Ficha({ servicio: s }: { servicio: ServicioRead }) {
   const desdeRuta = params.get('origen') === 'ruta'
   const lista = new URLSearchParams(params)
   lista.delete('origen')
-  const volver = `/servicios${lista.toString() ? `?${lista}` : ''}`
+  const volver = `/panel/servicios${lista.toString() ? `?${lista}` : ''}`
 
   return (
     <>
       <header className="ficha-cabeza">
-        <Link to={desdeRuta ? '/rutas' : volver} className="btn btn-plano ficha-volver" aria-label={desdeRuta ? 'Volver a mi ruta' : 'Volver a servicios'}>
+        <Link to={desdeRuta ? '/panel/rutas' : volver} className="btn btn-plano ficha-volver" aria-label={desdeRuta ? 'Volver a mi ruta' : 'Volver a servicios'}>
           <Icono nombre="volver" size={16} />
         </Link>
         <h2 className="consulta-titulo">{nombreTipo(s.tipo_codigo)}</h2>
         <p className="servicio-quien">
           {s.mascota_id ? (mascota ? `${mascota.nombre} (${mascota.especie})` : '…') : 'Toda la familia'}
           {' · '}
-          {familia.data ? <Link to={`/familias/${s.familia_id}`}>{familia.data.titular_nombre}</Link> : '…'}
+          {familia.data ? <Link to={`/panel/familias/${s.familia_id}`}>{familia.data.titular_nombre}</Link> : '…'}
         </p>
         <div className="ficha-datos">
           <Distintivo dominio="servicio" valor={s.estado} />
@@ -207,7 +207,7 @@ function AccionesServicio({
         </button>
       )}
       {desdeRuta && (
-        <Link className={`btn ${cerrado && !verdeOcupado ? 'btn-primario' : 'btn-secundario'}`} to="/rutas">
+        <Link className={`btn ${cerrado && !verdeOcupado ? 'btn-primario' : 'btn-secundario'}`} to="/panel/rutas">
           Volver a mi ruta
         </Link>
       )}

@@ -76,7 +76,7 @@ describe('CampanasPage', () => {
       }),
     )
     const user = userEvent.setup()
-    renderizar(<CampanasPage />, { ruta: '/campanas?campana=c1' })
+    renderizar(<CampanasPage />, { ruta: '/panel/campanas?campana=c1' })
     const ficha = await screen.findByRole('region', { name: 'Campaña abierta' })
     await user.click(await within(ficha).findByRole('button', { name: 'Enviar ahora' }))
     // El envío inmediato no se deshace: pide confirmarlo, con la audiencia a la vista.

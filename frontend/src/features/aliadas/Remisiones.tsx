@@ -113,7 +113,7 @@ export function Remisiones() {
                 {d.map((r) => (
                   <tr key={r.id}>
                     <td className="principal" data-etiqueta="Remisión">
-                      <Link to={`/familias/${r.familia_id}`}>
+                      <Link to={`/panel/familias/${r.familia_id}`}>
                         {r.titular}
                         {r.mascota && ` · ${r.mascota}`}
                       </Link>

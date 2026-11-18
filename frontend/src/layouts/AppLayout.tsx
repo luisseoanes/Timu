@@ -24,26 +24,26 @@ interface ItemNav {
 
 // Un elemento por dominio de la plataforma (sección A de la propuesta).
 const NAV: ItemNav[] = [
-  { to: '/', label: 'Inicio', icono: 'panel', end: true, titulo: 'Inicio', sub: 'Resumen de la operación', cabeceraPropia: true },
-  { to: '/familias', label: 'Familias', icono: 'familias', titulo: 'Familias y mascotas', sub: 'Afiliaciones, titulares y mascotas' },
-  { to: '/cartera', label: 'Cartera', icono: 'cartera', titulo: 'Cartera', sub: 'Cuotas, mora y renovaciones' },
-  { to: '/servicios', label: 'Servicios', icono: 'servicios', titulo: 'Servicios', sub: 'Agenda, autorizaciones y pendientes' },
-  { to: '/tareas', label: 'Tareas', icono: 'tareas', titulo: 'Tareas', sub: 'Lo que el equipo tiene por resolver' },
-  { to: '/preventivos', label: 'Preventivos', icono: 'preventivos', titulo: 'Preventivos', sub: 'Calendario, autorizaciones y carnet' },
-  { to: '/clinica', label: 'Clínica', icono: 'clinica', titulo: 'Clínica', sub: 'Historia clínica y atención virtual' },
-  { to: '/rutas', label: 'Rutas', icono: 'rutas', titulo: 'Rutas', sub: 'Visitas domiciliarias del día' },
-  { to: '/comercial', label: 'Comercial', icono: 'comercial', titulo: 'Comercial', sub: 'Interesados y conversaciones', permiso: 'mercadeo' },
-  { to: '/campanas', label: 'Campañas', icono: 'campanas', titulo: 'Campañas y encuestas', sub: 'Segmentos, envíos y satisfacción' },
-  { to: '/aliadas', label: 'Aliadas', icono: 'aliadas', titulo: 'Clínicas aliadas', sub: 'Convenios, remisiones y liquidación' },
-  { to: '/admin', label: 'Administración', icono: 'ajustes', titulo: 'Administración', sub: 'Usuarios, planes, reglas e IA', permiso: 'administrar' },
+  { to: '/panel', label: 'Inicio', icono: 'panel', end: true, titulo: 'Inicio', sub: 'Resumen de la operación', cabeceraPropia: true },
+  { to: '/panel/familias', label: 'Familias', icono: 'familias', titulo: 'Familias y mascotas', sub: 'Afiliaciones, titulares y mascotas' },
+  { to: '/panel/cartera', label: 'Cartera', icono: 'cartera', titulo: 'Cartera', sub: 'Cuotas, mora y renovaciones' },
+  { to: '/panel/servicios', label: 'Servicios', icono: 'servicios', titulo: 'Servicios', sub: 'Agenda, autorizaciones y pendientes' },
+  { to: '/panel/tareas', label: 'Tareas', icono: 'tareas', titulo: 'Tareas', sub: 'Lo que el equipo tiene por resolver' },
+  { to: '/panel/preventivos', label: 'Preventivos', icono: 'preventivos', titulo: 'Preventivos', sub: 'Calendario, autorizaciones y carnet' },
+  { to: '/panel/clinica', label: 'Clínica', icono: 'clinica', titulo: 'Clínica', sub: 'Historia clínica y atención virtual' },
+  { to: '/panel/rutas', label: 'Rutas', icono: 'rutas', titulo: 'Rutas', sub: 'Visitas domiciliarias del día' },
+  { to: '/panel/comercial', label: 'Comercial', icono: 'comercial', titulo: 'Comercial', sub: 'Interesados y conversaciones', permiso: 'mercadeo' },
+  { to: '/panel/campanas', label: 'Campañas', icono: 'campanas', titulo: 'Campañas y encuestas', sub: 'Segmentos, envíos y satisfacción' },
+  { to: '/panel/aliadas', label: 'Aliadas', icono: 'aliadas', titulo: 'Clínicas aliadas', sub: 'Convenios, remisiones y liquidación' },
+  { to: '/panel/admin', label: 'Administración', icono: 'ajustes', titulo: 'Administración', sub: 'Usuarios, planes, reglas e IA', permiso: 'administrar' },
 ]
 
 /** Los cuatro módulos que cada perfil usa más: van en la barra inferior del celular. */
 const PRINCIPALES: Partial<Record<Rol, string[]>> = {
-  medico: ['/', '/rutas', '/servicios', '/clinica'],
-  operaciones: ['/', '/servicios', '/rutas', '/tareas'],
-  comercial: ['/', '/familias', '/comercial', '/tareas'],
-  admin: ['/', '/familias', '/cartera', '/servicios'],
+  medico: ['/panel', '/panel/rutas', '/panel/servicios', '/panel/clinica'],
+  operaciones: ['/panel', '/panel/servicios', '/panel/rutas', '/panel/tareas'],
+  comercial: ['/panel', '/panel/familias', '/panel/comercial', '/panel/tareas'],
+  admin: ['/panel', '/panel/familias', '/panel/cartera', '/panel/servicios'],
 }
 
 // Cuántos módulos caben en la barra superior según el ancho. Con 0 la navegación pasa a la
@@ -135,7 +135,7 @@ export function AppLayout() {
             onSubmit={(e) => {
               e.preventDefault()
               const q = busqueda.trim()
-              if (q) navigate(`/familias?q=${encodeURIComponent(q)}`)
+              if (q) navigate(`/panel/familias?q=${encodeURIComponent(q)}`)
             }}
           >
             <label className="buscador">

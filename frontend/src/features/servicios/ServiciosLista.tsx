@@ -189,7 +189,7 @@ function FilaServicio({
     <li className="listado-fila" data-seleccionada={s.id === seleccionado}>
       <span className="listado-fila-cabeza">
         {/* El enlace es solo el título; ::after lo extiende a toda la fila. */}
-        <Link className="listado-fila-enlace" to={`/servicios/${s.id}${sufijo}`} aria-current={s.id === seleccionado ? 'page' : undefined}>
+        <Link className="listado-fila-enlace" to={`/panel/servicios/${s.id}${sufijo}`} aria-current={s.id === seleccionado ? 'page' : undefined}>
           {s.mascota ? `${s.mascota.nombre} · ${nombreTipo(s.tipo_codigo)}` : nombreTipo(s.tipo_codigo)}
         </Link>
         <Distintivo dominio="servicio" valor={s.estado} />

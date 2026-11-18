@@ -74,7 +74,7 @@ describe('CarteraPage', () => {
     )
     renderizar(<CarteraPage />)
     const enlace = await screen.findByRole('link', { name: FAMILIA.titular_nombre })
-    expect(enlace).toHaveAttribute('href', `/familias/${FAMILIA.id}`)
+    expect(enlace).toHaveAttribute('href', `/panel/familias/${FAMILIA.id}`)
     expect(consultas[0]).toContain('solo_mora=true')
     expect(screen.getByRole('button', { name: /en mora/i })).toHaveAttribute('aria-pressed', 'true')
     const fila = within(enlace.closest('tr')!)
@@ -145,7 +145,7 @@ describe('CarteraPage', () => {
 
   it('dice por qué la vista está vacía', async () => {
     server.use(http.get(RUTA, () => pagina([])))
-    renderizar(<CarteraPage />, { ruta: '/cartera?vista=por_renovar' })
+    renderizar(<CarteraPage />, { ruta: '/panel/cartera?vista=por_renovar' })
     expect(await screen.findByText('Ningún contrato vence en los próximos 90 días.')).toBeInTheDocument()
   })
 
@@ -158,7 +158,7 @@ describe('CarteraPage', () => {
       }),
     )
     const user = userEvent.setup()
-    renderizar(<CarteraPage />, { ruta: '/cartera?vista=todos' })
+    renderizar(<CarteraPage />, { ruta: '/panel/cartera?vista=todos' })
     await user.type(await screen.findByRole('searchbox', { name: 'Buscar contratos' }), 'TM')
     await waitFor(() => expect(consultas.some((c) => c.includes('q=TM') && !c.includes('solo_mora'))).toBe(true))
     expect(await screen.findByText('Ningún contrato de esta vista coincide con la búsqueda.')).toBeInTheDocument()

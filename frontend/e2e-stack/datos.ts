@@ -17,7 +17,7 @@ export async function rutaDemo(request: APIRequestContext, responsable?: string)
     const respuesta = await request.get('/api/v1/rutas', { params: { fecha: dia, ...(responsable ? { responsable_id: responsable } : {}) } })
     expect(respuesta.ok(), `GET /rutas respondió ${respuesta.status()}`).toBeTruthy()
     const rutas = (await respuesta.json()) as { paradas: unknown[] }[]
-    if (rutas.some((r) => r.paradas.length > 0)) return { dia, url: dia === hoy ? '/rutas' : `/rutas?dia=${dia}` }
+    if (rutas.some((r) => r.paradas.length > 0)) return { dia, url: dia === hoy ? '/panel/rutas' : `/panel/rutas?dia=${dia}` }
   }
   throw new Error('datos_demo no dejó ninguna ruta en la próxima semana')
 }

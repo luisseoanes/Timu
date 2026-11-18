@@ -46,9 +46,9 @@ function abrir(entrada: Partial<EntradaHistoria> = {}, { adjuntos = [] as unknow
   if (medico) server.use(comoMedico)
   renderizar(
     <Routes>
-      <Route path="/clinica/historias/:id" element={<EntradaPage />} />
+      <Route path="/panel/clinica/historias/:id" element={<EntradaPage />} />
     </Routes>,
-    { ruta: '/clinica/historias/h1' },
+    { ruta: '/panel/clinica/historias/h1' },
   )
   return userEvent.setup()
 }
@@ -138,9 +138,9 @@ describe('consulta en borrador', () => {
     server.use(http.get(`${API}/clinica/historias/h1`, () => HttpResponse.json({ detail: 'No encontrada' }, { status: 404 })))
     renderizar(
       <Routes>
-        <Route path="/clinica/historias/:id" element={<EntradaPage />} />
+        <Route path="/panel/clinica/historias/:id" element={<EntradaPage />} />
       </Routes>,
-      { ruta: '/clinica/historias/h1' },
+      { ruta: '/panel/clinica/historias/h1' },
     )
     expect(await screen.findByRole('alert')).toHaveTextContent('No fue posible cargar la consulta. No encontrada')
   })

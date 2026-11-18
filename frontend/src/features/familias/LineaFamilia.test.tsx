@@ -51,10 +51,10 @@ function Ubicacion() {
 function abrirFicha() {
   return renderizar(
     <Routes>
-      <Route path="/familias/:id" element={<FamiliaDetallePage />} />
-      <Route path="/servicios/:id" element={<Ubicacion />} />
+      <Route path="/panel/familias/:id" element={<FamiliaDetallePage />} />
+      <Route path="/panel/servicios/:id" element={<Ubicacion />} />
     </Routes>,
-    { ruta: `/familias/${FAMILIA.id}` },
+    { ruta: `/panel/familias/${FAMILIA.id}` },
   )
 }
 
@@ -101,7 +101,7 @@ describe('Familias con la línea de metro', () => {
     const user = userEvent.setup()
     abrirFicha()
     await user.click(await screen.findByRole('button', { name: 'Abrir consulta de Luna' }))
-    expect(await screen.findByTestId('ubicacion')).toHaveTextContent('/servicios/s9')
+    expect(await screen.findByTestId('ubicacion')).toHaveTextContent('/panel/servicios/s9')
   })
 
   it('sin familia abierta explica qué aparecerá al elegir una', async () => {
@@ -112,13 +112,13 @@ describe('Familias con la línea de metro', () => {
   it('el enlace a la familia conserva la búsqueda del listado', async () => {
     renderizar(
       <Routes>
-        <Route path="/familias" element={<FamiliasPage />} />
+        <Route path="/panel/familias" element={<FamiliasPage />} />
       </Routes>,
-      { ruta: '/familias?q=Ana' },
+      { ruta: '/panel/familias?q=Ana' },
     )
     expect(await screen.findByRole('link', { name: FAMILIA.titular_nombre })).toHaveAttribute(
       'href',
-      `/familias/${FAMILIA.id}?q=Ana`,
+      `/panel/familias/${FAMILIA.id}?q=Ana`,
     )
   })
 

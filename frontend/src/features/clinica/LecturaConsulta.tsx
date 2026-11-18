@@ -58,7 +58,7 @@ export function LecturaConsulta({ entrada: e, volver, identidad }: { entrada: En
         {esMedico && firmada && (
           <div className="ficha-acciones">
             {state?.recienFirmada && e.servicio_id && (
-              <Link className="btn btn-primario" to="/rutas">
+              <Link className="btn btn-primario" to="/panel/rutas">
                 Volver a la ruta
               </Link>
             )}
@@ -115,7 +115,7 @@ export function LecturaConsulta({ entrada: e, volver, identidad }: { entrada: En
             corregir.mutate(datos, {
               onSuccess: (nueva) => {
                 setCorrigiendo(false)
-                navegar(`/clinica/historias/${nueva.id}`)
+                navegar(`/panel/clinica/historias/${nueva.id}`)
               },
             })
           }}

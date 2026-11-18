@@ -140,7 +140,7 @@ export function CarteraPage() {
                       <tr key={c.id}>
                         <td className="principal" data-etiqueta="Familia">
                           {/* El titular lleva al estado de cuenta completo: la pestaña Cartera de su familia. */}
-                          <Link to={`/familias/${c.familia_id}`} state={{ seccion: 'cartera' }}>{c.titular}</Link>
+                          <Link to={`/panel/familias/${c.familia_id}`} state={{ seccion: 'cartera' }}>{c.titular}</Link>
                           <div className="bandeja-detalle">
                             {c.planes.map((p) => (
                               <span key={p.nombre} className="familia-fila-marcador">
