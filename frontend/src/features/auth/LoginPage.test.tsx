@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { Route, Routes, type InitialEntry } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { LoginPage } from './LoginPage'
 import { RecuperarPage, RestablecerPage } from './RecuperarPage'
@@ -236,12 +236,23 @@ describe('Recuperación de contraseña', () => {
         }),
       ),
     )
-    renderizar(<RestablecerPage modo="restablecer" />, { ruta: '/restablecer?token=abc' })
-    expect(await screen.findByRole('heading', { name: 'Hola, Valentina' })).toBeInTheDocument()
-    expect(screen.getByText(/se cierran las sesiones/)).toBeInTheDocument()
-    // La vigencia la da la API, en la hora de Colombia (UTC−5).
-    expect(screen.getByText(/Este enlace sirve hasta el mié 18 nov a las 9:00/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Guardar y entrar' })).toBeInTheDocument()
+    // Con el reloj quieto: el mismo día del vencimiento dice «hoy» (la prueba se rompió el 18 nov).
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      vi.setSystemTime(new Date('2026-11-10T12:00:00Z'))
+      const { unmount } = renderizar(<RestablecerPage modo="restablecer" />, { ruta: '/restablecer?token=abc' })
+      expect(await screen.findByRole('heading', { name: 'Hola, Valentina' })).toBeInTheDocument()
+      expect(screen.getByText(/se cierran las sesiones/)).toBeInTheDocument()
+      // La vigencia la da la API, en la hora de Colombia (UTC−5).
+      expect(screen.getByText(/Este enlace sirve hasta el mié 18 nov a las 9:00/)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Guardar y entrar' })).toBeInTheDocument()
+      unmount()
+      vi.setSystemTime(new Date('2026-11-18T12:00:00Z'))
+      renderizar(<RestablecerPage modo="restablecer" />, { ruta: '/restablecer?token=abc' })
+      expect(await screen.findByText(/Este enlace sirve hasta hoy a las 9:00/)).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it.each([
