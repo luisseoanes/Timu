@@ -1577,6 +1577,8 @@
 .plan-adicional-fila { padding-block: var(--e4); border-top: 1px solid var(--borde); }
 .plan-adicional-fila:last-child { border-bottom: 1px solid var(--borde); }
 .plan-adicional-mover { justify-content: flex-end; }
+/* Cada red de «Datos de TIMU»: nombre y enlace en fila, y su botón de quitar al final. */
+.datos-timu-red { align-items: end; }
 .indicador .barra-presupuesto { margin-top: var(--e2); }
 .admin-quien { color: var(--texto); font-size: var(--t-cuerpo); }
 .admin-ciudades { max-width: 70ch; color: var(--texto); line-height: 1.6; }

@@ -1,6 +1,7 @@
 import { Pestanas } from '@/components/Pestanas'
 
 import { Catalogos } from './Catalogos'
+import { DatosTimu } from './DatosTimu'
 import { InteligenciaArtificial } from './InteligenciaArtificial'
 import { Planes } from './Planes'
 import { Reglas } from './Reglas'
@@ -19,6 +20,7 @@ export function AdminPage() {
         { valor: 'catalogos', titulo: 'Catálogos', contenido: <Catalogos /> },
         { valor: 'ia', titulo: 'Inteligencia artificial', contenido: <InteligenciaArtificial /> },
         { valor: 'reportes', titulo: 'Reportes y pasarela', contenido: <Reportes /> },
+        { valor: 'timu', titulo: 'Datos de TIMU', contenido: <DatosTimu /> },
       ]}
     />
   )

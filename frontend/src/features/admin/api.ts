@@ -6,6 +6,8 @@ import type {
   CasoRead,
   ColorPlan,
   ConsultaRead,
+  DatosTimuIn,
+  DatosTimuRead,
   EnPalabras,
   EsquemaPreventivoRead,
   EventoDeReglas,
@@ -259,6 +261,18 @@ export function useGuardarAdicionales() {
       (await api.put<PlanRead>(`/planes/${id}/adicionales`, adicionales)).data,
     'planes',
   )
+}
+
+/** Lo que dice de TIMU la portada pública (R3-PUB-04). */
+export function useDatosTimu() {
+  return useQuery({
+    queryKey: ['institucional'],
+    queryFn: async () => (await api.get<DatosTimuRead>('/institucional')).data,
+  })
+}
+
+export function useGuardarDatosTimu() {
+  return useMutacion(async (datos: DatosTimuIn) => (await api.put<DatosTimuRead>('/institucional', datos)).data, 'institucional')
 }
 
 /** Lo que se guarda de una regla desde el editor por campos (DEU-8). */
