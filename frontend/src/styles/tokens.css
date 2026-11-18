@@ -158,6 +158,7 @@
   /* GeosansLight (manual, sección 12): solo títulos de 20 px o más. Un único peso, fino. */
   --fuente-titulos: "GeosansLight", var(--fuente);
 
+  --t-portada:  clamp(2.5rem, 1.75rem + 2.2vw, 3.625rem);  /* 40 a 58 px: el titular de la portada pública y de cada plan */
   --t-display:  2.125rem;  /* 34 px: nombre de la familia abierta, saludo, ingreso */
   --t-cifra:    1.5rem;    /* 24 px: cifras destacadas de indicadores y métricas */
   --t-titulo:   1.25rem;   /* 20 px: título de página */

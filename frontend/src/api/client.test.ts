@@ -95,6 +95,17 @@ describe('cliente de la API', () => {
       expect(asignar).toHaveBeenCalledWith('/login')
     })
 
+    it.each(['/'])('en la página pública %s un 401 no lleva al ingreso (R3-PUB-04)', async (pathname) => {
+      const asignar = vi.fn()
+      vi.stubGlobal('location', { ...window.location, pathname, assign: asignar })
+      server.use(
+        protegido({ renovada: false }),
+        http.post(`${API}/auth/refresh`, () => new HttpResponse(null, { status: 401 })),
+      )
+      await expect(api.get('/familias')).rejects.toMatchObject({ response: { status: 401 } })
+      expect(asignar).not.toHaveBeenCalled()
+    })
+
     it('si tras renovar la petición falla por otra cosa, llega ese error y no un 401', async () => {
       const asignar = enPantallaProtegida()
       let renovada = false

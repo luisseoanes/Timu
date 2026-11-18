@@ -24,6 +24,7 @@ import { GestionarPreventivo, PreventivosPage } from '@/features/preventivos'
 import {
   CompletarRegistroPage,
   EncuestaPage,
+  PortadaPage,
   RegistroPage,
   RegistroResultadoPage,
   VerificarCarnetPage,
@@ -60,8 +61,8 @@ export default function App() {
             <Route path="/afiliacion" element={<RegistroPage />} />
             <Route path="/afiliacion/resultado" element={<RegistroResultadoPage />} />
             <Route path="/afiliacion/completar" element={<CompletarRegistroPage />} />
-            {/* Hasta que la portada pública ocupe la raíz (R3-PUB-04), la raíz lleva al panel. */}
-            <Route index element={<Navigate to="/panel" replace />} />
+            {/* La portada pública (R3-PUB-04): el punto de acceso a todo. El panel vive en /panel. */}
+            <Route index element={<PortadaPage />} />
 
             <Route path="panel" element={<ProtectedRoute roles={EQUIPO} />}>
               <Route element={<AppLayout />}>

@@ -29,6 +29,9 @@ const SIN_RENOVACION = [
 // Páginas que se abren sin sesión: un 401 ahí no debe mandar al ingreso.
 const PAGINAS_PUBLICAS = ['/login', '/recuperar', '/restablecer', '/activar', '/encuesta', '/verificar', '/afiliacion']
 
+/** La portada (`/`) es pública, pero como prefijo lo sería todo: se compara entera. */
+const esPublica = (ruta: string) => ruta === '/' || PAGINAS_PUBLICAS.some((p) => ruta.startsWith(p))
+
 type Reintento = InternalAxiosRequestConfig & { _renovada?: boolean }
 
 /**
@@ -77,7 +80,7 @@ api.interceptors.response.use(
     }
 
     // Sesión expirada o ausente: devolver al ingreso. La cookie la limpia el backend.
-    const enPublica = PAGINAS_PUBLICAS.some((p) => window.location.pathname.startsWith(p))
+    const enPublica = esPublica(window.location.pathname)
     if (error.response?.status === 401 && !enPublica && !url.endsWith('/auth/me')) {
       window.location.assign('/login')
     }

@@ -1716,3 +1716,159 @@
 .aliada-atendidas-lista > li { display: grid; gap: 2px; padding: var(--e3) 0; border-top: 1px solid var(--borde); font-size: var(--t-menor); color: var(--texto-suave); }
 .aliada-atendidas-lista > li:first-child { border-top: 0; padding-top: 0; }
 .aliada-atendidas-lista strong { font-size: var(--t-cuerpo); color: var(--texto-titulo); }
+
+/* ==========================================================================================
+   Portada pública y página de cada plan (R3-PUB-04, «Álbum de la manada»)
+   La barra marina con el logo, el álbum de fotos reales con su pie en pastilla y el panel marino
+   con el titular, los planes en su color y «Arma tu plan» (el único verde lleno). Las secciones
+   ocupan todo el ancho con su fondo y centran su contenido a 1200 px.
+   ========================================================================================== */
+.publica { min-height: 100vh; background: var(--superficie-lienzo); color: var(--texto); }
+.saltar { position: absolute; left: var(--e4); top: -100px; z-index: var(--capa-menu); padding: var(--e2) var(--e4); border-radius: var(--r-campo); background: var(--superficie); color: var(--texto-titulo); font-weight: 600; }
+.saltar:focus-visible { top: var(--e2); }
+.publica-barra, .album-panel, .publica-pie, .plan-cabeza { --foco: var(--foco-sobre-marca); }
+.publica-barra :focus-visible, .album-panel :focus-visible:not(.arma *), .publica-pie :focus-visible, .plan-cabeza :focus-visible { outline-color: var(--foco-sobre-marca); }
+
+.publica-barra {
+  position: sticky; top: 0; z-index: var(--capa-barra); height: var(--alto-barra);
+  display: flex; align-items: center; gap: var(--e7); padding-inline: var(--e8);
+  background: var(--superficie-marca);
+}
+.publica-marca { display: flex; align-items: center; }
+.publica-marca .marca { height: 30px; display: block; }
+.publica-marca-completa .marca { height: 40px; }
+.publica-marca-compacta { display: none; }
+.publica-nav { display: flex; gap: var(--e6); }
+.publica-nav a, .publica-barra-enlace { color: var(--texto-sobre-marca); font-weight: 600; text-decoration: none; }
+.publica-nav a:hover, .publica-barra-enlace:hover { text-decoration: underline; text-underline-offset: 4px; }
+.publica-barra-acciones { margin-left: auto; display: flex; align-items: center; gap: var(--e4); }
+.publica-btn-marca { background: transparent; color: var(--texto-sobre-marca); border-color: var(--borde-sobre-marca); }
+.publica-btn-marca:hover { background: var(--superficie-sobre-marca); }
+.publica-menu { display: none; background: transparent; color: var(--texto-sobre-marca); }
+.publica-menu:hover { background: var(--superficie-sobre-marca); }
+@media (max-width: 1023px) {
+  .publica-barra { padding-inline: var(--e4); gap: var(--e4); }
+  .publica-nav, .publica-barra-enlace, .publica-marca-completa { display: none; }
+  .publica-marca-compacta { display: flex; }
+  .publica-menu { display: inline-flex; }
+  .publica-barra-acciones { gap: var(--e2); }
+}
+
+/* El álbum: dos tercios de mosaico y un tercio de panel marino. */
+.album {
+  display: grid; grid-template-columns: minmax(0, 2fr) minmax(420px, 1fr);
+  min-height: min(calc(100vh - var(--alto-barra)), 860px); background: var(--superficie-marca);
+}
+.album-mosaico {
+  display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 10px; padding: 10px 0 10px 10px; background: var(--superficie-lienzo);
+}
+.album-principal { grid-row: 1 / 3; }
+/* En una celda estrecha, la foto del equipo se encuadra desde el logo: se lee «TIMU» y la persona.
+   Entre 1100 y 1299 px la celda no da para los dos: manda la cara de la persona. */
+.album-logo img { object-position: left center; }
+@media (min-width: 1100px) and (max-width: 1299px) { .album-logo img { object-position: 72% center; } }
+.album-foto { position: relative; margin: 0; overflow: hidden; border-radius: var(--r-tarjeta); background: var(--pista); }
+.album-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.album-foto figcaption {
+  position: absolute; left: var(--e4); bottom: var(--e3); padding: 6px var(--e3); border-radius: var(--r-pastilla);
+  background: var(--superficie-marca); color: var(--texto-sobre-marca); font-size: var(--t-menor); font-weight: 600;
+}
+.album-panel {
+  display: grid; align-content: start; gap: var(--e5); padding: 56px var(--e8) var(--e8);
+  color: var(--texto-sobre-marca);
+}
+.album-titulo { margin: 0; font-size: var(--t-portada); line-height: 1.02; letter-spacing: -.01em; color: var(--texto-sobre-marca); text-wrap: balance; }
+.album-frase { margin: 0; max-width: 46ch; font-size: var(--t-seccion); line-height: 1.55; color: var(--texto-sobre-marca-suave); text-wrap: pretty; }
+
+.pastillas-planes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e2); }
+.pastillas-planes li { display: grid; }
+.pastilla-plan { align-content: space-between; }
+.pastilla-plan {
+  display: grid; gap: 2px; min-height: 56px; padding: var(--e2) var(--e3); border-radius: var(--r-campo);
+  background: var(--plan-verde); color: var(--plan-verde-texto); font-size: var(--t-menor); font-weight: 600; text-decoration: none;
+}
+.pastilla-plan[data-color="naranja"] { background: var(--plan-naranja); color: var(--plan-naranja-texto); }
+.pastilla-plan[data-color="azul"] { background: var(--plan-azul); color: var(--plan-azul-texto); }
+.pastilla-plan strong { font-size: var(--t-seccion); }
+.pastilla-plan:hover span { text-decoration: underline; text-underline-offset: 3px; }
+
+.arma { display: grid; gap: var(--e4); padding: var(--e6); border-radius: var(--r-panel); background: var(--superficie); color: var(--texto); }
+.arma-titulo { margin: 0; font-family: var(--fuente); font-size: var(--t-seccion); font-weight: 600; color: var(--texto-titulo); }
+.arma-contadores { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e3); }
+.arma-contador-control {
+  display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding-inline: 2px;
+  border: 1px solid var(--borde-control); border-radius: var(--r-campo); background: var(--superficie);
+}
+.arma-contador-control output { font-size: var(--t-seccion); font-weight: 600; color: var(--texto-titulo); }
+.arma-cierre { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--e4); }
+.arma-precio { margin: 0; display: grid; font-size: var(--t-menor); color: var(--texto-suave); }
+.arma-precio strong { font-size: var(--t-cifra); line-height: 1.2; color: var(--texto-titulo); }
+.arma-ir { min-height: 48px; padding-inline: var(--e6); }
+
+@media (max-width: 1099px) {
+  .album { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .album-mosaico { grid-template-rows: repeat(2, 200px); padding: 10px; }
+  .album-logo img { object-position: center; }
+  .album-panel { grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); column-gap: var(--e7); padding: var(--e7) var(--e5); }
+  .album-panel > :not(.arma) { grid-column: 1; }
+  .album-panel > .arma { grid-column: 2; grid-row: 1 / span 4; align-self: start; }
+}
+@media (max-width: 719px) {
+  .album-mosaico { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .album-mosaico > :not(.album-principal) { display: none; }
+  .album-principal { grid-row: auto; aspect-ratio: 16 / 10; }
+  .album-panel { grid-template-columns: minmax(0, 1fr); padding: var(--e6) var(--e4) var(--e7); gap: var(--e4); }
+  .album-panel > .arma { grid-column: 1; grid-row: auto; }
+  .arma { padding: var(--e5); }
+}
+
+/* Las secciones: todo el ancho con su fondo y el contenido centrado. */
+.seccion {
+  padding-block: calc(var(--e8) * 2); padding-inline: max(var(--e5), calc((100% - 1200px) / 2));
+  scroll-margin-top: var(--alto-barra);
+}
+.seccion-cabeza { display: grid; gap: var(--e3); max-width: 680px; margin-bottom: var(--e7); }
+.seccion-cabeza p { margin: 0; font-size: var(--t-seccion); line-height: 1.55; text-wrap: pretty; }
+.seccion-titulo { margin: 0; font-size: var(--t-display); line-height: 1.1; color: var(--texto-titulo); }
+.seccion-red, .seccion-contacto { background: var(--superficie); }
+@media (max-width: 599px) { .seccion { padding-block: var(--e8); padding-inline: var(--e4); } }
+
+.planes-detalle { list-style: none; margin: var(--e5) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--e3) var(--e6); }
+.planes-detalle-enlace { display: inline-flex; align-items: center; gap: var(--e2); min-height: 44px; font-weight: 600; }
+.planes-detalle-enlace::before { content: ""; width: 12px; height: 12px; flex: none; border-radius: var(--r-fino); background: var(--plan-verde); }
+.planes-detalle-enlace[data-color="naranja"]::before { background: var(--plan-naranja); }
+.planes-detalle-enlace[data-color="azul"]::before { background: var(--plan-azul); }
+
+/* Nosotros: dos fotos al lado del texto, con los valores en pastillas. */
+.seccion-nosotros { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: var(--e8); align-items: center; }
+.nosotros-fotos { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 10px; align-items: end; }
+.nosotros-fotos .album-foto:first-child { aspect-ratio: 4 / 5; }
+.nosotros-fotos .album-foto:last-child { aspect-ratio: 1; }
+.nosotros-texto { display: grid; gap: var(--e4); }
+.nosotros-presentacion { margin: 0; max-width: 60ch; font-size: var(--t-seccion); line-height: 1.6; text-wrap: pretty; }
+.nosotros-lista { margin: 0; display: grid; gap: var(--e4); }
+.nosotros-lista dt, .contacto-lista dt, .plan-lado .registro-condiciones dt {
+  font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; color: var(--texto-suave);
+}
+.nosotros-lista dd { margin: var(--e1) 0 0; max-width: 60ch; line-height: 1.55; }
+.nosotros-valores { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--e2); }
+.nosotros-valores li { padding: var(--e1) var(--e3); border-radius: var(--r-pastilla); background: var(--accion-suave-fondo); color: var(--accion-suave-texto); font-size: var(--t-menor); font-weight: 600; }
+@media (max-width: 899px) { .seccion-nosotros { grid-template-columns: minmax(0, 1fr); gap: var(--e7); } }
+
+/* El pie: el logo con la razón social y el NIT, y los enlaces en columnas. */
+.publica-pie { padding: var(--e8) max(var(--e5), calc((100% - 1200px) / 2)); background: var(--superficie-marca); color: var(--texto-sobre-marca-suave); }
+.publica-pie-cuerpo { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)); gap: var(--e7); }
+.publica-pie-marca { display: grid; gap: var(--e3); align-content: start; }
+.publica-pie-marca .marca { height: 40px; width: auto; justify-self: start; }
+.publica-pie-marca p { margin: 0; font-size: var(--t-menor); }
+.publica-pie-grupo { display: grid; gap: var(--e2); align-content: start; justify-items: start; }
+.publica-pie-grupo a { color: var(--texto-sobre-marca); font-size: var(--t-cuerpo); text-decoration: none; }
+.publica-pie-grupo a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.publica-pie-titulo {
+  margin: 0 0 var(--e1); font-family: var(--fuente); font-size: var(--t-etiqueta); font-weight: 700;
+  letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; color: var(--texto-sobre-marca-acento);
+}
+@media (max-width: 899px) { .publica-pie-cuerpo { grid-template-columns: repeat(2, minmax(0, 1fr)); } .publica-pie-marca { grid-column: 1 / -1; } }
+@media (max-width: 479px) { .publica-pie-cuerpo { grid-template-columns: minmax(0, 1fr); } }
+
