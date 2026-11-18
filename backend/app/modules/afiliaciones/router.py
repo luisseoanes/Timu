@@ -18,7 +18,6 @@ from app.api.deps import (
     publico,
     requiere,
 )
-from app.core.config import settings
 from app.core.database import ContextoDb, fijar_contexto
 from app.core.enums import ColorPlan, EstadoPago, Periodicidad, Rol
 from app.core.errores import ReglaNegocio
@@ -39,6 +38,7 @@ from app.modules.familias.schemas import (
     MascotaAlta,
     MascotaRead,
 )
+from app.modules.institucional import service as institucional
 from app.modules.planes import service as planes
 from app.modules.planes.models import Plan
 from app.modules.planes.schemas import CotizacionRead, PlanPublico, cotizacion_read
@@ -387,14 +387,15 @@ async def ciudades_con_cobertura(db: DbSession) -> list[str]:
 
 
 class ContactoPublico(BaseModel):
-    """A quien escribe quien se afilia: el WhatsApp de TIMU, o nada si no esta configurado."""
+    """A quien escribe quien se afilia: el WhatsApp de TIMU que escribe Administracion en los
+    datos de TIMU (R3-PUB-04), o nada si no lo ha escrito."""
 
     whatsapp: str | None
 
 
 @router.get("/registro/contacto", response_model=ContactoPublico, dependencies=[PUBLICO])
-async def contacto_registro() -> ContactoPublico:
-    return ContactoPublico(whatsapp=settings.WHATSAPP_CONTACTO_PUBLICO or None)
+async def contacto_registro(db: DbSession) -> ContactoPublico:
+    return ContactoPublico(whatsapp=await db.run_sync(institucional.whatsapp))
 
 
 @router.get("/registro/planes", response_model=list[PlanPublico], dependencies=[PUBLICO])

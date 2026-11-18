@@ -20,6 +20,7 @@ from app.modules.comercial import service as comercial
 from app.modules.comercial.models import Interesado
 from app.modules.comunicaciones.models import Mensaje
 from app.modules.familias.models import ContactoFamilia, Familia
+from app.modules.institucional import service as institucional
 from app.modules.preventivos.models import EventoPreventivo
 from app.modules.tareas.models import Tarea
 from scripts import seed
@@ -137,11 +138,12 @@ async def test_el_modelo_del_contrato_se_lee_antes_de_pagar_sin_guardar_nada(
     assert (await client.post(f"{API}/contrato-modelo", json=gato_en_otro)).status_code == 422
 
 
-async def test_el_contacto_de_timu_sale_de_la_configuracion(client: AsyncClient, monkeypatch):
-    monkeypatch.setattr(settings, "WHATSAPP_CONTACTO_PUBLICO", "+573001112233")
-    assert (await client.get(f"{API}/contacto")).json() == {"whatsapp": "+573001112233"}
-    monkeypatch.setattr(settings, "WHATSAPP_CONTACTO_PUBLICO", "")
+async def test_el_contacto_de_timu_sale_de_los_datos_de_timu(client: AsyncClient, db):
+    """R3-PUB-04: el WhatsApp lo escribe Administracion, ya no una variable de entorno."""
     assert (await client.get(f"{API}/contacto")).json() == {"whatsapp": None}
+    await db.run_sync(institucional.actualizar, {"whatsapp": "+573001112233"})
+    await db.commit()
+    assert (await client.get(f"{API}/contacto")).json() == {"whatsapp": "+573001112233"}
 
 
 async def test_el_valor_lo_calcula_el_backend_y_no_hay_familia_hasta_el_formulario(

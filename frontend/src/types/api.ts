@@ -816,6 +816,50 @@ export interface ContactoPublico {
   whatsapp: string | null
 }
 
+export interface Red {
+  nombre: string
+  url: string
+}
+
+export interface DatosTimuIn {
+  razon_social?: string | null
+  nit?: string | null
+  presentacion?: string | null
+  mision?: string | null
+  vision?: string | null
+  valores?: string[]
+  clinica_nombre?: string | null
+  clinica_direccion?: string | null
+  clinica_barrio?: string | null
+  clinica_ciudad?: string | null
+  clinica_horario?: string | null
+  horario_atencion?: string | null
+  telefonos?: string[]
+  whatsapp?: string | null
+  correo?: string | null
+  redes?: Red[]
+}
+
+export interface DatosTimuRead {
+  id: string
+  razon_social: string | null
+  nit: string | null
+  presentacion: string | null
+  mision: string | null
+  vision: string | null
+  valores: string[]
+  clinica_nombre: string | null
+  clinica_direccion: string | null
+  clinica_barrio: string | null
+  clinica_ciudad: string | null
+  clinica_horario: string | null
+  horario_atencion: string | null
+  telefonos: string[]
+  whatsapp: string | null
+  correo: string | null
+  redes: Red[]
+}
+
 export interface CarnetVerificadoRead {
   codigo: string
   emitido_en: string

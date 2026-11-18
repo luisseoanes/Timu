@@ -21,6 +21,7 @@ from app.modules.encuestas.router import router as encuestas_router
 from app.modules.familias.router import mascotas_router
 from app.modules.familias.router import router as familias_router
 from app.modules.ia.router import router as ia_router
+from app.modules.institucional.router import router as institucional_router
 from app.modules.planes.router import router as planes_router
 from app.modules.portal.router import router as portal_router
 from app.modules.preventivos.router import router as preventivos_router
@@ -63,6 +64,7 @@ for r in (
     encuestas_router,
     aliadas_router,
     portal_router,
+    institucional_router,
     dashboard_router,
     ia_router,
     webhooks.router,

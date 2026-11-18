@@ -111,8 +111,6 @@ def test_produccion_sin_variable_obligatoria_no_arranca():
         # Obligatoria, pero el valor de desarrollo la cumplia: cualquiera que lea el repo
         # podia suscribir el webhook de WhatsApp.
         {"WHATSAPP_VERIFY_TOKEN": "timu-verify"},
-        # R3-PUB-02: el WhatsApp ficticio de .env.example no puede llegar a una familia de verdad.
-        {"WHATSAPP_CONTACTO_PUBLICO": "+573000000000"},
         {"SECRET_KEY": "cambiar-en-produccion-solo-para-desarrollo-local"},
     ],
 )

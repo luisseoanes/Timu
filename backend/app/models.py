@@ -61,6 +61,7 @@ from app.modules.documentos.models import DocumentoFamilia  # noqa: F401
 from app.modules.encuestas.models import ConfiguracionEncuesta, Encuesta  # noqa: F401
 from app.modules.familias.models import ContactoFamilia, Familia, Mascota  # noqa: F401
 from app.modules.ia.models import CasoPruebaIA, ConsultaIA, PromptIA  # noqa: F401
+from app.modules.institucional.models import DatosTimu  # noqa: F401
 from app.modules.planes.models import (  # noqa: F401
     Beneficio,
     BeneficioAdicional,
