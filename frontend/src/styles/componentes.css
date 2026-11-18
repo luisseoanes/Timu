@@ -385,6 +385,9 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
 .formulario > label.acciones { align-self: end; min-height: 40px; }
 .formulario .ancho { grid-column: 1 / -1; }
 .formulario fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--e3); }
+/* Un fieldset que es él mismo la rejilla (los beneficios de un plan, las secciones de una ventana)
+   tampoco lleva la caja del navegador. */
+fieldset.formulario { border: 0; padding: 0; margin: 0; min-width: 0; }
 .formulario legend { padding: 0; font-family: var(--fuente); font-size: var(--t-cuerpo); font-weight: 600; color: var(--texto-titulo); margin-bottom: var(--e2); }
 .exito { color: var(--estado-ok-texto); font-size: var(--t-menor); }
 
