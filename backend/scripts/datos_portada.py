@@ -47,6 +47,8 @@ DATOS_TIMU: dict[str, Any] = {
     "telefonos": ["+573016244775", "+573184140551"],
     "whatsapp": "+573000000000",
     "correo": "administracion@timu.com.co",
+    # La de la web actual: deja de existir cuando la web nueva sustituya a WordPress.
+    "politica_datos_url": "https://timu.com.co/wp-content/uploads/2025/05/Habeas-Data-TIMU.pdf",
     "redes": [
         {"nombre": "Instagram", "url": "https://www.instagram.com/timumedicinaprepagada/"},
         {
@@ -280,7 +282,7 @@ ADICIONALES: dict[str, list[dict[str, Any]]] = {
             "nombre": "Baño y peluquería",
             "cubre": "30 %",
             "tercero": True,
-            "detalle": "Lo presta un tercero: TIMU no garantiza siempre su disponibilidad.",
+            "detalle": "TIMU no garantiza siempre su disponibilidad.",
         },
         {
             "nombre": "Precios preferenciales",

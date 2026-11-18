@@ -486,8 +486,17 @@ def portada(c: Cliente) -> None:
             c.post("/aliadas", {**aliada, "en_portada": True, "orden_portada": orden})
     for plan in c.get("/planes"):
         deseados = ADICIONALES.get(plan["codigo"])
-        if deseados and [(a["nombre"], a["cubre"]) for a in plan["adicionales"]] != [
-            (a["nombre"], a["cubre"]) for a in deseados
+        # Todos los campos, con lo que la API pone si falta: un detalle corregido tambien llega.
+        campos = {
+            "nombre": None,
+            "cubre": None,
+            "detalle": None,
+            "carencia_dias": None,
+            "tercero": False,
+        }
+        actuales = [tuple(a.get(k, d) for k, d in campos.items()) for a in plan["adicionales"]]
+        if deseados and actuales != [
+            tuple(a.get(k, d) for k, d in campos.items()) for a in deseados
         ]:
             c.put(f"/planes/{plan['id']}/adicionales", deseados)
 
