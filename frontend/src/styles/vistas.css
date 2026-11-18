@@ -1528,6 +1528,12 @@
 /* ===== Aliadas (R2-PAN-10): remisiones en bandeja, clínicas en listado con ficha ===== */
 .aliada-quien { color: var(--texto); font-size: var(--t-cuerpo); }
 .aliada-nota { max-width: 65ch; font-size: var(--t-menor); color: var(--texto-suave); }
+/* Cómo sale una aliada en la portada (R3-PUB-04): su logo junto a lo que dice de ella. El logo es
+   de un tercero: se muestra entero sobre la superficie, sin recortarlo ni teñirlo. */
+.aliada-portada { display: grid; gap: var(--e4); grid-template-columns: auto minmax(0, 1fr); align-items: start; }
+.aliada-portada:not(:has(.aliada-logo)) { grid-template-columns: minmax(0, 1fr); }
+.aliada-logo { width: 72px; height: 72px; object-fit: contain; border: 1px solid var(--borde); border-radius: var(--r-campo); background: var(--superficie); padding: var(--e2); }
+@media (max-width: 480px) { .aliada-portada { grid-template-columns: minmax(0, 1fr); } }
 /* Las remisiones por usar de la clínica: a quién y cuándo vence, sin tabla. */
 .aliada-remisiones { list-style: none; margin: 0; padding: 0; }
 .aliada-remisiones > li { display: grid; gap: 2px; padding: var(--e3) 0; border-top: 1px solid var(--borde); }

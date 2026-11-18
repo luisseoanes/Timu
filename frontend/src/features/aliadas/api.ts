@@ -10,6 +10,7 @@ import type {
   RecuentosRemisiones,
   RemisionRead,
   RemisionVistaAliada,
+  TipoAliada,
 } from '@/types'
 
 export interface FilaLiquidacion {
@@ -119,12 +120,35 @@ export function useCrearClinica() {
   )
 }
 
+/** Lo que dice de una aliada la portada pública (R3-PUB-04). */
+export interface EnPortada {
+  en_portada?: boolean
+  tipo?: TipoAliada
+  atiende_24h?: boolean
+  barrio?: string | null
+  horario?: string | null
+  presentacion?: string | null
+  orden_portada?: number
+}
+
 export function useActualizarClinica() {
   return useMutacion(
-    async ({ id, ...datos }: { id: string; activa?: boolean; telefono?: string; email?: string; servicios?: string }) =>
+    async ({ id, ...datos }: { id: string; activa?: boolean; telefono?: string; email?: string; servicios?: string } & EnPortada) =>
       (await api.patch<ClinicaRead>(`/aliadas/${id}`, datos)).data,
     'aliadas',
   )
+}
+
+export function useSubirLogo() {
+  return useMutacion(async ({ id, logo }: { id: string; logo: File }) => {
+    const forma = new FormData()
+    forma.append('logo', logo)
+    return (await api.put<ClinicaRead>(`/aliadas/${id}/logo`, forma)).data
+  }, 'aliadas')
+}
+
+export function useQuitarLogo() {
+  return useMutacion(async (id: string) => (await api.delete<ClinicaRead>(`/aliadas/${id}/logo`)).data, 'aliadas')
 }
 
 export function useCrearConvenio() {

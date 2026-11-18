@@ -14,6 +14,7 @@ import { puede } from '@/lib/permisos'
 import type { ClinicaRead } from '@/types'
 
 import { useActualizarClinica, useClinicas, useConvenios, useCrearClinica, useCrearConvenio, useRecuentosRemisiones, useRemisiones } from './api'
+import { EnLaPortada } from './ClinicaEnPortada'
 import { cobertura } from './remision'
 
 /** Clínicas y convenios en listado con ficha (R2-PAN-10), como Familias: la clínica abierta vive en
@@ -175,6 +176,8 @@ function Ficha({ clinica: c }: { clinica: ClinicaRead }) {
           <dd>{c.servicios ?? '—'}</dd>
         </div>
       </dl>
+
+      <EnLaPortada clinica={c} editable={esAdmin} />
 
       <section className="bloque" aria-labelledby="clinica-convenios">
         <h3 id="clinica-convenios">Convenios</h3>
