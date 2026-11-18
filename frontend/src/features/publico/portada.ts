@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
 import type { AliadaPublica, DatosTimuRead, PlanPublico } from '@/types'
@@ -18,6 +18,26 @@ export function useAliadasPublicas() {
     queryKey: ['portada', 'aliadas'],
     staleTime: 5 * 60_000,
     queryFn: async () => (await api.get<AliadaPublica[]>('/aliadas/publicas')).data,
+  })
+}
+
+export interface MensajeContacto {
+  nombre: string
+  telefono?: string
+  email?: string
+  ciudad?: string
+  mascota?: string
+  especie?: 'canino' | 'felino'
+  mensaje: string
+  acepta_datos: true
+  /** Campo trampa: queda vacío para las personas. */
+  sitio_web?: string
+}
+
+/** El formulario de contacto: quien escribe entra al embudo de Comercial con su mensaje. */
+export function useEnviarContacto() {
+  return useMutation({
+    mutationFn: async (datos: MensajeContacto) => (await api.post<{ recibido: boolean }>('/comercial/contacto', datos)).data,
   })
 }
 

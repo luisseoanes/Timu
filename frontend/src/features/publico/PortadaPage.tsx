@@ -17,6 +17,7 @@ import type { PlanPublico } from '@/types'
 
 import { ArmaTuPlan, type Manada } from './ArmaTuPlan'
 import { Comparador } from './Comparador'
+import { ContactoPortada } from './ContactoPortada'
 import { MarcoPublico } from './MarcoPublico'
 import { useAliadasPublicas, useDatosTimu, rutaDePlan } from './portada'
 import { RedTimu } from './RedTimu'
@@ -256,6 +257,14 @@ export function PortadaPage() {
         </div>
       </section>
 
+      <section id="contacto" className="seccion seccion-contacto" aria-labelledby="contacto-titulo">
+        <div className="seccion-cabeza">
+          <h2 id="contacto-titulo" className="seccion-titulo">
+            Hablemos de tu peludo
+          </h2>
+        </div>
+        <ContactoPortada datos={datos.data} />
+      </section>
     </MarcoPublico>
   )
 }

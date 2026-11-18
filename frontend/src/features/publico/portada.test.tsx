@@ -243,3 +243,61 @@ describe('Portada (R3-PUB-04)', () => {
     expect(screen.getByText('Aún no vendemos planes en esta ciudad.')).toBeInTheDocument()
   })
 })
+
+describe('Contacto de la portada', () => {
+  it('envía el mensaje con la autorización y da las gracias', async () => {
+    const enviados: unknown[] = []
+    server.use(
+      http.post(`${API}/comercial/contacto`, async ({ request }) => {
+        enviados.push(await request.json())
+        return HttpResponse.json({ recibido: true }, { status: 202 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<PortadaPage />)
+    const form = await screen.findByRole('form', { name: 'Déjanos un mensaje' })
+    expect(await within(form).findByRole('link', { name: 'Política de tratamiento de datos' })).toHaveAttribute('href', DATOS.politica_datos_url)
+    await user.type(within(form).getByLabelText('Tu nombre'), 'Paula Díaz')
+    await user.type(within(form).getByLabelText('Celular'), '3005551234')
+    await user.selectOptions(within(form).getByLabelText('Tu peludo es'), 'felino')
+    await user.type(within(form).getByLabelText('Tu mensaje'), '¿Atienden en Envigado?')
+    await user.click(within(form).getByLabelText(/Autorizo a TIMU/))
+    await user.click(within(form).getByRole('button', { name: 'Enviar mensaje' }))
+    expect(await screen.findByRole('heading', { name: 'Recibimos tu mensaje' })).toBeInTheDocument()
+    expect(enviados).toEqual([
+      { nombre: 'Paula Díaz', telefono: '3005551234', especie: 'felino', mensaje: '¿Atienden en Envigado?', acepta_datos: true, sitio_web: '' },
+    ])
+  })
+
+  it('sin celular ni correo pide uno y no envía nada', async () => {
+    let enviado = false
+    server.use(
+      http.post(`${API}/comercial/contacto`, () => {
+        enviado = true
+        return HttpResponse.json({ recibido: true }, { status: 202 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<PortadaPage />)
+    const form = await screen.findByRole('form', { name: 'Déjanos un mensaje' })
+    await user.type(within(form).getByLabelText('Tu nombre'), 'Paula')
+    await user.type(within(form).getByLabelText('Tu mensaje'), 'Hola')
+    await user.click(within(form).getByLabelText(/Autorizo a TIMU/))
+    await user.click(within(form).getByRole('button', { name: 'Enviar mensaje' }))
+    expect(within(form).getByRole('alert')).toHaveTextContent('Escribe tu celular o tu correo')
+    expect(enviado).toBe(false)
+  })
+
+  it('dice el error de la API', async () => {
+    server.use(http.post(`${API}/comercial/contacto`, () => HttpResponse.json({ detail: 'Telefono no valido' }, { status: 422 })))
+    const user = userEvent.setup()
+    renderizar(<PortadaPage />)
+    const form = await screen.findByRole('form', { name: 'Déjanos un mensaje' })
+    await user.type(within(form).getByLabelText('Tu nombre'), 'Paula')
+    await user.type(within(form).getByLabelText('Correo'), 'paula@correo.co')
+    await user.type(within(form).getByLabelText('Tu mensaje'), 'Hola')
+    await user.click(within(form).getByLabelText(/Autorizo a TIMU/))
+    await user.click(within(form).getByRole('button', { name: 'Enviar mensaje' }))
+    expect(await within(form).findByRole('alert')).toHaveTextContent('Telefono no valido')
+  })
+})

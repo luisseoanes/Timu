@@ -1909,6 +1909,29 @@
 .nosotros-valores li { padding: var(--e1) var(--e3); border-radius: var(--r-pastilla); background: var(--accion-suave-fondo); color: var(--accion-suave-texto); font-size: var(--t-menor); font-weight: 600; }
 @media (max-width: 899px) { .seccion-nosotros { grid-template-columns: minmax(0, 1fr); gap: var(--e7); } }
 
+/* Contacto: cómo llegar a TIMU sin escribir y, al lado, el formulario. */
+.contacto { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: var(--e8); align-items: start; }
+.contacto-datos { display: grid; gap: var(--e6); }
+.contacto-whatsapp {
+  display: flex; align-items: center; gap: var(--e3); padding: var(--e4) var(--e5); border-radius: var(--r-panel);
+  background: var(--accion-suave-fondo); color: var(--accion-suave-texto); text-decoration: none;
+}
+.contacto-whatsapp:hover { background: var(--accion-suave-fondo-hover); }
+.contacto-whatsapp > span { display: grid; }
+.contacto-whatsapp strong { color: var(--texto-titulo); }
+.contacto-lista { margin: 0; display: grid; gap: var(--e5); }
+.contacto-lista dd { margin: var(--e1) 0 0; display: grid; gap: 2px; justify-items: start; }
+.contacto-horario { font-size: var(--t-menor); color: var(--texto-suave); }
+.contacto-form { display: grid; gap: var(--e5); padding: var(--e6); border: 1px solid var(--borde); border-radius: var(--r-panel); background: var(--superficie); }
+.contacto-form h3 { margin: 0; font-size: var(--t-seccion); color: var(--texto-titulo); }
+.contacto-autorizo { align-items: start; font-size: var(--t-menor); }
+.contacto-autorizo input { margin-top: 2px; }
+.contacto-recibido { justify-items: start; }
+.contacto-recibido svg { color: var(--indicador-seleccion); }
+.contacto-recibido p { margin: 0; }
+@media (max-width: 899px) { .contacto { grid-template-columns: minmax(0, 1fr); gap: var(--e7); } }
+@media (max-width: 479px) { .contacto-form { padding: var(--e4); } .contacto-form .formulario { grid-template-columns: minmax(0, 1fr); } }
+
 /* El pie: el logo con la razón social y el NIT, y los enlaces en columnas. */
 .publica-pie { padding: var(--e8) max(var(--e5), calc((100% - 1200px) / 2)); background: var(--superficie-marca); color: var(--texto-sobre-marca-suave); }
 .publica-pie-cuerpo { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)); gap: var(--e7); }
