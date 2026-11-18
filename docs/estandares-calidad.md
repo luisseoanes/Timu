@@ -69,9 +69,8 @@ haciendo que los dos lo usen.
 
 **Deuda**: avisos moderados sin versión corregida en herramientas de desarrollo: `minimatch`
 en la cadena de ESLint y el `npm` que trae `semantic-release`; se ven en el registro del job.
-Y uno alto con excepción (decidido con el usuario el 2026-11-17): `picomatch` (GHSA-fc5q-39xc-vjpf,
-ReDoS, sin versión corregida; hasta la 4.0.7), que llega por vite, vitest y semantic-release, no al
-panel desplegado. Se cierra al salir la versión que lo corrige: el script falla cuando sobra.
+La excepción alta de `picomatch` (GHSA-fc5q-39xc-vjpf, del 2026-11-17) se cerró el 2026-11-18,
+cuando dejó de aparecer en la auditoría; la lista de excepciones está vacía.
 La auditoría corre en cada empuje, no en un horario (decidido: un aviso nuevo sin empujes se
 ve en el siguiente).
 

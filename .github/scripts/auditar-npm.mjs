@@ -11,12 +11,9 @@
 // despliega: el paso del panel en produccion sigue con `npm audit --omit=dev`, sin excepciones.
 import { execFileSync } from 'node:child_process'
 
-const EXCEPCIONES = {
-  // 2026-11-17, decidido con el usuario: ReDoS de picomatch (<= 4.0.7, la ultima publicada), sin
-  // version corregida. Solo llega por herramientas: vite y vitest en el panel, semantic-release en
-  // la raiz; el panel desplegado no lo incluye. Se borra al salir la version que lo corrige.
-  'GHSA-fc5q-39xc-vjpf': 'picomatch: ReDoS con extglobs repetidos, sin versión corregida',
-}
+// Vacia desde el 2026-11-18: la de picomatch (GHSA-fc5q-39xc-vjpf, del 2026-11-17) dejo de salir.
+// Una nueva va con su motivo y su fecha: { 'GHSA-…': 'paquete: motivo, sin versión corregida' }.
+const EXCEPCIONES = {}
 
 const GRAVES = new Set(['high', 'critical'])
 
