@@ -6,8 +6,8 @@
 > empieza sin que el usuario lo diga. El panel del equipo está rediseñado entero (R2) y
 > el portal de familias también, igual que el acceso (ingreso, recuperación y activación). El
 > espacio de la clínica aliada está rediseñado desde `R3-ALI-01`, la encuesta y la verificación
-> del carnet desde `R3-PUB-03`, y el registro en línea desde `R3-PUB-02`: no queda ninguna pantalla
-> con la composición anterior.
+> del carnet desde `R3-PUB-03`, el registro en línea desde `R3-PUB-02` y la portada pública con la
+> página de cada plan desde `R3-PUB-04`: no queda ninguna pantalla con la composición anterior.
 
 ## Qué leer antes de escribir una pantalla
 

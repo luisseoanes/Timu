@@ -3,12 +3,13 @@
 Plataforma de gestión veterinaria por afiliación descrita en
 `docs/propuesta-timu-puntos-15-19.md` (sección 15.C — Tecnología). Arquitectura modular por
 dominios: familias, planes, afiliaciones, cartera, servicios, preventivos, clínica, rutas,
-comunicaciones, comercial, campañas, encuestas, clínicas aliadas, IA, portal y dashboard.
+comunicaciones, comercial, campañas, encuestas, clínicas aliadas, IA, portal, dashboard e
+institucional (los datos de TIMU que dice la portada).
 
-Tres espacios con su propio acceso: el **panel del equipo** (administración, comercial,
-operaciones y médicos), el **portal de familias** y el de la **clínica aliada**, y páginas
-públicas sin sesión: el registro en línea con pago (`/afiliacion`), las encuestas y la
-verificación de carnets.
+Tres espacios con su propio acceso: el **panel del equipo** (`/panel`: administración,
+comercial, operaciones y médicos), el **portal de familias** y el de la **clínica aliada**, y
+páginas públicas sin sesión: la **portada** de `timu.com.co` (`/`) con una página por plan, el
+registro en línea con pago (`/afiliacion`), las encuestas y la verificación de carnets.
 
 ## Stack
 
@@ -49,7 +50,7 @@ cp .env.example .env   # TIMU_API_PORT, TIMU_DB_PORT, TIMU_S3_PORT…
 
 Servicios (puertos por defecto):
 
-- Panel: http://localhost:5173
+- Portada pública: http://localhost:5173 (el panel del equipo, en http://localhost:5173/panel)
 - API + Swagger: http://localhost:8000/docs
 - Health check: http://localhost:8000/health (base, Redis y workers)
 - Almacenamiento S3 (SeaweedFS): http://localhost:9000
@@ -170,6 +171,7 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [docs/prueba-de-carga.md](docs/prueba-de-carga.md) | Cómo correr la prueba de carga con el volumen a 12 meses |
 | [docs/flujo-de-la-visita.md](docs/flujo-de-la-visita.md) | Cómo se atiende una visita en casa: estados de la parada y del servicio, pasos de cada tipo y la consulta como registro |
 | [docs/portal-familias.md](docs/portal-familias.md) | Qué ve y qué hace la familia en el portal, de dónde sale cada dato y lo que dice la API para que el panel no copie reglas del backend |
+| [docs/portada-publica.md](docs/portada-publica.md) | La portada y la página de cada plan: de dónde sale cada sección (lo que edita Administración), las reglas de la red de aliadas, del contacto a Comercial, las direcciones viejas y lo que falta de TIMU para publicarla |
 | [docs/registro-en-linea.md](docs/registro-en-linea.md) | Cómo se afilia una familia sola, de la ciudad al portal: pantallas, rutas de la API, estados, token y plazos, y lo que sigue provisional |
 | [docs/indicadores.md](docs/indicadores.md) | Definición de cada indicador del dashboard y de los exportables |
 | [docs/datos-de-demostracion.md](docs/datos-de-demostracion.md) | Qué siembran `datos_demo` y `operacion_demo`, cómo se hizo la operación (por la API y corrida al pasado), sus límites y cómo ampliarlos |

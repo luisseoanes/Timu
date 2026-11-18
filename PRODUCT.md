@@ -30,8 +30,10 @@ Cada espacio se optimiza para su público; comparten marca y componentes, no den
   familia. Consultan mascotas, carnet, historia clínica, citas y pagos. Usan la plataforma sobre
   todo desde el celular, a menudo llegando desde un enlace de WhatsApp.
 - **Clínica aliada** (`aliada`). Valida las remisiones de su clínica y reporta la atención.
-- **Público sin sesión**: registro en línea con pago (`/afiliacion`), encuestas de
-  satisfacción y verificación de carnet. Mayoritariamente desde el celular.
+- **Público sin sesión**: la portada de `timu.com.co` (`/`), la entrada de todo, con una página
+  por plan (`/planes/<plan>`); el registro en línea con pago (`/afiliacion`), las encuestas de
+  satisfacción y la verificación de carnet. Mayoritariamente desde el celular, a menudo desde un
+  enlace de WhatsApp o de redes.
 
 ## Product Purpose
 
