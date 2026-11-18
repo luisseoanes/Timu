@@ -47,13 +47,12 @@ hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
   tabla de [deuda decidida](rediseno/deuda.md) marca como pendiente: `DEU-14` (terminar la siembra
   gruesa), `DEU-15` (plantillas de consulta, decidida, TODO) y `DEU-27` (va en `R4-CIE-03`). `DEU-E`
   espera a TIMU. `DEU-8` (el editor de reglas por campos) se cerró el 2026-11-17.
-- **Lo siguiente lo decide el usuario: R3 está completa.** Del orden **confirmado por el usuario el
-  2026-11-16** quedan `DEU-14` y `DEU-15` (intercaladas, preguntando antes de empezar cada una) y el
-  cierre `R4` (recorrido, auditoría, documentación y umbrales). El 2026-11-17 el usuario eligió
-  `DEU-8` antes que la portada, recomendada por los requisitos (Sección 7, 6.3 y Sección 13): la
-  portada no la pide el documento de TIMU, sino el cambio de dominio, y TIMU aún no eligió entre A, B
-  y C. El usuario puede pedir
-  antes algo distinto a la revisión visual: preguntarle antes de empezar nada.
+- **Lo siguiente lo decide el usuario: R3 está completa.** Quedan `DEU-14` y `DEU-15` y el cierre
+  `R4` (recorrido, auditoría, documentación y umbrales). **Recomendado** (2026-11-18): `DEU-14`, luego
+  `DEU-15` y después `R4-CIE-01` a `R4-CIE-04` en orden. El recorrido y la auditoría de R4 solo valen
+  si la demostración recorre todos los casos (hoy faltan las visitas en clínica y las plantillas), y
+  `DEU-15` toca la historia clínica, que pide el documento de TIMU; R4 es pulido. Se le pregunta al
+  usuario antes de empezar cada una.
 - **La portada pública de `timu.com.co` está hecha: `R3-PUB-04`** (2026-11-18). Antes de publicarla
   en el dominio quedan cosas de TIMU, en [pendientes externos](pendientes-externos.md): los valores
   provisionales sacados de la web vieja, el permiso de las personas de las fotos del equipo, la

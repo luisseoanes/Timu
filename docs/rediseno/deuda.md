@@ -42,7 +42,7 @@ qué quedó decidido. Los «Lo que quedó» de cada superficie (más abajo) son 
 | `DEU-24` | Contrato, fórmula y comprobante en PDF sin marca | Usan `marca_pdf` | ahora | Hecho (2026-11-15): piezas comunes en `marca_pdf`; además dicen cada cosa en palabras |
 | `DEU-25` | Los campos con icono del acceso miden 48 px | 48 px es la norma del acceso | ahora (documentación) | Hecho (2026-11-15): `DESIGN.md` lo recoge en Inputs |
 | `DEU-26` | Pasarela sin recuento ni vista en la URL, casos de la IA en JSON, `style` en Reportes | Se arreglan | ahora | Hecho (2026-11-15): recuentos y vista en la URL, casos en palabras (`esperado_texto`) y sin `style`; de paso, la API rechaza un caso que el evaluador no entiende |
-| `DEU-27` | `.impeccable/design.json` va por detrás de `DESIGN.md` | Se completa en el cierre | `R4-CIE-03` | Pendiente |
+| `DEU-27` | `.impeccable/design.json` va por detrás de `DESIGN.md` | Se completa en el cierre | `R4-CIE-03` | Pendiente de comprobar: el documentador de `R3-PUB-04` lo regeneró entero desde `DESIGN.md` el 2026-11-18 (reglas, «Do» y «Don't», colores, tipos y componentes nuevos); en `R4-CIE-03` solo se comprueba que siga al día tras refrescar `DESIGN.md` |
 | `DEU-28`–`DEU-70` | El «techo» del revisor en cada superficie | Como lo recomendó Claude: sí a todo salvo 28, 29, 30, 38, 39, 43, 44, 65, 68, 69 y 70 (detalle abajo) | ahora | Hecho (2026-11-16) |
 | `DEU-E` | Lo que decide TIMU | Valor provisional en el código para cada uno, pero **todos siguen pendientes** hasta que TIMU confirme el valor oficial ([pendientes externos](../pendientes-externos.md#valores-provisionales)) | — | Pendiente de TIMU |
 
