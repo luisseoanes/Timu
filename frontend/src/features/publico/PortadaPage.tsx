@@ -18,7 +18,8 @@ import type { PlanPublico } from '@/types'
 import { ArmaTuPlan, type Manada } from './ArmaTuPlan'
 import { Comparador } from './Comparador'
 import { MarcoPublico } from './MarcoPublico'
-import { useDatosTimu, rutaDePlan } from './portada'
+import { useAliadasPublicas, useDatosTimu, rutaDePlan } from './portada'
+import { RedTimu } from './RedTimu'
 import { tarifaCon, useCiudadesRegistro, usePlanesRegistro } from './registro'
 
 /** Una foto del álbum: dos anchos para el celular y el escritorio, con su pie en pastilla. */
@@ -92,6 +93,7 @@ export function PortadaPage() {
   useIrAlAncla()
   const ciudades = useCiudadesRegistro()
   const datos = useDatosTimu()
+  const aliadas = useAliadasPublicas()
   const [manada, setManada] = useState<Manada>({ ciudad: '', perros: 1, gatos: 0 })
   // Hasta que la familia elija, la ciudad es la de la clínica de TIMU si se vende allí.
   const ciudad = manada.ciudad || (ciudades.data?.includes(datos.data?.clinica_ciudad ?? '') ? datos.data!.clinica_ciudad! : (ciudades.data?.[0] ?? ''))
@@ -184,6 +186,31 @@ export function PortadaPage() {
               ))}
             </ul>
           </>
+        )}
+      </section>
+
+      <section id="aliadas" className="seccion seccion-red" aria-labelledby="aliadas-titulo">
+        <div className="seccion-cabeza">
+          <h2 id="aliadas-titulo" className="seccion-titulo">
+            La red TIMU
+          </h2>
+          <p>Nuestra clínica y las clínicas, especialistas y servicios aliados que atienden a los peludos afiliados.</p>
+        </div>
+        {aliadas.isError ? (
+          <p className="aviso-error" role="alert">
+            {mensajeError(aliadas.error, 'No pudimos cargar la red de aliadas.')}
+          </p>
+        ) : aliadas.isPending ? (
+          <div className="esqueleto" role="status">
+            <span className="sr-only">Cargando la red…</span>
+            <span className="esqueleto-linea" aria-hidden="true" />
+          </div>
+        ) : (
+          <RedTimu
+            aliadas={aliadas.data}
+            datos={datos.data}
+            aDomicilio={lista.filter((p) => p.beneficios.some((b) => b.tipo_servicio_codigo === 'consulta_domiciliaria')).map((p) => p.nombre)}
+          />
         )}
       </section>
 

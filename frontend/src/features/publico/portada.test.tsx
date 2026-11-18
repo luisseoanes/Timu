@@ -8,7 +8,7 @@ import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { AliadaPublica, DatosTimuRead, PlanPublico } from '@/types'
 
-import { desdeMensual, enlaceAfiliacion, rutaDePlan } from './portada'
+import { desdeMensual, enlaceAfiliacion, redTimu, rutaDePlan } from './portada'
 import { PortadaPage } from './PortadaPage'
 
 const API = '*/api/v1'
@@ -112,7 +112,32 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 
-describe('Los precios de la portada (portada.ts)', () => {
+describe('La red y los precios de la portada (portada.ts)', () => {
+  it('agrupa en estaciones las aliadas seguidas del mismo barrio y marca la de la clínica de TIMU', () => {
+    const { estaciones, servicios } = redTimu(ALIADAS, DATOS)
+    expect(estaciones.map((e) => [e.nombre, e.ciudad, e.aliadas.length, e.clinicaTimu])).toEqual([
+      ['Bello', null, 1, false],
+      ['Laureles', 'Medellín', 2, true],
+      ['Aguacatala', 'Medellín', 1, false],
+    ])
+    expect(servicios.map((a) => a.nombre)).toEqual(['AnesVet'])
+  })
+
+  it('sin aliadas en el barrio de la clínica, la clínica abre la línea con su propia estación', () => {
+    const { estaciones } = redTimu([aliada('Cabañitas', { ciudad: 'Bello' })], DATOS)
+    expect(estaciones[0]).toMatchObject({ nombre: 'Los Conquistadores, Laureles', ciudad: 'Medellín', aliadas: [], clinicaTimu: true })
+  })
+
+  it('una aliada sin barrio en un municipio con barrios no inventa su estación: va con los servicios', () => {
+    const { estaciones, servicios } = redTimu([...ALIADAS, aliada('Cosmo Pets', { tipo: 'peluqueria' })], DATOS)
+    expect(estaciones.map((e) => e.nombre)).not.toContain('Medellín')
+    expect(servicios.map((a) => a.nombre)).toEqual(['AnesVet', 'Cosmo Pets'])
+  })
+
+  it('sin datos de la clínica, ninguna estación es de intercambio', () => {
+    expect(redTimu(ALIADAS, null).estaciones.some((e) => e.clinicaTimu)).toBe(false)
+  })
+
   it('el «desde» es la tarifa más baja con los peludos de la familia, hasta la de 4', () => {
     expect(desdeMensual(PLANES)).toBe('35500.00')
     expect(desdeMensual(PLANES, 2)).toBe('30500.00')
@@ -171,6 +196,27 @@ describe('Portada (R3-PUB-04)', () => {
     expect(screen.getByRole('link', { name: 'Todo lo que cubre Mi Amigo Fiel' })).toHaveAttribute('href', '/planes/mi-amigo-fiel')
   })
 
+  it('pinta la red con la clínica de TIMU en su estación y los servicios aparte', async () => {
+    renderizar(<PortadaPage />)
+    const linea = await screen.findByRole('list', { name: 'Estaciones de la red TIMU' })
+    const laureles = within(linea).getByRole('heading', { name: /Laureles/ }).closest('li')!
+    expect(laureles).toHaveAttribute('data-intercambio', 'true')
+    expect(within(laureles).getByText('TIMU clínica veterinaria')).toBeInTheDocument()
+    expect(within(laureles).getByText('Macarena')).toBeInTheDocument()
+    expect(within(linea).getByText('24 horas')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Especialistas y servicios de la red' }).parentElement).toHaveTextContent('AnesVet')
+    // Sin consulta domiciliaria en ningún plan, no hay ramal a casa.
+    expect(within(linea).queryByText('Tu casa')).not.toBeInTheDocument()
+  })
+
+  it('de la clínica sale el ramal a casa solo si algún plan trae consulta domiciliaria', async () => {
+    const domicilio = { ...PLANES[0]!.beneficios[0]!, tipo_servicio_codigo: 'consulta_domiciliaria', nombre: 'Consulta domiciliaria' }
+    server.use(http.get(`${REGISTRO}/planes`, () => HttpResponse.json([{ ...PLANES[0], beneficios: [domicilio] }, PLANES[1]])))
+    renderizar(<PortadaPage />)
+    const linea = await screen.findByRole('list', { name: 'Estaciones de la red TIMU' })
+    expect(await within(linea).findByText(/Consulta domiciliaria en Colita Feliz/)).toBeInTheDocument()
+  })
+
   it('dice quiénes son con lo que escribe Administración, y calla lo que falta', async () => {
     renderizar(<PortadaPage />)
     expect(await screen.findByText(DATOS.presentacion!)).toBeInTheDocument()
@@ -180,10 +226,14 @@ describe('Portada (R3-PUB-04)', () => {
     expect(screen.getByText(/TIMU S\.A\.S\./)).toHaveTextContent('NIT 901635168-2')
   })
 
-  it('dice si no pudo cargar los planes', async () => {
-    server.use(http.get(`${REGISTRO}/planes`, () => new HttpResponse(null, { status: 503 })))
+  it('dice si no pudo cargar los planes o la red', async () => {
+    server.use(
+      http.get(`${REGISTRO}/planes`, () => new HttpResponse(null, { status: 503 })),
+      http.get(`${API}/aliadas/publicas`, () => new HttpResponse(null, { status: 503 })),
+    )
     renderizar(<PortadaPage />)
     expect(await screen.findByText(/No pudimos cargar los planes/)).toBeInTheDocument()
+    expect(await screen.findByText(/No pudimos cargar la red de aliadas/)).toBeInTheDocument()
   })
 
   it('en una ciudad sin planes lo dice en vez de inventar precios', async () => {

@@ -144,6 +144,7 @@
   /* Rutas: una ruta no es un plan, así que su línea no toma color de plan */
   --ruta-recorrida: var(--marino-900);  /* tramo hecho; estación hecha o en la que se está */
   --ruta-pendiente: var(--marino-400);  /* tramo y estación por hacer */
+  --linea-aliadas: var(--verde-500);        /* la línea de la red de aliadas en la portada; decorativa */
 
   /* Series de gráfico, siempre en este orden */
   --serie-1: var(--verde-600);
