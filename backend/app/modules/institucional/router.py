@@ -57,6 +57,10 @@ class DatosTimuIn(BaseModel):
     whatsapp: Annotated[TelefonoCO | None, BeforeValidator(_vacio_es_nada)] = None
     correo: Annotated[EmailStr | None, BeforeValidator(_vacio_es_nada)] = None
     redes: list[Red] = Field(default_factory=list, max_length=8)
+    politica_datos_url: Annotated[
+        Annotated[str, Field(max_length=500, pattern=r"^https://")] | None,
+        BeforeValidator(_vacio_es_nada),
+    ] = None
 
 
 class DatosTimuRead(BaseModel):
@@ -79,6 +83,7 @@ class DatosTimuRead(BaseModel):
     whatsapp: str | None
     correo: str | None
     redes: list[Red]
+    politica_datos_url: str | None
 
 
 @router.get("", response_model=DatosTimuRead, dependencies=[PUBLICO])

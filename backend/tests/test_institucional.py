@@ -41,6 +41,7 @@ async def test_el_administrador_escribe_los_datos_de_timu(client: AsyncClient, h
                 {"nombre": "Instagram", "url": "https://instagram.com/timumedicinaprepagada"}
             ],
             "vision": "",
+            "politica_datos_url": "https://timu.com.co/politica-de-datos",
         },
         headers=headers,
     )
@@ -53,6 +54,7 @@ async def test_el_administrador_escribe_los_datos_de_timu(client: AsyncClient, h
     assert datos["telefonos"] == ["+573016244775", "+573184140551"]
     assert (datos["whatsapp"], datos["correo"]) == ("+573016244775", "administracion@timu.com.co")
     assert datos["vision"] is None
+    assert datos["politica_datos_url"] == "https://timu.com.co/politica-de-datos"
 
 
 async def test_un_dato_mal_escrito_se_rechaza(client: AsyncClient, headers):
@@ -61,6 +63,7 @@ async def test_un_dato_mal_escrito_se_rechaza(client: AsyncClient, headers):
         {"correo": "no-es-un-correo"},
         {"redes": [{"nombre": "Instagram", "url": "http://instagram.com/x"}]},
         {"clinica_ciudad": "Gotham"},
+        {"politica_datos_url": "http://timu.com.co/datos"},
     ):
         resp = await client.put(API, json=malo, headers=headers)
         assert resp.status_code == 422, malo

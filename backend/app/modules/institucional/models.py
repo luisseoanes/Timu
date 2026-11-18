@@ -17,6 +17,7 @@ class DatosTimu(Base, UUIDMixin, TimestampMixin, Auditable):
         "una_sola_fila": "unica",
         "whatsapp_formato": "whatsapp IS NULL OR whatsapp ~ '^\\+[1-9][0-9]{7,14}$'",
         "correo_formato": "correo IS NULL OR correo ~ '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$'",
+        "politica_https": "politica_datos_url IS NULL OR politica_datos_url ~ '^https://'",
     }
     __unicos__ = {"unica": (["unica"], None)}
 
@@ -43,3 +44,5 @@ class DatosTimu(Base, UUIDMixin, TimestampMixin, Auditable):
     correo: Mapped[str | None] = mapped_column(String(255))
     # [{"nombre": "Instagram", "url": "https://..."}]
     redes: Mapped[list[dict[str, Any]]] = mapped_column(JSONTipo, default=list)
+    # La politica de tratamiento de datos (Ley 1581) que enlaza el formulario de contacto.
+    politica_datos_url: Mapped[str | None] = mapped_column(String(500))

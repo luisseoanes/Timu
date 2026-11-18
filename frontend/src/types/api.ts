@@ -838,6 +838,7 @@ export interface DatosTimuIn {
   whatsapp?: string | null
   correo?: string | null
   redes?: Red[]
+  politica_datos_url?: string | null
 }
 
 export interface DatosTimuRead {
@@ -858,6 +859,7 @@ export interface DatosTimuRead {
   whatsapp: string | null
   correo: string | null
   redes: Red[]
+  politica_datos_url: string | null
 }
 
 export interface CarnetVerificadoRead {
