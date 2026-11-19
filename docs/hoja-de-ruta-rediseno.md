@@ -38,22 +38,22 @@ con `R3-PUB-03` (2026-11-17), la encuesta y la verificación del carnet. Con `R3
 registro en línea: **R3 está completa**. Con `R3-PUB-04` (2026-11-18), la portada pública de
 `timu.com.co`, que la amplió a petición del usuario.
 
-### Dónde se retoma (2026-11-18, tras `DEU-15`)
+### Dónde se retoma (2026-11-18, tras `DEU-14`)
 
 Para la sesión siguiente, que no tiene la conversación anterior: todo lo decidido está en esta
 hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
 
 - **El techo del revisor (`DEU-28`–`DEU-70`) y la deuda decidida están hechos**, salvo lo que la
-  tabla de [deuda decidida](rediseno/deuda.md) marca como pendiente: `DEU-14` (terminar la siembra
-  gruesa) y `DEU-27` (va en `R4-CIE-03`). `DEU-E` espera a TIMU. `DEU-8` (el editor de reglas por
+  tabla de [deuda decidida](rediseno/deuda.md) marca como pendiente: `DEU-27` (va en `R4-CIE-03`).
+  `DEU-14` (la siembra gruesa) se terminó el 2026-11-18: la operación de demostración ya lleva
+  vacunas y desparasitaciones en ruta y citas en la clínica. `DEU-E` espera a TIMU. `DEU-8` (el editor de reglas por
   campos) se cerró el 2026-11-17 y `DEU-15` (las plantillas de consulta, editables y sembradas), el
   2026-11-18: el usuario la eligió antes que `DEU-14` porque es la única que cerraba un hueco del
   producto (6.14, F2-CLI-03) y porque así las consultas en clínica de `DEU-14` ya parten de plantillas.
-- **Lo siguiente lo decide el usuario: R3 está completa.** Quedan `DEU-14` y el cierre `R4`
-  (recorrido, auditoría, documentación y umbrales). **Recomendado** (2026-11-18): `DEU-14` y después
-  `R4-CIE-01` a `R4-CIE-04` en orden. El recorrido y la auditoría de R4 solo valen si la demostración
-  recorre todos los casos (hoy faltan las visitas en clínica y las vacunas y desparasitaciones en
-  ruta); R4 es pulido. Se le pregunta al usuario antes de empezar cada una.
+- **Lo siguiente lo decide el usuario: R3 está completa y la deuda decidida, cerrada.** Queda el
+  cierre `R4` (recorrido, auditoría, documentación y umbrales). **Recomendado** (2026-11-18):
+  `R4-CIE-01` a `R4-CIE-04` en orden; la demostración ya recorre todos los casos. Se le pregunta al
+  usuario antes de empezar cada una.
 - **La portada pública de `timu.com.co` está hecha: `R3-PUB-04`** (2026-11-18). Antes de publicarla
   en el dominio quedan cosas de TIMU, en [pendientes externos](pendientes-externos.md): los valores
   provisionales sacados de la web vieja, el permiso de las personas de las fotos del equipo, la
@@ -253,7 +253,7 @@ Viven en dos anexos de `docs/rediseno/`, separados de esta hoja el 2026-11-16:
 
 ### Orden de lo que sigue
 
-El orden vigente está en [«Dónde se retoma»](#dónde-se-retoma-2026-11-18-tras-deu-15). El primero, confirmado por
+El orden vigente está en [«Dónde se retoma»](#dónde-se-retoma-2026-11-18-tras-deu-14). El primero, confirmado por
 el usuario el 2026-11-12, empezaba por lo que más se usa desde el celular (Rutas, Clínica y el portal)
 y ya está hecho.
 

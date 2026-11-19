@@ -22,7 +22,7 @@ actualiza lo ya sembrado, así que un stack viejo conserva los datos de cuando s
 | Portal de familias | `ana@example.com`, con el plan en pausa por cuotas vencidas, y `jorge@example.com`, al día: en cada pasada se le paga lo vencido. |
 | Familias | Cinco, en Bogotá y Medellín, con sus mascotas y contratos (una sin plan). |
 | Planes | Los beneficios provisionales: lo que dice el plegable 2026 donde lo dice y cupos de prueba en lo demás (`BENEFICIOS` y `DEL_PLEGABLE`), y la carencia y las exclusiones provisionales que dice el registro (`CONDICIONES`); ver [pendientes externos](pendientes-externos.md). |
-| Agenda | Franjas de lunes a sábado, a domicilio y preventivas, en Bogotá y Medellín. |
+| Agenda | Franjas de lunes a sábado, a domicilio y preventivas, en Bogotá y Medellín, y en la clínica solo en Medellín (la sede de Laureles, la única de TIMU; `FRANJAS_MEDELLIN`). |
 | Portada pública (`R3-PUB-04`) | Lo que dice hoy la web de TIMU, como valores provisionales: los Datos de TIMU (presentación, visión, valores, clínica, horarios, teléfonos, el WhatsApp ficticio de local, correo, redes y la política de datos), las 17 aliadas de su página «Aliados» con su tipo, barrio, horario y orden en la red (sin logos), y los beneficios adicionales de cada plan. El contenido vive en `scripts/datos_portada.py`. A diferencia del resto, **sí se actualiza**: si los Datos de TIMU o los adicionales de un plan no coinciden con el fichero, se reescriben (las aliadas solo se crean si faltan). Ver [portada pública](portada-publica.md) y [pendientes externos](pendientes-externos.md). |
 | Lo demás | Servicios, tareas, calendarios de preventivos (con una vacuna aplicada a Nala, de Laura Gómez, para que el barrido mida la verificación de un carnet real), una consulta firmada y un borrador, tres plantillas de consulta («Control general» y «Gastroenteritis leve», para cualquier atención, y «Otitis externa», para la consulta domiciliaria; `PLANTILLAS_CONSULTA`), una respuesta virtual aprobada, interesados, una conversación de WhatsApp que pide asesor, una plantilla y una campaña, y una remisión. |
 | Ruta de la médica | En el primer día con cupo de la semana (no siempre hoy): los recorridos la buscan con `rutaDemo` (`e2e-stack/datos.ts`). |
@@ -38,7 +38,11 @@ con historia (decidido con el usuario el 2026-11-16, `DEU-14`). Siembra:
 - **Rutas pasadas**: lunes, miércoles y viernes en Bogotá, martes y sábados en Medellín (con un
   médico propio, `medico.medellin@timu.co`). Cada ruta lleva sus visitas con la consulta
   firmada, y una de cada tres consultas parte de una plantilla de `datos_demo`; una de cada seis
-  rutas omite una parada y una de cada siete cancela un servicio antes.
+  rutas omite una parada y una de cada siete cancela un servicio antes. Cada ruta lleva además una
+  parada preventiva, que alterna vacuna y desparasitación: se agenda desde el preventivo, como en la
+  bandeja, y al completarse lo aplica, así que el carnet sale de la ruta (6.8, 6.15).
+- **Citas en la clínica**: los jueves, en Medellín, dos consultas clínicas y un control post
+  atención, cada uno con su consulta presencial firmada.
 - **Preventivos** aplicados en su fecha y otros vencidos, para la bandeja.
 - **Encuestas** enviadas y respondidas, con las tareas que deja una calificación baja.
 - **Comercial**: interesados que llegaron en las últimas semanas, cada uno en su etapa (también
@@ -65,7 +69,7 @@ remisiones. Por eso:
 3. Al final se recalculan las marcas que la operación puso con la hora real (la llegada a una
    parada, la firma de la consulta, cuándo se agendó) a partir de la hora de cada visita.
 
-Ese paso escribe con la conexión del **dueño del esquema** (la de `inicializar`): es la única que
+Ese paso (y el de los preventivos aplicados en ruta) escribe con la conexión del **dueño del esquema** (la de `inicializar`): es la única que
 puede fechar una consulta ya firmada. Nada más se escribe por debajo de la API.
 
 Lo que el beat haría con el tiempo (emitir cuotas, revisar la mora, drenar el outbox, enviar
@@ -78,8 +82,9 @@ los mismos módulos de tareas que el worker.
   el pago, y en local no hay pasarela de pruebas (Wompi, pendiente de TIMU). No se fuerza por SQL.
 - **Las plantillas de WhatsApp** de campañas y encuestas se dan por aprobadas en local; en Meta
   siguen pendientes ([pendientes externos](pendientes-externos.md)).
-- **Solo hay consultas a domicilio en las rutas.** Faltan vacunas y desparasitaciones en ruta, y
-  controles y consultas en clínica (`DEU-14`): ver la [deuda del rediseño](rediseno/deuda.md).
+- **Una visita preventiva aplica el preventivo con la fecha de hoy**: el script lo lleva al día de
+  la visita, con su próxima fecha y la dosis siguiente (`aplicados_al_pasado`), escribiendo por
+  debajo de la API como el resto del paso al pasado.
 
 ## Para ampliar cualquiera de los dos
 
