@@ -186,6 +186,19 @@ def test_los_datos_de_demostracion_se_siembran_en_local_y_staging_pero_no_en_pro
             datos_demo.comprobar_ambiente(Settings(_env_file=None, **ambiente), "datos_demo")
 
 
+def test_vaciar_staging_solo_corre_en_staging_y_con_la_confirmacion_escrita():
+    from scripts import vaciar_staging
+
+    staging = Settings(_env_file=None, **{**PRODUCCION_VALIDA, "ENVIRONMENT": "staging"})
+    vaciar_staging.comprobar(staging, "staging")
+    for confirmar in (None, "si", "production"):
+        with pytest.raises(SystemExit, match="--confirmar staging"):
+            vaciar_staging.comprobar(staging, confirmar)
+    for ambiente in (PRODUCCION_VALIDA, {"ENVIRONMENT": "local"}):
+        with pytest.raises(SystemExit, match="solo corre en staging"):
+            vaciar_staging.comprobar(Settings(_env_file=None, **ambiente), "staging")
+
+
 # --- F0-06 Endurecimiento HTTP ----------------------------------------------------------------
 
 
