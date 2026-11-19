@@ -126,6 +126,7 @@ describe('interesados', () => {
         enviado = await request.json()
         return HttpResponse.json(interesado({ id: 'nuevo', nombre: 'Laura' }), { status: 201 })
       }),
+      http.get(`${API}/comercial/interesados/nuevo`, () => HttpResponse.json(interesado({ id: 'nuevo', nombre: 'Laura' }))),
     )
     const user = userEvent.setup()
     renderizar(<ComercialPage />)
@@ -137,8 +138,9 @@ describe('interesados', () => {
     await user.click(within(ventana).getByRole('button', { name: 'Guardar interesado' }))
     await waitFor(() => expect(enviado).toEqual({ nombre: 'Laura', telefono: '3001234567', origen: 'referido' }))
     // Cerrar la ventana, recargar el listado y abrir la ficha van encadenados: con la suite entera
-    // bajo cobertura, el segundo por defecto de findBy no siempre alcanza (frontend/CLAUDE.md).
-    expect(await screen.findByRole('region', { name: 'Interesado abierto' }, { timeout: 5000 })).toBeInTheDocument()
+    // bajo cobertura, el segundo por defecto de findBy no siempre alcanza (frontend/CLAUDE.md). Se
+    // espera su título: la ficha vacía se llama igual que la abierta y desaparece al abrirse.
+    expect(await screen.findByRole('heading', { name: 'Laura' }, { timeout: 5000 })).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })
