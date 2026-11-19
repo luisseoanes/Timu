@@ -69,6 +69,9 @@ y el registro, la encuesta y el carnet con sus marcos;
 La interfaz está en rediseño con la marca real de TIMU: el orden y el estado de cada unidad
 están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
 
+- **El hook de diseño solo revisa lo editado con Edit/Write**: un fichero de interfaz copiado o generado
+  con un script se le pasa a mano (`echo '{"tool_name":"Write","tool_input":{"file_path":"<ruta>"}}' |
+  .claude/skills/impeccable/scripts/impeccable hook`).
 - **Sorteos de la skill**: `serve-question --wait --key <k>` sale con 3 cada 60 s sin respuesta:
   repítelo en bucle en segundo plano hasta que salga 0. Las capturas para el revisor final siguen
   [`docs/frontend/capturas-revisor.md`](../docs/frontend/capturas-revisor.md).
