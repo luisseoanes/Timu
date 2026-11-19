@@ -12,12 +12,10 @@ está por decidir ([costos de infraestructura](costos-infraestructura.md) recomi
 
 ## Cómo llega un cambio: autodeploy desde `main`
 
-> **Estado (2026-11-19): la conexión con GitHub está pendiente.** Falta que Luis instale la app de
-> GitHub de Railway con acceso a `luisseoanes/Timu` (ver el final de este apartado). Hasta entonces
-> staging se despliega a mano desde una copia limpia de `main`, como se hizo ese día:
-> `git archive HEAD | tar -x -C <dir>` y, desde `<dir>`, `railway up backend --path-as-root -p $P
-> -e staging -s api` (igual para `worker`, y `frontend` para `web`). La migración y el resto de
-> este documento ya valen.
+> **Conectado el 2026-11-19**: Luis instaló la app de GitHub de Railway y conectó los tres
+> servicios. Comprobado con `c8ae0ea`: los despliegues esperaron en `WAITING` hasta que el CI salió
+> en verde y luego se construyeron solos; con `9a00165`, que solo tocaba `frontend/`, `api` y
+> `worker` quedaron en `SKIPPED` por sus *watch patterns*.
 
 Cada servicio con código está conectado al repositorio `luisseoanes/Timu`, rama `main`, con
 **«Wait for CI»**: Railway ve el empuje, espera a que el CI de ese commit termine en verde y solo
