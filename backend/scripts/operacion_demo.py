@@ -335,7 +335,6 @@ class Operacion:
     visitas: list[Visita] = field(default_factory=list)
     rutas: list[tuple[str, date]] = field(default_factory=list)
     cancelados: list[str] = field(default_factory=list)
-    con_plantilla: int = 0
 
 
 def dias_habiles(desde: date, hasta: date) -> Iterator[date]:
@@ -661,8 +660,7 @@ def recorrer(
             "tipo": "domiciliaria",
             "fecha": dia.isoformat(),
         }
-        con_plantilla = bool(plantillas) and len(op.visitas) % CADA_PLANTILLA == 0
-        if con_plantilla:
+        if plantillas and len(op.visitas) % CADA_PLANTILLA == 0:
             consulta["plantilla_codigo"] = azar.choice(plantillas)
         else:
             motivo, anamnesis, examen, diagnostico, tratamiento = azar.choice(CONSULTAS)
@@ -676,7 +674,6 @@ def recorrer(
         entrada = medico.post("/clinica/historias", consulta)
         if entrada:
             medico.post(f"/clinica/historias/{entrada['id']}/firma")
-            op.con_plantilla += con_plantilla
         resp = medico.http.post(
             f"/rutas/paradas/{parada['id']}/salida", data={"nota": "Visita sin novedad."}
         )
@@ -1229,8 +1226,10 @@ def comprobar(op: Operacion) -> None:
                 "SELECT count(*) FROM solicitudes_virtuales WHERE estado = 'cerrada'"
             ),
             "campanas enviadas": contar("SELECT count(*) FROM ejecuciones_campana"),
-            # La consulta no guarda de que plantilla partio: lo cuenta la propia siembra.
-            "consultas desde una plantilla": op.con_plantilla,
+            "consultas desde una plantilla": contar(
+                "SELECT count(*) FROM historias_clinicas"
+                " WHERE plantilla_codigo IS NOT NULL AND estado = 'firmada'"
+            ),
         }
     faltan = [f"{k}: {hechos[k]} de {v}" for k, v in MINIMOS.items() if hechos[k] < v]
     if faltan:

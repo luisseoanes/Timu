@@ -215,6 +215,7 @@ PLANTILLAS_CONSULTA: list[dict[str, Any]] = [
     },
     {
         "nombre": "Otitis externa",
+        "tipo_servicio_codigo": "consulta_domiciliaria",
         "campos": {
             "motivo": "Se rasca las orejas y sacude la cabeza.",
             "examen_fisico": (
