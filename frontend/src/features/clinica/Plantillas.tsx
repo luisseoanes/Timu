@@ -1,16 +1,16 @@
 import * as Menu from '@radix-ui/react-dropdown-menu'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
 import { Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
-import { useNombreTipoServicio } from '@/features/catalogos'
+import { useNombreTipoServicio, useTiposServicio } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
 import type { PlantillaConsultaRead } from '@/types'
 
-import { useCrearPlantilla, useEditarPlantilla, usePlantillas } from './api'
+import { useCrearPlantilla, useEditarPlantilla, usePlantillas, useUsoPlantillas } from './api'
 import { ESTACIONES, apartadosDePlantilla, enPalabras } from './consulta'
 
 /** Plantillas de consulta en listado con ficha (DEU-15): el equipo médico las lee por apartado,
@@ -104,6 +104,12 @@ function resumen(p: PlantillaConsultaRead): string {
   return `Prellena ${enPalabras(llena.map((a) => a.enFrase))}`
 }
 
+/** Cuánto se ha usado: solo cuentan las consultas firmadas y vigentes. */
+function textoDeUso(consultas: number): string {
+  if (consultas === 0) return 'Aún sin consultas firmadas'
+  return consultas === 1 ? 'Usada en 1 consulta firmada' : `Usada en ${consultas} consultas firmadas`
+}
+
 function FichaPlantilla({ codigo }: { codigo: string }) {
   const plantillas = usePlantillas({ incluirInactivas: true })
   const p = plantillas.data?.find((x) => x.codigo === codigo)
@@ -120,6 +126,7 @@ function Ficha({ plantilla: p }: { plantilla: PlantillaConsultaRead }) {
   const enlace = usePlantillaEnlace()
   const editar = useEditarPlantilla()
   const nombreTipo = useNombreTipoServicio()
+  const uso = useUsoPlantillas()
   const [editando, setEditando] = useState(false)
   const { llena, falta } = apartadosDePlantilla(p.campos)
 
@@ -135,7 +142,8 @@ function Ficha({ plantilla: p }: { plantilla: PlantillaConsultaRead }) {
           <span>
             Prellena {llena.length} de {ESTACIONES.length} apartados
           </span>
-          {p.tipo_servicio_codigo && <span>Para {nombreTipo(p.tipo_servicio_codigo)}</span>}
+          {uso.data && <span>{textoDeUso(uso.data[p.codigo] ?? 0)}</span>}
+          {p.tipo_servicio_codigo && <span>Para {nombreTipo(p.tipo_servicio_codigo).toLowerCase()}</span>}
         </div>
         <div className="ficha-acciones">
           <button className="btn btn-primario" type="button" onClick={() => setEditando(true)}>
@@ -235,14 +243,16 @@ function FormularioPlantilla({
             if (v) campos[campo] = v
           }
           const nombre = String(d.get('nombre')).trim()
-          if (plantilla) editar.mutate({ codigo: plantilla.codigo, nombre, campos }, { onSuccess: alGuardar })
-          else crear.mutate({ nombre, campos }, { onSuccess: alGuardar })
+          const tipo_servicio_codigo = String(d.get('tipo_servicio_codigo') ?? '') || null
+          if (plantilla) editar.mutate({ codigo: plantilla.codigo, nombre, tipo_servicio_codigo, campos }, { onSuccess: alGuardar })
+          else crear.mutate({ nombre, tipo_servicio_codigo, campos }, { onSuccess: alGuardar })
         }}
       >
-        <label className="campo ancho">
+        <label className="campo">
           <span>Nombre</span>
           <input className="input" name="nombre" required minLength={3} maxLength={120} defaultValue={plantilla?.nombre} autoFocus />
         </label>
+        <CampoTipoDeAtencion actual={plantilla?.tipo_servicio_codigo ?? null} />
         {ESTACIONES.map(({ campo, titulo }) => (
           <label key={campo} className="campo ancho">
             <span>{titulo}</span>
@@ -256,5 +266,40 @@ function FormularioPlantilla({
         )}
       </form>
     </Modal>
+  )
+}
+
+/** A qué atención va la plantilla. Vive dentro del formulario: se reinicia cada vez que se abre. */
+function CampoTipoDeAtencion({ actual }: { actual: string | null }) {
+  const tipos = useTiposServicio()
+  const nombreTipo = useNombreTipoServicio()
+  const [valor, setValor] = useState(actual ?? '')
+  const id = useId()
+  const opciones = tipos.data ?? []
+  // El que ya tiene sigue a la vista mientras carga el catálogo, o si el catálogo lo retiró.
+  const faltaElActual = actual !== null && !opciones.some((t) => t.codigo === actual)
+  return (
+    <div className="campo">
+      <label htmlFor={id}>Tipo de atención</label>
+      <select
+        id={id}
+        className="input"
+        name="tipo_servicio_codigo"
+        value={valor}
+        aria-describedby={`${id}-ayuda`}
+        onChange={(e) => setValor(e.target.value)}
+      >
+        <option value="">Cualquier atención</option>
+        {faltaElActual && <option value={actual}>{nombreTipo(actual)}</option>}
+        {opciones.map((t) => (
+          <option key={t.codigo} value={t.codigo}>
+            {t.nombre}
+          </option>
+        ))}
+      </select>
+      <small id={`${id}-ayuda`} className="campo-ayuda">
+        {valor ? 'En una visita solo se ofrece si es de este tipo.' : 'Se ofrece en cualquier visita.'}
+      </small>
+    </div>
   )
 }

@@ -49,6 +49,17 @@ export function apartadosDePlantilla(campos: Record<string, string>) {
   return { llena, falta: ESTACIONES.filter((e) => !llena.includes(e)) }
 }
 
+/** Qué plantillas ofrece una consulta. Sin visita (`undefined`), todas. La de una visita, las de su
+ * tipo de atención y las que valen para cualquiera; mientras no se sabe su tipo (`null`), solo estas
+ * últimas: una de otra atención elegida antes de tiempo desaparecería del selector. */
+export function plantillasDeLaConsulta<T extends { tipo_servicio_codigo: string | null }>(activas: T[], tipoDeVisita?: string | null) {
+  if (tipoDeVisita === undefined) return { deLaVisita: [] as T[], generales: activas }
+  return {
+    deLaVisita: activas.filter((p) => tipoDeVisita !== null && p.tipo_servicio_codigo === tipoDeVisita),
+    generales: activas.filter((p) => !p.tipo_servicio_codigo),
+  }
+}
+
 const LISTA = new Intl.ListFormat('es', { type: 'conjunction' })
 
 /** «motivo, diagnóstico y tratamiento». */

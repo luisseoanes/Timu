@@ -118,6 +118,7 @@ export const handlers = [
   http.get(`${API}/planes`, () => HttpResponse.json([])),
   http.get(`${API}/aliadas`, () => HttpResponse.json([])),
   http.get(`${API}/clinica/plantillas`, () => HttpResponse.json([])),
+  http.get(`${API}/clinica/plantillas/uso`, () => HttpResponse.json({})),
   // Lo que carga Clínica al abrirla un médico: su ruta de hoy y sus consultas sin firmar.
   http.get(`${API}/clinica/borradores`, () => HttpResponse.json([])),
   http.get(`${API}/rutas`, () => HttpResponse.json([])),

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { AdjuntoRead, FormulaRead, PlantillaConsultaRead, RespuestaRead, SolicitudVirtualRead } from '@/types'
+import type { AdjuntoRead, FormulaRead, PlantillaConsultaRead, RespuestaRead, ServicioRead, SolicitudVirtualRead } from '@/types'
 
 /**
  * Entrada de historia clínica tal como la presenta el backend (clinica/service.py:
@@ -215,10 +215,27 @@ export function useAprobarRespuesta() {
   )
 }
 
+/** Cuántas consultas firmadas y vigentes partieron de cada plantilla, por su código. */
+export function useUsoPlantillas() {
+  return useQuery({
+    queryKey: ['clinica', 'plantillas', 'uso'],
+    queryFn: async () => (await api.get<Record<string, number>>('/clinica/plantillas/uso')).data,
+  })
+}
+
+/** El tipo de atención de la visita, para ofrecerle sus plantillas. Solo se pide si hace falta. */
+export function useTipoDeVisita(servicioId: string | undefined, hacePlantilla: boolean) {
+  return useQuery({
+    queryKey: ['clinica', 'visita', servicioId],
+    enabled: Boolean(servicioId) && hacePlantilla,
+    queryFn: async () => (await api.get<ServicioRead>(`/servicios/${servicioId}`)).data.tipo_codigo,
+  })
+}
+
 /** El código lo saca la API del nombre. */
 export function useCrearPlantilla() {
   return useMutacion(
-    async (datos: { nombre: string; tipo_servicio_codigo?: string; campos: Record<string, string> }) =>
+    async (datos: { nombre: string; tipo_servicio_codigo: string | null; campos: Record<string, string> }) =>
       (await api.post<PlantillaConsultaRead>('/clinica/plantillas', datos)).data,
   )
 }
@@ -226,7 +243,16 @@ export function useCrearPlantilla() {
 /** Corrige el texto de una plantilla o la activa y desactiva; `campos` reemplaza los textos enteros. */
 export function useEditarPlantilla() {
   return useMutacion(
-    async ({ codigo, ...cambios }: { codigo: string; nombre?: string; campos?: Record<string, string>; activa?: boolean }) =>
+    async ({
+      codigo,
+      ...cambios
+    }: {
+      codigo: string
+      nombre?: string
+      tipo_servicio_codigo?: string | null
+      campos?: Record<string, string>
+      activa?: boolean
+    }) =>
       (await api.patch<PlantillaConsultaRead>(`/clinica/plantillas/${codigo}`, cambios)).data,
   )
 }

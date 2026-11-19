@@ -7,12 +7,13 @@ import { mensajeError } from '@/lib/errores'
 import { fecha } from '@/lib/formato'
 import type { MascotaRead } from '@/types'
 
-import { useCrearEntrada, useFirmarConsulta, useGuardarConsulta, usePlantillas, type EntradaHistoria } from './api'
+import { useCrearEntrada, useFirmarConsulta, useGuardarConsulta, usePlantillas, useTipoDeVisita, type EntradaHistoria } from './api'
 import {
   ESTACIONES,
   cambios,
   estacionInicial,
   faltanParaFirmar,
+  plantillasDeLaConsulta,
   siguienteDe,
   tituloDe,
   valoresDe,
@@ -20,6 +21,14 @@ import {
   type Valores,
 } from './consulta'
 import { Adjuntos } from './LecturaConsulta'
+
+function opcionDePlantilla(p: { codigo: string; nombre: string }) {
+  return (
+    <option key={p.codigo} value={p.codigo}>
+      {p.nombre}
+    </option>
+  )
+}
 
 /**
  * La consulta como una línea de cinco estaciones (contrato de la superficie): un apartado por
@@ -74,6 +83,10 @@ export function ConsultaGuiada({
   const ultima = actual === ESTACIONES.length - 1
   const ocupada = crear.isPending || guardar.isPending || firmar.isPending
   const activas = (plantillas.data ?? []).filter((p) => p.activa)
+  const visitaNueva = id ? undefined : servicioId
+  const tipoDeVisita = useTipoDeVisita(visitaNueva, activas.some((p) => p.tipo_servicio_codigo))
+  const { deLaVisita, generales } = plantillasDeLaConsulta(activas, visitaNueva ? (tipoDeVisita.data ?? null) : undefined)
+  const ofrecidas = [...deLaVisita, ...generales]
   const referencia = anterior?.[estacion.campo]
   const error = crear.error ?? guardar.error ?? firmar.error
 
@@ -190,7 +203,7 @@ export function ConsultaGuiada({
         </h2>
         {actual === 0 && !id && (
           <div className="formulario">
-            {activas.length > 0 && (
+            {ofrecidas.length > 0 && (
               <label className="campo">
                 <span>Plantilla</span>
                 <select
@@ -198,7 +211,7 @@ export function ConsultaGuiada({
                   value={plantilla}
                   onChange={(ev) => {
                     setPlantilla(ev.target.value)
-                    const campos = activas.find((p) => p.codigo === ev.target.value)?.campos ?? {}
+                    const campos = ofrecidas.find((p) => p.codigo === ev.target.value)?.campos ?? {}
                     // La plantilla es el punto de partida: llena lo vacío, no pisa lo escrito.
                     setValores((v) =>
                       Object.fromEntries(
@@ -208,11 +221,14 @@ export function ConsultaGuiada({
                   }}
                 >
                   <option value="">Sin plantilla</option>
-                  {activas.map((p) => (
-                    <option key={p.codigo} value={p.codigo}>
-                      {p.nombre}
-                    </option>
-                  ))}
+                  {deLaVisita.length > 0 ? (
+                    <>
+                      <optgroup label="Para esta visita">{deLaVisita.map(opcionDePlantilla)}</optgroup>
+                      {generales.length > 0 && <optgroup label="Generales">{generales.map(opcionDePlantilla)}</optgroup>}
+                    </>
+                  ) : (
+                    generales.map(opcionDePlantilla)
+                  )}
                 </select>
               </label>
             )}

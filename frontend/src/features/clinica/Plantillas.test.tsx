@@ -115,6 +115,37 @@ describe('plantillas de consulta', () => {
     expect(screen.getByRole('tab', { name: 'Respuestas aprobadas' })).toHaveAttribute('aria-selected', 'true')
   })
 
+  it('dice cuánto se ha usado y para qué atención es', async () => {
+    conPlantillas([{ ...OTITIS, tipo_servicio_codigo: 'consulta_domiciliaria' }, CONTROL, COMPLETA])
+    server.use(
+      http.get(`${API}/clinica/plantillas/uso`, () => HttpResponse.json({ otitis_externa: 12, gastroenteritis_leve: 1 })),
+    )
+    const user = await abrir('/panel/clinica?plantilla=otitis_externa')
+    expect(await screen.findByText('Usada en 12 consultas firmadas')).toBeInTheDocument()
+    expect(await screen.findByText('Para consulta domiciliaria')).toBeInTheDocument()
+    await user.click(screen.getByRole('link', { name: 'Gastroenteritis leve' }))
+    expect(await screen.findByText('Usada en 1 consulta firmada')).toBeInTheDocument()
+    await user.click(screen.getByRole('link', { name: 'Control general' }))
+    expect(await screen.findByText('Aún sin consultas firmadas')).toBeInTheDocument()
+  })
+
+  it('conserva un tipo de atención que el catálogo ya no ofrece', async () => {
+    let cambios: unknown = null
+    conPlantillas([{ ...OTITIS, tipo_servicio_codigo: 'retirado' }])
+    server.use(
+      http.patch(`${API}/clinica/plantillas/otitis_externa`, async ({ request }) => {
+        cambios = await request.json()
+        return HttpResponse.json(OTITIS)
+      }),
+    )
+    const user = await abrir('/panel/clinica?plantilla=otitis_externa')
+    await user.click(await screen.findByRole('button', { name: 'Editar plantilla' }))
+    const modal = await screen.findByRole('dialog')
+    expect(within(modal).getByLabelText('Tipo de atención')).toHaveValue('retirado')
+    await user.click(within(modal).getByRole('button', { name: 'Guardar plantilla' }))
+    await waitFor(() => expect(cambios).toMatchObject({ tipo_servicio_codigo: 'retirado' }))
+  })
+
   it('dice cuando la plantilla abierta ya no existe y cuando no prellena nada', async () => {
     conPlantillas([CONTROL])
     await abrir('/panel/clinica?plantilla=no_existe')
@@ -145,7 +176,9 @@ describe('plantillas de consulta', () => {
     await user.click(within(modal).getByLabelText('Diagnóstico'))
     await user.paste(' Otitis externa ')
     await user.click(within(modal).getByRole('button', { name: 'Guardar plantilla' }))
-    await waitFor(() => expect(enviado).toEqual({ nombre: 'Otitis externa', campos: { diagnostico: 'Otitis externa' } }))
+    await waitFor(() =>
+      expect(enviado).toEqual({ nombre: 'Otitis externa', tipo_servicio_codigo: null, campos: { diagnostico: 'Otitis externa' } }),
+    )
     // Por su título: la ficha vacía y la abierta comparten el nombre de la región.
     expect(await screen.findByRole('heading', { name: 'Otitis externa' }, { timeout: 4000 })).toBeInTheDocument()
   })
@@ -164,6 +197,10 @@ describe('plantillas de consulta', () => {
     const modal = await screen.findByRole('dialog', { name: 'Editar plantilla' })
     expect(within(modal).getByLabelText('Nombre')).toHaveValue('Otitis externa')
     expect(within(modal).getByLabelText('Motivo de consulta')).toHaveValue('Rasca el oído')
+    // La ayuda dice lo que significa lo elegido.
+    expect(within(modal).getByLabelText('Tipo de atención')).toHaveAccessibleDescription('Se ofrece en cualquier visita.')
+    await user.selectOptions(within(modal).getByLabelText('Tipo de atención'), await within(modal).findByRole('option', { name: 'Consulta domiciliaria' }))
+    expect(within(modal).getByLabelText('Tipo de atención')).toHaveAccessibleDescription('En una visita solo se ofrece si es de este tipo.')
     // Vaciar un apartado deja de prellenarlo.
     await user.clear(within(modal).getByLabelText('Diagnóstico'))
     await user.type(within(modal).getByLabelText('Anamnesis'), 'Desde hace tres días')
@@ -171,6 +208,7 @@ describe('plantillas de consulta', () => {
     await waitFor(() =>
       expect(cambios).toEqual({
         nombre: 'Otitis externa',
+        tipo_servicio_codigo: 'consulta_domiciliaria',
         campos: { motivo: 'Rasca el oído', anamnesis: 'Desde hace tres días', tratamiento: 'Limpieza ótica cada 12 h' },
       }),
     )

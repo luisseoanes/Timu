@@ -122,6 +122,85 @@ describe('La consulta de una visita', () => {
     expect(await screen.findByRole('heading', { name: 'Anamnesis' })).toBeInTheDocument()
   })
 
+  it('ofrece las plantillas del tipo de la visita y las generales, no las de otra atención', async () => {
+    const plantilla = (codigo: string, nombre: string, tipo: string | null) => ({ codigo, nombre, tipo_servicio_codigo: tipo, campos: { motivo: nombre }, activa: true })
+    server.use(
+      comoMedico,
+      http.get(`${API}/servicios/s1`, () => HttpResponse.json({ id: 's1', tipo_codigo: 'consulta_domiciliaria' })),
+      http.get(`${API}/clinica/plantillas`, () =>
+        HttpResponse.json([
+          plantilla('otitis', 'Otitis externa', 'consulta_domiciliaria'),
+          plantilla('control', 'Control general', null),
+          plantilla('vacuna', 'Vacunación anual', 'vacunacion'),
+        ]),
+      ),
+    )
+    const user = abrir(VISITA)
+    const delTipo = await screen.findByRole('group', { name: 'Para esta visita' })
+    expect(within(delTipo).getByRole('option', { name: 'Otitis externa' })).toBeInTheDocument()
+    expect(within(screen.getByRole('group', { name: 'Generales' })).getByRole('option', { name: 'Control general' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Vacunación anual' })).not.toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Plantilla'), 'otitis')
+    expect(screen.getByRole('textbox', { name: 'Motivo de consulta' })).toHaveValue('Otitis externa')
+  })
+
+  describe('mientras no se sabe el tipo de la visita', () => {
+    const PLANTILLAS = [
+      { codigo: 'vacuna', nombre: 'Vacunación anual', tipo_servicio_codigo: 'vacunacion', campos: {}, activa: true },
+      { codigo: 'control', nombre: 'Control general', tipo_servicio_codigo: null, campos: {}, activa: true },
+    ]
+
+    it('solo ofrece las generales hasta que llega', async () => {
+      let responder = () => {}
+      const espera = new Promise<void>((r) => (responder = r))
+      server.use(
+        comoMedico,
+        http.get(`${API}/clinica/plantillas`, () => HttpResponse.json(PLANTILLAS)),
+        http.get(`${API}/servicios/s1`, async () => {
+          await espera
+          return HttpResponse.json({ id: 's1', tipo_codigo: 'vacunacion' })
+        }),
+      )
+      abrir(VISITA)
+      expect(await screen.findByRole('option', { name: 'Control general' })).toBeInTheDocument()
+      expect(screen.queryByRole('option', { name: 'Vacunación anual' })).not.toBeInTheDocument()
+      responder()
+      expect(await screen.findByRole('group', { name: 'Para esta visita' })).toHaveTextContent('Vacunación anual')
+    })
+
+    it('si no se pudo saber, sigue ofreciendo solo las generales', async () => {
+      let pedido = false
+      server.use(
+        comoMedico,
+        http.get(`${API}/clinica/plantillas`, () => HttpResponse.json(PLANTILLAS)),
+        http.get(`${API}/servicios/s1`, () => {
+          pedido = true
+          return HttpResponse.json({ detail: 'x' }, { status: 400 })
+        }),
+      )
+      abrir(VISITA)
+      expect(await screen.findByRole('option', { name: 'Control general' })).toBeInTheDocument()
+      await waitFor(() => expect(pedido).toBe(true))
+      expect(screen.queryByRole('option', { name: 'Vacunación anual' })).not.toBeInTheDocument()
+    })
+  })
+
+  it('sin visita ofrece todas las plantillas, sin agruparlas', async () => {
+    server.use(
+      comoMedico,
+      http.get(`${API}/clinica/plantillas`, () =>
+        HttpResponse.json([
+          { codigo: 'otitis', nombre: 'Otitis externa', tipo_servicio_codigo: 'consulta_domiciliaria', campos: {}, activa: true },
+          { codigo: 'control', nombre: 'Control general', tipo_servicio_codigo: null, campos: {}, activa: true },
+        ]),
+      ),
+    )
+    abrir(`/panel/clinica/mascotas/${LUNA.id}?nueva=1`)
+    expect(await screen.findByRole('option', { name: 'Otitis externa' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Control general' })).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Para esta visita' })).not.toBeInTheDocument()
+  })
+
   it('continúa el borrador de la visita y, para firmarla, pide el tratamiento', async () => {
     let firmada = false
     server.use(
