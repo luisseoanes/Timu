@@ -274,7 +274,7 @@ components:
 Este fichero describe lo construido, no lo planeado. La primera superficie del sistema es la
 estructura del panel del equipo (`AppLayout`) y Familias (listado, detalle, pestañas y
 ventanas); después, Rutas (la ruta del día del médico y su coordinación) y Clínica (la historia de
-cada mascota y la consulta guiada), el Inicio (las cifras del período y la línea del día), Servicios y Tareas (el listado con
+cada mascota, la consulta guiada y sus plantillas), el Inicio (las cifras del período y la línea del día), Servicios y Tareas (el listado con
 ficha de los servicios y la bandeja), Cartera y Preventivos (sus bandejas, el carnet y el
 preventivo atendido desde su estación) y Comercial y Campañas (los interesados del embudo con su
 conversación, la bandeja de conversaciones y las campañas en listado con ficha) y Aliadas y
@@ -291,10 +291,8 @@ la manada»), con lo que de ella se edita en Administración. La plantilla públ
 (`MarcoPublico`). La
 clínica aliada tiene su espacio rediseñado: Mi clínica (R3-ALI-01), el mostrador donde valida el
 código de una remisión, reporta la atención y ve lo atendido en el mes.
-El resto de módulos del panel todavía usan la maqueta anterior y adoptan
-este sistema en sus unidades de
-[`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md): lo que se ve hoy en ellos no
-es el sistema. El color, la tipografía, el logo y la voz los fija el
+Ningún módulo del panel queda ya en la maqueta anterior; lo que falta para cerrar el rediseño está
+en [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md). El color, la tipografía, el logo y la voz los fija el
 [manual de marca](docs/manual-de-marca.md); aquí se dice cómo se aplican en la interfaz y se
 remite al manual donde él es la autoridad.
 
@@ -429,7 +427,8 @@ Las cifras siguen en Inter por sus números tabulares (sección 12 del manual).
   (`cabecera-pagina`).
 - **Title** (600, `--t-seccion` 1rem / 16 px, 1.2): encabezado de bloque, título de ventana,
   cabecera del listado.
-- **Body** (400, `--t-cuerpo` 0.875rem / 14 px, 1.55): texto de la interfaz, botones, celdas.
+- **Body** (400, `--t-cuerpo` 0.875rem / 14 px, 1.55): texto de la interfaz, botones, celdas. El
+  texto de cada apartado de una consulta que se lee (`consulta-lectura`) llega hasta 75ch.
 - **Menor** (400–600, `--t-menor` 0.8125rem / 13 px): metadatos, pestañas, módulos de la barra,
   rótulos de estación.
 - **Label** (700, `--t-etiqueta` 0.75rem / 12 px, `--tracking-etiqueta` 0.09em, mayúsculas, `texto-suave`): cabeceras
@@ -921,8 +920,29 @@ anamnesis, examen físico, diagnóstico, tratamiento): un apartado por pantalla.
 - **Identidad:** por debajo de 900 px, donde la historia de la izquierda no está, la cabecera de
   la consulta (guiada o leída) dice la mascota, su familia, la especie y el peso.
 - **Lectura:** la consulta firmada se lee como una ficha en columna (etiqueta y texto por
-  apartado), con «Emitir fórmula» y «Corregir»; el título va a 24 px, no a 34: no es el nombre
-  de nada.
+  apartado, el texto hasta 75ch), con «Emitir fórmula» y «Corregir»; el título va a 24 px, no a
+  34: no es el nombre de nada.
+
+### Las plantillas de consulta (DEU-15)
+La pestaña «Plantillas de consulta» de Clínica, en listado con ficha, con la abierta en la URL
+(`?plantilla=`). La página controla la pestaña: una plantilla que aparece en la URL lleva a la
+suya, y «Volver» cierra la ficha sin salir de ella.
+- **Listado:** el título lleva el total, con las inactivas incluidas («Plantillas 3»). «Nueva
+  plantilla», con el icono «mas», es verde solo sin ficha abierta (con ella, suave). Cada fila: el
+  nombre y, debajo en texto suave, lo que prellena en palabras y en el orden de la consulta
+  («Prellena el motivo de consulta y el tratamiento», «Prellena los cinco apartados», «No prellena
+  ningún apartado»). Las inactivas van al final, con la insignia neutra «Inactiva».
+- **Ficha:** el nombre; la insignia «Activa» o «Inactiva», «Prellena 2 de 5 apartados» y, si la
+  plantilla es de un tipo de servicio, «Para <tipo>». «Editar plantilla» es el verde; «Desactivar
+  plantilla» o «Activar plantilla» va en el menú de tres puntos y se hace sin preguntar. Inactiva,
+  una nota dice qué deja de pasar: «Inactiva: la consulta ya no la ofrece. Las consultas que
+  partieron de ella no cambian.». Debajo, los apartados con texto en `consulta-lectura`, y una nota
+  con el resto: «Deja en blanco la anamnesis, el examen físico y el diagnóstico.».
+- **Ventana:** la misma para crear y editar, con el pie «Guardar plantilla». Pide el nombre y un
+  área de texto de tres líneas por apartado, a lo ancho y con el título de la consulta. La
+  descripción dice el alcance: al editar, «Los cambios valen para las consultas nuevas; las que ya
+  partieron de ella no cambian.». El código lo saca la API del nombre y no se pide ni se muestra.
+  Al crear, se abre la ficha de la plantilla creada.
 
 ### Servicios y Tareas (R2-PAN-05)
 Servicios hereda el listado con ficha; Tareas, la tabla apilable.
@@ -1710,6 +1730,9 @@ va en contorno y el envío del contacto en secundario.
   estaciones de 24 px, con una sola estación de intercambio.
 - **Do** en la web pública, centra el contenido de cada sección a 1200 px con la sección a todo el
   ancho, y deja el verde lleno a «Arma tu plan» o a la afiliación del plan.
+- **Do** resume en palabras, en la fila de un listado, lo que hace cada registro («Prellena el
+  motivo de consulta y el tratamiento»), y dentro de una frase nombra los apartados de la consulta
+  con su artículo (`enFrase`).
 
 ### Don't:
 - **Don't** escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.

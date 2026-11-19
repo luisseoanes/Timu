@@ -76,7 +76,11 @@ ficha es la ruta abierta con su línea (`LineaRuta`). En los dos, el registro ab
 URL (`/familias/:id`, `/rutas?ruta=`), igual que los filtros. En Clínica el listado es la
 historia de la mascota (su ficha y sus consultas) y la ficha, la consulta abierta: guiada si es
 un borrador propio, leída si no (`/clinica/mascotas/:id`, `?nueva=1`, `?servicio=` y
-`/clinica/historias/:id`). En Servicios (R2-PAN-05) el listado agrupa los servicios por día
+`/clinica/historias/:id`). Su pestaña «Plantillas de consulta» (`DEU-15`) es otro listado con ficha
+(`?plantilla=`): cada fila dice en palabras qué apartados prellena, las inactivas van al final con su
+insignia y la ficha lee la plantilla por apartado, como la consulta firmada, con «Editar plantilla»
+en verde y activar o desactivar en el menú. La página controla la pestaña: una plantilla que llega
+en la URL abre «Plantillas de consulta», y «Volver» se queda en ella. En Servicios (R2-PAN-05) el listado agrupa los servicios por día
 («Hoy · sáb 14 nov», «Mañana · …») y cada fila dice a quién se atiende: la mascota y el tipo en
 el título, la hora, el titular y la ciudad debajo, y «Por autorizar» si espera la autorización.
 Los filtros (estado, ciudad, desde y hasta, en dos columnas) viven en la URL; sin `desde` la

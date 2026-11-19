@@ -24,7 +24,7 @@ actualiza lo ya sembrado, así que un stack viejo conserva los datos de cuando s
 | Planes | Los beneficios provisionales: lo que dice el plegable 2026 donde lo dice y cupos de prueba en lo demás (`BENEFICIOS` y `DEL_PLEGABLE`), y la carencia y las exclusiones provisionales que dice el registro (`CONDICIONES`); ver [pendientes externos](pendientes-externos.md). |
 | Agenda | Franjas de lunes a sábado, a domicilio y preventivas, en Bogotá y Medellín. |
 | Portada pública (`R3-PUB-04`) | Lo que dice hoy la web de TIMU, como valores provisionales: los Datos de TIMU (presentación, visión, valores, clínica, horarios, teléfonos, el WhatsApp ficticio de local, correo, redes y la política de datos), las 17 aliadas de su página «Aliados» con su tipo, barrio, horario y orden en la red (sin logos), y los beneficios adicionales de cada plan. El contenido vive en `scripts/datos_portada.py`. A diferencia del resto, **sí se actualiza**: si los Datos de TIMU o los adicionales de un plan no coinciden con el fichero, se reescriben (las aliadas solo se crean si faltan). Ver [portada pública](portada-publica.md) y [pendientes externos](pendientes-externos.md). |
-| Lo demás | Servicios, tareas, calendarios de preventivos (con una vacuna aplicada a Nala, de Laura Gómez, para que el barrido mida la verificación de un carnet real), una consulta firmada y un borrador, una respuesta virtual aprobada, interesados, una conversación de WhatsApp que pide asesor, una plantilla y una campaña, y una remisión. |
+| Lo demás | Servicios, tareas, calendarios de preventivos (con una vacuna aplicada a Nala, de Laura Gómez, para que el barrido mida la verificación de un carnet real), una consulta firmada y un borrador, tres plantillas de consulta («Control general», «Otitis externa» y «Gastroenteritis leve», `PLANTILLAS_CONSULTA`), una respuesta virtual aprobada, interesados, una conversación de WhatsApp que pide asesor, una plantilla y una campaña, y una remisión. |
 | Ruta de la médica | En el primer día con cupo de la semana (no siempre hoy): los recorridos la buscan con `rutaDemo` (`e2e-stack/datos.ts`). |
 
 ## `operacion_demo`: ocho semanas de operación
@@ -37,7 +37,8 @@ con historia (decidido con el usuario el 2026-11-16, `DEU-14`). Siembra:
   y sus pagos con fecha y medio.
 - **Rutas pasadas**: lunes, miércoles y viernes en Bogotá, martes y sábados en Medellín (con un
   médico propio, `medico.medellin@timu.co`). Cada ruta lleva sus visitas con la consulta
-  firmada; una de cada seis omite una parada y una de cada siete cancela un servicio antes.
+  firmada, y una de cada tres consultas parte de una plantilla de `datos_demo`; una de cada seis
+  rutas omite una parada y una de cada siete cancela un servicio antes.
 - **Preventivos** aplicados en su fecha y otros vencidos, para la bandeja.
 - **Encuestas** enviadas y respondidas, con las tareas que deja una calificación baja.
 - **Comercial**: interesados que llegaron en las últimas semanas, cada uno en su etapa (también
@@ -78,8 +79,7 @@ los mismos módulos de tareas que el worker.
 - **Las plantillas de WhatsApp** de campañas y encuestas se dan por aprobadas en local; en Meta
   siguen pendientes ([pendientes externos](pendientes-externos.md)).
 - **Solo hay consultas a domicilio en las rutas.** Faltan vacunas y desparasitaciones en ruta, y
-  controles y consultas en clínica (`DEU-14`), y las plantillas de consulta (`DEU-15`): ver la
-  [deuda del rediseño](rediseno/deuda.md).
+  controles y consultas en clínica (`DEU-14`): ver la [deuda del rediseño](rediseno/deuda.md).
 
 ## Para ampliar cualquiera de los dos
 

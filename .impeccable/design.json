@@ -748,7 +748,7 @@
       },
       "body": {
         "displayName": "Cuerpo (--t-cuerpo)",
-        "purpose": "Texto de la interfaz, botones y celdas."
+        "purpose": "Texto de la interfaz, botones y celdas. El texto de cada apartado de una consulta que se lee (`consulta-lectura`) llega hasta 75ch."
       },
       "body-menor": {
         "displayName": "Menor (--t-menor)",
@@ -1134,6 +1134,14 @@
       "description": "Las aliadas como el plano de una línea de metro verde de 8 px: una estación de 24 px por barrio, la de la clínica de TIMU de intercambio (36 px, marino con halo) y el ramal punteado a casa.",
       "html": "<ol class=\"ds-red\"><li class=\"ds-est\"><span class=\"ds-punto\"></span><h3>Bello</h3><span class=\"ds-aliada\"><b>Clínica Veterinaria Cabañitas</b> · Clínica veterinaria</span></li><li class=\"ds-est\" data-intercambio><span class=\"ds-punto\"></span><h3>Laureles<small>Medellín</small></h3><span class=\"ds-aliada\"><b>TIMU clínica veterinaria</b> · <em>Nuestra clínica</em></span><p class=\"ds-ramal\"><span class=\"ds-ramal-punto\"></span><span><b>Tu casa</b> · Consulta domiciliaria en los 3 planes</span></p></li><li class=\"ds-est\"><span class=\"ds-punto\"></span><h3>Aguacatala<small>Medellín</small></h3><span class=\"ds-aliada\"><b>Clínica veterinaria Integral Vet</b> · Clínica veterinaria</span></li></ol>",
       "css": ".ds-red { position: relative; list-style: none; margin: 0; padding: 0; font-family: var(--fuente); font-size: var(--t-cuerpo); color: var(--texto-suave); } .ds-red::before { content: \"\"; position: absolute; left: 14px; top: 16px; bottom: 16px; width: 8px; border-radius: var(--r-pastilla); background: var(--linea-aliadas); } .ds-est { position: relative; display: grid; grid-template-columns: 36px 150px minmax(0, 1fr); column-gap: var(--e4); row-gap: var(--e2); padding-block: var(--e3); border-top: 1px solid var(--borde); } .ds-est:first-child { border-top: 0; } .ds-punto { position: relative; z-index: 1; width: 24px; height: 24px; margin: 2px 0 0 6px; box-sizing: border-box; border: 6px solid var(--linea-aliadas); border-radius: var(--r-pastilla); background: var(--superficie); } .ds-est[data-intercambio] .ds-punto { width: 36px; height: 36px; margin: -4px 0 0; border: 9px solid var(--ruta-recorrida); box-shadow: 0 0 0 6px var(--accion-suave-fondo-hover); } .ds-est h3 { margin: 0; display: grid; font-size: var(--t-seccion); font-weight: 600; line-height: 1.3; color: var(--texto-titulo); } .ds-est small { font-size: var(--t-menor); font-weight: 400; color: var(--texto-suave); } .ds-aliada b { color: var(--texto-titulo); } .ds-aliada em { font-style: normal; font-weight: 600; color: var(--accion-suave-texto); } .ds-ramal { grid-column: 2 / -1; margin: var(--e1) 0 0; display: flex; align-items: center; gap: var(--e3); font-size: var(--t-menor); color: var(--texto); } .ds-ramal b { color: var(--texto-titulo); } .ds-ramal-punto { width: 16px; height: 16px; box-sizing: border-box; border: 3px dashed var(--linea-aliadas); border-radius: var(--r-pastilla); }"
+    },
+    {
+      "name": "Plantilla de consulta en palabras",
+      "kind": "custom",
+      "refersTo": "texto-suave",
+      "description": "La fila del listado resume lo que prellena la plantilla, con cada apartado y su artículo; la ficha lee sus apartados en el orden de la consulta, con el texto hasta 75ch, y dice lo que deja en blanco.",
+      "html": "<div class=\"ds-plantilla\"><p class=\"ds-fila\"><strong>Vacunación anual</strong><span>Prellena el motivo de consulta y el tratamiento</span></p><dl class=\"ds-lectura\"><div><dt>Motivo de consulta</dt><dd>Refuerzo anual de vacunas.</dd></div><div><dt>Tratamiento</dt><dd>Aplicar la vacuna del calendario.</dd></div></dl><p class=\"ds-nota\">Deja en blanco la anamnesis, el examen físico y el diagnóstico.</p></div>",
+      "css": ".ds-plantilla { display: grid; gap: var(--e4); font-family: var(--fuente); font-size: var(--t-cuerpo); } .ds-fila { display: grid; gap: 2px; margin: 0; color: var(--texto-suave); } .ds-fila strong { color: var(--texto-titulo); } .ds-lectura { display: grid; gap: var(--e4); margin: 0; } .ds-lectura dt { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; color: var(--texto-suave); } .ds-lectura dd { max-width: 75ch; margin: 2px 0 0; color: var(--texto-titulo); white-space: pre-wrap; } .ds-nota { margin: 0; font-size: var(--t-menor); color: var(--texto-suave); }"
     }
   ],
   "narrative": {
@@ -1364,7 +1372,8 @@
       "Do muestra a quien se afilia solo lo que da el catálogo de la API; lo que falta se escribe en Administración → Planes, no en la pantalla.",
       "Do en la web pública, pon un pie en pastilla marina solo a las fotos reales del equipo de TIMU, y deja sin pie las de banco.",
       "Do dibuja la red de aliadas y los servicios de un plan como una línea de metro de 8 px con estaciones de 24 px, con una sola estación de intercambio.",
-      "Do en la web pública, centra el contenido de cada sección a 1200 px con la sección a todo el ancho, y deja el verde lleno a «Arma tu plan» o a la afiliación del plan."
+      "Do en la web pública, centra el contenido de cada sección a 1200 px con la sección a todo el ancho, y deja el verde lleno a «Arma tu plan» o a la afiliación del plan.",
+      "Do resume en palabras, en la fila de un listado, lo que hace cada registro («Prellena el motivo de consulta y el tratamiento»), y dentro de una frase nombra los apartados de la consulta con su artículo (`enFrase`)."
     ],
     "donts": [
       "Don't escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.",

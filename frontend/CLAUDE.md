@@ -104,7 +104,7 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   ya espera la red al cerrar cada prueba (tope de 2 s); una consulta que se dispara más tarde (un
   temporizador, un `refetchInterval`) se simula en la prueba que la provoca.
 - Con una ventana de Radix abierta, el resto de la página queda oculto a los lectores de pantalla y `findByRole` no lo encuentra hasta que se cierra. Crear y abrir la ficha encadena el cierre, el listado y la ficha: espera a su título con `{ timeout: 5000 }`. Con un segundo falla a veces con la suite entera bajo cobertura.
-- `Pestanas` sin `valor` no cambia de pestaña al cambiar la URL: un enlace desde otra pestaña que abre un registro (`?interesado=`) lo deja en una pestaña oculta. La página controla la pestaña y vuelve a la del registro cuando este cambia (`ComercialPage.tsx`).
+- `Pestanas` sin `valor` no cambia de pestaña al cambiar la URL: un enlace desde otra pestaña que abre un registro (`?interesado=`) lo deja en una pestaña oculta. La página controla la pestaña y vuelve a la del registro cuando este cambia (`ComercialPage.tsx`, `ClinicaPage.tsx`). Remontarla con un `key` no sirve: al cerrar la ficha cambia la `key` y vuelve a la primera.
 - Dentro de `.fila-cuerpo` cada `span` es un bloque: un dato en un `span` propio («60 min», un número) parte la línea. Escríbelo en un solo texto.
 - `npx eslint`, `npx tsc` o `npx vitest` desde la raíz del repositorio descargan otra versión y fallan: se corren desde `frontend/`.
 - Con la máquina cargada (`uptime` alto), `verificar` agota los tiempos de Vitest: corre los mismos

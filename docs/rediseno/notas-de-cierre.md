@@ -29,7 +29,24 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
 - **Sugerencias del revisor, opcionales** (decididas en `DEU-28`–`DEU-70`; ver el «techo» aceptado en [deuda.md](deuda.md), que dice cuáles se hicieron, cuáles no y cuáles siguen pendientes): limitar el área de texto de la consulta a unos 75
   caracteres en escritorio, unificar la cabecera del borrador y la de la lectura, alinear a la
   izquierda los valores largos de la tabla apilable en el celular (es del componente común) y
-  sembrar una plantilla de consulta en `datos_demo`.
+  ~~sembrar una plantilla de consulta en `datos_demo`~~ (resuelto el 2026-11-18, `DEU-15`).
+
+### Lo que quedó de las plantillas de consulta tras cerrar `DEU-15` (2026-11-18)
+
+- **La ventana no deja elegir el tipo de atención de una plantilla.** El modelo y la API lo
+  admiten (`tipo_servicio_codigo`, y la ficha lo dice si existe) y F2-CLI-03 habla de «plantillas
+  por tipo de atención», pero nunca se pudo fijar desde el panel y la consulta no filtra por él.
+  Lo vio el revisor final. Decisión abierta con el usuario.
+- **La consulta no guarda de qué plantilla partió**: copia sus textos al crearse. Editar o
+  desactivar una plantilla no cambia lo ya registrado, pero tampoco se puede saber cuántas
+  consultas salieron de cada una (`operacion_demo` lo cuenta por su cuenta). Si TIMU lo quiere
+  para la trazabilidad (secciones 3 y 4), es una columna nueva en la historia. Decisión abierta.
+- **Sin el separador «Desactivadas» del boceto ASCII** que eligió el usuario: las inactivas van
+  al final con su insignia, como en Planes, Reglas y Clínicas aliadas. El revisor lo dio por
+  adaptación aceptable; si el usuario lo quiere, es un subtítulo en el listado.
+- **Administración tiene el hueco que se cerró en Clínica**: `AdminPage.tsx` no controla su
+  pestaña, así que al recargar con `?plan=` o `?regla=` abre en «Usuarios», con la ficha escondida
+  en la suya. Visto en el código el 2026-11-18, sin arreglar.
 
 ### Lo que quedó del portal tras cerrar `R3-POR-01` y `R3-POR-02`
 

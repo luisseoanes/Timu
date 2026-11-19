@@ -83,3 +83,25 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 Sobre la mesa: «Bitácora» (notas con hora que se ordenan al firmar), «Pasos guiados» y «Listado
 con ficha». Los bocetos descartados quedaron en `.impeccable/mocks/decision/`, sin versionar.
+
+## Plantillas de consulta editables (DEU-15, 2026-11-18)
+
+Sin sorteo (`seed: none (pinned)`): hereda el listado con ficha de Historia clínica y de
+Administración → Planes. Palabras del usuario, que eligió la opción recomendada en las dos
+preguntas: «Listado con ficha (Recomendada)» y «La API lo saca del nombre (Recomendada)».
+
+- **Listado con ficha** en la pestaña «Plantillas de consulta», con la abierta en la URL
+  (`?plantilla=<codigo>`; al recargar, la página abre en esa pestaña). El listado dice en palabras
+  qué apartados prellena cada una y deja las inactivas al final con su insignia «Inactiva», como
+  Planes, Reglas y Clínicas aliadas (sin el separador «Desactivadas» del boceto ASCII: el revisor
+  final lo dio por adaptación aceptable). El título lleva el total, con las inactivas.
+- **La página controla la pestaña**: una plantilla que aparece en la URL lleva a «Plantillas de
+  consulta», y «Volver» (cerrar la ficha) se queda en ella.
+- **La ficha lee la plantilla por apartado**, en el orden de la consulta y con la misma lectura de
+  la consulta firmada (`consulta-lectura`), y dice lo que deja en blanco. «Editar plantilla» es el
+  verde; «Desactivar plantilla» y «Activar plantilla», en el menú de tres puntos (es reversible),
+  con la nota de qué deja de pasar al estar inactiva.
+- **Nada se borra** (regla del proyecto); la bitácora guarda cada versión. La consulta copia los
+  textos de la plantilla al crearse: editarla o desactivarla no cambia lo ya registrado.
+- **El código lo saca la API del nombre** y no se enseña: la ventana pide el nombre y el texto de
+  cada apartado, igual al crear que al editar.
