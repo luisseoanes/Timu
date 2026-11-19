@@ -447,4 +447,11 @@ describe('Administración: reglas', () => {
     expect(within(ficha).queryByRole('button', { name: 'Editar regla' })).not.toBeInTheDocument()
     expect(within(ficha).queryByRole('region', { name: 'Probar esta regla' })).not.toBeInTheDocument()
   })
+
+  it('una regla en la URL abre su pestaña', async () => {
+    server.use(...base, http.get(`${API}/reglas`, () => HttpResponse.json([REGLA])))
+    renderizar(<AdminPage />, { ruta: '/panel/admin?regla=rg1' })
+    expect(await screen.findByRole('heading', { level: 2, name: REGLA.nombre })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Reglas' })).toHaveAttribute('aria-selected', 'true')
+  })
 })

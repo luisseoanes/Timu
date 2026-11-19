@@ -352,3 +352,42 @@ describe('Administración: reportes y pasarela', () => {
     })
   })
 })
+
+describe('Administración: lo que abre la URL', () => {
+  const conPlanes = () => server.use(...base, http.get(`${API}/planes`, () => HttpResponse.json([PLAN])))
+
+  it('un plan en la URL abre su pestaña, y «Volver» se queda en ella', async () => {
+    conPlanes()
+    const user = userEvent.setup()
+    renderizar(<AdminPage />, { ruta: '/panel/admin?plan=p1' })
+    expect(await screen.findByRole('heading', { level: 2, name: 'Colita Feliz' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Planes' })).toHaveAttribute('aria-selected', 'true')
+    await user.click(screen.getByRole('link', { name: 'Volver a los planes' }))
+    expect(await screen.findByText(/Abre un plan para ver/)).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Planes' })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('al dejar la pestaña, la URL deja de pedir su ficha', async () => {
+    conPlanes()
+    const user = userEvent.setup()
+    renderizar(<AdminPage />, { ruta: '/panel/admin?plan=p1' })
+    await screen.findByRole('heading', { level: 2, name: 'Colita Feliz' })
+    await user.click(screen.getByRole('tab', { name: 'Usuarios' }))
+    expect(screen.getByRole('tab', { name: 'Usuarios' })).toHaveAttribute('aria-selected', 'true')
+    await user.click(screen.getByRole('tab', { name: 'Planes' }))
+    expect(await screen.findByText(/Abre un plan para ver/)).toBeInTheDocument()
+  })
+
+  it('la vista de eventos en la URL abre Reportes y pasarela', async () => {
+    server.use(
+      ...base,
+      http.get(`${API}/dashboard/reportes`, () => HttpResponse.json([])),
+      http.get(`${API}/dashboard/definiciones`, () => HttpResponse.json([])),
+      http.get(`${API}/cartera/eventos-pasarela/recuentos`, () => HttpResponse.json({ error: 0, procesado: 2, todos: 2 })),
+      http.get(`${API}/cartera/eventos-pasarela`, () => HttpResponse.json({ items: [], total: 0, limit: 50, offset: 0 })),
+    )
+    renderizar(<AdminPage />, { ruta: '/panel/admin?eventos=procesado' })
+    expect(await screen.findByRole('button', { name: 'Procesados 2' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('tab', { name: 'Reportes y pasarela' })).toHaveAttribute('aria-selected', 'true')
+  })
+})

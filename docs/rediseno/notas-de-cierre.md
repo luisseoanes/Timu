@@ -44,9 +44,8 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
 - **Sin el separador «Desactivadas» del boceto ASCII** que eligió el usuario: las inactivas van
   al final con su insignia, como en Planes, Reglas y Clínicas aliadas. El revisor lo dio por
   adaptación aceptable; si el usuario lo quiere, es un subtítulo en el listado.
-- **Administración tiene el hueco que se cerró en Clínica**: `AdminPage.tsx` no controla su
-  pestaña, así que al recargar con `?plan=` o `?regla=` abre en «Usuarios», con la ficha escondida
-  en la suya. Visto en el código el 2026-11-18, sin arreglar.
+- ~~**Administración tiene el hueco que se cerró en Clínica**~~ Resuelto el 2026-11-18: la página
+  controla su pestaña, y `?plan=`, `?regla=` y `?eventos=` abren la suya al recargar.
 
 ### Lo que quedó del portal tras cerrar `R3-POR-01` y `R3-POR-02`
 
