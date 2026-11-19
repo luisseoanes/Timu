@@ -13,7 +13,7 @@ docker compose exec api python -m scripts.operacion_demo   # ocho semanas de ope
 `backend/scripts/datos_demo.py` deja lo que recorren las pruebas contra el stack
 (`frontend/e2e-stack/`). El CI lo corre antes de esa suite. **Solo crea lo que falta**: no
 actualiza lo ya sembrado, así que un stack viejo conserva los datos de cuando se sembró (ver
-«Datos del día» en el `CLAUDE.md` raíz).
+«Datos del día» en [la e2e contra el stack](frontend/e2e-stack.md)).
 
 | Qué | Detalle |
 | --- | --- |
