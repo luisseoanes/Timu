@@ -1,5 +1,6 @@
 # Servidor del panel compilado (Dockerfile.despliegue). Variables:
-#   PORT         puerto en el que escucha (lo pone Railway).
+#   PORT         puerto en el que escucha (lo pone Railway; en staging, 5173, al que apunta
+#                el dominio público de `web`).
 #   API_INTERNA  dirección de la API por la red privada (http://api.railway.internal:8000).
 {
 	admin off
