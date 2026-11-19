@@ -160,6 +160,8 @@ UBICACIONES = [
     (4.7239, -74.0402),
 ]
 
+FRANJAS_MEDELLIN = ("domiciliario", "preventivo", "clinico")
+
 # Coberturas provisionales (docs/pendientes-externos.md, «Valores provisionales»): PENDIENTES
 # hasta que TIMU confirme las oficiales. Donde el plegable 2026 dice algo, lo del plegable (las
 # consultas al mes y la hospitalizacion, que se cubre como atencion en clinica aliada); lo que
@@ -168,6 +170,8 @@ BENEFICIOS: list[dict[str, Any]] = [
     {"tipo_servicio_codigo": "consulta_domiciliaria", "cupo": 6, "periodo_cupo": "anual"},
     {"tipo_servicio_codigo": "vacunacion", "cupo": 4, "periodo_cupo": "anual"},
     {"tipo_servicio_codigo": "desparasitacion", "cupo": 4, "periodo_cupo": "anual"},
+    # La consulta en la clinica de Laureles (DEU-14): sin beneficio, la API no la agenda.
+    {"tipo_servicio_codigo": "consulta_clinica", "cupo": 4, "periodo_cupo": "anual"},
     {"tipo_servicio_codigo": "control_post", "cupo": 4, "periodo_cupo": "anual"},
     {"tipo_servicio_codigo": "orientacion_virtual", "cupo": None, "periodo_cupo": "anual"},
     {"tipo_servicio_codigo": "atencion_aliada", "cupo": 2, "periodo_cupo": "anual"},
@@ -573,8 +577,10 @@ def main() -> None:
 
     print("Franjas de agenda")
     existentes = {(f["ciudad"], f["dia_semana"], f["modalidad"]) for f in c.get("/agenda/franjas")}
-    for ciudad in ("Bogotá", "Medellín"):
-        for modalidad in ("domiciliario", "preventivo"):
+    # En la clinica, solo Medellin: la unica sede de TIMU es la de Laureles (DEU-14).
+    modalidades = {"Bogotá": ("domiciliario", "preventivo"), "Medellín": FRANJAS_MEDELLIN}
+    for ciudad, de_la_ciudad in modalidades.items():
+        for modalidad in de_la_ciudad:
             for dia_semana in range(6):
                 if (ciudad, dia_semana, modalidad) not in existentes:
                     c.post(

@@ -60,6 +60,12 @@ CADA_CANCELACION = 7
 # Una de cada tantas consultas parte de una plantilla de datos_demo (DEU-15), como haria la medica
 # en una consulta frecuente; el resto escribe cada apartado.
 CADA_PLANTILLA = 3
+# Cada ruta lleva ademas una parada preventiva, que alterna vacuna y desparasitacion: el carnet
+# se alimenta de las rutas preventivas (6.8, 6.15; DEU-14).
+TIPOS_PREVENTIVOS = ("vacunacion", "desparasitacion")
+# Los jueves hay citas en la clinica de Laureles, la unica sede, en Medellin (DEU-14).
+DIA_CLINICA = 3
+CITAS_CLINICA = ("consulta_clinica", "consulta_clinica", "control_post")
 
 MEDICO_MEDELLIN = ("medico.medellin@timu.co", "Dr. Andrés Villa")
 
@@ -335,6 +341,7 @@ class Operacion:
     visitas: list[Visita] = field(default_factory=list)
     rutas: list[tuple[str, date]] = field(default_factory=list)
     cancelados: list[str] = field(default_factory=list)
+    citas: list[str] = field(default_factory=list)
 
 
 def dias_habiles(desde: date, hasta: date) -> Iterator[date]:
@@ -537,9 +544,21 @@ def operar_dias(c: Cliente, medicos: dict[str, tuple[Cliente, str]], hoy: date) 
     pendientes_por_ciudad = {ciudad: candidatas(c, ciudad) for ciudad in set(DIAS_RUTA.values())}
     turno = dict.fromkeys(pendientes_por_ciudad, 0)
     motor = dueno()
-    plantillas = [p["codigo"] for p in c.get("/clinica/plantillas")]
+    plantillas = c.get("/clinica/plantillas")
     numero = 0
     for dia in dias_habiles(hoy - timedelta(weeks=SEMANAS), hoy - timedelta(days=1)):
+        if dia.weekday() == DIA_CLINICA:
+            citas_en_clinica(
+                c,
+                medicos["Medellín"][0],
+                dia,
+                hoy,
+                pendientes_por_ciudad["Medellín"],
+                op,
+                motor,
+                plantillas,
+            )
+            continue
         ciudad = DIAS_RUTA.get(dia.weekday())
         if ciudad is None:
             continue
@@ -600,15 +619,184 @@ def operar_dias(c: Cliente, medicos: dict[str, tuple[Cliente, str]], hoy: date) 
             )
             op.cancelados.append(cancelado)
             correr(motor, servicios=[cancelado], dias=corrimiento)
+        tipo = TIPOS_PREVENTIVOS[numero % len(TIPOS_PREVENTIVOS)]
+        preventivo = agendar_preventivo(c, futuro, ciudad, dia, pares, tipo)
+        if preventivo:
+            servicios.append(preventivo)
         ruta = planear(c, futuro, ciudad, medico_id)
         if ruta is None:
             print(f"  ! sin ruta para {dia} en {ciudad}")
             correr(motor, servicios=servicios, dias=corrimiento)
             continue
         recorrer(medico, ruta, dia, omitir=numero % CADA_OMISION == 0, op=op, plantillas=plantillas)
+        aplicados_al_pasado(motor, servicios=servicios, dia=dia)
         correr(motor, servicios=servicios, dias=corrimiento, ruta_id=ruta["id"])
         op.rutas.append((ruta["id"], dia))
     return op
+
+
+def plantilla_para(plantillas: list[dict[str, Any]], tipo: str) -> str | None:
+    """Una plantilla que la consulta de ese tipo de atencion ofreceria: la suya o una general."""
+    validas = [p["codigo"] for p in plantillas if p["tipo_servicio_codigo"] in (None, tipo)]
+    return azar.choice(validas) if validas else None
+
+
+def agendar_preventivo(
+    c: Cliente,
+    futuro: date,
+    ciudad: str,
+    dia: date,
+    pares: list[tuple[dict[str, Any], dict[str, Any]]],
+    tipo: str,
+) -> str | None:
+    """La parada preventiva de la ruta: un peludo afiliado ese dia con un preventivo de `tipo`
+    por aplicar. Se autoriza y se agenda desde el preventivo, como en la bandeja, y su visita
+    lo aplica al completarse (el servicio manda)."""
+    cupos = [
+        x
+        for x in c.get(
+            "/agenda/disponibilidad", fecha=futuro.isoformat(), ciudad=ciudad, tipo_codigo=tipo
+        )
+        if x["disponibles"] > 0
+    ]
+    if not cupos:
+        return None
+    # Pocos intentos: cada uno son dos consultas y el cupo de peticiones es por usuario.
+    for familia, mascota in azar.sample(pares, min(len(pares), 6)):
+        if familia["afiliada_desde"] > dia:
+            continue
+        eventos = [
+            e
+            for e in c.get("/preventivos", mascota_id=mascota["id"], estado="programado", limit=50)[
+                "items"
+            ]
+            if e["tipo_servicio_codigo"] == tipo and e["servicio_id"] is None
+        ]
+        if (
+            not eventos
+            or not c.get(
+                "/servicios/elegibilidad",
+                familia_id=familia["id"],
+                mascota_id=mascota["id"],
+                tipo_codigo=tipo,
+            )["elegible"]
+        ):
+            continue
+        evento = min(eventos, key=lambda e: e["fecha_programada"])
+        if evento["requiere_autorizacion"] and not evento["autorizado"]:
+            c.post("/preventivos/autorizaciones", {"eventos": [evento["id"]], "medio": "whatsapp"})
+        # La ultima franja del dia: la manana es de las consultas.
+        agendado = c.post(f"/preventivos/{evento['id']}/agendar", {"inicio": cupos[-1]["inicio"]})
+        return agendado["servicio_id"] if agendado else None
+    return None
+
+
+def aplicados_al_pasado(motor: Any, *, servicios: list[str], dia: date) -> None:
+    """Una visita preventiva aplica el preventivo con la fecha de hoy: se lleva al dia de la
+    visita, con su proxima fecha y la dosis siguiente que se programo desde ella."""
+    ids = [UUID(s) for s in servicios]
+    with motor.begin() as cx:
+        cx.execute(
+            text(
+                "UPDATE eventos_preventivos n"
+                " SET fecha_programada = n.fecha_programada - (e.fecha_aplicacion - :dia)"
+                " FROM eventos_preventivos e"
+                " WHERE e.servicio_id = ANY(:ids) AND e.estado = 'aplicado'"
+                " AND n.mascota_id = e.mascota_id AND n.esquema_codigo = e.esquema_codigo"
+                " AND n.dosis_numero = e.dosis_numero + 1 AND n.estado = 'programado'"
+            ),
+            {"ids": ids, "dia": dia},
+        )
+        cx.execute(
+            text(
+                "UPDATE eventos_preventivos"
+                " SET proxima_fecha = proxima_fecha - (fecha_aplicacion - :dia),"
+                " fecha_aplicacion = :dia"
+                " WHERE servicio_id = ANY(:ids) AND estado = 'aplicado'"
+            ),
+            {"ids": ids, "dia": dia},
+        )
+
+
+def citas_en_clinica(
+    c: Cliente,
+    medico: Cliente,
+    dia: date,
+    hoy: date,
+    pares: list[tuple[dict[str, Any], dict[str, Any]]],
+    op: Operacion,
+    motor: Any,
+    plantillas: list[dict[str, Any]],
+) -> None:
+    """Las citas de un jueves en la clinica: cada mascota llega, se atiende con su consulta
+    presencial y el servicio se completa. Como las rutas, se agenda y se atiende en el dia de
+    reserva y despues se lleva al pasado."""
+    futuro = reserva(hoy, dia)
+    hechas: list[str] = []
+    for tipo in CITAS_CLINICA:
+        cupos = [
+            x
+            for x in c.get(
+                "/agenda/disponibilidad",
+                fecha=futuro.isoformat(),
+                ciudad="Medellín",
+                tipo_codigo=tipo,
+            )
+            if x["disponibles"] > 0
+        ]
+        if not cupos:
+            continue
+        nuevo = None
+        for familia, mascota in azar.sample(pares, min(len(pares), 6)):
+            if (
+                familia["afiliada_desde"] > dia
+                or not c.get(
+                    "/servicios/elegibilidad",
+                    familia_id=familia["id"],
+                    mascota_id=mascota["id"],
+                    tipo_codigo=tipo,
+                )["elegible"]
+            ):
+                continue
+            nuevo = c.post(
+                "/servicios",
+                {
+                    "familia_id": familia["id"],
+                    "mascota_id": mascota["id"],
+                    "tipo_codigo": tipo,
+                    "inicio": cupos[0]["inicio"],
+                },
+            )
+            break
+        if not nuevo:
+            continue
+        c.post(f"/servicios/{nuevo['id']}/estado", {"estado": "en_atencion"})
+        consulta: dict[str, Any] = {
+            "mascota_id": nuevo["mascota_id"],
+            "servicio_id": nuevo["id"],
+            "tipo": "presencial",
+            "fecha": dia.isoformat(),
+        }
+        codigo = plantilla_para(plantillas, tipo) if len(op.citas) % CADA_PLANTILLA == 0 else None
+        if codigo:
+            consulta["plantilla_codigo"] = codigo
+        else:
+            motivo, anamnesis, examen, diagnostico, tratamiento = azar.choice(CONSULTAS)
+            consulta |= {
+                "motivo": motivo,
+                "anamnesis": anamnesis,
+                "examen_fisico": examen,
+                "diagnostico": diagnostico,
+                "tratamiento": tratamiento,
+            }
+        entrada = medico.post("/clinica/historias", consulta)
+        if entrada:
+            medico.post(f"/clinica/historias/{entrada['id']}/firma")
+        # La consulta firmada registro los pasos del servicio: ya se puede completar.
+        c.post(f"/servicios/{nuevo['id']}/estado", {"estado": "completado"})
+        op.citas.append(nuevo["id"])
+        hechas.append(nuevo["id"])
+    correr(motor, servicios=hechas, dias=(futuro - dia).days)
 
 
 def planear(c: Cliente, dia: date, ciudad: str, responsable: str) -> dict[str, Any] | None:
@@ -636,7 +824,7 @@ def recorrer(
     *,
     omitir: bool,
     op: Operacion,
-    plantillas: list[str],
+    plantillas: list[dict[str, Any]],
 ) -> None:
     """La medica sale, atiende cada parada con su consulta firmada y cierra la ruta. Parte de
     las consultas salen de una plantilla, que da todos los apartados."""
@@ -654,14 +842,32 @@ def recorrer(
             continue
         medico.post(f"/rutas/paradas/{parada['id']}/en-camino")
         medico.post(f"/rutas/paradas/{parada['id']}/llegada")
+        if parada["tipo_codigo"] in TIPOS_PREVENTIVOS:
+            # Sin consulta: la aplicacion es el paso que exige el servicio (el carnet sale de aqui).
+            producto, lote = azar.choice(
+                ANTIPARASITARIOS if parada["tipo_codigo"] == "desparasitacion" else VACUNAS
+            )
+            datos: dict[str, Any] = {"producto": producto, "lote": lote}
+            peso = (parada["mascota"] or {}).get("peso_kg")
+            if parada["tipo_codigo"] == "desparasitacion" and peso:
+                datos["peso_kg"] = peso
+            medico.put(f"/servicios/{servicio_id}/pasos/aplicacion", {"datos": datos})
+            salir(medico, parada["id"])
+            op.visitas.append(Visita(servicio_id, dia))
+            continue
         consulta: dict[str, Any] = {
             "mascota_id": parada["mascota"]["id"],
             "servicio_id": servicio_id,
             "tipo": "domiciliaria",
             "fecha": dia.isoformat(),
         }
-        if plantillas and len(op.visitas) % CADA_PLANTILLA == 0:
-            consulta["plantilla_codigo"] = azar.choice(plantillas)
+        codigo = (
+            plantilla_para(plantillas, parada["tipo_codigo"])
+            if len(op.visitas) % CADA_PLANTILLA == 0
+            else None
+        )
+        if codigo:
+            consulta["plantilla_codigo"] = codigo
         else:
             motivo, anamnesis, examen, diagnostico, tratamiento = azar.choice(CONSULTAS)
             consulta |= {
@@ -674,12 +880,17 @@ def recorrer(
         entrada = medico.post("/clinica/historias", consulta)
         if entrada:
             medico.post(f"/clinica/historias/{entrada['id']}/firma")
-        resp = medico.http.post(
-            f"/rutas/paradas/{parada['id']}/salida", data={"nota": "Visita sin novedad."}
-        )
-        if resp.is_error:
-            print(f"  ! salida {parada['id']}: {resp.status_code} {resp.text[:200]}")
+        salir(medico, parada["id"])
         op.visitas.append(Visita(servicio_id, dia))
+
+
+def salir(medico: Cliente, parada_id: str) -> None:
+    """Terminar la visita: la salida va como formulario, porque admite una evidencia."""
+    resp = medico.http.post(
+        f"/rutas/paradas/{parada_id}/salida", data={"nota": "Visita sin novedad."}
+    )
+    if resp.is_error:
+        print(f"  ! salida {parada_id}: {resp.status_code} {resp.text[:200]}")
 
 
 def correr(motor: Any, *, servicios: list[str], dias: int, ruta_id: str | None = None) -> None:
@@ -724,7 +935,8 @@ def fechar(motor: Any, op: Operacion) -> None:
     cuando se agendo, cuando se llego y se salio, cuando se firmo la consulta y cuando arranco
     y termino la ruta."""
     hechas = [UUID(v.servicio_id) for v in op.visitas if not v.omitida]
-    todas = [UUID(v.servicio_id) for v in op.visitas] + [UUID(s) for s in op.cancelados]
+    citas = [UUID(s) for s in op.citas]
+    todas = [UUID(v.servicio_id) for v in op.visitas] + [UUID(s) for s in op.cancelados] + citas
     rutas = [UUID(r) for r, _ in op.rutas]
     with motor.begin() as cx:
         # Se agenda entre dos y seis dias antes de la visita.
@@ -778,6 +990,25 @@ def fechar(motor: Any, op: Operacion) -> None:
             ),
             {"ids": hechas},
         )
+        # En la clinica no hay parada: la consulta se abre al empezar la cita y se firma al final.
+        cx.execute(
+            text(
+                "UPDATE historias_clinicas h"
+                " SET created_at = s.programado_para + interval '5 minutes',"
+                " firmada_en = s.termina_en - interval '3 minutes',"
+                " updated_at = s.termina_en - interval '3 minutes'"
+                " FROM servicios s WHERE s.id = h.servicio_id AND h.servicio_id = ANY(:ids)"
+            ),
+            {"ids": citas},
+        )
+        cx.execute(
+            text(
+                "UPDATE servicio_pasos sp SET created_at = s.termina_en - interval '3 minutes',"
+                " updated_at = s.termina_en - interval '3 minutes'"
+                " FROM servicios s WHERE s.id = sp.servicio_id AND sp.servicio_id = ANY(:ids)"
+            ),
+            {"ids": citas},
+        )
         cx.execute(
             text(
                 "UPDATE rutas r SET"
@@ -818,6 +1049,7 @@ def encuestas_respondidas(c: Cliente, op: Operacion, motor: Any) -> None:
                 json={"estado_aprobacion": "aprobada", "activa": True},
             )
     hechas = [UUID(v.servicio_id) for v in op.visitas if not v.omitida]
+    hechas += [UUID(s) for s in op.citas]
     for _ in range(30):
         outbox.drenar()
         with sesion_worker() as db:
@@ -1169,7 +1401,8 @@ def main() -> None:
     campana_enviada(c, motor)
     print(
         f"Listo: {len(op.rutas)} rutas, {sum(not v.omitida for v in op.visitas)} visitas,"
-        f" {sum(v.omitida for v in op.visitas)} omitidas y {len(op.cancelados)} canceladas."
+        f" {sum(v.omitida for v in op.visitas)} omitidas, {len(op.cancelados)} canceladas"
+        f" y {len(op.citas)} citas en la clínica."
     )
     comprobar(op)
 
@@ -1191,6 +1424,9 @@ MINIMOS = {
     "orientaciones cerradas": 2,
     "campanas enviadas": 1,
     "consultas desde una plantilla": 20,
+    "preventivos aplicados en ruta": 20,
+    "consultas en clínica": 10,
+    "controles en clínica": 5,
 }
 
 
@@ -1226,6 +1462,18 @@ def comprobar(op: Operacion) -> None:
                 "SELECT count(*) FROM solicitudes_virtuales WHERE estado = 'cerrada'"
             ),
             "campanas enviadas": contar("SELECT count(*) FROM ejecuciones_campana"),
+            "preventivos aplicados en ruta": contar(
+                "SELECT count(*) FROM eventos_preventivos"
+                " WHERE estado = 'aplicado' AND servicio_id IS NOT NULL"
+            ),
+            "consultas en clínica": contar(
+                "SELECT count(*) FROM servicios"
+                " WHERE tipo_codigo = 'consulta_clinica' AND estado = 'completado'"
+            ),
+            "controles en clínica": contar(
+                "SELECT count(*) FROM servicios"
+                " WHERE tipo_codigo = 'control_post' AND estado = 'completado'"
+            ),
             "consultas desde una plantilla": contar(
                 "SELECT count(*) FROM historias_clinicas"
                 " WHERE plantilla_codigo IS NOT NULL AND estado = 'firmada'"
