@@ -184,6 +184,10 @@ la referencia de crítica es el boceto elegido en el sorteo o, si no hubo sorteo
 ya cerradas del mismo mundo. Tras un `fix`, los arreglos se recapturan sobre los mismos ficheros y
 se le piden puntuados (resolved, partial o unresolved) al mismo revisor.
 
+**Si corre una suite del backend mientras revisa, el encargo le prohíbe ejecutar `pytest` o
+cualquier cosa contra `db-test`**: su `pytest` recrea el esquema y la suite en marcha deja de valer
+(pasó el 2026-11-18). Vitest y la lectura de código sí puede usarlos.
+
 ## La skill
 
 - `impeccable concept-seed --help` no imprime la ayuda: ejecuta una tirada sin modo. La forma del

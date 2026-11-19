@@ -187,7 +187,8 @@ pone `conftest.py` (`-m unit` también necesita `db-test`). Fixtures: `db` (act�
 `almacenamiento` (S3 en memoria), `en_worker` y `login(client, email)`. Las trampas conocidas, en
 [pruebas](../docs/backend/pruebas.md); las que más se tropiezan:
 
-- **Nunca dos `pytest` a la vez contra `db-test`**: el fixture `esquema` recrea el esquema al arrancar.
+- **Nunca dos `pytest` a la vez contra `db-test`**, tampoco el de un subagente (un revisor): el fixture
+  `esquema` recrea el esquema al arrancar y la otra suite deja de valer.
 - Dentro de una prueba todo comparte `created_at`: se comparan conjuntos, no órdenes por fecha.
 - Tras `await db.commit()` los objetos ORM caducan (`MissingGreenlet`): guarda los ids antes.
 - Una fila con estado avanzado se inserta ya en él: el trigger de transiciones solo valida `UPDATE`.
