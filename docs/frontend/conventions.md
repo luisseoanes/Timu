@@ -168,7 +168,8 @@ marca, no colores de la interfaz.
 6. ¿Las tablas son `tabla-apilable`, con `data-etiqueta` en cada celda?
 7. ¿Se ve bien a 1440, 1180, 900 y **390** px? Las ventanas, por encima de todo; los títulos,
    sin pisarse; nada que desborde dentro de una pestaña (si la pantalla tiene pestañas, su
-   ruta lleva `pestanas: true` en el barrido de `e2e-stack/responsive.spec.ts`).
+   ruta lleva `pestanas: true` en el barrido de `e2e-stack/responsive.spec.ts`, y si abre una ficha
+   desde la URL, la declara en `fichas`).
 8. ¿Los textos están en español, en voz activa y sin jerga?
 9. ¿`npm run verificar` pasa? (lint + tipos + cobertura + build, lo mismo que el CI)
 

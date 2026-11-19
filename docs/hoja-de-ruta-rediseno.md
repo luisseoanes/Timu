@@ -29,8 +29,8 @@ actualiza aquí, igual que en el backlog.
 | R1 — Fundaciones | 7 | 5 | 2 | 0 |
 | R2 — Panel del equipo | 10 | 10 | 0 | 0 |
 | R3 — Familias, aliada y páginas públicas | 7 | 7 | 0 | 0 |
-| R4 — Cierre | 4 | 0 | 0 | 4 |
-| **Total** | **32** | **26** | **2** | **4** |
+| R4 — Cierre | 4 | 1 | 0 | 3 |
+| **Total** | **32** | **27** | **2** | **3** |
 
 Al cierre de `R2-PAN-10` (2026-11-15) el panel del equipo está rediseñado entero, y con `R3-PUB-01`
 (el mismo día) también el acceso. Con `R3-ALI-01` (2026-11-16), el espacio de la clínica aliada, y
@@ -52,8 +52,8 @@ hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
   producto (6.14, F2-CLI-03) y porque así las consultas en clínica de `DEU-14` ya parten de plantillas.
 - **Lo siguiente lo decide el usuario: R3 está completa y la deuda decidida, cerrada.** Queda el
   cierre `R4` (recorrido, auditoría, documentación y umbrales). **Recomendado** (2026-11-18):
-  `R4-CIE-01` a `R4-CIE-04` en orden; la demostración ya recorre todos los casos. Se le pregunta al
-  usuario antes de empezar cada una.
+  `R4-CIE-01` a `R4-CIE-04` en orden; la demostración ya recorre todos los casos. `R4-CIE-01` se
+  cerró el 2026-11-19; sigue `R4-CIE-02`. Se le pregunta al usuario antes de empezar cada una.
 - **La portada pública de `timu.com.co` está hecha: `R3-PUB-04`** (2026-11-18). Antes de publicarla
   en el dominio quedan cosas de TIMU, en [pendientes externos](pendientes-externos.md): los valores
   provisionales sacados de la web vieja, el permiso de las personas de las fotos del equipo, la
@@ -222,7 +222,7 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 
 | ID | Trabajo | Criterio de aceptación | Estado |
 | --- | --- | --- | --- |
-| `R4-CIE-01` | Recorrido completo | La lista de rutas pendientes de `R0-QAA-02` está vacía (desde `R2-PAN-10`) y se elimina. El recorrido cubre todas las rutas a los cuatro anchos (375, 768, 900 y 1280 px). | Pendiente |
+| `R4-CIE-01` | Recorrido completo | La lista de rutas pendientes de `R0-QAA-02` está vacía (desde `R2-PAN-10`) y se elimina. El recorrido cubre todas las rutas a los cuatro anchos (375, 768, 900 y 1280 px). | Hecho (2026-11-19): `PENDIENTES` y su prueba se retiraron, y un fallo hace fallar el barrido. Además, decidido con el usuario, el barrido mide abiertas las fichas que cada pantalla abre desde la URL (plantilla, ruta, campaña, clínica aliada, interesado, plan y regla), con un registro de `datos_demo` buscado por su nombre: en el celular son lo que se ve al tocar una fila, y no eran una ruta propia. |
 | `R4-CIE-02` | Auditoría | `/impeccable audit` en cada espacio y `/impeccable critique` en el panel y el portal. Se corrigen todos los hallazgos P0 y P1; los P2 y P3 quedan como deuda escrita. | Pendiente |
 | `R4-CIE-03` | Documentación final | La skill refresca `DESIGN.md`. Se reescriben `docs/frontend/` (componentes, plantillas y convenciones) y la sección 15 del manual. El `CLAUDE.md` describe las guardas definitivas, y los tres `CLAUDE.md` se condensan (el del backend pasa de 35 KB) sin perder ninguna regla: lo que sea historia o explicación larga va a `docs/`. | Pendiente. Adelantado el 2026-11-16: el `CLAUDE.md` del backend pasó de 36 KB a 14 KB (el detalle, en `docs/backend/`) y el detalle de la e2e del stack salió del de la raíz (`docs/frontend/e2e-stack.md`). |
 | `R4-CIE-04` | Umbrales de cobertura | Los umbrales de `vitest.config.ts` se ajustan a lo medido, según la regla del `CLAUDE.md`. | Pendiente |
