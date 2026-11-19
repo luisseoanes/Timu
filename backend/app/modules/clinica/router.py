@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import Rol
-from app.core.errores import Conflicto, ReglaNegocio
+from app.core.errores import ReglaNegocio
 from app.core.eventos import EventoDominio
 from app.core.outbox import publicar
 from app.modules.archivos import service as archivos
@@ -92,11 +92,28 @@ class FormulaRead(BaseModel):
     url: str
 
 
+NombrePlantilla = Annotated[str, Field(min_length=3, max_length=120)]
+CamposPlantilla = dict[
+    Literal[service.CAMPOS_CLINICOS],  # type: ignore[valid-type]
+    Annotated[str, Field(max_length=4000)],
+]
+
+
 class PlantillaIn(BaseModel):
-    codigo: str = Field(pattern=r"^[a-z0-9_]{3,40}$")
-    nombre: str = Field(min_length=3, max_length=120)
+    """El codigo lo saca la API del nombre (`service.crear_plantilla`)."""
+
+    nombre: NombrePlantilla
     tipo_servicio_codigo: str | None = None
-    campos: dict[Literal[service.CAMPOS_CLINICOS], str] = {}  # type: ignore[valid-type]
+    campos: CamposPlantilla = {}
+
+
+class PlantillaUpdate(BaseModel):
+    """Solo cambia lo que se manda; `campos` reemplaza los textos enteros."""
+
+    nombre: NombrePlantilla | None = None
+    tipo_servicio_codigo: str | None = None
+    campos: CamposPlantilla | None = None
+    activa: bool | None = None
 
 
 class PlantillaRead(BaseModel):
@@ -309,13 +326,14 @@ async def emitir_formula(
 
 
 @router.get("/plantillas", response_model=list[PlantillaRead], dependencies=[EQUIPO])
-async def plantillas(db: DbSession, tipo_servicio: str | None = None) -> list[PlantillaConsulta]:
-    from sqlalchemy import select
-
-    stmt = select(PlantillaConsulta).where(PlantillaConsulta.activa.is_(True))
-    if tipo_servicio:
-        stmt = stmt.where(PlantillaConsulta.tipo_servicio_codigo == tipo_servicio)
-    return list(await db.scalars(stmt.order_by(PlantillaConsulta.nombre)))
+async def plantillas(
+    db: DbSession, tipo_servicio: str | None = None, incluir_inactivas: bool = False
+) -> list[PlantillaConsulta]:
+    return await db.run_sync(
+        lambda s: service.listar_plantillas(
+            s, tipo_servicio=tipo_servicio, incluir_inactivas=incluir_inactivas
+        )
+    )
 
 
 @router.post(
@@ -325,14 +343,14 @@ async def plantillas(db: DbSession, tipo_servicio: str | None = None) -> list[Pl
     dependencies=[GESTION],
 )
 async def crear_plantilla(db: DbSession, data: PlantillaIn) -> PlantillaConsulta:
-    from sqlalchemy import select
+    return await db.run_sync(
+        service.crear_plantilla, data.nombre, data.campos, data.tipo_servicio_codigo
+    )
 
-    if await db.scalar(select(PlantillaConsulta.id).where(PlantillaConsulta.codigo == data.codigo)):
-        raise Conflicto(f"Ya existe la plantilla {data.codigo}")
-    plantilla = PlantillaConsulta(**data.model_dump())
-    db.add(plantilla)
-    await db.flush()
-    return plantilla
+
+@router.patch("/plantillas/{codigo}", response_model=PlantillaRead, dependencies=[GESTION])
+async def editar_plantilla(db: DbSession, codigo: str, data: PlantillaUpdate) -> PlantillaConsulta:
+    return await db.run_sync(service.editar_plantilla, codigo, data.model_dump(exclude_unset=True))
 
 
 # --- F2-CLI-04 Atencion virtual ---------------------------------------------------------------

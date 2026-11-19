@@ -139,7 +139,6 @@ async def test_un_borrador_solo_lo_edita_quien_lo_abrio(client, equipo, mascota_
 
 async def test_plantilla_es_el_punto_de_partida(client, equipo, mascota_id):
     plantilla = {
-        "codigo": "control_vacunal",
         "nombre": "Control vacunal",
         "campos": {"motivo": "Control de vacunas", "examen_fisico": "Mucosas rosadas, T 38.5"},
     }
@@ -147,6 +146,7 @@ async def test_plantilla_es_el_punto_de_partida(client, equipo, mascota_id):
         "/api/v1/clinica/plantillas", json=plantilla, headers=equipo["medica"]
     )
     assert creada.status_code == 201, creada.text
+    assert creada.json()["codigo"] == "control_vacunal"
     resp = await client.post(
         "/api/v1/clinica/historias",
         json={
@@ -160,6 +160,101 @@ async def test_plantilla_es_el_punto_de_partida(client, equipo, mascota_id):
     assert entrada["motivo"] == "Control de vacunas"
     assert entrada["examen_fisico"].startswith("Mucosas")
     assert entrada["anamnesis"] == "Sin novedad"
+
+
+async def _plantilla(client, headers, nombre: str, **campos: str) -> dict:
+    resp = await client.post(
+        "/api/v1/clinica/plantillas", json={"nombre": nombre, "campos": campos}, headers=headers
+    )
+    assert resp.status_code == 201, resp.text
+    return resp.json()
+
+
+async def test_el_codigo_de_la_plantilla_sale_del_nombre_y_no_se_repite(client, equipo):
+    primera = await _plantilla(client, equipo["medica"], "Otitis externa", motivo="Rascado")
+    # Otro nombre que da el mismo codigo: lleva sufijo.
+    segunda = await _plantilla(client, equipo["admin"], "Otitis, externa", motivo="Rascado")
+    tilde = await _plantilla(client, equipo["medica"], "Revisión", motivo="Control")
+    assert (primera["codigo"], segunda["codigo"], tilde["codigo"]) == (
+        "otitis_externa",
+        "otitis_externa_2",
+        "revision",
+    )
+    # El mismo nombre, sin distinguir mayusculas, no se puede repetir.
+    repetida = await client.post(
+        "/api/v1/clinica/plantillas",
+        json={"nombre": "otitis externa", "campos": {"motivo": "x"}},
+        headers=equipo["medica"],
+    )
+    assert repetida.status_code == 409
+
+
+async def test_el_equipo_medico_corrige_la_plantilla_y_la_retira_sin_borrarla(
+    client, equipo, mascota_id
+):
+    creada = await _plantilla(
+        client, equipo["medica"], "Gastroenteritis", motivo="Vomito", diagnostico="Gastritis"
+    )
+    url = f"/api/v1/clinica/plantillas/{creada['codigo']}"
+    corregida = await client.patch(
+        url,
+        json={
+            "nombre": "Gastroenteritis leve",
+            "campos": {"motivo": "Vomito y diarrea", "diagnostico": "  ", "tratamiento": "Dieta"},
+        },
+        headers=equipo["admin"],
+    )
+    assert corregida.status_code == 200, corregida.text
+    # El codigo no cambia (es su identificador) y un apartado vacio deja de prellenar.
+    assert corregida.json() == {
+        "codigo": creada["codigo"],
+        "nombre": "Gastroenteritis leve",
+        "tipo_servicio_codigo": None,
+        "campos": {"motivo": "Vomito y diarrea", "tratamiento": "Dieta"},
+        "activa": True,
+    }
+
+    retirada = await client.patch(url, json={"activa": False}, headers=equipo["medica"])
+    assert retirada.json()["activa"] is False
+    assert retirada.json()["nombre"] == "Gastroenteritis leve"
+    activas = (await client.get("/api/v1/clinica/plantillas", headers=equipo["op"])).json()
+    assert creada["codigo"] not in {p["codigo"] for p in activas}
+    # La consulta ya no la ofrece ni la acepta.
+    consulta = await client.post(
+        "/api/v1/clinica/historias",
+        json={"mascota_id": str(mascota_id), "plantilla_codigo": creada["codigo"]},
+        headers=equipo["medica"],
+    )
+    assert consulta.status_code == 404
+
+    otra = await _plantilla(client, equipo["medica"], "Control general", motivo="Control")
+    todas = (
+        await client.get(
+            "/api/v1/clinica/plantillas",
+            params={"incluir_inactivas": "true"},
+            headers=equipo["medica"],
+        )
+    ).json()
+    # Las retiradas siguen ahi, al final.
+    assert [p["codigo"] for p in todas] == [otra["codigo"], creada["codigo"]]
+
+    devuelta = await client.patch(url, json={"activa": True}, headers=equipo["medica"])
+    assert devuelta.json()["activa"] is True
+
+
+async def test_editar_una_plantilla_es_del_equipo_medico(client, equipo):
+    creada = await _plantilla(client, equipo["medica"], "Control general", motivo="Control")
+    url = f"/api/v1/clinica/plantillas/{creada['codigo']}"
+    assert (
+        await client.patch(url, json={"activa": False}, headers=equipo["op"])
+    ).status_code == 403
+    otra = await _plantilla(client, equipo["medica"], "Otitis externa", motivo="Rascado")
+    choque = await client.patch(url, json={"nombre": otra["nombre"]}, headers=equipo["medica"])
+    assert choque.status_code == 409
+    falta = await client.patch(
+        "/api/v1/clinica/plantillas/no_existe", json={"activa": False}, headers=equipo["medica"]
+    )
+    assert falta.status_code == 404
 
 
 # --- F2-CLI-05 Permisos -----------------------------------------------------------------------

@@ -1,15 +1,16 @@
 """6.14 / 6.17 Historia clinica, adjuntos, formulas y atencion veterinaria virtual."""
 
 import re
+import unicodedata
 from typing import Any, Literal
 from uuid import UUID
 
 import structlog
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.enums import EstadoServicio, Rol
-from app.core.errores import NoEncontrado, Prohibido, ReglaNegocio
+from app.core.errores import Conflicto, NoEncontrado, Prohibido, ReglaNegocio
 from app.core.eventos import declarar_evento
 from app.core.tiempo import ahora, hoy
 from app.modules.archivos import service as archivos
@@ -106,6 +107,90 @@ def plantilla(db: Session, codigo: str) -> PlantillaConsulta:
     )
     if p is None:
         raise NoEncontrado(f"Plantilla de consulta '{codigo}' inexistente o inactiva")
+    return p
+
+
+def listar_plantillas(
+    db: Session, *, tipo_servicio: str | None = None, incluir_inactivas: bool = False
+) -> list[PlantillaConsulta]:
+    """Las activas, que son las que ofrece la consulta; con `incluir_inactivas`, tambien las
+    retiradas, al final (las mantiene el equipo medico en Clinica)."""
+    stmt = select(PlantillaConsulta)
+    if not incluir_inactivas:
+        stmt = stmt.where(PlantillaConsulta.activa.is_(True))
+    if tipo_servicio:
+        stmt = stmt.where(PlantillaConsulta.tipo_servicio_codigo == tipo_servicio)
+    orden = (PlantillaConsulta.activa.desc(), PlantillaConsulta.nombre)
+    return list(db.scalars(stmt.order_by(*orden)))
+
+
+def _campos_plantilla(campos: dict[str, str]) -> dict[str, str]:
+    """Solo los apartados con texto: uno vacio no prellena nada."""
+    return {k: v.strip() for k, v in campos.items() if k in CAMPOS_CLINICOS and v.strip()}
+
+
+def _nombre_libre(db: Session, nombre: str, *, salvo: UUID | None = None) -> str:
+    """Dos plantillas con el mismo nombre no se distinguen en la consulta."""
+    nombre = nombre.strip()
+    stmt = select(PlantillaConsulta.id).where(
+        func.lower(PlantillaConsulta.nombre) == nombre.lower()
+    )
+    if salvo is not None:
+        stmt = stmt.where(PlantillaConsulta.id != salvo)
+    if db.scalar(stmt) is not None:
+        raise Conflicto(f"Ya hay una plantilla que se llama «{nombre}»")
+    return nombre
+
+
+def _codigo_plantilla(db: Session, nombre: str) -> str:
+    """El codigo interno, sacado del nombre: sin tildes, en minusculas y unico («Otitis
+    externa» → «otitis_externa»). No cambia al editar: es su identificador en la API y en la
+    URL del panel."""
+    sin_tildes = unicodedata.normalize("NFKD", nombre).encode("ascii", "ignore").decode()
+    base = re.sub(r"[^a-z0-9]+", "_", sin_tildes.lower()).strip("_")[:36]
+    base = base if len(base) >= 3 else f"plantilla_{base}".rstrip("_")
+    existentes = set(
+        db.scalars(
+            select(PlantillaConsulta.codigo).where(PlantillaConsulta.codigo.like(f"{base}%"))
+        )
+    )
+    codigo, n = base, 2
+    while codigo in existentes:
+        codigo, n = f"{base}_{n}", n + 1
+    return codigo
+
+
+def crear_plantilla(
+    db: Session, nombre: str, campos: dict[str, str], tipo_servicio_codigo: str | None = None
+) -> PlantillaConsulta:
+    nombre = _nombre_libre(db, nombre)
+    p = PlantillaConsulta(
+        codigo=_codigo_plantilla(db, nombre),
+        nombre=nombre,
+        tipo_servicio_codigo=tipo_servicio_codigo,
+        campos=_campos_plantilla(campos),
+    )
+    db.add(p)
+    db.flush()
+    return p
+
+
+def editar_plantilla(db: Session, codigo: str, cambios: dict[str, Any]) -> PlantillaConsulta:
+    """F2-CLI-03 El equipo medico corrige el texto de una plantilla o la retira (`activa`); no
+    se borra (nada de negocio se borra) y la bitacora guarda cada version. La consulta copia
+    los textos al crearse: lo ya registrado no cambia."""
+    p = db.scalar(select(PlantillaConsulta).where(PlantillaConsulta.codigo == codigo))
+    if p is None:
+        raise NoEncontrado(f"Plantilla de consulta '{codigo}' inexistente")
+    if "nombre" in cambios:
+        p.nombre = _nombre_libre(db, cambios["nombre"], salvo=p.id)
+    if "campos" in cambios:
+        p.campos = _campos_plantilla(cambios["campos"])
+    if "tipo_servicio_codigo" in cambios:
+        p.tipo_servicio_codigo = cambios["tipo_servicio_codigo"]
+    if "activa" in cambios:
+        p.activa = cambios["activa"]
+    db.flush()
     return p
 
 
