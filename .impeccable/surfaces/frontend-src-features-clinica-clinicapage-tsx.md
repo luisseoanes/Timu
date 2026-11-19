@@ -105,3 +105,14 @@ preguntas: «Listado con ficha (Recomendada)» y «La API lo saca del nombre (Re
   textos de la plantilla al crearse: editarla o desactivarla no cambia lo ya registrado.
 - **El código lo saca la API del nombre** y no se enseña: la ventana pide el nombre y el texto de
   cada apartado, igual al crear que al editar.
+
+### Tipo de atención y uso de cada plantilla (2026-11-18)
+
+Decidido con el usuario, en sus palabras: «Añadirlo (Recomendada)» y «Mostrarlo en la ficha
+(Recomendada)».
+
+- **La ventana pide el tipo de atención**, opcional («Cualquier atención»), y su ayuda dice qué
+  cambia. La consulta de una visita ofrece «Para esta visita» (las de su tipo) y «Generales»; las de
+  otra atención no salen. Sin visita se ofrecen todas, sin agrupar.
+- **La ficha dice cuánto se ha usado**: «Usada en 12 consultas firmadas», contando solo las firmadas
+  y vigentes. La plantilla de origen ya se guardaba en cada consulta.

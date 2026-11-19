@@ -932,17 +932,26 @@ suya, y «Volver» cierra la ficha sin salir de ella.
   nombre y, debajo en texto suave, lo que prellena en palabras y en el orden de la consulta
   («Prellena el motivo de consulta y el tratamiento», «Prellena los cinco apartados», «No prellena
   ningún apartado»). Las inactivas van al final, con la insignia neutra «Inactiva».
-- **Ficha:** el nombre; la insignia «Activa» o «Inactiva», «Prellena 2 de 5 apartados» y, si la
-  plantilla es de un tipo de servicio, «Para <tipo>». «Editar plantilla» es el verde; «Desactivar
-  plantilla» o «Activar plantilla» va en el menú de tres puntos y se hace sin preguntar. Inactiva,
-  una nota dice qué deja de pasar: «Inactiva: la consulta ya no la ofrece. Las consultas que
+- **Ficha:** el nombre; la insignia «Activa» o «Inactiva», «Prellena 2 de 5 apartados», cuánto se
+  ha usado («Usada en 12 consultas firmadas», «Usada en 1 consulta firmada» o «Aún sin consultas
+  firmadas»; solo cuentan las firmadas y vigentes) y, si la plantilla es de un tipo de atención,
+  «Para <tipo>» en minúscula. «Editar plantilla» es el verde; «Desactivar plantilla» o «Activar
+  plantilla» va en el menú de tres puntos y se hace sin preguntar. Inactiva, una nota dice qué deja
+  de pasar: «Inactiva: la consulta ya no la ofrece. Las consultas que
   partieron de ella no cambian.». Debajo, los apartados con texto en `consulta-lectura`, y una nota
   con el resto: «Deja en blanco la anamnesis, el examen físico y el diagnóstico.».
-- **Ventana:** la misma para crear y editar, con el pie «Guardar plantilla». Pide el nombre y un
-  área de texto de tres líneas por apartado, a lo ancho y con el título de la consulta. La
-  descripción dice el alcance: al editar, «Los cambios valen para las consultas nuevas; las que ya
-  partieron de ella no cambian.». El código lo saca la API del nombre y no se pide ni se muestra.
-  Al crear, se abre la ficha de la plantilla creada.
+- **Ventana:** la misma para crear y editar, con el pie «Guardar plantilla». «Nombre» y «Tipo de
+  atención» comparten fila (por debajo de 900 px se apilan). El tipo es opcional: una lista que
+  empieza en «Cualquier atención», y su ayuda dice qué significa lo elegido: «Se ofrece en cualquier visita.» o «En una visita solo
+  se ofrece si es de este tipo.». Debajo, un área de texto de tres líneas por apartado, a lo ancho y con el título de la
+  consulta. La descripción dice el alcance: al editar, «Los cambios valen para las consultas
+  nuevas; las que ya partieron de ella no cambian.». El código lo saca la API del nombre y no se
+  pide ni se muestra. Al crear, se abre la ficha de la plantilla creada.
+- **Qué ofrece la consulta:** la lista «Plantilla» del primer apartado, al crear la consulta. La de
+  una visita agrupa «Para esta visita» (las de su tipo) y «Generales» (las de cualquier atención),
+  y no ofrece las de otra atención; si ninguna es de su tipo, las generales van sin grupo. Mientras
+  no se conoce el tipo de la visita, o si falla, solo las generales. Sin visita, todas y sin
+  agrupar.
 
 ### Servicios y Tareas (R2-PAN-05)
 Servicios hereda el listado con ficha; Tareas, la tabla apilable.

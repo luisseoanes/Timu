@@ -33,14 +33,13 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
 
 ### Lo que quedó de las plantillas de consulta tras cerrar `DEU-15` (2026-11-18)
 
-- **La ventana no deja elegir el tipo de atención de una plantilla.** El modelo y la API lo
-  admiten (`tipo_servicio_codigo`, y la ficha lo dice si existe) y F2-CLI-03 habla de «plantillas
-  por tipo de atención», pero nunca se pudo fijar desde el panel y la consulta no filtra por él.
-  Lo vio el revisor final. Decisión abierta con el usuario.
-- **La consulta no guarda de qué plantilla partió**: copia sus textos al crearse. Editar o
-  desactivar una plantilla no cambia lo ya registrado, pero tampoco se puede saber cuántas
-  consultas salieron de cada una (`operacion_demo` lo cuenta por su cuenta). Si TIMU lo quiere
-  para la trazabilidad (secciones 3 y 4), es una columna nueva en la historia. Decisión abierta.
+- ~~**La ventana no deja elegir el tipo de atención de una plantilla**~~ Resuelto el 2026-11-18,
+  decidido con el usuario: la ventana lo pide, y la consulta de una visita ofrece las plantillas de
+  su tipo y las generales (F2-CLI-03).
+- **La consulta guarda de qué plantilla partió** (`historias_clinicas.plantilla_codigo`, con su
+  llave foránea) y además copia sus textos al crearse: editar o desactivar una plantilla no cambia
+  lo ya registrado. La ficha de la plantilla dice en cuántas consultas firmadas y vigentes se usó
+  (`GET /clinica/plantillas/uso`), decidido con el usuario el 2026-11-18.
 - **Sin el separador «Desactivadas» del boceto ASCII** que eligió el usuario: las inactivas van
   al final con su insignia, como en Planes, Reglas y Clínicas aliadas. El revisor lo dio por
   adaptación aceptable; si el usuario lo quiere, es un subtítulo en el listado.
