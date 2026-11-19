@@ -169,6 +169,7 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [docs/integraciones-timu.md](docs/integraciones-timu.md) | Para la cliente: qué tiene que hacer TIMU en cada integración decidida y las opciones de las que faltan |
 | [docs/costos-infraestructura.md](docs/costos-infraestructura.md) | Estimación de costos de tres nubes, integraciones e IA (10 de noviembre de 2026) |
 | [docs/prueba-de-carga.md](docs/prueba-de-carga.md) | Cómo correr la prueba de carga con el volumen a 12 meses |
+| [docs/despliegue-staging.md](docs/despliegue-staging.md) | Staging en Railway: autodeploy desde `main` con el CI en verde, configuración de cada servicio, migraciones y cómo volver a sembrar |
 | [docs/flujo-de-la-visita.md](docs/flujo-de-la-visita.md) | Cómo se atiende una visita en casa: estados de la parada y del servicio, pasos de cada tipo y la consulta como registro |
 | [docs/portal-familias.md](docs/portal-familias.md) | Qué ve y qué hace la familia en el portal, de dónde sale cada dato y lo que dice la API para que el panel no copie reglas del backend |
 | [docs/portada-publica.md](docs/portada-publica.md) | La portada y la página de cada plan: de dónde sale cada sección (lo que edita Administración), las reglas de la red de aliadas, del contacto a Comercial, las direcciones viejas y lo que falta de TIMU para publicarla |

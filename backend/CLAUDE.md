@@ -156,6 +156,7 @@ Dónde se aplica `alembic upgrade head`:
 | --- | --- |
 | Desarrollo | automático: el servicio `inicializar` en cada `docker compose up`; `docker compose run --rm inicializar` si llega una migración con el stack ya arriba |
 | Pruebas | automático: `tests/conftest.py` levanta el esquema con las migraciones |
+| Staging (Railway) | automático: el *pre-deploy* de `api` corre `inicializar` en cada despliegue desde `main` ([despliegue de staging](../docs/despliegue-staging.md)); nunca a mano |
 | Producción | como paso del despliegue, **antes** de arrancar la API, con el servicio anterior aún sirviendo |
 
 Alembic se conecta siempre como dueño del esquema (`DATABASE_URL_PROPIETARIO`). Sin Docker

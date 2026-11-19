@@ -1,7 +1,8 @@
 # Datos de demostración
 
-Dos scripts siembran datos para ver el sistema con vida en local. Ninguno corre fuera de
-`ENVIRONMENT=local`, y los dos son repetibles.
+Dos scripts siembran datos para ver el sistema con vida en local y en staging. Ninguno corre
+fuera de `ENVIRONMENT=local` o `staging` (en staging, como se vacía y se vuelve a sembrar:
+[despliegue de staging](despliegue-staging.md)), y los dos son repetibles.
 
 ```bash
 docker compose exec api python -m scripts.datos_demo       # lo mínimo: ~1 min

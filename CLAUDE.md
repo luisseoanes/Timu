@@ -126,6 +126,23 @@ job **Stack con un solo comando** de `.github/workflows/ci.yml` repite lo mismo 
 empuje a `main` y bloquea el release si falla, pero para entonces el commit ya está en
 `main`: la verificación local es la que evita romperlo.
 
+## Staging en Railway: cada empuje verde se despliega solo
+
+Railway (proyecto `timu`, entorno `staging`) despliega `api`, `worker` y `web` desde `main` en
+cuanto el CI de ese commit sale en verde («Wait for CI»). Detalle, configuración de cada servicio y
+cómo volver a sembrar: [`docs/despliegue-staging.md`](docs/despliegue-staging.md).
+
+- **Las migraciones llegan a staging solas**: el *pre-deploy* de la API corre `inicializar`. Nunca se
+  aplican a mano allí, y se escriben como si hubiera datos reales: una que solo funciona sobre una base
+  vacía rompe el despliegue.
+- **Una variable que `Settings` exige desplegado se pone en Railway antes de empujar** el cambio que la
+  pide; si no, `inicializar` no arranca.
+- **El panel de staging es el compilado** (`frontend/Dockerfile.despliegue`, Caddy): un cambio que toca
+  su build, el `Caddyfile` o cómo llega a `/api` se prueba con esa imagen, no con `npm run dev`.
+- **Tras empujar, se comprueba también el despliegue** de los servicios que el cambio toca (`railway
+  deployment list -s <servicio> -e staging --json`, o el panel de Railway): un despliegue fallido deja
+  staging en la versión anterior sin que el CI lo diga.
+
 ## Dónde está cada cosa
 
 Este fichero es lo transversal. Las reglas de cada lado viven junto a su código y se
