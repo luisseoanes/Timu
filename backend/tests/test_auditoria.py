@@ -4,6 +4,7 @@ from httpx import AsyncClient
 from sqlalchemy import select
 
 from app.core.auditoria import RegistroAuditoria
+from app.core.enums import Rol
 
 
 async def _registros(db, entidad_id: str) -> list[RegistroAuditoria]:
@@ -26,7 +27,7 @@ def _familia(documento: str, **extra) -> dict:
     }
 
 
-async def test_alta_y_cambio_de_estado_quedan_auditados(client: AsyncClient, db, admin, headers):
+async def test_alta_y_cambio_de_estado_quedan_auditados(client: AsyncClient, db, equipo, headers):
     creada = await client.post(
         "/api/v1/familias",
         json=_familia("1001"),
@@ -41,11 +42,12 @@ async def test_alta_y_cambio_de_estado_quedan_auditados(client: AsyncClient, db,
     registros = await _registros(db, familia_id)
     assert [r.accion for r in registros] == ["crear", "cambio_estado"]
     alta, cambio = registros
-    assert alta.usuario_id == admin.id
+    # Lo hizo atencion al cliente: dar de alta y cambiar el estado es lo suyo (Seccion 12).
+    assert alta.usuario_id == equipo[Rol.ATENCION_CLIENTE].id
     assert alta.request_id == "peticion-alta-01"
     assert alta.cambios["titular_nombre"] == [None, "Ana"]
     assert cambio.cambios == {"estado": ["prospecto", "activa"]}
-    assert cambio.usuario_id == admin.id
+    assert cambio.usuario_id == equipo[Rol.ATENCION_CLIENTE].id
 
 
 async def test_edicion_sin_cambios_reales_no_deja_rastro(client: AsyncClient, db, headers):

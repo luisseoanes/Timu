@@ -4,10 +4,13 @@ import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { AliadasPage } from './AliadasPage'
-import { USUARIO_ADMIN } from '@/test/handlers'
+import { sesionDe } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { ClinicaRead } from '@/types'
+
+// Sección 12: esta pantalla se prueba con el perfil que la usa (docs/perfiles-y-permisos.md).
+beforeEach(() => server.use(sesionDe('operaciones')))
 
 const API = '*/api/v1'
 
@@ -130,13 +133,10 @@ describe('Aliadas: cómo sale una clínica en la portada', () => {
     expect(await within(modal).findByRole('alert')).toHaveTextContent('La ciudad no existe')
   })
 
-  it('quien no administra lo ve pero no lo edita', async () => {
-    server.use(
-      http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'operaciones' })),
-      http.get(`${API}/aliadas`, () => HttpResponse.json([EN_PORTADA])),
-    )
-    const { bloque } = await abrirClinica()
-    expect(within(bloque).getByText('Laureles')).toBeInTheDocument()
-    expect(within(bloque).queryByRole('button', { name: 'Editar cómo sale en la portada' })).not.toBeInTheDocument()
+  it('quien no lleva la red de aliadas no ve sus clínicas: Atención solo emite remisiones', async () => {
+    server.use(sesionDe('atencion_cliente'))
+    renderizar(<AliadasPage />, { ruta: '/panel/aliadas?clinica=cl1' })
+    expect(await screen.findByRole('tab', { name: 'Remisiones' })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Clínicas y convenios' })).not.toBeInTheDocument()
   })
 })

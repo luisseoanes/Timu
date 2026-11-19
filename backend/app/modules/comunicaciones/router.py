@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 
-from app.api.deps import INTERNOS, DbSession, requiere
+from app.api.deps import DbSession, requiere
 from app.core.enums import Rol
 from app.modules.comunicaciones import service
 from app.modules.comunicaciones.models import BajaComunicaciones, Mensaje, PlantillaWhatsApp
@@ -24,11 +24,16 @@ from app.schemas.common import Page, ParamsListado, paginar
 
 router = APIRouter(prefix="/comunicaciones", tags=["comunicaciones"])
 
-GESTION = Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))
-EQUIPO = Depends(requiere(*INTERNOS))
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
+ADMIN = Depends(requiere(Rol.ADMIN))
+ATENCION = Depends(requiere(Rol.ATENCION_CLIENTE))
+ADMIN_COMERCIAL_Y_ATENCION = Depends(requiere(Rol.ADMIN, Rol.COMERCIAL, Rol.ATENCION_CLIENTE))
+COMERCIAL_Y_ATENCION = Depends(requiere(Rol.COMERCIAL, Rol.ATENCION_CLIENTE))
 
 
-@router.get("/plantillas", response_model=list[PlantillaRead], dependencies=[EQUIPO])
+@router.get(
+    "/plantillas", response_model=list[PlantillaRead], dependencies=[ADMIN_COMERCIAL_Y_ATENCION]
+)
 async def listar_plantillas(db: DbSession, nombre: str | None = None) -> list[PlantillaWhatsApp]:
     stmt = select(PlantillaWhatsApp).order_by(
         PlantillaWhatsApp.nombre, PlantillaWhatsApp.version.desc()
@@ -42,7 +47,7 @@ async def listar_plantillas(db: DbSession, nombre: str | None = None) -> list[Pl
     "/plantillas",
     response_model=PlantillaRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[GESTION],
+    dependencies=[ADMIN],
 )
 async def crear_plantilla(db: DbSession, data: PlantillaCreate) -> PlantillaWhatsApp:
     """Crea una version nueva en borrador. El texto de una version no se edita: Meta la aprobo
@@ -51,7 +56,7 @@ async def crear_plantilla(db: DbSession, data: PlantillaCreate) -> PlantillaWhat
 
 
 @router.patch(
-    "/plantillas/{plantilla_id}/estado", response_model=PlantillaRead, dependencies=[GESTION]
+    "/plantillas/{plantilla_id}/estado", response_model=PlantillaRead, dependencies=[ADMIN]
 )
 async def cambiar_estado_plantilla(
     db: DbSession, plantilla_id: UUID, data: PlantillaEstado
@@ -61,7 +66,7 @@ async def cambiar_estado_plantilla(
     )
 
 
-@router.get("/mensajes", response_model=Page[MensajeRead], dependencies=[EQUIPO])
+@router.get("/mensajes", response_model=Page[MensajeRead], dependencies=[COMERCIAL_Y_ATENCION])
 async def listar_mensajes(
     db: DbSession,
     params: ParamsListado,
@@ -94,7 +99,7 @@ async def listar_mensajes(
     "/mensajes/plantilla",
     response_model=MensajeRead,
     status_code=status.HTTP_202_ACCEPTED,
-    dependencies=[EQUIPO],
+    dependencies=[COMERCIAL_Y_ATENCION],
 )
 async def enviar_plantilla(db: DbSession, data: EnvioPlantilla) -> Mensaje:
     return await db.run_sync(
@@ -110,7 +115,7 @@ async def enviar_plantilla(db: DbSession, data: EnvioPlantilla) -> Mensaje:
     "/mensajes/texto",
     response_model=MensajeRead,
     status_code=status.HTTP_202_ACCEPTED,
-    dependencies=[EQUIPO],
+    dependencies=[COMERCIAL_Y_ATENCION],
 )
 async def enviar_texto(db: DbSession, data: EnvioTexto) -> Mensaje:
     """Texto libre: solo dentro de las 24 horas desde el ultimo mensaje de la persona."""
@@ -119,7 +124,7 @@ async def enviar_texto(db: DbSession, data: EnvioTexto) -> Mensaje:
     )
 
 
-@router.get("/bajas", response_model=list[BajaRead], dependencies=[EQUIPO])
+@router.get("/bajas", response_model=list[BajaRead], dependencies=[COMERCIAL_Y_ATENCION])
 async def listar_bajas(db: DbSession) -> list[BajaComunicaciones]:
     return list(
         await db.scalars(
@@ -131,7 +136,10 @@ async def listar_bajas(db: DbSession) -> list[BajaComunicaciones]:
 
 
 @router.post(
-    "/bajas", response_model=BajaRead, status_code=status.HTTP_201_CREATED, dependencies=[EQUIPO]
+    "/bajas",
+    response_model=BajaRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[COMERCIAL_Y_ATENCION],
 )
 async def registrar_baja(db: DbSession, data: BajaCreate) -> BajaComunicaciones:
     destino = data.telefono or str(data.email)
@@ -142,7 +150,9 @@ async def registrar_baja(db: DbSession, data: BajaCreate) -> BajaComunicaciones:
 @router.delete(
     "/bajas/{destino}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(requiere(Rol.ADMIN))],
+    # Volver a escribirle a quien pidio no recibir mensajes lo pide la familia: lo registra
+    # atencion al cliente; comercial da de baja pero no reactiva (docs/perfiles-y-permisos.md).
+    dependencies=[ATENCION],
 )
 async def quitar_baja(db: DbSession, destino: Annotated[str, "Telefono E.164 o email"]) -> None:
     """Solo administracion: reactivar envios masivos exige que la persona lo haya pedido."""

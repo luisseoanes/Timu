@@ -6,6 +6,7 @@ import { Distintivo } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { Paginacion } from '@/components/Paginacion'
+import { Pestanas } from '@/components/Pestanas'
 import { useAuth } from '@/features/auth'
 import { useCiudades } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
@@ -14,6 +15,7 @@ import { puede } from '@/lib/permisos'
 import type { ContratoListado, RecuentosCartera } from '@/types'
 
 import { useContratos, useEstadoCuenta, useRecuentosCartera, useRenovarContrato } from './api'
+import { EventosPasarela } from './EventosPasarela'
 import { porPagar } from './cuotas'
 import { RegistrarPagoModal } from './RegistrarPagoModal'
 
@@ -34,20 +36,43 @@ const PERIODICIDAD: Record<string, string> = {
 
 const POR_PAGINA = 25
 
-/** Cartera como bandeja (F1-CAR, R2-PAN-08): a quién cobrar, qué renovar y todos los contratos,
- * cada fila con la acción que toca. El estado de cuenta completo es la pestaña Cartera de la familia. */
+/** Cartera (6.2): Atención al cliente cobra y revisa la pasarela de pagos; Comercial ve los contratos
+ * para renovarlos (6.4). Docs/perfiles-y-permisos.md. */
 export function CarteraPage() {
   const { usuario } = useAuth()
+  const [params] = useSearchParams()
+  if (!puede(usuario, 'cartera')) return <BandejaCartera />
+  return (
+    <Pestanas
+      etiqueta="Secciones de cartera"
+      // Una vista de la pasarela en la URL (`?eventos=`) abre su pestaña.
+      inicial={params.has('eventos') ? 'pasarela' : 'contratos'}
+      pestanas={[
+        { valor: 'contratos', titulo: 'Contratos', contenido: <BandejaCartera /> },
+        { valor: 'pasarela', titulo: 'Pasarela de pagos', contenido: <EventosPasarela /> },
+      ]}
+    />
+  )
+}
+
+/** Cartera como bandeja (F1-CAR, R2-PAN-08): a quién cobrar, qué renovar y todos los contratos,
+ * cada fila con la acción que toca. El estado de cuenta completo es la pestaña Cartera de la familia. */
+function BandejaCartera() {
+  const { usuario } = useAuth()
   const [params, setParams] = useSearchParams()
-  // Sin vista, «En mora»: es lo que se cobra hoy, y adonde lleva «Ver la mora» del Inicio (`?mora=1`).
-  const vista: Vista = VISTAS.find((v) => v.valor === params.get('vista'))?.valor ?? 'en_mora'
+  // Sin vista, «En mora» para quien cobra: es lo que se cobra hoy, y adonde lleva «Ver la mora» del
+  // Inicio (`?mora=1`); «Por renovar» para Comercial, que es lo suyo (6.4).
+  const porDefecto: Vista = usuario?.rol === 'comercial' ? 'por_renovar' : 'en_mora'
+  const vista: Vista = VISTAS.find((v) => v.valor === params.get('vista'))?.valor ?? porDefecto
   const q = params.get('q') ?? ''
   const ciudad = params.get('ciudad') ?? ''
   const offset = Number(params.get('desde') ?? 0)
   const [pagando, setPagando] = useState<ContratoListado | null>(null)
   const [renovando, setRenovando] = useState<ContratoListado | null>(null)
   const ciudades = useCiudades()
-  const gestiona = puede(usuario, 'gestionarAfiliacion')
+  // Atención cobra y Comercial renueva (Sección 12, docs/perfiles-y-permisos.md).
+  const cobra = puede(usuario, 'cartera')
+  const renueva = puede(usuario, 'renovar')
 
   const filtros = { q: q || undefined, ciudad: ciudad || undefined }
   const recuentos = useRecuentosCartera(filtros)
@@ -181,12 +206,12 @@ export function CarteraPage() {
                           <Distintivo dominio="afiliacion" valor={c.estado} />
                         </td>
                         <td className="tabla-acciones">
-                          {gestiona && debe && (
+                          {cobra && debe && (
                             <button className="btn btn-suave" type="button" onClick={() => setPagando(c)} aria-label={`Registrar pago de ${c.titular}`}>
                               Registrar pago
                             </button>
                           )}
-                          {gestiona && c.renovable && (
+                          {renueva && c.renovable && (
                             <button
                               className={`btn ${debe ? 'btn-plano btn-accion' : 'btn-suave'}`}
                               type="button"

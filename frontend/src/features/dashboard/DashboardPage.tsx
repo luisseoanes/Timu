@@ -11,23 +11,28 @@ import { useCiudades, useNombreTipoServicio } from '@/features/catalogos'
 import { useRutas } from '@/features/rutas'
 import { descargar } from '@/lib/descargas'
 import { mensajeError } from '@/lib/errores'
-import { diaISO, fecha, fechaCorta, fechaCortaConDia, fechaLarga, hora, hoyISO } from '@/lib/formato'
-import { puede } from '@/lib/permisos'
+import { diaISO, fecha, fechaCorta, fechaCortaConDia, hora, hoyISO } from '@/lib/formato'
+import { NOMBRE_ROL, puede } from '@/lib/permisos'
 import type { Rol } from '@/types'
 
 import {
   useEvolucion,
   useIndicadores,
   useMisPendientes,
+  useComercialHoy,
   useProximosServicios,
   useVencidos,
   type FiltrosIndicadores,
+  type GruposVencidos,
   type ValoresIndicadores,
 } from './api'
-import { CIFRAS, contraQue, ordenCifras, primerNombre, type CodigoCifra } from './cifras'
+import { CIFRAS, codigosDe, contraQue, ordenCifras, type CodigoCifra } from './cifras'
 import { FranjaCifras } from './FranjaCifras'
 import { GraficoSerie } from './GraficoSerie'
+import { InicioAdmin } from './InicioAdmin'
 import { LineaDelDia, type Estacion } from './LineaDelDia'
+import { ReportesProgramados } from './ReportesProgramados'
+import { Saludo } from './Saludo'
 
 type Periodo = 'mes' | '30' | 'trimestre' | 'anio'
 
@@ -76,25 +81,18 @@ function Todas({ consultas, cargando, error, children }: { consultas: UseQueryRe
   return <>{children()}</>
 }
 
-function Saludo({ resumen, children }: { resumen: string; children?: ReactNode }) {
-  const { usuario } = useAuth()
-  const dia = fechaLarga(hoyISO())
-  return (
-    <header className="inicio-cabeza">
-      <div>
-        <h1>Hola, {primerNombre(usuario?.nombre)}</h1>
-        <p>
-          {dia.charAt(0).toUpperCase() + dia.slice(1)} · {resumen}
-        </p>
-      </div>
-      {children}
-    </header>
-  )
-}
 
+/** Un Inicio por perfil (Sección 12, docs/perfiles-y-permisos.md): Gerencia, el tablero de la
+ * Sección 8; el administrador, lo que falta configurar; el médico, su jornada; y Comercial,
+ * Atención al cliente y Operaciones, la línea de hoy con solo su trabajo. */
 export function DashboardPage() {
   const { usuario } = useAuth()
-  return puede(usuario, 'verIndicadores') ? <InicioEquipo rol={usuario?.rol} /> : <InicioMedico />
+  // Sin saber aún quién es, no se pide nada: las cifras dependen del perfil.
+  if (!usuario) return null
+  if (usuario.rol === 'admin') return <InicioAdmin />
+  if (usuario.rol === 'medico') return <InicioMedico />
+  if (puede(usuario, 'verIndicadores')) return <InicioEquipo rol={usuario.rol} />
+  return <InicioPerfil rol={usuario.rol} />
 }
 
 // --- Equipo: cifras del período y el día de la operación ---------------------------------------
@@ -106,7 +104,8 @@ function InicioEquipo({ rol }: { rol: Rol | undefined }) {
   const ciudades = useCiudades()
   const filtros: FiltrosIndicadores = { ...rango(periodo), ciudad: ciudad || undefined }
   const indicadores = useIndicadores(filtros)
-  const evolucion = useEvolucion(filtros)
+  // El reparto por tipo no tiene serie en el tablero: va aparte, en su propio panel.
+  const evolucion = useEvolucion(filtros, codigosDe(ordenCifras(rol)))
   const [errorDescarga, setErrorDescarga] = useState<string | null>(null)
 
   async function exportar(formato: 'csv' | 'xlsx') {
@@ -178,12 +177,8 @@ function InicioEquipo({ rol }: { rol: Rol | undefined }) {
       </div>
 
       <div className="inicio-cuerpo">
-        <section className="inicio-panel" aria-labelledby="inicio-dia-titulo">
-          <h2 id="inicio-dia-titulo" className="inicio-panel-titulo">
-            Hoy en la operación
-          </h2>
-          <LineaEquipo rol={rol} />
-        </section>
+        {/* Gerencia mide y no opera: en lugar del día, los reportes que recibe por correo. */}
+        <ReportesProgramados />
         <div className="inicio-columna">
           {/* Sale de la misma consulta que la franja: si falla, el aviso ya está arriba. */}
           {!indicadores.isError && (
@@ -217,6 +212,47 @@ function InicioEquipo({ rol }: { rol: Rol | undefined }) {
 
 type Vencido = 'mora' | 'preventivos' | 'tareas'
 
+/** Lo vencido que pide cada perfil: solo lo que es suyo y puede leer. */
+function gruposDe(rol: Rol | undefined): GruposVencidos {
+  const atencion = rol === 'atencion_cliente'
+  return { mora: atencion, preventivos: atencion, tareas: rol === 'comercial' || atencion || rol === 'operaciones' }
+}
+
+const TITULO_PERFIL: Partial<Record<Rol, string>> = {
+  comercial: 'Lo comercial de hoy',
+  atencion_cliente: 'Hoy con las familias',
+  operaciones: 'Hoy en la operación',
+}
+
+// --- Comercial, Atención al cliente y Operaciones: la línea de hoy de cada uno -------------------
+
+function InicioPerfil({ rol }: { rol: Rol | undefined }) {
+  const [abierta, setAbierta] = useState<CodigoCifra | null>(null)
+  const orden = ordenCifras(rol)
+  // Las cifras del mes en curso, sin filtros: quien opera mira su mes; los cortes, Gerencia.
+  const filtros: FiltrosIndicadores = rango('mes')
+  const indicadores = useIndicadores(filtros)
+  const evolucion = useEvolucion(filtros, codigosDe(orden))
+  return (
+    <div className="inicio">
+      <Saludo resumen={`${rol ? NOMBRE_ROL[rol] : ''} · cifras del ${fechaCorta(filtros.desde)} al ${fechaCorta(filtros.hasta)}`} />
+      <div className="inicio-cifras-marco">
+        <Consulta consulta={indicadores} cargando="Calculando tus cifras del mes…" error="No fue posible calcular tus cifras.">
+          {(d) => (
+            <FranjaCifras orden={orden} indicadores={d.indicadores} evolucion={evolucion} abierta={abierta} onAbrir={setAbierta} />
+          )}
+        </Consulta>
+      </div>
+      <section className="inicio-panel" aria-labelledby="inicio-dia-titulo">
+        <h2 id="inicio-dia-titulo" className="inicio-panel-titulo">
+          {(rol && TITULO_PERFIL[rol]) ?? 'Hoy'}
+        </h2>
+        <LineaEquipo rol={rol} />
+      </section>
+    </div>
+  )
+}
+
 /** Cada perfil ve primero lo vencido de su área. */
 function ordenVencidos(rol: Rol | undefined): Vencido[] {
   return rol === 'operaciones' ? ['preventivos', 'tareas', 'mora'] : ['mora', 'tareas', 'preventivos']
@@ -224,18 +260,46 @@ function ordenVencidos(rol: Rol | undefined): Vencido[] {
 
 function LineaEquipo({ rol }: { rol: Rol | undefined }) {
   const hoy = hoyISO()
-  const vencidos = useVencidos()
-  const servicios = useProximosServicios(hoy)
+  const vencidos = useVencidos(gruposDe(rol))
+  // La agenda es de Operaciones (docs/perfiles-y-permisos.md): Atención no la ve en su Inicio.
+  const conServicios = rol === 'operaciones'
+  const servicios = useProximosServicios(hoy, conServicios)
+  const comercial = useComercialHoy(rol === 'comercial')
   const nombreTipo = useNombreTipoServicio()
   const equipo = useEquipo('medico')
   const medico = (id: string | null) => (id && equipo.data?.find((m) => m.id === id)?.nombre) || 'sin médico asignado'
 
   return (
-    <Todas consultas={[vencidos, servicios]} cargando="Revisando el día…" error="No fue posible revisar el día.">
+    <Todas
+      consultas={[vencidos, ...(conServicios ? [servicios] : []), ...(rol === 'comercial' ? [comercial] : [])]}
+      cargando="Revisando el día…"
+      error="No fue posible revisar el día."
+    >
       {() => {
         const { mora, preventivos, tareas } = vencidos.data!
         const antes: Estacion[] = []
         const despues: Estacion[] = []
+        if (comercial.data) {
+          const { conversaciones, renovaciones } = comercial.data
+          if (conversaciones.length > 0) {
+            antes.push({
+              clave: 'conversaciones',
+              estado: 'vencida',
+              titulo: plural(conversaciones.length, 'conversación espera a un asesor', 'conversaciones esperan a un asesor'),
+              detalle: conversaciones[0].interesado_nombre ?? undefined,
+              accion: { texto: 'Contestar', to: '/panel/comercial?pestana=conversaciones' },
+            })
+          }
+          if (renovaciones.total > 0) {
+            despues.push({
+              clave: 'renovaciones',
+              estado: 'proxima',
+              titulo: plural(renovaciones.total, 'contrato por renovar', 'contratos por renovar'),
+              detalle: renovaciones.primero && `El primero, ${renovaciones.primero.titular}`,
+              accion: { texto: 'Ver las renovaciones', to: '/panel/cartera?vista=por_renovar' },
+            })
+          }
+        }
         for (const clave of ordenVencidos(rol)) {
           if (clave === 'mora' && mora.total > 0) {
             antes.push({
@@ -267,7 +331,7 @@ function LineaEquipo({ rol }: { rol: Rol | undefined }) {
             })
           }
         }
-        const { items, total } = servicios.data!
+        const { items, total } = servicios.data ?? { items: [], total: 0 }
         const ahora = new Date().toISOString()
         const deHoy = items.filter((s) => s.programado_para && diaISO(s.programado_para) === hoy)
         // Lo agendado para hoy cuya hora ya pasó no es «lo siguiente»: va antes de Hoy, sin atender.
@@ -322,7 +386,13 @@ function LineaEquipo({ rol }: { rol: Rol | undefined }) {
             hoy={hoy}
             antes={antes}
             despues={despues}
-            cierre="No hay servicios agendados desde hoy. Los que se agenden aparecerán aquí."
+            cierre={
+              !conServicios
+                ? 'No hay nada más por ahora. Lo nuevo de tu área aparecerá aquí.'
+                : sinAtender.length > 0
+                  ? 'No hay más servicios agendados. Los que se agenden aparecerán aquí.'
+                  : 'No hay servicios agendados desde hoy. Los que se agenden aparecerán aquí.'
+            }
           />
         )
       }}

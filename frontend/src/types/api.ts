@@ -2,7 +2,7 @@
 // No editar a mano: si cambia un schema de Pydantic, se regenera en el mismo cambio.
 // Los decimales llegan como string en JSON; se formatean con lib/formato.ts.
 
-export type Rol = 'admin' | 'comercial' | 'operaciones' | 'medico' | 'familia' | 'aliada'
+export type Rol = 'admin' | 'gerencia' | 'comercial' | 'atencion_cliente' | 'operaciones' | 'medico' | 'familia' | 'aliada'
 
 export type EstadoAfiliacion = 'prospecto' | 'activa' | 'en_mora' | 'congelada' | 'cancelada'
 
@@ -73,6 +73,21 @@ export interface FamiliaRead {
   usuario_portal_id: string | null
   mascotas?: MascotaRead[]
   contactos?: ContactoRead[]
+}
+
+export interface FamiliaParaSuprimir {
+  id: string
+  titular_nombre: string
+  mascotas: number
+  estado: EstadoAfiliacion
+  anonimizada: boolean
+  con_contrato_vigente: boolean
+}
+
+export interface PlantillaFaltante {
+  codigo: string
+  titulo: string
+  reglas: string[]
 }
 
 export interface CambioHistorial {

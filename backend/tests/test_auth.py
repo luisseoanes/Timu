@@ -433,8 +433,8 @@ async def test_los_usuarios_se_ven_por_grupo_con_su_recuento(client: AsyncClient
     await db.commit()
 
     recuentos = (await client.get("/api/v1/auth/usuarios/recuentos", headers=headers)).json()
-    # El administrador de la prueba tambien es del equipo.
-    assert recuentos == {"equipo": 2, "aliadas": 0, "familias": 1, "inactivos": 1}
+    # El equipo de la prueba (un usuario por perfil, con el administrador) tambien cuenta.
+    assert recuentos == {"equipo": 7, "aliadas": 0, "familias": 1, "inactivos": 1}
 
     async def correos(**params) -> set[str]:
         resp = await client.get("/api/v1/auth/usuarios", params=params, headers=headers)

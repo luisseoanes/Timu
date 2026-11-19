@@ -89,7 +89,7 @@ export function AtencionVirtual() {
                           </button>
                         )}
                         {/* Una por fila: ninguna es verde llena, la cola no tiene una acción principal. */}
-                        {(mia || puede(usuario, 'administrar')) && (
+                        {mia && (
                           <button className="btn btn-suave" type="button" onClick={() => setAbierta(s)}>
                             Atender
                           </button>

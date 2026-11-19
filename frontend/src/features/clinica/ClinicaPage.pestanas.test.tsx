@@ -1,13 +1,16 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { ClinicaPage } from './ClinicaPage'
-import { FAMILIA, USUARIO_ADMIN } from '@/test/handlers'
+import { FAMILIA, sesionDe, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { FamiliaRead, RespuestaRead, SolicitudVirtualRead } from '@/types'
+
+// Sección 12: esta pantalla se prueba con el perfil que la usa (docs/perfiles-y-permisos.md).
+beforeEach(() => server.use(sesionDe('medico')))
 
 const API = '*/api/v1'
 const LUNA = FAMILIA.mascotas![0]!
@@ -111,14 +114,13 @@ describe('cola de atención virtual', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('La solicitud ya fue tomada')
   })
 
-  it('la administración atiende cualquiera, pero no la toma ni responde', async () => {
+  it('la solicitud que tomó otro médico no se toma ni se atiende', async () => {
+    // Sección 12: la administración ya no atiende la cola; solo el médico asignado la atiende.
     conCola(solicitud({ asignada_a_id: OTRO_MEDICO }))
-    const user = await abrirPestana('Atención virtual')
+    await abrirPestana('Atención virtual')
+    expect(await screen.findByRole('cell', { name: /Kira|Mi perro|vomit/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Tomar' })).not.toBeInTheDocument()
-    await user.click(await screen.findByRole('button', { name: 'Atender' }))
-    const modal = await screen.findByRole('dialog')
-    expect(within(modal).queryByRole('button', { name: 'Enviar respuesta' })).not.toBeInTheDocument()
-    expect(within(modal).queryByRole('button', { name: 'Pedir borrador a la IA' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Atender' })).not.toBeInTheDocument()
   })
 
   it('muestra la cola vacía', async () => {
@@ -314,14 +316,14 @@ describe('respuestas aprobadas', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Solo la administración aprueba')
   })
 
-  it('un médico ve las pendientes pero no las aprueba', async () => {
+  it('el médico aprueba las respuestas pendientes (6.17: aprobadas por el equipo médico)', async () => {
     server.use(
       comoMedico,
       http.get(`${API}/clinica/respuestas-virtuales`, () => HttpResponse.json([{ ...RESPUESTA, estado: 'borrador' }])),
     )
     await abrirPestana('Respuestas aprobadas')
     expect(await screen.findByText('Por aprobar')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Aprobar' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Aprobar' })).toBeInTheDocument()
   })
 
   it('crea una respuesta con sus variables en orden', async () => {

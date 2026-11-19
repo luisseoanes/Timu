@@ -2,7 +2,7 @@
 version: 1
 slug: "frontend-src-features-admin-adminpage-tsx"
 primary_target: "frontend/src/features/admin/AdminPage.tsx"
-related_targets: ["frontend/src/features/admin/Usuarios.tsx","frontend/src/features/admin/Planes.tsx","frontend/src/features/admin/Reglas.tsx","frontend/src/features/admin/EditorRegla.tsx","frontend/src/features/admin/ProbarRegla.tsx","frontend/src/features/admin/Catalogos.tsx","frontend/src/features/admin/InteligenciaArtificial.tsx","frontend/src/features/admin/Reportes.tsx"]
+related_targets: ["frontend/src/features/admin/Usuarios.tsx","frontend/src/features/admin/Planes.tsx","frontend/src/features/admin/Reglas.tsx","frontend/src/features/admin/EditorRegla.tsx","frontend/src/features/admin/ProbarRegla.tsx","frontend/src/features/admin/Catalogos.tsx","frontend/src/features/admin/InteligenciaArtificial.tsx","frontend/src/features/admin/Supresion.tsx"]
 ---
 
 # Panel del equipo · Administración (R2-PAN-10, segunda parte)
@@ -98,6 +98,19 @@ Desviaciones del boceto tomadas al construir (aceptadas por el revisor final):
   de» y «distinto de» en la comparación y en la regla en palabras.
 - **Las plantillas de mora que aún no están en el catálogo** se nombran con un nombre provisional
   («Aviso de mora · aún sin registrar»), nunca por su código.
+
+## Perfiles por función (2026-11-19)
+
+seed: none (pinned). El administrador configura y no opera (decidido con el usuario el 2026-11-19,
+`docs/perfiles-y-permisos.md`). Administración pierde «Reportes y pasarela» (los reportes van al Inicio
+de Gerencia y la pasarela a Cartera) y gana «Plantillas de WhatsApp», «Guion del asistente»,
+«Encuestas» (su configuración) y «Supresión de datos».
+
+- **Supresión de datos** (`Supresion.tsx`, Ley 1581), palabras del usuario: «la hace el
+  Administrador sin ver la ficha». Busca por documento (campo y «Buscar» en una línea, el botón a la
+  altura del campo), ve solo el nombre del titular, cuántas mascotas y el estado, y confirma en rojo.
+  Con un contrato vigente no se ofrece anonimizar: lo dice («Atención al cliente lo cancela antes»)
+  con una insignia de alerta, porque la base lo rechazaría.
 
 ## Pendiente
 

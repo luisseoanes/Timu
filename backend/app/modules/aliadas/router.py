@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, statu
 from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr, Field, computed_field
 from sqlalchemy import select
 
-from app.api.deps import INTERNOS, Admin, DbSession, publico, requiere
+from app.api.deps import DbSession, publico, requiere
 from app.core.enums import Rol, TipoAliada
 from app.core.errores import Prohibido
 from app.core.tiempo import hoy
@@ -24,11 +24,13 @@ from app.modules.catalogos import service as catalogos
 
 router = APIRouter(prefix="/aliadas", tags=["aliadas"])
 
-EQUIPO = Depends(requiere(*INTERNOS))
-ADMIN = Depends(requiere(Rol.ADMIN))
-Emisor = Annotated[
-    Usuario, Depends(requiere(Rol.ADMIN, Rol.OPERACIONES, Rol.MEDICO, Rol.COMERCIAL))
-]
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
+ATENCION = Depends(requiere(Rol.ATENCION_CLIENTE))
+ATENCION_Y_OPERACIONES = Depends(requiere(Rol.ATENCION_CLIENTE, Rol.OPERACIONES))
+Atencion = Annotated[Usuario, Depends(requiere(Rol.ATENCION_CLIENTE))]
+GERENCIA_Y_OPERACIONES = Depends(requiere(Rol.GERENCIA, Rol.OPERACIONES))
+OPERACIONES = Depends(requiere(Rol.OPERACIONES))
+Operaciones = Annotated[Usuario, OPERACIONES]
 Aliada = Annotated[Usuario, Depends(requiere(Rol.ALIADA))]
 
 
@@ -258,7 +260,7 @@ async def _leida(db: DbSession, clinica: ClinicaAliada) -> ClinicaRead:
     )
 
 
-@router.get("", response_model=list[ClinicaRead], dependencies=[EQUIPO])
+@router.get("", response_model=list[ClinicaRead], dependencies=[ATENCION_Y_OPERACIONES])
 async def listar(
     db: DbSession, ciudad: str | None = None, incluir_inactivas: bool = False
 ) -> list[ClinicaRead]:
@@ -293,7 +295,7 @@ async def publicas(db: DbSession) -> list[AliadaPublica]:
 
 
 @router.post(
-    "", response_model=ClinicaRead, status_code=status.HTTP_201_CREATED, dependencies=[ADMIN]
+    "", response_model=ClinicaRead, status_code=status.HTTP_201_CREATED, dependencies=[OPERACIONES]
 )
 async def crear(db: DbSession, data: ClinicaIn) -> ClinicaRead:
     datos = data.model_dump()
@@ -304,7 +306,7 @@ async def crear(db: DbSession, data: ClinicaIn) -> ClinicaRead:
     return await _leida(db, clinica)
 
 
-@router.patch("/{clinica_id}", response_model=ClinicaRead, dependencies=[ADMIN])
+@router.patch("/{clinica_id}", response_model=ClinicaRead, dependencies=[OPERACIONES])
 async def actualizar(db: DbSession, clinica_id: UUID, data: ClinicaUpdate) -> ClinicaRead:
     clinica = await db.run_sync(service.obtener_clinica, clinica_id)
     for campo, valor in data.model_dump(exclude_unset=True).items():
@@ -316,7 +318,7 @@ async def actualizar(db: DbSession, clinica_id: UUID, data: ClinicaUpdate) -> Cl
 @router.put("/{clinica_id}/logo", response_model=ClinicaRead)
 async def subir_logo(
     db: DbSession,
-    usuario: Admin,
+    usuario: Operaciones,
     clinica_id: UUID,
     logo: Annotated[UploadFile, File(description="JPG, PNG o WEBP de hasta 2 MB")],
 ) -> ClinicaRead:
@@ -326,13 +328,17 @@ async def subir_logo(
     return await _leida(db, clinica)
 
 
-@router.delete("/{clinica_id}/logo", response_model=ClinicaRead, dependencies=[ADMIN])
+@router.delete("/{clinica_id}/logo", response_model=ClinicaRead, dependencies=[OPERACIONES])
 async def quitar_logo(db: DbSession, clinica_id: UUID) -> ClinicaRead:
     clinica = await db.run_sync(service.obtener_clinica, clinica_id)
     return await _leida(db, await db.run_sync(service.quitar_logo, clinica))
 
 
-@router.get("/{clinica_id}/convenios", response_model=list[ConvenioRead], dependencies=[EQUIPO])
+@router.get(
+    "/{clinica_id}/convenios",
+    response_model=list[ConvenioRead],
+    dependencies=[ATENCION_Y_OPERACIONES],
+)
 async def convenios(db: DbSession, clinica_id: UUID) -> list[ConvenioAliada]:
     return list(
         await db.scalars(
@@ -347,7 +353,7 @@ async def convenios(db: DbSession, clinica_id: UUID) -> list[ConvenioAliada]:
     "/{clinica_id}/convenios",
     response_model=ConvenioRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[ADMIN],
+    dependencies=[OPERACIONES],
 )
 async def crear_convenio(db: DbSession, clinica_id: UUID, data: ConvenioIn) -> ConvenioAliada:
     clinica = await db.run_sync(service.obtener_clinica, clinica_id)
@@ -358,7 +364,7 @@ async def crear_convenio(db: DbSession, clinica_id: UUID, data: ConvenioIn) -> C
 
 
 @router.post("/remisiones", response_model=RemisionRead, status_code=status.HTTP_201_CREATED)
-async def emitir(db: DbSession, usuario: Emisor, data: RemisionIn) -> RemisionAliada:
+async def emitir(db: DbSession, usuario: Atencion, data: RemisionIn) -> RemisionAliada:
     return await db.run_sync(
         lambda s: service.emitir(
             s,
@@ -371,7 +377,7 @@ async def emitir(db: DbSession, usuario: Emisor, data: RemisionIn) -> RemisionAl
     )
 
 
-@router.get("/remisiones", response_model=list[RemisionRead], dependencies=[EQUIPO])
+@router.get("/remisiones", response_model=list[RemisionRead], dependencies=[ATENCION])
 async def remisiones(
     db: DbSession,
     clinica_id: UUID | None = None,
@@ -397,14 +403,14 @@ async def remisiones(
     return [RemisionRead.model_validate(r).model_copy(update=nombres[r.id]) for r in lista]
 
 
-@router.get("/remisiones/recuentos", response_model=RecuentosRemisiones, dependencies=[EQUIPO])
+@router.get("/remisiones/recuentos", response_model=RecuentosRemisiones, dependencies=[ATENCION])
 async def recuentos(db: DbSession, clinica_id: UUID | None = None) -> dict[str, int]:
     return await db.run_sync(service.recuentos, clinica_id)
 
 
 @router.post("/remisiones/{remision_id}/anulacion", response_model=RemisionRead)
 async def anular(
-    db: DbSession, usuario: Emisor, remision_id: UUID, data: AnulacionIn
+    db: DbSession, usuario: Atencion, remision_id: UUID, data: AnulacionIn
 ) -> RemisionAliada:
     remision = await db.run_sync(service.obtener_remision, remision_id)
     return await db.run_sync(service.anular, remision, data.motivo, usuario.id)
@@ -468,7 +474,7 @@ async def reportar_atencion(
 # --- 6.22 Liquidacion --------------------------------------------------------------------
 
 
-@router.get("/liquidacion", dependencies=[ADMIN], response_model=None)
+@router.get("/liquidacion", dependencies=[GERENCIA_Y_OPERACIONES], response_model=None)
 async def liquidacion(
     db: DbSession,
     desde: date,

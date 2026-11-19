@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import func, select
 
-from app.api.deps import INTERNOS, DbSession, requiere
+from app.api.deps import DbSession, requiere
 from app.core.enums import Rol
 from app.core.errores import NoEncontrado
 from app.modules.auth.models import Usuario
@@ -37,8 +37,11 @@ router = APIRouter(prefix="/cartera", tags=["cartera"])
 # bajo /planes, donde lo busca el panel.
 planes_router = APIRouter(prefix="/planes", tags=["planes"])
 
-EQUIPO = Depends(requiere(*INTERNOS))
-CARTERA = Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
+ATENCION = Depends(requiere(Rol.ATENCION_CLIENTE))
+Atencion = Annotated[Usuario, Depends(requiere(Rol.ATENCION_CLIENTE))]
+COMERCIAL = Depends(requiere(Rol.COMERCIAL))
+COMERCIAL_Y_ATENCION = Depends(requiere(Rol.COMERCIAL, Rol.ATENCION_CLIENTE))
 ADMIN = Depends(requiere(Rol.ADMIN))
 Cartera = Annotated[Usuario, Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))]
 
@@ -47,7 +50,7 @@ Cartera = Annotated[Usuario, Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))]
     "/contratos",
     response_model=ContratoRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[CARTERA],
+    dependencies=[COMERCIAL],
 )
 async def crear_contrato(db: DbSession, data: ContratoCreate) -> Any:
     """6.2 Contrato directo (afiliacion asistida). La afiliacion completa, con pago y
@@ -65,7 +68,7 @@ async def crear_contrato(db: DbSession, data: ContratoCreate) -> Any:
     return contrato
 
 
-@router.get("/contratos", response_model=Page[ContratoListado], dependencies=[EQUIPO])
+@router.get("/contratos", response_model=Page[ContratoListado], dependencies=[COMERCIAL_Y_ATENCION])
 async def listar_contratos(
     db: DbSession,
     estado: str | None = None,
@@ -95,7 +98,9 @@ async def listar_contratos(
     )
 
 
-@router.get("/contratos/recuentos", response_model=RecuentosCartera, dependencies=[EQUIPO])
+@router.get(
+    "/contratos/recuentos", response_model=RecuentosCartera, dependencies=[COMERCIAL_Y_ATENCION]
+)
 async def recuentos(
     db: DbSession, estado: str | None = None, ciudad: str | None = None, q: str | None = None
 ) -> dict[str, int]:
@@ -105,12 +110,14 @@ async def recuentos(
     )
 
 
-@router.get("/contratos/{contrato_id}", response_model=ContratoRead, dependencies=[EQUIPO])
+@router.get(
+    "/contratos/{contrato_id}", response_model=ContratoRead, dependencies=[COMERCIAL_Y_ATENCION]
+)
 async def obtener_contrato(db: DbSession, contrato_id: UUID) -> Any:
     return await db.run_sync(service.obtener_contrato, contrato_id)
 
 
-@router.get("/contratos/{contrato_id}/documento", dependencies=[EQUIPO])
+@router.get("/contratos/{contrato_id}/documento", dependencies=[COMERCIAL_Y_ATENCION])
 async def documento(db: DbSession, contrato_id: UUID) -> dict[str, str]:
     """6.12 Enlace firmado y de vida corta al PDF del contrato."""
     return await db.run_sync(
@@ -119,7 +126,7 @@ async def documento(db: DbSession, contrato_id: UUID) -> dict[str, str]:
 
 
 @router.post(
-    "/contratos/{contrato_id}/renovar", response_model=ContratoRead, dependencies=[CARTERA]
+    "/contratos/{contrato_id}/renovar", response_model=ContratoRead, dependencies=[COMERCIAL]
 )
 async def renovar(db: DbSession, contrato_id: UUID) -> Any:
     """6.4 Extiende un ano la vigencia del contrato."""
@@ -129,7 +136,7 @@ async def renovar(db: DbSession, contrato_id: UUID) -> Any:
 
 
 @router.post(
-    "/contratos/{contrato_id}/cancelar", response_model=ContratoRead, dependencies=[CARTERA]
+    "/contratos/{contrato_id}/cancelar", response_model=ContratoRead, dependencies=[ATENCION]
 )
 async def cancelar(db: DbSession, contrato_id: UUID, data: Cancelacion) -> Any:
     return await db.run_sync(
@@ -138,7 +145,10 @@ async def cancelar(db: DbSession, contrato_id: UUID, data: Cancelacion) -> Any:
 
 
 @router.get(
-    "/familias/{familia_id}/estado-cuenta", response_model=EstadoCuenta, dependencies=[EQUIPO]
+    "/familias/{familia_id}/estado-cuenta",
+    response_model=EstadoCuenta,
+    # Comercial lo lee para renovar (6.4): saber si la familia debe antes de ofrecer condiciones.
+    dependencies=[COMERCIAL_Y_ATENCION],
 )
 async def estado_cuenta(db: DbSession, familia_id: UUID) -> Any:
     """6.2 Cuotas, pagos, saldo y proximo cobro."""
@@ -147,7 +157,7 @@ async def estado_cuenta(db: DbSession, familia_id: UUID) -> Any:
 
 
 @router.post("/pagos", response_model=PagoRead, status_code=status.HTTP_201_CREATED)
-async def registrar_pago(db: DbSession, data: PagoManual, usuario: Cartera) -> Any:
+async def registrar_pago(db: DbSession, data: PagoManual, usuario: Atencion) -> Any:
     """6.2 Pago recibido fuera de la pasarela. Se aplica a la cuota indicada o a la
     mas antigua, y actualiza el estado de la familia (reactiva si estaba congelada)."""
     await db.run_sync(familias.obtener, data.familia_id)
@@ -168,7 +178,7 @@ async def registrar_pago(db: DbSession, data: PagoManual, usuario: Cartera) -> A
     "/medios-pago",
     response_model=MedioPagoRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[CARTERA],
+    dependencies=[ATENCION],
 )
 async def registrar_medio(db: DbSession, data: MedioPagoCreate) -> Any:
     """6.2 Autorizacion de cobro recurrente con tarjeta tokenizada."""
@@ -184,7 +194,7 @@ async def registrar_medio(db: DbSession, data: MedioPagoCreate) -> Any:
 
 
 @router.delete(
-    "/medios-pago/{medio_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[CARTERA]
+    "/medios-pago/{medio_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[ATENCION]
 )
 async def revocar_medio(db: DbSession, medio_id: UUID) -> None:
     medio = await db.get(MedioPagoRecurrente, medio_id)
@@ -193,7 +203,7 @@ async def revocar_medio(db: DbSession, medio_id: UUID) -> None:
     medio.activo = False
 
 
-@router.get("/eventos-pasarela", response_model=Page[EventoPasarelaRead], dependencies=[ADMIN])
+@router.get("/eventos-pasarela", response_model=Page[EventoPasarelaRead], dependencies=[ATENCION])
 async def eventos(
     db: DbSession, params: ParamsListado, estado: str | None = None
 ) -> Page[EventoPasarelaRead]:
@@ -214,7 +224,7 @@ async def eventos(
 @router.get(
     "/eventos-pasarela/recuentos",
     response_model=RecuentosEventosPasarela,
-    dependencies=[ADMIN],
+    dependencies=[ATENCION],
 )
 async def recuentos_eventos(db: DbSession) -> RecuentosEventosPasarela:
     """Cuantos eventos hay en cada vista de la bandeja: con error, procesados y todos."""
@@ -232,7 +242,7 @@ async def recuentos_eventos(db: DbSession) -> RecuentosEventosPasarela:
 @router.post(
     "/eventos-pasarela/{evento_id}/reprocesar",
     response_model=EventoPasarelaRead,
-    dependencies=[ADMIN],
+    dependencies=[ATENCION],
 )
 async def reprocesar(db: DbSession, evento_id: UUID) -> Any:
     """6.2 Vuelve a procesar un evento (p. ej. si fallo por datos incompletos)."""
@@ -243,7 +253,7 @@ async def reprocesar(db: DbSession, evento_id: UUID) -> Any:
 @router.post(
     "/transacciones/{transaccion_id}/recuperar",
     response_model=EventoPasarelaRead,
-    dependencies=[ADMIN],
+    dependencies=[ATENCION],
 )
 async def recuperar(db: DbSession, transaccion_id: str) -> Any:
     """6.2 Evento perdido: consulta la transaccion en la pasarela y la concilia."""
@@ -278,7 +288,7 @@ class CambioPlanRead(BaseModel):
 
 @planes_router.post("/contratos/{contrato_id}/cambio", response_model=CambioPlanRead)
 async def cambiar_plan(
-    db: DbSession, usuario: Cartera, contrato_id: UUID, data: CambioPlanIn
+    db: DbSession, usuario: Atencion, contrato_id: UUID, data: CambioPlanIn
 ) -> Any:
     """6.3 Un peludo cambia de plan, con el cobro que defina la regla `plan.cambio`."""
     contrato = await db.run_sync(service.obtener_contrato, contrato_id)

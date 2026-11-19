@@ -15,6 +15,7 @@ from app.modules.institucional import service
 
 router = APIRouter(prefix="/institucional", tags=["institucional"])
 
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
 ADMIN = Depends(requiere(Rol.ADMIN))
 PUBLICO = Depends(publico)
 

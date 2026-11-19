@@ -4,8 +4,11 @@ from enum import StrEnum
 class Rol(StrEnum):
     """Perfiles de acceso a la plataforma."""
 
+    # Seccion 12 Cada perfil hace lo suyo (docs/perfiles-y-permisos.md).
     ADMIN = "admin"
+    GERENCIA = "gerencia"
     COMERCIAL = "comercial"
+    ATENCION_CLIENTE = "atencion_cliente"
     OPERACIONES = "operaciones"
     MEDICO = "medico"
     FAMILIA = "familia"  # portal de usuarios

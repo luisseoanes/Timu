@@ -7,8 +7,9 @@ import { Paginacion } from '@/components/Paginacion'
 import { useAuth } from '@/features/auth'
 import { useNombreTipoServicio } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
-import { fechaHora, hoyISO, porcentaje } from '@/lib/formato'
+import { fechaHora, hoyISO, porcentaje, puntaje } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
+import type { Usuario } from '@/types'
 
 import { useConfiguracionEncuestas, useEncuestas, useGuardarConfiguracion, useResumenEncuestas } from './api'
 
@@ -19,17 +20,26 @@ const COMO_SIGUE: Record<'bien' | 'duda' | 'novedad', { tono: 'ok' | 'info' | 'a
   novedad: { tono: 'alerta', texto: 'Algo no va bien' },
 }
 
+/** Gerencia analiza (la satisfacción del mes y todas las respuestas); Atención al cliente trabaja
+ * las novedades: entra en las calificaciones de 3 o menos (docs/perfiles-y-permisos.md). */
 export function Encuestas() {
   const { usuario } = useAuth()
+  // Lo que se pide depende del perfil: sin saber aún quién es, no se pide nada.
+  return usuario ? <Respuestas usuario={usuario} /> : null
+}
+
+function Respuestas({ usuario }: { usuario: Usuario }) {
+  const analiza = puede(usuario, 'analizarEncuestas')
   const hoy = hoyISO()
-  const resumen = useResumenEncuestas(`${hoy.slice(0, 8)}01`, hoy)
-  const [soloBajas, setSoloBajas] = useState(false)
+  const resumen = useResumenEncuestas(`${hoy.slice(0, 8)}01`, hoy, analiza)
+  const [soloBajas, setSoloBajas] = useState(!analiza)
   const [offset, setOffset] = useState(0)
   const encuestas = useEncuestas({ estado: 'respondida', puntaje_max: soloBajas ? 3 : undefined, limit: 20, offset })
   const nombreTipo = useNombreTipoServicio()
 
   return (
     <div className="pila">
+      {analiza && (
       <section className="tarjeta">
         <div className="tarjeta-cabeza">
           <h3>Satisfacción del mes</h3>
@@ -40,7 +50,7 @@ export function Encuestas() {
               <div className="indicadores indicadores-pocos">
                 <div className="indicador">
                   <span className="indicador-titulo">Promedio</span>
-                  <strong className="indicador-valor numero">{r.promedio === null ? '—' : `${r.promedio} / 5`}</strong>
+                  <strong className="indicador-valor numero">{puntaje(r.promedio)}</strong>
                 </div>
                 <div className="indicador">
                   <span className="indicador-titulo">Respondidas</span>
@@ -54,7 +64,7 @@ export function Encuestas() {
                     <div key={t.tipo_servicio}>
                       <dt>{nombreTipo(t.tipo_servicio)}</dt>
                       <dd className="numero">
-                        {t.promedio} · {t.respuestas} resp.
+                        {puntaje(t.promedio)} · {t.respuestas} resp.
                       </dd>
                     </div>
                   ))}
@@ -64,6 +74,7 @@ export function Encuestas() {
           )}
         </Consulta>
       </section>
+      )}
       <section className="tarjeta">
         <div className="tarjeta-cabeza">
           <h3>Respuestas</h3>
@@ -92,8 +103,20 @@ export function Encuestas() {
                     <strong>{e.comentario ?? 'Sin comentario'}</strong>
                     <span>
                       {e.tipo === 'seguimiento' ? 'Seguimiento · ' : ''}
-                      {fechaHora(e.respondida_en)} · <Link to={`/panel/familias/${e.familia_id}`}>Ver familia</Link> ·{' '}
-                      <Link to={`/panel/servicios/${e.servicio_id}`}>Ver servicio</Link>
+                      {fechaHora(e.respondida_en)}
+                      {/* Las fichas, solo para quien las abre: Gerencia analiza las respuestas, no las fichas. */}
+                      {puede(usuario, 'verFamilias') && (
+                        <>
+                          {' · '}
+                          <Link to={`/panel/familias/${e.familia_id}`}>Ver familia</Link>
+                        </>
+                      )}
+                      {puede(usuario, 'servicios') && (
+                        <>
+                          {' · '}
+                          <Link to={`/panel/servicios/${e.servicio_id}`}>Ver servicio</Link>
+                        </>
+                      )}
                     </span>
                   </div>
                   {e.tarea_id && <Insignia tono="info">Con tarea de seguimiento</Insignia>}
@@ -104,12 +127,12 @@ export function Encuestas() {
           )}
         </Consulta>
       </section>
-      {puede(usuario, 'administrar') && <ConfiguracionEncuestas />}
     </div>
   )
 }
 
-function ConfiguracionEncuestas() {
+/** Cuándo sale cada encuesta: lo configura Administración (Sección 12). */
+export function ConfiguracionEncuestas() {
   const configuracion = useConfiguracionEncuestas(true)
   const guardar = useGuardarConfiguracion()
   const general = configuracion.data?.find((c) => !c.tipo_servicio_codigo)

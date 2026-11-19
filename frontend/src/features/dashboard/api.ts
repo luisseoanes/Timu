@@ -1,7 +1,18 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { ContratoListado, EventoRead, Page, ServicioListado, TareaRead } from '@/types'
+import type {
+  ContratoListado,
+  ConversacionRead,
+  DatosTimuRead,
+  EventoRead,
+  Page,
+  PlantillaFaltante,
+  RecuentosUsuarios,
+  ReporteRead,
+  ServicioListado,
+  TareaRead,
+} from '@/types'
 
 /** Respuesta de `GET /dashboard/indicadores` (definiciones en docs/indicadores.md). */
 export interface Indicadores {
@@ -62,26 +73,16 @@ export function useIndicadores(filtros: FiltrosIndicadores) {
   })
 }
 
-/** Lo que dibujan las series: todo menos el reparto por tipo, que no tiene evolución. */
-const CODIGOS_SERIE = [
-  'afiliaciones',
-  'retiros',
-  'vigentes',
-  'recaudo',
-  'facturado',
-  'mora',
-  'cumplimiento_rutas',
-  'satisfaccion',
-]
-
-export function useEvolucion(filtros: FiltrosIndicadores) {
+/** `codigos`: lo que dibujan las series de las cifras a la vista (`codigosDe`); la API rechaza los
+ * que no son del perfil. */
+export function useEvolucion(filtros: FiltrosIndicadores, codigos: string[]) {
   return useQuery({
-    queryKey: ['dashboard', 'evolucion', filtros],
+    queryKey: ['dashboard', 'evolucion', filtros, codigos],
     placeholderData: keepPreviousData,
     queryFn: async () =>
       (
         await api.get<Evolucion>('/dashboard/evolucion', {
-          params: { ...filtros, codigos: CODIGOS_SERIE },
+          params: { ...filtros, codigos },
           paramsSerializer: { indexes: null },
         })
       ).data,
@@ -100,9 +101,10 @@ export function useDefiniciones(activa = true) {
 
 /** Servicios agendados de hoy en adelante: lo que viene en la línea del equipo. Veinte bastan
  * para hoy y para agrupar los días siguientes; el total dice cuántos quedan fuera. */
-export function useProximosServicios(desde: string) {
+export function useProximosServicios(desde: string, habilitado = true) {
   return useQuery({
     queryKey: ['servicios', { desde, proximos: true }],
+    enabled: habilitado,
     queryFn: async () =>
       (
         await api.get<Page<ServicioListado>>('/servicios', {
@@ -123,18 +125,59 @@ async function grupo<T>(ruta: string, params: Record<string, unknown>): Promise<
   return { total, primero: items[0] }
 }
 
-/** Lo vencido del equipo. Cartera lista primero el contrato más atrasado; preventivos y
- * tareas, el más antiguo. */
-export function useVencidos() {
+const NADA: Grupo<never> = { total: 0, primero: undefined }
+
+/** Qué grupos de lo vencido pide cada perfil (Sección 12): solo los que puede leer. */
+export interface GruposVencidos {
+  mora: boolean
+  preventivos: boolean
+  tareas: boolean
+}
+
+/** Lo vencido de cada perfil. Cartera lista primero el contrato más atrasado; preventivos y
+ * tareas, el más antiguo (las tareas ya llegan solo de su área). */
+export function useVencidos(grupos: GruposVencidos = { mora: true, preventivos: true, tareas: true }) {
   return useQuery({
-    queryKey: ['dashboard', 'vencidos'],
+    queryKey: ['dashboard', 'vencidos', grupos],
     queryFn: async () => {
       const [mora, preventivos, tareas] = await Promise.all([
-        grupo<ContratoListado>('/cartera/contratos', { solo_mora: true }),
-        grupo<EventoRead>('/preventivos', { pendientes_autorizacion: true }),
-        grupo<TareaRead>('/tareas', { vencidas: true, orden: 'vence_el' }),
+        grupos.mora ? grupo<ContratoListado>('/cartera/contratos', { solo_mora: true }) : NADA,
+        grupos.preventivos ? grupo<EventoRead>('/preventivos', { pendientes_autorizacion: true }) : NADA,
+        grupos.tareas ? grupo<TareaRead>('/tareas', { vencidas: true, orden: 'vence_el' }) : NADA,
       ])
       return { mora, preventivos, tareas }
+    },
+  })
+}
+
+/** Lo de Comercial para hoy: las conversaciones que esperan a un asesor y los contratos por
+ * renovar (6.4, 6.11). */
+export function useComercialHoy(habilitado: boolean) {
+  return useQuery({
+    queryKey: ['dashboard', 'comercial'],
+    enabled: habilitado,
+    queryFn: async () => {
+      const [conversaciones, renovaciones] = await Promise.all([
+        api.get<ConversacionRead[]>('/comercial/conversaciones', { params: { estado: 'con_asesor' } }).then((r) => r.data),
+        grupo<ContratoListado>('/cartera/contratos', { por_renovar: true, orden: 'fecha_renovacion' }),
+      ])
+      return { conversaciones, renovaciones }
+    },
+  })
+}
+
+/** Lo que falta configurar (el Inicio del administrador): las plantillas que citan las reglas y no
+ * están aprobadas, los Datos de TIMU y los usuarios inactivos. Mismas claves que Administración. */
+export function useLoQueFalta() {
+  return useQuery({
+    queryKey: ['dashboard', 'configuracion'],
+    queryFn: async () => {
+      const [plantillas, datos, usuarios] = await Promise.all([
+        api.get<PlantillaFaltante[]>('/reglas/plantillas-faltantes').then((r) => r.data),
+        api.get<DatosTimuRead>('/institucional').then((r) => r.data),
+        api.get<RecuentosUsuarios>('/auth/usuarios/recuentos').then((r) => r.data),
+      ])
+      return { plantillas, datos, usuarios }
     },
   })
 }
@@ -159,5 +202,23 @@ export function useMisPendientes() {
       ])
       return { borradores, vencidas, abiertas }
     },
+  })
+}
+
+// --- Reportes programados (Sección 8): los programa Gerencia ---------------------------------
+
+export function useReportes() {
+  return useQuery({
+    queryKey: ['reportes'],
+    queryFn: async () => (await api.get<ReporteRead[]>('/dashboard/reportes')).data,
+  })
+}
+
+export function useGuardarReporte() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...datos }: { id?: string; nombre: string; periodicidad: string; destinatarios: string[]; indicadores: string[]; ciudad?: string; activo: boolean }) =>
+      (id ? await api.put<ReporteRead>(`/dashboard/reportes/${id}`, datos) : await api.post<ReporteRead>('/dashboard/reportes', datos)).data,
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['reportes'] }),
   })
 }

@@ -5,10 +5,13 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import { RutasPage } from './RutasPage'
 import { hoyISO } from '@/lib/formato'
-import { USUARIO_ADMIN } from '@/test/handlers'
+import { sesionDe, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { ParadaRead, PorRutearRead, RutaRead } from '@/types'
+
+// Sección 12: esta pantalla se prueba con el perfil que la usa (docs/perfiles-y-permisos.md).
+beforeEach(() => server.use(sesionDe('operaciones')))
 
 const API = '*/api/v1'
 const MEDICA = { id: 'm1', nombre: 'Dra. Sara', rol: 'medico' }

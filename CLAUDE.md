@@ -215,10 +215,8 @@ Reglas que mantienen esto vivo:
   real con los usuarios de `scripts.datos_demo`, en el job «Stack con un solo comando». Un
   recorrido nuevo que dependa de datos los crea `datos_demo`, no la prueba.
   - Una sola sesión por perfil (`e2e-stack/sesiones.setup.ts`): ingreso y renovación comparten un
-    límite de 10 por minuto y por IP. El perfil de equipo es `comercial@timu.co` y Administración va
-    con `gerencia@timu.co`: no lances scripts con ninguno de los dos antes del barrido (cupo de 120
-    peticiones por minuto y usuario); un recorrido nuevo que no necesite el de equipo va con
-    `sesion('admin')`.
+    límite de 10 por minuto y por IP. Hay un usuario por perfil (Sección 12) y cada pantalla o
+    recorrido va con el perfil que la usa; con los ocho perfiles van 9 ingresos de 10.
   - Un recorrido busca lo que dejó `datos_demo` por su identidad (el motivo, el nombre), nunca el
     primero del listado, y la ruta de la médica con `rutaDemo` (`e2e-stack/datos.ts`). Si falla con
     «datos_demo no dejó ninguna ruta», vuelve a sembrar `datos_demo` hoy.

@@ -4,10 +4,13 @@ import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { PreventivosPage } from './PreventivosPage'
-import { FAMILIA, USUARIO_ADMIN } from '@/test/handlers'
+import { FAMILIA, sesionDe, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { EventoBandeja, FamiliaBandeja } from '@/types'
+
+// Sección 12: esta pantalla se prueba con el perfil que la usa (docs/perfiles-y-permisos.md).
+beforeEach(() => server.use(sesionDe('atencion_cliente')))
 
 const API = '*/api/v1'
 const LUNA = FAMILIA.mascotas![0]!
@@ -171,10 +174,10 @@ describe('PreventivosPage', () => {
     await waitFor(() => expect(enviado).toMatchObject({ producto: 'Nobivac Rabia', lote: 'L-77', peso_kg: 8.4 }))
   })
 
-  it('operaciones cancela un preventivo con su motivo, pero no registra aplicaciones', async () => {
+  it('Atención cancela un preventivo con su motivo, pero no registra aplicaciones', async () => {
     let enviado: unknown = null
     server.use(
-      http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'operaciones' })),
+      sesionDe('atencion_cliente'),
       http.post(`${API}/preventivos/:id/cancelacion`, async ({ request }) => {
         enviado = await request.json()
         return HttpResponse.json(EVENTO)

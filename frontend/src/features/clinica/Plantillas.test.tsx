@@ -1,12 +1,16 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { ClinicaPage } from './ClinicaPage'
+import { sesionDe } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { PlantillaConsultaRead } from '@/types'
+
+// Sección 12: esta pantalla se prueba con el perfil que la usa (docs/perfiles-y-permisos.md).
+beforeEach(() => server.use(sesionDe('medico')))
 
 const API = '*/api/v1'
 

@@ -8,13 +8,13 @@ import { expect, type Page } from '@playwright/test'
  * suite que ingresa en cada prueba acaba rechazada por su propio límite.
  */
 export const USUARIOS = {
-  // No el administrador: datos_demo crea todo a través de la API como admin justo antes, y
-  // el límite general (120 por minuto) se cuenta por usuario. Con el mismo usuario, los
-  // primeros recorridos caían en ese minuto y recibían 429.
-  equipo: { email: 'comercial@timu.co', clave: 'demo12345' },
-  // Por la misma razón, Administración se recorre con un administrador que datos_demo crea
-  // solo para esto, no con admin@timu.co.
-  admin: { email: 'gerencia@timu.co', clave: 'demo12345' },
+  // Un usuario por perfil del equipo (Sección 12, docs/perfiles-y-permisos.md): cada pantalla se
+  // recorre con el perfil que la usa. Atención al cliente ingresa por el formulario real.
+  atencion: { email: 'atencion@timu.co', clave: 'demo12345' },
+  admin: { email: 'admin@timu.co', clave: 'cambiar123' },
+  gerencia: { email: 'gerencia@timu.co', clave: 'demo12345' },
+  comercial: { email: 'comercial@timu.co', clave: 'demo12345' },
+  operaciones: { email: 'operaciones@timu.co', clave: 'demo12345' },
   medico: { email: 'medico@timu.co', clave: 'demo12345' },
   familia: { email: 'ana@example.com', clave: 'demo12345' },
   aliada: { email: 'aliada@timu.co', clave: 'demo12345' },

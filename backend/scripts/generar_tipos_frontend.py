@@ -30,6 +30,8 @@ ESQUEMAS = [
     "ContactoRead",
     "DocumentoRead",
     "FamiliaRead",
+    "FamiliaParaSuprimir",
+    "PlantillaFaltante",
     "CambioHistorial",
     "UsuarioRead",
     "MiembroEquipo",

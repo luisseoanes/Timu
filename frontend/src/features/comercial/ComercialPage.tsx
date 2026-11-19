@@ -2,21 +2,18 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { Pestanas } from '@/components/Pestanas'
-import { useAuth } from '@/features/auth'
-import { puede } from '@/lib/permisos'
 
 import { Conversaciones } from './Conversaciones'
 import { FichaInteresado } from './FichaInteresado'
-import { GuionBot } from './GuionBot'
 import { InteresadosLista } from './InteresadosLista'
 
-/** Comercial (R2-PAN-09): los interesados en listado con ficha, como Familias; las conversaciones
- * que esperan a un asesor, y el guion del asistente para administración. */
+/** Comercial (R2-PAN-09): los interesados en listado con ficha, como Familias, y las conversaciones
+ * que esperan a un asesor. El guion del asistente lo edita Administración. */
 export function ComercialPage() {
-  const { usuario } = useAuth()
   const [params] = useSearchParams()
   const abierto = params.get('interesado')
-  const [pestana, setPestana] = useState('interesados')
+  // El Inicio de Comercial lleva a las conversaciones que esperan a un asesor (`?pestana=`).
+  const [pestana, setPestana] = useState(params.get('pestana') === 'conversaciones' ? 'conversaciones' : 'interesados')
   // La ficha vive en Interesados: abrir uno desde otra pestaña («Abrir conversación») la trae.
   const [visto, setVisto] = useState(abierto)
   if (abierto !== visto) {
@@ -27,7 +24,6 @@ export function ComercialPage() {
     { valor: 'interesados', titulo: 'Interesados', contenido: <Interesados /> },
     { valor: 'conversaciones', titulo: 'Conversaciones', contenido: <Conversaciones /> },
   ]
-  if (puede(usuario, 'administrar')) pestanas.push({ valor: 'guion', titulo: 'Guion del asistente', contenido: <GuionBot /> })
   return <Pestanas etiqueta="Secciones comerciales" pestanas={pestanas} valor={pestana} onCambio={setPestana} />
 }
 

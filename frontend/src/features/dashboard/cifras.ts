@@ -6,7 +6,7 @@ import type { Evolucion, MesEvolucion, ValoresIndicadores } from './api'
 /** Valores de un mes de la serie: el backend solo manda los códigos que se le piden. */
 type Valores = Partial<ValoresIndicadores>
 
-export type CodigoCifra = 'vigentes' | 'afiliaciones' | 'recaudo' | 'mora' | 'rutas' | 'satisfaccion'
+export type CodigoCifra = 'vigentes' | 'afiliaciones' | 'recaudo' | 'mora' | 'rutas' | 'satisfaccion' | 'servicios'
 
 /** Escala del eje de un gráfico: decide el formato de los valores y su dominio. */
 export type Escala = 'entero' | 'moneda' | 'proporcion' | 'puntaje'
@@ -27,6 +27,10 @@ export interface DefCifra {
   /** La primera es la cifra; las demás acompañan en el gráfico (dos como máximo). */
   series: [Serie] | [Serie, Serie]
   detalle: (v: ValoresIndicadores) => string
+}
+
+function totalServicios(porTipo: Record<string, number>): number {
+  return Object.values(porTipo).reduce((suma, n) => suma + n, 0)
 }
 
 export const CIFRAS: Record<CodigoCifra, DefCifra> = {
@@ -93,6 +97,15 @@ export const CIFRAS: Record<CodigoCifra, DefCifra> = {
         ? 'ninguna parada planeada'
         : `${v.cumplimiento_rutas.paradas_completadas} de ${v.cumplimiento_rutas.paradas_planeadas} paradas · puntualidad ${porcentaje(v.cumplimiento_rutas.puntualidad)}`,
   },
+  servicios: {
+    codigo: 'servicios',
+    titulo: 'Servicios',
+    indicador: 'servicios_por_tipo',
+    escala: 'entero',
+    subeEsBueno: true,
+    series: [{ nombre: 'Servicios completados', valor: (v) => v.servicios_por_tipo && totalServicios(v.servicios_por_tipo) }],
+    detalle: () => 'completados en el período',
+  },
   satisfaccion: {
     codigo: 'satisfaccion',
     titulo: 'Satisfacción',
@@ -107,10 +120,29 @@ export const CIFRAS: Record<CodigoCifra, DefCifra> = {
   },
 }
 
-/** Cada perfil ve primero lo de su área (decidido con el usuario el 2026-11-13). */
+/** Las cifras de cada perfil (Sección 12, decidido con el usuario el 2026-11-19): Gerencia, las
+ * seis del tablero; los demás, las de su función encima de su línea de hoy. La API solo les sirve
+ * esas (`INDICADORES_POR_ROL`). */
 export function ordenCifras(rol: Rol | undefined): CodigoCifra[] {
-  if (rol === 'operaciones') return ['rutas', 'satisfaccion', 'mora', 'vigentes', 'afiliaciones', 'recaudo']
+  if (rol === 'comercial') return ['vigentes', 'afiliaciones']
+  if (rol === 'atencion_cliente') return ['recaudo', 'mora', 'satisfaccion']
+  if (rol === 'operaciones') return ['rutas', 'satisfaccion', 'servicios']
   return ['vigentes', 'afiliaciones', 'recaudo', 'mora', 'rutas', 'satisfaccion']
+}
+
+/** Los indicadores de la API que dibujan esas cifras, con los que acompañan en su serie. */
+const CODIGOS: Record<CodigoCifra, string[]> = {
+  vigentes: ['vigentes'],
+  afiliaciones: ['afiliaciones', 'retiros'],
+  recaudo: ['recaudo', 'facturado'],
+  mora: ['mora'],
+  rutas: ['cumplimiento_rutas'],
+  satisfaccion: ['satisfaccion'],
+  servicios: ['servicios_por_tipo'],
+}
+
+export function codigosDe(orden: CodigoCifra[]): string[] {
+  return orden.flatMap((c) => CODIGOS[c])
 }
 
 const ENTERO = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 })

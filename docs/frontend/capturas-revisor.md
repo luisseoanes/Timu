@@ -48,8 +48,9 @@ lo aprendido al cerrar Familias, Rutas, Clínica, el portal, el Inicio y Servici
   con un 401 (`page.route`) deja capturar todas las que hagan falta; el estado del enlace
   (`/auth/enlace`) se simula igual.
 - **Lotes por usuario con un minuto entre lotes**: la API admite 120 peticiones por minuto por
-  usuario, y una carga del panel gasta de 8 a 12. No captures con `comercial@timu.co` justo
-  antes del e2e contra el stack, que lo deja sin cupo (429).
+  usuario, y una carga del panel gasta de 8 a 12. No captures con los usuarios de la e2e justo
+  antes de correrla, que los deja sin cupo (429). Cada pantalla, con el perfil que la usa
+  ([perfiles y permisos](../perfiles-y-permisos.md)).
 
 ## Páginas públicas (sin sesión)
 

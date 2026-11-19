@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
-from app.api.deps import INTERNOS, DbSession, publico, requiere
+from app.api.deps import DbSession, publico, requiere
 from app.core.enums import Rol
 from app.modules.encuestas import service
 from app.modules.encuestas.models import ConfiguracionEncuesta, Encuesta
@@ -16,8 +16,11 @@ from app.schemas.common import Page, ParamsListado, paginar
 
 router = APIRouter(prefix="/encuestas", tags=["encuestas"])
 
-EQUIPO = Depends(requiere(*INTERNOS))
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
 ADMIN = Depends(requiere(Rol.ADMIN))
+# La satisfaccion agregada es analisis: de Gerencia (Seccion 8).
+GERENCIA = Depends(requiere(Rol.GERENCIA))
+GERENCIA_Y_ATENCION = Depends(requiere(Rol.GERENCIA, Rol.ATENCION_CLIENTE))
 
 
 class EncuestaRead(BaseModel):
@@ -83,7 +86,7 @@ class RespuestaEncuestaRead(BaseModel):
 ORDEN = {"programada_para": Encuesta.programada_para, "respondida_en": Encuesta.respondida_en}
 
 
-@router.get("", response_model=Page[EncuestaRead], dependencies=[EQUIPO])
+@router.get("", response_model=Page[EncuestaRead], dependencies=[GERENCIA_Y_ATENCION])
 async def listar(
     db: DbSession,
     params: ParamsListado,
@@ -112,7 +115,7 @@ async def listar(
     )
 
 
-@router.get("/resumen", dependencies=[EQUIPO])
+@router.get("/resumen", dependencies=[GERENCIA])
 async def resumen(db: DbSession, desde: date, hasta: date) -> dict[str, Any]:
     return await db.run_sync(service.resumen, desde, hasta)
 

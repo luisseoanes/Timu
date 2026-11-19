@@ -4,10 +4,14 @@ import { delay, http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { ComercialPage } from './ComercialPage'
-import { USUARIO_ADMIN } from '@/test/handlers'
+import { GuionBot } from './GuionBot'
+import { sesionDe, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { ConversacionDelInteresado, ConversacionRead, InteresadoRead, MensajeRead } from '@/types'
+
+// Sección 12: esta pantalla se prueba con el perfil que la usa (docs/perfiles-y-permisos.md).
+beforeEach(() => server.use(sesionDe('comercial')))
 
 const API = '*/api/v1'
 const pagina = (items: unknown[]) => ({ items, total: items.length, limit: 30, offset: 0 })
@@ -370,13 +374,20 @@ describe('conversaciones', () => {
   })
 })
 
+// El guion lo edita Administración (Sección 12): vive en su pestaña, no en Comercial.
 describe('guion del asistente', () => {
   async function abrirGuion() {
     const user = userEvent.setup()
-    renderizar(<ComercialPage />)
-    await user.click(await screen.findByRole('tab', { name: 'Guion del asistente' }))
+    server.use(sesionDe('admin'))
+    renderizar(<GuionBot />)
     return user
   }
+
+  it('Comercial ya no lleva la pestaña del guion', async () => {
+    renderizar(<ComercialPage />)
+    expect(await screen.findByRole('tab', { name: 'Interesados' })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Guion del asistente' })).not.toBeInTheDocument()
+  })
 
   it('rechaza un JSON inválido sin llamar a la API', async () => {
     let llamadas = 0

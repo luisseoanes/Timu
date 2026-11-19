@@ -43,6 +43,8 @@ from app.schemas.common import Mensaje, Page, ParamsListado, paginar
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
+OPERATIVO = Depends(require_roles(Rol.COMERCIAL, Rol.ATENCION_CLIENTE, Rol.OPERACIONES, Rol.MEDICO))
 # Cualquier sesion valida, la de una clinica aliada incluida: sin /me ni /logout esa cuenta
 # podia ingresar pero el panel no la reconocia ni podia cerrarla.
 Autenticado = Annotated[Usuario, Depends(require_roles(*Rol))]
@@ -181,7 +183,7 @@ async def me(usuario: Autenticado) -> Usuario:
 @router.get(
     "/equipo",
     response_model=list[MiembroEquipo],
-    dependencies=[Depends(require_roles(*INTERNOS))],
+    dependencies=[OPERATIVO],
 )
 async def equipo(db: DbSession, rol: str | None = None) -> list[Usuario]:
     """Personas activas del equipo interno, para asignar rutas y tareas. Cualquier perfil

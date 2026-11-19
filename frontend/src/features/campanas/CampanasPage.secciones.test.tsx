@@ -1,9 +1,14 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
+import type { ReactElement } from 'react'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { CampanasPage } from './CampanasPage'
+import { ConfiguracionEncuestas } from './Encuestas'
+import { EncuestasPage } from './EncuestasPage'
+import { MensajesPage } from './MensajesPage'
+import { PlantillasWhatsApp } from './PlantillasWhatsApp'
 import { PLAN as PLAN_TIMU, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
@@ -74,12 +79,33 @@ async function abrirDetalle() {
   return { user, modal: ficha }
 }
 
+// Lo que salió de Campañas (Sección 12, docs/perfiles-y-permisos.md): las encuestas y los mensajes
+// tienen su módulo, y la configuración de las encuestas y las plantillas viven en Administración.
+const MUDADAS: Record<string, () => ReactElement> = {
+  Encuestas: () => (
+    <>
+      <EncuestasPage />
+      <ConfiguracionEncuestas />
+    </>
+  ),
+  Mensajes: () => <MensajesPage />,
+  'Plantillas de WhatsApp': () => <PlantillasWhatsApp />,
+}
+
 async function abrirPestana(nombre: string) {
   const user = userEvent.setup()
+  const mudada = MUDADAS[nombre]
+  if (mudada) {
+    renderizar(mudada())
+    return user
+  }
   renderizar(<CampanasPage />)
   await user.click(await screen.findByRole('tab', { name: nombre }))
   return user
 }
+
+// Las campañas son de Comercial.
+beforeEach(() => server.use(como('comercial')))
 
 describe('campañas', () => {
   it('dice cuándo sale y cada cuánto se repite', async () => {
@@ -391,6 +417,9 @@ describe('segmentos', () => {
 })
 
 describe('encuestas', () => {
+  // El análisis es de Gerencia (Sección 12); Atención trabaja las novedades (la última prueba).
+  beforeEach(() => server.use(como('gerencia')))
+
   const resumen = (cambios = {}) =>
     http.get(`${API}/encuestas/resumen`, () =>
       HttpResponse.json({ enviadas: 0, respondidas: 0, tasa_respuesta: 0, promedio: null, por_responsable: [], por_tipo_servicio: [], ...cambios }),
@@ -401,9 +430,8 @@ describe('encuestas', () => {
       resumen(),
       http.get(`${API}/encuestas/configuracion`, () => HttpResponse.json([])),
     )
-    const { unmount } = renderizar(<CampanasPage />)
+    const { unmount } = renderizar(<EncuestasPage />)
     const user = userEvent.setup()
-    await user.click(await screen.findByRole('tab', { name: 'Encuestas' }))
     expect(await screen.findByText('—')).toBeInTheDocument()
     expect(await screen.findByText('Aún nadie ha respondido la encuesta.')).toBeInTheDocument()
     await user.click(screen.getByLabelText('Sólo calificaciones de 3 o menos'))
@@ -411,7 +439,7 @@ describe('encuestas', () => {
     unmount()
     server.use(resumen({ promedio: 4.2, respondidas: 5, enviadas: 6, por_tipo_servicio: [{ tipo_servicio: 'consulta_domiciliaria', promedio: 4.5, respuestas: 4 }] }))
     await abrirPestana('Encuestas')
-    expect(await screen.findByText('4.5 · 4 resp.')).toBeInTheDocument()
+    expect(await screen.findByText('4,5 / 5 · 4 resp.')).toBeInTheDocument()
   })
 
   it('filtra las calificaciones bajas', async () => {
@@ -430,7 +458,6 @@ describe('encuestas', () => {
     )
     const user = await abrirPestana('Encuestas')
     expect(await screen.findByText('Sin comentario')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Ver familia' })).toHaveAttribute('href', '/panel/familias/f1')
     await user.click(screen.getByLabelText('Sólo calificaciones de 3 o menos'))
     await waitFor(() => expect(maximos).toEqual([null, '3']))
   })
@@ -480,15 +507,34 @@ describe('encuestas', () => {
     expect(await screen.findByText('Umbral fuera de rango')).toBeInTheDocument()
   })
 
-  it('quien no administra no ve la configuración', async () => {
-    server.use(resumen(), como('comercial'))
-    await abrirPestana('Encuestas')
-    await screen.findByText('Satisfacción del mes')
+  it('Atención entra en las novedades, sin el análisis ni la configuración', async () => {
+    const maximos: (string | null)[] = []
+    const pedidos: string[] = []
+    server.use(
+      como('atencion_cliente'),
+      http.get(`${API}/encuestas/resumen`, () => {
+        pedidos.push('resumen')
+        return HttpResponse.json({})
+      }),
+      http.get(`${API}/encuestas`, ({ request }) => {
+        maximos.push(new URL(request.url).searchParams.get('puntaje_max'))
+        return HttpResponse.json({ items: [], total: 0, limit: 20, offset: 0 })
+      }),
+    )
+    renderizar(<EncuestasPage />)
+    expect(await screen.findByText('Nadie ha calificado con 3 o menos.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Sólo calificaciones de 3 o menos')).toBeChecked()
+    expect(maximos).toEqual(['3'])
+    expect(pedidos).toEqual([])
+    expect(screen.queryByText('Satisfacción del mes')).not.toBeInTheDocument()
     expect(screen.queryByText('Configuración general')).not.toBeInTheDocument()
   })
 })
 
 describe('mensajes y bajas', () => {
+  // Atención al cliente quita las bajas, a pedido de la familia.
+  beforeEach(() => server.use(como('atencion_cliente')))
+
   const MENSAJE: MensajeRead = {
     id: 'm1',
     familia_id: 'f1',

@@ -10,6 +10,7 @@ import { puede } from '@/lib/permisos'
 import type { EstadoAfiliacion, LineaFamiliaRead } from '@/types'
 
 import { useFamilias, useLineas } from './api'
+import { estacionesDelPerfil } from './linea'
 import { LineaMini } from './LineaFamilia'
 import { NuevaFamiliaModal } from './NuevaFamiliaModal'
 
@@ -54,7 +55,7 @@ export function FamiliasLista({ seleccionada }: { seleccionada?: string }) {
         <h2 id="familias-titulo">
           Familias <span className="apagado numero">{familias.data?.total ?? 0}</span>
         </h2>
-        {puede(usuario, 'gestionarAfiliacion') && (
+        {puede(usuario, 'altaFamilia') && (
           // Una sola acción verde llena por vista (manual, sección 11): con una familia abierta,
           // la principal es la de su próxima estación.
           <button className={`btn ${seleccionada ? 'btn-suave' : 'btn-primario'}`} type="button" onClick={() => setNueva(true)}>
@@ -104,7 +105,8 @@ export function FamiliasLista({ seleccionada }: { seleccionada?: string }) {
                 const linea = porFamilia.get(f.id)
                 const planes = linea?.planes ?? []
                 const activas = f.mascotas?.filter((m) => m.activa).map((m) => m.nombre) ?? []
-                const vencidas = linea?.estaciones.filter((e) => e.estado === 'vencida').length ?? 0
+                const delPerfil = linea ? estacionesDelPerfil(linea.estaciones, usuario) : []
+                const vencidas = delPerfil.filter((e) => e.estado === 'vencida').length
                 return (
                   <li key={f.id} className="listado-fila" data-seleccionada={f.id === seleccionada}>
                     <span className="listado-fila-cabeza">
@@ -138,7 +140,7 @@ export function FamiliasLista({ seleccionada }: { seleccionada?: string }) {
                         {vencidas} {vencidas === 1 ? 'vencida' : 'vencidas'}
                       </span>
                     )}
-                    {linea && <LineaMini estaciones={linea.estaciones} color={planes[0]?.color} />}
+                    {linea && <LineaMini estaciones={delPerfil} color={planes[0]?.color} />}
                   </li>
                 )
               })}

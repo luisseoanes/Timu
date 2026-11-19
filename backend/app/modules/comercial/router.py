@@ -22,9 +22,11 @@ from app.schemas.common import Page, ParamsListado, paginar
 
 router = APIRouter(prefix="/comercial", tags=["comercial"])
 
-EQUIPO_COMERCIAL = Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))
-Comercial = Annotated[Usuario, Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))]
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
 ADMIN = Depends(requiere(Rol.ADMIN))
+ADMIN_Y_COMERCIAL = Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))
+COMERCIAL = Depends(requiere(Rol.COMERCIAL))
+Comercial = Annotated[Usuario, Depends(requiere(Rol.COMERCIAL))]
 
 
 class InteresadoIn(BaseModel):
@@ -128,7 +130,7 @@ ORDEN = {
 # --- 6.11 Embudo -------------------------------------------------------------------------
 
 
-@router.get("/interesados", response_model=Page[InteresadoRead], dependencies=[EQUIPO_COMERCIAL])
+@router.get("/interesados", response_model=Page[InteresadoRead], dependencies=[COMERCIAL])
 async def listar(
     db: DbSession,
     params: ParamsListado,
@@ -162,16 +164,12 @@ async def listar(
     )
 
 
-@router.get(
-    "/interesados/recuentos", response_model=RecuentosEmbudo, dependencies=[EQUIPO_COMERCIAL]
-)
+@router.get("/interesados/recuentos", response_model=RecuentosEmbudo, dependencies=[COMERCIAL])
 async def recuentos(db: DbSession, q: str | None = None) -> dict[str, int]:
     return await db.run_sync(service.recuentos, q)
 
 
-@router.get(
-    "/interesados/{interesado_id}", response_model=InteresadoRead, dependencies=[EQUIPO_COMERCIAL]
-)
+@router.get("/interesados/{interesado_id}", response_model=InteresadoRead, dependencies=[COMERCIAL])
 async def obtener(db: DbSession, interesado_id: UUID) -> Interesado:
     return await db.run_sync(service.obtener, interesado_id)
 
@@ -179,7 +177,7 @@ async def obtener(db: DbSession, interesado_id: UUID) -> Interesado:
 @router.get(
     "/interesados/{interesado_id}/conversacion",
     response_model=ConversacionDelInteresado,
-    dependencies=[EQUIPO_COMERCIAL],
+    dependencies=[COMERCIAL],
 )
 async def conversacion_del_interesado(
     db: DbSession, interesado_id: UUID
@@ -200,7 +198,7 @@ async def conversacion_del_interesado(
     "/interesados",
     response_model=InteresadoRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[EQUIPO_COMERCIAL],
+    dependencies=[COMERCIAL],
 )
 async def registrar(db: DbSession, data: InteresadoIn) -> Interesado:
     return await db.run_sync(
@@ -216,7 +214,7 @@ async def registrar(db: DbSession, data: InteresadoIn) -> Interesado:
 
 
 @router.patch(
-    "/interesados/{interesado_id}", response_model=InteresadoRead, dependencies=[EQUIPO_COMERCIAL]
+    "/interesados/{interesado_id}", response_model=InteresadoRead, dependencies=[COMERCIAL]
 )
 async def actualizar(db: DbSession, interesado_id: UUID, data: InteresadoUpdate) -> Interesado:
     interesado = await db.run_sync(service.obtener, interesado_id)
@@ -233,7 +231,7 @@ async def actualizar(db: DbSession, interesado_id: UUID, data: InteresadoUpdate)
 @router.post(
     "/interesados/{interesado_id}/perdida",
     response_model=InteresadoRead,
-    dependencies=[EQUIPO_COMERCIAL],
+    dependencies=[COMERCIAL],
 )
 async def perder(db: DbSession, interesado_id: UUID, data: PerdidaIn) -> Interesado:
     interesado = await db.run_sync(service.obtener, interesado_id)
@@ -243,14 +241,14 @@ async def perder(db: DbSession, interesado_id: UUID, data: PerdidaIn) -> Interes
 @router.post(
     "/interesados/{interesado_id}/reactivacion",
     response_model=InteresadoRead,
-    dependencies=[EQUIPO_COMERCIAL],
+    dependencies=[COMERCIAL],
 )
 async def reactivar(db: DbSession, interesado_id: UUID) -> Interesado:
     interesado = await db.run_sync(service.obtener, interesado_id)
     return await db.run_sync(service.reactivar, interesado)
 
 
-@router.get("/embudo", dependencies=[EQUIPO_COMERCIAL])
+@router.get("/embudo", dependencies=[COMERCIAL])
 async def embudo(db: DbSession, desde: date, hasta: date) -> dict[str, Any]:
     return await db.run_sync(service.embudo, desde, hasta)
 
@@ -258,9 +256,7 @@ async def embudo(db: DbSession, desde: date, hasta: date) -> dict[str, Any]:
 # --- 6.11 Conversaciones ------------------------------------------------------------
 
 
-@router.get(
-    "/conversaciones", response_model=list[ConversacionRead], dependencies=[EQUIPO_COMERCIAL]
-)
+@router.get("/conversaciones", response_model=list[ConversacionRead], dependencies=[COMERCIAL])
 async def conversaciones(
     db: DbSession, estado: EstadoConversacion | None = "con_asesor"
 ) -> list[ConversacionRead]:
@@ -310,7 +306,7 @@ async def responder_como_asesor(
 @router.post(
     "/conversaciones/{conversacion_id}/liberacion",
     response_model=ConversacionRead,
-    dependencies=[EQUIPO_COMERCIAL],
+    dependencies=[COMERCIAL],
 )
 async def liberar(db: DbSession, conversacion_id: UUID) -> ConversacionRead:
     """El asesor termina: vuelve el asistente para la proxima vez que la persona escriba."""
@@ -323,7 +319,7 @@ async def liberar(db: DbSession, conversacion_id: UUID) -> ConversacionRead:
     )
 
 
-@router.get("/arbol", dependencies=[EQUIPO_COMERCIAL])
+@router.get("/arbol", dependencies=[ADMIN_Y_COMERCIAL])
 async def arbol(db: DbSession) -> dict[str, Any]:
     return await db.run_sync(conversacion.arbol)
 

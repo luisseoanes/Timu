@@ -2,14 +2,17 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { Route, Routes, useLocation } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { FamiliaDetallePage } from './FamiliaDetallePage'
 import { FamiliasPage } from './FamiliasPage'
-import { FAMILIA } from '@/test/handlers'
+import { FAMILIA, sesionDe } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { EstacionRead, LineaFamiliaRead } from '@/types'
+
+// Sección 12: esta pantalla se prueba con el perfil que la usa (docs/perfiles-y-permisos.md).
+beforeEach(() => server.use(sesionDe('atencion_cliente')))
 
 /** Fecha ISO a `dias` de hoy: la línea sitúa «hoy» con el reloj del navegador. */
 function dentroDe(dias: number): string {

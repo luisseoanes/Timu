@@ -2,23 +2,28 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { Pestanas } from '@/components/Pestanas'
+import { ConfiguracionEncuestas, PlantillasWhatsApp } from '@/features/campanas'
+import { GuionBot } from '@/features/comercial'
 
 import { Catalogos } from './Catalogos'
 import { DatosTimu } from './DatosTimu'
 import { InteligenciaArtificial } from './InteligenciaArtificial'
 import { Planes } from './Planes'
 import { Reglas } from './Reglas'
-import { Reportes } from './Reportes'
+import { Supresion } from './Supresion'
 import { Usuarios } from './Usuarios'
 
-/** Lo que la URL abre dentro de cada pestaña: la ficha de un plan o una regla, o una vista. */
-const PESTANA_DE: Record<string, string> = { plan: 'planes', regla: 'reglas', eventos: 'reportes' }
+/** Lo que la URL abre dentro de cada pestaña: la ficha de un plan o una regla. */
+const PESTANA_DE: Record<string, string> = { plan: 'planes', regla: 'reglas' }
 
-/** Administración de la plataforma: sólo el perfil admin llega aquí (App.tsx). */
+/** Administración de la plataforma: sólo el perfil admin llega aquí (App.tsx). Configura y nada más
+ * (Sección 12, docs/perfiles-y-permisos.md): los reportes son de Gerencia y la pasarela de Cartera. */
 export function AdminPage() {
   const [params, setParams] = useSearchParams()
   const pedida = Object.keys(PESTANA_DE).find((p) => params.has(p))
-  const [pestana, setPestana] = useState(pedida ? PESTANA_DE[pedida]! : 'usuarios')
+  // `?pestana=` abre una pestaña (el Inicio del administrador lleva a lo que falta configurar).
+  const directa = params.get('pestana')
+  const [pestana, setPestana] = useState(pedida ? PESTANA_DE[pedida]! : (directa ?? 'usuarios'))
   // Lo que aparece en la URL (al recargar o desde un enlace) lleva a su pestaña.
   const [vista, setVista] = useState(pedida)
   if (pedida !== vista) {
@@ -46,9 +51,12 @@ export function AdminPage() {
         { valor: 'planes', titulo: 'Planes', contenido: <Planes /> },
         { valor: 'reglas', titulo: 'Reglas', contenido: <Reglas /> },
         { valor: 'catalogos', titulo: 'Catálogos', contenido: <Catalogos /> },
+        { valor: 'plantillas', titulo: 'Plantillas de WhatsApp', contenido: <PlantillasWhatsApp /> },
+        { valor: 'guion', titulo: 'Guion del asistente', contenido: <GuionBot /> },
+        { valor: 'encuestas', titulo: 'Encuestas', contenido: <ConfiguracionEncuestas /> },
         { valor: 'ia', titulo: 'Inteligencia artificial', contenido: <InteligenciaArtificial /> },
-        { valor: 'reportes', titulo: 'Reportes y pasarela', contenido: <Reportes /> },
         { valor: 'timu', titulo: 'Datos de TIMU', contenido: <DatosTimu /> },
+        { valor: 'supresion', titulo: 'Supresión de datos', contenido: <Supresion /> },
       ]}
     />
   )

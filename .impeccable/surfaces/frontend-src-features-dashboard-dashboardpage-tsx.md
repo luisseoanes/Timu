@@ -2,7 +2,7 @@
 version: 1
 slug: "frontend-src-features-dashboard-dashboardpage-tsx"
 primary_target: "frontend/src/features/dashboard/DashboardPage.tsx"
-related_targets: ["frontend/src/features/dashboard/api.ts"]
+related_targets: ["frontend/src/features/dashboard/api.ts","frontend/src/features/dashboard/InicioAdmin.tsx","frontend/src/features/dashboard/cifras.ts","frontend/src/features/dashboard/ReportesProgramados.tsx"]
 ---
 
 # Panel del equipo · Inicio (R2-PAN-04)
@@ -16,10 +16,11 @@ composición, no de identidad. Modo: Operate. Construcción: en código. El boce
 
 ## Público, tarea y restricciones
 
-- Administración, comercial y operaciones, en la oficina: ver cómo va el período (afiliaciones,
-  vigentes, recaudo, mora, rutas, satisfacción) y su evolución, y saber qué toca atender hoy.
-  Mismos indicadores para los tres; cada perfil ve primero los de su área (decidido con el
-  usuario el 2026-11-13).
+- Desde el 2026-11-19, un Inicio por perfil (Sección 12, `docs/perfiles-y-permisos.md`; abajo,
+  «Decisiones tomadas (2026-11-19)»). Gerencia, en la oficina: el tablero de la Sección 8 (las seis
+  cifras con su evolución, filtros y exportables) y sus reportes programados. Comercial, Atención al
+  cliente y Operaciones: la línea de hoy con solo su trabajo y, encima, sus cifras del mes. El
+  administrador: lo que falta configurar.
 - Médico, con el celular: su jornada (decidido con el usuario el 2026-11-13): su ruta de hoy, sus
   consultas sin firmar y sus tareas. El Inicio entra en su barra inferior.
 - Indicadores con su evolución: el backend sirve la serie de 12 meses (`GET
@@ -80,6 +81,24 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   año en el panel de la serie, la comparación en la línea del saludo y un solo control
   «Descargar». En la segunda, la acción del día agrupado, el gráfico de recaudo que no se repite
   con la serie abierta y la línea base de la variación.
+
+## Decisiones tomadas (2026-11-19): un Inicio por perfil
+
+seed: none (pinned). Palabras del usuario que fijan la composición: «cada perfil debería ver lo suyo y
+ya, en sincronía con los requisitos»; y, a pregunta, «el Inicio de Comercial, Atención al cliente y
+Operaciones es la línea de hoy de cada uno… encima tres o cuatro cifras suyas» y «el Inicio del
+administrador dice lo que falta configurar». Sustituye a «Mismo tablero, orden por perfil».
+
+- **Gerencia**: el tablero tal cual; en lugar de «Hoy en la operación», sus reportes programados
+  (Gerencia mide y no opera).
+- **Comercial, Atención y Operaciones**: el saludo con su perfil y el mes, la franja con sus cifras
+  (Comercial vigentes y afiliaciones; Atención recaudo, mora y satisfacción; Operaciones rutas,
+  satisfacción y servicios completados; la franja ocupa la fila con dos o tres) y la línea de hoy con
+  lo suyo: Comercial las conversaciones que esperan y las renovaciones; Atención la mora, sus tareas
+  y los preventivos por autorizar; Operaciones sus tareas y la agenda de servicios. Sin filtros ni
+  descargas: los cortes son de Gerencia.
+- **Administrador** (`InicioAdmin.tsx`): «Lo que falta configurar», una fila por cosa, lo que bloquea
+  primero en tono de alerta y con la única acción verde; en el celular la acción baja a lo ancho.
 
 ## Pendiente
 

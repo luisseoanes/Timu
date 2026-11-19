@@ -12,7 +12,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.api.deps import INTERNOS, DbSession, requiere
+from app.api.deps import DbSession, requiere
 from app.core.enums import Rol
 from app.core.errores import ReglaNegocio
 from app.core.eventos import EventoDominio
@@ -30,12 +30,9 @@ from app.modules.clinica.models import (
 
 router = APIRouter(prefix="/clinica", tags=["clinica"])
 
-Equipo = Annotated[Usuario, Depends(requiere(*INTERNOS))]
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
+MEDICO = Depends(requiere(Rol.MEDICO))
 Medico = Annotated[Usuario, Depends(requiere(Rol.MEDICO))]
-GESTION = Depends(requiere(Rol.MEDICO, Rol.ADMIN))
-Gestion = Annotated[Usuario, GESTION]
-ADMIN = Depends(requiere(Rol.ADMIN))
-EQUIPO = Depends(requiere(*INTERNOS))
 
 
 class EntradaIn(BaseModel):
@@ -180,7 +177,7 @@ class ResponderIn(BaseModel):
 
 @router.get("/mascotas/{mascota_id}/historia")
 async def historia(
-    db: DbSession, usuario: Equipo, mascota_id: UUID, incluir_corregidas: bool = False
+    db: DbSession, usuario: Medico, mascota_id: UUID, incluir_corregidas: bool = False
 ) -> list[dict[str, Any]]:
     vista = service.vista_para(usuario.rol)
     return await db.run_sync(
@@ -192,7 +189,7 @@ async def historia(
 
 
 @router.get("/borradores")
-async def borradores(db: DbSession, usuario: Gestion) -> list[dict[str, Any]]:
+async def borradores(db: DbSession, usuario: Medico) -> list[dict[str, Any]]:
     """R2-PAN-07 Las consultas que quien pregunta abrio y aun no firma."""
     return await db.run_sync(
         lambda s: [service.presentar(e, "completa") for e in service.borradores(s, usuario.id)]
@@ -219,7 +216,7 @@ async def crear_entrada(db: DbSession, medico: Medico, data: EntradaIn) -> dict[
 
 
 @router.get("/historias/{historia_id}")
-async def obtener(db: DbSession, usuario: Equipo, historia_id: UUID) -> dict[str, Any]:
+async def obtener(db: DbSession, usuario: Medico, historia_id: UUID) -> dict[str, Any]:
     vista = service.vista_para(usuario.rol)
     return await db.run_sync(lambda s: service.presentar(service.obtener(s, historia_id), vista))
 
@@ -289,14 +286,14 @@ async def adjuntar(
 
 
 @router.get(
-    "/historias/{historia_id}/adjuntos", response_model=list[AdjuntoRead], dependencies=[EQUIPO]
+    "/historias/{historia_id}/adjuntos", response_model=list[AdjuntoRead], dependencies=[MEDICO]
 )
 async def listar_adjuntos(db: DbSession, historia_id: UUID) -> list[AdjuntoClinico]:
     return await db.run_sync(service.adjuntos, historia_id)
 
 
 @router.get("/adjuntos/{adjunto_id}/url")
-async def url_adjunto(db: DbSession, usuario: Equipo, adjunto_id: UUID) -> dict[str, str]:
+async def url_adjunto(db: DbSession, usuario: Medico, adjunto_id: UUID) -> dict[str, str]:
     """URL firmada de vida corta; solo para quien ve la historia completa."""
     return await db.run_sync(service.url_adjunto, adjunto_id, service.vista_para(usuario.rol))
 
@@ -325,7 +322,7 @@ async def emitir_formula(
     return FormulaRead(id=formula.id, url=archivos.url(archivo))
 
 
-@router.get("/plantillas", response_model=list[PlantillaRead], dependencies=[EQUIPO])
+@router.get("/plantillas", response_model=list[PlantillaRead], dependencies=[MEDICO])
 async def plantillas(
     db: DbSession, tipo_servicio: str | None = None, incluir_inactivas: bool = False
 ) -> list[PlantillaConsulta]:
@@ -336,7 +333,7 @@ async def plantillas(
     )
 
 
-@router.get("/plantillas/uso", response_model=dict[str, int], dependencies=[GESTION])
+@router.get("/plantillas/uso", response_model=dict[str, int], dependencies=[MEDICO])
 async def uso_de_plantillas(db: DbSession) -> dict[str, int]:
     return await db.run_sync(service.uso_de_plantillas)
 
@@ -345,7 +342,7 @@ async def uso_de_plantillas(db: DbSession) -> dict[str, int]:
     "/plantillas",
     response_model=PlantillaRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[GESTION],
+    dependencies=[MEDICO],
 )
 async def crear_plantilla(db: DbSession, data: PlantillaIn) -> PlantillaConsulta:
     return await db.run_sync(
@@ -353,7 +350,7 @@ async def crear_plantilla(db: DbSession, data: PlantillaIn) -> PlantillaConsulta
     )
 
 
-@router.patch("/plantillas/{codigo}", response_model=PlantillaRead, dependencies=[GESTION])
+@router.patch("/plantillas/{codigo}", response_model=PlantillaRead, dependencies=[MEDICO])
 async def editar_plantilla(db: DbSession, codigo: str, data: PlantillaUpdate) -> PlantillaConsulta:
     return await db.run_sync(service.editar_plantilla, codigo, data.model_dump(exclude_unset=True))
 
@@ -361,7 +358,7 @@ async def editar_plantilla(db: DbSession, codigo: str, data: PlantillaUpdate) ->
 # --- 6.17 Atencion virtual ---------------------------------------------------------------
 
 
-@router.get("/respuestas-virtuales", response_model=list[RespuestaRead], dependencies=[GESTION])
+@router.get("/respuestas-virtuales", response_model=list[RespuestaRead], dependencies=[MEDICO])
 async def respuestas(db: DbSession, estado: str | None = None) -> list[RespuestaVirtual]:
     from sqlalchemy import select
 
@@ -375,7 +372,7 @@ async def respuestas(db: DbSession, estado: str | None = None) -> list[Respuesta
     "/respuestas-virtuales",
     response_model=RespuestaRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[GESTION],
+    dependencies=[MEDICO],
 )
 async def crear_respuesta(db: DbSession, data: RespuestaIn) -> RespuestaVirtual:
     """Nace en borrador: no se usa hasta que la direccion la aprueba."""
@@ -383,13 +380,11 @@ async def crear_respuesta(db: DbSession, data: RespuestaIn) -> RespuestaVirtual:
 
 
 @router.post("/respuestas-virtuales/{codigo}/aprobacion", response_model=RespuestaRead)
-async def aprobar_respuesta(
-    db: DbSession, usuario: Annotated[Usuario, Depends(requiere(Rol.ADMIN))], codigo: str
-) -> RespuestaVirtual:
+async def aprobar_respuesta(db: DbSession, usuario: Medico, codigo: str) -> RespuestaVirtual:
     return await db.run_sync(service.aprobar_respuesta, codigo, usuario.id)
 
 
-@router.get("/virtual/cola", response_model=list[SolicitudRead], dependencies=[GESTION])
+@router.get("/virtual/cola", response_model=list[SolicitudRead], dependencies=[MEDICO])
 async def cola(db: DbSession) -> list[SolicitudVirtual]:
     return await db.run_sync(service.cola)
 
@@ -398,7 +393,7 @@ async def cola(db: DbSession) -> list[SolicitudVirtual]:
     "/virtual",
     response_model=SolicitudRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[EQUIPO],
+    dependencies=[MEDICO],
 )
 async def solicitar(db: DbSession, data: SolicitudIn) -> SolicitudVirtual:
     """Registro desde el panel (p. ej. una consulta que entro por telefono)."""
@@ -448,7 +443,7 @@ async def responder(
     )
 
 
-@router.post("/virtual/{solicitud_id}/cierre", response_model=SolicitudRead, dependencies=[GESTION])
+@router.post("/virtual/{solicitud_id}/cierre", response_model=SolicitudRead, dependencies=[MEDICO])
 async def cerrar(db: DbSession, solicitud_id: UUID) -> SolicitudVirtual:
     solicitud = await db.run_sync(service.obtener_solicitud, solicitud_id)
     return await db.run_sync(service.cerrar_solicitud, solicitud)

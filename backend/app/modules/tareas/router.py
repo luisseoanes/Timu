@@ -1,18 +1,26 @@
 """6.4 Bandeja unica de tareas internas."""
 
 from datetime import date, datetime
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.api.deps import INTERNOS, DbSession, Interno, requiere
+from app.api.deps import DbSession, requiere
+from app.core.enums import Rol
+from app.modules.auth.models import Usuario
 from app.modules.tareas import service
 from app.modules.tareas.models import Tarea
 from app.schemas.common import Page, ParamsListado, paginar
 
-router = APIRouter(prefix="/tareas", tags=["tareas"], dependencies=[Depends(requiere(*INTERNOS))])
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md): los cuatro perfiles operativos,
+# cada uno con las tareas de su area (TAREAS_POR_ROL en el servicio).
+_OPERATIVOS = (Rol.COMERCIAL, Rol.ATENCION_CLIENTE, Rol.OPERACIONES, Rol.MEDICO)
+Operativo = Annotated[Usuario, Depends(requiere(*_OPERATIVOS))]
+router = APIRouter(
+    prefix="/tareas", tags=["tareas"], dependencies=[Depends(requiere(*_OPERATIVOS))]
+)
 
 Area = Literal["comercial", "operaciones", "medico", "cartera", "servicio_cliente"]
 
@@ -76,7 +84,7 @@ class Cierre(BaseModel):
 @router.get("", response_model=Page[TareaListado])
 async def bandeja(
     db: DbSession,
-    usuario: Interno,
+    usuario: Operativo,
     params: ParamsListado,
     area: Area | None = None,
     estado: Literal["abierta", "en_progreso", "cerrada"] | None = None,
@@ -87,6 +95,7 @@ async def bandeja(
 ) -> Page[TareaListado]:
     """Por defecto: prioridad (alta primero) y luego vencimiento mas cercano."""
     stmt = service.consulta(
+        areas=service.AREAS_POR_ROL[usuario.rol],
         area=area,
         estado=estado,
         asignada_a_id=usuario.id if mias else None,
@@ -143,20 +152,24 @@ async def crear(db: DbSession, data: TareaCreate) -> Tarea:
     return tarea
 
 
+async def _de_su_area(db: DbSession, usuario: Usuario, tarea_id: UUID) -> Tarea:
+    return await db.run_sync(service.obtener, tarea_id, service.AREAS_POR_ROL[usuario.rol])
+
+
 @router.patch("/{tarea_id}/asignacion", response_model=TareaRead)
-async def asignar(db: DbSession, tarea_id: UUID, data: Asignacion) -> Tarea:
+async def asignar(db: DbSession, usuario: Operativo, tarea_id: UUID, data: Asignacion) -> Tarea:
     return await db.run_sync(
-        service.asignar, await db.run_sync(service.obtener, tarea_id), data.usuario_id
+        service.asignar, await _de_su_area(db, usuario, tarea_id), data.usuario_id
     )
 
 
 @router.post("/{tarea_id}/iniciar", response_model=TareaRead)
-async def iniciar(db: DbSession, tarea_id: UUID) -> Tarea:
-    return await db.run_sync(service.iniciar, await db.run_sync(service.obtener, tarea_id))
+async def iniciar(db: DbSession, usuario: Operativo, tarea_id: UUID) -> Tarea:
+    return await db.run_sync(service.iniciar, await _de_su_area(db, usuario, tarea_id))
 
 
 @router.post("/{tarea_id}/cerrar", response_model=TareaRead)
-async def cerrar(db: DbSession, tarea_id: UUID, data: Cierre) -> Tarea:
+async def cerrar(db: DbSession, usuario: Operativo, tarea_id: UUID, data: Cierre) -> Tarea:
     return await db.run_sync(
-        service.cerrar, await db.run_sync(service.obtener, tarea_id), data.resolucion
+        service.cerrar, await _de_su_area(db, usuario, tarea_id), data.resolucion
     )

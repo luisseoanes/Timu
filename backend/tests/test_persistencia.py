@@ -699,7 +699,8 @@ async def test_un_cambio_por_sql_tambien_deja_rastro(db: AsyncSession):
     """Con la auditoria en Python, un UPDATE fuera del ORM no quedaba registrado."""
     familia = await db.run_sync(fabricas.familia)
     await db.run_sync(
-        fijar_contexto, ContextoDb(rol="admin", usuario_id=uuid4(), request_id="sql-directo")
+        fijar_contexto,
+        ContextoDb(rol="atencion_cliente", usuario_id=uuid4(), request_id="sql-directo"),
     )
     await db.execute(
         text("UPDATE familias SET ciudad = 'Pasto' WHERE id = :i"),

@@ -48,3 +48,21 @@ Trampas conocidas:
   `marca.parrafo` (o la pieza de `marca_pdf` que lo escribe) con `monkeypatch` y se comprueba lo
   recogido, como `test_el_modelo_del_contrato_dice_lo_elegido_y_las_condiciones_del_plan`
   (`tests/test_documentos.py`). Para mirarlo a mano en local, `pdftotext -layout fichero.pdf -`.
+
+## El equipo en las pruebas (Sección 12)
+
+Desde el 2026-11-19 cada perfil del equipo hace lo suyo ([perfiles y permisos](../perfiles-y-permisos.md)),
+así que ninguna sesión sirve para todo. El fixture `headers` no es una sesión: es una marca que el
+cliente de pruebas cambia, petición a petición, por la cookie del perfil al que la ruta le toca, leído
+de las guardas de la API (`app/api/perfiles.py`, la misma lectura que congela `test_permisos.py`). Si
+varios perfiles la admiten, el primero de `PREFERENCIA_EQUIPO` (Atención, Operaciones, Comercial,
+médico, administrador, Gerencia). El fixture `equipo` da el usuario de cada perfil, para comprobar
+quién hizo algo (`equipo[Rol.ATENCION_CLIENTE].id`).
+
+- Las sesiones se crean con `sesiones.crear`, sin pasar por el ingreso: no gastan el límite de
+  ingresos ni repiten el hash de la contraseña en cada prueba.
+- El médico solo ve y mueve sus servicios: una prueba que registra pasos o pendientes con `headers` se
+  lo asigna antes con `del_medico`.
+- Las tareas se filtran por área: con `headers`, `/tareas` sale como Atención y solo ve `cartera` y
+  `servicio_cliente`.
+- Una prueba de permisos no usa `headers`: entra con el perfil que mira (`crear_usuario` y `login`).

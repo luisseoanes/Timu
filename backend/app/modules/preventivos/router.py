@@ -7,7 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.api.deps import INTERNOS, DbSession, publico, requiere
+from app.api.deps import DbSession, publico, requiere
 from app.core.enums import Rol
 from app.core.tiempo import hoy
 from app.modules.archivos import service as archivos
@@ -20,10 +20,15 @@ from app.schemas.common import Page, ParamsListado, paginar
 router = APIRouter(prefix="/preventivos", tags=["preventivos"])
 verificacion_router = APIRouter(prefix="/verificacion", tags=["preventivos"])
 
-EQUIPO = Depends(requiere(*INTERNOS))
-Equipo = Annotated[Usuario, Depends(requiere(*INTERNOS))]
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
+ATENCION = Depends(requiere(Rol.ATENCION_CLIENTE))
+ATENCION_OPERACIONES_Y_MEDICO = Depends(requiere(Rol.ATENCION_CLIENTE, Rol.OPERACIONES, Rol.MEDICO))
+ATENCION_Y_MEDICO = Depends(requiere(Rol.ATENCION_CLIENTE, Rol.MEDICO))
+Atencion = Annotated[Usuario, Depends(requiere(Rol.ATENCION_CLIENTE))]
+AtencionYMedico = Annotated[Usuario, Depends(requiere(Rol.ATENCION_CLIENTE, Rol.MEDICO))]
+AtencionYOperaciones = Annotated[Usuario, Depends(requiere(Rol.ATENCION_CLIENTE, Rol.OPERACIONES))]
+Medico = Annotated[Usuario, Depends(requiere(Rol.MEDICO))]
 # Aplicar un preventivo es un acto clinico.
-Clinico = Annotated[Usuario, Depends(requiere(Rol.MEDICO, Rol.ADMIN))]
 
 ORDEN = {
     "fecha_programada": EventoPreventivo.fecha_programada,
@@ -122,7 +127,7 @@ class CarnetEmitidoRead(BaseModel):
     sha256: str
 
 
-@router.get("", response_model=Page[EventoRead], dependencies=[EQUIPO])
+@router.get("", response_model=Page[EventoRead], dependencies=[ATENCION_OPERACIONES_Y_MEDICO])
 async def listar(
     db: DbSession,
     params: ParamsListado,
@@ -149,7 +154,9 @@ async def listar(
     )
 
 
-@router.get("/bandeja", response_model=Page[FamiliaBandeja], dependencies=[EQUIPO])
+@router.get(
+    "/bandeja", response_model=Page[FamiliaBandeja], dependencies=[ATENCION_OPERACIONES_Y_MEDICO]
+)
 async def bandeja(
     db: DbSession,
     vista: Literal["por_autorizar", "por_agendar", "agendados", "todos"] = "por_autorizar",
@@ -186,7 +193,11 @@ async def bandeja(
     )
 
 
-@router.get("/bandeja/recuentos", response_model=RecuentosBandeja, dependencies=[EQUIPO])
+@router.get(
+    "/bandeja/recuentos",
+    response_model=RecuentosBandeja,
+    dependencies=[ATENCION_OPERACIONES_Y_MEDICO],
+)
 async def recuentos_bandeja(
     db: DbSession, ciudad: str | None = None, q: str | None = None
 ) -> dict[str, int]:
@@ -195,7 +206,7 @@ async def recuentos_bandeja(
 
 @router.post("/autorizaciones", response_model=list[EventoRead])
 async def autorizar_varios(
-    db: DbSession, usuario: Equipo, data: AutorizacionesIn
+    db: DbSession, usuario: Atencion, data: AutorizacionesIn
 ) -> list[EventoPreventivo]:
     """6.9 La familia autoriza (o no) de una vez varios preventivos."""
     return await db.run_sync(
@@ -207,7 +218,7 @@ async def autorizar_varios(
     "/mascotas/{mascota_id}/calendario",
     response_model=list[EventoRead],
     status_code=status.HTTP_201_CREATED,
-    dependencies=[EQUIPO],
+    dependencies=[ATENCION_Y_MEDICO],
 )
 async def calendarizar(db: DbSession, mascota_id: UUID) -> list[EventoPreventivo]:
     """Programa los esquemas que la mascota aun no tenga (p. ej. tras crear uno nuevo)."""
@@ -217,7 +228,7 @@ async def calendarizar(db: DbSession, mascota_id: UUID) -> list[EventoPreventivo
 
 @router.post("/{evento_id}/autorizacion", response_model=EventoRead)
 async def autorizar(
-    db: DbSession, usuario: Equipo, evento_id: UUID, data: AutorizacionIn
+    db: DbSession, usuario: Atencion, evento_id: UUID, data: AutorizacionIn
 ) -> EventoPreventivo:
     """6.9 Registra la autorizacion de la familia, con quien y por que medio."""
     evento = await db.run_sync(service.obtener, evento_id)
@@ -226,7 +237,7 @@ async def autorizar(
 
 @router.post("/{evento_id}/aplicacion", response_model=EventoRead)
 async def aplicar(
-    db: DbSession, usuario: Clinico, evento_id: UUID, data: AplicacionIn
+    db: DbSession, usuario: Medico, evento_id: UUID, data: AplicacionIn
 ) -> EventoPreventivo:
     """6.8 Registra la aplicacion y programa la siguiente dosis o refuerzo."""
     evento = await db.run_sync(service.obtener, evento_id)
@@ -247,7 +258,7 @@ async def aplicar(
 
 @router.post("/{evento_id}/agendar", response_model=EventoRead)
 async def agendar(
-    db: DbSession, usuario: Equipo, evento_id: UUID, data: AgendarIn
+    db: DbSession, usuario: AtencionYOperaciones, evento_id: UUID, data: AgendarIn
 ) -> EventoPreventivo:
     """6.8 Convierte el evento en un servicio agendado contra la disponibilidad real."""
     evento = await db.run_sync(service.obtener, evento_id)
@@ -256,13 +267,13 @@ async def agendar(
     )
 
 
-@router.post("/{evento_id}/cancelacion", response_model=EventoRead, dependencies=[EQUIPO])
+@router.post("/{evento_id}/cancelacion", response_model=EventoRead, dependencies=[ATENCION])
 async def cancelar(db: DbSession, evento_id: UUID, data: CancelacionIn) -> EventoPreventivo:
     evento = await db.run_sync(service.obtener, evento_id)
     return await db.run_sync(service.cancelar, evento, data.motivo)
 
 
-@router.get("/mascotas/{mascota_id}/carnet", dependencies=[EQUIPO])
+@router.get("/mascotas/{mascota_id}/carnet", dependencies=[ATENCION_Y_MEDICO])
 async def carnet(db: DbSession, mascota_id: UUID) -> dict[str, Any]:
     """6.15 Lo aplicado, lo vencido y lo proximo."""
     return await db.run_sync(service.carnet, mascota_id)
@@ -273,7 +284,9 @@ async def carnet(db: DbSession, mascota_id: UUID) -> dict[str, Any]:
     response_model=CarnetEmitidoRead,
     status_code=status.HTTP_201_CREATED,
 )
-async def emitir_carnet(db: DbSession, usuario: Equipo, mascota_id: UUID) -> CarnetEmitidoRead:
+async def emitir_carnet(
+    db: DbSession, usuario: AtencionYMedico, mascota_id: UUID
+) -> CarnetEmitidoRead:
     """6.15 PDF con codigo de verificacion; la URL es firmada y de vida corta."""
     registro = await db.run_sync(service.emitir_carnet, mascota_id, usuario.id)
     archivo = await db.get(Archivo, registro.archivo_id)

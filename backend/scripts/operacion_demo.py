@@ -46,6 +46,7 @@ from scripts.datos_demo import (
     CLAVE_EQUIPO,
     Cliente,
     comprobar_ambiente,
+    equipo,
     pagar_lo_vencido,
 )
 
@@ -1366,7 +1367,8 @@ def campana_enviada(c: Cliente, motor: Any) -> None:
 
 def main() -> None:
     comprobar_ambiente(settings, "operacion_demo")
-    c = Cliente()
+    # Cada ruta, con el perfil al que le toca (Seccion 12); los medicos, con su propia sesion.
+    c = equipo()
     hoy = datetime.now(BOGOTA).date()
     if c.get("/familias", q=FAMILIAS[0]["documento"])["total"]:
         print("La operación ya estaba sembrada: no se hace nada.")
@@ -1390,11 +1392,9 @@ def main() -> None:
     familias = familias_y_cartera(c, hoy)
     motor = dueno()
     print("Preventivos")
-    preventivos(Cliente("operaciones@timu.co", CLAVE_EQUIPO), medico, familias, hoy, motor)
+    preventivos(c, medico, familias, hoy, motor)
     print(f"Rutas de las ultimas {SEMANAS} semanas")
-    # Con operaciones, no con gerencia@timu.co: ese administrador es el de los recorridos e2e, y
-    # el cupo de peticiones es por usuario (frontend/e2e-stack/sesiones.ts).
-    op = operar_dias(Cliente("operaciones@timu.co", CLAVE_EQUIPO), medicos, hoy)
+    op = operar_dias(c, medicos, hoy)
     print("Fechas de la operación")
     fechar(motor, op)
     print("Encuestas")

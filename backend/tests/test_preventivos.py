@@ -13,7 +13,7 @@ from app.modules.preventivos import documento, service
 from app.modules.preventivos.models import CarnetEmitido, EventoPreventivo
 from app.modules.servicios.models import Franja
 from tests import fabricas
-from tests.conftest import crear_usuario, login
+from tests.conftest import crear_usuario, del_medico, login
 
 pytestmark = pytest.mark.integration
 
@@ -163,7 +163,7 @@ async def test_solo_personal_medico_aplica(client: AsyncClient, db, headers):
     assert resp.status_code == 403
 
 
-async def test_flujo_http_autorizar_y_aplicar(client: AsyncClient, db, headers, admin):
+async def test_flujo_http_autorizar_y_aplicar(client: AsyncClient, db, headers, equipo):
     _, mascota = await _cachorro(db)
     evento_id = (await _eventos(db, mascota, "can_rabia"))[0].id
     await db.commit()
@@ -181,7 +181,7 @@ async def test_flujo_http_autorizar_y_aplicar(client: AsyncClient, db, headers, 
     assert aplicado.json()["proxima_fecha"] == str(HOY + timedelta(days=365))
     assert aplicado.json()["peso_kg"] == 12.5
     # Queda quien aplico, como el sello del carnet impreso.
-    assert aplicado.json()["aplicado_por_nombre"] == admin.nombre
+    assert aplicado.json()["aplicado_por_nombre"] == equipo[Rol.MEDICO].nombre
 
 
 @pytest.mark.parametrize("peso", [0, -3, 150])
@@ -321,7 +321,8 @@ async def test_autorizar_la_visita_autoriza_el_preventivo(client: AsyncClient, d
 
 async def test_completar_la_visita_aplica_el_preventivo(client: AsyncClient, db, headers):
     evento_id, servicio_id = await _visita(client, db, headers, autorizado=True)
-    await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    vet = await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    await del_medico(db, servicio_id, vet)
     medico = await login(client, "vet@timu.co")
     url = f"/api/v1/servicios/{servicio_id}"
     await client.post(f"{url}/estado", json={"estado": "en_atencion"}, headers=medico)
@@ -348,7 +349,8 @@ async def test_la_desparasitacion_en_visita_lleva_el_peso_al_carnet(
     evento_id, servicio_id = await _visita(
         client, db, headers, autorizado=True, esquema="can_desp_interna"
     )
-    await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    vet = await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    await del_medico(db, servicio_id, vet)
     medico = await login(client, "vet@timu.co")
     url = f"/api/v1/servicios/{servicio_id}"
     await client.post(f"{url}/estado", json={"estado": "en_atencion"}, headers=medico)

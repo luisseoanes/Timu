@@ -279,80 +279,6 @@ describe('Administración: catálogos apagados', () => {
   })
 })
 
-describe('Administración: reportes y pasarela', () => {
-  it('abre la vista de eventos que dice la URL', async () => {
-    const estados: (string | null)[] = []
-    server.use(
-      ...base,
-      http.get(`${API}/dashboard/reportes`, () => HttpResponse.json([])),
-      http.get(`${API}/dashboard/definiciones`, () => HttpResponse.json([])),
-      http.get(`${API}/cartera/eventos-pasarela/recuentos`, () => HttpResponse.json({ error: 0, procesado: 2, todos: 2 })),
-      http.get(`${API}/cartera/eventos-pasarela`, ({ request }) => {
-        estados.push(new URL(request.url).searchParams.get('estado'))
-        return HttpResponse.json({ items: [], total: 0, limit: 50, offset: 0 })
-      }),
-    )
-    const user = userEvent.setup()
-    renderizar(<AdminPage />, { ruta: '/panel/admin?eventos=procesado' })
-    await user.click(await screen.findByRole('tab', { name: 'Reportes y pasarela' }))
-    expect(await screen.findByRole('button', { name: 'Procesados 2' })).toHaveAttribute('aria-pressed', 'true')
-    await waitFor(() => expect(estados).toContain('procesado'))
-  })
-
-  it('crea un reporte con sus indicadores y reprocesa un evento con error', async () => {
-    const pedidos: unknown[] = []
-    server.use(
-      ...base,
-      http.get(`${API}/dashboard/reportes`, () => HttpResponse.json([])),
-      http.get(`${API}/dashboard/definiciones`, () =>
-        HttpResponse.json([{ codigo: 'recaudo', nombre: 'Recaudo', formula: 'Suma de pagos', unidad: 'COP' }]),
-      ),
-      http.post(`${API}/dashboard/reportes`, async ({ request }) => {
-        pedidos.push(await request.json())
-        return HttpResponse.json({}, { status: 201 })
-      }),
-      http.get(`${API}/cartera/eventos-pasarela`, () =>
-        HttpResponse.json({
-          items: [{ id: 'ev1', proveedor: 'wompi', tipo: 'transaction.updated', referencia: 'TX-1', estado: 'error', intentos: 2, error: 'Pago no encontrado', procesado_en: null, created_at: '2026-10-24T10:00:00Z' }],
-          total: 1,
-          limit: 50,
-          offset: 0,
-        }),
-      ),
-      http.get(`${API}/cartera/eventos-pasarela/recuentos`, () =>
-        HttpResponse.json({ error: 1, procesado: 4, todos: 5 }),
-      ),
-      http.post(`${API}/cartera/eventos-pasarela/ev1/reprocesar`, () => {
-        pedidos.push('reprocesar')
-        return HttpResponse.json({})
-      }),
-    )
-    const user = await abrirPestana('Reportes y pasarela')
-    expect(await screen.findByText('Pago no encontrado')).toBeInTheDocument()
-    // El evento en palabras, no el código del proveedor.
-    expect(screen.getByText('Cambio en un pago')).toBeInTheDocument()
-    expect(screen.getByText('Wompi')).toBeInTheDocument()
-    // Cada vista dice cuántos tiene, y la elegida vive en la URL, como en las demás bandejas (DEU-26).
-    expect(await screen.findByRole('button', { name: 'Con error 1' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'Procesados 4' })).toHaveAttribute('aria-pressed', 'false')
-    await user.click(screen.getByRole('button', { name: 'Reprocesar el evento TX-1' }))
-    await user.click(screen.getByRole('button', { name: /nuevo reporte/i }))
-    const modal = await screen.findByRole('dialog')
-    await user.type(within(modal).getByLabelText('Nombre'), 'Gerencia semanal')
-    await user.type(within(modal).getByLabelText(/destinatarios/i), 'gerencia@timu.co, socios@timu.co')
-    await user.click(await within(modal).findByRole('button', { name: 'Recaudo' }))
-    await user.click(within(modal).getByRole('button', { name: 'Guardar' }))
-    await waitFor(() => expect(pedidos).toHaveLength(2))
-    expect(pedidos).toContainEqual({
-      nombre: 'Gerencia semanal',
-      periodicidad: 'semanal',
-      destinatarios: ['gerencia@timu.co', 'socios@timu.co'],
-      indicadores: ['recaudo'],
-      activo: true,
-    })
-  })
-})
-
 describe('Administración: lo que abre la URL', () => {
   const conPlanes = () => server.use(...base, http.get(`${API}/planes`, () => HttpResponse.json([PLAN])))
 
@@ -376,18 +302,5 @@ describe('Administración: lo que abre la URL', () => {
     expect(screen.getByRole('tab', { name: 'Usuarios' })).toHaveAttribute('aria-selected', 'true')
     await user.click(screen.getByRole('tab', { name: 'Planes' }))
     expect(await screen.findByText(/Abre un plan para ver/)).toBeInTheDocument()
-  })
-
-  it('la vista de eventos en la URL abre Reportes y pasarela', async () => {
-    server.use(
-      ...base,
-      http.get(`${API}/dashboard/reportes`, () => HttpResponse.json([])),
-      http.get(`${API}/dashboard/definiciones`, () => HttpResponse.json([])),
-      http.get(`${API}/cartera/eventos-pasarela/recuentos`, () => HttpResponse.json({ error: 0, procesado: 2, todos: 2 })),
-      http.get(`${API}/cartera/eventos-pasarela`, () => HttpResponse.json({ items: [], total: 0, limit: 50, offset: 0 })),
-    )
-    renderizar(<AdminPage />, { ruta: '/panel/admin?eventos=procesado' })
-    expect(await screen.findByRole('button', { name: 'Procesados 2' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('tab', { name: 'Reportes y pasarela' })).toHaveAttribute('aria-selected', 'true')
   })
 })

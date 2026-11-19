@@ -1,52 +1,23 @@
 """Seccion 11 Matriz de permisos: ningun endpoint queda abierto por omision."""
 
 import re
-from collections.abc import Callable, Iterator
 from typing import Any
 
 import pytest
-from fastapi.dependencies.models import Dependant
-from fastapi.routing import APIRoute, iter_route_contexts
 from httpx import AsyncClient
 
-from app.api.deps import publico
+from app.api import perfiles
 from app.core.enums import Rol
 from app.main import app
 from tests.conftest import crear_usuario, login
 
 
-def _llamables(dep: Dependant) -> Iterator[Callable[..., Any]]:
-    for sub in dep.dependencies:
-        if sub.call is not None:
-            yield sub.call
-        yield from _llamables(sub)
-
-
 def rutas() -> dict[str, Any]:
-    """clave -> ruta efectiva, con el prefijo y las dependencias de los routers que la
-    incluyen. Desde FastAPI 0.137 `app.routes` no las lista: cada `include_router` queda
-    como un unico elemento que se resuelve al atender, y recorrerlo dejaba fuera de esta
-    guarda casi todos los endpoints sin que fallara nada."""
-    return {
-        f"{','.join(sorted(ruta.methods))} {ruta.path}": ruta
-        for ruta in iter_route_contexts(app.routes)
-        if isinstance(ruta.original_route, APIRoute) and not ruta.path.startswith("/__")
-    }
+    return perfiles.rutas(app)
 
 
 def matriz() -> dict[str, frozenset[Rol] | str]:
-    """ruta -> perfiles permitidos, o 'publico'. Una ruta puede combinar varios guards
-    (p. ej. el del router y el del endpoint): aplica la interseccion."""
-    resultado: dict[str, frozenset[Rol] | str] = {}
-    for clave, ruta in rutas().items():
-        llamables = list(_llamables(ruta.dependant))
-        if publico in llamables:
-            resultado[clave] = "publico"
-            continue
-        conjuntos = [c.roles for c in llamables if hasattr(c, "roles")]
-        if conjuntos:
-            resultado[clave] = frozenset.intersection(*conjuntos)
-    return resultado
+    return perfiles.matriz(app)
 
 
 def test_la_guarda_recorre_todas_las_rutas_de_la_api():
@@ -125,6 +96,285 @@ def test_ninguna_ruta_interna_admite_al_portal():
             continue
         ruta = clave.split(" ", 1)[1]
         assert ruta.startswith(permitidas_familia), f"{clave} admite al rol familia"
+
+
+# Perfiles de cada ruta del equipo, de docs/perfiles-y-permisos.md (Seccion 12: "cada perfil
+# debera contar con permisos diferenciados de acuerdo con sus funciones"). Letras: A admin,
+# G gerencia, C comercial, T atencion al cliente, O operaciones, M medico, F familia. El portal,
+# la clinica aliada y las rutas publicas tienen sus propias pruebas arriba y en test_alcance.py.
+_LETRAS = {
+    "A": Rol.ADMIN,
+    "G": Rol.GERENCIA,
+    "C": Rol.COMERCIAL,
+    "T": Rol.ATENCION_CLIENTE,
+    "O": Rol.OPERACIONES,
+    "M": Rol.MEDICO,
+    "F": Rol.FAMILIA,
+    "L": Rol.ALIADA,
+}
+MATRIZ = {
+    "GET /afiliaciones": "C",
+    "POST /afiliaciones/asistida": "C",
+    "GET /afiliaciones/lineas": "CTO",
+    "GET /afiliaciones/{solicitud_id}": "C",
+    "POST /afiliaciones/{solicitud_id}/pago-manual": "C",
+    "POST /agenda/bloqueos": "O",
+    "GET /agenda/disponibilidad": "TO",
+    "GET /agenda/franjas": "TO",
+    "POST /agenda/franjas": "O",
+    "PATCH /agenda/franjas/{franja_id}": "O",
+    "GET /aliadas": "TO",
+    "POST /aliadas": "O",
+    "GET /aliadas/liquidacion": "GO",
+    "GET /aliadas/remisiones": "T",
+    "POST /aliadas/remisiones": "T",
+    "GET /aliadas/remisiones/recuentos": "T",
+    "POST /aliadas/remisiones/{remision_id}/anulacion": "T",
+    "PATCH /aliadas/{clinica_id}": "O",
+    "GET /aliadas/{clinica_id}/convenios": "TO",
+    "POST /aliadas/{clinica_id}/convenios": "O",
+    "DELETE /aliadas/{clinica_id}/logo": "O",
+    "PUT /aliadas/{clinica_id}/logo": "O",
+    "GET /auth/equipo": "CTOM",
+    "POST /auth/logout": "AGCTOMFL",
+    "POST /auth/logout-todas": "AGCTOMFL",
+    "GET /auth/me": "AGCTOMFL",
+    "GET /auth/usuarios": "A",
+    "POST /auth/usuarios": "A",
+    "GET /auth/usuarios/recuentos": "A",
+    "PATCH /auth/usuarios/{usuario_id}": "A",
+    "GET /campanas": "C",
+    "POST /campanas": "C",
+    "PUT /campanas/{campana_id}": "C",
+    "POST /campanas/{campana_id}/cancelacion": "C",
+    "GET /campanas/{campana_id}/ejecuciones": "C",
+    "GET /campanas/{campana_id}/previsualizacion": "C",
+    "POST /campanas/{campana_id}/programacion": "C",
+    "GET /campanas/{campana_id}/resultados": "C",
+    "GET /cartera/contratos": "CT",
+    "POST /cartera/contratos": "C",
+    "GET /cartera/contratos/recuentos": "CT",
+    "GET /cartera/contratos/{contrato_id}": "CT",
+    "POST /cartera/contratos/{contrato_id}/cancelar": "T",
+    "GET /cartera/contratos/{contrato_id}/documento": "CT",
+    "POST /cartera/contratos/{contrato_id}/renovar": "C",
+    "GET /cartera/eventos-pasarela": "T",
+    "GET /cartera/eventos-pasarela/recuentos": "T",
+    "POST /cartera/eventos-pasarela/{evento_id}/reprocesar": "T",
+    "GET /cartera/familias/{familia_id}/estado-cuenta": "CT",
+    "POST /cartera/medios-pago": "T",
+    "DELETE /cartera/medios-pago/{medio_id}": "T",
+    "POST /cartera/pagos": "T",
+    "POST /cartera/transacciones/{transaccion_id}/recuperar": "T",
+    "POST /catalogos/cargar": "A",
+    "GET /catalogos/ciudades": "AGCTOMF",
+    "GET /catalogos/especies": "AGCTOMF",
+    "GET /catalogos/esquemas-preventivos": "AGCTOMF",
+    "POST /catalogos/esquemas-preventivos": "A",
+    "PATCH /catalogos/esquemas-preventivos/{codigo}": "A",
+    "GET /catalogos/tipos-servicio": "AGCTOMF",
+    "PATCH /catalogos/{catalogo}/{codigo}/activo": "A",
+    "GET /clinica/adjuntos/{adjunto_id}/url": "M",
+    "GET /clinica/borradores": "M",
+    "POST /clinica/historias": "M",
+    "GET /clinica/historias/{historia_id}": "M",
+    "PATCH /clinica/historias/{historia_id}": "M",
+    "GET /clinica/historias/{historia_id}/adjuntos": "M",
+    "POST /clinica/historias/{historia_id}/adjuntos": "M",
+    "POST /clinica/historias/{historia_id}/correccion": "M",
+    "POST /clinica/historias/{historia_id}/firma": "M",
+    "POST /clinica/historias/{historia_id}/formulas": "M",
+    "GET /clinica/mascotas/{mascota_id}/historia": "M",
+    "GET /clinica/plantillas": "M",
+    "POST /clinica/plantillas": "M",
+    "GET /clinica/plantillas/uso": "M",
+    "PATCH /clinica/plantillas/{codigo}": "M",
+    "GET /clinica/respuestas-virtuales": "M",
+    "POST /clinica/respuestas-virtuales": "M",
+    "POST /clinica/respuestas-virtuales/{codigo}/aprobacion": "M",
+    "POST /clinica/virtual": "M",
+    "GET /clinica/virtual/cola": "M",
+    "POST /clinica/virtual/{solicitud_id}/borrador": "M",
+    "POST /clinica/virtual/{solicitud_id}/cierre": "M",
+    "POST /clinica/virtual/{solicitud_id}/respuesta": "M",
+    "POST /clinica/virtual/{solicitud_id}/toma": "M",
+    "GET /comercial/arbol": "AC",
+    "PUT /comercial/arbol": "A",
+    "GET /comercial/conversaciones": "C",
+    "POST /comercial/conversaciones/{conversacion_id}/liberacion": "C",
+    "POST /comercial/conversaciones/{conversacion_id}/mensajes": "C",
+    "GET /comercial/embudo": "C",
+    "GET /comercial/interesados": "C",
+    "POST /comercial/interesados": "C",
+    "GET /comercial/interesados/recuentos": "C",
+    "GET /comercial/interesados/{interesado_id}": "C",
+    "PATCH /comercial/interesados/{interesado_id}": "C",
+    "GET /comercial/interesados/{interesado_id}/conversacion": "C",
+    "POST /comercial/interesados/{interesado_id}/perdida": "C",
+    "POST /comercial/interesados/{interesado_id}/reactivacion": "C",
+    "GET /comunicaciones/bajas": "CT",
+    "POST /comunicaciones/bajas": "CT",
+    "DELETE /comunicaciones/bajas/{destino}": "T",
+    "GET /comunicaciones/mensajes": "CT",
+    "POST /comunicaciones/mensajes/plantilla": "CT",
+    "POST /comunicaciones/mensajes/texto": "CT",
+    "GET /comunicaciones/plantillas": "ACT",
+    "POST /comunicaciones/plantillas": "A",
+    "PATCH /comunicaciones/plantillas/{plantilla_id}/estado": "A",
+    "GET /dashboard/definiciones": "GCTO",
+    "GET /dashboard/evolucion": "GCTO",
+    "GET /dashboard/indicadores": "GCTO",
+    "GET /dashboard/reportes": "G",
+    "POST /dashboard/reportes": "G",
+    "PUT /dashboard/reportes/{reporte_id}": "G",
+    "PATCH /documentos/{documento_id}": "T",
+    "POST /documentos/{documento_id}/baja": "T",
+    "GET /encuestas": "GT",
+    "GET /encuestas/configuracion": "A",
+    "PUT /encuestas/configuracion": "A",
+    "GET /encuestas/resumen": "G",
+    "GET /familias": "CTOF",
+    "POST /familias": "CT",
+    "GET /familias/supresion": "A",
+    "GET /familias/{familia_id}": "CTOF",
+    "PATCH /familias/{familia_id}": "CT",
+    "POST /familias/{familia_id}/acceso-portal": "T",
+    "POST /familias/{familia_id}/anonimizar": "A",
+    "POST /familias/{familia_id}/baja": "T",
+    "POST /familias/{familia_id}/contactos": "T",
+    "PATCH /familias/{familia_id}/contactos/{contacto_id}": "T",
+    "POST /familias/{familia_id}/contactos/{contacto_id}/baja": "T",
+    "GET /familias/{familia_id}/documentos": "T",
+    "POST /familias/{familia_id}/documentos": "T",
+    "POST /familias/{familia_id}/estado": "T",
+    "GET /familias/{familia_id}/historial": "CT",
+    "GET /familias/{familia_id}/linea": "CTO",
+    "POST /familias/{familia_id}/mascotas": "CT",
+    "GET /ia/casos": "A",
+    "POST /ia/casos": "A",
+    "GET /ia/consultas": "A",
+    "GET /ia/consumo": "A",
+    "GET /ia/prompts": "A",
+    "POST /ia/prompts": "A",
+    "POST /ia/prompts/sembrar": "A",
+    "POST /ia/prompts/{prompt_id}/activacion": "A",
+    "POST /ia/prompts/{prompt_id}/evaluacion": "A",
+    "PUT /institucional": "A",
+    "GET /mascotas/{mascota_id}": "CTOM",
+    "PATCH /mascotas/{mascota_id}": "T",
+    "POST /mascotas/{mascota_id}/baja": "T",
+    "DELETE /mascotas/{mascota_id}/foto": "T",
+    "PUT /mascotas/{mascota_id}/foto": "T",
+    "GET /pendientes": "TOM",
+    "POST /pendientes/{pendiente_id}/autorizacion": "T",
+    "POST /pendientes/{pendiente_id}/avance": "TO",
+    "GET /planes": "AGCTOM",
+    "POST /planes": "A",
+    "POST /planes/contratos/{contrato_id}/cambio": "T",
+    "POST /planes/cotizacion": "CT",
+    "GET /planes/recomendacion": "C",
+    "GET /planes/{plan_id}": "AGCTOM",
+    "PATCH /planes/{plan_id}": "A",
+    "PUT /planes/{plan_id}/adicionales": "A",
+    "PUT /planes/{plan_id}/beneficios": "A",
+    "PUT /planes/{plan_id}/ciudades": "A",
+    "PUT /planes/{plan_id}/tarifas": "A",
+    "GET /preventivos": "TOM",
+    "POST /preventivos/autorizaciones": "T",
+    "GET /preventivos/bandeja": "TOM",
+    "GET /preventivos/bandeja/recuentos": "TOM",
+    "POST /preventivos/mascotas/{mascota_id}/calendario": "TM",
+    "GET /preventivos/mascotas/{mascota_id}/carnet": "TM",
+    "POST /preventivos/mascotas/{mascota_id}/carnet/pdf": "TM",
+    "POST /preventivos/{evento_id}/agendar": "TO",
+    "POST /preventivos/{evento_id}/aplicacion": "M",
+    "POST /preventivos/{evento_id}/autorizacion": "T",
+    "POST /preventivos/{evento_id}/cancelacion": "T",
+    "GET /reglas": "A",
+    "POST /reglas": "A",
+    "POST /reglas/describir": "A",
+    "GET /reglas/eventos": "A",
+    "POST /reglas/probar": "A",
+    "GET /reglas/plantillas-faltantes": "A",
+    "PATCH /reglas/{regla_id}": "A",
+    "GET /rutas": "OM",
+    "POST /rutas/paradas/{parada_id}/en-camino": "OM",
+    "POST /rutas/paradas/{parada_id}/llegada": "OM",
+    "POST /rutas/paradas/{parada_id}/omision": "OM",
+    "POST /rutas/paradas/{parada_id}/salida": "OM",
+    "POST /rutas/planificaciones": "O",
+    "GET /rutas/planificaciones/{planificacion_id}": "O",
+    "GET /rutas/por-rutear": "O",
+    "GET /rutas/{ruta_id}": "OM",
+    "POST /rutas/{ruta_id}/cancelacion": "O",
+    "POST /rutas/{ruta_id}/inicio": "OM",
+    "POST /rutas/{ruta_id}/paradas": "O",
+    "GET /segmentos": "C",
+    "POST /segmentos": "C",
+    "POST /segmentos/previsualizacion": "C",
+    "GET /segmentos/{segmento_id}/conteo": "C",
+    "GET /servicios": "TOM",
+    "POST /servicios": "TO",
+    "GET /servicios/elegibilidad": "TO",
+    "GET /servicios/resumen": "TOM",
+    "GET /servicios/{servicio_id}": "TOM",
+    "POST /servicios/{servicio_id}/autorizar": "M",
+    "POST /servicios/{servicio_id}/estado": "TOM",
+    "GET /servicios/{servicio_id}/pasos": "TOM",
+    "PUT /servicios/{servicio_id}/pasos/{paso_codigo}": "M",
+    "POST /servicios/{servicio_id}/pendientes": "M",
+    "POST /servicios/{servicio_id}/reprogramar": "TO",
+    "GET /tareas": "CTOM",
+    "POST /tareas": "CTOM",
+    "PATCH /tareas/{tarea_id}/asignacion": "CTOM",
+    "POST /tareas/{tarea_id}/cerrar": "CTOM",
+    "POST /tareas/{tarea_id}/iniciar": "CTOM",
+}
+
+
+def test_cada_ruta_del_equipo_admite_exactamente_sus_perfiles():
+    """Un perfil de mas en una ruta es informacion o una accion que no le toca; uno de menos,
+    una pantalla rota. La matriz cambia aqui y en docs/perfiles-y-permisos.md a la vez."""
+    reales = {
+        clave.split(" ", 1)[0] + " " + clave.split(" ", 1)[1].removeprefix("/api/v1"): roles
+        for clave, roles in matriz().items()
+        if roles != "publico"
+        and not clave.split(" ", 1)[1].startswith(("/api/v1/portal", "/health"))
+        and "/mi-clinica" not in clave
+    }
+    esperadas = {
+        ruta: frozenset(_LETRAS[letra] for letra in letras) for ruta, letras in MATRIZ.items()
+    }
+    distintas = {
+        ruta: (sorted(reales.get(ruta, set())), sorted(esperadas.get(ruta, set())))
+        for ruta in reales.keys() | esperadas.keys()
+        if reales.get(ruta) != esperadas.get(ruta)
+    }
+    assert not distintas, f"Perfiles distintos de los esperados (reales, esperados): {distintas}"
+
+
+def test_el_administrador_no_ve_nada_operativo():
+    """Decidido con el usuario el 2026-11-19: configura la plataforma y nada mas."""
+    operativas = (
+        "/familias",
+        "/mascotas",
+        "/cartera",
+        "/servicios",
+        "/rutas",
+        "/clinica",
+        "/tareas",
+        "/preventivos",
+        "/aliadas/remisiones",
+        "/comercial/interesados",
+    )
+    abiertas = [
+        ruta
+        for ruta, letras in MATRIZ.items()
+        if "A" in letras
+        and ruta.split(" ", 1)[1].startswith(operativas)
+        and ruta not in ("POST /familias/{familia_id}/anonimizar", "GET /familias/supresion")
+    ]
+    assert abiertas == []
 
 
 def _ejemplo(path: str) -> str:

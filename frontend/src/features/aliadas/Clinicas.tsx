@@ -13,12 +13,12 @@ import { fechaCompacta, hoyISO, moneda, telefono } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
 import type { ClinicaRead } from '@/types'
 
-import { useActualizarClinica, useClinicas, useConvenios, useCrearClinica, useCrearConvenio, useRecuentosRemisiones, useRemisiones } from './api'
+import { useActualizarClinica, useClinicas, useConvenios, useCrearClinica, useCrearConvenio } from './api'
 import { EnLaPortada } from './ClinicaEnPortada'
 import { cobertura } from './remision'
 
 /** Clínicas y convenios en listado con ficha (R2-PAN-10), como Familias: la clínica abierta vive en
- * la URL (`?clinica=`), con sus datos, sus convenios y las remisiones que tiene por usar. */
+ * la URL (`?clinica=`), con sus datos y sus convenios. */
 export function Clinicas() {
   const [params] = useSearchParams()
   const abierta = params.get('clinica')
@@ -29,7 +29,7 @@ export function Clinicas() {
         <FichaClinica key={abierta} id={abierta} />
       ) : (
         <section className="ficha-abierta ficha-vacia" aria-label="Clínica abierta">
-          <p>Abre una clínica para ver sus convenios y las remisiones que tiene por usar.</p>
+          <p>Abre una clínica para ver sus datos y sus convenios.</p>
         </section>
       )}
     </div>
@@ -39,7 +39,7 @@ export function Clinicas() {
 function ClinicasLista({ seleccionada }: { seleccionada: string | null }) {
   const { usuario } = useAuth()
   const [params] = useSearchParams()
-  const esAdmin = puede(usuario, 'administrar')
+  const esAdmin = puede(usuario, 'redAliadas')
   // Administración ve también las inactivas, para volver a activarlas.
   const clinicas = useClinicas(undefined, esAdmin)
   const [nueva, setNueva] = useState(false)
@@ -96,7 +96,7 @@ function ClinicasLista({ seleccionada }: { seleccionada: string | null }) {
 
 function FichaClinica({ id }: { id: string }) {
   const { usuario } = useAuth()
-  const clinicas = useClinicas(undefined, puede(usuario, 'administrar'))
+  const clinicas = useClinicas(undefined, puede(usuario, 'redAliadas'))
   const c = clinicas.data?.find((x) => x.id === id)
   return (
     <section className="ficha-abierta" aria-label="Clínica abierta">
@@ -110,12 +110,10 @@ function FichaClinica({ id }: { id: string }) {
 function Ficha({ clinica: c }: { clinica: ClinicaRead }) {
   const { usuario } = useAuth()
   const [params] = useSearchParams()
-  const esAdmin = puede(usuario, 'administrar')
+  const esAdmin = puede(usuario, 'redAliadas')
   const actualizar = useActualizarClinica()
   const convenios = useConvenios(c.id)
   const planes = usePlanes()
-  const recuentos = useRecuentosRemisiones(c.id)
-  const porUsar = useRemisiones({ clinica_id: c.id, estado: 'emitida' })
   const [nuevo, setNuevo] = useState(false)
   const volver = new URLSearchParams(params)
   volver.delete('clinica')
@@ -229,57 +227,6 @@ function Ficha({ clinica: c }: { clinica: ClinicaRead }) {
         </Consulta>
       </section>
 
-      <section className="bloque" aria-labelledby="clinica-remisiones">
-        <h3 id="clinica-remisiones">Remisiones</h3>
-        {recuentos.data && (
-          <p className="aliada-nota">
-            {/* Cada recuento lleva a sus remisiones en la bandeja, solo las de esta clínica. */}
-            <Link to={`/panel/aliadas?pestana=remisiones&vista=emitida&remisiones_de=${c.id}`}>
-              <span className="numero">{recuentos.data.emitida}</span> por usar
-            </Link>{' '}
-            ·{' '}
-            <Link to={`/panel/aliadas?pestana=remisiones&vista=utilizada&remisiones_de=${c.id}`}>
-              <span className="numero">{recuentos.data.utilizada}</span> {recuentos.data.utilizada === 1 ? 'atendida' : 'atendidas'}
-            </Link>{' '}
-            ·{' '}
-            <Link to={`/panel/aliadas?pestana=remisiones&vista=anulada&remisiones_de=${c.id}`}>
-              <span className="numero">{recuentos.data.anulada}</span> {recuentos.data.anulada === 1 ? 'anulada' : 'anuladas'}
-            </Link>
-          </p>
-        )}
-        <Consulta
-          consulta={porUsar}
-          cargando="Cargando las remisiones…"
-          error="No fue posible cargar las remisiones."
-          vacio="Ninguna remisión espera atención en esta clínica."
-          estaVacio={(d) => d.length === 0}
-        >
-          {(d) => (
-            <ul className="aliada-remisiones">
-              {d.map((r) => (
-                <li key={r.id}>
-                  <Link to={`/panel/familias/${r.familia_id}`}>
-                    {r.titular}
-                    {r.mascota && ` · ${r.mascota}`}
-                  </Link>
-                  <span className="bandeja-detalle">
-                    <span className="numero">{r.codigo}</span>
-                    {r.vencida ? (
-                      <span className="bandeja-vencida">
-                        <Icono nombre="alerta" size={14} />
-                        <span>Venció el</span>
-                        <span className="numero">{fechaCompacta(r.vence_en)}</span>
-                      </span>
-                    ) : (
-                      <span className="numero">Vence el {fechaCompacta(r.vence_en)}</span>
-                    )}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Consulta>
-      </section>
       <NuevoConvenio clinica={c} abierto={nuevo} onCerrar={() => setNuevo(false)} />
     </>
   )

@@ -136,9 +136,10 @@ export function useEncuestas(filtros: { estado?: string; puntaje_max?: number; l
   })
 }
 
-export function useResumenEncuestas(desde: string, hasta: string) {
+export function useResumenEncuestas(desde: string, hasta: string, habilitado = true) {
   return useQuery({
     queryKey: ['encuestas', 'resumen', desde, hasta],
+    enabled: habilitado,
     queryFn: async () => (await api.get<ResumenEncuestas>('/encuestas/resumen', { params: { desde, hasta } })).data,
   })
 }

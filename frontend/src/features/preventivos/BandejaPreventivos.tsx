@@ -40,7 +40,11 @@ export function BandejaPreventivos() {
   const offset = Number(params.get('desde') ?? 0)
   const [accion, setAccion] = useState<Accion | null>(null)
   const ciudades = useCiudades()
+  // Cada perfil, su paso (Sección 12): Atención habla con la familia, autoriza y cancela;
+  // Atención y Operaciones agendan la visita, y el médico aplica.
   const clinico = puede(usuario, 'clinico')
+  const conLaFamilia = puede(usuario, 'autorizarConLaFamilia')
+  const agenda = conLaFamilia || puede(usuario, 'gestionarAgenda')
   // En «Por autorizar» y «Por agendar» el estado es el de la vista: repetirlo en cada fila es ruido.
   const conEstado = vista === 'agendados' || vista === 'todos'
 
@@ -130,10 +134,12 @@ export function BandejaPreventivos() {
                           </span>
                           {/* Escribir sirve en cualquier paso: pedir la autorización o avisar de la visita. */}
                           <span className="preventivos-familia-acciones">
-                            <a className="btn btn-plano btn-accion" href={enlaceWhatsApp(g.telefono)} target="_blank" rel="noopener noreferrer">
-                              <Icono nombre="mensaje" size={16} /> Escribir
-                            </a>
-                            {porAutorizar.length > 0 && (
+                            {conLaFamilia && (
+                              <a className="btn btn-plano btn-accion" href={enlaceWhatsApp(g.telefono)} target="_blank" rel="noopener noreferrer">
+                                <Icono nombre="mensaje" size={16} /> Escribir
+                              </a>
+                            )}
+                            {conLaFamilia && porAutorizar.length > 0 && (
                               <button className="btn btn-suave" type="button" onClick={() => setAccion({ tipo: 'autorizar', grupo: g })}>
                                 Registrar autorización{porAutorizar.length > 1 ? ` (${porAutorizar.length})` : ''}
                               </button>
@@ -146,6 +152,8 @@ export function BandejaPreventivos() {
                           key={e.id}
                           evento={e}
                           clinico={clinico}
+                          agenda={agenda}
+                          cancela={conLaFamilia}
                           conEstado={conEstado}
                           onAccion={(tipo) => setAccion({ tipo, evento: e, grupo: g })}
                         />
@@ -195,11 +203,15 @@ export function BandejaPreventivos() {
 function FilaPreventivo({
   evento: e,
   clinico,
+  agenda,
+  cancela,
   conEstado,
   onAccion,
 }: {
   evento: EventoBandeja
   clinico: boolean
+  agenda: boolean
+  cancela: boolean
   conEstado: boolean
   onAccion: (tipo: 'agendar' | 'aplicar' | 'cancelar') => void
 }) {
@@ -244,13 +256,14 @@ function FilaPreventivo({
       </td>
       )}
       <td className="tabla-acciones">
-        {e.siguiente === 'agendar' && (
+        {agenda && e.siguiente === 'agendar' && (
           <button className="btn btn-suave" type="button" onClick={() => onAccion('agendar')} aria-label={`Agendar ${e.nombre} de ${e.mascota_nombre}`}>
             Agendar visita
           </button>
         )}
       </td>
       <td className="preventivo-menu">
+        {(clinico || cancela) && (
         <Menu.Root modal={false}>
           <Menu.Trigger className="btn btn-plano btn-icono" aria-label={`Más acciones de ${e.nombre} de ${e.mascota_nombre}`}>
             <Icono nombre="puntos" size={18} />
@@ -263,12 +276,15 @@ function FilaPreventivo({
                   Registrar aplicación sin visita
                 </Menu.Item>
               )}
-              <Menu.Item className="menu-item menu-item-peligro" onSelect={() => onAccion('cancelar')}>
-                Cancelar preventivo
-              </Menu.Item>
+              {cancela && (
+                <Menu.Item className="menu-item menu-item-peligro" onSelect={() => onAccion('cancelar')}>
+                  Cancelar preventivo
+                </Menu.Item>
+              )}
             </Menu.Content>
           </Menu.Portal>
         </Menu.Root>
+        )}
       </td>
     </tr>
   )

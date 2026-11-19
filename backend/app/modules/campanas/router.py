@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
-from app.api.deps import INTERNOS, DbSession, requiere
+from app.api.deps import DbSession, requiere
 from app.core.enums import Rol
 from app.core.errores import Conflicto, NoEncontrado
 from app.modules.auth.models import Usuario
@@ -21,8 +21,9 @@ from app.modules.comunicaciones import service as comunicaciones
 router = APIRouter(prefix="/campanas", tags=["campanas"])
 segmentos_router = APIRouter(prefix="/segmentos", tags=["campanas"])
 
-EQUIPO = Depends(requiere(*INTERNOS))
-Mercadeo = Annotated[Usuario, Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))]
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
+COMERCIAL = Depends(requiere(Rol.COMERCIAL))
+Comercial = Annotated[Usuario, Depends(requiere(Rol.COMERCIAL))]
 
 
 class SegmentoIn(BaseModel):
@@ -97,7 +98,7 @@ class EjecucionRead(BaseModel):
 # --- 6.16 Segmentos ----------------------------------------------------------------------
 
 
-@segmentos_router.post("/previsualizacion", dependencies=[EQUIPO])
+@segmentos_router.post("/previsualizacion", dependencies=[COMERCIAL])
 async def previsualizar_segmento(
     db: DbSession, filtros: segmentos.FiltrosSegmento
 ) -> dict[str, Any]:
@@ -105,13 +106,13 @@ async def previsualizar_segmento(
     return await db.run_sync(segmentos.previsualizar, filtros)
 
 
-@segmentos_router.get("", response_model=list[SegmentoRead], dependencies=[EQUIPO])
+@segmentos_router.get("", response_model=list[SegmentoRead], dependencies=[COMERCIAL])
 async def listar_segmentos(db: DbSession) -> list[Segmento]:
     return list(await db.scalars(select(Segmento).order_by(Segmento.nombre)))
 
 
 @segmentos_router.post("", response_model=SegmentoRead, status_code=status.HTTP_201_CREATED)
-async def crear_segmento(db: DbSession, usuario: Mercadeo, data: SegmentoIn) -> Segmento:
+async def crear_segmento(db: DbSession, usuario: Comercial, data: SegmentoIn) -> Segmento:
     if await db.scalar(select(Segmento.id).where(Segmento.nombre == data.nombre)):
         raise Conflicto("Ya existe un segmento con ese nombre")
     segmento = Segmento(
@@ -125,7 +126,7 @@ async def crear_segmento(db: DbSession, usuario: Mercadeo, data: SegmentoIn) -> 
     return segmento
 
 
-@segmentos_router.get("/{segmento_id}/conteo", dependencies=[EQUIPO])
+@segmentos_router.get("/{segmento_id}/conteo", dependencies=[COMERCIAL])
 async def contar_segmento(db: DbSession, segmento_id: UUID) -> dict[str, Any]:
     segmento = await db.get(Segmento, segmento_id)
     if segmento is None:
@@ -144,7 +145,7 @@ def _datos(data: CampanaIn) -> dict[str, Any]:
     return datos
 
 
-@router.get("", response_model=list[CampanaRead], dependencies=[EQUIPO])
+@router.get("", response_model=list[CampanaRead], dependencies=[COMERCIAL])
 async def listar(db: DbSession, estado: str | None = None) -> list[CampanaRead]:
     stmt = select(Campana).order_by(Campana.created_at.desc())
     if estado:
@@ -153,21 +154,21 @@ async def listar(db: DbSession, estado: str | None = None) -> list[CampanaRead]:
 
 
 @router.post("", response_model=CampanaRead, status_code=status.HTTP_201_CREATED)
-async def crear(db: DbSession, usuario: Mercadeo, data: CampanaIn) -> CampanaRead:
+async def crear(db: DbSession, usuario: Comercial, data: CampanaIn) -> CampanaRead:
     campana = await db.run_sync(service.guardar, None, _datos(data), usuario.id)
     return (await _leidas(db, [campana]))[0]
 
 
 @router.put("/{campana_id}", response_model=CampanaRead)
 async def editar(
-    db: DbSession, usuario: Mercadeo, campana_id: UUID, data: CampanaIn
+    db: DbSession, usuario: Comercial, campana_id: UUID, data: CampanaIn
 ) -> CampanaRead:
     campana = await db.run_sync(service.obtener, campana_id)
     guardada = await db.run_sync(service.guardar, campana, _datos(data), usuario.id)
     return (await _leidas(db, [guardada]))[0]
 
 
-@router.get("/{campana_id}/previsualizacion", dependencies=[EQUIPO])
+@router.get("/{campana_id}/previsualizacion", dependencies=[COMERCIAL])
 async def previsualizar(db: DbSession, campana_id: UUID) -> dict[str, Any]:
     """6.18 Audiencia, exclusiones y ejemplos del mensaje antes de enviar."""
     return await db.run_sync(lambda s: service.previsualizar(s, service.obtener(s, campana_id)))
@@ -175,7 +176,7 @@ async def previsualizar(db: DbSession, campana_id: UUID) -> dict[str, Any]:
 
 @router.post("/{campana_id}/programacion", response_model=CampanaRead)
 async def programar(
-    db: DbSession, _: Mercadeo, campana_id: UUID, data: ProgramacionIn
+    db: DbSession, _: Comercial, campana_id: UUID, data: ProgramacionIn
 ) -> CampanaRead:
     """6.18 Ahora, en una fecha o de forma recurrente."""
     campana = await db.run_sync(service.obtener, campana_id)
@@ -184,13 +185,15 @@ async def programar(
 
 
 @router.post("/{campana_id}/cancelacion", response_model=CampanaRead)
-async def cancelar(db: DbSession, _: Mercadeo, campana_id: UUID) -> CampanaRead:
+async def cancelar(db: DbSession, _: Comercial, campana_id: UUID) -> CampanaRead:
     campana = await db.run_sync(service.obtener, campana_id)
     cancelada = await db.run_sync(service.cancelar, campana)
     return (await _leidas(db, [cancelada]))[0]
 
 
-@router.get("/{campana_id}/ejecuciones", response_model=list[EjecucionRead], dependencies=[EQUIPO])
+@router.get(
+    "/{campana_id}/ejecuciones", response_model=list[EjecucionRead], dependencies=[COMERCIAL]
+)
 async def ejecuciones(db: DbSession, campana_id: UUID) -> list[EjecucionCampana]:
     return list(
         await db.scalars(
@@ -201,7 +204,7 @@ async def ejecuciones(db: DbSession, campana_id: UUID) -> list[EjecucionCampana]
     )
 
 
-@router.get("/{campana_id}/resultados", dependencies=[EQUIPO], response_model=None)
+@router.get("/{campana_id}/resultados", dependencies=[COMERCIAL], response_model=None)
 async def resultados(
     db: DbSession, campana_id: UUID, ejecucion_id: UUID | None = None, formato: str = "json"
 ) -> dict[str, Any] | Response:

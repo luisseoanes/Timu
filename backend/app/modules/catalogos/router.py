@@ -14,8 +14,9 @@ from app.modules.catalogos.models import Ciudad, Especie, EsquemaPreventivo, Tip
 
 router = APIRouter(prefix="/catalogos", tags=["catalogos"])
 
-LECTURA = Depends(requiere(*TODOS))
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
 ADMIN = Depends(requiere(Rol.ADMIN))
+LECTURA = Depends(requiere(*TODOS))
 
 
 class CiudadRead(BaseModel):

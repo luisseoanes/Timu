@@ -83,6 +83,29 @@ def obtener(db: Session, familia_id: UUID, alcance: Alcance | None = None) -> Fa
     return familia
 
 
+def para_suprimir(db: Session, documento: str) -> Familia:
+    """Ley 1581 La familia de un documento, para que el administrador la anonimice sin abrir
+    su ficha (Seccion 11, docs/perfiles-y-permisos.md)."""
+    familia = db.scalar(select(Familia).where(Familia.documento == documento.strip().upper()))
+    if familia is None:
+        raise NoEncontrado("No hay ninguna familia con ese documento")
+    return familia
+
+
+def con_contrato_vigente(db: Session, familia_id: UUID) -> bool:
+    """Lo mismo que comprueba anonimizar_familia() en la base antes de anonimizar. Por SQL y no
+    con el modelo de cartera: cartera ya depende de familias y la importacion cerraria un ciclo."""
+    return bool(
+        db.scalar(
+            text(
+                "SELECT EXISTS (SELECT 1 FROM contratos WHERE familia_id = :id"
+                " AND estado IN ('activa', 'en_mora', 'congelada'))"
+            ),
+            {"id": familia_id},
+        )
+    )
+
+
 def _verificar_documento(
     db: Session, tipo: str, documento: str, excluir: UUID | None = None
 ) -> None:

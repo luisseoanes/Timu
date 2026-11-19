@@ -325,6 +325,13 @@
 }
 @container (min-width: 600px) { .inicio-franja { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @container (min-width: 1100px) { .inicio-franja { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+/* Las dos o tres cifras de un perfil (Sección 12) llenan la fila; en el celular, la tercera abajo a lo ancho. */
+.inicio-franja[data-cuantas="3"] > li:last-child { grid-column: 1 / -1; }
+@container (min-width: 600px) {
+  .inicio-franja[data-cuantas="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .inicio-franja[data-cuantas="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .inicio-franja[data-cuantas="3"] > li:last-child { grid-column: auto; }
+}
 .inicio-cifra {
   width: 100%; height: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
   padding: var(--e4) var(--e5); border: 0; background: var(--superficie);
@@ -399,6 +406,17 @@
 .inicio-cuerpo > * { min-width: 0; }
 .inicio-columna { display: grid; gap: var(--e4); align-content: start; }
 .inicio-columna > * { min-width: 0; }
+/* Lo que falta configurar (Inicio del administrador): lo que bloquea, en el tono de alerta; en el
+   celular la acción baja bajo su texto, a lo ancho, como en la línea de hoy. */
+.inicio-config { list-style: none; margin: 0; padding: 0; }
+.inicio-config .fila-icono[data-bloquea] { background: var(--estado-alerta-fondo); color: var(--estado-alerta-texto); }
+@container (max-width: 600px) {
+  .inicio-config .fila { flex-wrap: wrap; }
+  .inicio-config .fila > .btn { flex: 1 0 100%; }
+}
+/* Supresión de datos: el documento y «Buscar» en una línea, el botón a la altura del campo. */
+.supresion-busqueda { display: flex; align-items: flex-end; gap: var(--e2); }
+.supresion-busqueda > .campo { flex: 0 1 360px; min-width: 0; }
 .inicio-panel-titulo { margin-bottom: var(--e3); font-family: var(--fuente); font-size: var(--t-seccion); font-weight: 600; color: var(--texto-titulo); }
 .inicio-panel-cabeza { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e3); }
 

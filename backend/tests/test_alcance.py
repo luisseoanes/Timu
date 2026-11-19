@@ -13,7 +13,7 @@ from app.core.scope import Alcance, AlcanceNoDefinido, restringir
 from app.core.security import hash_password
 from app.modules.auth.models import Usuario
 from app.modules.familias.models import Familia, Mascota
-from tests.conftest import autenticar
+from tests.conftest import autenticar, crear_usuario
 
 
 async def _familia_con_portal(db: AsyncSession, nombre: str, documento: str, email: str):
@@ -71,12 +71,13 @@ async def test_los_filtros_no_saltan_el_alcance(client: AsyncClient, db: AsyncSe
     assert resp.json()["total"] == 0
 
 
-async def test_el_personal_interno_ve_todo(client: AsyncClient, db: AsyncSession, usuario_admin):
+async def test_el_personal_interno_ve_todo(client: AsyncClient, db: AsyncSession):
     await _familia_con_portal(db, "Ana", "111", "ana@ejemplo.co")
     await _familia_con_portal(db, "Beto", "222", "beto@ejemplo.co")
+    await crear_usuario(db, "mostrador@timu.co", Rol.ATENCION_CLIENTE)
     await db.commit()
 
-    await autenticar(client, "admin@timu.co", "secreto123")
+    await autenticar(client, "mostrador@timu.co", "secreto123")
     resp = await client.get("/api/v1/familias")
     assert resp.json()["total"] == 2
 

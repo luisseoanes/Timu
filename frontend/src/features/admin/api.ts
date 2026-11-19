@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 
 import { api } from '@/api/client'
 import type {
+  FamiliaParaSuprimir,
   BorradorRegla,
   CasoRead,
   ColorPlan,
@@ -11,14 +12,11 @@ import type {
   EnPalabras,
   EsquemaPreventivoRead,
   EventoDeReglas,
-  EventoPasarelaRead,
   Page,
   PlanRead,
   PromptRead,
-  RecuentosEventosPasarela,
   RecuentosUsuarios,
   ReglaRead,
-  ReporteRead,
   Rol,
   UsuarioRead,
 } from '@/types'
@@ -141,27 +139,8 @@ export function useConsumoIA() {
   })
 }
 
-export function useReportes() {
-  return useQuery({
-    queryKey: ['reportes'],
-    queryFn: async () => (await api.get<ReporteRead[]>('/dashboard/reportes')).data,
-  })
-}
 
-export function useRecuentosEventosPasarela() {
-  return useQuery({
-    queryKey: ['pasarela', 'recuentos'],
-    queryFn: async () => (await api.get<RecuentosEventosPasarela>('/cartera/eventos-pasarela/recuentos')).data,
-  })
-}
 
-export function useEventosPasarela(estado?: string) {
-  return useQuery({
-    queryKey: ['pasarela', estado ?? null],
-    queryFn: async () =>
-      (await api.get<Page<EventoPasarelaRead>>('/cartera/eventos-pasarela', { params: { estado, limit: 50, orden: '-created_at' } })).data,
-  })
-}
 
 // --- Escrituras -------------------------------------------------------------------------------
 
@@ -376,17 +355,17 @@ export function useCrearCaso() {
   )
 }
 
-export function useGuardarReporte() {
-  return useMutacion(
-    async ({ id, ...datos }: { id?: string; nombre: string; periodicidad: string; destinatarios: string[]; indicadores: string[]; ciudad?: string; activo: boolean }) =>
-      (id ? await api.put<ReporteRead>(`/dashboard/reportes/${id}`, datos) : await api.post<ReporteRead>('/dashboard/reportes', datos)).data,
-    'reportes',
-  )
+// --- Supresion de datos (Ley 1581): sin abrir la ficha de la familia ----------------------------
+
+export function useParaSuprimir(documento: string) {
+  return useQuery({
+    queryKey: ['supresion', documento],
+    queryFn: async () => (await api.get<FamiliaParaSuprimir>('/familias/supresion', { params: { documento } })).data,
+    enabled: documento.length >= 3,
+    retry: false,
+  })
 }
 
-export function useReprocesarEvento() {
-  return useMutacion(
-    async (id: string) => (await api.post<EventoPasarelaRead>(`/cartera/eventos-pasarela/${id}/reprocesar`)).data,
-    'pasarela',
-  )
+export function useAnonimizar() {
+  return useMutacion(async (familiaId: string) => (await api.post(`/familias/${familiaId}/anonimizar`)).data, 'supresion')
 }

@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { AliadasPage } from './AliadasPage'
-import { USUARIO_ADMIN } from '@/test/handlers'
+import { sesionDe } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { ClinicaRead, RemisionRead } from '@/types'
@@ -44,6 +44,7 @@ describe('AliadasPage', () => {
   it('lista las remisiones con su clínica y cobertura y permite anular', async () => {
     let motivo: unknown = null
     server.use(
+      sesionDe('atencion_cliente'),
       http.get(`${API}/aliadas`, () => HttpResponse.json([CLINICA])),
       http.get(`${API}/aliadas/remisiones`, () => HttpResponse.json([REMISION])),
       http.post(`${API}/aliadas/remisiones/r1/anulacion`, async ({ request }) => {
@@ -65,6 +66,7 @@ describe('AliadasPage', () => {
 
   it('muestra los convenios de la clínica elegida', async () => {
     server.use(
+      sesionDe('operaciones'),
       http.get(`${API}/aliadas`, () => HttpResponse.json([CLINICA])),
       http.get(`${API}/aliadas/remisiones`, () => HttpResponse.json([])),
       http.get(`${API}/aliadas/cl1/convenios`, () =>
@@ -78,9 +80,9 @@ describe('AliadasPage', () => {
     expect(await screen.findByText('Hospitalización')).toBeInTheDocument()
   })
 
-  it('la liquidación sólo la ve administración', async () => {
+  it('la liquidación no la ve Atención: es de Operaciones y Gerencia', async () => {
     server.use(
-      http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'operaciones' })),
+      sesionDe('atencion_cliente'),
       http.get(`${API}/aliadas`, () => HttpResponse.json([])),
       http.get(`${API}/aliadas/remisiones`, () => HttpResponse.json([])),
     )

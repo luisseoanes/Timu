@@ -221,6 +221,23 @@ def nombres(db: Session) -> dict[str, dict[str, str]]:
     return {fuente: todas[fuente] for fuente in _DE_CATALOGO}
 
 
+def plantillas_faltantes(db: Session) -> list[dict[str, Any]]:
+    """Seccion 12 Lo que falta configurar: las plantillas que citan las reglas activas y no tienen
+    version aprobada y activa en el catalogo. Sin ella, esos avisos no salen por ningun canal."""
+    titulos = titulos_plantillas(db)
+    por_plantilla: dict[str, list[str]] = {}
+    reglas = db.scalars(select(Regla).where(Regla.activa).order_by(Regla.prioridad, Regla.nombre))
+    for regla in reglas:
+        codigo = (regla.accion or {}).get("plantilla")
+        if codigo:
+            por_plantilla.setdefault(codigo, []).append(regla.nombre)
+    return [
+        {"codigo": codigo, "titulo": titulos.get(codigo, codigo), "reglas": nombres}
+        for codigo, nombres in sorted(por_plantilla.items())
+        if comunicaciones.plantilla_vigente(db, codigo) is None
+    ]
+
+
 def titulos_plantillas(db: Session) -> dict[str, str]:
     """El nombre de cada plantilla para decir una regla en palabras: el del catalogo y, para las
     de mora que aun no estan en el, el provisional."""

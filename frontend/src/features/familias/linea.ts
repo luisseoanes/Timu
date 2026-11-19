@@ -1,4 +1,5 @@
-import type { EstacionRead } from '@/types'
+import { puede } from '@/lib/permisos'
+import type { EstacionRead, Usuario } from '@/types'
 
 /**
  * La línea de la familia como un plano de metro (contrato de dirección del panel,
@@ -101,4 +102,11 @@ export function resumen(estaciones: EstacionRead[], fechaCorta: (iso: string) =>
     proxima ? `próxima: ${proxima.titulo} el ${fechaCorta(proxima.fecha)}` : 'nada programado',
   ]
   return partes.join(', ')
+}
+
+/** Las estaciones que le tocan a cada perfil (Sección 12, docs/perfiles-y-permisos.md): las cuotas,
+ * a quien ve la cartera; los preventivos y los servicios, a quien los trabaja. */
+export function estacionesDelPerfil(estaciones: EstacionRead[], usuario: Usuario | null | undefined): EstacionRead[] {
+  const ve = { cuota: puede(usuario, 'verCartera'), preventivo: puede(usuario, 'preventivos'), servicio: puede(usuario, 'servicios') }
+  return estaciones.filter((e) => ve[e.tipo])
 }

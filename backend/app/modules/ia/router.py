@@ -19,6 +19,7 @@ from app.modules.ia.models import CasoPruebaIA, ConsultaIA, PromptIA
 
 router = APIRouter(prefix="/ia", tags=["ia"])
 
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
 ADMIN = Depends(requiere(Rol.ADMIN))
 Admin = Annotated[Usuario, Depends(requiere(Rol.ADMIN))]
 

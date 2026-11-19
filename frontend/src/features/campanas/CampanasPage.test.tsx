@@ -1,12 +1,17 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { CampanasPage } from './CampanasPage'
+import { EncuestasPage } from './EncuestasPage'
+import { sesionDe } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { CampanaRead } from '@/types'
+
+// Sección 12: esta pantalla se prueba con el perfil que la usa (docs/perfiles-y-permisos.md).
+beforeEach(() => server.use(sesionDe('comercial')))
 
 const API = '*/api/v1'
 
@@ -124,8 +129,9 @@ describe('CampanasPage', () => {
     expect(titulo.closest('section')).toHaveAccessibleName('Campaña abierta')
   })
 
-  it('muestra la satisfacción del mes', async () => {
+  it('Atención ve las respuestas con sus fichas; Gerencia, la satisfacción del mes sin fichas', async () => {
     server.use(
+      sesionDe('atencion_cliente'),
       ...base,
       http.get(`${API}/encuestas/resumen`, () =>
         HttpResponse.json({ enviadas: 20, respondidas: 15, tasa_respuesta: 0.75, promedio: 4.7, por_responsable: [], por_tipo_servicio: [] }),
@@ -144,14 +150,30 @@ describe('CampanasPage', () => {
       ),
       http.get(`${API}/encuestas/configuracion`, () => HttpResponse.json([])),
     )
-    const user = userEvent.setup()
-    renderizar(<CampanasPage />)
-    await user.click(await screen.findByRole('tab', { name: 'Encuestas' }))
-    expect(await screen.findByText('4.7 / 5')).toBeInTheDocument()
-    expect(screen.getByText('Llegaron tarde')).toBeInTheDocument()
+    const { unmount } = renderizar(<EncuestasPage />)
+    expect(await screen.findByText('Llegaron tarde')).toBeInTheDocument()
+    expect(screen.queryByText('Satisfacción del mes')).not.toBeInTheDocument()
     expect(screen.getAllByText('Con tarea de seguimiento')).toHaveLength(2)
     expect(screen.getByText('Tiene una duda')).toBeInTheDocument()
     expect(screen.getByText(/^Seguimiento ·/)).toBeInTheDocument()
     expect(screen.queryByText(/null/)).not.toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Ver familia' })).toHaveLength(2)
+    unmount()
+
+    // Gerencia analiza las respuestas, pero no abre las fichas (Sección 12).
+    server.use(sesionDe('gerencia'))
+    renderizar(<EncuestasPage />)
+    expect(await screen.findByText('4,7 / 5')).toBeInTheDocument()
+    expect(await screen.findByText('Llegaron tarde')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Ver familia' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Ver servicio' })).not.toBeInTheDocument()
+  })
+
+  it('Campañas ya no lleva las encuestas ni las plantillas de WhatsApp', async () => {
+    server.use(...base)
+    renderizar(<CampanasPage />)
+    expect(await screen.findByRole('tab', { name: 'Campañas' })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Encuestas' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Plantillas de WhatsApp' })).not.toBeInTheDocument()
   })
 })

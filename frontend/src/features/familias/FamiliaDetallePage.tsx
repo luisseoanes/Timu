@@ -20,7 +20,7 @@ import { DatosFamilia } from './DatosFamilia'
 import { DocumentosFamilia } from './DocumentosFamilia'
 import { FamiliasLista } from './FamiliasLista'
 import { LineaFamilia } from './LineaFamilia'
-import type { Parada } from './linea'
+import { estacionesDelPerfil, type Parada } from './linea'
 import { MascotasFamilia } from './MascotasFamilia'
 import { ResumenCartera, ResumenMascotas } from './ResumenFamilia'
 import { ServiciosFamilia } from './ServiciosFamilia'
@@ -89,10 +89,12 @@ function Ficha({
   const [seccion, setSeccion] = useState(pedida ?? 'datos')
   const [pagando, setPagando] = useState<string | null>(null)
   const [preventivo, setPreventivo] = useState<Omit<GestionarPreventivoProps, 'onCerrar'> | null>(null)
-  const cuenta = useEstadoCuenta(f.id)
+  const cuenta = useEstadoCuenta(f.id, puede(usuario, 'verCartera'))
   const abiertas = cuenta.data?.cuotas.filter((q) => q.estado !== 'pagada' && q.estado !== 'anulada') ?? []
   const planes = linea?.planes ?? []
-  const proxima = linea?.estaciones.find((e) => e.estado === 'proxima')
+  // Cada perfil ve sus estaciones: Operaciones no ve las cuotas, Comercial no ve los servicios.
+  const estaciones = linea ? estacionesDelPerfil(linea.estaciones, usuario) : []
+  const proxima = estaciones.find((e) => e.estado === 'proxima')
 
   /** Cómo se atiende una estación: una cuota pendiente se paga ahí mismo (si el perfil puede), un
    * preventivo pendiente se agenda ahí mismo (o se autoriza antes, si le falta), un servicio se
@@ -100,7 +102,7 @@ function Ficha({
   const accion = (e: EstacionRead): 'pagar' | 'agendar' | 'abrir' | 'ver' =>
     e.tipo === 'servicio'
       ? 'abrir'
-      : e.tipo === 'cuota' && puede(usuario, 'gestionarAfiliacion') && abiertas.some((q) => q.id === e.referencia_id)
+      : e.tipo === 'cuota' && puede(usuario, 'cartera') && abiertas.some((q) => q.id === e.referencia_id)
         ? 'pagar'
         : e.tipo === 'preventivo' && GestionarPreventivo && e.estado !== 'hecha'
           ? 'agendar'
@@ -143,7 +145,7 @@ function Ficha({
               {proxima.mascota ? ` de ${proxima.mascota}` : ''}
             </button>
           )}
-          {puede(usuario, 'gestionarAfiliacion') && <AccionesFamilia familia={f} />}
+          {puede(usuario, 'cartera') && <AccionesFamilia familia={f} />}
         </div>
       </header>
       {f.dada_de_baja_en && (
@@ -161,13 +163,13 @@ function Ficha({
         ) : lineaError || !linea ? (
           <p className="error">No fue posible cargar la línea de la familia.</p>
         ) : (
-          <LineaFamilia estaciones={linea.estaciones} color={planes[0]?.color} onActivar={atender} />
+          <LineaFamilia estaciones={estaciones} color={planes[0]?.color} onActivar={atender} />
         )}
       </section>
 
       <div className="ficha-resumen">
         <ResumenMascotas familia={f} planes={planes} />
-        <ResumenCartera familiaId={f.id} />
+        {puede(usuario, 'verCartera') && <ResumenCartera familiaId={f.id} />}
       </div>
 
       <RegistrarPagoModal
@@ -195,17 +197,19 @@ function Ficha({
               </>
             ),
           },
-          { valor: 'mascotas', titulo: 'Mascotas', contenido: <MascotasFamilia familia={f} /> },
-          { valor: 'cartera', titulo: 'Cartera', contenido: <CarteraFamilia familia={f} /> },
-          { valor: 'servicios', titulo: 'Servicios', contenido: <ServiciosFamilia familia={f} /> },
-          { valor: 'documentos', titulo: 'Documentos', contenido: <DocumentosFamilia familia={f} /> },
-          {
+          // Cada perfil, sus pestañas (Sección 12, docs/perfiles-y-permisos.md): Atención las ve todas,
+          // Comercial lo que necesita para afiliar y renovar, y Operaciones lo de la visita.
+          puede(usuario, 'verCartera') && { valor: 'mascotas', titulo: 'Mascotas', contenido: <MascotasFamilia familia={f} /> },
+          puede(usuario, 'verCartera') && { valor: 'cartera', titulo: 'Cartera', contenido: <CarteraFamilia familia={f} /> },
+          puede(usuario, 'servicios') && { valor: 'servicios', titulo: 'Servicios', contenido: <ServiciosFamilia familia={f} /> },
+          puede(usuario, 'cartera') && { valor: 'documentos', titulo: 'Documentos', contenido: <DocumentosFamilia familia={f} /> },
+          puede(usuario, 'verCartera') && {
             valor: 'comunicaciones',
             titulo: 'Comunicaciones',
             contenido: <ComunicacionesFamilia familiaId={f.id} />,
           },
-          { valor: 'historial', titulo: 'Historial', contenido: <HistorialFamilia familiaId={f.id} /> },
-        ]}
+          puede(usuario, 'verCartera') && { valor: 'historial', titulo: 'Historial', contenido: <HistorialFamilia familiaId={f.id} /> },
+        ].filter((p) => p !== false)}
       />
     </>
   )

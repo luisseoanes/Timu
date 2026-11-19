@@ -2,13 +2,16 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { ServicioDetallePage } from './ServicioDetallePage'
-import { FAMILIA, TIPOS_SERVICIO, USUARIO_ADMIN } from '@/test/handlers'
+import { FAMILIA, sesionDe, TIPOS_SERVICIO, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { ServicioRead } from '@/types'
+
+// Sección 12: esta pantalla se prueba con el perfil que la usa (docs/perfiles-y-permisos.md).
+beforeEach(() => server.use(sesionDe('operaciones')))
 
 const API = '*/api/v1'
 
@@ -90,6 +93,7 @@ describe('autorización', () => {
   it('quien es clínico autoriza un servicio pendiente', async () => {
     let autorizado = false
     server.use(
+      sesionDe('medico'),
       http.post(`${API}/servicios/s1/autorizar`, () => {
         autorizado = true
         return HttpResponse.json({ ...SERVICIO, autorizado: true })
@@ -102,7 +106,10 @@ describe('autorización', () => {
   })
 
   it('explica por qué no se pudo autorizar', async () => {
-    server.use(http.post(`${API}/servicios/s1/autorizar`, () => HttpResponse.json({ detail: 'Solo el médico autoriza' }, { status: 403 })))
+    server.use(
+      sesionDe('medico'),
+      http.post(`${API}/servicios/s1/autorizar`, () => HttpResponse.json({ detail: 'Solo el médico autoriza' }, { status: 403 })),
+    )
     const user = abrir({ requiere_autorizacion: true })
     await user.click(await screen.findByRole('button', { name: 'Autorizar servicio' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Solo el médico autoriza')

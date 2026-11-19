@@ -642,11 +642,14 @@ async def test_contrato_por_api_se_crea_renueva_y_cancela(client: AsyncClient, d
         await client.get(f"/api/v1/cartera/contratos/{uuid4()}", headers=headers)
     ).status_code == 404
 
-    # Operaciones consulta el contrato pero no lo gestiona.
+    # Seccion 12: operaciones ya no ve la cartera; atencion la ve pero no renueva (es de comercial).
     await crear_usuario(db, "ops@timu.co", Rol.OPERACIONES)
     ops = await login(client, "ops@timu.co")
-    assert (await client.get(url, headers=ops)).status_code == 200
-    assert (await client.post(f"{url}/renovar", headers=ops)).status_code == 403
+    assert (await client.get(url, headers=ops)).status_code == 403
+    await crear_usuario(db, "mostrador@timu.co", Rol.ATENCION_CLIENTE)
+    atencion = await login(client, "mostrador@timu.co")
+    assert (await client.get(url, headers=atencion)).status_code == 200
+    assert (await client.post(f"{url}/renovar", headers=atencion)).status_code == 403
 
 
 async def test_medio_de_pago_por_api_se_registra_y_se_revoca(

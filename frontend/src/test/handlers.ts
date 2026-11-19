@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 
-import type { CiudadRead, EspecieRead, FamiliaRead, PlanRead, TipoServicioRead, Usuario } from '@/types'
+import type { CiudadRead, EspecieRead, FamiliaRead, PlanRead, Rol, TipoServicioRead, Usuario } from '@/types'
 
 export const USUARIO_ADMIN: Usuario = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -9,6 +9,15 @@ export const USUARIO_ADMIN: Usuario = {
   rol: 'admin',
   activo: true,
 }
+
+/** Un usuario de cada perfil del equipo (Sección 12, docs/perfiles-y-permisos.md): cada pantalla se
+ * prueba con el perfil que la usa. */
+export function usuarioDe(rol: Rol, nombre = 'Admin'): Usuario {
+  return { ...USUARIO_ADMIN, email: `${rol}@timu.co`, nombre, rol }
+}
+
+/** La sesión de un perfil: `server.use(sesionDe('atencion_cliente'))` en el `beforeEach` del fichero. */
+export const sesionDe = (rol: Rol, nombre?: string) => http.get(`${API}/auth/me`, () => HttpResponse.json(usuarioDe(rol, nombre)))
 
 export const FAMILIA: FamiliaRead = {
   id: '22222222-2222-2222-2222-222222222222',

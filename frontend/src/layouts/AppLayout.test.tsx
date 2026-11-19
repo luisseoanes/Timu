@@ -2,10 +2,10 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { Route, Routes, useLocation } from 'react-router-dom'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppLayout } from './AppLayout'
-import { USUARIO_ADMIN } from '@/test/handlers'
+import { sesionDe, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 
@@ -47,25 +47,34 @@ async function abrirMenu(nombre: string | RegExp) {
 const textos = (elementos: HTMLElement[]) => elementos.map((e) => e.textContent?.trim())
 
 afterEach(() => vi.unstubAllGlobals())
+// Sección 12: cada perfil ve solo sus módulos (docs/perfiles-y-permisos.md). Por defecto, Atención.
+beforeEach(() => server.use(sesionDe('atencion_cliente')))
 
 describe('AppLayout en escritorio', () => {
   it('pone en la barra los módulos que caben y el resto en «Más»', async () => {
     abrir()
     const nav = await screen.findByRole('navigation', { name: 'Módulos' })
     expect(textos(within(nav).getAllByRole('link'))).toEqual([
-      'Inicio', 'Familias', 'Cartera', 'Servicios', 'Tareas', 'Preventivos', 'Clínica', 'Rutas',
+      'Inicio', 'Familias', 'Cartera', 'Servicios', 'Preventivos', 'Tareas', 'Mensajes', 'Encuestas',
     ])
     const mas = await abrirMenu('Más')
-    expect(textos(within(mas).getAllByRole('menuitem'))).toEqual(['Comercial', 'Campañas', 'Aliadas', 'Administración'])
+    expect(textos(within(mas).getAllByRole('menuitem'))).toEqual(['Aliadas'])
   })
 
-  it('un médico no ve administración ni el embudo comercial', async () => {
+  it('un médico ve solo lo suyo: ni familias, ni cartera, ni comercial, ni administración', async () => {
     comoMedico()
     abrir()
     const nav = await screen.findByRole('navigation', { name: 'Módulos' })
-    expect(nav).toHaveTextContent('Clínica')
-    const mas = await abrirMenu('Más')
-    expect(textos(within(mas).getAllByRole('menuitem'))).toEqual(['Campañas', 'Aliadas'])
+    expect(textos(within(nav).getAllByRole('link'))).toEqual(['Inicio', 'Servicios', 'Rutas', 'Clínica', 'Preventivos', 'Tareas'])
+    expect(screen.queryByRole('button', { name: 'Más' })).not.toBeInTheDocument()
+  })
+
+  it('el administrador solo configura: Inicio y Administración, sin buscador de familias', async () => {
+    server.use(sesionDe('admin'))
+    abrir()
+    const nav = await screen.findByRole('navigation', { name: 'Módulos' })
+    expect(textos(within(nav).getAllByRole('link'))).toEqual(['Inicio', 'Administración'])
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
   })
 
   it('marca «Más» cuando el módulo abierto está dentro', async () => {
@@ -83,12 +92,13 @@ describe('AppLayout en escritorio', () => {
     )
     abrir()
     const menu = await abrirMenu(/^Cuenta de /)
-    expect(menu).toHaveTextContent('Administración')
+    expect(menu).toHaveTextContent('Atención al cliente')
     await userEvent.setup().click(within(menu).getByRole('menuitem', { name: 'Cerrar sesión' }))
     await vi.waitFor(() => expect(salio).toBe(true))
   })
 
   it('titula la página según el módulo activo', async () => {
+    server.use(sesionDe('operaciones'))
     abrir('/panel/rutas')
     expect(await screen.findByRole('heading', { name: 'Rutas' })).toBeInTheDocument()
   })
@@ -114,11 +124,11 @@ describe('AppLayout en el celular', () => {
     abrir('/panel/rutas')
     const barra = await screen.findByRole('navigation', { name: 'Módulos principales' })
     // En el orden del menú, no en el de prioridad: la barra no se reordena según el perfil.
-    expect(textos(within(barra).getAllByRole('link'))).toEqual(['Inicio', 'Servicios', 'Clínica', 'Rutas'])
+    expect(textos(within(barra).getAllByRole('link'))).toEqual(['Inicio', 'Servicios', 'Rutas', 'Clínica'])
     expect(within(barra).getByRole('link', { name: 'Rutas' })).toHaveAttribute('aria-current', 'page')
     expect(screen.queryByRole('navigation', { name: 'Módulos' })).not.toBeInTheDocument()
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
     const mas = await abrirMenu('Más')
-    expect(textos(within(mas).getAllByRole('menuitem'))).toEqual(['Familias', 'Cartera', 'Tareas', 'Preventivos', 'Campañas', 'Aliadas'])
+    expect(textos(within(mas).getAllByRole('menuitem'))).toEqual(['Preventivos', 'Tareas'])
   })
 })

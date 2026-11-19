@@ -19,15 +19,18 @@ os.environ.setdefault("DEBUG", "false")
 
 import importlib  # noqa: E402
 import pkgutil  # noqa: E402
+import re  # noqa: E402
 from collections.abc import AsyncGenerator, Iterator  # noqa: E402
 from contextlib import contextmanager  # noqa: E402
 from pathlib import Path  # noqa: E402
 from typing import Any  # noqa: E402
+from uuid import UUID  # noqa: E402
 
 import pytest  # noqa: E402
 import pytest_asyncio  # noqa: E402
 from fastapi import Request  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402
+from httpx import Request as PeticionHttp  # noqa: E402
 from sqlalchemy import create_engine, make_url, select, text  # noqa: E402
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine  # noqa: E402
 
@@ -44,6 +47,7 @@ import app.workers.tasks.preventivos  # noqa: E402, F401
 import app.workers.tasks.rutas  # noqa: E402, F401
 from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
+from app.api import perfiles  # noqa: E402
 from app.core.config import ROL_APLICACION, settings  # noqa: E402
 from app.core.database import (  # noqa: E402
     CLAVE_CONTEXTO,
@@ -62,9 +66,11 @@ from app.core.security import hash_password  # noqa: E402
 from app.integrations import storage  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import Base as _  # noqa: E402, F401  asegura el registro de todos los modelos
+from app.modules.auth import sesiones  # noqa: E402
 from app.modules.auth.models import Usuario  # noqa: E402
 from app.modules.catalogos.service import cargar as cargar_catalogos  # noqa: E402
 from app.modules.reglas.service import sembrar as sembrar_reglas  # noqa: E402
+from app.modules.servicios.models import Servicio  # noqa: E402
 from app.workers import tasks as _tareas  # noqa: E402
 from app.workers.celery_app import celery_app  # noqa: E402
 
@@ -417,7 +423,20 @@ async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides[get_db] = _get_db
     app.state.contador_peticiones.reiniciar()
     transport = ASGITransport(app=app, raise_app_exceptions=False)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+    sesiones_equipo: dict[Rol, str] = {}
+
+    async def _como_el_equipo(peticion: PeticionHttp) -> None:
+        """Una peticion con `headers` (el equipo) sale con la sesion del perfil de su ruta."""
+        if _MARCA_EQUIPO not in peticion.headers:
+            return
+        del peticion.headers[_MARCA_EQUIPO]
+        rol = _perfil_de(peticion.method, peticion.url.path, sesiones_equipo)
+        peticion.headers["Cookie"] = sesiones_equipo[rol]
+
+    async with AsyncClient(
+        transport=transport, base_url="http://test", event_hooks={"request": [_como_el_equipo]}
+    ) as ac:
+        ac.sesiones_equipo = sesiones_equipo  # type: ignore[attr-defined]
         yield ac
     app.dependency_overrides.clear()
 
@@ -465,6 +484,78 @@ async def admin(usuario_admin: Usuario) -> Usuario:
     return usuario_admin
 
 
+# Seccion 12 Cada perfil hace lo suyo (docs/perfiles-y-permisos.md). `headers` es el equipo
+# entero: cada peticion sale con la sesion del perfil al que la ruta le toca, leido de las
+# guardas de la API (app/api/perfiles.py), como el cliente de los scripts de demostracion. Si
+# varios la admiten, el primero de esta lista. Una prueba que mira un perfil concreto entra
+# con el suyo (`login`).
+PREFERENCIA_EQUIPO = (
+    Rol.ATENCION_CLIENTE,
+    Rol.OPERACIONES,
+    Rol.COMERCIAL,
+    Rol.MEDICO,
+    Rol.ADMIN,
+    Rol.GERENCIA,
+)
+_MARCA_EQUIPO = "x-prueba-equipo"
+_HASH_PRUEBAS = hash_password(PASSWORD)
+
+
+def _rutas_por_perfil() -> list[tuple[str, re.Pattern[str], frozenset[Rol]]]:
+    salida = []
+    for clave, roles in perfiles.matriz(app).items():
+        if isinstance(roles, str):  # publico: vale con cualquier sesion
+            roles = frozenset(Rol)
+        metodos, ruta = clave.split(" ", 1)
+        patron = re.compile("^" + re.sub(r"\{[^}]+\}", "[^/]+", ruta) + "$")
+        salida += [(m, patron, roles) for m in metodos.split(",")]
+    # Una ruta literal antes que una con parametros: /familias/supresion antes que /familias/{id}.
+    return sorted(salida, key=lambda r: r[1].pattern.count("[^/]+"))
+
+
+_RUTAS_EQUIPO = _rutas_por_perfil()
+
+
+def _perfil_de(metodo: str, camino: str, disponibles: dict[Rol, str]) -> Rol:
+    for m, patron, roles in _RUTAS_EQUIPO:
+        if m == metodo and patron.match(camino):
+            return next(r for r in PREFERENCIA_EQUIPO if r in roles and r in disponibles)
+    raise AssertionError(f"Ninguna ruta del equipo casa con {metodo} {camino}")
+
+
 @pytest_asyncio.fixture
-async def headers(client: AsyncClient, admin: Usuario) -> dict[str, str]:
-    return await login(client, admin.email)
+async def equipo(db: AsyncSession, usuario_admin: Usuario) -> dict[Rol, Usuario]:
+    """Un usuario por perfil del equipo; el administrador es `usuario_admin`."""
+    usuarios = {Rol.ADMIN: usuario_admin}
+    for rol in PREFERENCIA_EQUIPO:
+        if rol != Rol.ADMIN:
+            usuarios[rol] = Usuario(
+                email=f"equipo-{rol}@timu.co",
+                nombre=f"Equipo {rol}",
+                rol=rol,
+                hashed_password=_HASH_PRUEBAS,
+            )
+            db.add(usuarios[rol])
+    await db.commit()
+    return usuarios
+
+
+async def del_medico(db: AsyncSession, servicio_id: Any, medico: Usuario) -> None:
+    """El medico solo mueve sus servicios (Seccion 12): la prueba se lo asigna, como al rutearlo."""
+    servicio = await db.get(Servicio, UUID(str(servicio_id)))
+    assert servicio is not None
+    servicio.profesional_id = medico.id
+    await db.commit()
+
+
+@pytest_asyncio.fixture
+async def headers(
+    client: AsyncClient, db: AsyncSession, equipo: dict[Rol, Usuario]
+) -> dict[str, str]:
+    for rol, usuario in equipo.items():
+        acceso, _renovacion = await db.run_sync(
+            sesiones.crear, usuario, ip=None, user_agent="pruebas"
+        )
+        client.sesiones_equipo[rol] = f"{settings.COOKIE_NAME}={acceso}"  # type: ignore[attr-defined]
+    await db.commit()
+    return {_MARCA_EQUIPO: "1"}

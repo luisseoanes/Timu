@@ -2,14 +2,17 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { ServicioDetallePage } from './ServicioDetallePage'
 import { ServiciosPage } from './ServiciosPage'
-import { FAMILIA, USUARIO_ADMIN } from '@/test/handlers'
+import { FAMILIA, sesionDe, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { ServicioListado, ServicioRead } from '@/types'
+
+// Sección 12: esta pantalla se prueba con el perfil que la usa (docs/perfiles-y-permisos.md).
+beforeEach(() => server.use(sesionDe('atencion_cliente')))
 
 const API = '*/api/v1'
 
@@ -116,6 +119,7 @@ describe('ServiciosPage', () => {
 
   it('los de operaciones administran las franjas de agenda', async () => {
     server.use(
+      sesionDe('operaciones'),
       http.get(`${API}/agenda/franjas`, () =>
         HttpResponse.json([
           { id: 'f1', ciudad: 'Bogotá', modalidad: 'domiciliario', dia_semana: 0, hora_inicio: '08:00:00', hora_fin: '12:00:00', capacidad: 2, activa: true },

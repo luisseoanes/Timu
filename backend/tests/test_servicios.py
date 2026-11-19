@@ -15,7 +15,7 @@ from app.modules.familias.models import Familia, Mascota
 from app.modules.servicios.models import Franja, Pendiente, Servicio, ServicioPaso
 from app.modules.tareas.models import Tarea
 from tests import fabricas
-from tests.conftest import crear_usuario, login
+from tests.conftest import crear_usuario, del_medico, login
 
 DIA = hoy() + timedelta(days=7)
 
@@ -157,9 +157,10 @@ async def test_cupo_del_beneficio(client: AsyncClient, db, headers, agenda):
 # --- 6.5 Estados, autorizacion y pasos ---------------------------------------------
 
 
-async def test_ciclo_de_vacunacion(client: AsyncClient, db, headers, afiliada, tareas):
+async def test_ciclo_de_vacunacion(client: AsyncClient, db, headers, equipo, afiliada, tareas):
     creado = await _agendar(client, headers, afiliada, tipo="vacunacion")
     servicio = creado.json()
+    await del_medico(db, servicio["id"], equipo[Rol.MEDICO])
     assert servicio["estado"] == "pendiente_autorizacion"
     # La regla servicio_requiere_autorizacion dejo tarea para el equipo medico.
     tarea = await db.scalar(select(Tarea).where(Tarea.servicio_id == UUID(servicio["id"])))
@@ -200,7 +201,8 @@ async def test_un_paso_se_corrige_en_atencion_y_queda_fijo_al_completar(
     servicio = (await _agendar(client, headers, afiliada, tipo="vacunacion")).json()
     url = f"/api/v1/servicios/{servicio['id']}"
     await client.post(f"{url}/autorizar", headers=headers)
-    await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    vet = await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
+    await del_medico(db, servicio["id"], vet)
     medico = await login(client, "vet@timu.co")
     await client.post(f"{url}/estado", json={"estado": "en_atencion"}, headers=medico)
 
@@ -265,8 +267,11 @@ async def test_reprogramar_dispara_tarea_de_operaciones(client: AsyncClient, db,
 # --- 6.6 Pendientes ---------------------------------------------------------------------
 
 
-async def test_pendiente_no_avanza_sin_autorizacion(client: AsyncClient, headers, afiliada):
+async def test_pendiente_no_avanza_sin_autorizacion(
+    client: AsyncClient, db, headers, equipo, afiliada
+):
     servicio = (await _agendar(client, headers, afiliada)).json()
+    await del_medico(db, servicio["id"], equipo[Rol.MEDICO])
     pendiente = (
         await client.post(
             f"/api/v1/servicios/{servicio['id']}/pendientes",
@@ -294,8 +299,9 @@ async def test_pendiente_no_avanza_sin_autorizacion(client: AsyncClient, headers
     assert resuelto.json()["estado"] == "resuelto"
 
 
-async def test_pendiente_rechazado_no_se_agenda(client: AsyncClient, headers, afiliada):
+async def test_pendiente_rechazado_no_se_agenda(client: AsyncClient, db, headers, equipo, afiliada):
     servicio = (await _agendar(client, headers, afiliada)).json()
+    await del_medico(db, servicio["id"], equipo[Rol.MEDICO])
     pendiente = (
         await client.post(
             f"/api/v1/servicios/{servicio['id']}/pendientes",
@@ -324,11 +330,29 @@ async def test_pendiente_rechazado_no_se_agenda(client: AsyncClient, headers, af
 # --- 6.4 Bandeja de tareas --------------------------------------------------------------
 
 
-async def test_bandeja_asigna_prioriza_y_cierra(client: AsyncClient, admin, headers):
+async def test_cada_perfil_ve_y_trabaja_las_tareas_de_su_area(client: AsyncClient, db, headers):
+    """Seccion 12: comercial ve las comerciales; atencion al cliente, las de cartera y servicio
+    al cliente; una tarea de otra area no existe para el, ni para trabajarla."""
+    comercial = Tarea(titulo="Cotizar plan", area="comercial")
+    cartera = Tarea(titulo="Cobrar la cuota", area="cartera")
+    db.add_all([comercial, cartera, Tarea(titulo="Llamar", area="servicio_cliente")])
+    await db.commit()
+    await crear_usuario(db, "ventas@timu.co", Rol.COMERCIAL)
+    ventas = await login(client, "ventas@timu.co")
+    vistas = (await client.get("/api/v1/tareas", headers=ventas)).json()["items"]
+    assert [t["titulo"] for t in vistas] == ["Cotizar plan"]
+    ajena = await client.post(f"/api/v1/tareas/{cartera.id}/iniciar", headers=ventas)
+    assert ajena.status_code == 404
+    atencion = (await client.get("/api/v1/tareas", headers=headers)).json()["items"]
+    assert {t["titulo"] for t in atencion} == {"Cobrar la cuota", "Llamar"}
+
+
+async def test_bandeja_asigna_prioriza_y_cierra(client: AsyncClient, equipo, headers):
+    atencion = equipo[Rol.ATENCION_CLIENTE]
     for titulo, prioridad in (("Llamar", "baja"), ("Urgente", "alta"), ("Revisar", "media")):
         await client.post(
             "/api/v1/tareas",
-            json={"titulo": titulo, "area": "operaciones", "prioridad": prioridad},
+            json={"titulo": titulo, "area": "servicio_cliente", "prioridad": prioridad},
             headers=headers,
         )
     bandeja = (await client.get("/api/v1/tareas", headers=headers)).json()
@@ -336,7 +360,9 @@ async def test_bandeja_asigna_prioriza_y_cierra(client: AsyncClient, admin, head
 
     tarea_id = bandeja["items"][0]["id"]
     await client.patch(
-        f"/api/v1/tareas/{tarea_id}/asignacion", json={"usuario_id": str(admin.id)}, headers=headers
+        f"/api/v1/tareas/{tarea_id}/asignacion",
+        json={"usuario_id": str(atencion.id)},
+        headers=headers,
     )
     mias = (await client.get("/api/v1/tareas", params={"mias": True}, headers=headers)).json()
     assert [t["titulo"] for t in mias["items"]] == ["Urgente"]
@@ -364,12 +390,12 @@ async def test_la_bandeja_dice_a_quien_afecta_cada_tarea(client: AsyncClient, db
     db.add(
         Tarea(
             titulo="Autorizar servicio",
-            area="medico",
+            area="servicio_cliente",
             familia_id=familia_id,
             servicio_id=servicio_id,
         )
     )
-    db.add(Tarea(titulo="Revisar la auditoria", area="operaciones"))
+    db.add(Tarea(titulo="Revisar la auditoria", area="cartera"))
     await db.commit()
 
     items = (await client.get("/api/v1/tareas", headers=headers)).json()["items"]
@@ -398,7 +424,7 @@ async def test_bandeja_desempata_por_vencimiento_con_las_sin_fecha_al_final(
             "/api/v1/tareas",
             json={
                 "titulo": titulo,
-                "area": "operaciones",
+                "area": "servicio_cliente",
                 "prioridad": prioridad,
                 "vence_en_dias": dias,
             },
@@ -444,10 +470,17 @@ async def test_operaciones_crea_franjas_con_la_ciudad_del_catalogo(client: Async
     assert al_reves.status_code == 422
 
 
-async def test_un_medico_consulta_franjas_pero_no_las_administra(client: AsyncClient, db, agenda):
+async def test_la_agenda_la_lleva_operaciones_y_la_consulta_atencion(
+    client: AsyncClient, db, agenda
+):
+    """Seccion 12: atencion al cliente consulta las franjas para proponer opciones (6.5); solo
+    operaciones las administra, y el medico no las ve."""
+    await crear_usuario(db, "mostrador@timu.co", Rol.ATENCION_CLIENTE)
+    atencion = await login(client, "mostrador@timu.co")
+    assert len((await client.get("/api/v1/agenda/franjas", headers=atencion)).json()) == 2
     await crear_usuario(db, "vet@timu.co", Rol.MEDICO)
     cabecera = await login(client, "vet@timu.co")
-    assert len((await client.get("/api/v1/agenda/franjas", headers=cabecera)).json()) == 2
+    assert (await client.get("/api/v1/agenda/franjas", headers=cabecera)).status_code == 403
     nueva = await client.post(
         "/api/v1/agenda/franjas",
         json={
@@ -457,7 +490,7 @@ async def test_un_medico_consulta_franjas_pero_no_las_administra(client: AsyncCl
             "hora_inicio": "08:00",
             "hora_fin": "09:00",
         },
-        headers=cabecera,
+        headers=atencion,
     )
     assert nueva.status_code == 403
 
@@ -533,10 +566,13 @@ async def test_un_servicio_inexistente_da_404_tambien_en_sus_pasos(
     ).status_code == 404
 
 
-async def test_pendientes_se_filtran_por_estado_y_servicio(client: AsyncClient, headers, afiliada):
+async def test_pendientes_se_filtran_por_estado_y_servicio(
+    client: AsyncClient, db, headers, equipo, afiliada
+):
     primero = (await _agendar(client, headers, afiliada)).json()
     segundo = (await _agendar(client, headers, afiliada, inicio=_hora(10))).json()
     for servicio, descripcion in ((primero, "Radiografia"), (segundo, "Ecografia")):
+        await del_medico(db, servicio["id"], equipo[Rol.MEDICO])
         await client.post(
             f"/api/v1/servicios/{servicio['id']}/pendientes",
             json={"descripcion": descripcion},
@@ -557,9 +593,11 @@ async def test_pendientes_se_filtran_por_estado_y_servicio(client: AsyncClient, 
 
 
 async def test_la_bandeja_combina_area_estado_asignacion_vencimiento_y_familia(
-    client: AsyncClient, db, admin, headers, afiliada
+    client: AsyncClient, db, equipo, headers, afiliada
 ):
-    async def crear(titulo: str, area: str = "operaciones", **extra) -> str:
+    atencion = equipo[Rol.ATENCION_CLIENTE]
+
+    async def crear(titulo: str, area: str = "servicio_cliente", **extra) -> str:
         resp = await client.post(
             "/api/v1/tareas", json={"titulo": titulo, "area": area, **extra}, headers=headers
         )
@@ -567,7 +605,7 @@ async def test_la_bandeja_combina_area_estado_asignacion_vencimiento_y_familia(
         return resp.json()["id"]
 
     de_la_familia = await crear("Llamar a la familia", familia_id=str(afiliada.id))
-    await crear("Cotizar plan", area="comercial", asignada_a_id=str(admin.id))
+    await crear("Cobrar la cuota", area="cartera", asignada_a_id=str(atencion.id))
     vencida = await crear("Revisar ruta", vence_en_dias=0)
     tarea = await db.get(Tarea, UUID(vencida))
     tarea.vence_el = hoy() - timedelta(days=2)
@@ -577,9 +615,9 @@ async def test_la_bandeja_combina_area_estado_asignacion_vencimiento_y_familia(
         resp = await client.get("/api/v1/tareas", params=filtros, headers=headers)
         return {t["titulo"] for t in resp.json()["items"]}
 
-    assert await titulos(area="comercial") == {"Cotizar plan"}
+    assert await titulos(area="cartera") == {"Cobrar la cuota"}
     assert await titulos(sin_asignar=True) == {"Llamar a la familia", "Revisar ruta"}
-    assert await titulos(mias=True) == {"Cotizar plan"}
+    assert await titulos(mias=True) == {"Cobrar la cuota"}
     assert await titulos(vencidas=True) == {"Revisar ruta"}
     assert await titulos(familia_id=str(afiliada.id)) == {"Llamar a la familia"}
 
@@ -597,7 +635,9 @@ async def test_la_bandeja_combina_area_estado_asignacion_vencimiento_y_familia(
     )
     assert await titulos(vencidas=True) == set(), "una tarea cerrada ya no esta vencida"
     reasignar = await client.patch(
-        f"/api/v1/tareas/{vencida}/asignacion", json={"usuario_id": str(admin.id)}, headers=headers
+        f"/api/v1/tareas/{vencida}/asignacion",
+        json={"usuario_id": str(atencion.id)},
+        headers=headers,
     )
     assert reasignar.status_code == 422 and "cerrada" in reasignar.json()["detail"]
 

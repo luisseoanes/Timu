@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { Evolucion } from './api'
-import { CIFRAS, contraQue, dominio, formatear, formatearEje, mesLargo, ordenCifras, primerNombre, variacion } from './cifras'
+import { CIFRAS, codigosDe, contraQue, dominio, formatear, formatearEje, mesLargo, ordenCifras, primerNombre, variacion } from './cifras'
 
 describe('variación contra el período comparable', () => {
   it('un porcentaje cambia en puntos, no en porcentaje de porcentaje', () => {
@@ -67,9 +67,13 @@ describe('el saludo y el orden', () => {
     expect(primerNombre(undefined)).toBe('')
   })
 
-  it('operaciones ve primero rutas y satisfacción; los demás, afiliados y cartera', () => {
-    expect(ordenCifras('operaciones').slice(0, 2)).toEqual(['rutas', 'satisfaccion'])
-    expect(ordenCifras('comercial').slice(0, 2)).toEqual(['vigentes', 'afiliaciones'])
-    expect(new Set(ordenCifras('admin'))).toEqual(new Set(ordenCifras('operaciones')))
+  it('Gerencia ve las seis cifras; los demás, solo las de su función (Sección 12)', () => {
+    expect(ordenCifras('gerencia')).toEqual(['vigentes', 'afiliaciones', 'recaudo', 'mora', 'rutas', 'satisfaccion'])
+    expect(ordenCifras('comercial')).toEqual(['vigentes', 'afiliaciones'])
+    expect(ordenCifras('atencion_cliente')).toEqual(['recaudo', 'mora', 'satisfaccion'])
+    expect(ordenCifras('operaciones')).toEqual(['rutas', 'satisfaccion', 'servicios'])
+    // Lo que se pide a la API es lo que dibujan, con lo que acompaña en su serie.
+    expect(codigosDe(ordenCifras('operaciones'))).toEqual(['cumplimiento_rutas', 'satisfaccion', 'servicios_por_tipo'])
+    expect(codigosDe(['afiliaciones', 'recaudo'])).toEqual(['afiliaciones', 'retiros', 'recaudo', 'facturado'])
   })
 })

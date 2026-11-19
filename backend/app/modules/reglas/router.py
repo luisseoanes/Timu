@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 from sqlalchemy import String, cast, select
 
-from app.api.deps import INTERNOS, DbSession, requiere
+from app.api.deps import DbSession, requiere
 from app.core.enums import Rol
 from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
 from app.modules.reglas import acciones, motor, service
@@ -17,8 +17,8 @@ from app.modules.reglas.models import Regla
 
 router = APIRouter(prefix="/reglas", tags=["reglas"])
 
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
 ADMIN = Depends(requiere(Rol.ADMIN))
-EQUIPO = Depends(requiere(*INTERNOS))
 
 
 class _Validada(BaseModel):
@@ -192,7 +192,21 @@ def _lista(valores: dict[str, str] | None) -> list[OpcionRegla] | None:
     return None if valores is None else [OpcionRegla(valor=v, nombre=n) for v, n in valores.items()]
 
 
-@router.get("/eventos", response_model=list[EventoDeReglas], dependencies=[EQUIPO])
+class PlantillaFaltante(BaseModel):
+    """Una plantilla que citan las reglas y no esta aprobada y activa: sus avisos no salen."""
+
+    codigo: str
+    titulo: str
+    reglas: list[str]
+
+
+@router.get("/plantillas-faltantes", response_model=list[PlantillaFaltante], dependencies=[ADMIN])
+async def plantillas_faltantes(db: DbSession) -> list[dict[str, Any]]:
+    """El Inicio del administrador dice lo que falta configurar (docs/perfiles-y-permisos.md)."""
+    return await db.run_sync(service.plantillas_faltantes)
+
+
+@router.get("/eventos", response_model=list[EventoDeReglas], dependencies=[ADMIN])
 async def eventos(db: DbSession) -> list[EventoDeReglas]:
     """Los puntos del sistema donde se evaluan reglas, con los datos que da cada uno y lo que
     puede hacer una regla en el (los eventos retirados no salen: no se crean ni se editan)."""
@@ -242,7 +256,7 @@ async def eventos(db: DbSession) -> list[EventoDeReglas]:
     return salida
 
 
-@router.post("/describir", response_model=EnPalabras, dependencies=[EQUIPO])
+@router.post("/describir", response_model=EnPalabras, dependencies=[ADMIN])
 async def describir(db: DbSession, data: BorradorRegla) -> EnPalabras:
     """Una regla a medio escribir, en palabras y validada como al guardarla, sin guardar nada:
     el editor la dice mientras se escribe."""
@@ -277,7 +291,7 @@ async def _leidas(db: DbSession, reglas: list[Regla]) -> list[ReglaRead]:
     ]
 
 
-@router.get("", response_model=list[ReglaRead], dependencies=[EQUIPO])
+@router.get("", response_model=list[ReglaRead], dependencies=[ADMIN])
 async def listar(db: DbSession, evento: str | None = None) -> list[ReglaRead]:
     stmt = select(Regla).order_by(cast(Regla.evento, String), Regla.prioridad, Regla.codigo)
     if evento:
@@ -338,7 +352,7 @@ async def actualizar(db: DbSession, regla_id: UUID, data: ReglaUpdate) -> ReglaR
     return (await _leidas(db, [regla]))[0]
 
 
-@router.post("/probar", dependencies=[EQUIPO])
+@router.post("/probar", dependencies=[ADMIN])
 async def probar(db: DbSession, data: Prueba) -> list[dict[str, Any]]:
     """Evalua sin ejecutar nada: muestra que reglas aplicarian a un contexto."""
     if data.evento not in motor.EVENTOS:

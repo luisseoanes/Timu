@@ -30,7 +30,7 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
     return (
       <section className="tarjeta">
         <p className="apagado">Esta familia aún no tiene contrato: no hay cuotas ni pagos.</p>
-        {puede(usuario, 'gestionarAfiliacion') && (
+        {puede(usuario, 'afiliar') && (
           <button className="btn btn-suave" type="button" style={{ marginTop: 'var(--e3)' }} onClick={() => setAfiliando(true)}>
             Afiliar a un plan
           </button>
@@ -50,7 +50,7 @@ export function CarteraFamilia({ familia }: { familia: FamiliaRead }) {
           <h3>
             Contrato {c.contrato.numero} · pago {c.contrato.periodicidad}
           </h3>
-          {puede(usuario, 'gestionarAfiliacion') && (
+          {puede(usuario, 'cartera') && (
             <button className="btn btn-suave" type="button" onClick={() => setPagando(true)}>
               Registrar pago
             </button>

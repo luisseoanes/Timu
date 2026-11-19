@@ -74,6 +74,9 @@ async function abrirPestana(nombre: string) {
 }
 
 describe('remisiones', () => {
+  // Las emite y anula Atención al cliente (6.22, docs/perfiles-y-permisos.md).
+  beforeEach(() => server.use(como('atencion_cliente')))
+
   it('una utilizada dice cuándo se atendió y lo que cubrió, y ya no se anula', async () => {
     server.use(http.get(`${API}/aliadas/remisiones`, () => HttpResponse.json([REMISION])))
     renderizar(<AliadasPage />, { ruta: '/panel/aliadas?vista=utilizada' })
@@ -246,6 +249,9 @@ describe('remisiones', () => {
 })
 
 describe('clínicas y convenios', () => {
+  // La red de aliadas la lleva Operaciones.
+  beforeEach(() => server.use(como('operaciones')))
+
   async function abrirClinica() {
     const user = userEvent.setup()
     renderizar(<AliadasPage />, { ruta: '/panel/aliadas?clinica=cl1' })
@@ -255,10 +261,9 @@ describe('clínicas y convenios', () => {
     return { user, ficha }
   }
 
-  it('sin clínica abierta lo indica, y al abrir una muestra sus datos, convenios y remisiones', async () => {
-    server.use(http.get(`${API}/aliadas/remisiones`, () => HttpResponse.json([{ ...REMISION, estado: 'emitida', fecha_atencion: null, valor_cubierto: null }])))
+  it('sin clínica abierta lo indica, y al abrir una muestra sus datos y convenios', async () => {
     const user = await abrirPestana('Clínicas y convenios')
-    expect(await screen.findByText(/Abre una clínica para ver sus convenios/)).toBeInTheDocument()
+    expect(await screen.findByText(/Abre una clínica para ver sus datos y sus convenios/)).toBeInTheDocument()
     await user.click(await screen.findByRole('link', { name: 'Clínica Norte' }))
     const ficha = screen.getByRole('region', { name: 'Clínica abierta' })
     expect(await within(ficha).findByText('Rayos X y hospitalización')).toBeInTheDocument()
@@ -266,20 +271,11 @@ describe('clínicas y convenios', () => {
     expect(within(convenio).getByText(/^80 %\shasta\s\$\s200\.000$/)).toBeInTheDocument()
     expect(within(convenio).getByText('Todos los planes')).toBeInTheDocument()
     expect(within(convenio).getByText('Desde el 1 ene')).toBeInTheDocument()
-    // Cada recuento lleva a sus remisiones en la bandeja, solo las de esta clínica (techo 59).
-    expect(await within(ficha).findByRole('link', { name: '1 por usar' })).toHaveAttribute(
-      'href',
-      `/panel/aliadas?pestana=remisiones&vista=emitida&remisiones_de=${CLINICA.id}`,
-    )
-    expect(within(ficha).getByRole('link', { name: '1 atendida' })).toHaveAttribute(
-      'href',
-      `/panel/aliadas?pestana=remisiones&vista=utilizada&remisiones_de=${CLINICA.id}`,
-    )
-    expect(within(ficha).getByRole('link', { name: '0 anuladas' })).toBeInTheDocument()
-    expect(within(ficha).getByRole('link', { name: 'Ana Ruiz · Luna' })).toHaveAttribute('href', '/panel/familias/f1')
+    // Las remisiones son de Atención al cliente: la ficha de Operaciones no las pide (Sección 12).
+    expect(within(ficha).queryByRole('heading', { name: 'Remisiones' })).not.toBeInTheDocument()
   })
 
-  it('la administración desactiva una clínica desde el menú', async () => {
+  it('Operaciones desactiva una clínica desde el menú', async () => {
     let activa = true
     let cambio: unknown = null
     server.use(
@@ -298,7 +294,7 @@ describe('clínicas y convenios', () => {
     expect(within(ficha).getByRole('button', { name: /nuevo convenio/i })).toBeDisabled()
   })
 
-  it('la administración registra un convenio con su plan', async () => {
+  it('Operaciones registra un convenio con su plan', async () => {
     let enviado: unknown = null
     server.use(
       http.get(`${API}/planes`, () => HttpResponse.json([{ id: 'p1', nombre: 'Plan Familiar' }])),
@@ -388,24 +384,15 @@ describe('clínicas y convenios', () => {
     expect(await within(modal).findByRole('alert')).toHaveTextContent('NIT repetido')
   })
 
-  it('quien no administra ve solo las clínicas activas y no las gestiona', async () => {
-    const pedidas: (string | null)[] = []
-    server.use(
-      como('operaciones'),
-      http.get(`${API}/aliadas`, ({ request }) => {
-        pedidas.push(new URL(request.url).searchParams.get('incluir_inactivas'))
-        return HttpResponse.json([CLINICA])
-      }),
-    )
-    const { ficha } = await abrirClinica()
-    await within(ficha).findByText('Radiografía')
-    expect(screen.queryByRole('button', { name: /nueva clínica/i })).not.toBeInTheDocument()
-    expect(within(ficha).queryByRole('button', { name: /nuevo convenio/i })).not.toBeInTheDocument()
-    expect(within(ficha).queryByRole('button', { name: /más acciones/i })).not.toBeInTheDocument()
-    expect(pedidas.every((p) => p === null)).toBe(true)
+  it('quien no lleva la red no ve las clínicas ni la liquidación', async () => {
+    server.use(como('atencion_cliente'))
+    renderizar(<AliadasPage />)
+    expect(await screen.findByRole('tab', { name: 'Remisiones' })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Clínicas y convenios' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Liquidación' })).not.toBeInTheDocument()
   })
 
-  it('la administración ve también las inactivas', async () => {
+  it('Operaciones ve también las inactivas', async () => {
     const pedidas: (string | null)[] = []
     server.use(
       http.get(`${API}/aliadas`, ({ request }) => {
@@ -427,6 +414,8 @@ describe('clínicas y convenios', () => {
 })
 
 describe('liquidación', () => {
+  beforeEach(() => server.use(como('operaciones')))
+
   const FILA = {
     clinica_id: 'cl1',
     clinica: 'Clínica Norte',

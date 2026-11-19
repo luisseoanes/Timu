@@ -4,7 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AdminPage } from '@/features/admin'
 import { AliadasPage, MiClinicaPage } from '@/features/aliadas'
 import { AuthProvider, LoginPage, RecuperarPage, RestablecerPage } from '@/features/auth'
-import { CampanasPage } from '@/features/campanas'
+import { CampanasPage, EncuestasPage, MensajesPage } from '@/features/campanas'
 import { CarteraPage } from '@/features/cartera'
 import { ClinicaPage, EntradaPage, HistoriaMascotaPage } from '@/features/clinica'
 import { ComercialPage } from '@/features/comercial'
@@ -42,7 +42,7 @@ import { DeLaWebVieja } from '@/routes/WebVieja'
 import type { Rol } from '@/types'
 
 // El panel es del equipo interno; las familias y las aliadas tienen su propio espacio.
-const EQUIPO: Rol[] = ['admin', 'comercial', 'operaciones', 'medico']
+const EQUIPO: Rol[] = ['admin', 'gerencia', 'comercial', 'atencion_cliente', 'operaciones', 'medico']
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -70,21 +70,45 @@ export default function App() {
             <Route path="panel" element={<ProtectedRoute roles={EQUIPO} />}>
               <Route element={<AppLayout />}>
                 <Route index element={<DashboardPage />} />
-                <Route path="familias" element={<FamiliasPage />} />
-                <Route path="familias/:id" element={<FamiliaDetallePage GestionarPreventivo={GestionarPreventivo} />} />
-                <Route path="cartera" element={<CarteraPage />} />
-                <Route path="servicios" element={<ServiciosPage />} />
-                <Route path="servicios/:id" element={<ServicioDetallePage />} />
-                <Route path="tareas" element={<TareasPage />} />
-                <Route path="preventivos" element={<PreventivosPage />} />
-                <Route path="clinica" element={<ClinicaPage />} />
-                <Route path="clinica/mascotas/:mascotaId" element={<HistoriaMascotaPage />} />
-                <Route path="clinica/historias/:id" element={<EntradaPage />} />
-                <Route path="rutas" element={<RutasPage />} />
-                <Route path="campanas" element={<CampanasPage />} />
-                <Route path="aliadas" element={<AliadasPage />} />
+                {/* Cada módulo, solo para los perfiles que lo tienen (Sección 12): el mismo permiso
+                    que su entrada del menú y que la API. */}
+                <Route element={<ProtectedRoute roles={[...PERMISOS.verFamilias]} />}>
+                  <Route path="familias" element={<FamiliasPage />} />
+                  <Route path="familias/:id" element={<FamiliaDetallePage GestionarPreventivo={GestionarPreventivo} />} />
+                </Route>
+                <Route element={<ProtectedRoute roles={[...PERMISOS.verCartera]} />}>
+                  <Route path="cartera" element={<CarteraPage />} />
+                </Route>
+                <Route element={<ProtectedRoute roles={[...PERMISOS.servicios]} />}>
+                  <Route path="servicios" element={<ServiciosPage />} />
+                  <Route path="servicios/:id" element={<ServicioDetallePage />} />
+                </Route>
+                <Route element={<ProtectedRoute roles={[...PERMISOS.tareas]} />}>
+                  <Route path="tareas" element={<TareasPage />} />
+                </Route>
+                <Route element={<ProtectedRoute roles={[...PERMISOS.preventivos]} />}>
+                  <Route path="preventivos" element={<PreventivosPage />} />
+                </Route>
+                <Route element={<ProtectedRoute roles={[...PERMISOS.clinico]} />}>
+                  <Route path="clinica" element={<ClinicaPage />} />
+                  <Route path="clinica/mascotas/:mascotaId" element={<HistoriaMascotaPage />} />
+                  <Route path="clinica/historias/:id" element={<EntradaPage />} />
+                </Route>
+                <Route element={<ProtectedRoute roles={[...PERMISOS.campo]} />}>
+                  <Route path="rutas" element={<RutasPage />} />
+                </Route>
                 <Route element={<ProtectedRoute roles={[...PERMISOS.mercadeo]} />}>
                   <Route path="comercial" element={<ComercialPage />} />
+                  <Route path="campanas" element={<CampanasPage />} />
+                </Route>
+                <Route element={<ProtectedRoute roles={[...PERMISOS.mensajes]} />}>
+                  <Route path="mensajes" element={<MensajesPage />} />
+                </Route>
+                <Route element={<ProtectedRoute roles={[...PERMISOS.encuestas]} />}>
+                  <Route path="encuestas" element={<EncuestasPage />} />
+                </Route>
+                <Route element={<ProtectedRoute roles={[...PERMISOS.aliadas]} />}>
+                  <Route path="aliadas" element={<AliadasPage />} />
                 </Route>
                 <Route element={<ProtectedRoute roles={[...PERMISOS.administrar]} />}>
                   <Route path="admin" element={<AdminPage />} />

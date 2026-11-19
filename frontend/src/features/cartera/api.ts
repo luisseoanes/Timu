@@ -1,7 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { ContratoListado, ContratoRead, EstadoCuenta, Page, PagoRead, RecuentosCartera } from '@/types'
+import type {
+  ContratoListado,
+  ContratoRead,
+  EstadoCuenta,
+  EventoPasarelaRead,
+  Page,
+  PagoRead,
+  RecuentosCartera,
+  RecuentosEventosPasarela,
+} from '@/types'
 
 export type MedioPago = 'efectivo' | 'transferencia' | 'consignacion' | 'datafono' | 'otro'
 
@@ -54,9 +63,10 @@ export function useRenovarContrato() {
 }
 
 /** El estado de cuenta responde 404 cuando la familia aún no tiene contrato: no es un error. */
-export function useEstadoCuenta(familiaId: string) {
+export function useEstadoCuenta(familiaId: string, habilitado = true) {
   return useQuery({
     queryKey: ['cartera', 'estado-cuenta', familiaId],
+    enabled: habilitado,
     queryFn: async () => {
       const { data, status } = await api.get<EstadoCuenta>(
         `/cartera/familias/${familiaId}/estado-cuenta`,
@@ -76,5 +86,30 @@ export function useRegistrarPago() {
       void qc.invalidateQueries({ queryKey: ['cartera'] })
       void qc.invalidateQueries({ queryKey: ['familias'] })
     },
+  })
+}
+
+// --- Eventos de la pasarela de pagos: los revisa Atención al cliente (6.2) --------------------
+
+export function useRecuentosEventosPasarela() {
+  return useQuery({
+    queryKey: ['pasarela', 'recuentos'],
+    queryFn: async () => (await api.get<RecuentosEventosPasarela>('/cartera/eventos-pasarela/recuentos')).data,
+  })
+}
+
+export function useEventosPasarela(estado?: string) {
+  return useQuery({
+    queryKey: ['pasarela', estado ?? null],
+    queryFn: async () =>
+      (await api.get<Page<EventoPasarelaRead>>('/cartera/eventos-pasarela', { params: { estado, limit: 50, orden: '-created_at' } })).data,
+  })
+}
+
+export function useReprocesarEvento() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => (await api.post<EventoPasarelaRead>(`/cartera/eventos-pasarela/${id}/reprocesar`)).data,
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['pasarela'] }),
   })
 }

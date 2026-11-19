@@ -18,8 +18,8 @@ from sqlalchemy import Select, and_, case, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core import cache
-from app.core.enums import EstadoAfiliacion, EstadoServicio
-from app.core.errores import ReglaNegocio
+from app.core.enums import EstadoAfiliacion, EstadoServicio, Rol
+from app.core.errores import Prohibido, ReglaNegocio
 from app.core.tiempo import ZONA_NEGOCIO
 from app.modules.cartera.models import AplicacionPago, Contrato, Cuota, EstadoCuota, Pago
 from app.modules.cartera.periodos import sumar_meses
@@ -325,6 +325,27 @@ INDICADORES: dict[str, Indicador] = {
         ),
     )
 }
+
+
+# Seccion 12: cada perfil ve las cifras de su funcion (docs/perfiles-y-permisos.md, decidido con
+# el usuario el 2026-11-19). Gerencia, todas; los demas, encima de su linea de hoy.
+INDICADORES_POR_ROL: dict[Rol, tuple[str, ...]] = {
+    Rol.GERENCIA: tuple(INDICADORES),
+    Rol.COMERCIAL: ("vigentes", "afiliaciones", "retiros"),
+    Rol.ATENCION_CLIENTE: ("recaudo", "facturado", "recaudo_del_facturado", "mora", "satisfaccion"),
+    Rol.OPERACIONES: ("cumplimiento_rutas", "satisfaccion", "servicios_por_tipo"),
+}
+
+
+def de_su_funcion(rol: Rol, codigos: list[str] | None) -> list[str]:
+    """Los indicadores pedidos, o los del perfil si no pide ninguno; uno ajeno es Prohibido."""
+    suyos = INDICADORES_POR_ROL[rol]
+    if not codigos:
+        return list(suyos)
+    ajenos = [c for c in codigos if c in INDICADORES and c not in suyos]
+    if ajenos:
+        raise Prohibido(f"Indicadores fuera de su perfil: {', '.join(ajenos)}")
+    return codigos
 
 
 def periodo(desde: date, hasta: date, ciudad: str | None) -> Periodo:

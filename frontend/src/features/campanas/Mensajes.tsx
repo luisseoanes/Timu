@@ -4,8 +4,10 @@ import { Consulta } from '@/components/Consulta'
 import { Distintivo } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Paginacion } from '@/components/Paginacion'
+import { useAuth } from '@/features/auth'
 import { mensajeError } from '@/lib/errores'
 import { diaISO, fechaCompacta, fechaHora, hora, telefono } from '@/lib/formato'
+import { puede } from '@/lib/permisos'
 
 import { useBajas, useCrearBaja, useMensajes, usePlantillasWhatsApp, useQuitarBaja } from './api'
 
@@ -19,6 +21,8 @@ export function Mensajes() {
   const nombrePlantilla = (codigo: string) => plantillas.data?.find((p) => p.nombre === codigo && p.titulo)?.titulo ?? codigo
   const crearBaja = useCrearBaja()
   const quitarBaja = useQuitarBaja()
+  const { usuario } = useAuth()
+  const reactiva = puede(usuario, 'reactivarEnvios')
 
   return (
     <div className="con-rail">
@@ -118,9 +122,11 @@ export function Mensajes() {
                     <strong className="numero">{telefono(x.destino)}</strong>
                     <span>Desde el {fechaCompacta(diaISO(x.created_at))}</span>
                   </div>
-                  <button className="btn btn-plano" type="button" onClick={() => quitarBaja.mutate(x.destino)} aria-label={`Quitar la baja de ${telefono(x.destino)}`}>
-                    Quitar
-                  </button>
+                  {reactiva && (
+                    <button className="btn btn-plano" type="button" onClick={() => quitarBaja.mutate(x.destino)} aria-label={`Quitar la baja de ${telefono(x.destino)}`}>
+                      Quitar
+                    </button>
+                  )}
                 </div>
               ))
             }

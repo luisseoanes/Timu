@@ -3,19 +3,22 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 
-from app.api.deps import INTERNOS, DbSession, Interno, requiere
-from app.core.enums import CategoriaDocumento
+from app.api.deps import DbSession, requiere
+from app.core.enums import CategoriaDocumento, Rol
 from app.modules.archivos import service as archivos
+from app.modules.auth.models import Usuario
 from app.modules.documentos import service
 from app.modules.documentos.service import DocumentoIn, DocumentoRead, DocumentoUpdate
 from app.modules.familias import service as familias
 
 router = APIRouter(tags=["documentos"])
-EQUIPO = Depends(requiere(*INTERNOS))
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
+ATENCION = Depends(requiere(Rol.ATENCION_CLIENTE))
+Atencion = Annotated[Usuario, Depends(requiere(Rol.ATENCION_CLIENTE))]
 
 
 @router.get(
-    "/familias/{familia_id}/documentos", response_model=list[DocumentoRead], dependencies=[EQUIPO]
+    "/familias/{familia_id}/documentos", response_model=list[DocumentoRead], dependencies=[ATENCION]
 )
 async def listar(db: DbSession, familia_id: UUID, mascota_id: UUID | None = None) -> Any:
     """6.1 Todos los documentos de la familia: los subidos, sus contratos, sus carnets y los
@@ -31,7 +34,7 @@ async def listar(db: DbSession, familia_id: UUID, mascota_id: UUID | None = None
 )
 async def subir(
     db: DbSession,
-    usuario: Interno,
+    usuario: Atencion,
     familia_id: UUID,
     archivo: Annotated[UploadFile, File(description="PDF, JPG, PNG o WEBP de hasta 10 MB")],
     categoria: Annotated[CategoriaDocumento, Form()],
@@ -53,7 +56,7 @@ async def subir(
     return await db.run_sync(service.leer, documento)
 
 
-@router.patch("/documentos/{documento_id}", response_model=DocumentoRead, dependencies=[EQUIPO])
+@router.patch("/documentos/{documento_id}", response_model=DocumentoRead, dependencies=[ATENCION])
 async def actualizar(db: DbSession, documento_id: UUID, data: DocumentoUpdate) -> Any:
     """Categoria, descripcion y si la familia lo ve en su portal."""
     documento = await db.run_sync(service.obtener, documento_id)
@@ -64,7 +67,7 @@ async def actualizar(db: DbSession, documento_id: UUID, data: DocumentoUpdate) -
 @router.post(
     "/documentos/{documento_id}/baja",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[EQUIPO],
+    dependencies=[ATENCION],
 )
 async def dar_de_baja(db: DbSession, documento_id: UUID) -> None:
     """Deja de figurar en la ficha y en el portal; el registro y el fichero se conservan."""

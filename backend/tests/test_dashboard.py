@@ -202,8 +202,9 @@ async def test_el_medico_no_ve_el_dashboard(client: AsyncClient, db):
 # --- Seccion 8 Exportables y reportes ---------------------------------------------------------
 
 
-async def test_exporta_csv_y_excel(client: AsyncClient, db, operacion, headers):
+async def test_exporta_csv_y_excel(client: AsyncClient, db, operacion, equipo):
     await db.commit()
+    headers = await login(client, equipo[Rol.GERENCIA].email)
     params = {"desde": str(DESDE), "hasta": str(HASTA)}
     csv = await client.get(
         "/api/v1/dashboard/indicadores", params={**params, "formato": "csv"}, headers=headers
@@ -256,8 +257,9 @@ def test_periodo_comparable():
     )
 
 
-async def test_evolucion_por_la_api(client: AsyncClient, db, operacion, headers):
+async def test_evolucion_por_la_api(client: AsyncClient, db, operacion, equipo):
     await db.commit()
+    headers = await login(client, equipo[Rol.GERENCIA].email)
     resp = await client.get(
         "/api/v1/dashboard/evolucion",
         params={"desde": str(DESDE), "hasta": str(HASTA), "codigos": ["afiliaciones", "vigentes"]},
@@ -279,6 +281,47 @@ async def test_evolucion_por_la_api(client: AsyncClient, db, operacion, headers)
         headers=headers,
     )
     assert invalido.status_code == 422
+
+
+async def test_cada_perfil_ve_las_cifras_de_su_funcion(client: AsyncClient, db, operacion, equipo):
+    # Seccion 12 (docs/perfiles-y-permisos.md): encima de su linea de hoy, cada perfil ve sus
+    # cifras y solo esas; los exportables son de Gerencia.
+    await db.commit()
+    params = {"desde": str(DESDE), "hasta": str(HASTA)}
+    for rol, suyos in service.INDICADORES_POR_ROL.items():
+        sesion = await login(client, equipo[rol].email)
+        resp = await client.get("/api/v1/dashboard/indicadores", params=params, headers=sesion)
+        assert resp.status_code == 200, (rol, resp.text)
+        assert set(resp.json()["indicadores"]) == set(suyos), rol
+        # Y la base le deja leer lo que cada cifra cuenta: sin permiso, saldria vacia.
+        if "satisfaccion" in suyos:
+            assert resp.json()["indicadores"]["satisfaccion"]["promedio"] == 4.0, rol
+    atencion = await login(client, equipo[Rol.ATENCION_CLIENTE].email)
+    for url, extra in (
+        ("indicadores", {"codigos": ["recaudo", "afiliaciones"]}),
+        ("evolucion", {"codigos": ["vigentes"]}),
+        ("indicadores", {"formato": "csv"}),
+    ):
+        resp = await client.get(
+            f"/api/v1/dashboard/{url}", params={**params, **extra}, headers=atencion
+        )
+        assert resp.status_code == 403, (url, extra)
+
+
+async def test_gerencia_filtra_por_ciudad_desde_la_api(client: AsyncClient, db, operacion, equipo):
+    # La ciudad se lee de la familia: sin poder leer familias, la base devolveria ceros.
+    await db.commit()
+    resp = await client.get(
+        "/api/v1/dashboard/indicadores",
+        params={
+            "desde": str(DESDE),
+            "hasta": str(HASTA),
+            "ciudad": "Cali",
+            "codigos": ["afiliaciones", "recaudo"],
+        },
+        headers=await login(client, equipo[Rol.GERENCIA].email),
+    )
+    assert resp.json()["indicadores"] == {"afiliaciones": 2, "recaudo": 45_000.0}
 
 
 async def test_el_medico_no_ve_la_evolucion(client: AsyncClient, db):

@@ -39,8 +39,16 @@ from app.modules.familias.models import Familia
 # antes de que existiera lo escrito (tests/test_transacciones.py).
 DbSession = Annotated[AsyncSession, Depends(get_db, scope="function")]
 
-# Perfiles del equipo de TIMU (todo menos el portal de familias).
-INTERNOS = (Rol.ADMIN, Rol.COMERCIAL, Rol.OPERACIONES, Rol.MEDICO)
+# Perfiles del equipo de TIMU (todo menos el portal de familias y la clinica aliada). Cada uno
+# hace lo suyo (Seccion 12, docs/perfiles-y-permisos.md): pocas rutas los admiten a todos.
+INTERNOS = (
+    Rol.ADMIN,
+    Rol.GERENCIA,
+    Rol.COMERCIAL,
+    Rol.ATENCION_CLIENTE,
+    Rol.OPERACIONES,
+    Rol.MEDICO,
+)
 TODOS = (*INTERNOS, Rol.FAMILIA)
 
 # El refresh token solo viaja a las rutas de sesion, no en cada peticion.
@@ -164,7 +172,6 @@ async def publico() -> None:
     """Marca explicita de endpoint abierto (webhooks, login, formularios publicos)."""
 
 
-Interno = Annotated[Usuario, Depends(require_roles(*INTERNOS))]
 Admin = Annotated[Usuario, Depends(require_roles(Rol.ADMIN))]
 
 

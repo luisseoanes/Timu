@@ -5,9 +5,11 @@ import { Consulta } from '@/components/Consulta'
 import { Distintivo } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Paginacion } from '@/components/Paginacion'
+import { useAuth } from '@/features/auth'
 import { useCiudades, useNombreTipoServicio } from '@/features/catalogos'
 import { estado as etiquetaEstado } from '@/lib/estados'
 import { diaISO, fechaCortaConDia, hora, hoyISO } from '@/lib/formato'
+import { puede } from '@/lib/permisos'
 import type { EstadoServicio, ServicioListado } from '@/types'
 
 import { ayer, porDia, rotuloDia } from './agenda'
@@ -33,6 +35,8 @@ const POR_PAGINA = 25
  */
 export function ServiciosLista({ seleccionado, nuevoInicial = false }: { seleccionado?: string; nuevoInicial?: boolean }) {
   const [params, setParams] = useSearchParams()
+  const { usuario } = useAuth()
+  const agenda = puede(usuario, 'autorizarConLaFamilia') || puede(usuario, 'gestionarAgenda')
   const [nuevo, setNuevo] = useState(nuevoInicial)
   const ciudades = useCiudades()
   const estado = (params.get('estado') ?? '') as EstadoServicio | ''
@@ -78,10 +82,13 @@ export function ServiciosLista({ seleccionado, nuevoInicial = false }: { selecci
           Servicios <span className="apagado numero">{(servicios.data?.total ?? 0) + totalAtrasados}</span>
         </h2>
         {/* Una sola acción verde llena por vista: con un servicio abierto, la principal es la suya. */}
-        <button className={`btn ${seleccionado ? 'btn-suave' : 'btn-primario'}`} type="button" onClick={() => setNuevo(true)}>
-          <Icono nombre="mas" size={16} />
-          Agendar servicio
-        </button>
+        {/* Agendan Atención y Operaciones; el médico ve los suyos (Sección 12). */}
+        {agenda && (
+          <button className={`btn ${seleccionado ? 'btn-suave' : 'btn-primario'}`} type="button" onClick={() => setNuevo(true)}>
+            <Icono nombre="mas" size={16} />
+            Agendar servicio
+          </button>
+        )}
       </div>
 
       <div className="filtros servicios-filtros">
@@ -118,7 +125,7 @@ export function ServiciosLista({ seleccionado, nuevoInicial = false }: { selecci
         vacio={
           filtrado
             ? 'Ningún servicio coincide con estos filtros. Quita alguno o amplía las fechas.'
-            : 'No hay servicios agendados desde hoy. Agenda uno con «Agendar servicio».'
+            : agenda ? 'No hay servicios agendados desde hoy. Agenda uno con «Agendar servicio».' : 'No tienes servicios asignados desde hoy.'
         }
         estaVacio={(d) => d.items.length === 0 && atrasados.length === 0}
       >

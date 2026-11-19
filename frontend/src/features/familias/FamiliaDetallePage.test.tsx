@@ -2,13 +2,16 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { Link, Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { FamiliaDetallePage, type GestionarPreventivoProps } from './FamiliaDetallePage'
-import { FAMILIA, PLAN, USUARIO_ADMIN } from '@/test/handlers'
+import { FAMILIA, PLAN, sesionDe, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { DocumentoRead, EstadoCuenta, MascotaRead } from '@/types'
+
+// Sección 12: esta pantalla se prueba con el perfil que la usa (docs/perfiles-y-permisos.md).
+beforeEach(() => server.use(sesionDe('atencion_cliente')))
 
 const API = '*/api/v1'
 
@@ -124,6 +127,7 @@ describe('FamiliaDetallePage', () => {
   })
 
   it('afilia con un plan por peludo, la forma de pago y el precio del backend', async () => {
+    server.use(sesionDe('comercial')) // afiliar es de Comercial (Sección 12)
     const pedidos: unknown[] = []
     const cotizacion = (periodicidad: string, meses: number, valor: string, descuento: boolean, ahorro = '0.00') => ({
       periodicidad,
@@ -255,10 +259,10 @@ describe('FamiliaDetallePage', () => {
     expect(within(modal).getByLabelText('Valor (COP)')).toHaveValue(89000)
   })
 
-  it('sin permiso para cobrar, la cuota de la línea solo lleva a la cartera', async () => {
+  it('sin permiso para cobrar (Comercial), la cuota de la línea solo lleva a la cartera', async () => {
     const cuota = { tipo: 'cuota' as const, referencia_id: 'q1', fecha: '2099-01-05', estado: 'proxima' as const, titulo: 'Cuota septiembre', mascota: null }
     server.use(
-      http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'operaciones' })),
+      sesionDe('comercial'),
       http.get(`${API}/cartera/familias/:id/estado-cuenta`, () => HttpResponse.json(CUENTA)),
       http.get(`${API}/familias/:id/linea`, () => HttpResponse.json({ familia_id: FAMILIA.id, planes: [], estaciones: [cuota] })),
     )

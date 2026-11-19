@@ -22,28 +22,33 @@ interface ItemNav {
   cabeceraPropia?: boolean
 }
 
-// Un elemento por dominio de la plataforma (sección A de la propuesta).
+// Un elemento por dominio de la plataforma (sección A de la propuesta). Cada perfil ve solo los
+// suyos (Sección 12, docs/perfiles-y-permisos.md): el permiso es el mismo que aplica la API.
 const NAV: ItemNav[] = [
-  { to: '/panel', label: 'Inicio', icono: 'panel', end: true, titulo: 'Inicio', sub: 'Resumen de la operación', cabeceraPropia: true },
-  { to: '/panel/familias', label: 'Familias', icono: 'familias', titulo: 'Familias y mascotas', sub: 'Afiliaciones, titulares y mascotas' },
-  { to: '/panel/cartera', label: 'Cartera', icono: 'cartera', titulo: 'Cartera', sub: 'Cuotas, mora y renovaciones' },
-  { to: '/panel/servicios', label: 'Servicios', icono: 'servicios', titulo: 'Servicios', sub: 'Agenda, autorizaciones y pendientes' },
-  { to: '/panel/tareas', label: 'Tareas', icono: 'tareas', titulo: 'Tareas', sub: 'Lo que el equipo tiene por resolver' },
-  { to: '/panel/preventivos', label: 'Preventivos', icono: 'preventivos', titulo: 'Preventivos', sub: 'Calendario, autorizaciones y carnet' },
-  { to: '/panel/clinica', label: 'Clínica', icono: 'clinica', titulo: 'Clínica', sub: 'Historia clínica y atención virtual' },
-  { to: '/panel/rutas', label: 'Rutas', icono: 'rutas', titulo: 'Rutas', sub: 'Visitas domiciliarias del día' },
+  { to: '/panel', label: 'Inicio', icono: 'panel', end: true, titulo: 'Inicio', sub: 'Lo que toca hoy', cabeceraPropia: true },
+  { to: '/panel/familias', label: 'Familias', icono: 'familias', titulo: 'Familias y mascotas', sub: 'Afiliaciones, titulares y mascotas', permiso: 'verFamilias' },
+  { to: '/panel/cartera', label: 'Cartera', icono: 'cartera', titulo: 'Cartera', sub: 'Cuotas, mora y renovaciones', permiso: 'verCartera' },
+  { to: '/panel/servicios', label: 'Servicios', icono: 'servicios', titulo: 'Servicios', sub: 'Agenda, autorizaciones y pendientes', permiso: 'servicios' },
+  { to: '/panel/rutas', label: 'Rutas', icono: 'rutas', titulo: 'Rutas', sub: 'Visitas domiciliarias del día', permiso: 'campo' },
+  { to: '/panel/clinica', label: 'Clínica', icono: 'clinica', titulo: 'Clínica', sub: 'Historia clínica y atención virtual', permiso: 'clinico' },
+  { to: '/panel/preventivos', label: 'Preventivos', icono: 'preventivos', titulo: 'Preventivos', sub: 'Calendario, autorizaciones y carnet', permiso: 'preventivos' },
+  { to: '/panel/tareas', label: 'Tareas', icono: 'tareas', titulo: 'Tareas', sub: 'Lo que tu área tiene por resolver', permiso: 'tareas' },
   { to: '/panel/comercial', label: 'Comercial', icono: 'comercial', titulo: 'Comercial', sub: 'Interesados y conversaciones', permiso: 'mercadeo' },
-  { to: '/panel/campanas', label: 'Campañas', icono: 'campanas', titulo: 'Campañas y encuestas', sub: 'Segmentos, envíos y satisfacción' },
-  { to: '/panel/aliadas', label: 'Aliadas', icono: 'aliadas', titulo: 'Clínicas aliadas', sub: 'Convenios, remisiones y liquidación' },
+  { to: '/panel/campanas', label: 'Campañas', icono: 'campanas', titulo: 'Campañas', sub: 'Segmentos y envíos', permiso: 'mercadeo' },
+  { to: '/panel/mensajes', label: 'Mensajes', icono: 'mensaje', titulo: 'Mensajes', sub: 'WhatsApp y bajas', permiso: 'mensajes' },
+  { to: '/panel/encuestas', label: 'Encuestas', icono: 'campanas', titulo: 'Encuestas', sub: 'Satisfacción y seguimiento', permiso: 'encuestas' },
+  { to: '/panel/aliadas', label: 'Aliadas', icono: 'aliadas', titulo: 'Clínicas aliadas', sub: 'Convenios, remisiones y liquidación', permiso: 'aliadas' },
   { to: '/panel/admin', label: 'Administración', icono: 'ajustes', titulo: 'Administración', sub: 'Usuarios, planes, reglas e IA', permiso: 'administrar' },
 ]
 
 /** Los cuatro módulos que cada perfil usa más: van en la barra inferior del celular. */
 const PRINCIPALES: Partial<Record<Rol, string[]>> = {
+  admin: ['/panel', '/panel/admin'],
+  gerencia: ['/panel', '/panel/encuestas', '/panel/aliadas'],
+  comercial: ['/panel', '/panel/comercial', '/panel/familias', '/panel/campanas'],
+  atencion_cliente: ['/panel', '/panel/familias', '/panel/cartera', '/panel/servicios'],
+  operaciones: ['/panel', '/panel/servicios', '/panel/rutas', '/panel/preventivos'],
   medico: ['/panel', '/panel/rutas', '/panel/servicios', '/panel/clinica'],
-  operaciones: ['/panel', '/panel/servicios', '/panel/rutas', '/panel/tareas'],
-  comercial: ['/panel', '/panel/familias', '/panel/comercial', '/panel/tareas'],
-  admin: ['/panel', '/panel/familias', '/panel/cartera', '/panel/servicios'],
 }
 
 // Cuántos módulos caben en la barra superior según el ancho. Con 0 la navegación pasa a la
@@ -129,7 +134,8 @@ export function AppLayout() {
             {enMas.length > 0 && <MenuMas items={enMas} activo={enMas.includes(actual)} />}
           </nav>
         )}
-        {!movil && (
+        {/* El buscador lleva a Familias: solo para quien la ve. */}
+        {!movil && puede(usuario, 'verFamilias') && (
           <form
             role="search"
             onSubmit={(e) => {

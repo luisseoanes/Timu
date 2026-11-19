@@ -94,6 +94,13 @@ el usuario no puede hacer, pero **eso no es seguridad**: la autorización real l
 backend en cada endpoint, con `require_roles` para el perfil y `restringir()` para las
 filas. Un botón oculto sin permiso en el servidor es un defecto.
 
+Cada perfil del equipo hace lo suyo (Sección 12, [perfiles y permisos](../perfiles-y-permisos.md)).
+`lib/permisos.ts` (`PERMISOS` y `puede`) es el mismo reparto que la API: el menú (`permiso` de cada
+entrada de `AppLayout`), las rutas de `App.tsx`, las pestañas y las acciones salen de ahí. Una
+pantalla que cruza dominios (la ficha de familia, la línea, el Inicio) pide solo lo que el perfil
+puede leer: una consulta que daría 403 no se lanza (`enabled`), y sus pruebas entran con el perfil que
+la usa (`server.use(sesionDe('atencion_cliente'))`, de `src/test/handlers.ts`).
+
 ## Pruebas
 
 Toda pantalla nueva llega con las suyas. No es una aspiración: el CI las ejecuta todas en

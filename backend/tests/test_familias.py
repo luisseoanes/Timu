@@ -557,7 +557,11 @@ async def test_tipos_de_servicio_exponen_sus_pasos(client: AsyncClient, headers)
 # --- Sesion por cookie (pruebas que trajo el remoto) ------------------------------------------
 
 
-async def test_logout_invalida_la_sesion(client: AsyncClient, usuario_admin):
+async def test_logout_invalida_la_sesion(client: AsyncClient, db):
+    from app.core.enums import Rol
+    from tests.conftest import crear_usuario
+
+    await crear_usuario(db, "admin@timu.co", Rol.ATENCION_CLIENTE)
     await autenticar(client, "admin@timu.co", "secreto123")
     assert (await client.get("/api/v1/familias")).status_code == 200
 
@@ -581,13 +585,13 @@ async def test_el_token_no_viaja_en_el_cuerpo(client: AsyncClient, usuario_admin
 
 async def test_patch_no_cambia_el_estado_de_afiliacion(client: AsyncClient, db, headers):
     """Revision F1: el PATCH general aceptaba `estado` y saltaba el permiso del endpoint
-    dedicado (solo comercial o admin)."""
+    dedicado (solo atencion al cliente)."""
     from app.core.enums import Rol
     from tests.conftest import crear_usuario, login
 
     familia = await _crear(client, headers)
-    await crear_usuario(db, "medico@timu.co", Rol.MEDICO)
-    medico = await login(client, "medico@timu.co")
+    await crear_usuario(db, "ventas@timu.co", Rol.COMERCIAL)
+    medico = await login(client, "ventas@timu.co")
     resp = await client.patch(
         f"/api/v1/familias/{familia['id']}", json={"estado": "cancelada"}, headers=medico
     )
@@ -910,6 +914,34 @@ async def test_anonimizar_dos_veces_o_con_contrato_vigente(client: AsyncClient, 
     assert (
         await client.post(f"/api/v1/familias/{otra.id}/anonimizar", headers=headers)
     ).status_code == 409
+
+
+async def test_la_supresion_busca_por_documento_y_dice_si_puede_anonimizar(
+    client: AsyncClient, db, headers
+):
+    # Ley 1581: el administrador ve lo minimo y sabe antes de confirmar si la base se lo
+    # permitira (con un contrato vigente, no: lo cancela Atencion antes).
+    afiliada, _ = await fabricas.afiliada(db, hoy())
+    libre = await db.run_sync(fabricas.familia)
+    await db.commit()
+    for familia, vigente in ((afiliada, True), (libre, False)):
+        resp = await client.get(
+            "/api/v1/familias/supresion", params={"documento": familia.documento}, headers=headers
+        )
+        assert resp.status_code == 200, resp.text
+        assert set(resp.json()) == {
+            "id",
+            "titular_nombre",
+            "mascotas",
+            "estado",
+            "anonimizada",
+            "con_contrato_vigente",
+        }
+        assert resp.json()["con_contrato_vigente"] is vigente
+    falta = await client.get(
+        "/api/v1/familias/supresion", params={"documento": "000000"}, headers=headers
+    )
+    assert falta.status_code == 404
 
 
 async def test_solo_un_administrador_anonimiza(client: AsyncClient, db):

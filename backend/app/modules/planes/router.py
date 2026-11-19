@@ -12,7 +12,6 @@ from sqlalchemy import select
 from app.api.deps import INTERNOS, DbSession, requiere
 from app.core.enums import ColorPlan, Periodicidad, Rol
 from app.core.errores import NoEncontrado
-from app.modules.auth.models import Usuario
 from app.modules.catalogos import service as catalogos
 from app.modules.catalogos.models import TipoServicioCatalogo
 from app.modules.planes import service
@@ -26,9 +25,11 @@ from app.modules.planes.schemas import (
 
 router = APIRouter(prefix="/planes", tags=["planes"])
 
-EQUIPO = Depends(requiere(*INTERNOS))
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
 ADMIN = Depends(requiere(Rol.ADMIN))
-Gestion = Annotated[Usuario, Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))]
+COMERCIAL = Depends(requiere(Rol.COMERCIAL))
+COMERCIAL_Y_ATENCION = Depends(requiere(Rol.COMERCIAL, Rol.ATENCION_CLIENTE))
+EQUIPO = Depends(requiere(*INTERNOS))
 
 
 Valor = Annotated[Decimal, Field(gt=0, max_digits=12, decimal_places=2)]
@@ -206,7 +207,9 @@ async def listar(
     return list(await db.scalars(stmt))
 
 
-@router.post("/cotizacion", response_model=list[CotizacionRead], dependencies=[EQUIPO])
+@router.post(
+    "/cotizacion", response_model=list[CotizacionRead], dependencies=[COMERCIAL_Y_ATENCION]
+)
 async def cotizacion(db: DbSession, data: CotizacionIn) -> list[CotizacionRead]:
     """6.2 / 6.3 Precio de una afiliacion con cada periodicidad: cada peludo con su plan."""
     ciudad = await db.run_sync(catalogos.ciudad_valida, data.ciudad)
@@ -217,7 +220,7 @@ async def cotizacion(db: DbSession, data: CotizacionIn) -> list[CotizacionRead]:
     ]
 
 
-@router.get("/recomendacion", response_model=Recomendacion, dependencies=[EQUIPO])
+@router.get("/recomendacion", response_model=Recomendacion, dependencies=[COMERCIAL])
 async def recomendacion(
     db: DbSession,
     ciudad: str,

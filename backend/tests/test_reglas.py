@@ -395,13 +395,12 @@ def test_un_valor_de_catalogo_se_dice_por_su_nombre():
     assert describir_condicion(modalidad) == "Modalidad del servicio: en la clínica"
 
 
-async def test_los_eventos_dicen_campos_opciones_y_acciones(client: AsyncClient, db, planes):
-    """Lo lee el equipo, no solo administracion: con la base filtrando por perfil (RLS), un
-    catalogo que el perfil no puede leer saldria vacio sin error."""
-    from tests.conftest import crear_usuario, login
+async def test_los_eventos_dicen_campos_opciones_y_acciones(client: AsyncClient, db, planes, admin):
+    """Lo lee administracion, que configura las reglas (Seccion 12): con la base filtrando por
+    perfil (RLS), un catalogo que el perfil no puede leer saldria vacio sin error."""
+    from tests.conftest import login
 
-    await crear_usuario(db, "medica@timu.co", Rol.MEDICO)
-    resp = await client.get("/api/v1/reglas/eventos", headers=await login(client, "medica@timu.co"))
+    resp = await client.get("/api/v1/reglas/eventos", headers=await login(client, admin.email))
     assert resp.status_code == 200, resp.text
     eventos = {e["evento"]: e for e in resp.json()}
     assert set(eventos) == set(motor.EVENTOS)  # el retirado no se ofrece
@@ -595,3 +594,19 @@ async def test_lo_sembrado_se_lee_sin_codigos(client: AsyncClient, headers, plan
 def test_la_frase_usa_las_palabras_del_editor(condicion, texto):
     """El control dice «al menos», «como mucho», «igual a»: la frase, lo mismo."""
     assert describir_condicion(condicion) == texto
+
+
+async def test_el_administrador_ve_las_plantillas_que_citan_las_reglas_y_faltan(
+    client: AsyncClient, db, admin
+):
+    """Las reglas sembradas de mora citan plantillas que no estan en el catalogo: sus avisos no
+    salen, y el Inicio del administrador lo dice (docs/perfiles-y-permisos.md)."""
+    from tests.conftest import login
+
+    resp = await client.get(
+        "/api/v1/reglas/plantillas-faltantes", headers=await login(client, admin.email)
+    )
+    assert resp.status_code == 200, resp.text
+    faltantes = {p["codigo"]: p for p in resp.json()}
+    assert "aviso_mora" in faltantes
+    assert faltantes["aviso_mora"]["reglas"], "dice que reglas la citan"

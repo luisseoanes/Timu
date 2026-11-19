@@ -1,11 +1,11 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DashboardPage } from './DashboardPage'
 import type { Evolucion, Indicadores, MesEvolucion } from './api'
-import { USUARIO_ADMIN } from '@/test/handlers'
+import { sesionDe, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import { hoyISO } from '@/lib/formato'
@@ -56,13 +56,39 @@ const conDatos = () =>
   server.use(
     http.get(`${API}/dashboard/indicadores`, () => HttpResponse.json(INDICADORES)),
     http.get(`${API}/dashboard/evolucion`, () => HttpResponse.json(EVOLUCION)),
+    http.get(`${API}/dashboard/reportes`, () => HttpResponse.json([])),
   )
+
+const DATOS_COMPLETOS = {
+  id: 'd1',
+  razon_social: 'TIMU S.A.S.',
+  nit: '901635168-2',
+  presentacion: 'Medicina veterinaria prepagada.',
+  mision: 'Cuidar a cada peludo.',
+  vision: null,
+  valores: [],
+  clinica_nombre: 'Clínica TIMU',
+  clinica_direccion: 'Calle 1',
+  clinica_barrio: 'Laureles',
+  clinica_ciudad: 'Medellín',
+  clinica_horario: null,
+  horario_atencion: 'Lunes a sábado',
+  telefonos: [],
+  whatsapp: '573001112233',
+  correo: 'hola@timu.co',
+  redes: [],
+  politica_datos_url: 'https://timu.com.co/datos',
+}
 
 const cifras = () => screen.findByRole('list', { name: 'Cifras del período' })
 const cifra = async (nombre: RegExp) => within(await cifras()).getByRole('button', { name: nombre })
 
-describe('Inicio del equipo', () => {
-  beforeEach(conDatos)
+// Sección 12: un Inicio por perfil (docs/perfiles-y-permisos.md). Gerencia ve el tablero de la Sección 8.
+describe('Inicio de Gerencia', () => {
+  beforeEach(() => {
+    conDatos()
+    server.use(sesionDe('gerencia'))
+  })
 
   it('saluda y muestra las cifras del período en el orden de su perfil', async () => {
     renderizar(<DashboardPage />)
@@ -76,11 +102,10 @@ describe('Inicio del equipo', () => {
     expect(botones[5]).toHaveTextContent('4,6 / 5')
   })
 
-  it('operaciones ve primero las rutas', async () => {
-    server.use(http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'operaciones' })))
+  it('en lugar del día de la operación, los reportes que recibe por correo', async () => {
     renderizar(<DashboardPage />)
-    const [primera] = within(await cifras()).getAllByRole('button')
-    expect(primera).toHaveTextContent(/^Rutas/)
+    expect(await screen.findByRole('heading', { name: 'Reportes programados' })).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'El día de la operación' })).not.toBeInTheDocument()
   })
 
   it('dice cuánto cambió cada cifra contra el período comparable, con su tono', async () => {
@@ -188,8 +213,9 @@ describe('Inicio del equipo', () => {
   })
 })
 
+// Comercial, Atención al cliente y Operaciones: la línea de hoy con solo su trabajo.
 describe('La línea del día', () => {
-  beforeEach(conDatos)
+  beforeEach(() => server.use(sesionDe('atencion_cliente')))
 
   it('agrupa lo vencido con su ejemplo y solo la primera estación lleva el verde', async () => {
     server.use(
@@ -222,9 +248,14 @@ describe('La línea del día', () => {
     expect(within(linea).getByRole('link', { name: 'Autorizar' })).toHaveClass('btn-primario')
   })
 
-  it('sin nada vencido ni agendado, la línea dice qué aparecerá', async () => {
+  it('sin nada vencido ni agendado, la línea dice qué aparecerá: la agenda solo a Operaciones', async () => {
     renderizar(<DashboardPage />)
-    const linea = await screen.findByRole('list', { name: 'El día de la operación' })
+    let linea = await screen.findByRole('list', { name: 'El día de la operación' })
+    expect(await within(linea).findByText(/No hay nada más por ahora/)).toBeInTheDocument()
+    cleanup()
+    server.use(sesionDe('operaciones'))
+    renderizar(<DashboardPage />)
+    linea = await screen.findByRole('list', { name: 'El día de la operación' })
     expect(await within(linea).findByText(/No hay servicios agendados desde hoy/)).toBeInTheDocument()
   })
 
@@ -234,6 +265,7 @@ describe('La línea del día', () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-11-13T13:00:00Z')) // 8:00 a. m. en Colombia
     server.use(
+      sesionDe('operaciones'),
       http.get(`${API}/auth/equipo`, () => HttpResponse.json([{ id: 'm1', nombre: 'Sara Díaz', rol: 'medico' }])),
       http.get(`${API}/servicios`, () =>
         HttpResponse.json({
@@ -272,6 +304,84 @@ describe('La línea del día', () => {
     server.use(http.get(`${API}/cartera/contratos`, () => HttpResponse.json({ detail: 'Caído' }, { status: 503 })))
     renderizar(<DashboardPage />)
     expect(await screen.findByText(/No fue posible revisar el día/)).toBeInTheDocument()
+  })
+
+  it('Operaciones no ve la mora ni lo que se autoriza con la familia: solo servicios y sus tareas', async () => {
+    const pedidas: string[] = []
+    const series: string[][] = []
+    server.use(
+      sesionDe('operaciones'),
+      http.get(`${API}/dashboard/evolucion`, ({ request }) => {
+        series.push(new URL(request.url).searchParams.getAll('codigos'))
+        return HttpResponse.json(EVOLUCION)
+      }),
+      http.get(`${API}/cartera/contratos`, ({ request }) => {
+        pedidas.push(new URL(request.url).pathname)
+        return HttpResponse.json(pagina([]))
+      }),
+      http.get(`${API}/tareas`, () => HttpResponse.json(pagina([{ id: 't1', titulo: 'Revisar la ruta', vence_el: '2026-11-05' }], 1))),
+    )
+    renderizar(<DashboardPage />)
+    const linea = await screen.findByRole('list', { name: 'El día de la operación' })
+    expect(await within(linea).findByText('1 tarea vencida')).toBeInTheDocument()
+    expect(within(linea).queryByText(/en mora/)).not.toBeInTheDocument()
+    expect(pedidas).toEqual([])
+    // Encima, sus tres cifras (Sección 12), y la serie pide solo lo suyo: la API rechaza lo ajeno.
+    const franja = screen.getByRole('list', { name: 'Cifras del período' })
+    expect(within(franja).getAllByRole('listitem').map((c) => c.querySelector('.inicio-cifra-titulo')?.textContent)).toEqual([
+      'Rutas',
+      'Satisfacción',
+      'Servicios',
+    ])
+    await waitFor(() => expect(series).toEqual([['cumplimiento_rutas', 'satisfaccion', 'servicios_por_tipo']]))
+  })
+
+  it('Comercial ve las conversaciones que esperan a un asesor y las renovaciones', async () => {
+    server.use(
+      sesionDe('comercial'),
+      http.get(`${API}/comercial/conversaciones`, () =>
+        HttpResponse.json([{ id: 'cv1', interesado_nombre: 'Natalia Gómez' }, { id: 'cv2', interesado_nombre: null }]),
+      ),
+      http.get(`${API}/cartera/contratos`, () => HttpResponse.json(pagina([{ id: 'c1', titular: 'Jorge Ramírez' }], 3))),
+    )
+    renderizar(<DashboardPage />)
+    const linea = await screen.findByRole('list', { name: 'El día de la operación' })
+    expect(await within(linea).findByText('2 conversaciones esperan a un asesor')).toBeInTheDocument()
+    expect(within(linea).getByRole('link', { name: 'Contestar' })).toHaveAttribute('href', '/panel/comercial?pestana=conversaciones')
+    expect(within(linea).getByText('3 contratos por renovar')).toBeInTheDocument()
+    expect(within(linea).getByRole('link', { name: 'Ver las renovaciones' })).toHaveAttribute('href', '/panel/cartera?vista=por_renovar')
+  })
+})
+
+describe('Inicio del administrador', () => {
+  beforeEach(() => server.use(sesionDe('admin')))
+
+  it('dice lo que falta configurar, con una sola acción verde: la de lo primero que bloquea', async () => {
+    server.use(
+      http.get(`${API}/reglas/plantillas-faltantes`, () =>
+        HttpResponse.json([{ codigo: 'aviso_mora', titulo: 'Aviso de mora', reglas: ['Aviso de mora a los 25 días'] }]),
+      ),
+      http.get(`${API}/institucional`, () => HttpResponse.json({ ...DATOS_COMPLETOS, mision: null })),
+      http.get(`${API}/auth/usuarios/recuentos`, () => HttpResponse.json({ equipo: 6, aliadas: 1, familias: 2, inactivos: 2 })),
+    )
+    renderizar(<DashboardPage />)
+    expect(await screen.findByText('La plantilla «Aviso de mora» no está aprobada en el catálogo')).toBeInTheDocument()
+    expect(screen.getByText('Sus avisos no se envían. La usa: Aviso de mora a los 25 días.')).toBeInTheDocument()
+    expect(screen.getByText('Datos de TIMU: falta la misión')).toBeInTheDocument()
+    expect(screen.getByText('2 usuarios inactivos')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ver las plantillas' })).toHaveClass('btn-primario')
+    expect(screen.getByRole('link', { name: 'Completar los datos' })).toHaveAttribute('href', '/panel/admin?pestana=timu')
+    expect(document.querySelectorAll('.btn-primario')).toHaveLength(1)
+  })
+
+  it('con todo configurado lo dice', async () => {
+    server.use(
+      http.get(`${API}/reglas/plantillas-faltantes`, () => HttpResponse.json([])),
+      http.get(`${API}/institucional`, () => HttpResponse.json(DATOS_COMPLETOS)),
+      http.get(`${API}/auth/usuarios/recuentos`, () => HttpResponse.json({ equipo: 6, aliadas: 1, familias: 2, inactivos: 0 })),
+    )
+    renderizar(<DashboardPage />)
+    expect(await screen.findByText('Todo está configurado.')).toBeInTheDocument()
   })
 })
 

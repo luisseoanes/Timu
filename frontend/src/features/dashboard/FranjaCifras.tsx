@@ -112,7 +112,7 @@ export function FranjaCifras({
 
   return (
     <div className="inicio-cifras" onKeyDown={teclado}>
-      <ul className="inicio-franja" aria-label="Cifras del período">
+      <ul className="inicio-franja" aria-label="Cifras del período" data-cuantas={orden.length}>
         {orden.map((codigo) => {
           const c = CIFRAS[codigo]
           const actual = valorDe(c, indicadores)

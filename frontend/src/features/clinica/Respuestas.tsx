@@ -50,7 +50,7 @@ export function Respuestas() {
               <Insignia tono={r.estado === 'aprobada' ? 'ok' : 'alerta'}>
                 {r.estado === 'aprobada' ? 'Aprobada' : 'Por aprobar'}
               </Insignia>
-              {r.estado !== 'aprobada' && puede(usuario, 'administrar') && (
+              {r.estado !== 'aprobada' && puede(usuario, 'medico') && (
                 <button className="btn btn-plano" type="button" onClick={() => aprobar.mutate(r.codigo)}>
                   Aprobar
                 </button>

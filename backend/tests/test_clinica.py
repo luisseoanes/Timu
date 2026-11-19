@@ -173,7 +173,7 @@ async def _plantilla(client, headers, nombre: str, **campos: str) -> dict:
 async def test_el_codigo_de_la_plantilla_sale_del_nombre_y_no_se_repite(client, equipo):
     primera = await _plantilla(client, equipo["medica"], "Otitis externa", motivo="Rascado")
     # Otro nombre que da el mismo codigo: lleva sufijo.
-    segunda = await _plantilla(client, equipo["admin"], "Otitis, externa", motivo="Rascado")
+    segunda = await _plantilla(client, equipo["otro"], "Otitis, externa", motivo="Rascado")
     tilde = await _plantilla(client, equipo["medica"], "Revisión", motivo="Control")
     assert (primera["codigo"], segunda["codigo"], tilde["codigo"]) == (
         "otitis_externa",
@@ -202,7 +202,7 @@ async def test_el_equipo_medico_corrige_la_plantilla_y_la_retira_sin_borrarla(
             "nombre": "Gastroenteritis leve",
             "campos": {"motivo": "Vomito y diarrea", "diagnostico": "  ", "tratamiento": "Dieta"},
         },
-        headers=equipo["admin"],
+        headers=equipo["otro"],
     )
     assert corregida.status_code == 200, corregida.text
     # El codigo no cambia (es su identificador) y un apartado vacio deja de prellenar.
@@ -217,7 +217,7 @@ async def test_el_equipo_medico_corrige_la_plantilla_y_la_retira_sin_borrarla(
     retirada = await client.patch(url, json={"activa": False}, headers=equipo["medica"])
     assert retirada.json()["activa"] is False
     assert retirada.json()["nombre"] == "Gastroenteritis leve"
-    activas = (await client.get("/api/v1/clinica/plantillas", headers=equipo["op"])).json()
+    activas = (await client.get("/api/v1/clinica/plantillas", headers=equipo["otro"])).json()
     assert creada["codigo"] not in {p["codigo"] for p in activas}
     # La consulta ya no la ofrece ni la acepta.
     consulta = await client.post(
@@ -321,7 +321,7 @@ async def test_el_uso_de_una_plantilla_cuenta_las_consultas_firmadas_y_vigentes(
 
     url = "/api/v1/clinica/plantillas/uso"
     assert (await client.get(url, headers=equipo["medica"])).json() == {plantilla["codigo"]: 1}
-    assert sin_usar["codigo"] not in (await client.get(url, headers=equipo["admin"])).json()
+    assert sin_usar["codigo"] not in (await client.get(url, headers=equipo["otro"])).json()
     assert (await client.get(url, headers=equipo["op"])).status_code == 403
 
     # Corregirla no la cuenta dos veces: la version anterior deja de estar vigente.
@@ -349,13 +349,14 @@ async def test_solo_el_medico_escribe(client, equipo, mascota_id):
         assert resp.status_code == 403, perfil
 
 
-async def test_cada_perfil_ve_lo_suyo(client, equipo, mascota_id):
+async def test_solo_el_personal_medico_lee_la_historia(client, equipo, mascota_id):
+    """Seccion 12 (docs/perfiles-y-permisos.md): la historia clinica es del medico; operaciones y
+    administracion ya no leen ni un resumen."""
     await _entrada(client, equipo, mascota_id, diagnostico="Gastritis", notas_internas="Ojo")
     historia = f"/api/v1/clinica/mascotas/{mascota_id}/historia"
-    (resumen,) = (await client.get(historia, headers=equipo["op"])).json()
-    assert "diagnostico" not in resumen and "notas_internas" not in resumen
-    assert resumen["motivo"] == CONSULTA["motivo"]
-    (completa,) = (await client.get(historia, headers=equipo["admin"])).json()
+    for perfil in ("op", "admin"):
+        assert (await client.get(historia, headers=equipo[perfil])).status_code == 403, perfil
+    (completa,) = (await client.get(historia, headers=equipo["otro"])).json()
     assert completa["notas_internas"] == "Ojo"
 
 
@@ -435,7 +436,7 @@ async def _respuesta_aprobada(client, equipo) -> None:
     assert creada.status_code == 201, creada.text
     aprobada = await client.post(
         f"/api/v1/clinica/respuestas-virtuales/{RESPUESTA['codigo']}/aprobacion",
-        headers=equipo["admin"],
+        headers=equipo["otro"],
     )
     assert aprobada.json()["estado"] == "aprobada"
 
@@ -453,7 +454,7 @@ async def test_ciclo_virtual_queda_en_la_historia(client, db, equipo, mascota_id
         await client.post(
             "/api/v1/clinica/virtual",
             json={"mascota_id": str(mascota_id), "motivo": "Mi perro vomito dos veces"},
-            headers=equipo["op"],
+            headers=equipo["medica"],
         )
     ).json()
     url = f"/api/v1/clinica/virtual/{solicitud['id']}"
@@ -469,7 +470,7 @@ async def test_ciclo_virtual_queda_en_la_historia(client, db, equipo, mascota_id
     ).status_code == 422
     await client.post(
         f"/api/v1/clinica/respuestas-virtuales/{RESPUESTA['codigo']}/aprobacion",
-        headers=equipo["admin"],
+        headers=equipo["otro"],
     )
     # Solo quien la tomo responde.
     assert (
@@ -496,7 +497,7 @@ async def test_respuesta_virtual_va_por_texto_si_la_ventana_esta_abierta(
         await client.post(
             "/api/v1/clinica/virtual",
             json={"mascota_id": str(mascota_id), "motivo": "Consulta por WhatsApp"},
-            headers=equipo["op"],
+            headers=equipo["medica"],
         )
     ).json()
     url = f"/api/v1/clinica/virtual/{solicitud['id']}"
@@ -519,7 +520,7 @@ async def test_cola_prioriza_lo_urgente(client, equipo, mascota_id):
                 "motivo": f"Caso {prioridad}",
                 "prioridad": prioridad,
             },
-            headers=equipo["op"],
+            headers=equipo["medica"],
         )
     cola = (await client.get("/api/v1/clinica/virtual/cola", headers=equipo["medica"])).json()
     assert [s["prioridad"] for s in cola] == ["alta", "media", "baja"]
@@ -532,7 +533,7 @@ async def test_virtual_requiere_plan_vigente(client, db, equipo):
     resp = await client.post(
         "/api/v1/clinica/virtual",
         json={"mascota_id": str(mascota_id), "motivo": "Consulta sin plan"},
-        headers=equipo["op"],
+        headers=equipo["medica"],
     )
     assert resp.status_code == 422
 
@@ -656,5 +657,7 @@ async def test_cada_profesional_ve_sus_borradores(client, equipo, mascota_id):
 
     mias = (await client.get("/api/v1/clinica/borradores", headers=equipo["medica"])).json()
     assert [e["id"] for e in mias] == [propia["id"]]
-    assert (await client.get("/api/v1/clinica/borradores", headers=equipo["admin"])).json() == []
+    assert (
+        await client.get("/api/v1/clinica/borradores", headers=equipo["admin"])
+    ).status_code == 403
     assert (await client.get("/api/v1/clinica/borradores", headers=equipo["op"])).status_code == 403

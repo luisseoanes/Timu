@@ -8,6 +8,7 @@ from uuid import UUID
 from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
+from app.core.enums import AreaTarea, Rol
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
 from app.modules.familias.models import Familia
@@ -65,8 +66,18 @@ def desde_accion(db: Session, accion: dict[str, Any], regla: str, **vinculos: An
     )
 
 
+# Seccion 12 Cada perfil ve y trabaja las tareas de su area (docs/perfiles-y-permisos.md).
+AREAS_POR_ROL: dict[str, tuple[str, ...]] = {
+    Rol.COMERCIAL: (AreaTarea.COMERCIAL,),
+    Rol.ATENCION_CLIENTE: (AreaTarea.CARTERA, AreaTarea.SERVICIO_CLIENTE),
+    Rol.OPERACIONES: (AreaTarea.OPERACIONES,),
+    Rol.MEDICO: (AreaTarea.MEDICO,),
+}
+
+
 def consulta(
     *,
+    areas: tuple[str, ...] | None = None,
     area: str | None = None,
     estado: str | None = None,
     asignada_a_id: UUID | None = None,
@@ -75,6 +86,8 @@ def consulta(
     familia_id: UUID | None = None,
 ) -> Select[tuple[Tarea]]:
     stmt = select(Tarea)
+    if areas is not None:
+        stmt = stmt.where(Tarea.area.in_(areas))
     if area:
         stmt = stmt.where(Tarea.area == area)
     if estado:
@@ -90,9 +103,10 @@ def consulta(
     return stmt
 
 
-def obtener(db: Session, tarea_id: UUID) -> Tarea:
+def obtener(db: Session, tarea_id: UUID, areas: tuple[str, ...] | None = None) -> Tarea:
+    """Con `areas`, una tarea de otra area no existe para quien pregunta."""
     tarea = db.get(Tarea, tarea_id)
-    if tarea is None:
+    if tarea is None or (areas is not None and tarea.area not in areas):
         raise NoEncontrado("Tarea no encontrada")
     return tarea
 

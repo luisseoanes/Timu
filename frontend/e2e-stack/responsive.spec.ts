@@ -74,12 +74,11 @@ async function familiaDemo(page: Page): Promise<Familia> {
 
 /** Una entrada de historia clínica y su mascota, de cualquier familia de datos_demo. */
 async function entradaClinica(page: Page): Promise<{ mascota: string; entrada: string }> {
-  const { items } = await pedir<{ items: Familia[] }>(page, '/familias?limit=50')
-  for (const familia of items) {
-    for (const { id } of familia.mascotas ?? []) {
-      const historia = await pedir<{ id: string }[]>(page, `/clinica/mascotas/${id}/historia`)
-      if (historia.length > 0) return { mascota: id, entrada: historia[0].id }
-    }
+  // Las mascotas que atiende el médico: no ve Familias (Sección 12), sí sus servicios.
+  const { items } = await pedir<{ items: { mascota: { id: string } | null }[] }>(page, '/servicios?limit=50')
+  for (const id of new Set(items.flatMap((s) => (s.mascota ? [s.mascota.id] : [])))) {
+    const historia = await pedir<{ id: string }[]>(page, `/clinica/mascotas/${id}/historia`)
+    if (historia.length > 0) return { mascota: id, entrada: historia[0].id }
   }
   throw new Error('datos_demo no dejó ninguna entrada de historia clínica')
 }
@@ -119,16 +118,21 @@ const RUTAS: Ruta[] = [
   { app: '/afiliacion/completar', perfil: null, url: '/afiliacion/completar' },
 
   // Panel del equipo.
-  { app: 'index:panel', perfil: 'equipo', url: '/panel' },
-  { app: 'familias', perfil: 'equipo', url: '/panel/familias' },
+  // Un Inicio por perfil (Sección 12): cada uno es otra pantalla, y cada uno se mide.
+  { app: 'index:panel', perfil: 'atencion', url: '/panel' },
+  { app: 'index:panel', perfil: 'admin', url: '/panel' },
+  { app: 'index:panel', perfil: 'gerencia', url: '/panel' },
+  { app: 'index:panel', perfil: 'comercial', url: '/panel' },
+  { app: 'index:panel', perfil: 'operaciones', url: '/panel' },
+  { app: 'familias', perfil: 'atencion', url: '/panel/familias' },
   {
     app: 'familias/:id',
-    perfil: 'equipo',
+    perfil: 'atencion',
     url: async (page) => `/panel/familias/${(await familiaDemo(page)).id}`,
     pestanas: true,
   },
-  { app: 'cartera', perfil: 'equipo', url: '/panel/cartera' },
-  { app: 'servicios', perfil: 'equipo', url: '/panel/servicios', pestanas: true },
+  { app: 'cartera', perfil: 'atencion', url: '/panel/cartera' },
+  { app: 'servicios', perfil: 'atencion', url: '/panel/servicios', pestanas: true },
   {
     app: 'servicios/:id',
     perfil: 'medico',
@@ -138,9 +142,8 @@ const RUTAS: Ruta[] = [
       return `/panel/servicios/${items[0].id}`
     },
   },
-  { app: 'tareas', perfil: 'equipo', url: '/panel/tareas' },
-  // Con sus dos pestañas (R2-PAN-08), y con administración: el perfil de equipo va al borde del cupo.
-  { app: 'preventivos', perfil: 'admin', url: '/panel/preventivos', pestanas: true },
+  { app: 'tareas', perfil: 'atencion', url: '/panel/tareas' },
+  { app: 'preventivos', perfil: 'atencion', url: '/panel/preventivos', pestanas: true },
   {
     app: 'clinica',
     perfil: 'medico',
@@ -167,18 +170,20 @@ const RUTAS: Ruta[] = [
       return { ruta: `${url}${url.includes('?') ? '&' : '?'}ruta=${ruta!.id}` }
     },
   },
-  // Con sus pestañas (R2-PAN-09), y con administración: el perfil de equipo va al borde del cupo.
+  // El planificador de rutas: lo que ve Operaciones (el médico ve su ruta, arriba).
+  { app: 'rutas', perfil: 'operaciones', url: '/panel/rutas' },
   {
     app: 'campanas',
-    perfil: 'admin',
+    perfil: 'comercial',
     url: '/panel/campanas',
     pestanas: true,
     fichas: async (page) => ({ campana: `/panel/campanas?campana=${(await deDatosDemo(page, '/campanas', 'Renovaciones del mes')).id}` }),
   },
-  // Con sus pestañas (R2-PAN-10), y con administración, que también ve la liquidación.
+  // Atención emite las remisiones; Operaciones lleva la red y su liquidación.
+  { app: 'aliadas', perfil: 'atencion', url: '/panel/aliadas' },
   {
     app: 'aliadas',
-    perfil: 'admin',
+    perfil: 'operaciones',
     url: '/panel/aliadas',
     pestanas: true,
     fichas: async (page) => {
@@ -186,10 +191,9 @@ const RUTAS: Ruta[] = [
       return { clinica: `/panel/aliadas?pestana=clinicas&clinica=${clinica.id}` }
     },
   },
-  // Con sus pestañas (R2-PAN-09), y con administración: el perfil de equipo va al borde del cupo.
   {
     app: 'comercial',
-    perfil: 'admin',
+    perfil: 'comercial',
     url: '/panel/comercial',
     pestanas: true,
     fichas: async (page) => {
@@ -197,7 +201,9 @@ const RUTAS: Ruta[] = [
       return { interesado: `/panel/comercial?interesado=${interesado.id}` }
     },
   },
-  // Con sus seis pestañas (R2-PAN-10).
+  { app: 'encuestas', perfil: 'atencion', url: '/panel/encuestas' },
+  { app: 'mensajes', perfil: 'atencion', url: '/panel/mensajes' },
+  // Con sus nueve pestañas: configura y nada más (Sección 12).
   {
     app: 'admin',
     perfil: 'admin',
@@ -212,8 +218,8 @@ const RUTAS: Ruta[] = [
       return { plan: `/panel/admin?plan=${plan!.id}`, regla: `/panel/admin?regla=${regla!.id}` }
     },
   },
-  // La verificación pública de un carnet de verdad (R3-PUB-03): emitirlo pide una sesión del equipo.
-  { app: '/verificar/:codigo', perfil: 'admin', url: carnetEmitido },
+  // La verificación pública de un carnet de verdad (R3-PUB-03): lo emite Atención al cliente.
+  { app: '/verificar/:codigo', perfil: 'atencion', url: carnetEmitido },
 
   // Portal de familias.
   { app: 'index:portal', perfil: 'familia', url: '/portal' },
@@ -325,7 +331,7 @@ async function cargarConDatos(page: Page, fallos: FalloApi[], cargar: (reintento
   ).toEqual([])
 }
 
-for (const perfil of [null, 'equipo', 'medico', 'admin', 'familia', 'aliada'] as const) {
+for (const perfil of [null, 'atencion', 'admin', 'gerencia', 'comercial', 'operaciones', 'medico', 'familia', 'aliada'] as const) {
   test.describe(perfil ? `responsive y contraste · ${perfil}` : 'responsive y contraste · público', () => {
     test.use({ storageState: perfil ? sesion(perfil) : { cookies: [], origins: [] } })
 
@@ -385,8 +391,10 @@ test('el recorrido cubre todas las rutas de App.tsx', () => {
     .map((m) => m[1])
     .filter((p) => p !== '*')
   const indices = [...app.matchAll(/<Route\s+index\s+element=\{<[^>]*\/>\}\s*\/>/g)].filter(pantalla).length
-  const declaradas = RUTAS.map((r) => r.app)
+  // Una pantalla puede medirse con varios perfiles (el Inicio, Aliadas, Rutas): cada uno ve otra.
+  const declaradas = [...new Set(RUTAS.map((r) => r.app))]
   expect(declaradas.filter((r) => !r.startsWith('index:')).sort()).toEqual(rutas.sort())
   expect(declaradas.filter((r) => r.startsWith('index:'))).toHaveLength(indices)
-  expect(new Set(declaradas).size, 'cada ruta aparece una sola vez').toBe(declaradas.length)
+  const pares = RUTAS.map((r) => `${r.perfil} ${r.app}`)
+  expect(new Set(pares).size, 'cada ruta aparece una sola vez por perfil').toBe(pares.length)
 })

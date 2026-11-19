@@ -356,8 +356,9 @@ async def test_configuracion_general_y_por_tipo_se_reemplaza(client: AsyncClient
 async def test_solo_la_administracion_configura_las_encuestas(client: AsyncClient, db):
     from tests.conftest import login
 
-    await crear_usuario(db, "comercial@timu.co", Rol.COMERCIAL)
-    comercial = await login(client, "comercial@timu.co")
+    # Atencion al cliente lee las respuestas (6.20, 6.21) pero no configura cuando salen.
+    await crear_usuario(db, "mostrador@timu.co", Rol.ATENCION_CLIENTE)
+    comercial = await login(client, "mostrador@timu.co")
     assert (await client.get("/api/v1/encuestas", headers=comercial)).status_code == 200
     assert (
         await client.get("/api/v1/encuestas/configuracion", headers=comercial)

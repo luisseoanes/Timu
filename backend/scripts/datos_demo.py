@@ -24,8 +24,11 @@ from sqlalchemy import select
 # app.workers.tasks.comunicaciones conecta los mensajes entrantes con quien los contesta (el bot
 # comercial), como en el worker.
 import app.workers.tasks.comunicaciones  # noqa: F401
+from app.api import perfiles
 from app.core.config import Settings, settings
 from app.core.database import sesion_worker
+from app.core.enums import Rol
+from app.main import app as api_app
 from app.modules.comunicaciones import service as comunicaciones
 from app.modules.comunicaciones.models import Mensaje
 from scripts.datos_portada import ADICIONALES, ALIADAS, DATOS_TIMU
@@ -268,13 +271,14 @@ def _clave_beneficio(b: dict[str, Any]) -> tuple[Any, ...]:
     return (b["tipo_servicio_codigo"], b["cupo"], b["periodo_cupo"], b["cobertura_pct"])
 
 
+# Un usuario por perfil del equipo (Seccion 12, docs/perfiles-y-permisos.md); el administrador,
+# admin@timu.co, lo crea `inicializar`.
 EQUIPO = [
-    # Administrador propio de los recorridos e2e: el limite de peticiones es por usuario, y
-    # admin@timu.co lo gasta creando estos datos justo antes (frontend/e2e-stack/sesiones.ts).
-    ("gerencia@timu.co", "Laura Gómez", "admin"),
-    ("medico@timu.co", "Dra. Sara Martínez", "medico"),
-    ("operaciones@timu.co", "Carlos Peña", "operaciones"),
+    ("gerencia@timu.co", "Laura Gómez", "gerencia"),
     ("comercial@timu.co", "Valentina Ríos", "comercial"),
+    ("atencion@timu.co", "Mariana Ortiz", "atencion_cliente"),
+    ("operaciones@timu.co", "Carlos Peña", "operaciones"),
+    ("medico@timu.co", "Dra. Sara Martínez", "medico"),
 ]
 CLAVE_EQUIPO = "demo12345"
 
@@ -335,6 +339,78 @@ class Cliente:
         resp = self.http.patch(ruta, json=cuerpo)
         resp.raise_for_status()
         return resp.json()
+
+
+# Seccion 12 Cada perfil hace lo suyo (docs/perfiles-y-permisos.md): el script habla con la API
+# como el perfil al que le toca cada ruta, leido de las guardas de la propia API. Si varios la
+# admiten, el primero de esta lista.
+PREFERENCIA = (
+    Rol.ATENCION_CLIENTE,
+    Rol.OPERACIONES,
+    Rol.COMERCIAL,
+    Rol.MEDICO,
+    Rol.ADMIN,
+    Rol.GERENCIA,
+)
+
+
+def _rutas_por_perfil() -> list[tuple[str, re.Pattern[str], frozenset[Rol]]]:
+    salida = []
+    for clave, roles in perfiles.matriz(api_app).items():
+        if isinstance(roles, str):  # publico: vale con cualquier sesion
+            roles = frozenset(Rol)
+        metodos, ruta = clave.split(" ", 1)
+        camino = ruta.removeprefix(settings.API_V1_PREFIX)
+        patron = re.compile("^" + re.sub(r"\{[^}]+\}", "[^/]+", camino) + "$")
+        salida += [(m, patron, roles) for m in metodos.split(",")]
+    # Una ruta literal antes que una con parametros: /familias/supresion antes que /familias/{id}.
+    return sorted(salida, key=lambda r: r[1].pattern.count("[^/]+"))
+
+
+class _Despacho(httpx.Client):
+    """Cada peticion sale con la sesion del perfil que la ruta admite."""
+
+    def __init__(self, clientes: dict[Rol, Cliente]) -> None:
+        super().__init__(base_url=API)
+        self.clientes = clientes
+        self.rutas = _rutas_por_perfil()
+
+    def request(self, method: str, url: Any, **kwargs: Any) -> httpx.Response:  # type: ignore[override]
+        camino = str(url).split("?")[0]
+        for metodo, patron, roles in self.rutas:
+            if metodo == method.upper() and patron.match(camino):
+                rol = next((r for r in PREFERENCIA if r in roles and r in self.clientes), None)
+                if rol is None:
+                    raise RuntimeError(f"Ningun perfil del script puede {method} {camino}")
+                return self.clientes[rol].http.request(method, url, **kwargs)
+        raise RuntimeError(f"Ruta desconocida: {method} {camino}")
+
+
+class Equipo(Cliente):
+    """Un cliente por perfil del equipo; se usa como un `Cliente` cualquiera."""
+
+    def __init__(self, clientes: dict[Rol, Cliente]) -> None:
+        self.http = _Despacho(clientes)
+
+
+def equipo() -> Equipo:
+    """El administrador y los perfiles del equipo de prueba (crea los que falten)."""
+    admin = Cliente()
+    existentes = {u["email"]: u for u in admin.get("/auth/usuarios", limit=200)["items"]}
+    for email, nombre, rol in EQUIPO:
+        if email not in existentes:
+            admin.post(
+                "/auth/usuarios",
+                {"email": email, "nombre": nombre, "rol": rol, "password": CLAVE_EQUIPO},
+            )
+        elif existentes[email]["rol"] != rol:
+            # Una base sembrada antes de los perfiles por funcion: el usuario pasa al suyo.
+            admin.patch(f"/auth/usuarios/{existentes[email]['id']}", {"rol": rol})
+    clientes = {Rol.ADMIN: admin}
+    for email, _, rol in EQUIPO:
+        if Rol(rol) not in clientes:
+            clientes[Rol(rol)] = Cliente(email, CLAVE_EQUIPO)
+    return Equipo(clientes)
 
 
 # Una persona escribe por WhatsApp, el bot la atiende y pide un asesor (6.11/04): la ficha de
@@ -571,7 +647,8 @@ def portada(c: Cliente) -> None:
 
 def main() -> None:
     comprobar_ambiente(settings, "datos_demo")
-    c = Cliente()
+    print("Equipo de prueba")
+    c = equipo()
     hoy = datetime.now(BOGOTA).date()
 
     if not c.get("/planes"):
@@ -710,15 +787,6 @@ def main() -> None:
                     "vence_en_dias": max(dias, 0),
                     "familia_id": familias[i % len(familias)]["id"],
                 },
-            )
-
-    print("Equipo de prueba")
-    existentes_u = {u["email"] for u in c.get("/auth/usuarios", limit=200)["items"]}
-    for email, nombre, rol in EQUIPO:
-        if email not in existentes_u:
-            c.post(
-                "/auth/usuarios",
-                {"email": email, "nombre": nombre, "rol": rol, "password": CLAVE_EQUIPO},
             )
 
     print("Preventivos")

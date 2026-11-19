@@ -4,10 +4,13 @@ import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { CarteraPage } from './CarteraPage'
-import { FAMILIA, USUARIO_ADMIN } from '@/test/handlers'
+import { FAMILIA, sesionDe, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { ContratoListado, EstadoCuenta } from '@/types'
+
+// Sección 12: esta pantalla se prueba con el perfil que la usa (docs/perfiles-y-permisos.md).
+beforeEach(() => server.use(sesionDe('atencion_cliente')))
 
 const CONTRATO: ContratoListado = {
   id: 'c1',
@@ -115,10 +118,11 @@ describe('CarteraPage', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
-  it('en «Por renovar» renueva un año tras confirmarlo', async () => {
+  it('en «Por renovar» Comercial renueva un año tras confirmarlo', async () => {
     const consultas: string[] = []
     let renovado = ''
     server.use(
+      sesionDe('comercial'),
       http.get(RUTA, ({ request }) => {
         consultas.push(new URL(request.url).search)
         return pagina([POR_RENOVAR])
@@ -159,6 +163,8 @@ describe('CarteraPage', () => {
     )
     const user = userEvent.setup()
     renderizar(<CarteraPage />, { ruta: '/panel/cartera?vista=todos' })
+    // Con la sesión de Atención llegan las pestañas (contratos y pasarela): se busca después.
+    await screen.findByRole('tab', { name: 'Contratos' })
     await user.type(await screen.findByRole('searchbox', { name: 'Buscar contratos' }), 'TM')
     await waitFor(() => expect(consultas.some((c) => c.includes('q=TM') && !c.includes('solo_mora'))).toBe(true))
     expect(await screen.findByText('Ningún contrato de esta vista coincide con la búsqueda.')).toBeInTheDocument()

@@ -10,8 +10,8 @@ import { sesion } from './sesiones'
  * sesiones.setup.ts por el formulario real.
  */
 
-test.describe('equipo', () => {
-  test.use({ storageState: sesion('equipo') })
+test.describe('atención al cliente', () => {
+  test.use({ storageState: sesion('atencion') })
 
   test('busca una familia en el panel y abre su ficha con sus mascotas', async ({ page }) => {
     await page.goto('/panel')
@@ -128,8 +128,8 @@ test.describe('equipo', () => {
   })
 })
 
-test.describe('equipo comercial', () => {
-  test.use({ storageState: sesion('equipo') })
+test.describe('comercial', () => {
+  test.use({ storageState: sesion('comercial') })
 
   test('la bandeja de conversaciones carga contra la API real', async ({ page }) => {
     // Con la API simulada esto pasaba aunque el panel pedía un estado que la API rechaza.
@@ -142,9 +142,8 @@ test.describe('equipo comercial', () => {
 })
 
 test.describe('gerencia en el inicio', () => {
-  // Con el perfil de administración (gerencia@timu.co), que ve el mismo tablero: el de equipo
-  // ya gasta casi todo su cupo de 120 peticiones por minuto en el barrido y los demás recorridos.
-  test.use({ storageState: sesion('admin') })
+  // El tablero de la Sección 8 es de Gerencia (Sección 12).
+  test.use({ storageState: sesion('gerencia') })
 
   test('una cifra abre su serie de 12 meses servida por la API, con una sola acción verde', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
@@ -159,13 +158,14 @@ test.describe('gerencia en el inicio', () => {
     await abierta.getByText('Ver los datos').click()
     // La cabecera y los 12 meses.
     await expect(abierta.getByRole('row')).toHaveCount(13)
-    await expect(page.getByRole('list', { name: 'El día de la operación' })).toBeVisible()
+    // Gerencia mide y no opera: en lugar del día, sus reportes por correo (Sección 12).
+    await expect(page.getByRole('heading', { name: 'Reportes programados' })).toBeVisible()
     await expect(page.locator('.btn-primario:visible')).toHaveCount(1)
     await expect(page.getByRole('alert')).toHaveCount(0)
   })
 })
 
-test.describe('gerencia en reglas', () => {
+test.describe('administración en reglas', () => {
   // Con el perfil de administración: solo él edita reglas. No guarda nada: una regla creada en
   // cada pasada cambiaría la operación que recorren los demás.
   test.use({ storageState: sesion('admin') })
@@ -194,9 +194,9 @@ test.describe('gerencia en reglas', () => {
   })
 })
 
-test.describe('gerencia en servicios', () => {
-  // Con el perfil de administración: el de equipo no tiene cupo de peticiones para uno más.
-  test.use({ storageState: sesion('admin') })
+test.describe('atención en servicios', () => {
+  // Atención agenda y sigue los servicios (6.5).
+  test.use({ storageState: sesion('atencion') })
 
   test('el listado dice a quién se atiende y abre la ficha sin perder el listado', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
@@ -224,9 +224,9 @@ test.describe('gerencia en servicios', () => {
   })
 })
 
-test.describe('gerencia en cartera y preventivos', () => {
-  // Con el perfil de administración: el de equipo no tiene cupo de peticiones para dos más.
-  test.use({ storageState: sesion('admin') })
+test.describe('atención en cartera y preventivos', () => {
+  // Atención cobra y pide las autorizaciones a la familia (6.2, 6.9).
+  test.use({ storageState: sesion('atencion') })
 
   test('la cartera abre en lo que se debe y cobra desde la fila con las cuotas de la familia', async ({ page }) => {
     await page.goto('/panel/cartera')
@@ -254,9 +254,9 @@ test.describe('gerencia en cartera y preventivos', () => {
   })
 })
 
-test.describe('gerencia en comercial', () => {
-  // Con el perfil de administración: el de equipo no tiene cupo de peticiones para uno más.
-  test.use({ storageState: sesion('admin') })
+test.describe('comercial en sus conversaciones', () => {
+  // Comercial contesta a quien espera un asesor (6.11).
+  test.use({ storageState: sesion('comercial') })
 
   test('la conversación que espera a un asesor lleva a la ficha del interesado, con sus mensajes', async ({ page }) => {
     await page.goto('/panel/comercial')
@@ -331,13 +331,16 @@ test.describe('médico en clínica', () => {
 
   // Solo lectura también: la consulta nace al dejar el motivo, y avanzar dejaría un borrador en
   // cada pasada. Que la plantilla llena los demás apartados lo prueba clinica.test.tsx.
-  test('una consulta nueva parte de una plantilla de datos_demo y la usa de punto de partida', async ({ page }) => {
+  test('una consulta nueva parte de una plantilla de datos_demo y la usa de punto de partida', async ({ page, playwright, baseURL }) => {
     await page.goto('/panel/clinica')
-    const familias = await page.request.get('/api/v1/familias', { params: { q: 'Ana Ruiz', limit: 5 } })
+    // El médico no ve Familias (Sección 12): la mascota se busca con la sesión de Atención.
+    const atencion = await playwright.request.newContext({ baseURL, storageState: sesion('atencion') })
+    const familias = await atencion.get('/api/v1/familias', { params: { q: 'Ana Ruiz', limit: 5 } })
     expect(familias.ok(), `GET /familias respondió ${familias.status()}`).toBeTruthy()
     const { items } = (await familias.json()) as { items: { titular_nombre: string; mascotas: { id: string; nombre: string }[] }[] }
     const michi = items.find((f) => f.titular_nombre === 'Ana Ruiz')?.mascotas.find((m) => m.nombre === 'Michi')
     expect(michi, 'datos_demo no dejó a Michi, de Ana Ruiz').toBeTruthy()
+    await atencion.dispose()
 
     await page.goto(`/panel/clinica/mascotas/${michi!.id}?nueva=1`)
     const plantilla = page.getByLabel('Plantilla')
@@ -350,8 +353,8 @@ test.describe('médico en clínica', () => {
   })
 })
 
-test.describe('equipo en rutas', () => {
-  test.use({ storageState: sesion('equipo') })
+test.describe('operaciones en rutas', () => {
+  test.use({ storageState: sesion('operaciones') })
 
   test('ve las rutas del día y abre una con sus paradas', async ({ page }) => {
     const { url } = await rutaDemo(page.request)
@@ -395,7 +398,7 @@ test.describe('clínica aliada', () => {
 
   test('valida una remisión emitida sin consumirla', async ({ page, playwright, baseURL }) => {
     // El código lo consulta el equipo, como haría quien emite la remisión.
-    const equipo = await playwright.request.newContext({ baseURL, storageState: sesion('equipo') })
+    const equipo = await playwright.request.newContext({ baseURL, storageState: sesion('atencion') })
     const remisiones = await (await equipo.get('/api/v1/aliadas/remisiones', { params: { estado: 'emitida' } })).json()
     await equipo.dispose()
     // La de datos_demo, por su motivo: con la operación sembrada hay otras emitidas, y la primera

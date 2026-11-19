@@ -7,21 +7,39 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
-from app.api.deps import INTERNOS, DbSession, requiere
+from app.api.deps import DbSession, requiere
 from app.core.enums import EstadoParada, EstadoRuta, Rol
 from app.core.errores import NoEncontrado
 from app.modules.archivos import service as archivos
 from app.modules.auth.models import Usuario
 from app.modules.rutas import service
-from app.modules.rutas.models import PlanificacionRuta, Ruta
+from app.modules.rutas.models import ParadaRuta, PlanificacionRuta, Ruta
 
 router = APIRouter(prefix="/rutas", tags=["rutas"])
 
-EQUIPO = Depends(requiere(*INTERNOS))
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
+OPERACIONES = Depends(requiere(Rol.OPERACIONES))
+Operaciones = Annotated[Usuario, OPERACIONES]
+OperacionesYMedico = Annotated[Usuario, Depends(requiere(Rol.OPERACIONES, Rol.MEDICO))]
+
+
+def _propia(usuario: Usuario, ruta: Ruta) -> Ruta:
+    """Seccion 12 El medico solo ve y recorre su ruta: para el, una ajena no existe.
+    Operaciones puede marcar las paradas de cualquiera (lo hace por el medico)."""
+    if usuario.rol == Rol.MEDICO and ruta.responsable_id != usuario.id:
+        raise NoEncontrado("Ruta no encontrada")
+    return ruta
+
+
+def _parada(db: Session, usuario: Usuario, parada_id: UUID) -> ParadaRuta:
+    parada = service.obtener_parada(db, parada_id)
+    _propia(usuario, parada.ruta)
+    return parada
+
+
 # Planear y rehacer rutas es de operaciones; ejecutarlas, de quien sale a campo.
-Operaciones = Annotated[Usuario, Depends(requiere(Rol.OPERACIONES, Rol.ADMIN))]
-Campo = Annotated[Usuario, Depends(requiere(Rol.MEDICO, Rol.OPERACIONES, Rol.ADMIN))]
 
 
 class PlanificacionIn(BaseModel):
@@ -136,7 +154,7 @@ async def planificar(
 @router.get(
     "/planificaciones/{planificacion_id}",
     response_model=PlanificacionRead,
-    dependencies=[EQUIPO],
+    dependencies=[OPERACIONES],
 )
 async def planificacion(db: DbSession, planificacion_id: UUID) -> PlanificacionRuta:
     p = await db.get(PlanificacionRuta, planificacion_id)
@@ -145,16 +163,17 @@ async def planificacion(db: DbSession, planificacion_id: UUID) -> PlanificacionR
     return p
 
 
-@router.get("/por-rutear", response_model=list[PorRutearRead], dependencies=[EQUIPO])
+@router.get("/por-rutear", response_model=list[PorRutearRead], dependencies=[OPERACIONES])
 async def por_rutear(db: DbSession, fecha: date, ciudad: str | None = None) -> list[dict[str, Any]]:
     return await db.run_sync(
         lambda s: service.presentar_por_rutear(s, service.por_rutear(s, fecha, ciudad))
     )
 
 
-@router.get("", response_model=list[RutaRead], dependencies=[EQUIPO])
+@router.get("", response_model=list[RutaRead])
 async def listar(
     db: DbSession,
+    usuario: OperacionesYMedico,
     fecha: date,
     ciudad: str | None = None,
     responsable_id: UUID | None = None,
@@ -163,6 +182,8 @@ async def listar(
     stmt = select(Ruta).where(Ruta.fecha == fecha)
     if ciudad:
         stmt = stmt.where(Ruta.ciudad == ciudad)
+    if usuario.rol == Rol.MEDICO:
+        responsable_id = usuario.id
     if responsable_id:
         stmt = stmt.where(Ruta.responsable_id == responsable_id)
     if not incluir_canceladas:
@@ -171,9 +192,11 @@ async def listar(
     return await db.run_sync(service.presentar_varias, rutas)
 
 
-@router.get("/{ruta_id}", response_model=RutaRead, dependencies=[EQUIPO])
-async def obtener(db: DbSession, ruta_id: UUID) -> dict[str, Any]:
-    return await db.run_sync(lambda s: service.presentar(s, service.obtener(s, ruta_id)))
+@router.get("/{ruta_id}", response_model=RutaRead)
+async def obtener(db: DbSession, usuario: OperacionesYMedico, ruta_id: UUID) -> dict[str, Any]:
+    return await db.run_sync(
+        lambda s: service.presentar(s, _propia(usuario, service.obtener(s, ruta_id)))
+    )
 
 
 @router.post("/{ruta_id}/cancelacion", response_model=RutaRead)
@@ -187,27 +210,27 @@ async def cancelar(db: DbSession, _: Operaciones, ruta_id: UUID) -> dict[str, An
 
 
 @router.post("/{ruta_id}/inicio", response_model=RutaRead)
-async def iniciar(db: DbSession, usuario: Campo, ruta_id: UUID) -> dict[str, Any]:
+async def iniciar(db: DbSession, usuario: OperacionesYMedico, ruta_id: UUID) -> dict[str, Any]:
     return await db.run_sync(
         lambda s: service.presentar(s, service.iniciar(s, service.obtener(s, ruta_id), usuario.id))
     )
 
 
 @router.post("/paradas/{parada_id}/en-camino", response_model=RutaRead)
-async def en_camino(db: DbSession, usuario: Campo, parada_id: UUID) -> dict[str, Any]:
+async def en_camino(db: DbSession, usuario: OperacionesYMedico, parada_id: UUID) -> dict[str, Any]:
     """El servicio pasa a en ruta y la familia recibe el aviso de que el tecnico va."""
     return await db.run_sync(
         lambda s: service.presentar(
-            s, service.en_camino(s, service.obtener_parada(s, parada_id), usuario.id).ruta
+            s, service.en_camino(s, _parada(s, usuario, parada_id), usuario.id).ruta
         )
     )
 
 
 @router.post("/paradas/{parada_id}/llegada", response_model=RutaRead)
-async def llegada(db: DbSession, usuario: Campo, parada_id: UUID) -> dict[str, Any]:
+async def llegada(db: DbSession, usuario: OperacionesYMedico, parada_id: UUID) -> dict[str, Any]:
     return await db.run_sync(
         lambda s: service.presentar(
-            s, service.llegada(s, service.obtener_parada(s, parada_id), usuario.id).ruta
+            s, service.llegada(s, _parada(s, usuario, parada_id), usuario.id).ruta
         )
     )
 
@@ -215,7 +238,7 @@ async def llegada(db: DbSession, usuario: Campo, parada_id: UUID) -> dict[str, A
 @router.post("/paradas/{parada_id}/salida", response_model=RutaRead)
 async def salida(
     db: DbSession,
-    usuario: Campo,
+    usuario: OperacionesYMedico,
     parada_id: UUID,
     nota: Annotated[str | None, Form(max_length=2000)] = None,
     evidencia: Annotated[UploadFile | None, File(description="Foto o PDF de la visita")] = None,
@@ -227,7 +250,7 @@ async def salida(
             s,
             service.salida(
                 s,
-                service.obtener_parada(s, parada_id),
+                _parada(s, usuario, parada_id),
                 usuario.id,
                 nota=nota,
                 evidencia=contenido,
@@ -241,14 +264,16 @@ async def salida(
 
 
 @router.post("/paradas/{parada_id}/omision", response_model=RutaRead)
-async def omitir(db: DbSession, usuario: Campo, parada_id: UUID, data: OmisionIn) -> dict[str, Any]:
+async def omitir(
+    db: DbSession, usuario: OperacionesYMedico, parada_id: UUID, data: OmisionIn
+) -> dict[str, Any]:
     """Saca la parada; el resto se renumera y se reestima sin rehacer la ruta."""
     return await db.run_sync(
         lambda s: service.presentar(
             s,
             service.omitir(
                 s,
-                service.obtener_parada(s, parada_id),
+                _parada(s, usuario, parada_id),
                 data.motivo,
                 cancelar_servicio=data.cancelar_servicio,
                 usuario_id=usuario.id,

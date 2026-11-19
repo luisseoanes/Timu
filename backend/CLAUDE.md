@@ -185,7 +185,10 @@ Contra **PostgreSQL** (`docker compose up -d db-test`, puerto 5433), nunca SQLit
 `timu_app`. Cada prueba corre en una transacción que se revierte; las marcas `unit` e `integration` las
 pone `conftest.py` (`-m unit` también necesita `db-test`). Fixtures: `db` (actúa como `SISTEMA`),
 `client` (empieza en `publico`), `tareas` (drena el outbox con sus manejadores reales),
-`almacenamiento` (S3 en memoria), `en_worker` y `login(client, email)`. Las trampas conocidas, en
+`almacenamiento` (S3 en memoria), `en_worker` y `login(client, email)`. **`headers` es el equipo**: cada
+petición sale con la sesión del perfil al que la ruta le toca (`equipo` da un usuario por perfil); una
+prueba que mira un perfil concreto entra con el suyo (`login`), y una ruta solo del médico sobre un
+servicio necesita `del_medico(db, servicio_id, medico)`. Las trampas conocidas, en
 [pruebas](../docs/backend/pruebas.md); las que más se tropiezan:
 
 - **Nunca dos `pytest` a la vez contra `db-test`**, tampoco el de un subagente (un revisor): el fixture

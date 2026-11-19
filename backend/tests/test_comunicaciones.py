@@ -374,7 +374,9 @@ async def test_pedir_baja_excluye_de_envios_masivos(
     assert await tareas.de(service.TAREA_ENVIO) == [(str(individual.id),)]
 
 
-async def test_solo_admin_reactiva_envios(client: AsyncClient, db, headers):
+async def test_atencion_reactiva_los_envios_y_comercial_no(client: AsyncClient, db, headers):
+    """La familia pide volver a recibir mensajes: lo registra atencion al cliente (el equipo de
+    `headers` sale con ella); comercial da de baja pero no reactiva (Seccion 12)."""
     from app.core.enums import Rol
     from tests.conftest import crear_usuario, login
 

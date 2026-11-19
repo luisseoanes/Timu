@@ -11,9 +11,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy import select
 
 from app.api.deps import (
-    INTERNOS,
     DbSession,
-    Interno,
     establecer_cookie_sesion,
     publico,
     requiere,
@@ -52,10 +50,16 @@ router = APIRouter(prefix="/afiliaciones", tags=["afiliaciones"])
 familias_router = APIRouter(prefix="/familias", tags=["familias"])
 mascotas_router = APIRouter(prefix="/mascotas", tags=["familias"])
 formularios_router = APIRouter(prefix="/formularios", tags=["formularios"])
-GESTION_ESTADO = Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))
-
-Comercial = Annotated[Usuario, Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))]
-EQUIPO = Depends(requiere(*INTERNOS))
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
+ADMIN = Depends(requiere(Rol.ADMIN))
+ATENCION = Depends(requiere(Rol.ATENCION_CLIENTE))
+Atencion = Annotated[Usuario, Depends(requiere(Rol.ATENCION_CLIENTE))]
+COMERCIAL = Depends(requiere(Rol.COMERCIAL))
+COMERCIAL_ATENCION_Y_OPERACIONES = Depends(
+    requiere(Rol.COMERCIAL, Rol.ATENCION_CLIENTE, Rol.OPERACIONES)
+)
+Comercial = Annotated[Usuario, Depends(requiere(Rol.COMERCIAL))]
+ComercialYAtencion = Annotated[Usuario, Depends(requiere(Rol.COMERCIAL, Rol.ATENCION_CLIENTE))]
 
 
 class PlanDeMascota(BaseModel):
@@ -142,7 +146,11 @@ async def afiliacion_asistida(
 
 
 # Antes de GET /{solicitud_id}: si no, /lineas se leeria como un id de solicitud.
-@router.get("/lineas", response_model=list[LineaFamiliaRead], dependencies=[EQUIPO])
+@router.get(
+    "/lineas",
+    response_model=list[LineaFamiliaRead],
+    dependencies=[COMERCIAL_ATENCION_Y_OPERACIONES],
+)
 async def lineas_de_familias(
     db: DbSession,
     familia_id: Annotated[list[UUID], Query(min_length=1, max_length=linea.MAX_FAMILIAS)],
@@ -152,7 +160,7 @@ async def lineas_de_familias(
     return await db.run_sync(linea.leer, list(dict.fromkeys(familia_id)))
 
 
-@router.get("", response_model=list[SolicitudRead], dependencies=[EQUIPO])
+@router.get("", response_model=list[SolicitudRead], dependencies=[COMERCIAL])
 async def listar(
     db: DbSession, estado: str | None = None, familia_id: UUID | None = None
 ) -> list[SolicitudAfiliacion]:
@@ -164,7 +172,7 @@ async def listar(
     return list(await db.scalars(stmt))
 
 
-@router.get("/{solicitud_id}", response_model=SolicitudRead, dependencies=[EQUIPO])
+@router.get("/{solicitud_id}", response_model=SolicitudRead, dependencies=[COMERCIAL])
 async def obtener(db: DbSession, solicitud_id: UUID) -> SolicitudAfiliacion:
     return await db.run_sync(service.obtener, solicitud_id)
 
@@ -187,7 +195,11 @@ async def pago_manual(
 # --- Ciclo de vida de la familia afiliada (ciclo.py) ------------------------------------------
 
 
-@familias_router.get("/{familia_id}/linea", response_model=LineaFamiliaRead, dependencies=[EQUIPO])
+@familias_router.get(
+    "/{familia_id}/linea",
+    response_model=LineaFamiliaRead,
+    dependencies=[COMERCIAL_ATENCION_Y_OPERACIONES],
+)
 async def linea_de_familia(db: DbSession, familia_id: UUID) -> LineaFamiliaRead:
     """R2-PAN-02 Cuotas, preventivos y servicios de la familia en una sola linea por fecha:
     seis meses atras y seis adelante, mas todo lo vencido."""
@@ -195,9 +207,7 @@ async def linea_de_familia(db: DbSession, familia_id: UUID) -> LineaFamiliaRead:
     return (await db.run_sync(linea.leer, [familia_id]))[0]
 
 
-@familias_router.post(
-    "/{familia_id}/baja", response_model=FamiliaRead, dependencies=[GESTION_ESTADO]
-)
+@familias_router.post("/{familia_id}/baja", response_model=FamiliaRead, dependencies=[ATENCION])
 async def dar_de_baja(db: DbSession, familia_id: UUID, data: Baja) -> Familia:
     """6.1 Baja logica: se conserva toda la informacion y su historial."""
     familia = await db.run_sync(familias.obtener, familia_id)
@@ -207,7 +217,7 @@ async def dar_de_baja(db: DbSession, familia_id: UUID, data: Baja) -> Familia:
 @familias_router.post(
     "/{familia_id}/anonimizar",
     response_model=FamiliaRead,
-    dependencies=[Depends(requiere(Rol.ADMIN))],
+    dependencies=[ADMIN],
 )
 async def anonimizar(db: DbSession, familia_id: UUID) -> Familia:
     """Habeas data (Ley 1581): sustituye los datos personales de la familia. No se deshace."""
@@ -221,7 +231,7 @@ async def anonimizar(db: DbSession, familia_id: UUID) -> Familia:
     status_code=status.HTTP_201_CREATED,
 )
 async def agregar_mascota(
-    db: DbSession, usuario: Interno, familia_id: UUID, data: AltaMascota
+    db: DbSession, usuario: ComercialYAtencion, familia_id: UUID, data: AltaMascota
 ) -> Mascota:
     """Con afiliacion vigente, la mascota entra con su plan y el contrato se recalcula."""
     familia = await db.run_sync(familias.obtener, familia_id)
@@ -231,7 +241,7 @@ async def agregar_mascota(
 
 @mascotas_router.post("/{mascota_id}/baja", response_model=MascotaRead)
 async def dar_de_baja_mascota(
-    db: DbSession, usuario: Interno, mascota_id: UUID, data: Baja
+    db: DbSession, usuario: Atencion, mascota_id: UUID, data: Baja
 ) -> MascotaRead:
     mascota = await db.run_sync(familias.obtener_mascota, mascota_id)
     mascota = await db.run_sync(ciclo.dar_de_baja_mascota, mascota, data.motivo, usuario.id)

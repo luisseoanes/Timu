@@ -10,14 +10,19 @@ from sqlalchemy import select
 
 from app.api.deps import DbSession, requiere
 from app.core.enums import Rol
-from app.core.errores import NoEncontrado, ReglaNegocio
+from app.core.errores import NoEncontrado, Prohibido, ReglaNegocio
+from app.modules.auth.models import Usuario
 from app.modules.dashboard import exportar, service
 from app.modules.dashboard.models import ReporteProgramado
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
-GERENCIA = Depends(requiere(Rol.ADMIN, Rol.COMERCIAL, Rol.OPERACIONES))
-ADMIN = Depends(requiere(Rol.ADMIN))
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
+GERENCIA = Depends(requiere(Rol.GERENCIA))
+# Las cifras: Gerencia todas; Comercial, Atencion y Operaciones las de su funcion.
+ConCifras = Annotated[
+    Usuario, Depends(requiere(Rol.GERENCIA, Rol.COMERCIAL, Rol.ATENCION_CLIENTE, Rol.OPERACIONES))
+]
 
 
 class ReporteIn(BaseModel):
@@ -43,15 +48,16 @@ class ReporteRead(BaseModel):
     ultimo_error: str | None
 
 
-@router.get("/definiciones", dependencies=[GERENCIA])
-async def definiciones() -> list[dict[str, str]]:
+@router.get("/definiciones")
+async def definiciones(_: ConCifras) -> list[dict[str, str]]:
     """Seccion 8 Formula acordada de cada indicador."""
     return service.definiciones()
 
 
-@router.get("/indicadores", dependencies=[GERENCIA], response_model=None)
+@router.get("/indicadores", response_model=None)
 async def indicadores(
     db: DbSession,
+    usuario: ConCifras,
     desde: date,
     hasta: date,
     ciudad: str | None = None,
@@ -59,6 +65,9 @@ async def indicadores(
     formato: Literal["json", "csv", "xlsx"] = "json",
 ) -> dict[str, Any] | Response:
     """Seccion 8 Indicadores del periodo (cacheados unos minutos); Seccion 8 en CSV o Excel."""
+    if formato != "json" and usuario.rol != Rol.GERENCIA:
+        raise Prohibido("Los exportables son de Gerencia")
+    codigos = service.de_su_funcion(usuario.rol, codigos)
     resultado = await db.run_sync(service.calcular, desde, hasta, ciudad, codigos)
     if formato == "json":
         return resultado
@@ -74,19 +83,21 @@ async def indicadores(
     )
 
 
-@router.get("/evolucion", dependencies=[GERENCIA])
+@router.get("/evolucion")
 async def evolucion(
     db: DbSession,
+    usuario: ConCifras,
     desde: date,
     hasta: date,
     ciudad: str | None = None,
     codigos: Annotated[list[str] | None, Query()] = None,
 ) -> dict[str, Any]:
     """Indicadores mes a mes durante 12 meses y en el periodo comparable (series del panel)."""
+    codigos = service.de_su_funcion(usuario.rol, codigos)
     return await db.run_sync(service.evolucion, desde, hasta, ciudad, codigos)
 
 
-@router.get("/reportes", response_model=list[ReporteRead], dependencies=[ADMIN])
+@router.get("/reportes", response_model=list[ReporteRead], dependencies=[GERENCIA])
 async def reportes(db: DbSession) -> list[ReporteProgramado]:
     return list(await db.scalars(select(ReporteProgramado).order_by(ReporteProgramado.nombre)))
 
@@ -101,7 +112,7 @@ def _validar(data: ReporteIn) -> None:
     "/reportes",
     response_model=ReporteRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[ADMIN],
+    dependencies=[GERENCIA],
 )
 async def crear_reporte(db: DbSession, data: ReporteIn) -> ReporteProgramado:
     _validar(data)
@@ -111,7 +122,7 @@ async def crear_reporte(db: DbSession, data: ReporteIn) -> ReporteProgramado:
     return reporte
 
 
-@router.put("/reportes/{reporte_id}", response_model=ReporteRead, dependencies=[ADMIN])
+@router.put("/reportes/{reporte_id}", response_model=ReporteRead, dependencies=[GERENCIA])
 async def editar_reporte(db: DbSession, reporte_id: UUID, data: ReporteIn) -> ReporteProgramado:
     _validar(data)
     reporte = await db.get(ReporteProgramado, reporte_id)

@@ -18,7 +18,7 @@ actualiza lo ya sembrado, así que un stack viejo conserva los datos de cuando s
 
 | Qué | Detalle |
 | --- | --- |
-| Equipo (clave `demo12345`) | `medico@timu.co`, `operaciones@timu.co`, `comercial@timu.co` y `gerencia@timu.co`, un administrador solo para los recorridos e2e. El administrador `admin@timu.co` / `cambiar123` lo crea `inicializar`. |
+| Equipo (clave `demo12345`) | Un usuario por perfil ([perfiles y permisos](perfiles-y-permisos.md)): `gerencia@timu.co`, `comercial@timu.co`, `atencion@timu.co`, `operaciones@timu.co` y `medico@timu.co`. Si ya existían con otro perfil (una base sembrada antes del 2026-11-19), pasan al suyo. El administrador `admin@timu.co` / `cambiar123` lo crea `inicializar` (en staging, con `ADMIN_PASSWORD_INICIAL`). |
 | Clínica aliada | «Clínica Veterinaria del Norte», con un convenio y el usuario `aliada@timu.co`. |
 | Portal de familias | `ana@example.com`, con el plan en pausa por cuotas vencidas, y `jorge@example.com`, al día: en cada pasada se le paga lo vencido. |
 | Familias | Cinco, en Bogotá y Medellín, con sus mascotas y contratos (una sin plan). |
@@ -93,9 +93,9 @@ los mismos módulos de tareas que el worker.
 - **Coherencia en el tiempo**: solo se visita o se remite a quien ya estaba afiliado ese día
   (`afiliada_desde`), y lo que nace de otra cosa (una tarea de una encuesta) lleva la fecha de su
   origen.
-- **Cupo de peticiones por usuario**: los scripts trabajan con `admin@timu.co`,
-  `operaciones@timu.co` y los médicos, nunca con `gerencia@timu.co` ni `comercial@timu.co`, que
-  son de los recorridos e2e.
+- **Cada ruta con su perfil** (Sección 12): los scripts hablan con la API como el equipo (`equipo()`
+  en `datos_demo`), y cada petición sale con la sesión del perfil al que la ruta le toca, leído de
+  las guardas de la propia API (`app/api/perfiles.py`). Los médicos llevan su propia sesión.
 - **Los recorridos e2e buscan lo de `datos_demo` por su identidad** (un motivo, un nombre), nunca
   el primero de un listado: con la operación sembrada hay muchas más filas.
 - **Una ampliación de `operacion_demo` añade su mínimo** a `MINIMOS`.

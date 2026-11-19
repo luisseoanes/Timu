@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import select
 
-from app.api.deps import INTERNOS, DbSession, requiere
+from app.api.deps import DbSession, requiere
 from app.core.enums import EstadoServicio, Rol
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ZONA_NEGOCIO, hoy
@@ -30,10 +30,14 @@ router = APIRouter(prefix="/servicios", tags=["servicios"])
 agenda_router = APIRouter(prefix="/agenda", tags=["servicios"])
 pendientes_router = APIRouter(prefix="/pendientes", tags=["servicios"])
 
-EQUIPO = Depends(requiere(*INTERNOS))
-Equipo = Annotated[Usuario, Depends(requiere(*INTERNOS))]
-Medico = Annotated[Usuario, Depends(requiere(Rol.ADMIN, Rol.MEDICO))]
-GESTION_AGENDA = Depends(requiere(Rol.ADMIN, Rol.OPERACIONES))
+# Perfiles de cada ruta (Seccion 12, docs/perfiles-y-permisos.md).
+ATENCION_OPERACIONES_Y_MEDICO = Depends(requiere(Rol.ATENCION_CLIENTE, Rol.OPERACIONES, Rol.MEDICO))
+AtencionOperacionesYMedico = Annotated[Usuario, ATENCION_OPERACIONES_Y_MEDICO]
+ATENCION_Y_OPERACIONES = Depends(requiere(Rol.ATENCION_CLIENTE, Rol.OPERACIONES))
+Atencion = Annotated[Usuario, Depends(requiere(Rol.ATENCION_CLIENTE))]
+MEDICO = Depends(requiere(Rol.MEDICO))
+Medico = Annotated[Usuario, Depends(requiere(Rol.MEDICO))]
+OPERACIONES = Depends(requiere(Rol.OPERACIONES))
 
 
 class ServicioCreate(BaseModel):
@@ -201,14 +205,18 @@ class PendienteRead(BaseModel):
 # --- Agenda (6.5) -----------------------------------------------------------------------
 
 
-@agenda_router.get("/disponibilidad", response_model=list[CupoRead], dependencies=[EQUIPO])
+@agenda_router.get(
+    "/disponibilidad", response_model=list[CupoRead], dependencies=[ATENCION_Y_OPERACIONES]
+)
 async def disponibilidad(db: DbSession, fecha: date, ciudad: str, tipo_codigo: str) -> Any:
     ciudad = await db.run_sync(catalogos.ciudad_valida, ciudad)
     tipo = await db.run_sync(service.tipo_servicio, tipo_codigo)
     return await db.run_sync(service.disponibilidad, fecha, ciudad, tipo)
 
 
-@agenda_router.get("/franjas", response_model=list[FranjaRead], dependencies=[EQUIPO])
+@agenda_router.get(
+    "/franjas", response_model=list[FranjaRead], dependencies=[ATENCION_Y_OPERACIONES]
+)
 async def franjas(db: DbSession, ciudad: str | None = None) -> list[Franja]:
     stmt = select(Franja).order_by(Franja.ciudad, Franja.dia_semana, Franja.hora_inicio)
     if ciudad:
@@ -220,7 +228,7 @@ async def franjas(db: DbSession, ciudad: str | None = None) -> list[Franja]:
     "/franjas",
     response_model=FranjaRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[GESTION_AGENDA],
+    dependencies=[OPERACIONES],
 )
 async def crear_franja(db: DbSession, data: FranjaIn) -> Franja:
     datos = data.model_dump()
@@ -231,9 +239,7 @@ async def crear_franja(db: DbSession, data: FranjaIn) -> Franja:
     return franja
 
 
-@agenda_router.patch(
-    "/franjas/{franja_id}", response_model=FranjaRead, dependencies=[GESTION_AGENDA]
-)
+@agenda_router.patch("/franjas/{franja_id}", response_model=FranjaRead, dependencies=[OPERACIONES])
 async def actualizar_franja(
     db: DbSession, franja_id: UUID, capacidad: int | None = None, activa: bool | None = None
 ) -> Franja:
@@ -249,7 +255,7 @@ async def actualizar_franja(
     return franja
 
 
-@agenda_router.post("/bloqueos", status_code=status.HTTP_201_CREATED, dependencies=[GESTION_AGENDA])
+@agenda_router.post("/bloqueos", status_code=status.HTTP_201_CREATED, dependencies=[OPERACIONES])
 async def bloquear(db: DbSession, data: BloqueoIn) -> dict[str, str]:
     db.add(BloqueoAgenda(**data.model_dump()))
     return {"detail": f"Agenda bloqueada el {data.fecha:%d/%m/%Y}"}
@@ -258,7 +264,7 @@ async def bloquear(db: DbSession, data: BloqueoIn) -> dict[str, str]:
 # --- Servicios --------------------------------------------------------------------------------
 
 
-@router.get("/elegibilidad", response_model=ElegibilidadRead, dependencies=[EQUIPO])
+@router.get("/elegibilidad", response_model=ElegibilidadRead, dependencies=[ATENCION_Y_OPERACIONES])
 async def elegibilidad(
     db: DbSession, familia_id: UUID, tipo_codigo: str, mascota_id: UUID | None = None
 ) -> Any:
@@ -273,9 +279,18 @@ async def elegibilidad(
     )
 
 
-@router.get("", response_model=Page[ServicioListado], dependencies=[EQUIPO])
+def _del_medico(usuario: Usuario, servicio: Servicio) -> Servicio:
+    """Seccion 12 El medico solo ve y mueve sus servicios (los que tiene asignados, tambien por
+    su ruta): para el, uno ajeno no existe."""
+    if usuario.rol == Rol.MEDICO and servicio.profesional_id != usuario.id:
+        raise NoEncontrado("Servicio no encontrado")
+    return servicio
+
+
+@router.get("", response_model=Page[ServicioListado])
 async def listar(
     db: DbSession,
+    usuario: AtencionOperacionesYMedico,
     params: ParamsListado,
     familia_id: UUID | None = None,
     mascota_id: UUID | None = None,
@@ -286,6 +301,8 @@ async def listar(
     abiertos: bool = Query(False, description="Solo los que no se completaron ni cancelaron"),
 ) -> Page[ServicioListado]:
     stmt = select(Servicio)
+    if usuario.rol == Rol.MEDICO:
+        stmt = stmt.where(Servicio.profesional_id == usuario.id)
     if abiertos:
         stmt = stmt.where(
             Servicio.estado.notin_((EstadoServicio.COMPLETADO, EstadoServicio.CANCELADO))
@@ -335,7 +352,9 @@ async def listar(
     )
 
 
-@router.get("/resumen", response_model=ResumenServiciosRead, dependencies=[EQUIPO])
+@router.get(
+    "/resumen", response_model=ResumenServiciosRead, dependencies=[ATENCION_OPERACIONES_Y_MEDICO]
+)
 async def resumen(
     db: DbSession,
     familia_id: UUID,
@@ -355,7 +374,10 @@ async def resumen(
 
 
 @router.post(
-    "", response_model=ServicioRead, status_code=status.HTTP_201_CREATED, dependencies=[EQUIPO]
+    "",
+    response_model=ServicioRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[ATENCION_Y_OPERACIONES],
 )
 async def agendar(db: DbSession, data: ServicioCreate) -> Servicio:
     """6.5 Agenda contra disponibilidad real; rechaza cupos tomados y familias no
@@ -381,23 +403,29 @@ async def agendar(db: DbSession, data: ServicioCreate) -> Servicio:
     )
 
 
-@router.get("/{servicio_id}", response_model=ServicioRead, dependencies=[EQUIPO])
-async def obtener(db: DbSession, servicio_id: UUID) -> Servicio:
-    return await db.run_sync(service.obtener, servicio_id)
+@router.get("/{servicio_id}", response_model=ServicioRead)
+async def obtener(
+    db: DbSession, usuario: AtencionOperacionesYMedico, servicio_id: UUID
+) -> Servicio:
+    return _del_medico(usuario, await db.run_sync(service.obtener, servicio_id))
 
 
-@router.post("/{servicio_id}/estado", response_model=ServicioRead, dependencies=[EQUIPO])
-async def cambiar_estado(db: DbSession, servicio_id: UUID, data: Transicion) -> Servicio:
+@router.post("/{servicio_id}/estado", response_model=ServicioRead)
+async def cambiar_estado(
+    db: DbSession, usuario: AtencionOperacionesYMedico, servicio_id: UUID, data: Transicion
+) -> Servicio:
     """6.10 Transicion validada, auditada y con sus disparadores."""
     return await db.run_sync(
         service.cambiar_estado,
-        await db.run_sync(service.obtener, servicio_id),
+        _del_medico(usuario, await db.run_sync(service.obtener, servicio_id)),
         data.estado,
         data.motivo,
     )
 
 
-@router.post("/{servicio_id}/reprogramar", response_model=ServicioRead, dependencies=[EQUIPO])
+@router.post(
+    "/{servicio_id}/reprogramar", response_model=ServicioRead, dependencies=[ATENCION_Y_OPERACIONES]
+)
 async def reprogramar(db: DbSession, servicio_id: UUID, data: Reprogramacion) -> Servicio:
     return await db.run_sync(
         service.reprogramar,
@@ -414,9 +442,11 @@ async def autorizar(db: DbSession, usuario: Medico, servicio_id: UUID) -> Servic
     )
 
 
-@router.get("/{servicio_id}/pasos", response_model=list[PasoRead], dependencies=[EQUIPO])
-async def pasos(db: DbSession, servicio_id: UUID) -> list[ServicioPaso]:
-    await db.run_sync(service.obtener, servicio_id)
+@router.get("/{servicio_id}/pasos", response_model=list[PasoRead])
+async def pasos(
+    db: DbSession, usuario: AtencionOperacionesYMedico, servicio_id: UUID
+) -> list[ServicioPaso]:
+    _del_medico(usuario, await db.run_sync(service.obtener, servicio_id))
     return list(
         await db.scalars(
             select(ServicioPaso)
@@ -428,10 +458,10 @@ async def pasos(db: DbSession, servicio_id: UUID) -> list[ServicioPaso]:
 
 @router.put("/{servicio_id}/pasos/{paso_codigo}", response_model=PasoRead)
 async def completar_paso(
-    db: DbSession, usuario: Equipo, servicio_id: UUID, paso_codigo: str, data: PasoIn
+    db: DbSession, usuario: Medico, servicio_id: UUID, paso_codigo: str, data: PasoIn
 ) -> ServicioPaso:
     """6.5 Registra un paso del flujo configurado para el tipo de servicio."""
-    servicio = await db.run_sync(service.obtener, servicio_id)
+    servicio = _del_medico(usuario, await db.run_sync(service.obtener, servicio_id))
     return await db.run_sync(service.completar_paso, servicio, paso_codigo, data.datos, usuario.id)
 
 
@@ -439,17 +469,20 @@ async def completar_paso(
     "/{servicio_id}/pendientes",
     response_model=PendienteRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[EQUIPO],
 )
-async def crear_pendiente(db: DbSession, servicio_id: UUID, data: PendienteIn) -> Pendiente:
+async def crear_pendiente(
+    db: DbSession, usuario: Medico, servicio_id: UUID, data: PendienteIn
+) -> Pendiente:
     """6.6 Pendiente derivado de la atencion (examen, control, procedimiento)."""
-    servicio = await db.run_sync(service.obtener, servicio_id)
+    servicio = _del_medico(usuario, await db.run_sync(service.obtener, servicio_id))
     return await db.run_sync(
         service.crear_pendiente, servicio, data.descripcion, data.requiere_autorizacion
     )
 
 
-@pendientes_router.get("", response_model=list[PendienteRead], dependencies=[EQUIPO])
+@pendientes_router.get(
+    "", response_model=list[PendienteRead], dependencies=[ATENCION_OPERACIONES_Y_MEDICO]
+)
 async def listar_pendientes(
     db: DbSession, estado: str | None = None, servicio_id: UUID | None = None
 ) -> list[Pendiente]:
@@ -463,7 +496,7 @@ async def listar_pendientes(
 
 @pendientes_router.post("/{pendiente_id}/autorizacion", response_model=PendienteRead)
 async def autorizar_pendiente(
-    db: DbSession, usuario: Equipo, pendiente_id: UUID, data: AutorizacionPendiente
+    db: DbSession, usuario: Atencion, pendiente_id: UUID, data: AutorizacionPendiente
 ) -> Pendiente:
     """Registra la autorizacion de la familia: quien la recibio, cuando y por que medio."""
     pendiente = await db.run_sync(service.obtener_pendiente, pendiente_id)
@@ -473,7 +506,7 @@ async def autorizar_pendiente(
 
 
 @pendientes_router.post(
-    "/{pendiente_id}/avance", response_model=PendienteRead, dependencies=[EQUIPO]
+    "/{pendiente_id}/avance", response_model=PendienteRead, dependencies=[ATENCION_Y_OPERACIONES]
 )
 async def avanzar_pendiente(db: DbSession, pendiente_id: UUID, data: AvancePendiente) -> Pendiente:
     pendiente = await db.run_sync(service.obtener_pendiente, pendiente_id)

@@ -142,6 +142,12 @@ export function peso(kg: number | null | undefined): string {
   return `${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 }).format(kg)} kg`
 }
 
+/** Un puntaje de 1 a 5 con un decimal, como en el tablero («3,8 / 5»). */
+export function puntaje(valor: number | null | undefined): string {
+  if (valor === null || valor === undefined) return '—'
+  return `${valor.toLocaleString('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} / 5`
+}
+
 export function porcentaje(valor: number | null | undefined): string {
   return valor === null || valor === undefined ? '—' : `${Math.round(valor * 100)}%`
 }
