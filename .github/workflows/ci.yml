@@ -265,6 +265,21 @@ jobs:
           curl -fsS -o /dev/null -d 'username=admin@timu.co&password=cambiar123' \
             "http://$web/api/v1/auth/login"
 
+      # La imagen con la que Railway sirve el panel en staging (docs/despliegue-staging.md):
+      # compilado y servido por Caddy, que manda /api a la API por la red del stack. Sin esto,
+      # un fallo suyo solo se veria al desplegar. Usa una ruta publica: no gasta ingresos.
+      - name: Panel compilado de despliegue
+        run: |
+          docker build -f frontend/Dockerfile.despliegue -t timu-web-despliegue frontend
+          red=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' \
+            "$(docker compose ps -q api)")
+          docker run -d --rm --name web-despliegue --network "$red" -p 127.0.0.1:8090:8080 \
+            -e PORT=8080 -e API_INTERNA=http://api:8000 timu-web-despliegue
+          curl -fsS --retry 10 --retry-delay 1 --retry-all-errors -o /dev/null \
+            http://127.0.0.1:8090/panel/familias
+          curl -fsS -o /dev/null http://127.0.0.1:8090/api/v1/institucional
+          docker stop web-despliegue
+
       # Recorridos de extremo a extremo contra este mismo stack, sin nada simulado: panel,
       # portal de familias y clinica aliada con los usuarios que crea datos_demo.
       - name: Datos de demostracion
