@@ -65,6 +65,12 @@ Reglas que atraviesan todo el backend:
   al leer son `str`. Un dato guardado por SQL, o que una versión nueva del validador rechace,
   no puede tumbar la respuesta ni un listado entero. Se valida al escribir (`*Create`,
   `*Update`); `FamiliaRead` y `UsuarioRead` son la referencia.
+- **Un PATCH con `model_dump(exclude_unset=True)` recibe también los `null` que se mandan.**
+  `exclude_unset` deja fuera lo que no vino, no lo que vino vacío: `{"nombre": null}` llega como
+  cambio. Un campo obligatorio se declara sin `None` en su schema de edición, o el servicio trata
+  `None` como «sin cambio». Si no, falla Python (un 500: `editar_plantilla` lo daba hasta el
+  2026-11-18) o la base, que lo frena con un 409 cuyo mensaje dice que el registro ya existe (la
+  deuda está en [estándares de calidad](../estandares-calidad.md#integridad-de-la-información)).
 - **Toda consulta pasa por `restringir()` de `app/core/scope.py`.** `require_roles`
   dice *quién puede llamar*; el alcance dice *qué filas ve*, y el portal de familias
   necesita las dos. Los servicios reciben un `Alcance` como primer argumento tras la

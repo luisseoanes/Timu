@@ -88,6 +88,13 @@ migración `0036` no se reprocesaron: si producción tiene alguna, se limpia a m
 | Un evento que agota sus reintentos se registra como error (llega a Sentry) y la fila conserva su `ultimo_error`. | `test_un_evento_que_agota_los_intentos_avisa_como_error` |
 | Respaldo diario restaurable, verificado en una base nueva. | Paso **Respaldo y restauración verificada** del job del stack |
 
+**Deuda**: las rutas de edición que aplican `model_dump(exclude_unset=True)` campo a campo (planes,
+aliadas, familias y otras once) aceptan un `null` en un campo obligatorio. La base lo frena, y nada
+se guarda, pero responde 409 «El registro ya existe o entra en conflicto con otro», que no dice lo
+que pasó. Comprobado el 2026-11-18 en planes, aliadas y familias. Se cierra con la regla de
+`backend/CLAUDE.md` (el schema no admite `None` en lo obligatorio, o el servicio lo ignora), como
+ya hace `editar_plantilla`.
+
 ## Trazabilidad
 
 | Regla | Guarda |

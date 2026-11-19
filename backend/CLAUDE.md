@@ -33,6 +33,9 @@ los registros que agregan dominios (`app/models.py`, `app/transiciones.py`), en 
   al leer); se valida al escribir. Referencia: `FamiliaRead` y `UsuarioRead`.
 - **Un tope de Pydantic (`max_length`, `pattern`) va sobre el `str` de un opcional**: sobre
   `str | None` falla con `None` y da 500 (`planes/router.py`, `Texto2000`).
+- **Un PATCH con `exclude_unset` recibe también los `null` que se mandan**: un campo obligatorio no
+  admite `None` en su schema o el servicio lo ignora; si no, Python da 500 o la base un 409 que dice
+  «ya existe» (`editar_plantilla`).
 - **Toda consulta pasa por `restringir()`** (`app/core/scope.py`) con un `Alcance`; cada modelo
   visible desde el portal declara `__columna_familia__`. Se falla cerrado.
 - **Ningún `tarea.delay()` dentro de una transacción**: se publica con `app.core.outbox.publicar()`,
