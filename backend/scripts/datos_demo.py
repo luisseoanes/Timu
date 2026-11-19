@@ -194,6 +194,58 @@ CONDICIONES = {
     ),
 }
 
+# Plantillas de consulta de prueba (DEU-15): el recorrido de e2e-stack elige «Otitis externa» al
+# abrir una consulta y `operacion_demo` parte de ellas en parte de sus consultas. Son textos de
+# demostracion, no protocolos de TIMU: los del equipo medico se escriben en Clinica.
+PLANTILLAS_CONSULTA: list[dict[str, Any]] = [
+    {
+        "nombre": "Control general",
+        "campos": {
+            "motivo": "Control de salud de rutina.",
+            "anamnesis": (
+                "Come y bebe con normalidad. Sin vómito ni diarrea. Deposiciones normales."
+            ),
+            "examen_fisico": (
+                "Alerta y responsivo. Mucosas rosadas, llenado capilar menor de 2 segundos. "
+                "Hidratación normal. Auscultación cardiopulmonar sin hallazgos. Abdomen blando."
+            ),
+            "diagnostico": "Paciente sano.",
+            "tratamiento": "Continuar con el plan preventivo. Próximo control en seis meses.",
+        },
+    },
+    {
+        "nombre": "Otitis externa",
+        "campos": {
+            "motivo": "Se rasca las orejas y sacude la cabeza.",
+            "examen_fisico": (
+                "Conducto auditivo eritematoso, con cerumen oscuro y mal olor. Molestia al palpar "
+                "la base de la oreja."
+            ),
+            "diagnostico": "Otitis externa.",
+            "tratamiento": (
+                "Limpieza ótica y gotas óticas cada 12 horas por 7 días. Control en 10 días."
+            ),
+        },
+    },
+    {
+        "nombre": "Gastroenteritis leve",
+        "campos": {
+            "motivo": "Vómito y diarrea.",
+            "anamnesis": "Empezó hace menos de 48 horas. Sigue tomando agua. Sin sangre en heces.",
+            "examen_fisico": (
+                "Alerta. Hidratación levemente disminuida. Leve molestia a la palpación "
+                "abdominal, sin masas."
+            ),
+            "diagnostico": "Gastroenteritis aguda leve.",
+            "tratamiento": (
+                "Ayuno de sólidos por 12 horas y luego dieta blanda en porciones pequeñas por 3 "
+                "días. Agua a voluntad. Volver a consultar si hay sangre, decaimiento o vómito "
+                "que no cede."
+            ),
+        },
+    },
+]
+
 
 def beneficios_de(plan: str) -> list[dict[str, Any]]:
     """Los beneficios de un plan: los de prueba con lo que dice el plegable encima."""
@@ -644,6 +696,12 @@ def main() -> None:
 
     print("Clínica")
     medico = Cliente("medico@timu.co", CLAVE_EQUIPO)
+
+    # Por su nombre, que es lo que no se repite: el codigo lo saca la API.
+    sembradas = {p["nombre"] for p in medico.get("/clinica/plantillas", incluir_inactivas=True)}
+    for plantilla in PLANTILLAS_CONSULTA:
+        if plantilla["nombre"] not in sembradas:
+            medico.post("/clinica/plantillas", plantilla)
 
     # Una vacuna aplicada a la mascota de Laura Gómez (Nala), para que la verificación pública
     # del carnet (e2e-stack/responsive.spec.ts) se mida con sus tablas. Ningún otro recorrido

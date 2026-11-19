@@ -328,6 +328,26 @@ test.describe('médico en clínica', () => {
     await expect(page.locator('.btn-primario:visible')).toHaveCount(1)
     await expect(page.getByRole('alert')).toHaveCount(0)
   })
+
+  // Solo lectura también: la consulta nace al dejar el motivo, y avanzar dejaría un borrador en
+  // cada pasada. Que la plantilla llena los demás apartados lo prueba clinica.test.tsx.
+  test('una consulta nueva parte de una plantilla de datos_demo y la usa de punto de partida', async ({ page }) => {
+    await page.goto('/panel/clinica')
+    const familias = await page.request.get('/api/v1/familias', { params: { q: 'Ana Ruiz', limit: 5 } })
+    expect(familias.ok(), `GET /familias respondió ${familias.status()}`).toBeTruthy()
+    const { items } = (await familias.json()) as { items: { titular_nombre: string; mascotas: { id: string; nombre: string }[] }[] }
+    const michi = items.find((f) => f.titular_nombre === 'Ana Ruiz')?.mascotas.find((m) => m.nombre === 'Michi')
+    expect(michi, 'datos_demo no dejó a Michi, de Ana Ruiz').toBeTruthy()
+
+    await page.goto(`/panel/clinica/mascotas/${michi!.id}?nueva=1`)
+    const plantilla = page.getByLabel('Plantilla')
+    for (const nombre of ['Control general', 'Gastroenteritis leve', 'Otitis externa']) {
+      await expect(plantilla.getByRole('option', { name: nombre })).toBeAttached()
+    }
+    await plantilla.selectOption({ label: 'Otitis externa' })
+    await expect(page.getByRole('textbox', { name: 'Motivo de consulta' })).toHaveValue('Se rasca las orejas y sacude la cabeza.')
+    await expect(page.getByRole('alert')).toHaveCount(0)
+  })
 })
 
 test.describe('equipo en rutas', () => {
