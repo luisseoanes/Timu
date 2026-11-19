@@ -5,30 +5,36 @@ export const ESTACIONES = [
   {
     campo: 'motivo',
     titulo: 'Motivo de consulta',
+    // Dentro de una frase: «Prellena el motivo de consulta y el tratamiento».
+    enFrase: 'el motivo de consulta',
     corto: 'Motivo',
     ayuda: () => 'Por qué consulta la familia, con sus palabras.',
   },
   {
     campo: 'anamnesis',
     titulo: 'Anamnesis',
+    enFrase: 'la anamnesis',
     corto: 'Anamnesis',
     ayuda: () => 'Lo que cuenta la familia: desde cuándo, qué ha comido, qué ha cambiado.',
   },
   {
     campo: 'examen_fisico',
     titulo: 'Examen físico',
+    enFrase: 'el examen físico',
     corto: 'Examen',
     ayuda: (mascota: string) => `Lo que encuentras al examinar a ${mascota}.`,
   },
   {
     campo: 'diagnostico',
     titulo: 'Diagnóstico',
+    enFrase: 'el diagnóstico',
     corto: 'Diagnóstico',
     ayuda: () => 'El diagnóstico o la sospecha, y lo que falta por descartar.',
   },
   {
     campo: 'tratamiento',
     titulo: 'Tratamiento',
+    enFrase: 'el tratamiento',
     // «Plan», como en las notas clínicas: «Tratamiento» no cabe junto a «Diagnóstico» a 390 px.
     corto: 'Plan',
     ayuda: () => 'Lo que se le indica a la familia: medicamentos, dieta, controles.',
@@ -36,6 +42,19 @@ export const ESTACIONES = [
 ] as const
 
 export type CampoGuiado = (typeof ESTACIONES)[number]['campo']
+
+/** Qué apartados prellena una plantilla y cuáles deja en blanco, en el orden de la consulta. */
+export function apartadosDePlantilla(campos: Record<string, string>) {
+  const llena = ESTACIONES.filter((e) => campos[e.campo]?.trim())
+  return { llena, falta: ESTACIONES.filter((e) => !llena.includes(e)) }
+}
+
+const LISTA = new Intl.ListFormat('es', { type: 'conjunction' })
+
+/** «motivo, diagnóstico y tratamiento». */
+export function enPalabras(partes: readonly string[]): string {
+  return LISTA.format(partes)
+}
 /** Lo escrito en cada apartado, más las notas internas, que van con el tratamiento. */
 export type Valores = Record<CampoGuiado | 'notas_internas', string>
 

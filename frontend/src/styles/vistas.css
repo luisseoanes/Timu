@@ -1413,7 +1413,7 @@
 /* La consulta que se lee: cada apartado con su etiqueta, como una ficha de datos en columna. */
 .consulta-lectura { display: grid; gap: var(--e4); margin: 0; }
 .consulta-lectura dt { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; color: var(--texto-suave); }
-.consulta-lectura dd { margin: 2px 0 0; color: var(--texto-titulo); white-space: pre-wrap; }
+.consulta-lectura dd { max-width: 75ch; margin: 2px 0 0; color: var(--texto-titulo); white-space: pre-wrap; }
 
 @media (max-width: 899px) {
   .con-ficha { grid-template-columns: minmax(0, 1fr); }

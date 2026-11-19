@@ -92,10 +92,17 @@ export function useAdjuntos(historiaId: string) {
   })
 }
 
-export function usePlantillas() {
+/** Las activas, que son las que ofrece la consulta; con `incluirInactivas`, también las retiradas
+ * (al final), para mantenerlas en Clínica. */
+export function usePlantillas({ incluirInactivas = false }: { incluirInactivas?: boolean } = {}) {
   return useQuery({
-    queryKey: ['clinica', 'plantillas'],
-    queryFn: async () => (await api.get<PlantillaConsultaRead[]>('/clinica/plantillas')).data,
+    queryKey: ['clinica', 'plantillas', { incluirInactivas }],
+    queryFn: async () =>
+      (
+        await api.get<PlantillaConsultaRead[]>('/clinica/plantillas', {
+          params: incluirInactivas ? { incluir_inactivas: true } : undefined,
+        })
+      ).data,
   })
 }
 
@@ -208,9 +215,18 @@ export function useAprobarRespuesta() {
   )
 }
 
+/** El código lo saca la API del nombre. */
 export function useCrearPlantilla() {
   return useMutacion(
-    async (datos: { codigo: string; nombre: string; tipo_servicio_codigo?: string; campos: Record<string, string> }) =>
+    async (datos: { nombre: string; tipo_servicio_codigo?: string; campos: Record<string, string> }) =>
       (await api.post<PlantillaConsultaRead>('/clinica/plantillas', datos)).data,
+  )
+}
+
+/** Corrige el texto de una plantilla o la activa y desactiva; `campos` reemplaza los textos enteros. */
+export function useEditarPlantilla() {
+  return useMutacion(
+    async ({ codigo, ...cambios }: { codigo: string; nombre?: string; campos?: Record<string, string>; activa?: boolean }) =>
+      (await api.patch<PlantillaConsultaRead>(`/clinica/plantillas/${codigo}`, cambios)).data,
   )
 }

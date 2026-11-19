@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
 import { Distintivo } from '@/components/Distintivo'
@@ -20,6 +20,7 @@ import { Respuestas } from './Respuestas'
 
 export function ClinicaPage() {
   const { usuario } = useAuth()
+  const [params] = useSearchParams()
   const historia = (
     <div className="clinica-inicio" data-con-pendiente={puede(usuario, 'medico') || undefined}>
       {puede(usuario, 'medico') && <TrabajoPendiente />}
@@ -34,7 +35,18 @@ export function ClinicaPage() {
       { valor: 'plantillas', titulo: 'Plantillas de consulta', contenido: <Plantillas /> },
     )
   }
-  return <Pestanas etiqueta="Secciones de clínica" pestanas={pestanas} />
+  // La página controla la pestaña: una plantilla que aparece en la URL (al recargar o desde un
+  // enlace) lleva a la suya, y cerrar su ficha («Volver») no la cambia.
+  const plantilla = params.get('plantilla')
+  const [pestana, setPestana] = useState(plantilla ? 'plantillas' : 'historia')
+  const [vista, setVista] = useState(plantilla)
+  if (plantilla !== vista) {
+    setVista(plantilla)
+    if (plantilla) setPestana('plantillas')
+  }
+  // Mientras llega el perfil solo está la historia; quien no ve las plantillas se queda en ella.
+  const valor = pestanas.some((p) => p.valor === pestana) ? pestana : 'historia'
+  return <Pestanas etiqueta="Secciones de clínica" pestanas={pestanas} valor={valor} onCambio={setPestana} />
 }
 
 /**
