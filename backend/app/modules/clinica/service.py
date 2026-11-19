@@ -182,13 +182,14 @@ def editar_plantilla(db: Session, codigo: str, cambios: dict[str, Any]) -> Plant
     p = db.scalar(select(PlantillaConsulta).where(PlantillaConsulta.codigo == codigo))
     if p is None:
         raise NoEncontrado(f"Plantilla de consulta '{codigo}' inexistente")
-    if "nombre" in cambios:
+    # Un nulo no borra: solo el tipo de atencion admite quedar vacio (vale para cualquiera).
+    if cambios.get("nombre") is not None:
         p.nombre = _nombre_libre(db, cambios["nombre"], salvo=p.id)
-    if "campos" in cambios:
+    if cambios.get("campos") is not None:
         p.campos = _campos_plantilla(cambios["campos"])
     if "tipo_servicio_codigo" in cambios:
         p.tipo_servicio_codigo = cambios["tipo_servicio_codigo"]
-    if "activa" in cambios:
+    if cambios.get("activa") is not None:
         p.activa = cambios["activa"]
     db.flush()
     return p

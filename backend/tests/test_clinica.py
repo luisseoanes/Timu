@@ -257,6 +257,17 @@ async def test_editar_una_plantilla_es_del_equipo_medico(client, equipo):
     assert falta.status_code == 404
 
 
+async def test_un_nulo_no_borra_lo_que_la_plantilla_ya_dice(client, equipo):
+    creada = await _plantilla(client, equipo["medica"], "Control general", motivo="Control")
+    resp = await client.patch(
+        f"/api/v1/clinica/plantillas/{creada['codigo']}",
+        json={"nombre": None, "campos": None, "activa": None},
+        headers=equipo["medica"],
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json() == creada
+
+
 # --- F2-CLI-05 Permisos -----------------------------------------------------------------------
 
 
