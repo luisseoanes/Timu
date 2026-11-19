@@ -17,26 +17,23 @@ import { sesion, type Perfil } from './sesiones'
  *
  * Una ruta con `pestanas` se mide también con cada una de sus pestañas abierta: su contenido
  * no está en el DOM hasta que se elige. La clave de un fallo lleva entonces la pestaña
- * (`familias/:id#Cartera@375:desborde`). Cada pantalla rediseñada la activa al cerrarse.
+ * (`familias/:id#Cartera@375:desborde`). Cada pantalla rediseñada la activa al cerrarse. Una ruta
+ * con `fichas` se mide además con cada ficha que abre desde la URL (`admin?plan@375:desborde`):
+ * en el celular es lo que se ve al tocar una fila, y no es una ruta propia (R4-CIE-01).
  *
  * Una medida solo vale si la pantalla cargó sus datos. Con un 429 (el límite de la API es por
  * usuario, y el barrido hace muchas peticiones con el mismo) o un 5xx, la pantalla pinta un
  * error, que no desborda: daría por arreglado lo que no lo está. Ante un 429 se espera lo que
  * dice Retry-After y se vuelve a cargar; si el error sigue, la prueba falla.
  *
- * PENDIENTES es la deuda del rediseño: cada entrada es un fallo medido en una ruta y un ancho.
- * La prueba falla si aparece un fallo que no está en la lista y también si una entrada ya no
- * falla, así que la lista solo puede encogerse. Debe quedar vacía en R4-CIE-01.
+ * Cualquier fallo hace fallar la prueba: se arregla. La lista de deuda que tuvo (`PENDIENTES`,
+ * R0-QAA-02) se vació en R2-PAN-10 y se retiró en R4-CIE-01.
  */
 
 const ANCHOS = [375, 768, 900, 1280] as const
 const ALTO = 900
 
 type Fallo = 'desborde' | 'contraste'
-
-// Vacía desde el 2026-11-14 (R2-PAN-10): ninguna ruta desborda ni falla en contraste a estos
-// anchos. Un fallo nuevo se arregla; no vuelve a entrar aquí.
-const PENDIENTES: ReadonlySet<string> = new Set([])
 
 interface Ruta {
   /** La ruta tal como la declara App.tsx: el `path` o `index` dentro de su espacio. */
@@ -47,6 +44,8 @@ interface Ruta {
   url: string | ((page: Page) => Promise<string>)
   /** Mide también cada pestaña de la pantalla (ver arriba). */
   pestanas?: boolean
+  /** Las fichas que la pantalla abre desde la URL, por su nombre, con un registro de datos_demo. */
+  fichas?: (page: Page) => Promise<Record<string, string>>
 }
 
 const SIN_REGISTRO = '00000000-0000-7000-8000-000000000000'
@@ -58,6 +57,14 @@ async function pedir<T>(page: Page, url: string): Promise<T> {
 }
 
 interface Familia { id: string; mascotas?: { id: string }[] }
+
+/** Un registro de datos_demo por su nombre, nunca el primero del listado (docs/frontend/e2e-stack.md). */
+async function deDatosDemo(page: Page, url: string, nombre: string): Promise<{ id: string }> {
+  const respuesta = await pedir<{ id: string; nombre: string }[] | { items: { id: string; nombre: string }[] }>(page, url)
+  const registro = (Array.isArray(respuesta) ? respuesta : respuesta.items).find((r) => r.nombre === nombre)
+  expect(registro, `datos_demo deja «${nombre}»`).toBeTruthy()
+  return registro!
+}
 
 async function familiaDemo(page: Page): Promise<Familia> {
   const { items } = await pedir<{ items: Familia[] }>(page, '/familias?q=Ana%20Ruiz')
@@ -134,7 +141,13 @@ const RUTAS: Ruta[] = [
   { app: 'tareas', perfil: 'equipo', url: '/panel/tareas' },
   // Con sus dos pestañas (R2-PAN-08), y con administración: el perfil de equipo va al borde del cupo.
   { app: 'preventivos', perfil: 'admin', url: '/panel/preventivos', pestanas: true },
-  { app: 'clinica', perfil: 'medico', url: '/panel/clinica', pestanas: true },
+  {
+    app: 'clinica',
+    perfil: 'medico',
+    url: '/panel/clinica',
+    pestanas: true,
+    fichas: async () => ({ plantilla: '/panel/clinica?plantilla=otitis_externa' }),
+  },
   { app: 'clinica/mascotas/:mascotaId', perfil: 'medico', url: async (page) => `/panel/clinica/mascotas/${(await entradaClinica(page)).mascota}` },
   { app: 'clinica/historias/:id', perfil: 'medico', url: async (page) => `/panel/clinica/historias/${(await entradaClinica(page)).entrada}` },
   {
@@ -145,15 +158,60 @@ const RUTAS: Ruta[] = [
       const yo = await pedir<{ id: string }>(page, '/auth/me')
       return (await rutaDemo(page.request, yo.id)).url
     },
+    fichas: async (page) => {
+      const yo = await pedir<{ id: string }>(page, '/auth/me')
+      const { dia, url } = await rutaDemo(page.request, yo.id)
+      const rutas = await pedir<{ id: string; paradas: unknown[] }[]>(page, `/rutas?fecha=${dia}&responsable_id=${yo.id}`)
+      const ruta = rutas.find((r) => r.paradas.length > 0)
+      expect(ruta, 'datos_demo deja la ruta de la médica').toBeTruthy()
+      return { ruta: `${url}${url.includes('?') ? '&' : '?'}ruta=${ruta!.id}` }
+    },
   },
   // Con sus pestañas (R2-PAN-09), y con administración: el perfil de equipo va al borde del cupo.
-  { app: 'campanas', perfil: 'admin', url: '/panel/campanas', pestanas: true },
+  {
+    app: 'campanas',
+    perfil: 'admin',
+    url: '/panel/campanas',
+    pestanas: true,
+    fichas: async (page) => ({ campana: `/panel/campanas?campana=${(await deDatosDemo(page, '/campanas', 'Renovaciones del mes')).id}` }),
+  },
   // Con sus pestañas (R2-PAN-10), y con administración, que también ve la liquidación.
-  { app: 'aliadas', perfil: 'admin', url: '/panel/aliadas', pestanas: true },
+  {
+    app: 'aliadas',
+    perfil: 'admin',
+    url: '/panel/aliadas',
+    pestanas: true,
+    fichas: async (page) => {
+      const clinica = await deDatosDemo(page, '/aliadas', 'Clínica Veterinaria del Norte')
+      return { clinica: `/panel/aliadas?pestana=clinicas&clinica=${clinica.id}` }
+    },
+  },
   // Con sus pestañas (R2-PAN-09), y con administración: el perfil de equipo va al borde del cupo.
-  { app: 'comercial', perfil: 'admin', url: '/panel/comercial', pestanas: true },
+  {
+    app: 'comercial',
+    perfil: 'admin',
+    url: '/panel/comercial',
+    pestanas: true,
+    fichas: async (page) => {
+      const interesado = await deDatosDemo(page, '/comercial/interesados?q=Natalia', 'Natalia Gómez')
+      return { interesado: `/panel/comercial?interesado=${interesado.id}` }
+    },
+  },
   // Con sus seis pestañas (R2-PAN-10).
-  { app: 'admin', perfil: 'admin', url: '/panel/admin', pestanas: true },
+  {
+    app: 'admin',
+    perfil: 'admin',
+    url: '/panel/admin',
+    pestanas: true,
+    fichas: async (page) => {
+      const planes = await pedir<{ id: string; codigo: string }[]>(page, '/planes')
+      const reglas = await pedir<{ id: string; codigo: string }[]>(page, '/reglas')
+      const plan = planes.find((p) => p.codigo === 'mi_amigo_fiel')
+      const regla = reglas.find((r) => r.codigo === 'alerta_mora_25')
+      expect(plan && regla, 'el plan y la regla que siembran las migraciones').toBeTruthy()
+      return { plan: `/panel/admin?plan=${plan!.id}`, regla: `/panel/admin?regla=${regla!.id}` }
+    },
+  },
   // La verificación pública de un carnet de verdad (R3-PUB-03): emitirlo pide una sesión del equipo.
   { app: '/verificar/:codigo', perfil: 'admin', url: carnetEmitido },
 
@@ -212,6 +270,21 @@ async function contrastes(page: Page): Promise<string[]> {
 async function esperarPantalla(page: Page) {
   await page.waitForLoadState('networkidle')
   await page.evaluate(() => document.fonts.ready)
+}
+
+/** Mide la pantalla que hay a la vista a los cuatro anchos y anota lo que falla. */
+async function medir(page: Page, vista: string, encontrados: Map<string, string[]>) {
+  for (const ancho of ANCHOS) {
+    await page.setViewportSize({ width: ancho, height: ALTO })
+    await page.evaluate(() => new Promise((listo) => requestAnimationFrame(() => requestAnimationFrame(listo))))
+    const medidas: [Fallo, string[]][] = [
+      ['desborde', await desbordes(page)],
+      ['contraste', await contrastes(page)],
+    ]
+    for (const [fallo, detalle] of medidas) {
+      if (detalle.length > 0) encontrados.set(`${vista}@${ancho}:${fallo}`, detalle)
+    }
+  }
 }
 
 interface FalloApi { estado: number; ruta: string; espera: number }
@@ -281,26 +354,22 @@ for (const perfil of [null, 'equipo', 'medico', 'admin', 'familia', 'aliada'] as
               await page.getByRole('tab', { name: pestana, exact: true }).click()
             })
           }
-          const vista = pestana ? `${ruta.app}#${pestana}` : ruta.app
-          for (const ancho of ANCHOS) {
-            await page.setViewportSize({ width: ancho, height: ALTO })
-            await page.evaluate(() => new Promise((listo) => requestAnimationFrame(() => requestAnimationFrame(listo))))
-            const medidas: [Fallo, string[]][] = [
-              ['desborde', await desbordes(page)],
-              ['contraste', await contrastes(page)],
-            ]
-            for (const [fallo, detalle] of medidas) {
-              if (detalle.length > 0) encontrados.set(`${vista}@${ancho}:${fallo}`, detalle)
-            }
-          }
+          await medir(page, pestana ? `${ruta.app}#${pestana}` : ruta.app, encontrados)
         }
 
-        const nuevos = [...encontrados].filter(([clave]) => !PENDIENTES.has(clave))
-        const resueltos = [...PENDIENTES].filter(
-          (p) => (p.startsWith(`${ruta.app}@`) || p.startsWith(`${ruta.app}#`)) && !encontrados.has(p),
-        )
-        expect(nuevos.map(([clave, detalle]) => `${clave}: ${detalle.join(' | ')}`), 'fallos nuevos').toEqual([])
-        expect(resueltos, 'ya no fallan: sácalas de PENDIENTES').toEqual([])
+        const fichas = ruta.fichas ? await ruta.fichas(page) : {}
+        for (const [nombre, direccion] of Object.entries(fichas)) {
+          test.info().setTimeout(test.info().timeout + 20_000)
+          await page.setViewportSize({ width: ANCHOS[ANCHOS.length - 1], height: ALTO })
+          await cargarConDatos(page, fallosApi, async (reintento) => {
+            await (reintento ? page.reload() : page.goto(direccion))
+          })
+          // La ficha de verdad: la vacía lleva el mismo nombre accesible (frontend/CLAUDE.md).
+          await expect(page.locator('.ficha-abierta:not(.ficha-vacia)').first(), `se abre la ficha ${nombre}`).toBeVisible()
+          await medir(page, `${ruta.app}?${nombre}`, encontrados)
+        }
+
+        expect([...encontrados].map(([clave, detalle]) => `${clave}: ${detalle.join(' | ')}`), 'fallos').toEqual([])
       })
     }
   })
@@ -320,13 +389,4 @@ test('el recorrido cubre todas las rutas de App.tsx', () => {
   expect(declaradas.filter((r) => !r.startsWith('index:')).sort()).toEqual(rutas.sort())
   expect(declaradas.filter((r) => r.startsWith('index:'))).toHaveLength(indices)
   expect(new Set(declaradas).size, 'cada ruta aparece una sola vez').toBe(declaradas.length)
-})
-
-test('PENDIENTES solo nombra rutas, anchos y fallos que existen', () => {
-  const invalidas = [...PENDIENTES].filter((p) => {
-    const [, app, pestana, ancho] = /^(.+?)(?:#([^@]+))?@(\d+):(?:desborde|contraste)$/.exec(p) ?? []
-    const ruta = RUTAS.find((r) => r.app === app)
-    return !ruta || (pestana !== undefined && !ruta.pestanas) || !(ANCHOS as readonly number[]).includes(Number(ancho))
-  })
-  expect(invalidas).toEqual([])
 })
