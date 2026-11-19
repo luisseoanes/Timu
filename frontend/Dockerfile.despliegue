@@ -1,0 +1,17 @@
+# Imagen del panel en un entorno desplegado (staging en Railway, ver
+# docs/despliegue-staging.md): compila con `npm run build` y Caddy sirve dist/ y manda /api a
+# la API por la red privada, así la cookie de sesión sigue siendo del mismo dominio que el panel.
+# El compose de desarrollo usa Dockerfile (el servidor de Vite con recarga en caliente).
+FROM node:22-alpine AS compilacion
+
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+FROM caddy:2.10.2-alpine
+
+COPY Caddyfile /etc/caddy/Caddyfile
+COPY --from=compilacion /app/dist /srv
