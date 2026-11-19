@@ -1,4 +1,4 @@
-"""F4-DAS-03 Reportes programados: el periodo anterior, en Excel, por correo."""
+"""Seccion 8 Reportes programados: el periodo anterior, en Excel, por correo."""
 
 from datetime import date, timedelta
 from typing import Any

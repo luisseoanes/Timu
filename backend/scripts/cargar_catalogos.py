@@ -1,4 +1,4 @@
-"""F0-09 Carga repetible de catalogos maestros y de las reglas iniciales (F0-12).
+"""Carga repetible de catalogos maestros y de las reglas iniciales (Seccion 7).
 
 Uso: docker compose exec api python -m scripts.cargar_catalogos
 """

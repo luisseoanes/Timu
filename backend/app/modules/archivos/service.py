@@ -1,4 +1,4 @@
-"""F0-11 Subida validada de archivos.
+"""6.14 Subida validada de archivos.
 
 El tipo se verifica por la firma de los primeros bytes, no por la extension ni por el
 Content-Type que declara el cliente.

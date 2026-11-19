@@ -1,4 +1,4 @@
-"""F0-12 Lo que puede hacer una regla en cada evento.
+"""Seccion 7 Lo que puede hacer una regla en cada evento.
 
 Cada evento declara que acciones admite y con que parametros, de modo que una regla mal formada
 se rechaza al guardarla y no en operacion, y el editor de reglas pide cada parametro con su
@@ -91,22 +91,22 @@ def _union(*modelos: type[BaseModel]) -> TypeAdapter[Any]:
 # el editor.
 ACCIONES_POR_EVENTO: dict[str, tuple[str, tuple[type[BaseModel], ...]]] = {
     "cartera.estado": (
-        "Estado de cartera segun dias de mora (F1-CAR-03)",
+        "Estado de cartera segun dias de mora (6.2)",
         (AccionEstadoCartera,),
     ),
-    "cartera.alerta": ("Avisos escalonados de mora (F1-CAR-04)", (AccionNotificar,)),
+    "cartera.alerta": ("Avisos escalonados de mora (6.2)", (AccionNotificar,)),
     "cartera.renovacion": (
-        "Tarea comercial por contrato proximo a vencer (F1-CAR-07)",
+        "Tarea comercial por contrato proximo a vencer (6.4)",
         (AccionTarea,),
     ),
-    "plan.cambio": ("Cobro al cambiar de plan (F1-PLA-02)", (AccionProrrateo, AccionRechazar)),
-    "plan.recomendacion": ("Plan sugerido por ciudad y familia (F1-PLA-04)", (AccionRecomendar,)),
+    "plan.cambio": ("Cobro al cambiar de plan (6.3)", (AccionProrrateo, AccionRechazar)),
+    "plan.recomendacion": ("Plan sugerido por ciudad y familia (6.11)", (AccionRecomendar,)),
     "servicio.transicion": (
-        "Disparadores al cambiar de estado un servicio (F1-SER-03)",
+        "Disparadores al cambiar de estado un servicio (6.10)",
         (AccionTarea, AccionNotificar),
     ),
     "servicio.elegibilidad": (
-        "Restricciones adicionales para agendar (F1-SER-05)",
+        "Restricciones adicionales para agendar (6.5)",
         (AccionRechazar,),
     ),
 }

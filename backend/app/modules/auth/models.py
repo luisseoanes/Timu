@@ -35,14 +35,14 @@ class Usuario(Base, UUIDMixin, TimestampMixin, Auditable):
     hashed_password: Mapped[str] = mapped_column(String(255))
     rol: Mapped[Rol] = mapped_column(EnumDb(Rol), default=Rol.OPERACIONES)
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
-    # F2-ALI-03 Solo para el rol aliada: la clinica cuyas remisiones puede ver.
+    # 6.22 Solo para el rol aliada: la clinica cuyas remisiones puede ver.
     clinica_aliada_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("clinicas_aliadas.id"), index=True
     )
 
 
 class Sesion(Base, UUIDMixin, TimestampMixin):
-    """F1-AUT-01 Sesion renovable. El refresh token solo se guarda como hash."""
+    """Seccion 11 Sesion renovable. El refresh token solo se guarda como hash."""
 
     __tablename__ = "sesiones"
 
@@ -59,7 +59,7 @@ class Sesion(Base, UUIDMixin, TimestampMixin):
 
 
 class TokenUsoUnico(Base, UUIDMixin, TimestampMixin):
-    """F1-AUT-03 / F1-AUT-04 Enlaces de recuperacion y de activacion del portal."""
+    """Seccion 11 / Seccion 14 Enlaces de recuperacion y de activacion del portal."""
 
     __tablename__ = "tokens_uso_unico"
     __checks__ = {
@@ -75,5 +75,5 @@ class TokenUsoUnico(Base, UUIDMixin, TimestampMixin):
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     expira_en: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     usado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    # F3-POR-07 Intentos fallidos con un codigo de ingreso; al tope, el codigo se invalida.
+    # Seccion 11 Intentos fallidos con un codigo de ingreso; al tope, el codigo se invalida.
     intentos: Mapped[int] = mapped_column(Integer, default=0)

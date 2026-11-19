@@ -50,7 +50,7 @@ Cartera = Annotated[Usuario, Depends(requiere(Rol.ADMIN, Rol.COMERCIAL))]
     dependencies=[CARTERA],
 )
 async def crear_contrato(db: DbSession, data: ContratoCreate) -> Any:
-    """F1-CAR-01 Contrato directo (afiliacion asistida). La afiliacion completa, con pago y
+    """6.2 Contrato directo (afiliacion asistida). La afiliacion completa, con pago y
     contrato en PDF, esta en /afiliaciones."""
     familia = await db.run_sync(familias.obtener, data.familia_id)
     contrato, _ = await db.run_sync(
@@ -112,7 +112,7 @@ async def obtener_contrato(db: DbSession, contrato_id: UUID) -> Any:
 
 @router.get("/contratos/{contrato_id}/documento", dependencies=[EQUIPO])
 async def documento(db: DbSession, contrato_id: UUID) -> dict[str, str]:
-    """F1-AFI-02 Enlace firmado y de vida corta al PDF del contrato."""
+    """6.12 Enlace firmado y de vida corta al PDF del contrato."""
     return await db.run_sync(
         service.url_documento, await db.run_sync(service.obtener_contrato, contrato_id)
     )
@@ -122,7 +122,7 @@ async def documento(db: DbSession, contrato_id: UUID) -> dict[str, str]:
     "/contratos/{contrato_id}/renovar", response_model=ContratoRead, dependencies=[CARTERA]
 )
 async def renovar(db: DbSession, contrato_id: UUID) -> Any:
-    """F1-CAR-07 Extiende un ano la vigencia del contrato."""
+    """6.4 Extiende un ano la vigencia del contrato."""
     return await db.run_sync(
         service.renovar, await db.run_sync(service.obtener_contrato, contrato_id)
     )
@@ -141,14 +141,14 @@ async def cancelar(db: DbSession, contrato_id: UUID, data: Cancelacion) -> Any:
     "/familias/{familia_id}/estado-cuenta", response_model=EstadoCuenta, dependencies=[EQUIPO]
 )
 async def estado_cuenta(db: DbSession, familia_id: UUID) -> Any:
-    """F1-CAR-10 Cuotas, pagos, saldo y proximo cobro."""
+    """6.2 Cuotas, pagos, saldo y proximo cobro."""
     await db.run_sync(familias.obtener, familia_id)
     return await db.run_sync(service.estado_cuenta, familia_id)
 
 
 @router.post("/pagos", response_model=PagoRead, status_code=status.HTTP_201_CREATED)
 async def registrar_pago(db: DbSession, data: PagoManual, usuario: Cartera) -> Any:
-    """F1-CAR-06 Pago recibido fuera de la pasarela. Se aplica a la cuota indicada o a la
+    """6.2 Pago recibido fuera de la pasarela. Se aplica a la cuota indicada o a la
     mas antigua, y actualiza el estado de la familia (reactiva si estaba congelada)."""
     await db.run_sync(familias.obtener, data.familia_id)
     return await db.run_sync(
@@ -171,7 +171,7 @@ async def registrar_pago(db: DbSession, data: PagoManual, usuario: Cartera) -> A
     dependencies=[CARTERA],
 )
 async def registrar_medio(db: DbSession, data: MedioPagoCreate) -> Any:
-    """F1-CAR-08 Autorizacion de cobro recurrente con tarjeta tokenizada."""
+    """6.2 Autorizacion de cobro recurrente con tarjeta tokenizada."""
     familia = await db.run_sync(familias.obtener, data.familia_id)
     return await db.run_sync(
         pasarela.registrar_medio,
@@ -235,7 +235,7 @@ async def recuentos_eventos(db: DbSession) -> RecuentosEventosPasarela:
     dependencies=[ADMIN],
 )
 async def reprocesar(db: DbSession, evento_id: UUID) -> Any:
-    """F1-CAR-09 Vuelve a procesar un evento (p. ej. si fallo por datos incompletos)."""
+    """6.2 Vuelve a procesar un evento (p. ej. si fallo por datos incompletos)."""
     await db.run_sync(pasarela.procesar_evento, evento_id, forzar=True)
     return await db.get(EventoPasarela, evento_id)
 
@@ -246,11 +246,11 @@ async def reprocesar(db: DbSession, evento_id: UUID) -> Any:
     dependencies=[ADMIN],
 )
 async def recuperar(db: DbSession, transaccion_id: str) -> Any:
-    """F1-CAR-09 Evento perdido: consulta la transaccion en la pasarela y la concilia."""
+    """6.2 Evento perdido: consulta la transaccion en la pasarela y la concilia."""
     return await db.run_sync(pasarela.recuperar_transaccion, transaccion_id)
 
 
-# --- F1-PLA-02 Cambio de plan (contratos.py) --------------------------------------------------
+# --- 6.3 Cambio de plan (contratos.py) --------------------------------------------------
 
 
 class CambioPlanIn(BaseModel):
@@ -280,7 +280,7 @@ class CambioPlanRead(BaseModel):
 async def cambiar_plan(
     db: DbSession, usuario: Cartera, contrato_id: UUID, data: CambioPlanIn
 ) -> Any:
-    """F1-PLA-02 Un peludo cambia de plan, con el cobro que defina la regla `plan.cambio`."""
+    """6.3 Un peludo cambia de plan, con el cobro que defina la regla `plan.cambio`."""
     contrato = await db.run_sync(service.obtener_contrato, contrato_id)
     plan = await db.run_sync(planes.obtener, data.plan_id)
     return await db.run_sync(contratos.cambiar_plan, contrato, data.mascota_id, plan, usuario.id)

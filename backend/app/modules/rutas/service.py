@@ -53,7 +53,7 @@ def _hora(texto: str) -> int:
     return h * 3600 + m * 60
 
 
-# --- F2-RUT-01 Planeacion ---------------------------------------------------------------------
+# --- 6.7 Planeacion ---------------------------------------------------------------------
 
 
 def solicitar(
@@ -113,7 +113,7 @@ def _duracion(db: Session, servicio: Servicio) -> int:
 
 
 def _visita(db: Session, servicio: Servicio) -> Visita:
-    """F2-RUT-03 La atencion empieza dentro de la ventana acordada con la familia: desde
+    """6.7 La atencion empieza dentro de la ventana acordada con la familia: desde
     la hora agendada hasta RUTA_VENTANA_LLEGADA_MIN despues."""
     assert servicio.programado_para is not None
     inicio = _segundos(servicio.programado_para)
@@ -250,7 +250,7 @@ def cancelar(db: Session, ruta: Ruta) -> Ruta:
     return ruta
 
 
-# --- F2-RUT-04 Ejecucion ----------------------------------------------------------------------
+# --- 6.7 Ejecucion ----------------------------------------------------------------------
 
 
 def _servicio(db: Session, parada: ParadaRuta) -> Servicio:
@@ -359,7 +359,7 @@ def _quizas_finalizar(ruta: Ruta) -> None:
         ruta.fin_real = ahora()
 
 
-# --- F2-RUT-05 Cambios en caliente ------------------------------------------------------------
+# --- 6.7 Cambios en caliente ------------------------------------------------------------
 
 
 def _coordenada(parada: ParadaRuta) -> Coordenada:
@@ -488,7 +488,7 @@ def agregar(db: Session, ruta: Ruta, servicio_id: UUID) -> ParadaRuta:
     return parada
 
 
-# --- F2-RUT-06 Avisos -------------------------------------------------------------------------
+# --- 6.7 Avisos -------------------------------------------------------------------------
 
 
 def _aviso(db: Session, parada: ParadaRuta, plantilla: str, marca: str) -> None:

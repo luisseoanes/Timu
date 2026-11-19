@@ -46,7 +46,7 @@ interface AuthState {
   errorSesion: boolean
   reintentarSesion: () => void
   login: (email: string, password: string) => Promise<Usuario>
-  /** Ingreso del portal: celular más el código que llegó por WhatsApp (F3-POR-07). */
+  /** Ingreso del portal: celular más el código que llegó por WhatsApp (Sección 11). */
   ingresarConCodigo: (telefono: string, codigo: string) => Promise<Usuario>
   /** Define la contraseña con el enlace de recuperación o de activación y entra. */
   entrarConEnlace: (token: string, password: string) => Promise<Usuario>

@@ -1,4 +1,4 @@
-"""F1-AUT-02 Matriz de permisos: ningun endpoint queda abierto por omision."""
+"""Seccion 11 Matriz de permisos: ningun endpoint queda abierto por omision."""
 
 import re
 from collections.abc import Callable, Iterator
@@ -78,7 +78,7 @@ PUBLICAS_ESPERADAS = {
     # R3-PUB-01 la pantalla del enlace dice de entrada si sirve, sin gastarlo.
     "POST /api/v1/auth/enlace",
     "POST /api/v1/auth/restablecer",
-    "POST /api/v1/auth/codigo",  # F3-POR-07 ingreso del portal por WhatsApp
+    "POST /api/v1/auth/codigo",  # Seccion 11 ingreso del portal por WhatsApp
     "POST /api/v1/auth/codigo/verificacion",
     "POST /api/v1/formularios/familia",
     # 6.1 Registro en linea: catalogo y cotizacion publicos; el formulario posterior al
@@ -100,8 +100,8 @@ PUBLICAS_ESPERADAS = {
     "GET /api/v1/webhooks/whatsapp",
     "POST /api/v1/webhooks/whatsapp",  # autorizada por firma de Meta
     "POST /api/v1/webhooks/pagos",  # autorizada por firma de la pasarela
-    "GET /api/v1/verificacion/carnets/{codigo}",  # F2-PRE-06 la valida un tercero
-    "GET /api/v1/encuestas/respuesta/{token}",  # F3-ENC-02 autorizada por el token
+    "GET /api/v1/verificacion/carnets/{codigo}",  # 6.15 la valida un tercero
+    "GET /api/v1/encuestas/respuesta/{token}",  # 6.20 autorizada por el token
     "POST /api/v1/encuestas/respuesta/{token}",
 }
 

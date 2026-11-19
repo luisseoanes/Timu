@@ -2,7 +2,7 @@
 
 Mide el volumen proyectado a 12 meses (5.000 familias, un año de cartera, servicios y
 mensajes) con 20 usuarios simultáneos, y falla si el p95 pasa de 500 ms en las consultas o
-de 2 s en el dashboard, o si falla más del 1 % de las peticiones (F4-QAA-02). Mete datos
+de 2 s en el dashboard, o si falla más del 1 % de las peticiones (Sección 14). Mete datos
 sintéticos en la base, así que se corre en un proyecto aparte:
 
 ```bash

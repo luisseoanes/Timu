@@ -1,4 +1,4 @@
-"""F1-FAM-01..05 Familias y mascotas; F0-09 catalogos; F0-11 archivos."""
+"""6.1 Familias y mascotas; catalogos; 6.14 archivos."""
 
 import json
 from datetime import timedelta
@@ -88,7 +88,7 @@ async def test_familia_inexistente_responde_404(client: AsyncClient, headers):
     assert resp.json()["detail"] == "Familia no encontrada"
 
 
-# --- F1-FAM-04 Validaciones colombianas -------------------------------------------------------
+# --- 6.1 Validaciones colombianas -------------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -160,7 +160,7 @@ async def test_especie_fuera_del_catalogo(client: AsyncClient, headers):
     assert resp.status_code == 422
 
 
-# --- F1-FAM-01 Ficha, baja logica e historial -------------------------------------------------
+# --- 6.1 Ficha, baja logica e historial -------------------------------------------------
 
 
 async def test_baja_logica_oculta_pero_conserva(client: AsyncClient, headers):
@@ -217,7 +217,7 @@ async def test_operaciones_no_cambia_estado_de_afiliacion(client: AsyncClient, d
     assert resp.status_code == 403
 
 
-# --- F1-FAM-02 Mascotas -----------------------------------------------------------------------
+# --- 6.1 Mascotas -----------------------------------------------------------------------
 
 
 async def test_ciclo_de_mascota(client: AsyncClient, headers):
@@ -308,7 +308,7 @@ async def test_editar_una_mascota_no_vacia_peso_ni_fecha_ni_pone_una_futura(
     assert (resp.json()["peso_kg"], resp.json()["raza"]) == (13.2, None)
 
 
-# --- F0-11 Foto de mascota con enlace firmado -------------------------------------------------
+# --- 6.14 Foto de mascota con enlace firmado -------------------------------------------------
 
 
 async def test_foto_con_enlace_firmado(client: AsyncClient, headers, almacenamiento):
@@ -360,7 +360,7 @@ async def test_foto_rechaza_tipo_disfrazado(client: AsyncClient, headers, almace
 
 @pytest.mark.unit
 def test_url_firmada_de_vida_corta_y_con_nombre(monkeypatch, almacenamiento):
-    """F0-11 Nada se sirve publico: la URL la firma el proveedor S3, con vencimiento corto
+    """6.14 Nada se sirve publico: la URL la firma el proveedor S3, con vencimiento corto
     y el nombre original para la descarga (no la clave interna)."""
     from app.core.config import settings
     from app.integrations import storage
@@ -399,7 +399,7 @@ def test_url_firmada_con_el_host_que_ve_el_navegador(monkeypatch, almacenamiento
     assert "X-Amz-Signature=" in url
 
 
-# --- F1-FAM-05 Geocodificacion ----------------------------------------------------------------
+# --- 6.7 Geocodificacion ----------------------------------------------------------------
 
 
 async def test_guardar_direccion_programa_geocodificacion(client: AsyncClient, headers, tareas):
@@ -444,7 +444,7 @@ async def test_cambiar_direccion_limpia_coordenadas(client: AsyncClient, headers
     assert await tareas.de("familias.geocodificar") == [(familia["id"],)]
 
 
-# --- F1-FAM-03 Formularios publicos -----------------------------------------------------------
+# --- 6.1 Formularios publicos -----------------------------------------------------------
 
 
 FORMULARIO = {
@@ -498,7 +498,7 @@ async def test_formulario_ignora_bots(client: AsyncClient, db):
     assert await db.scalar(select(func.count()).select_from(Familia)) == 0
 
 
-# --- F0-09 Catalogos --------------------------------------------------------------------------
+# --- Catalogos --------------------------------------------------------------------------
 
 
 async def test_carga_de_catalogos_es_repetible(db):
@@ -535,7 +535,7 @@ async def test_esquemas_por_especie(client: AsyncClient, headers):
 
 
 async def test_tipos_de_servicio_exponen_sus_pasos(client: AsyncClient, headers):
-    """El panel arma el formulario de la atencion con los pasos de cada tipo (F1-SER-02)."""
+    """El panel arma el formulario de la atencion con los pasos de cada tipo (6.5)."""
     resp = await client.get("/api/v1/catalogos/tipos-servicio", headers=headers)
     consulta = next(t for t in resp.json() if t["codigo"] == "consulta_domiciliaria")
     valoracion = next(p for p in consulta["pasos"] if p["codigo"] == "valoracion")

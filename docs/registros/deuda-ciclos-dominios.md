@@ -61,8 +61,8 @@ solo cinco:
 | --- | --- | --- |
 | `familias → cartera` | `familias/service.py:161` (`dar_de_baja`), `:412` (`anonimizar`) | Cancela el contrato al dar de baja la familia; comprueba que no haya contrato vigente antes de anonimizar. |
 | `familias → planes` | `familias/service.py:162` (`dar_de_baja`), `:247` (`_validar_contra_plan`), `:273` (`dar_de_baja_mascota`), `:413` (`anonimizar`, `VIGENTES`) | Busca el contrato vigente, valida que la mascota nueva quepa en el plan y recalcula el valor por mascotas al dar de alta o de baja una. |
-| `familias → preventivos` | `familias/service.py:237` (`agregar_mascota`) | Crea el calendario preventivo de la mascota que entra a un plan vigente (F1-AFI-03). |
-| `familias → comercial` | `familias/service.py:329` (`desde_formulario`) | Deja al interesado del formulario público en el embudo comercial (F3-COM-01). |
+| `familias → preventivos` | `familias/service.py:237` (`agregar_mascota`) | Crea el calendario preventivo de la mascota que entra a un plan vigente (6.13). |
+| `familias → comercial` | `familias/service.py:329` (`desde_formulario`) | Deja al interesado del formulario público en el embudo comercial (6.11). |
 | `planes → cartera` | `planes/service.py:14-15`, `planes/router.py:174` | `planes` opera sobre `Contrato` y `Cuota`, que son de `cartera`: contrato vigente, ajuste por mascotas, cambio de plan con prorrateo y cuotas de ajuste. |
 
 ### La causa de fondo, en dos frases

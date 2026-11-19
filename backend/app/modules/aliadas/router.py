@@ -183,7 +183,7 @@ class MascotaRemitida(BaseModel):
 
 
 class RemisionVistaAliada(BaseModel):
-    """Lo que ve la clinica aliada al validar un codigo (F2-ALI-03): lo minimo para atender."""
+    """Lo que ve la clinica aliada al validar un codigo (6.22): lo minimo para atender."""
 
     codigo: str
     estado: str
@@ -246,7 +246,7 @@ class AtendidasAliada(BaseModel):
     items: list[AtendidaAliada]
 
 
-# --- F2-ALI-01 Directorio y convenios ---------------------------------------------------------
+# --- 6.22 Directorio y convenios ---------------------------------------------------------
 
 
 async def _leida(db: DbSession, clinica: ClinicaAliada) -> ClinicaRead:
@@ -354,7 +354,7 @@ async def crear_convenio(db: DbSession, clinica_id: UUID, data: ConvenioIn) -> C
     return await db.run_sync(service.crear_convenio, clinica, data.model_dump())
 
 
-# --- F2-ALI-02 Remisiones ---------------------------------------------------------------------
+# --- 6.22 Remisiones ---------------------------------------------------------------------
 
 
 @router.post("/remisiones", response_model=RemisionRead, status_code=status.HTTP_201_CREATED)
@@ -410,7 +410,7 @@ async def anular(
     return await db.run_sync(service.anular, remision, data.motivo, usuario.id)
 
 
-# --- F2-ALI-03 Acceso de la clinica aliada ----------------------------------------------------
+# --- 6.22 Acceso de la clinica aliada ----------------------------------------------------
 
 
 def _clinica(usuario: Usuario) -> UUID:
@@ -465,7 +465,7 @@ async def reportar_atencion(
     return await db.run_sync(service.vista_aliada, codigo, clinica_id)
 
 
-# --- F2-ALI-04 Liquidacion --------------------------------------------------------------------
+# --- 6.22 Liquidacion --------------------------------------------------------------------
 
 
 @router.get("/liquidacion", dependencies=[ADMIN], response_model=None)

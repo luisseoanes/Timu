@@ -1,4 +1,4 @@
-"""F0-09 Datos iniciales de los catalogos.
+"""Datos iniciales de los catalogos.
 
 Son valores de arranque, editables luego desde el panel. Los esquemas preventivos siguen
 pautas veterinarias generales y deben ser validados por el equipo medico de TIMU antes de
@@ -214,7 +214,7 @@ def _paso(
     return paso
 
 
-# F2-PRE-07 el peso de la mascota el dia de la desparasitacion, que va al carnet.
+# 6.8 el peso de la mascota el dia de la desparasitacion, que va al carnet.
 PESO = {"campo": "peso_kg", "nombre": "Peso de la mascota (kg)", "numerico": True}
 
 

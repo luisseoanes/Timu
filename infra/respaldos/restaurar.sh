@@ -1,5 +1,5 @@
 #!/bin/sh
-# F0-07 Restauracion probada con evidencia.
+# Seccion C Restauracion probada con evidencia.
 #
 # Uso: restaurar.sh <archivo.dump | s3://bucket/respaldos/archivo.dump> <base_destino>
 #

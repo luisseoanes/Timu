@@ -1,4 +1,4 @@
-"""F0-02 / F0-08 Observabilidad: registro estructurado, identificador de peticion y errores.
+"""Seccion 11 Observabilidad: registro estructurado, identificador de peticion y errores.
 
 Sin esto, depurar catorce dominios mas Celery es adivinar. El identificador de
 peticion viaja en la cabecera X-Request-ID y aparece en cada linea de log, para poder

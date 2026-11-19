@@ -23,12 +23,12 @@ TAREA_WEBHOOK = "comunicaciones.procesar_evento_whatsapp"
 
 
 def _calificacion_de_encuesta(db: Any, telefono: str, texto: str, _: UUID | None) -> bool:
-    """F3-ENC-02 Un "1" a "5" en respuesta a una encuesta reciente es su calificacion."""
+    """6.20 Un "1" a "5" en respuesta a una encuesta reciente es su calificacion."""
     return encuestas.respuesta_whatsapp(db, telefono, texto) is not None
 
 
 def _conversacion_comercial(db: Any, telefono: str, texto: str, familia: UUID | None) -> bool:
-    """F3-COM-02 Todo lo demas lo atiende la conversacion comercial (o el asesor)."""
+    """6.11 Todo lo demas lo atiende la conversacion comercial (o el asesor)."""
     comercial.procesar_entrante(db, telefono, texto, familia)
     return True
 

@@ -1,4 +1,4 @@
-"""F0-12 Motor de reglas configurable."""
+"""Seccion 7 Motor de reglas configurable."""
 
 import pytest
 from httpx import AsyncClient
@@ -172,7 +172,7 @@ def test_accion_debe_corresponder_al_evento():
 
 
 async def test_regla_nueva_opera_sin_desplegar(client: AsyncClient, db, headers):
-    """El criterio de F0-12: una regla creada por API cambia el resultado de inmediato."""
+    """El criterio de Seccion 7: una regla creada por API cambia el resultado de inmediato."""
     antes = await db.run_sync(service.primera, _mora(3))
     assert antes.accion["estado"] == "activa"
 

@@ -1,4 +1,4 @@
-"""F0-02 Formato unico de errores.
+"""Formato unico de errores.
 
 Toda respuesta de error tiene la forma:
 

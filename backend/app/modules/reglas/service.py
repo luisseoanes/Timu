@@ -1,4 +1,4 @@
-"""F0-12 Evaluacion de reglas desde la base de datos."""
+"""Seccion 7 Evaluacion de reglas desde la base de datos."""
 
 import re
 import unicodedata

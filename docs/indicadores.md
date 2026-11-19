@@ -1,6 +1,6 @@
 # Indicadores del dashboard gerencial
 
-Definición acordada de cada indicador (F4-DAS-01). Es la misma que devuelve
+Definición acordada de cada indicador (Sección 8). Es la misma que devuelve
 `GET /api/v1/dashboard/definiciones` y la que va en la hoja *Definiciones* de los
 exportables. Si una fórmula cambia, se cambia a la vez en
 `backend/app/modules/dashboard/service.py` y en este documento.

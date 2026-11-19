@@ -1,4 +1,4 @@
-"""F3-SEG-01 Segmentacion: filtros combinables (todos deben cumplirse) sobre familias.
+"""6.16 Segmentacion: filtros combinables (todos deben cumplirse) sobre familias.
 
 Las bajas nunca entran a un segmento. Los filtros vacios no restringen.
 """

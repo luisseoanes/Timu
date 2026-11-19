@@ -10,7 +10,7 @@ from app.core.enums import PeriodicidadReporte
 
 
 class ReporteProgramado(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F4-DAS-03 Reporte que llega solo por correo, con el periodo anterior en Excel."""
+    """Seccion 8 Reporte que llega solo por correo, con el periodo anterior en Excel."""
 
     __tablename__ = "reportes_programados"
 

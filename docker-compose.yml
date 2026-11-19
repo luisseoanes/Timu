@@ -197,7 +197,7 @@ services:
       redis:
         condition: service_started
 
-  # F0-07 Respaldo diario (2:00 a.m.). Copia fuera del servidor si se define
+  # Seccion C Respaldo diario (2:00 a.m.). Copia fuera del servidor si se define
   # RESPALDO_BUCKET: un bucket distinto al de adjuntos, con su regla de retencion.
   respaldos:
     profiles: [respaldos]
@@ -217,7 +217,7 @@ services:
       db:
         condition: service_healthy
 
-  # Prueba de carga (F4-QAA-02) sobre el volumen de scripts.datos_volumen; ver CLAUDE.md.
+  # Prueba de carga (Seccion 14) sobre el volumen de scripts.datos_volumen; ver CLAUDE.md.
   # Va por la red interna directo a la API, que es lo que se mide.
   carga:
     profiles: [carga]

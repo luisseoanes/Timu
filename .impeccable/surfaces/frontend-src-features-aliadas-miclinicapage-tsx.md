@@ -23,7 +23,7 @@ celdas). Modo: Operate. Construcción: en código.
   familia.
 - Tarea: escribir el código, ver si sirve (y por qué no, si no), reportar la fecha, el valor y un
   resumen clínico, y comprobar después lo que ya reportó en el mes.
-- Restricciones: F2-ALI-03, no ver de la familia más de lo necesario (titular, últimos dígitos del
+- Restricciones: 6.22, no ver de la familia más de lo necesario (titular, últimos dígitos del
   documento y la mascota; nada de contacto, dirección, cartera ni historia). El código es la prueba
   de que la familia se presentó: la clínica no ve las remisiones por usar. Roles de color del
   manual, una sola acción verde por vista, controles de 44 px en táctil, WCAG 2.2 AA, Radix para lo

@@ -13,7 +13,7 @@ Dos páginas sin sesión. La encuesta (`/encuesta/:token`): la familia llega des
 WhatsApp tras una atención y la califica (satisfacción, 6.20) o dice cómo sigue su peludo
 (seguimiento, 6.21). La verificación del carnet (`/verificar/:codigo`): un tercero (clínica,
 guardería, aerolínea) confirma con el código impreso al pie del PDF que el carnet preventivo es
-auténtico y ve lo que decía (6.15, F2-PRE-06). Superficie dentro de la línea visual de `DESIGN.md`,
+auténtico y ve lo que decía (6.15). Superficie dentro de la línea visual de `DESIGN.md`,
 sin sorteo. Modo: Operate (la encuesta tiene algo de persuasivo: que la familia responda).
 Construcción: en código.
 

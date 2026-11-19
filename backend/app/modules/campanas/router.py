@@ -94,7 +94,7 @@ class EjecucionRead(BaseModel):
     excluidos: int
 
 
-# --- F3-SEG-01 Segmentos ----------------------------------------------------------------------
+# --- 6.16 Segmentos ----------------------------------------------------------------------
 
 
 @segmentos_router.post("/previsualizacion", dependencies=[EQUIPO])
@@ -133,7 +133,7 @@ async def contar_segmento(db: DbSession, segmento_id: UUID) -> dict[str, Any]:
     return await db.run_sync(segmentos.previsualizar, segmentos.FiltrosSegmento(**segmento.filtros))
 
 
-# --- F3-CAM-01..04 Campanas -------------------------------------------------------------------
+# --- 6.18 Campanas -------------------------------------------------------------------
 
 
 def _datos(data: CampanaIn) -> dict[str, Any]:
@@ -169,7 +169,7 @@ async def editar(
 
 @router.get("/{campana_id}/previsualizacion", dependencies=[EQUIPO])
 async def previsualizar(db: DbSession, campana_id: UUID) -> dict[str, Any]:
-    """F3-CAM-01 Audiencia, exclusiones y ejemplos del mensaje antes de enviar."""
+    """6.18 Audiencia, exclusiones y ejemplos del mensaje antes de enviar."""
     return await db.run_sync(lambda s: service.previsualizar(s, service.obtener(s, campana_id)))
 
 
@@ -177,7 +177,7 @@ async def previsualizar(db: DbSession, campana_id: UUID) -> dict[str, Any]:
 async def programar(
     db: DbSession, _: Mercadeo, campana_id: UUID, data: ProgramacionIn
 ) -> CampanaRead:
-    """F3-CAM-04 Ahora, en una fecha o de forma recurrente."""
+    """6.18 Ahora, en una fecha o de forma recurrente."""
     campana = await db.run_sync(service.obtener, campana_id)
     programada = await db.run_sync(service.programar, campana, data.cuando, data.recurrencia)
     return (await _leidas(db, [programada]))[0]
@@ -205,7 +205,7 @@ async def ejecuciones(db: DbSession, campana_id: UUID) -> list[EjecucionCampana]
 async def resultados(
     db: DbSession, campana_id: UUID, ejecucion_id: UUID | None = None, formato: str = "json"
 ) -> dict[str, Any] | Response:
-    """F3-CAM-03 Totales por estado; con formato=csv, una fila por destinatario."""
+    """6.18 Totales por estado; con formato=csv, una fila por destinatario."""
     if formato != "csv":
         return await db.run_sync(
             lambda s: service.resultados(s, service.obtener(s, campana_id), ejecucion_id)

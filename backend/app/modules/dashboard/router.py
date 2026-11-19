@@ -45,7 +45,7 @@ class ReporteRead(BaseModel):
 
 @router.get("/definiciones", dependencies=[GERENCIA])
 async def definiciones() -> list[dict[str, str]]:
-    """F4-DAS-01 Formula acordada de cada indicador."""
+    """Seccion 8 Formula acordada de cada indicador."""
     return service.definiciones()
 
 
@@ -58,7 +58,7 @@ async def indicadores(
     codigos: Annotated[list[str] | None, Query()] = None,
     formato: Literal["json", "csv", "xlsx"] = "json",
 ) -> dict[str, Any] | Response:
-    """F4-DAS-02 Indicadores del periodo (cacheados unos minutos); F4-DAS-03 en CSV o Excel."""
+    """Seccion 8 Indicadores del periodo (cacheados unos minutos); Seccion 8 en CSV o Excel."""
     resultado = await db.run_sync(service.calcular, desde, hasta, ciudad, codigos)
     if formato == "json":
         return resultado

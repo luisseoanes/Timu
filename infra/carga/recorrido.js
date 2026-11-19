@@ -1,8 +1,8 @@
-// Prueba de carga (F4-QAA-02, fase 5 de docs/registros/plan-persistencia.md).
+// Prueba de carga (Sección 14, fase 5 de docs/registros/plan-persistencia.md).
 //
 // Usuarios simultaneos del equipo y del portal recorren listados, fichas y el dashboard sobre
 // el volumen de scripts.datos_volumen. Falla si con ese volumen se superan los tiempos
-// acordados: p95 < 500 ms en consultas y < 2 s en el dashboard (F4-DAS-02), con menos del
+// acordados: p95 < 500 ms en consultas y < 2 s en el dashboard (Sección 8), con menos del
 // 1 % de errores. Entra por la red interna del compose, directo a la API.
 //
 // Cada usuario virtual es una persona: su propio usuario (los impares, del equipo; los

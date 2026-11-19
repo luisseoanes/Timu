@@ -15,7 +15,7 @@ import { useEstadoEnlace } from './api'
 import { useAuth } from './AuthContext'
 import { CampoClave } from './CampoClave'
 
-/** Pide el enlace de recuperación (F1-AUT-03). Responde igual exista o no la cuenta. */
+/** Pide el enlace de recuperación (Sección 11). Responde igual exista o no la cuenta. */
 export function RecuperarPage() {
   const [identificador, setIdentificador] = useState('')
   const pedir = useMutation({

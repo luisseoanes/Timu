@@ -1,4 +1,4 @@
-"""F0-09 Carga repetible de catalogos: inserta lo nuevo y actualiza lo existente por codigo."""
+"""Carga repetible de catalogos: inserta lo nuevo y actualiza lo existente por codigo."""
 
 import unicodedata
 from typing import Any
@@ -56,7 +56,7 @@ def _sin_tildes(texto: str) -> str:
 
 
 def ciudad_valida(db: Session, nombre: str) -> str:
-    """F1-FAM-04 Devuelve el nombre canonico de la ciudad activa, sin distinguir mayusculas ni
+    """6.1 Devuelve el nombre canonico de la ciudad activa, sin distinguir mayusculas ni
     tildes: quien escribe «bogota» (en un formulario o por WhatsApp) llega a «Bogotá». Las
     ciudades activas son unas decenas: se comparan en Python."""
     buscada = _sin_tildes(nombre)

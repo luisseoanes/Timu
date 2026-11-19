@@ -1,4 +1,4 @@
-"""F1-AFI-01..03 Afiliacion: formulario -> pago -> contrato -> perfil, sin redigitacion.
+"""6.1 Afiliacion: formulario -> pago -> contrato -> perfil, sin redigitacion.
 
 1. La familia llena el formulario (o comercial la afilia de forma asistida) y acepta las
    condiciones: se crea o completa su perfil y una solicitud con un pago pendiente.
@@ -326,7 +326,7 @@ def al_embudo(
     ciudad: str,
     familia_id: UUID | None = None,
 ) -> None:
-    """F3-COM-01 La afiliacion tambien mueve el embudo comercial. El registro en linea entra
+    """6.11 La afiliacion tambien mueve el embudo comercial. El registro en linea entra
     antes de que exista la familia, con el contacto que dejo al pagar."""
     interesado = comercial.registrar(
         db,

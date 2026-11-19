@@ -98,7 +98,7 @@ async def cambiar_estado(db: DbSession, familia_id: UUID, data: CambioEstado) ->
     "/{familia_id}/acceso-portal", response_model=FamiliaRead, dependencies=[GESTION_ESTADO]
 )
 async def habilitar_portal(db: DbSession, familia_id: UUID) -> Familia:
-    """F1-AUT-04 Crea el usuario de portal de la familia y le envia el enlace de activacion."""
+    """Seccion 14 Crea el usuario de portal de la familia y le envia el enlace de activacion."""
     familia = await db.run_sync(service.obtener, familia_id)
     return await db.run_sync(service.habilitar_portal, familia)
 
@@ -152,7 +152,7 @@ async def dar_de_baja_contacto(db: DbSession, familia_id: UUID, contacto_id: UUI
     await db.run_sync(service.dar_de_baja_contacto, familia, contacto)
 
 
-# --- Mascotas (F1-FAM-02) ---------------------------------------------------------------------
+# --- Mascotas (6.1) ---------------------------------------------------------------------
 
 
 @mascotas_router.get("/{mascota_id}", response_model=MascotaRead, dependencies=[EQUIPO])

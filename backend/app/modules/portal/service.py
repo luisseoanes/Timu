@@ -50,7 +50,7 @@ def _servicio_propio(db: Session, familia: Familia, servicio_id: UUID) -> Servic
     return servicio
 
 
-# --- F3-POR-01 Plan vigente -------------------------------------------------------------------
+# --- Seccion 14 Plan vigente -------------------------------------------------------------------
 
 
 def _motivo_sin_agendar(contrato: Any) -> str | None:
@@ -126,7 +126,7 @@ def plan(db: Session, familia: Familia) -> dict[str, Any]:
     }
 
 
-# --- F3-POR-02 / 03 Historia y carnet ---------------------------------------------------------
+# --- Seccion 14 Historia y carnet ---------------------------------------------------------
 
 
 def historia(db: Session, familia: Familia, mascota_id: UUID) -> list[dict[str, Any]]:
@@ -154,7 +154,7 @@ def adjuntos(db: Session, familia: Familia, historia_id: UUID) -> list[Any]:
     return clinica.adjuntos(db, historia_id)
 
 
-# --- F3-POR-04 Autogestion de servicios -------------------------------------------------------
+# --- Seccion 14 Autogestion de servicios -------------------------------------------------------
 
 
 def _tipo_autogestionable(db: Session, codigo: str) -> Any:
@@ -255,7 +255,7 @@ def servicios_de(db: Session, familia: Familia, incluir_pasados: bool) -> list[S
     return list(db.scalars(stmt.order_by(Servicio.programado_para.desc()).limit(200)))
 
 
-# --- F3-POR-05 Pagos en linea -----------------------------------------------------------------
+# --- Seccion 14 Pagos en linea -----------------------------------------------------------------
 
 
 def iniciar_pago(db: Session, familia: Familia, cuota_id: UUID | None) -> tuple[Pago, str]:
@@ -328,7 +328,7 @@ def comprobante(db: Session, familia: Familia, pago_id: UUID) -> bytes:
     )
 
 
-# --- F3-POR-06 Datos de contacto --------------------------------------------------------------
+# --- 6.1 Datos de contacto --------------------------------------------------------------
 
 
 def actualizar_datos(db: Session, familia: Familia, cambios: dict[str, Any]) -> Familia:

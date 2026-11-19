@@ -40,7 +40,7 @@ cliente: [integraciones para TIMU](integraciones-timu.md), la versión en Markdo
 | IA | Gemini (decidido el 2026-11-10) | Adaptar el conector |
 | Mapa visual de las rutas | **Por decidir** (recomendada Google Maps JavaScript) | — |
 | Calendario | Por decidir. La propuesta firmada lo da como incluido: «Integraciones (WhatsApp, pasarela de pago, calendario) — Incluido» | Nada construido todavía. Recomendado: calendario ICS suscribible más invitación en las confirmaciones |
-| Hojas de cálculo, formularios, redes, APIs externas | Por decidir (opciones en el documento) | El 6.20 pide exportar las encuestas a Excel y hoy no se puede (`F4-DAS-03` dice «cualquier vista» y solo cubre el dashboard, la liquidación y los destinatarios) |
+| Hojas de cálculo, formularios, redes, APIs externas | Por decidir (opciones en el documento) | El 6.20 pide exportar las encuestas a Excel y hoy no se puede (`Sección 8` dice «cualquier vista» y solo cubre el dashboard, la liquidación y los destinatarios) |
 
 ## Wompi (pagos)
 
@@ -81,7 +81,7 @@ dos, queda la tarea «Pago doble de un registro en línea».
 **Cobro recurrente.** `ClienteWompi` tokeniza la tarjeta (token de aceptación y fuente de
 pago) y `cartera.pasarela.cobrar_recurrentes` cobra cada cuota fuera de la transacción del
 lote, con reintentos según `COBRO_RECURRENTE_REINTENTOS_DIAS`. Depende de la habilitación
-comercial de Wompi (`F1-CAR-08`).
+comercial de Wompi (`6.2`).
 
 ## WhatsApp Business (Meta Cloud API)
 

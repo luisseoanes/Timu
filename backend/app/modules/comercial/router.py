@@ -125,7 +125,7 @@ ORDEN = {
 }
 
 
-# --- F3-COM-01 Embudo -------------------------------------------------------------------------
+# --- 6.11 Embudo -------------------------------------------------------------------------
 
 
 @router.get("/interesados", response_model=Page[InteresadoRead], dependencies=[EQUIPO_COMERCIAL])
@@ -255,7 +255,7 @@ async def embudo(db: DbSession, desde: date, hasta: date) -> dict[str, Any]:
     return await db.run_sync(service.embudo, desde, hasta)
 
 
-# --- F3-COM-02 / 04 Conversaciones ------------------------------------------------------------
+# --- 6.11 Conversaciones ------------------------------------------------------------
 
 
 @router.get(

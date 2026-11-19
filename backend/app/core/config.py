@@ -19,7 +19,7 @@ _STORAGE_ACCESS_KEY_LOCAL = "timu-local"
 _STORAGE_SECRET_KEY_LOCAL = "timu-local-secreto"  # noqa: S105
 _WHATSAPP_VERIFY_TOKEN_LOCAL = "timu-verify"  # noqa: S105
 
-# F0-05 Variables sin las que el servicio no arranca, por ambiente desplegado.
+# Seccion 11 Variables sin las que el servicio no arranca, por ambiente desplegado.
 OBLIGATORIAS: dict[str, tuple[str, ...]] = {
     "staging": ("SECRET_KEY", "POSTGRES_PASSWORD", "APP_DB_PASSWORD", "REDIS_URL"),
     "production": (
@@ -53,16 +53,16 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     SECRET_KEY: str = _SECRET_KEY_LOCAL
     ALGORITHM: str = "HS256"
-    # F1-AUT-01 Access token corto; la sesion se sostiene con el refresh token.
+    # Seccion 11 Access token corto; la sesion se sostiene con el refresh token.
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
-    # F1-AUT-03 / F1-AUT-04 Enlaces de un solo uso
+    # Seccion 11 / Seccion 14 Enlaces de un solo uso
     TOKEN_RECUPERACION_MINUTOS: int = 30
     TOKEN_ACTIVACION_HORAS: int = 72
-    # F3-POR-07 Ingreso del portal con codigo por WhatsApp
+    # Seccion 11 Ingreso del portal con codigo por WhatsApp
     TOKEN_CODIGO_MINUTOS: int = 10
     CODIGO_MAX_INTENTOS: int = 5
-    # F3-POR-04 Anticipacion minima para que la familia cambie un servicio desde el portal
+    # Seccion 14 Anticipacion minima para que la familia cambie un servicio desde el portal
     PORTAL_ANTELACION_HORAS: int = 4
     FRONTEND_URL: str = "http://localhost:5173"
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:5173"]
@@ -86,7 +86,7 @@ class Settings(BaseSettings):
 
     REDIS_URL: str = "redis://localhost:6379/0"
 
-    # F0-06 Endurecimiento HTTP
+    # Seccion 11 Endurecimiento HTTP
     RATE_LIMIT_POR_MINUTO: int = 120
     RATE_LIMIT_LOGIN_POR_MINUTO: int = 10
     MAX_TAMANO_CARGA_MB: int = 10
@@ -113,7 +113,7 @@ class Settings(BaseSettings):
 
     GOOGLE_MAPS_API_KEY: str = ""
 
-    # Preventivos (F2-PRE-04): con cuantos dias se avisa a la familia que se acerca la fecha.
+    # Preventivos (6.8): con cuantos dias se avisa a la familia que se acerca la fecha.
     PREVENTIVO_ANTICIPACION_DIAS: int = 7
 
     # Rutas (F2-RUT): jornada, capacidad por tecnico y ventana de llegada acordada.
@@ -127,10 +127,10 @@ class Settings(BaseSettings):
     # Distance Matrix se factura por elemento: tope diario antes de pasar a estimar.
     MAPS_TOPE_DIARIO: int = 2000
 
-    # Campanas (F3-CAM-02): mensajes encolados por minuto, al ritmo que permite Meta.
+    # Campanas (6.18): mensajes encolados por minuto, al ritmo que permite Meta.
     CAMPANA_MENSAJES_POR_MINUTO: int = 60
 
-    # Clinicas aliadas (F2-ALI-02): dias de vigencia de una remision.
+    # Clinicas aliadas (6.22): dias de vigencia de una remision.
     REMISION_VIGENCIA_DIAS: int = 30
 
     # --- Sesion del navegador: el token viaja en cookie httpOnly -------------------------------
@@ -141,7 +141,7 @@ class Settings(BaseSettings):
     COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
     COOKIE_DOMAIN: str | None = None
 
-    # --- Almacenamiento de adjuntos (F0-11), compatible S3 -------------------------------------
+    # --- Almacenamiento de adjuntos (6.14), compatible S3 -------------------------------------
     # En desarrollo apunta al SeaweedFS del compose; en produccion, al S3 que entregue el
     # cliente. Cambiar de uno a otro es cambiar estas variables, no el codigo.
     STORAGE_ENDPOINT_URL: str | None = "http://almacenamiento:8333"
@@ -173,7 +173,7 @@ class Settings(BaseSettings):
     IA_PRESUPUESTO_MENSUAL_USD: float = 50.0
     IA_TIMEOUT_SEGUNDOS: float = 30.0
 
-    # --- Observabilidad (F0-08) ----------------------------------------------------------------
+    # --- Observabilidad (Seccion 11) --------------------------------------------------------------
     SENTRY_DSN: str = ""
     LOG_JSON: bool = False
 

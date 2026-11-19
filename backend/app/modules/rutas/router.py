@@ -92,7 +92,7 @@ class ParadaRead(BaseModel):
     motivo_omision: str | None
     tipo_codigo: str
     observaciones: str | None
-    # La ventana acordada con la familia: desde la hora agendada (F2-RUT-03).
+    # La ventana acordada con la familia: desde la hora agendada (6.7).
     ventana_desde: datetime | None
     ventana_hasta: datetime | None
     familia: FamiliaDeParada
@@ -127,7 +127,7 @@ class AgregarIn(BaseModel):
 async def planificar(
     db: DbSession, usuario: Operaciones, data: PlanificacionIn
 ) -> PlanificacionRuta:
-    """F2-RUT-01..03 La optimizacion corre en el worker; consulte el estado con GET."""
+    """6.7 La optimizacion corre en el worker; consulte el estado con GET."""
     return await db.run_sync(
         service.solicitar, data.fecha, data.ciudad, data.responsables, usuario.id
     )
@@ -183,7 +183,7 @@ async def cancelar(db: DbSession, _: Operaciones, ruta_id: UUID) -> dict[str, An
     )
 
 
-# --- F2-RUT-04 Ejecucion ----------------------------------------------------------------------
+# --- 6.7 Ejecucion ----------------------------------------------------------------------
 
 
 @router.post("/{ruta_id}/inicio", response_model=RutaRead)
@@ -237,7 +237,7 @@ async def salida(
     )
 
 
-# --- F2-RUT-05 Cambios en caliente ------------------------------------------------------------
+# --- 6.7 Cambios en caliente ------------------------------------------------------------
 
 
 @router.post("/paradas/{parada_id}/omision", response_model=RutaRead)

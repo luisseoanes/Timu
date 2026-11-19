@@ -199,7 +199,7 @@ async def linea_de_familia(db: DbSession, familia_id: UUID) -> LineaFamiliaRead:
     "/{familia_id}/baja", response_model=FamiliaRead, dependencies=[GESTION_ESTADO]
 )
 async def dar_de_baja(db: DbSession, familia_id: UUID, data: Baja) -> Familia:
-    """F1-FAM-01 Baja logica: se conserva toda la informacion y su historial."""
+    """6.1 Baja logica: se conserva toda la informacion y su historial."""
     familia = await db.run_sync(familias.obtener, familia_id)
     return await db.run_sync(ciclo.dar_de_baja, familia, data.motivo)
 

@@ -1,6 +1,6 @@
 """tipos_servicio: el peso, opcional, en la aplicacion de una desparasitacion
 
-F2-PRE-07 pide el peso de cada desparasitacion en el carnet, pero el paso «Aplicacion» de la
+6.8 pide el peso de cada desparasitacion en el carnet, pero el paso «Aplicacion» de la
 visita solo pedia producto y lote, y todos sus campos eran obligatorios. Los pasos ganan
 `opcionales` (campos que se aceptan sin exigirlos, con su nombre y si son una cifra); aqui se
 le da el peso al paso de la desparasitacion de las bases ya creadas. `datos.py` ya lo trae.

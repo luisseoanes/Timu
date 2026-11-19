@@ -1,4 +1,4 @@
-"""Cache con vencimiento para consultas costosas (F4-DAS-02).
+"""Cache con vencimiento para consultas costosas (Seccion 8).
 
 Redis en ambientes desplegados, compartida entre replicas; memoria en local y pruebas.
 Si Redis no responde, se calcula de nuevo: una cache caida no puede tumbar el panel.

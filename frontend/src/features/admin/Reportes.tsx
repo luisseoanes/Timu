@@ -18,7 +18,7 @@ const PERIODICIDAD: Record<string, string> = {
   mensual: 'El día 1 (el mes anterior)',
 }
 
-/** Reportes programados por correo (F4-DAS-03) y eventos de la pasarela con error. */
+/** Reportes programados por correo (Sección 8) y eventos de la pasarela con error. */
 export function Reportes() {
   const reportes = useReportes()
   const guardar = useGuardarReporte()

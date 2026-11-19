@@ -1,4 +1,4 @@
-"""F1-SER-01..06 Servicios, elegibilidad, estados, pendientes y bandeja de tareas."""
+"""6.5 Servicios, elegibilidad, estados, pendientes y bandeja de tareas."""
 
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
@@ -72,7 +72,7 @@ async def _agendar(client, headers, familia: Ids, tipo="consulta_domiciliaria", 
     )
 
 
-# --- F1-SER-01 --------------------------------------------------------------------------------
+# --- 6.5 --------------------------------------------------------------------------------
 
 
 async def test_disponibilidad_descuenta_lo_agendado(client: AsyncClient, headers, afiliada):
@@ -116,7 +116,7 @@ async def test_no_agenda_en_el_pasado(client: AsyncClient, headers, afiliada):
     assert resp.status_code == 422
 
 
-# --- F1-SER-05 --------------------------------------------------------------------------------
+# --- 6.5 --------------------------------------------------------------------------------
 
 
 async def test_elegibilidad_explica_los_motivos(client: AsyncClient, db, headers, agenda):
@@ -154,7 +154,7 @@ async def test_cupo_del_beneficio(client: AsyncClient, db, headers, agenda):
     assert "no incluye" in no_incluido.json()["detail"]
 
 
-# --- F1-SER-02 / 03 Estados, autorizacion y pasos ---------------------------------------------
+# --- 6.5 Estados, autorizacion y pasos ---------------------------------------------
 
 
 async def test_ciclo_de_vacunacion(client: AsyncClient, db, headers, afiliada, tareas):
@@ -262,7 +262,7 @@ async def test_reprogramar_dispara_tarea_de_operaciones(client: AsyncClient, db,
     assert tarea.area == "operaciones"
 
 
-# --- F1-SER-04 Pendientes ---------------------------------------------------------------------
+# --- 6.6 Pendientes ---------------------------------------------------------------------
 
 
 async def test_pendiente_no_avanza_sin_autorizacion(client: AsyncClient, headers, afiliada):
@@ -321,7 +321,7 @@ async def test_pendiente_rechazado_no_se_agenda(client: AsyncClient, headers, af
     assert resp.status_code == 422
 
 
-# --- F1-SER-06 Bandeja de tareas --------------------------------------------------------------
+# --- 6.4 Bandeja de tareas --------------------------------------------------------------
 
 
 async def test_bandeja_asigna_prioriza_y_cierra(client: AsyncClient, admin, headers):
@@ -413,7 +413,7 @@ async def test_bandeja_desempata_por_vencimiento_con_las_sin_fecha_al_final(
     ]
 
 
-# --- Agenda: franjas (F1-SER-02) y listados ---------------------------------------------------
+# --- Agenda: franjas (6.5) y listados ---------------------------------------------------
 
 
 async def test_operaciones_crea_franjas_con_la_ciudad_del_catalogo(client: AsyncClient, db):

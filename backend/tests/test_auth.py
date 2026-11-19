@@ -1,4 +1,4 @@
-"""F1-AUT-01 sesion y cierre, F1-AUT-03 recuperacion, F1-AUT-04 usuario de portal."""
+"""Seccion 11 sesion y cierre, Seccion 11 recuperacion, Seccion 14 usuario de portal."""
 
 import re
 from datetime import datetime, timedelta
@@ -42,7 +42,7 @@ async def _renovar(client: AsyncClient, renovacion: str):
     return resp
 
 
-# --- F1-AUT-01 --------------------------------------------------------------------------------
+# --- Seccion 11 --------------------------------------------------------------------------------
 
 
 async def test_la_cookie_de_renovacion_solo_viaja_a_auth(client: AsyncClient, admin):
@@ -134,7 +134,7 @@ async def test_un_email_que_ya_no_pasa_la_validacion_no_tumba_el_ingreso_ni_el_l
     assert resp.status_code == 422
 
 
-# --- F1-AUT-03 --------------------------------------------------------------------------------
+# --- Seccion 11 --------------------------------------------------------------------------------
 
 
 def _token_del_correo(contenido: str) -> str:
@@ -282,7 +282,7 @@ async def test_restablecer_abre_la_sesion(client: AsyncClient, db, admin):
     assert me.status_code == 200
 
 
-# --- F1-AUT-04 --------------------------------------------------------------------------------
+# --- Seccion 14 --------------------------------------------------------------------------------
 
 FAMILIA = {
     "barrio": "Centro",

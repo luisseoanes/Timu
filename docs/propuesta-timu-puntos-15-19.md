@@ -6,8 +6,8 @@ alcance: >
   Versión podada para consulta durante el desarrollo. Conserva la descripción de la
   solución (A), la tabla de cumplimiento de los requisitos 6.1 a 6.23 y los módulos de
   escalabilidad (B), el stack tecnológico (C), el reparto de alcance por fases (D) y la
-  capacitación (E), porque su manual por perfil es un entregable del backlog
-  (F4-DOC-01). Los comentarios del código y el backlog citan estas secciones por su letra.
+  capacitación (E), porque su manual por perfil es un entregable pendiente
+  (Sección E). Los comentarios del código y la documentación citan estas secciones por su letra.
 retirado: >
   Soporte, garantía, costos de terceros, modelo económico, criterios de evaluación y los
   cierres comerciales: nada de eso condiciona una decisión de código.

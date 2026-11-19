@@ -1,4 +1,4 @@
-"""F1-FAM-05 Geocodificacion en segundo plano: el guardado no espera al proveedor de mapas."""
+"""6.7 Geocodificacion en segundo plano: el guardado no espera al proveedor de mapas."""
 
 from uuid import UUID
 

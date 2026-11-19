@@ -20,7 +20,7 @@ from app.core.enums import (
 class HistoriaClinica(Base, UUIDMixin, TimestampMixin, Auditable):
     """6.14 Entrada de historia clinica por atencion. Solo lectura desde el portal.
 
-    F2-CLI-01 Una entrada firmada no se edita: se corrige con una nueva version que la
+    6.14 Una entrada firmada no se edita: se corrige con una nueva version que la
     reemplaza (`reemplaza_id`); la anterior queda como `corregida` y sigue consultable.
     """
 
@@ -63,7 +63,7 @@ class HistoriaClinica(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class AdjuntoClinico(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F2-CLI-02 Examen o imagen. El contenido vive en el almacenamiento: se abre solo con
+    """6.14 Examen o imagen. El contenido vive en el almacenamiento: se abre solo con
     URL firmada emitida a quien tiene permiso."""
 
     __tablename__ = "adjuntos_clinicos"
@@ -79,7 +79,7 @@ class AdjuntoClinico(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class PlantillaConsulta(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F2-CLI-03 Punto de partida del profesional por tipo de atencion: textos sugeridos
+    """6.14 Punto de partida del profesional por tipo de atencion: textos sugeridos
     para cada campo de la historia, que se editan en la consulta."""
 
     __tablename__ = "plantillas_consulta"
@@ -95,7 +95,7 @@ class PlantillaConsulta(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class Formula(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F2-CLI-03 Formula medica generada desde la historia, con su PDF."""
+    """6.14 Formula medica generada desde la historia, con su PDF."""
 
     __tablename__ = "formulas"
 
@@ -108,7 +108,7 @@ class Formula(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class RespuestaVirtual(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F2-CLI-04 Respuesta tipo de la atencion virtual. Solo una aprobada se usa: el
+    """6.17 Respuesta tipo de la atencion virtual. Solo una aprobada se usa: el
     profesional elige y completa, no redacta libre lo que sale al usuario."""
 
     __tablename__ = "respuestas_virtuales"
@@ -132,7 +132,7 @@ class RespuestaVirtual(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class SolicitudVirtual(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F2-CLI-04 Consulta de orientacion virtual: entra a una cola que atiende el equipo
+    """6.17 Consulta de orientacion virtual: entra a una cola que atiende el equipo
     medico; la respuesta queda registrada en la historia de la mascota."""
 
     __tablename__ = "solicitudes_virtuales"
@@ -164,6 +164,6 @@ class SolicitudVirtual(Base, UUIDMixin, TimestampMixin, Auditable):
     historia_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("historias_clinicas.id"), index=True
     )
-    # F4-IAA-03 Borrador de la IA para el profesional: nunca se envia a la familia.
+    # 6.17 Borrador de la IA para el profesional: nunca se envia a la familia.
     borrador_ia: Mapped[dict[str, Any] | None] = mapped_column(JSONTipo)
     borrador_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -31,7 +31,7 @@ from app.modules.planes.models import Plan
 
 logger = structlog.get_logger(__name__)
 
-# F4-IAA-04 Correr los casos de prueba de un prompt: cada caso es una consulta real.
+# 6.11 Correr los casos de prueba de un prompt: cada caso es una consulta real.
 EVENTO_EVALUACION = declarar_evento("ia.evaluacion_solicitada")
 
 # Respuesta estructurada de cada prompt (JSON Schema). Un codigo sin esquema responde texto.
@@ -202,7 +202,7 @@ def consultar(
     return datos
 
 
-# --- F4-IAA-04 Evaluacion ---------------------------------------------------------------------
+# --- 6.11 Evaluacion ---------------------------------------------------------------------
 
 
 # Los campos que miran los casos, dichos para Administracion (cadenas que se muestran: con tildes).
@@ -290,7 +290,7 @@ def evaluar(db: Session, prompt: PromptIA) -> dict[str, Any]:
     return prompt.evaluacion
 
 
-# --- F4-IAA-02 / 03 Usos ----------------------------------------------------------------------
+# --- 6.11 Usos ----------------------------------------------------------------------
 
 
 def _plan_en_texto(plan: Plan) -> str:

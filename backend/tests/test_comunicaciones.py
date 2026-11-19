@@ -1,4 +1,4 @@
-"""F1-WHA-01..04 Mensajeria por WhatsApp."""
+"""6.19 Mensajeria por WhatsApp."""
 
 import hashlib
 import hmac
@@ -67,7 +67,7 @@ async def _enviar(client, headers, **extra):
     )
 
 
-# --- F1-WHA-03 Plantillas ---------------------------------------------------------------------
+# --- 6.19 Plantillas ---------------------------------------------------------------------
 
 
 async def test_version_nueva_vuelve_a_borrador(client: AsyncClient, headers):
@@ -132,7 +132,7 @@ async def test_envio_con_variables_incompletas(client: AsyncClient, headers):
     assert resp.status_code == 422
 
 
-# --- F1-WHA-01 Cola y reintentos --------------------------------------------------------------
+# --- 6.19 Cola y reintentos --------------------------------------------------------------
 
 
 async def test_envio_se_encola_despues_del_commit(client: AsyncClient, headers, tareas):
@@ -226,7 +226,7 @@ async def test_el_equipo_no_lee_los_tokens_de_los_enlaces_de_un_solo_uso(
     assert mensaje["contenido"].endswith("/encuesta/[oculto]")
 
 
-# --- F1-WHA-02 Webhook: estados y entrantes ---------------------------------------------------
+# --- 6.19 Webhook: estados y entrantes ---------------------------------------------------
 
 
 def _evento(**valor) -> dict:
@@ -321,7 +321,7 @@ async def test_webhook_valida_firma_de_meta(client: AsyncClient, monkeypatch, ta
     assert await tareas.de("comunicaciones.procesar_evento_whatsapp") == [(_evento(statuses=[]),)]
 
 
-# --- F1-WHA-04 Ventana de 24 horas y bajas ----------------------------------------------------
+# --- 6.19 Ventana de 24 horas y bajas ----------------------------------------------------
 
 
 async def test_texto_libre_solo_dentro_de_la_ventana(client: AsyncClient, db, headers):

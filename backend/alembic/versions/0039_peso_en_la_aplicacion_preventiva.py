@@ -1,6 +1,6 @@
 """eventos_preventivos: peso de la mascota el dia de la aplicacion
 
-6.8 pide registrar el peso cuando sea pertinente (F2-PRE-07). Se guarda en cada aplicacion y
+6.8 pide registrar el peso cuando sea pertinente. Se guarda en cada aplicacion y
 el carnet lo muestra junto a cada desparasitacion. Opcional: las filas ya aplicadas quedan sin
 peso, y el CHECK solo exige que, si lo hay, sea positivo.
 

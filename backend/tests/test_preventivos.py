@@ -1,4 +1,4 @@
-"""F2-PRE-01..06 Esquemas, proximas fechas, autorizacion, agenda y carnet verificable."""
+"""6.8 Esquemas, proximas fechas, autorizacion, agenda y carnet verificable."""
 
 from datetime import date, time, timedelta
 
@@ -47,7 +47,7 @@ async def _autorizado(db, evento, usuario_id) -> None:
     await db.run_sync(service.autorizar, evento, usuario_id, "whatsapp", True)
 
 
-# --- F2-PRE-01 Calendario segun esquema -------------------------------------------------------
+# --- 6.8 Calendario segun esquema -------------------------------------------------------
 
 
 async def test_cachorro_recibe_la_serie_y_el_adulto_un_refuerzo(db):
@@ -99,7 +99,7 @@ async def test_serie_sin_intervalo_se_rechaza(client: AsyncClient, headers):
     assert resp.status_code == 422
 
 
-# --- F2-PRE-02 / 03 Autorizacion y aplicacion -------------------------------------------------
+# --- 6.8 Autorizacion y aplicacion -------------------------------------------------
 
 
 async def test_sin_autorizacion_no_se_aplica(db, admin):
@@ -199,7 +199,7 @@ async def test_un_peso_imposible_no_se_registra(client: AsyncClient, db, headers
     assert respuesta.status_code == 422
 
 
-# --- F2-PRE-04 Agenda -------------------------------------------------------------------------
+# --- 6.8 Agenda -------------------------------------------------------------------------
 
 
 async def test_agenda_diaria_avisa_una_sola_vez(db):
@@ -344,7 +344,7 @@ async def test_completar_la_visita_aplica_el_preventivo(client: AsyncClient, db,
 async def test_la_desparasitacion_en_visita_lleva_el_peso_al_carnet(
     client: AsyncClient, db, headers
 ):
-    """DEU-4 / F2-PRE-07: el peso es opcional en la aplicacion de una desparasitacion."""
+    """DEU-4 / 6.8: el peso es opcional en la aplicacion de una desparasitacion."""
     evento_id, servicio_id = await _visita(
         client, db, headers, autorizado=True, esquema="can_desp_interna"
     )
@@ -467,7 +467,7 @@ async def test_autorizar_varios_es_todo_o_nada(client: AsyncClient, db, headers,
     assert (await db.get(EventoPreventivo, primero_id, populate_existing=True)).autorizado is False
 
 
-# --- F2-PRE-05 / 06 Carnet --------------------------------------------------------------------
+# --- 6.15 Carnet --------------------------------------------------------------------
 
 
 async def test_carnet_separa_aplicado_vencido_y_proximo(db, admin):

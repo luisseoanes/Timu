@@ -197,7 +197,7 @@ async def recuentos_bandeja(
 async def autorizar_varios(
     db: DbSession, usuario: Equipo, data: AutorizacionesIn
 ) -> list[EventoPreventivo]:
-    """F2-PRE-03 La familia autoriza (o no) de una vez varios preventivos."""
+    """6.9 La familia autoriza (o no) de una vez varios preventivos."""
     return await db.run_sync(
         service.autorizar_varios, data.eventos, usuario.id, data.medio, data.aprobado
     )
@@ -219,7 +219,7 @@ async def calendarizar(db: DbSession, mascota_id: UUID) -> list[EventoPreventivo
 async def autorizar(
     db: DbSession, usuario: Equipo, evento_id: UUID, data: AutorizacionIn
 ) -> EventoPreventivo:
-    """F2-PRE-03 Registra la autorizacion de la familia, con quien y por que medio."""
+    """6.9 Registra la autorizacion de la familia, con quien y por que medio."""
     evento = await db.run_sync(service.obtener, evento_id)
     return await db.run_sync(service.autorizar, evento, usuario.id, data.medio, data.aprobado)
 
@@ -228,7 +228,7 @@ async def autorizar(
 async def aplicar(
     db: DbSession, usuario: Clinico, evento_id: UUID, data: AplicacionIn
 ) -> EventoPreventivo:
-    """F2-PRE-02 Registra la aplicacion y programa la siguiente dosis o refuerzo."""
+    """6.8 Registra la aplicacion y programa la siguiente dosis o refuerzo."""
     evento = await db.run_sync(service.obtener, evento_id)
     return await db.run_sync(
         lambda s: service.aplicar(
@@ -249,7 +249,7 @@ async def aplicar(
 async def agendar(
     db: DbSession, usuario: Equipo, evento_id: UUID, data: AgendarIn
 ) -> EventoPreventivo:
-    """F2-PRE-04 Convierte el evento en un servicio agendado contra la disponibilidad real."""
+    """6.8 Convierte el evento en un servicio agendado contra la disponibilidad real."""
     evento = await db.run_sync(service.obtener, evento_id)
     return await db.run_sync(
         lambda s: service.agendar(s, evento, data.inicio, data.observaciones, usuario_id=usuario.id)
@@ -264,7 +264,7 @@ async def cancelar(db: DbSession, evento_id: UUID, data: CancelacionIn) -> Event
 
 @router.get("/mascotas/{mascota_id}/carnet", dependencies=[EQUIPO])
 async def carnet(db: DbSession, mascota_id: UUID) -> dict[str, Any]:
-    """F2-PRE-05 Lo aplicado, lo vencido y lo proximo."""
+    """6.15 Lo aplicado, lo vencido y lo proximo."""
     return await db.run_sync(service.carnet, mascota_id)
 
 
@@ -274,7 +274,7 @@ async def carnet(db: DbSession, mascota_id: UUID) -> dict[str, Any]:
     status_code=status.HTTP_201_CREATED,
 )
 async def emitir_carnet(db: DbSession, usuario: Equipo, mascota_id: UUID) -> CarnetEmitidoRead:
-    """F2-PRE-06 PDF con codigo de verificacion; la URL es firmada y de vida corta."""
+    """6.15 PDF con codigo de verificacion; la URL es firmada y de vida corta."""
     registro = await db.run_sync(service.emitir_carnet, mascota_id, usuario.id)
     archivo = await db.get(Archivo, registro.archivo_id)
     assert archivo is not None
@@ -314,7 +314,7 @@ class PendienteVerificado(BaseModel):
 
 
 class CarnetVerificadoRead(BaseModel):
-    """F2-PRE-06 Lo que decia el carnet al emitirse: las secciones del PDF y lo pendiente.
+    """6.15 Lo que decia el carnet al emitirse: las secciones del PDF y lo pendiente.
     `pendientes` es None en un carnet emitido antes de guardarlo."""
 
     codigo: str

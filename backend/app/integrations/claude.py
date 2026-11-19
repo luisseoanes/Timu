@@ -1,4 +1,4 @@
-"""F4-IAA-01 Unico punto de contacto con la API de Claude.
+"""Seccion 14 Unico punto de contacto con la API de Claude.
 
 Ningun modulo importa el SDK de Anthropic: todos pasan por `app.modules.ia.service`,
 que agrega el prompt versionado, el limite de gasto y el registro de cada consulta, y

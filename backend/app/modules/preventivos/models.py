@@ -41,7 +41,7 @@ class EventoPreventivo(Base, UUIDMixin, TimestampMixin, Auditable):
     )
     producto: Mapped[str | None] = mapped_column(String(120))
     lote: Mapped[str | None] = mapped_column(String(60))
-    # 6.8 «Registrar peso cuando sea pertinente» (F2-PRE-07): el de la mascota el dia de la
+    # 6.8 «Registrar peso cuando sea pertinente»: el de la mascota el dia de la
     # aplicacion. Va en el carnet junto a cada desparasitacion, como en el carnet impreso.
     peso_kg: Mapped[float | None] = mapped_column()
     fecha_programada: Mapped[date] = mapped_column(Date, index=True)
@@ -52,14 +52,14 @@ class EventoPreventivo(Base, UUIDMixin, TimestampMixin, Auditable):
     # constancia, no referencia (si el usuario cambia de nombre o se va, no cambia), y asi la
     # familia lo ve en su portal sin poder leer la tabla de usuarios.
     aplicado_por_nombre: Mapped[str | None] = mapped_column(String(160))
-    # F2-PRE-03 Autorizacion previa de la familia: quien la registro, cuando y por que medio.
+    # 6.9 Autorizacion previa de la familia: quien la registro, cuando y por que medio.
     requiere_autorizacion: Mapped[bool] = mapped_column(Boolean, default=True)
     autorizado: Mapped[bool] = mapped_column(Boolean, default=False)
     autorizado_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
     autorizado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     medio_autorizacion: Mapped[str | None] = mapped_column(EnumDb(MedioAutorizacion))
     motivo_cancelacion: Mapped[str | None] = mapped_column(String(255))
-    # F2-PRE-04 Aviso a la familia de que se acerca la fecha (una sola vez por evento).
+    # 6.8 Aviso a la familia de que se acerca la fecha (una sola vez por evento).
     notificado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     servicio_id: Mapped[UUID | None] = mapped_column(ForeignKey("servicios.id"), index=True)
 
@@ -70,7 +70,7 @@ class EventoPreventivo(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class CarnetEmitido(Base, UUIDMixin, TimestampMixin):
-    """F2-PRE-06 Carnet descargado. El codigo lo valida un tercero (otra clinica, un
+    """6.15 Carnet descargado. El codigo lo valida un tercero (otra clinica, un
     hotel canino) sin entrar al sistema: ve lo que el carnet decia al emitirse y nada de
     la familia."""
 

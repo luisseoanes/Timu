@@ -12,8 +12,8 @@ from app.core.enums import CodigoPrompt, EstadoConsultaIa, EstadoPrompt
 
 
 class PromptIA(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F4-IAA-01 Prompt versionado. Solo una version activa por codigo, y solo despues de
-    pasar su evaluacion (F4-IAA-04)."""
+    """Seccion 14 Prompt versionado. Solo una version activa por codigo, y solo despues de
+    pasar su evaluacion (6.11)."""
 
     __tablename__ = "prompts_ia"
     __checks__ = {
@@ -37,7 +37,7 @@ class PromptIA(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class ConsultaIA(Base, UUIDMixin, TimestampMixin):
-    """F4-IAA-01 Registro de cada consulta: que prompt y version, cuanto costo, cuanto tardo
+    """Seccion 14 Registro de cada consulta: que prompt y version, cuanto costo, cuanto tardo
     y como termino. Es la base del limite de gasto."""
 
     __tablename__ = "consultas_ia"
@@ -68,7 +68,7 @@ class ConsultaIA(Base, UUIDMixin, TimestampMixin):
 
 
 class CasoPruebaIA(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F4-IAA-04 Caso de prueba con resultado esperado. Se corre contra una version antes de
+    """6.11 Caso de prueba con resultado esperado. Se corre contra una version antes de
     activarla: sin pasar todos, la version no entra en operacion."""
 
     __tablename__ = "casos_prueba_ia"

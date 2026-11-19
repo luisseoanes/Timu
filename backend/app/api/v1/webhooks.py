@@ -37,7 +37,7 @@ async def verificar_whatsapp(request: Request) -> Response:
 
 @router.post("/whatsapp", status_code=status.HTTP_202_ACCEPTED)
 async def recibir_whatsapp(db: DbSession, request: Request) -> dict[str, str]:
-    """Mensajes entrantes y estados de entrega (F1-WHA-02). Se guarda en el outbox y se
+    """Mensajes entrantes y estados de entrega (6.19). Se guarda en el outbox y se
     responde: Meta reintenta si tarda, y el procesamiento corre en el worker."""
     raw = await request.body()
     if not verificar_firma(raw, request.headers.get("x-hub-signature-256", "")):
@@ -50,7 +50,7 @@ async def recibir_whatsapp(db: DbSession, request: Request) -> dict[str, str]:
 
 @router.post("/pagos", status_code=status.HTTP_200_OK)
 async def recibir_pago(db: DbSession, request: Request) -> dict[str, str]:
-    """F1-CAR-09 Conciliacion: el evento se guarda (una sola vez aunque llegue repetido) y
+    """6.2 Conciliacion: el evento se guarda (una sola vez aunque llegue repetido) y
     se procesa en segundo plano. Wompi reintenta si no recibe 200."""
     try:
         evento = json.loads(await request.body())

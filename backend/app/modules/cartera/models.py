@@ -74,7 +74,7 @@ class Contrato(Base, UUIDMixin, TimestampMixin, Auditable):
     estado: Mapped[EstadoAfiliacion] = mapped_column(
         EnumDb(EstadoAfiliacion), default=EstadoAfiliacion.ACTIVA, index=True
     )
-    # F1-AFI-02 Aceptacion del contrato
+    # 6.12 Aceptacion del contrato
     aceptado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     medio_aceptacion: Mapped[str | None] = mapped_column(EnumDb(MedioAceptacion))
     evidencia_aceptacion: Mapped[dict[str, Any]] = mapped_column(JSONTipo, default=dict)
@@ -195,7 +195,7 @@ class AplicacionPago(Base, UUIDMixin, TimestampMixin):
 
 
 class AvisoCartera(Base, UUIDMixin, TimestampMixin):
-    """F1-CAR-04 Traza de cada aviso de mora: un mismo aviso no se repite por cuota."""
+    """6.2 Traza de cada aviso de mora: un mismo aviso no se repite por cuota."""
 
     __tablename__ = "avisos_cartera"
     __table_args__ = (UniqueConstraint("cuota_id", "clave"),)
@@ -210,7 +210,7 @@ class AvisoCartera(Base, UUIDMixin, TimestampMixin):
 
 
 class EventoPasarela(Base, UUIDMixin, TimestampMixin):
-    """F1-CAR-09 Evento de la pasarela, guardado antes de procesarlo: idempotente y
+    """6.2 Evento de la pasarela, guardado antes de procesarlo: idempotente y
     reprocesable."""
 
     __tablename__ = "eventos_pasarela"
@@ -232,7 +232,7 @@ class EventoPasarela(Base, UUIDMixin, TimestampMixin):
 
 
 class MedioPagoRecurrente(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F1-CAR-08 Tarjeta tokenizada en la pasarela. Nunca se guardan datos de la tarjeta."""
+    """6.2 Tarjeta tokenizada en la pasarela. Nunca se guardan datos de la tarjeta."""
 
     __tablename__ = "medios_pago_recurrente"
     __checks__ = {
@@ -254,7 +254,7 @@ class MedioPagoRecurrente(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class IntentoCobro(Base, UUIDMixin, TimestampMixin):
-    """F1-CAR-08 Cada intento de cobro automatico de una cuota."""
+    """6.2 Cada intento de cobro automatico de una cuota."""
 
     __tablename__ = "intentos_cobro"
     __checks__ = {

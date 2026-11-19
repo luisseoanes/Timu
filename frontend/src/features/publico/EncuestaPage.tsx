@@ -28,7 +28,7 @@ const COMO_SIGUE: { valor: ComoSigue; texto: string; icono: 'check' | 'ayuda' | 
 ]
 
 /**
- * Encuesta que llega por WhatsApp tras una atención (F3-ENC-02). El token es el secreto. La de
+ * Encuesta que llega por WhatsApp tras una atención (6.20). El token es el secreto. La de
  * satisfacción (6.20) se califica del 1 al 5; la de seguimiento (6.21) pregunta cómo sigue la
  * mascota. Hereda el acceso: es la otra página a la que la familia llega desde un enlace.
  */

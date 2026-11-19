@@ -77,7 +77,7 @@ como seguro (manual de marca, sección Voz).
 
 - Alcance funcional: requisitos 6.1 a 6.23 del documento de requerimientos, más portal de
   familias, consulta de historia clínica, carnet digital, pagos en línea y autogestión de
-  servicios (propuesta, sección B). El desglose ejecutable está en `docs/backlog.md`.
+  servicios (propuesta, sección B). Lo que falta está en `docs/pendientes-externos.md`.
 - Base de código existente: React 18 + TypeScript + Vite, CSS propio con tokens
   (`frontend/src/styles/tokens.css`) y primitivas de Radix para el comportamiento. Sin
   Tailwind ni librería de componentes con estilos propios.

@@ -1,4 +1,4 @@
-"""F3-POR-05 Comprobante de pago en PDF, con la marca de TIMU (como el carnet)."""
+"""Seccion 14 Comprobante de pago en PDF, con la marca de TIMU (como el carnet)."""
 
 from datetime import datetime
 from decimal import Decimal

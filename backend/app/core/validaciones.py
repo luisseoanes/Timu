@@ -1,4 +1,4 @@
-"""F1-FAM-04 Validaciones de datos colombianos, reutilizables como tipos de Pydantic.
+"""6.1 Validaciones de datos colombianos, reutilizables como tipos de Pydantic.
 
 - Telefono: se normaliza a E.164 (+57XXXXXXXXXX). Acepta espacios, guiones, parentesis y
   el indicativo con o sin '+'. Celulares (3XX) y fijos (60X) tienen 10 digitos.

@@ -1,7 +1,7 @@
 """Autorizacion a nivel de fila.
 
 `require_roles` responde a "que perfil puede llamar a este endpoint". Esto responde
-a la otra pregunta, la del portal de familias (6.x, F1-AUT-04): "que filas puede ver
+a la otra pregunta, la del portal de familias (6.x, Seccion 14): "que filas puede ver
 ESTE usuario". Son cosas distintas y las dos hacen falta.
 
 Regla: **todo listado y toda lectura por id pasa por `restringir()`**. Un servicio que

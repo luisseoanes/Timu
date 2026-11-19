@@ -1,4 +1,4 @@
-"""F4-DAS-01..03 Indicadores con formula documentada, filtros, cache, exportables y
+"""Seccion 8 Indicadores con formula documentada, filtros, cache, exportables y
 reportes programados."""
 
 import io
@@ -102,7 +102,7 @@ async def _calcular(db, ciudad=None, codigos=None):
     return (await db.run_sync(service.calcular, DESDE, HASTA, ciudad, codigos))["indicadores"]
 
 
-# --- F4-DAS-01 / 02 Indicadores ---------------------------------------------------------------
+# --- Seccion 8 Indicadores ---------------------------------------------------------------
 
 
 async def test_indicadores_del_periodo(db, operacion):
@@ -165,7 +165,7 @@ async def test_la_mora_de_un_cierre_pasado_no_cambia_al_pagar_despues(db):
 async def test_cache_y_rendimiento(db, operacion):
     inicio = time.perf_counter()
     primera = await _calcular(db)
-    assert time.perf_counter() - inicio < 2  # F4-DAS-02 menos de dos segundos
+    assert time.perf_counter() - inicio < 2  # el tablero responde en menos de dos segundos
     await fabricas.afiliada(db, HOY, telefono="+573001000010")
     assert (await _calcular(db))["afiliaciones"] == primera["afiliaciones"]  # cacheado
     from app.core import cache
@@ -199,7 +199,7 @@ async def test_el_medico_no_ve_el_dashboard(client: AsyncClient, db):
     assert resp.status_code == 403
 
 
-# --- F4-DAS-03 Exportables y reportes ---------------------------------------------------------
+# --- Seccion 8 Exportables y reportes ---------------------------------------------------------
 
 
 async def test_exporta_csv_y_excel(client: AsyncClient, db, operacion, headers):

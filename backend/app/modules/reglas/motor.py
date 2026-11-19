@@ -1,4 +1,4 @@
-"""F0-12 Motor de reglas.
+"""Seccion 7 Motor de reglas.
 
 Condiciones (JSON), sin codigo ejecutable:
 
@@ -227,7 +227,7 @@ _VALORES = {
     "aliada": "clínica aliada",
 }
 
-# El nombre de cada evento, sin la referencia al backlog que lleva su descripcion.
+# El nombre de cada evento, sin la referencia al requisito que lleva su descripcion.
 _NOMBRES_EVENTOS = {
     "cartera.estado": "Estado de cartera según los días de mora",
     "cartera.alerta": "Avisos escalonados de mora",

@@ -1,4 +1,4 @@
-"""F3-COM-01 Embudo comercial: todo interesado entra con su origen y un responsable."""
+"""6.11 Embudo comercial: todo interesado entra con su origen y un responsable."""
 
 from datetime import date, datetime, time, timedelta
 from typing import Any
@@ -216,7 +216,7 @@ def contacto_web(
     especie: str | None,
     mensaje: str,
 ) -> Interesado:
-    """Quien escribe desde la portada entra al embudo como interesado (6.11, F3-COM-01) con su
+    """Quien escribe desde la portada entra al embudo como interesado (6.11) con su
     mensaje, y el equipo comercial recibe una tarea para responderle."""
     interesado = registrar(
         db, origen="web", telefono=telefono, nombre=nombre, email=email, ciudad=ciudad

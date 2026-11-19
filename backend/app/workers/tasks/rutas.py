@@ -1,4 +1,4 @@
-"""F2-RUT-01..03 Planeacion de rutas en el worker: OR-Tools es CPU-bound."""
+"""6.7 Planeacion de rutas en el worker: OR-Tools es CPU-bound."""
 
 from uuid import UUID
 

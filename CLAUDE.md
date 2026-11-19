@@ -4,15 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Qué es este repositorio
 
-TIMU, plataforma de gestión veterinaria por afiliación. El contrato funcional
-vive en `docs/propuesta-timu-puntos-15-19.md` y el desglose ejecutable en
-`docs/backlog.md` (107 unidades con ID `fase-módulo-consecutivo`, p. ej. `F1-CAR-08`).
-Lo que TIMU pidió está en
+TIMU, plataforma de gestión veterinaria por afiliación. **La única fuente de verdad de lo que
+hay que construir es el documento de requerimientos de TIMU**:
 [`docs/documento-requerimientos-funcionales.md`](docs/documento-requerimientos-funcionales.md),
-transcripción literal del documento de requerimientos al que responde la propuesta; no se
-edita.
+copia literal del PDF (`~/Descargas/documento-requerimientos-funcionales.pdf`); no se edita.
+La propuesta (`docs/propuesta-timu-puntos-15-19.md`) responde a ese documento. El antiguo
+backlog por unidades se retiró el 2026-11-19 porque se había alejado de los requisitos: su
+trabajo abierto está en [`docs/pendientes-externos.md`](docs/pendientes-externos.md#lo-que-falta-en-el-código).
 
-El código y el backlog citan los dos documentos así:
+El código y la documentación citan los dos documentos así:
 
 - Requisito por número (`6.10`, `6.16`) o sección por número (`Sección 8`, `Sección 14`): el
   documento de requerimientos. La propuesta repite los números `6.x` en su tabla B y
@@ -21,8 +21,8 @@ El código y el backlog citan los dos documentos así:
 - Sección por letra (`sección A`, `Sección C`): los apartados A a E de la sección 15 de la
   propuesta.
 
-Al implementar un módulo pendiente, busca su ID en el backlog y respeta el criterio de
-aceptación que ya está escrito allí. El frontend está en rediseño con la marca real de TIMU:
+Al implementar algo, parte del requisito del documento (cita su número en el código y en el
+commit) y no de un resumen intermedio. El frontend está en rediseño con la marca real de TIMU:
 sus unidades (`R0-…` a `R4-…`) están en
 [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md), la identidad en
 [`docs/manual-de-marca.md`](docs/manual-de-marca.md), el sistema de diseño en
@@ -87,7 +87,7 @@ gh run watch <id> --exit-status --interval 60 && gh run view <id> --json jobs --
 
 ### Prueba de carga
 
-Mide el volumen proyectado a 12 meses (F4-QAA-02) y mete datos sintéticos, así que se corre en
+Mide el volumen proyectado a 12 meses (Sección 14) y mete datos sintéticos, así que se corre en
 un proyecto aparte: procedimiento en [`docs/prueba-de-carga.md`](docs/prueba-de-carga.md). El CI
 corre una versión reducida en el job del stack.
 

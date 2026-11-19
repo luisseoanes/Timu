@@ -162,7 +162,7 @@ def cambiar_estado(
 
 
 def dar_de_baja(db: Session, familia: Familia, motivo: str) -> Familia:
-    """F1-FAM-01 Baja logica: la familia deja de aparecer, pero su historia se conserva.
+    """6.1 Baja logica: la familia deja de aparecer, pero su historia se conserva.
 
     Solo marca la ficha. La baja completa, que antes cancela el contrato vigente, es
     `afiliaciones.ciclo.dar_de_baja`; la base rechaza marcar la baja con un contrato vigente
@@ -177,7 +177,7 @@ def dar_de_baja(db: Session, familia: Familia, motivo: str) -> Familia:
 
 
 def historial(db: Session, familia_id: UUID, solo_estado: bool) -> list[RegistroAuditoria]:
-    """F1-FAM-01 Historial de cambios tomado de la bitacora de auditoria."""
+    """6.1 Historial de cambios tomado de la bitacora de auditoria."""
     stmt = select(RegistroAuditoria).where(
         RegistroAuditoria.entidad == "familias",
         RegistroAuditoria.entidad_id == str(familia_id),
@@ -188,7 +188,7 @@ def historial(db: Session, familia_id: UUID, solo_estado: bool) -> list[Registro
 
 
 def habilitar_portal(db: Session, familia: Familia, clave: str | None = None) -> Familia:
-    """F1-AUT-04 Acceso propio de la familia al portal; recibe el enlace de activacion, o
+    """Seccion 14 Acceso propio de la familia al portal; recibe el enlace de activacion, o
     queda con `clave` si la eligio en el registro en linea."""
 
     if familia.usuario_portal_id is None:
@@ -218,7 +218,7 @@ def familia_de_usuario(db: Session, usuario_id: UUID) -> Familia:
     return familia
 
 
-# --- Mascotas (F1-FAM-02) ---------------------------------------------------------------------
+# --- Mascotas (6.1) ---------------------------------------------------------------------
 
 
 # --- Contactos adicionales (6.1) ----------------------------------------------------------------
@@ -355,7 +355,7 @@ def mascota_read(db: Session, mascota: Mascota) -> MascotaRead:
     return MascotaRead.model_validate(mascota)
 
 
-# --- Geocodificacion (F1-FAM-05) --------------------------------------------------------------
+# --- Geocodificacion (6.7) --------------------------------------------------------------
 
 
 def geocodificar(db: Session, familia_id: UUID) -> str | None:
@@ -381,7 +381,7 @@ def geocodificar(db: Session, familia_id: UUID) -> str | None:
     return familia.geo_precision
 
 
-# --- Autollenado desde formularios (F1-FAM-03) ------------------------------------------------
+# --- Autollenado desde formularios (6.1) ------------------------------------------------
 
 _CAMPOS_COMPLETABLES = ("email", "direccion", "complemento", "titular_nombre")
 

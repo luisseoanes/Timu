@@ -1,4 +1,4 @@
-"""F0-11 Almacenamiento de adjuntos clinicos (6.14), compatible S3.
+"""6.14 Almacenamiento de adjuntos clinicos, compatible S3.
 
 El cliente todavia no entrego el bucket, y esperarlo seria construir un apano local
 que luego habria que tirar. En su lugar hablamos S3 desde el primer dia contra SeaweedFS
@@ -6,7 +6,7 @@ que luego habria que tirar. En su lugar hablamos S3 desde el primer dia contra S
 S3 real se cambian cuatro variables de entorno y no se toca una linea de codigo.
 
 Nada se sirve publico: los adjuntos se entregan con URL firmada de vida corta
-(STORAGE_URL_TTL_SEGUNDOS), como exige el criterio de aceptacion de F0-11.
+(STORAGE_URL_TTL_SEGUNDOS), como pide 6.14.
 """
 
 from __future__ import annotations

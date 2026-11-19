@@ -190,7 +190,7 @@ function PlanYServicios({
   )
 }
 
-/** F1-PLA-02 El peludo pasa a otro plan; cómo se cobra lo decide la regla `plan.cambio`. */
+/** 6.3 El peludo pasa a otro plan; cómo se cobra lo decide la regla `plan.cambio`. */
 function CambioDePlan({
   contratoId,
   familia,

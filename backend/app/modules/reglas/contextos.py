@@ -1,4 +1,4 @@
-"""F0-12 Lo que da cada evento a sus reglas.
+"""Seccion 7 Lo que da cada evento a sus reglas.
 
 Cada evento evalua sus reglas con un contexto de tipo fijo (una dataclass por evento): el modulo
 que evalua lo construye con sus campos y mypy rechaza uno que falte o sobre. Asi la lista de

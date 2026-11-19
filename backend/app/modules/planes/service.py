@@ -244,7 +244,7 @@ def validar_para_familia(plan: Plan, ciudad: str, especies: list[str]) -> None:
             raise ReglaNegocio(f"El plan {plan.nombre} no cubre: {', '.join(fuera)}")
 
 
-# --- F1-PLA-04 Recomendacion ------------------------------------------------------------------
+# --- 6.11 Recomendacion ------------------------------------------------------------------
 
 
 def recomendar(db: Session, ciudad: str, especies: list[str]) -> tuple[Plan, str, str]:

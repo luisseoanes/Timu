@@ -1,5 +1,5 @@
 """Portal de familias (F3-POR): todo parte de la familia del usuario conectado
-(F1-AUT-04), asi que una familia nunca puede pedir datos de otra."""
+(Seccion 14), asi que una familia nunca puede pedir datos de otra."""
 
 from datetime import date, datetime
 from decimal import Decimal
@@ -133,7 +133,7 @@ class SolicitudVirtualIn(BaseModel):
     motivo: str = Field(min_length=5, max_length=4000)
 
 
-# --- F3-POR-01 Datos, plan y estado de cuenta -------------------------------------------------
+# --- Seccion 14 Datos, plan y estado de cuenta -------------------------------------------------
 
 
 @router.get("/mi-familia", response_model=FamiliaRead)
@@ -143,7 +143,7 @@ async def mi_familia(familia: FamiliaActual) -> Familia:
 
 @router.patch("/mi-familia", response_model=FamiliaRead)
 async def actualizar_datos(db: DbSession, familia: FamiliaActual, data: DatosFamiliaIn) -> Familia:
-    """F3-POR-06 Contacto y direccion, validados y auditados."""
+    """6.1 Contacto y direccion, validados y auditados."""
     return await db.run_sync(service.actualizar_datos, familia, data.model_dump(exclude_unset=True))
 
 
@@ -161,7 +161,7 @@ async def linea_propia(db: DbSession, familia: FamiliaActual) -> LineaFamiliaRea
 
 @router.get("/contrato")
 async def contrato(db: DbSession, familia: FamiliaActual) -> dict[str, str]:
-    """F1-AFI-02 PDF del contrato vigente de la familia."""
+    """6.12 PDF del contrato vigente de la familia."""
 
     vigente = await db.run_sync(contratos.contrato_vigente, familia.id)
     if vigente is None:
@@ -181,7 +181,7 @@ async def mis_documentos(
 
 @router.get("/estado-cuenta", response_model=EstadoCuenta)
 async def estado_cuenta(db: DbSession, familia: FamiliaActual) -> Any:
-    """F1-CAR-10 La misma consulta del panel, siempre sobre la familia conectada."""
+    """6.2 La misma consulta del panel, siempre sobre la familia conectada."""
     return await db.run_sync(cartera.estado_cuenta, familia.id)
 
 
@@ -210,7 +210,7 @@ async def quitar_foto(db: DbSession, familia: FamiliaActual, mascota_id: UUID) -
     return await db.run_sync(familias.mascota_read, mascota)
 
 
-# --- F3-POR-02 / 03 Historia clinica y carnet -------------------------------------------------
+# --- Seccion 14 Historia clinica y carnet -------------------------------------------------
 
 
 @router.get("/mascotas/{mascota_id}/historia")
@@ -247,7 +247,7 @@ async def carnet_pdf(db: DbSession, familia: FamiliaActual, mascota_id: UUID) ->
     return {"codigo": registro.codigo, "url": archivos.url(archivo)}
 
 
-# --- F3-POR-04 Autogestion de servicios -------------------------------------------------------
+# --- Seccion 14 Autogestion de servicios -------------------------------------------------------
 
 
 @router.get("/disponibilidad")
@@ -334,7 +334,7 @@ async def agendar_preventivo(
 async def orientacion_virtual(
     db: DbSession, familia: FamiliaActual, data: SolicitudVirtualIn
 ) -> dict[str, Any]:
-    """F2-CLI-04 La consulta entra a la cola del equipo medico."""
+    """6.17 La consulta entra a la cola del equipo medico."""
 
     mascota = await db.run_sync(service.mascota_propia, familia, data.mascota_id)
     solicitud = await db.run_sync(
@@ -343,7 +343,7 @@ async def orientacion_virtual(
     return {"id": solicitud.id, "estado": solicitud.estado}
 
 
-# --- F3-POR-05 Pagos en linea -----------------------------------------------------------------
+# --- Seccion 14 Pagos en linea -----------------------------------------------------------------
 
 
 @router.get("/pagos", response_model=list[PagoPortalRead])

@@ -52,7 +52,7 @@ T = TypeVar("T")
 GENERAN_CUOTAS = (EstadoAfiliacion.ACTIVA, EstadoAfiliacion.EN_MORA)
 
 
-# --- F1-CAR-01 Contrato -----------------------------------------------------------------------
+# --- 6.2 Contrato -----------------------------------------------------------------------
 
 
 def _numero(db: Session, dia: date) -> str:
@@ -153,7 +153,7 @@ def _abonar(cuota: Cuota, valor: Decimal) -> None:
     )
 
 
-# --- F1-CAR-02 Generacion de cuotas -----------------------------------------------------------
+# --- 6.2 Generacion de cuotas -----------------------------------------------------------
 
 
 def generar_cuotas(db: Session, dia: date | None = None) -> int:
@@ -205,7 +205,7 @@ def _aislado(db: Session, contrato: Contrato, fn: Callable[[], T]) -> T | None:
         return None
 
 
-# --- F1-CAR-03 / 05 Estados de cartera --------------------------------------------------------
+# --- 6.2 Estados de cartera --------------------------------------------------------
 
 
 def peludos(db: Session, contrato: Contrato) -> list[dict[str, Any]]:
@@ -317,7 +317,7 @@ def _notificar(db: Session, contrato: Contrato, plantilla: str, extra: list[str]
     return mensaje.id
 
 
-# --- F1-CAR-04 Avisos de mora -----------------------------------------------------------------
+# --- 6.2 Avisos de mora -----------------------------------------------------------------
 
 
 def avisar_mora(db: Session, contrato: Contrato, dia: date | None = None) -> str | None:
@@ -372,7 +372,7 @@ class ResumenRevision:
 
 
 def revisar_cartera(db: Session, dia: date | None = None) -> ResumenRevision:
-    """Proceso diario: estados (F1-CAR-03 / 05) y avisos (F1-CAR-04)."""
+    """Proceso diario: estados (6.2) y avisos."""
     dia = dia or hoy()
     resumen = ResumenRevision()
     revisables = db.scalars(select(Contrato).where(Contrato.estado != EstadoAfiliacion.CANCELADA))
@@ -395,7 +395,7 @@ def _revisar_contrato(db: Session, contrato: Contrato, dia: date) -> tuple[str, 
     return transicion, avisado
 
 
-# --- F1-CAR-06 Pagos --------------------------------------------------------------------------
+# --- 6.2 Pagos --------------------------------------------------------------------------
 
 
 def aplicar_pago(db: Session, pago: Pago) -> list[AplicacionPago]:
@@ -470,7 +470,7 @@ def registrar_pago_manual(
     return pago
 
 
-# --- F1-CAR-07 Renovacion ---------------------------------------------------------------------
+# --- 6.4 Renovacion ---------------------------------------------------------------------
 
 VENTANA_RENOVACION_DIAS = 90
 
@@ -696,7 +696,7 @@ def listar_contratos(
     ], int(total)
 
 
-# --- F1-CAR-10 Estado de cuenta ---------------------------------------------------------------
+# --- 6.2 Estado de cuenta ---------------------------------------------------------------
 
 
 def obtener_contrato(db: Session, contrato_id: UUID) -> Contrato:

@@ -1,4 +1,4 @@
-"""F0-04 Bitacora de auditoria, escrita por la base (fase 2g de
+"""Seccion 11 Bitacora de auditoria, escrita por la base (fase 2g de
 docs/registros/plan-persistencia.md).
 
 Todo modelo que herede `Auditable` lleva el trigger `tr_<tabla>_auditoria`: cada alta,

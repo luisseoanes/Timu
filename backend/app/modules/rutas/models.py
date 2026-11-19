@@ -47,7 +47,7 @@ class Ruta(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class ParadaRuta(Base, UUIDMixin, TimestampMixin, Auditable):
-    """Una visita de la ruta. F2-RUT-04 registra llegada, salida y evidencia."""
+    """Una visita de la ruta. 6.7 registra llegada, salida y evidencia."""
 
     __tablename__ = "paradas_ruta"
     __checks__ = {
@@ -75,7 +75,7 @@ class ParadaRuta(Base, UUIDMixin, TimestampMixin, Auditable):
     evidencia_archivo_id: Mapped[UUID | None] = mapped_column(ForeignKey("archivos.id"), index=True)
     nota: Mapped[str | None] = mapped_column(Text)
     motivo_omision: Mapped[str | None] = mapped_column(String(255))
-    # F2-RUT-06 Avisos a la familia (una sola vez cada uno).
+    # 6.7 Avisos a la familia (una sola vez cada uno).
     aviso_ventana_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     aviso_en_camino_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
@@ -83,7 +83,7 @@ class ParadaRuta(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class PlanificacionRuta(Base, UUIDMixin, TimestampMixin):
-    """F2-RUT-01 Solicitud de planear el dia de una ciudad. La optimizacion corre en el
+    """6.7 Solicitud de planear el dia de una ciudad. La optimizacion corre en el
     worker; aqui queda su estado y lo que no se pudo asignar, con el motivo."""
 
     __tablename__ = "planificaciones_ruta"
@@ -103,7 +103,7 @@ class PlanificacionRuta(Base, UUIDMixin, TimestampMixin):
 
 
 class DistanciaCache(Base, UUIDMixin, TimestampMixin):
-    """F2-RUT-02 Tiempo de viaje real entre dos puntos (redondeados a ~10 m). Distance
+    """6.7 Tiempo de viaje real entre dos puntos (redondeados a ~10 m). Distance
     Matrix se factura por consulta: un par ya conocido no se vuelve a pedir."""
 
     __tablename__ = "distancias_cache"
@@ -119,7 +119,7 @@ class DistanciaCache(Base, UUIDMixin, TimestampMixin):
 
 
 class ConsumoMapas(Base, UUIDMixin, TimestampMixin):
-    """F2-RUT-02 Elementos consultados por dia, contra MAPS_TOPE_DIARIO."""
+    """6.7 Elementos consultados por dia, contra MAPS_TOPE_DIARIO."""
 
     __tablename__ = "consumo_mapas"
     __checks__ = {

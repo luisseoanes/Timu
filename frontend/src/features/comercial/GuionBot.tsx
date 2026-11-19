@@ -5,7 +5,7 @@ import { mensajeError } from '@/lib/errores'
 
 import { useArbol, usePublicarArbol } from './api'
 
-/** El guion del asistente de WhatsApp (F3-COM-02): se edita como dato y cada versión queda guardada. */
+/** El guion del asistente de WhatsApp (6.11): se edita como dato y cada versión queda guardada. */
 export function GuionBot() {
   const arbol = useArbol(true)
   const publicar = usePublicarArbol()

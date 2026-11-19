@@ -2,10 +2,10 @@
 
 Dos capas, y las dos hacen falta:
 
-- `require_roles` responde a "que perfil puede llamar a este endpoint" (F1-AUT-02).
+- `require_roles` responde a "que perfil puede llamar a este endpoint" (Seccion 11).
 - `AlcanceActual` + `app.core.scope.restringir` responden a "que filas ve" (portal).
 
-F1-AUT-02 Todo endpoint declara quien puede usarlo, de una de dos formas:
+Seccion 11 Todo endpoint declara quien puede usarlo, de una de dos formas:
 
     @router.get("", dependencies=[Depends(require_roles(*INTERNOS))])   # o el usuario:
     async def f(usuario: Annotated[Usuario, Depends(require_roles(Rol.ADMIN))]): ...
@@ -99,7 +99,7 @@ def _uuid(valor: Any) -> UUID | None:
 
 
 async def _sesion_vigente(db: AsyncSession, sid: UUID) -> bool:
-    """F1-AUT-01 Cerrar sesion revoca el token de inmediato, aunque el JWT no haya vencido."""
+    """Seccion 11 Cerrar sesion revoca el token de inmediato, aunque el JWT no haya vencido."""
     sesion = await db.get(Sesion, sid)
     return sesion is not None and sesion.revocada_en is None
 
@@ -196,7 +196,7 @@ async def _familia_actual(
     _: Annotated[Usuario, Depends(require_roles(Rol.FAMILIA))],
     alcance: AlcanceActual,
 ) -> Any:
-    """F1-AUT-04 Familia del usuario de portal. Todo endpoint del portal parte de aqui, asi
+    """Seccion 14 Familia del usuario de portal. Todo endpoint del portal parte de aqui, asi
     que una familia nunca puede pedir datos de otra."""
 
     familia = await db.get(Familia, alcance.familia_id) if alcance.familia_id else None

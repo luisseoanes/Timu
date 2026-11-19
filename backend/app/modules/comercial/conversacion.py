@@ -1,4 +1,4 @@
-"""F3-COM-02..04 Conversacion comercial automatizada por WhatsApp.
+"""6.11 Conversacion comercial automatizada por WhatsApp.
 
 Un arbol de nodos (editable como dato, ver ArbolConversacion) resuelve las preguntas
 frecuentes, captura ciudad y mascotas, recomienda el plan con las reglas ya definidas y
@@ -240,7 +240,7 @@ def _responder(
 def _pregunta_abierta(
     db: Session, conversacion: ConversacionComercial, texto: str, turno: _Turno
 ) -> bool:
-    """F4-IAA-02 Una pregunta que no es una opcion del menu: la IA responde dentro del
+    """6.11 Una pregunta que no es una opcion del menu: la IA responde dentro del
     guion aprobado o, si sale de el, pasa a un asesor. Sin IA disponible, no hace nada y la
     conversacion sigue su camino (cuenta como no entendida)."""
 
@@ -262,7 +262,7 @@ def _pregunta_abierta(
 def _fallo(
     db: Session, conversacion: ConversacionComercial, nodos: dict[str, Any], turno: _Turno
 ) -> None:
-    """F3-COM-04 Tras varios intentos sin entender, pasa a una persona."""
+    """6.11 Tras varios intentos sin entender, pasa a una persona."""
     conversacion.fallos += 1
     if conversacion.fallos >= MAX_FALLOS:
         _asesor(db, conversacion, "El asistente no logro entender a la persona", turno)
@@ -349,7 +349,7 @@ def _accion(db: Session, conversacion: ConversacionComercial, accion: str, turno
 
 
 def _asesor(db: Session, conversacion: ConversacionComercial, motivo: str, turno: _Turno) -> None:
-    """F3-COM-04 Pasa la conversacion a una persona con todo el contexto: lo capturado,
+    """6.11 Pasa la conversacion a una persona con todo el contexto: lo capturado,
     el motivo y los ultimos mensajes, en una tarea del responsable comercial."""
 
     if conversacion.estado == "con_asesor":

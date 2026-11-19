@@ -1,4 +1,4 @@
-# Respaldo y restauración (F0-07)
+# Respaldo y restauración (Sección C)
 
 El servicio `respaldos` de `docker-compose.yml` corre `respaldar.sh` todos los días a las
 2:00 a.m. (hora de Colombia):

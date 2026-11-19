@@ -1,4 +1,4 @@
-"""F3-POR-01..07 Portal de familias: datos, historia, carnet, autogestion, pagos,
+"""Seccion 14 Portal de familias: datos, historia, carnet, autogestion, pagos,
 actualizacion de datos e ingreso con codigo por WhatsApp."""
 
 import re
@@ -76,7 +76,7 @@ async def portal(client: AsyncClient, db):
     return {**datos, "headers": await login(client, "ana@correo.co")}
 
 
-# --- F3-POR-01 / 06 Datos y plan --------------------------------------------------------------
+# --- Seccion 14 Datos y plan --------------------------------------------------------------
 
 
 async def test_ve_su_plan_y_estado_de_cuenta(client, portal):
@@ -145,7 +145,7 @@ async def test_telefono_invalido_se_rechaza(client, portal):
     assert resp.status_code == 422
 
 
-# --- F3-POR-02 / 03 Historia y carnet ---------------------------------------------------------
+# --- Seccion 14 Historia y carnet ---------------------------------------------------------
 
 
 async def test_historia_solo_lo_firmado_y_sin_notas_internas(client, db, portal):
@@ -185,7 +185,7 @@ async def test_carnet_de_sus_mascotas(client, portal):
     assert ajeno.status_code == 404
 
 
-# --- F3-POR-04 Autogestion --------------------------------------------------------------------
+# --- Seccion 14 Autogestion --------------------------------------------------------------------
 
 
 def _hora(h: int, dia=DIA) -> str:
@@ -294,7 +294,7 @@ async def test_cambios_con_poca_antelacion_van_por_el_equipo(client, portal, mon
     assert resp.status_code == 422 and "Faltan menos de" in resp.json()["detail"]
 
 
-# --- F3-POR-05 Pagos --------------------------------------------------------------------------
+# --- Seccion 14 Pagos --------------------------------------------------------------------------
 
 
 async def test_pago_en_linea_actualiza_y_da_comprobante(client, db, portal):
@@ -335,7 +335,7 @@ async def test_comprobante_de_otra_familia_no(client, db, portal):
     assert resp.status_code == 404
 
 
-# --- F3-POR-07 Codigo por WhatsApp ------------------------------------------------------------
+# --- Seccion 11 Codigo por WhatsApp ------------------------------------------------------------
 
 
 async def _codigo_enviado(db, telefono: str) -> str:

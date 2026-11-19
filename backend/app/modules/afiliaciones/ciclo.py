@@ -24,7 +24,7 @@ from app.modules.preventivos import service as preventivos
 
 
 def dar_de_baja(db: Session, familia: Familia, motivo: str) -> Familia:
-    """F1-FAM-01 Baja de la familia: cancela antes su contrato vigente. Sin esto seguiria
+    """6.1 Baja de la familia: cancela antes su contrato vigente. Sin esto seguiria
     vigente: cuotas, avisos de mora y cobro a la tarjeta de una familia que ya se fue."""
     if familia.dada_de_baja_en is not None:
         raise ReglaNegocio("La familia ya esta dada de baja")
@@ -41,10 +41,10 @@ def agregar_mascota(
     plan_id: UUID | None = None,
     usuario_id: UUID | None = None,
 ) -> Mascota:
-    """F1-FAM-02 Alta de mascota. Con contrato vigente y `plan_id`, entra al contrato con su
+    """6.1 Alta de mascota. Con contrato vigente y `plan_id`, entra al contrato con su
     plan: antes de guardarla se valida que el plan se venda en la ciudad y cubra su especie,
     y despues todos pasan a la tarifa del nuevo numero de peludos desde la siguiente cuota
-    (6.3). Recibe su calendario preventivo (F1-AFI-03).
+    (6.3). Recibe su calendario preventivo (6.13).
 
     Sin `plan_id` (un formulario publico que completa la ficha) queda en la ficha sin
     afiliar: sin beneficios hasta que el equipo la afilie."""
@@ -96,8 +96,8 @@ def anonimizar(db: Session, familia: Familia) -> Familia:
 
 
 def recibir_formulario(db: Session, data: FormularioFamilia) -> ResultadoFormulario:
-    """F1-FAM-03 Crea o completa el perfil desde un formulario publico y deja al interesado
-    en el embudo comercial (F3-COM-01)."""
+    """6.1 Crea o completa el perfil desde un formulario publico y deja al interesado
+    en el embudo comercial (6.11)."""
     resultado = familias.desde_formulario(db, data, agregar_mascota=agregar_mascota)
     comercial.registrar(
         db,

@@ -55,7 +55,7 @@ SessionWorker = sessionmaker(sync_engine, class_=Session, expire_on_commit=False
 JSONTipo = JSON().with_variant(JSONB(), "postgresql")
 
 
-# F0-01: los indices y las restricciones se nombran segun esta convencion en lugar
+# los indices y las restricciones se nombran segun esta convencion en lugar
 # de dejar que PostgreSQL invente el nombre. Sin ella, una migracion que quiera
 # borrar o alterar una restriccion no tiene forma estable de referirse a ella.
 CONVENCION_NOMBRES = {

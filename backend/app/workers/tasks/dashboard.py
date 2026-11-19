@@ -1,4 +1,4 @@
-"""F4-DAS-03 Envio de reportes programados."""
+"""Seccion 8 Envio de reportes programados."""
 
 from app.core.database import sesion_worker
 from app.modules.dashboard import reportes

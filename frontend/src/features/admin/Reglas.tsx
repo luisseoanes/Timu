@@ -13,7 +13,7 @@ import { useActualizarRegla, useReglas } from './api'
 import { EditorRegla } from './EditorRegla'
 import { ProbarRegla } from './ProbarRegla'
 
-/** Reglas de negocio configurables (F0-12) en listado con ficha (R2-PAN-10): agrupadas por el
+/** Reglas de negocio configurables (Sección 7) en listado con ficha (R2-PAN-10): agrupadas por el
  * evento que las evalúa, y la abierta (`?regla=`) dice en palabras cuándo aplica y qué hace. */
 export function Reglas() {
   const [params] = useSearchParams()

@@ -59,7 +59,7 @@ def fechas_esquema(
 
 
 def calendario_inicial(db: Session, mascota: Mascota, desde: date) -> list[EventoPreventivo]:
-    """F1-AFI-03 Programa los preventivos de la mascota segun los esquemas de su especie.
+    """6.13 Programa los preventivos de la mascota segun los esquemas de su especie.
     Repetible: no duplica esquemas que la mascota ya tenga programados."""
     esquemas = db.scalars(
         select(EsquemaPreventivo).where(
@@ -309,7 +309,7 @@ def _esquema(db: Session, codigo: str | None) -> EsquemaPreventivo | None:
     return db.scalar(select(EsquemaPreventivo).where(EsquemaPreventivo.codigo == codigo))
 
 
-# --- F2-PRE-03 Autorizacion -------------------------------------------------------------------
+# --- 6.9 Autorizacion -------------------------------------------------------------------
 
 
 def autorizar(
@@ -337,7 +337,7 @@ def autorizar(
     return evento
 
 
-# --- F2-PRE-02 Aplicacion y proxima fecha -----------------------------------------------------
+# --- 6.8 Aplicacion y proxima fecha -----------------------------------------------------
 
 
 def _siguiente(db: Session, evento: EventoPreventivo, numero: int) -> EventoPreventivo | None:
@@ -426,7 +426,7 @@ def cancelar(db: Session, evento: EventoPreventivo, motivo: str) -> EventoPreven
     return evento
 
 
-# --- F2-PRE-04 Agenda preventiva --------------------------------------------------------------
+# --- 6.8 Agenda preventiva --------------------------------------------------------------
 
 
 def _vigente(db: Session, familia_id: UUID) -> bool:
@@ -551,7 +551,7 @@ def _seguir_servicio(
             fecha=hoy(),
             producto=paso.datos["producto"],
             lote=paso.datos.get("lote"),
-            # F2-PRE-07 el peso, si se anoto en el paso: va al carnet y, si es el mas reciente,
+            # 6.8 el peso, si se anoto en el paso: va al carnet y, si es el mas reciente,
             # a la ficha de la mascota. Solo cuenta el que el paso valido como cifra.
             peso_kg=peso if isinstance(peso := paso.datos.get("peso_kg"), float) else None,
             usuario_id=paso.completado_por_id,
@@ -566,7 +566,7 @@ def _seguir_servicio(
 servicios.conectar_al_cambiar_estado(_seguir_servicio)
 
 
-# --- F2-PRE-05 / 06 Carnet --------------------------------------------------------------------
+# --- 6.15 Carnet --------------------------------------------------------------------
 
 
 def _fila_carnet(evento: EventoPreventivo, esquemas: dict[str, str]) -> dict[str, Any]:
@@ -633,7 +633,7 @@ def _codigo_unico(db: Session) -> str:
 
 
 def emitir_carnet(db: Session, mascota_id: UUID, usuario_id: UUID | None) -> CarnetEmitido:
-    """F2-PRE-06 Genera el PDF con un codigo de verificacion y guarda lo que decia."""
+    """6.15 Genera el PDF con un codigo de verificacion y guarda lo que decia."""
 
     datos = carnet(db, mascota_id)
     codigo = _codigo_unico(db)

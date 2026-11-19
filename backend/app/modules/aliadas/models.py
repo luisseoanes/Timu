@@ -43,7 +43,7 @@ class ClinicaAliada(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class ConvenioAliada(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F2-ALI-01 Lo que la aliada cubre para un plan (o para todos, sin plan), con su
+    """6.22 Lo que la aliada cubre para un plan (o para todos, sin plan), con su
     tarifa y vigencia. La remision solo se emite contra un convenio vigente."""
 
     __tablename__ = "convenios_aliadas"
@@ -97,7 +97,7 @@ class RemisionAliada(Base, UUIDMixin, TimestampMixin, Auditable):
     # emitida | utilizada | anulada
     estado: Mapped[str] = mapped_column(EnumDb(EstadoRemision), default="emitida", index=True)
     emitida_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
-    # F2-ALI-03 Lo que reporta la aliada.
+    # 6.22 Lo que reporta la aliada.
     fecha_atencion: Mapped[date | None] = mapped_column(Date, index=True)
     valor_atencion: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     valor_cubierto: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))

@@ -1,4 +1,4 @@
-"""F2-RUT-01..06 Planeacion, optimizacion con ventanas y capacidad, ejecucion, cambios en
+"""6.7 Planeacion, optimizacion con ventanas y capacidad, ejecucion, cambios en
 caliente y avisos de llegada."""
 
 from datetime import datetime, time, timedelta
@@ -139,7 +139,7 @@ def _plantilla(db, nombre: str, variables: int) -> None:
     )
 
 
-# --- F2-RUT-01..03 Planeacion -----------------------------------------------------------------
+# --- 6.7 Planeacion -----------------------------------------------------------------
 
 
 async def test_planificacion_se_encola_al_worker(client: AsyncClient, db, headers, tecnico, tareas):
@@ -191,7 +191,7 @@ async def test_planificar_avisa_la_ventana_de_llegada(db, dia_con_servicios, tec
     assert all(p.aviso_ventana_en is not None for p in paradas)
 
 
-# --- F2-RUT-02 Distancias con cache y tope ----------------------------------------------------
+# --- 6.7 Distancias con cache y tope ----------------------------------------------------
 
 
 async def test_distancias_se_cachean_y_respetan_el_tope(db, monkeypatch):
@@ -225,7 +225,7 @@ async def test_sin_proveedor_se_estima(db):
     assert await db.scalar(select(func.count()).select_from(DistanciaCache)) == 0
 
 
-# --- F2-RUT-04 Ejecucion ----------------------------------------------------------------------
+# --- 6.7 Ejecucion ----------------------------------------------------------------------
 
 
 async def test_ejecucion_mueve_el_servicio_y_cierra_la_ruta(
@@ -268,7 +268,7 @@ async def test_ejecucion_mueve_el_servicio_y_cierra_la_ruta(
     assert all(p["estado"] == "completada" and p["salida_en"] for p in final["paradas"])
     estados = set(await db.scalars(select(Servicio.estado).where(Servicio.ruta_id == ruta_id)))
     assert estados == {"completado"}
-    # F2-RUT-06 Cada familia recibio el aviso de "en camino".
+    # 6.7 Cada familia recibio el aviso de "en camino".
     assert (
         await db.scalar(
             select(func.count())
@@ -306,7 +306,7 @@ async def test_no_se_llega_a_otra_parada_con_una_abierta(db, dia_con_servicios, 
     assert (primera.estado, segunda.estado) == ("en_sitio", "pendiente")
 
 
-# --- F2-RUT-05 Cambios en caliente ------------------------------------------------------------
+# --- 6.7 Cambios en caliente ------------------------------------------------------------
 
 
 async def test_omitir_renumera_y_libera_el_servicio(db, dia_con_servicios, tecnico):

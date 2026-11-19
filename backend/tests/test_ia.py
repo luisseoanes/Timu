@@ -1,4 +1,4 @@
-"""F4-IAA-01..04 Capa de IA con control: prompts versionados, limite de gasto, registro,
+"""Seccion 14 Capa de IA con control: prompts versionados, limite de gasto, registro,
 uso comercial con paso a asesor, borrador veterinario y evaluacion antes de activar.
 
 Ninguna prueba llama a la API real: el proveedor se sustituye por uno falso.
@@ -66,7 +66,7 @@ async def _activo(db, codigo: str) -> PromptIA:
     return prompt
 
 
-# --- F4-IAA-01 Punto unico, costo, presupuesto y registro -------------------------------------
+# --- Seccion 14 Punto unico, costo, presupuesto y registro -------------------------------------
 
 
 @pytest.mark.unit
@@ -139,7 +139,7 @@ async def test_rechazo_y_json_invalido_no_se_usan(db, proveedor):
     assert set(await db.scalars(select(ConsultaIA.estado))) == {"rechazo", "error"}
 
 
-# --- F4-IAA-04 Versiones y evaluacion ---------------------------------------------------------
+# --- 6.11 Versiones y evaluacion ---------------------------------------------------------
 
 
 async def test_no_se_activa_sin_pasar_la_evaluacion(client: AsyncClient, db, proveedor, headers):
@@ -197,7 +197,7 @@ async def test_evaluar_se_encola_al_worker(client: AsyncClient, db, headers, tar
     assert await tareas.de("ia.evaluar_prompt") == [(prompt_id,)]
 
 
-# --- F4-IAA-02 Comercial ----------------------------------------------------------------------
+# --- 6.11 Comercial ----------------------------------------------------------------------
 
 
 @pytest.fixture
@@ -234,7 +234,7 @@ async def test_sin_ia_el_bot_sigue_como_antes(db, comerciales):
     assert "No te entendi" in await chat.escribir("Ustedes vienen a la casa a vacunar?")
 
 
-# --- F4-IAA-03 Borrador veterinario -----------------------------------------------------------
+# --- 6.17 Borrador veterinario -----------------------------------------------------------
 
 
 async def test_borrador_para_el_profesional_nunca_se_envia(

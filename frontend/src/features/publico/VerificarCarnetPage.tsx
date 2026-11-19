@@ -11,7 +11,7 @@ import type { CarnetVerificadoRead, SeccionVerificada } from '@/types'
 import { useCarnetVerificado } from './api'
 
 /**
- * Verificación pública del carnet preventivo (F2-PRE-06, 6.15): un tercero —clínica, guardería,
+ * Verificación pública del carnet preventivo (6.15): un tercero —clínica, guardería,
  * aerolínea— confirma con el código impreso que el carnet es auténtico. Dice lo mismo que el
  * PDF el día que se emitió, sección por sección, sin datos de la familia.
  */

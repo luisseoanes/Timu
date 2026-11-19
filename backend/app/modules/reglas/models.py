@@ -11,7 +11,7 @@ from app.core.enums import EventoRegla
 
 
 class Regla(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F0-12 Regla configurable: cuando ocurre `evento` y se cumple `condicion`, el modulo
+    """Seccion 7 Regla configurable: cuando ocurre `evento` y se cumple `condicion`, el modulo
     dueno del evento ejecuta `accion`. Se evalua en orden de prioridad (menor primero)."""
 
     __tablename__ = "reglas"

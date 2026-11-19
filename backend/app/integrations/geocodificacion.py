@@ -1,4 +1,4 @@
-"""F1-FAM-05 Geocodificacion de direcciones con Google Geocoding API.
+"""6.7 Geocodificacion de direcciones con Google Geocoding API.
 
 Sin API key configurada (desarrollo) no consulta nada y el servicio usa las coordenadas
 de la ciudad del catalogo como aproximacion.

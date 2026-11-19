@@ -223,7 +223,7 @@ async def recomendacion(
     ciudad: str,
     especies: Annotated[list[str], Query(description="Una entrada por mascota")] = ["canino"],  # noqa: B006
 ) -> Recomendacion:
-    """F1-PLA-04 Plan sugerido para la ciudad y las mascotas de la familia, y por que."""
+    """6.11 Plan sugerido para la ciudad y las mascotas de la familia, y por que."""
     ciudad = await db.run_sync(catalogos.ciudad_valida, ciudad)
     plan, motivo, regla = await db.run_sync(service.recomendar, ciudad, especies)
     return Recomendacion(plan=PlanRead.model_validate(plan), motivo=motivo, regla=regla)
@@ -237,7 +237,7 @@ async def obtener(db: DbSession, plan_id: UUID) -> Plan:
 
 @router.post("", response_model=PlanRead, status_code=status.HTTP_201_CREATED, dependencies=[ADMIN])
 async def crear(db: DbSession, data: PlanCreate) -> Plan:
-    """F1-PLA-01 Plan con sus tarifas, sus ciudades y sus beneficios por tipo de servicio."""
+    """6.2 Plan con sus tarifas, sus ciudades y sus beneficios por tipo de servicio."""
     await _validar_beneficios(db, data.beneficios)
     ciudades = [await db.run_sync(catalogos.ciudad_valida, c) for c in data.ciudades]
     datos = data.model_dump(exclude={"tarifas", "ciudades"})

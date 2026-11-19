@@ -1,4 +1,4 @@
-"""F1-AUT-01 Sesion larga con renovacion y cierre inmediato.
+"""Seccion 11 Sesion larga con renovacion y cierre inmediato.
 
 - El access token (JWT) dura poco y lleva el id de la sesion (`sid`).
 - El refresh token es opaco, se guarda como hash y rota en cada renovacion.

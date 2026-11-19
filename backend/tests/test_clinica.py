@@ -1,4 +1,4 @@
-"""F2-CLI-01..05 Historia versionada, adjuntos, plantillas y formulas, atencion virtual y
+"""6.14 Historia versionada, adjuntos, plantillas y formulas, atencion virtual y
 permisos por perfil."""
 
 from datetime import timedelta
@@ -86,7 +86,7 @@ async def _visita(db, mascota_id) -> str:
     return servicio_id
 
 
-# --- F2-CLI-01 Historia firmada y versiones ---------------------------------------------------
+# --- 6.14 Historia firmada y versiones ---------------------------------------------------
 async def test_firmada_no_se_edita_se_corrige_con_version(client, equipo, mascota_id):
     firmada = await _firmada(client, equipo, mascota_id)
     url = f"/api/v1/clinica/historias/{firmada['id']}"
@@ -336,7 +336,7 @@ async def test_el_uso_de_una_plantilla_cuenta_las_consultas_firmadas_y_vigentes(
     assert (await client.get(url, headers=equipo["medica"])).json() == {plantilla["codigo"]: 1}
 
 
-# --- F2-CLI-05 Permisos -----------------------------------------------------------------------
+# --- 6.14 Permisos -----------------------------------------------------------------------
 
 
 async def test_solo_el_medico_escribe(client, equipo, mascota_id):
@@ -359,7 +359,7 @@ async def test_cada_perfil_ve_lo_suyo(client, equipo, mascota_id):
     assert completa["notas_internas"] == "Ojo"
 
 
-# --- F2-CLI-02 Adjuntos -----------------------------------------------------------------------
+# --- 6.14 Adjuntos -----------------------------------------------------------------------
 
 
 async def test_adjunto_solo_por_url_firmada_y_con_permiso(
@@ -394,7 +394,7 @@ async def test_adjunto_rechaza_tipo_no_permitido(client, equipo, mascota_id):
     assert resp.status_code == 422
 
 
-# --- F2-CLI-03 Formula ------------------------------------------------------------------------
+# --- 6.14 Formula ------------------------------------------------------------------------
 
 
 async def test_formula_en_pdf(client, equipo, mascota_id, almacenamiento):
@@ -419,7 +419,7 @@ async def test_formula_en_pdf(client, equipo, mascota_id, almacenamiento):
     assert pdf.startswith(b"%PDF-")
 
 
-# --- F2-CLI-04 Atencion virtual ---------------------------------------------------------------
+# --- 6.17 Atencion virtual ---------------------------------------------------------------
 RESPUESTA = {
     "codigo": "observacion_casa",
     "titulo": "Observacion en casa",

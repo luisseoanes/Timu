@@ -1,4 +1,4 @@
-"""F0-06 Limite de peticiones por ventana fija de un minuto.
+"""Seccion 11 Limite de peticiones por ventana fija de un minuto.
 
 Redis en ambientes desplegados (compartido entre replicas); memoria en local y pruebas.
 Si Redis no responde, se deja pasar la peticion y se registra: un limitador caido no

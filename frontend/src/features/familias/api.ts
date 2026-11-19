@@ -413,7 +413,7 @@ export function usePagoManualAfiliacion() {
   })
 }
 
-/** F1-PLA-02 Un peludo cambia de plan; cómo se cobra lo decide la regla `plan.cambio`. */
+/** 6.3 Un peludo cambia de plan; cómo se cobra lo decide la regla `plan.cambio`. */
 export function useCambiarPlanMascota() {
   const refrescar = useRefrescarAfiliacion()
   return useMutation({

@@ -1,4 +1,4 @@
-"""F1-PLA-01..04 Planes, cambios, cupos y recomendacion."""
+"""6.2 Planes, cambios, cupos y recomendacion."""
 
 from datetime import timedelta
 from decimal import Decimal
@@ -394,7 +394,7 @@ async def test_solo_el_administrador_cambia_tarifas(client: AsyncClient, db, tim
     assert opciones["mensual"]["valor_periodo"] == "35500.00"
 
 
-# --- F1-PLA-04 --------------------------------------------------------------------------------
+# --- 6.11 --------------------------------------------------------------------------------
 
 
 async def test_recomendacion_provisional_es_el_plan_principal(client: AsyncClient, db, headers):
@@ -423,7 +423,7 @@ async def test_recomendacion_salta_plan_de_otra_ciudad(db):
     assert regla == "por_defecto"
 
 
-# --- F1-PLA-02 Cambio de plan de un peludo ---------------------------------------------------
+# --- 6.3 Cambio de plan de un peludo ---------------------------------------------------
 
 
 async def test_subir_de_plan_cobra_prorrateo(db):

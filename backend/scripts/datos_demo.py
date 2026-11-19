@@ -337,7 +337,7 @@ class Cliente:
         return resp.json()
 
 
-# Una persona escribe por WhatsApp, el bot la atiende y pide un asesor (F3-COM-02/04): la ficha de
+# Una persona escribe por WhatsApp, el bot la atiende y pide un asesor (6.11/04): la ficha de
 # un interesado enseña su conversación (R2-PAN-09). Cada mensaje recorre el mismo camino que uno
 # de Meta en el worker (`procesar_evento_whatsapp`), en orden y en su propia transacción: por el
 # webhook esperaría al drenado del outbox, de minuto en minuto, y podría responderse desordenado.

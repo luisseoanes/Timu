@@ -218,7 +218,7 @@ def cotizar_alta(db: Session, contrato: Contrato, especie: str, plan_id: UUID) -
 def agregar_mascota(
     db: Session, contrato: Contrato, mascota: Mascota, plan_id: UUID, usuario_id: UUID | None
 ) -> CambioPlan | None:
-    """F1-FAM-02 / 6.3 Un peludo mas: entra con su plan y todos pasan a la tarifa del nuevo
+    """6.1 / 6.3 Un peludo mas: entra con su plan y todos pasan a la tarifa del nuevo
     numero de peludos desde la siguiente cuota."""
     linea = AfiliacionMascota(
         familia_id=contrato.familia_id,
@@ -270,7 +270,7 @@ def retirar_mascota(
     )
 
 
-# --- F1-PLA-02 Cambio de plan de un peludo ----------------------------------------------------
+# --- 6.3 Cambio de plan de un peludo ----------------------------------------------------
 
 
 def ciclo_actual(contrato: Contrato, dia: date) -> tuple[date, date]:

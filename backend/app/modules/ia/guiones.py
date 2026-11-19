@@ -1,5 +1,5 @@
 # ruff: noqa: E501  (los prompts son prosa para el modelo; se leen mejor sin cortes)
-"""Primera version de los prompts y sus casos de prueba (F4-IAA-02..04).
+"""Primera version de los prompts y sus casos de prueba (6.11).
 
 Se siembran en borrador: entran en operacion despues de pasar su evaluacion, y las
 versiones siguientes se escriben desde el panel, no aqui. El guion comercial esta

@@ -35,7 +35,7 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
 
 - ~~**La ventana no deja elegir el tipo de atención de una plantilla**~~ Resuelto el 2026-11-18,
   decidido con el usuario: la ventana lo pide, y la consulta de una visita ofrece las plantillas de
-  su tipo y las generales (F2-CLI-03).
+  su tipo y las generales (6.14).
 - **La consulta guarda de qué plantilla partió** (`historias_clinicas.plantilla_codigo`, con su
   llave foránea) y además copia sus textos al crearse: editar o desactivar una plantilla no cambia
   lo ya registrado. La ficha de la plantilla dice en cuántas consultas firmadas y vigentes se usó
@@ -70,7 +70,7 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
 - ~~**Las series 1 y 2 del manual no se distinguen**~~ Resuelto el 2026-11-15 (`DEU-1`): el manual
   pasa a verde, azul, naranja y marino.
 - **Rendimiento de la serie con volumen real**: son 13 cálculos por carga. Sobre los datos de
-  demostración tarda 190–335 ms sin caché; contra el umbral de 2 s de F4-DAS-02 lo dirá la prueba
+  demostración tarda 190–335 ms sin caché; contra el umbral de 2 s de Sección 8 lo dirá la prueba
   de carga, que ya la incluye.
 - ~~Las estaciones de servicio no nombran familia ni mascota~~: resuelto en `R2-PAN-05`, con el
   listado que las trae.
@@ -99,7 +99,7 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
 ### Lo que quedó de Cartera y preventivos tras cerrar `R2-PAN-08`
 
 - ~~**El peso de la desparasitación no está en el paso «Aplicación»**~~ Resuelto el 2026-11-16 (`DEU-4`). del servicio: con «el servicio
-  manda», una desparasitación hecha en visita se aplica sin peso (`F2-PRE-07` lo pide opcional). Para
+  manda», una desparasitación hecha en visita se aplica sin peso (`6.8` lo pide opcional). Para
   tenerlo hay que añadir un campo opcional a los pasos del catálogo (hoy todos los campos son
   obligatorios en `completar_paso`). Se decide con el usuario.
 - ~~**Una visita preventiva agendada desde el portal no se enlaza con ningún preventivo**~~ Resuelto el 2026-11-16 (`DEU-3`).: el portal

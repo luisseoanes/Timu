@@ -24,7 +24,7 @@ los registros que agregan dominios (`app/models.py`, `app/transiciones.py`), en 
   tarea de Celery dentro de `with sesion_worker() as db:` (nunca `asyncio.run()` en una tarea).
 - **La transacción la cierra `get_db`**: los servicios hacen `flush()`, nunca `commit()`.
 - **Autorización con `requiere`** (`app/api/deps.py`): ningún endpoint queda abierto por omisión; uno
-  público declara `Depends(publico)`. Lo vigila `tests/test_permisos.py` (F1-AUT-02).
+  público declara `Depends(publico)`. Lo vigila `tests/test_permisos.py` (Sección 11).
 - **Enums de dominio en `app/core/enums.py`** (`StrEnum`); la columna es `EnumDb(Clase)`.
 - **Los estados de servicio pasan por `servicios/state_machine.py`** (`aplicar()`): nadie reimplementa
   el grafo ni asigna `servicio.estado` a mano; `aplicar` valida y publica el evento (6.10).

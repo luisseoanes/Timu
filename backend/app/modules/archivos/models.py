@@ -9,7 +9,7 @@ from app.core.enums import PropositoArchivo
 
 
 class Archivo(Base, UUIDMixin, TimestampMixin):
-    """F0-11 Metadatos de un archivo guardado fuera del servidor. El contenido vive en el
+    """6.14 Metadatos de un archivo guardado fuera del servidor. El contenido vive en el
     almacenamiento bajo `clave`; la URL se genera firmada en cada consulta."""
 
     __tablename__ = "archivos"

@@ -158,7 +158,7 @@ Un único scope, en minúscula, que diga **qué parte del sistema** cambia:
 - Un dominio nuevo amplía esta lista en el mismo commit que lo crea.
 - Si el cambio toca varios dominios sin que uno domine, **o se parte o va sin scope**.
   Nunca `feat(cartera,rutas)`: el analizador no lo agrupa.
-- Con `docs`, el scope es el área documentada: `docs(frontend)`, `docs(backlog)`.
+- Con `docs`, el scope es el área documentada: `docs(frontend)`, `docs(backend)`.
 
 #### Descripción
 
@@ -237,7 +237,7 @@ This reverts commit 3f2a9c1.
 
 La pasarela rechaza los cobros recurrentes sin el token de la
 suscripción y deja cuotas en estado intermedio. Se vuelve a
-publicar cuando F1-CAR-11 guarde ese token.
+publicar cuando la cuota guarde ese token.
 ```
 
 Conserva la línea `This reverts commit <sha>.`: es la que reconoce el analizador para

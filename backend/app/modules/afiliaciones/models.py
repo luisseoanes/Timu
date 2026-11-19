@@ -22,7 +22,7 @@ class EstadoSolicitud(StrEnum):
 
 
 class SolicitudAfiliacion(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F1-AFI-01 Ciclo cotizacion -> pago -> contrato -> perfil. La solicitud guarda lo que
+    """6.1 Ciclo cotizacion -> pago -> contrato -> perfil. La solicitud guarda lo que
     la familia acepto y el pago que la completa.
 
     En el registro en linea (6.1) se paga antes de que exista la familia: la solicitud lleva
@@ -70,7 +70,7 @@ class SolicitudAfiliacion(Base, UUIDMixin, TimestampMixin, Auditable):
         EnumDb(EstadoSolicitud), default=EstadoSolicitud.PENDIENTE_PAGO, index=True
     )
     origen: Mapped[str] = mapped_column(EnumDb(OrigenSolicitudAfiliacion))  # formulario | asistida
-    # F1-AFI-02 Evidencia de aceptacion: medio, version de terminos, fecha, ip, agente.
+    # 6.12 Evidencia de aceptacion: medio, version de terminos, fecha, ip, agente.
     aceptacion: Mapped[dict[str, Any]] = mapped_column(JSONTipo, default=dict)
     completada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     error: Mapped[str | None] = mapped_column(Text)

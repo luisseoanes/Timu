@@ -23,35 +23,35 @@ def _al_recibir_evento(evento: EventoDominio) -> None:
 
 @celery_app.task(name="cartera.generar_cuotas")
 def generar_cuotas() -> dict[str, int]:
-    """F1-CAR-02 Emision de cuotas del periodo. Repetible sin duplicar."""
+    """6.2 Emision de cuotas del periodo. Repetible sin duplicar."""
     with sesion_worker() as db:
         return {"emitidas": service.generar_cuotas(db)}
 
 
 @celery_app.task(name="cartera.revisar_mora")
 def revisar_mora() -> dict[str, Any]:
-    """F1-CAR-03 / 04 / 05 Estados de cartera, avisos, congelamiento y reactivacion."""
+    """6.2 / 05 Estados de cartera, avisos, congelamiento y reactivacion."""
     with sesion_worker() as db:
         return asdict(service.revisar_cartera(db))
 
 
 @celery_app.task(name="cartera.detectar_renovaciones")
 def detectar_renovaciones() -> dict[str, int]:
-    """F1-CAR-07 Tareas comerciales para contratos proximos a renovar."""
+    """6.4 Tareas comerciales para contratos proximos a renovar."""
     with sesion_worker() as db:
         return {"tareas_creadas": service.detectar_renovaciones(db)}
 
 
 @celery_app.task(name="cartera.cobrar_recurrentes")
 def cobrar_recurrentes() -> dict[str, int]:
-    """F1-CAR-08 Cobro automatico de cuotas vencidas con tarjeta autorizada. Abre una
+    """6.2 Cobro automatico de cuotas vencidas con tarjeta autorizada. Abre una
     transaccion por paso de cada cobro (ver pasarela.cobrar_recurrentes)."""
     return pasarela.cobrar_recurrentes(sesion_worker)
 
 
 @celery_app.task(name="cartera.conciliar_pendientes")
 def conciliar_pendientes() -> dict[str, int]:
-    """F1-CAR-09 Cobros que siguen pendientes porque el webhook no llego."""
+    """6.2 Cobros que siguen pendientes porque el webhook no llego."""
     with sesion_worker() as db:
         return pasarela.conciliar_pendientes(db)
 
@@ -60,6 +60,6 @@ def conciliar_pendientes() -> dict[str, int]:
     name=pasarela.TAREA_PROCESAR_EVENTO, autoretry_for=(OSError,), max_retries=5, retry_backoff=True
 )
 def procesar_evento_pasarela(evento_id: str) -> str:
-    """F1-CAR-09 Conciliacion del evento guardado por el webhook."""
+    """6.2 Conciliacion del evento guardado por el webhook."""
     with sesion_worker() as db:
         return pasarela.procesar_evento(db, UUID(evento_id))

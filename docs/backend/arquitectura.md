@@ -25,7 +25,7 @@ Reglas que atraviesan todo el backend:
   importado ahí: un modelo que no se añada a ese fichero no llega a las migraciones y,
   por tanto, tampoco a ninguna base de datos.
 - **El esquema se aplica con `alembic upgrade head`**, nunca con `create_all`. La
-  migración inicial (`F0-01`) crea las 21 tablas y está verificada en los dos sentidos:
+  migración inicial crea las 21 tablas y está verificada en los dos sentidos:
   `upgrade` sobre base vacía y `downgrade base` que la deja limpia.
 - **Un modelo nuevo exige su migración en el mismo cambio.** Las pruebas construyen el
   esquema aplicando las migraciones, y `tests/test_migraciones.py` compara el resultado
@@ -49,7 +49,7 @@ Reglas que atraviesan todo el backend:
 - **Autorización con `requiere`** (alias de `require_roles`, en `app/api/deps.py`):
   `dependencies=[Depends(requiere(Rol.ADMIN))]`, o `requiere(*INTERNOS)` para todo el
   equipo. **Ningún endpoint queda abierto por
-  omisión** (F1-AUT-02): uno abierto a propósito declara `Depends(publico)`, y
+  omisión** (Sección 11): uno abierto a propósito declara `Depends(publico)`, y
   `tests/test_permisos.py` recorre todas las rutas y falla si alguna no declara ninguna
   de las dos, o si aparece una pública que no está en su lista.
 - **Enums de dominio en `app/core/enums.py`**, no en cada módulo. Son `StrEnum` y viajan
@@ -159,7 +159,7 @@ Reglas que atraviesan todo el backend:
   el event loop, así que `app/integrations/routing.py` se invoca siempre desde una tarea
   de Celery. Una dependencia pesada que sólo use el worker va en ese fichero.
 - **Los registros salen por `structlog`, no por `logging` a pelo.** Cada petición lleva
-  su identificador en `X-Request-ID` (F0-02), que el middleware propaga a todas las
+  su identificador en `X-Request-ID`, que el middleware propaga a todas las
   líneas de log para poder seguirla de punta a punta. Sentry se activa solo si hay
   `SENTRY_DSN`, así que en local no estorba y en producción no se olvida.
 - **Los adjuntos van a `app/integrations/storage.py`**, que habla S3. En desarrollo

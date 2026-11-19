@@ -1,4 +1,4 @@
-"""F3-CAM-02 / 04 Campanas: lanzamiento de las programadas y despacho al ritmo permitido."""
+"""6.18 Campanas: lanzamiento de las programadas y despacho al ritmo permitido."""
 
 from app.core.database import sesion_worker
 from app.modules.campanas import service

@@ -8,7 +8,7 @@ import { hoyISO, moneda } from '@/lib/formato'
 
 import { type FilaLiquidacion, useLiquidacion } from './api'
 
-/** Lo que TIMU le debe a cada aliada en el período (F2-ALI-04): las atenciones reportadas, su valor
+/** Lo que TIMU le debe a cada aliada en el período (6.22): las atenciones reportadas, su valor
  * y cuánto cubre TIMU y cuánto pagan las familias. */
 export function Liquidacion() {
   const hoy = hoyISO()

@@ -1,4 +1,4 @@
-"""F0-10 Contrato unico de listados: paginacion, orden y respuesta `Page`.
+"""6.16 Contrato unico de listados: paginacion, orden y respuesta `Page`.
 
 Uso en un router:
 

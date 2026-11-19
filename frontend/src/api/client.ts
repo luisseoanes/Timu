@@ -35,7 +35,7 @@ const esPublica = (ruta: string) => ruta === '/' || PAGINAS_PUBLICAS.some((p) =>
 type Reintento = InternalAxiosRequestConfig & { _renovada?: boolean }
 
 /**
- * El access token dura poco (F1-AUT-01) y lo sostiene una cookie de renovación que
+ * El access token dura poco (Sección 11) y lo sostiene una cookie de renovación que
  * rota en cada uso. Si varias peticiones vencen a la vez, todas esperan la MISMA
  * renovación: presentar dos veces el refresh ya rotado se interpreta como robo y el
  * backend cierra todas las sesiones del usuario.

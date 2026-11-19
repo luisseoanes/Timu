@@ -12,7 +12,7 @@
 4. `cerrar_sin_pago` (beat): a las 48 horas sin pago, el alta se cancela.
 
 Decision de TIMU pendiente: no hay periodo de carencia para el peludo nuevo; con el contrato
-en mora o congelado no se agrega (docs/backlog.md, pendientes del 6.1).
+en mora o congelado no se agrega (docs/pendientes-externos.md, valores provisionales).
 """
 
 from dataclasses import dataclass

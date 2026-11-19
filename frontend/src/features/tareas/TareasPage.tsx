@@ -36,7 +36,7 @@ const VISTAS: { valor: Vista; label: string }[] = [
 
 const POR_PAGINA = 25
 
-/** Bandeja de tareas del equipo (F1-SER-06): lo que alguien tiene que resolver y para cuándo. */
+/** Bandeja de tareas del equipo (6.4): lo que alguien tiene que resolver y para cuándo. */
 export function TareasPage() {
   const { usuario } = useAuth()
   const [params] = useSearchParams()

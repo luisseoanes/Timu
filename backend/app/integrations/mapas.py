@@ -1,4 +1,4 @@
-"""F2-RUT-02 Google Distance Matrix: distancias y tiempos reales de viaje.
+"""6.7 Google Distance Matrix: distancias y tiempos reales de viaje.
 
 Se factura por elemento (cada par origen-destino), asi que quien llama cachea y respeta
 un tope diario (ver app/modules/rutas/distancias.py). Sin API key no consulta nada.

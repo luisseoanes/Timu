@@ -1,4 +1,4 @@
-"""Pruebas de la base tecnica transversal (F0-02, F0-05, F0-06, F0-10)."""
+"""Pruebas de la base tecnica transversal (Seccion 11, 6.16)."""
 
 from pathlib import Path
 
@@ -11,7 +11,7 @@ from app.core.config import ConfiguracionInvalida, Settings
 from app.main import app
 from tests.conftest import PASSWORD
 
-# --- F0-02 Formato de errores e identificador de peticion --------------------------------------
+# --- Formato de errores e identificador de peticion --------------------------------------
 
 _router_prueba = APIRouter()
 
@@ -59,7 +59,7 @@ async def test_error_no_controlado_no_filtra_detalles(client: AsyncClient):
     assert resp.json()["request_id"] == resp.headers["X-Request-ID"]
 
 
-# --- F0-05 Configuracion por ambiente ---------------------------------------------------------
+# --- Seccion 11 Configuracion por ambiente --------------------------------------------------------
 
 PRODUCCION_VALIDA = {
     "ENVIRONMENT": "production",
@@ -199,7 +199,7 @@ def test_vaciar_staging_solo_corre_en_staging_y_con_la_confirmacion_escrita():
             vaciar_staging.comprobar(Settings(_env_file=None, **ambiente), "staging")
 
 
-# --- F0-06 Endurecimiento HTTP ----------------------------------------------------------------
+# --- Seccion 11 Endurecimiento HTTP ---------------------------------------------------------------
 
 
 async def test_encabezados_de_seguridad(client: AsyncClient):
@@ -252,7 +252,7 @@ async def test_cors_solo_para_origenes_permitidos(client: AsyncClient):
     assert "access-control-allow-origin" not in ajeno.headers
 
 
-# --- F0-10 Contrato de listados ---------------------------------------------------------------
+# --- 6.16 Contrato de listados ---------------------------------------------------------------
 
 
 async def _crear_familias(client: AsyncClient, headers, nombres: list[str]) -> None:

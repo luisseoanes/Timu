@@ -20,7 +20,7 @@ PLANTILLAS_DE_LAS_REGLAS = {
 }
 
 REGLAS: list[dict[str, Any]] = [
-    # F1-CAR-03 Estado de cartera por dias de mora de la cuota mas antigua sin pagar.
+    # 6.2 Estado de cartera por dias de mora de la cuota mas antigua sin pagar.
     {
         "codigo": "cartera_congelada",
         "nombre": "Congelar a los 30 días de mora",
@@ -48,7 +48,7 @@ REGLAS: list[dict[str, Any]] = [
         "prioridad": 100,
         "detener": True,
     },
-    # F1-CAR-04 Avisos escalonados. Se envia el mas avanzado que aun no se haya enviado.
+    # 6.2 Avisos escalonados. Se envia el mas avanzado que aun no se haya enviado.
     *[
         {
             "codigo": f"alerta_mora_{dias}",
@@ -65,7 +65,7 @@ REGLAS: list[dict[str, Any]] = [
             (25, "aviso_congelamiento"),
         )
     ],
-    # F1-CAR-07 Renovacion anual.
+    # 6.4 Renovacion anual.
     {
         "codigo": "renovacion_30_dias",
         "nombre": "Gestionar renovación 30 días antes",
@@ -79,7 +79,7 @@ REGLAS: list[dict[str, Any]] = [
             "vence_en_dias": 7,
         },
     },
-    # F1-PLA-02 / F1-PLA-03 Planes.
+    # 6.3 Planes.
     {
         "codigo": "cambio_plan_prorrateo",
         "nombre": "Cambio de plan con prorrateo diario",
@@ -101,7 +101,7 @@ REGLAS: list[dict[str, Any]] = [
         "prioridad": 10,
         "detener": True,
     },
-    # F1-PLA-04 Recomendacion.
+    # 6.11 Recomendacion.
     # Valor provisional (docs/pendientes-externos.md): TIMU no ha dicho que plan recomendar
     # segun ciudad, especie y numero de peludos. Mientras tanto, el plan principal del manual
     # de marca (seccion 4). Si no aplica en la ciudad, se recomienda el de menor valor.
@@ -118,7 +118,7 @@ REGLAS: list[dict[str, Any]] = [
         "prioridad": 100,
         "detener": True,
     },
-    # F1-SER-03 Disparadores de servicios.
+    # 6.10 Disparadores de servicios.
     {
         "codigo": "servicio_requiere_autorizacion",
         "nombre": "Autorizar servicio pendiente",

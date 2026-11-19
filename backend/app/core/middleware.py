@@ -1,8 +1,8 @@
 """Middlewares ASGI puros (sin BaseHTTPMiddleware, para no romper streaming ni contextvars).
 
-- SecurityHeadersMiddleware (F0-06): encabezados de seguridad en toda respuesta.
-- LimiteCargaMiddleware (F0-06): rechaza cuerpos por encima del tope configurado.
-- RateLimitMiddleware (F0-06): limite por usuario autenticado o, si no hay, por IP;
+- SecurityHeadersMiddleware (Seccion 11): encabezados de seguridad en toda respuesta.
+- LimiteCargaMiddleware (Seccion 11): rechaza cuerpos por encima del tope configurado.
+- RateLimitMiddleware (Seccion 11): limite por usuario autenticado o, si no hay, por IP;
   limite estricto por IP en login, renovacion y recuperacion de clave.
 """
 

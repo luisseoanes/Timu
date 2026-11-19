@@ -41,7 +41,7 @@ export function useRecuentosCartera(filtros: Pick<FiltrosCartera, 'ciudad' | 'q'
   })
 }
 
-/** Renovar extiende un año la vigencia del contrato (F1-CAR-07). */
+/** Renovar extiende un año la vigencia del contrato (6.4). */
 export function useRenovarContrato() {
   const qc = useQueryClient()
   return useMutation({

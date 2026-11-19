@@ -1,4 +1,4 @@
-"""F0-12 Administracion de reglas: una regla nueva opera en cuanto se guarda."""
+"""Seccion 7 Administracion de reglas: una regla nueva opera en cuanto se guarda."""
 
 from datetime import date
 from typing import Any, Literal

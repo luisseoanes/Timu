@@ -20,7 +20,7 @@ def _al_completar_servicio(evento: EventoDominio) -> None:
 
 @celery_app.task(name=TAREA_ENCUESTA)
 def programar_encuesta(servicio_id: str) -> dict[str, int]:
-    """F3-ENC-01 Programa la encuesta (y el seguimiento) con la demora del tipo de atencion."""
+    """6.20 Programa la encuesta (y el seguimiento) con la demora del tipo de atencion."""
     with sesion_worker() as db:
         return {"programadas": len(service.programar(db, UUID(servicio_id)))}
 

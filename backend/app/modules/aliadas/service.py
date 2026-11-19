@@ -85,7 +85,7 @@ def de_la_portada(db: Session) -> list[tuple[ClinicaAliada, str | None]]:
     return [(c, logo_url(db, c)) for c in clinicas]
 
 
-# --- F2-ALI-01 Convenios ----------------------------------------------------------------------
+# --- 6.22 Convenios ----------------------------------------------------------------------
 
 
 def crear_convenio(db: Session, clinica: ClinicaAliada, datos: dict[str, Any]) -> ConvenioAliada:
@@ -114,7 +114,7 @@ def convenios_vigentes(
     return sorted(db.scalars(stmt), key=lambda c: c.plan_id is None)
 
 
-# --- F2-ALI-02 Remision -----------------------------------------------------------------------
+# --- 6.22 Remision -----------------------------------------------------------------------
 
 
 def _codigo(db: Session) -> str:
@@ -258,7 +258,7 @@ def anular(db: Session, remision: RemisionAliada, motivo: str, usuario_id: UUID)
     return remision
 
 
-# --- F2-ALI-03 Acceso de la aliada ------------------------------------------------------------
+# --- 6.22 Acceso de la aliada ------------------------------------------------------------
 
 
 def _de_la_clinica(db: Session, codigo: str, clinica_id: UUID) -> RemisionAliada:
@@ -449,7 +449,7 @@ def atendidas(db: Session, clinica_id: UUID, desde: date, hasta: date) -> dict[s
     }
 
 
-# --- F2-ALI-04 Liquidacion --------------------------------------------------------------------
+# --- 6.22 Liquidacion --------------------------------------------------------------------
 
 
 def liquidacion(

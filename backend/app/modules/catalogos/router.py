@@ -1,4 +1,4 @@
-"""F0-09 Catalogos maestros: lectura para los formularios y administracion por codigo."""
+"""Catalogos maestros: lectura para los formularios y administracion por codigo."""
 
 from typing import Any, Literal
 
@@ -42,7 +42,7 @@ class CampoOpcional(BaseModel):
 
 
 class PasoTipoRead(BaseModel):
-    """Paso de la atencion (F1-SER-02): el panel arma con esto el formulario de cada paso."""
+    """Paso de la atencion (6.5): el panel arma con esto el formulario de cada paso."""
 
     codigo: str
     nombre: str
@@ -91,7 +91,7 @@ class EsquemaPreventivoRead(BaseModel):
 
 
 class EsquemaPreventivoIn(BaseModel):
-    """F2-PRE-01 Esquema administrado como dato: un esquema nuevo aplica a las mascotas que
+    """6.8 Esquema administrado como dato: un esquema nuevo aplica a las mascotas que
     se calendaricen despues, sin desplegar codigo."""
 
     codigo: str = Field(pattern=r"^[a-z0-9_]{3,40}$")

@@ -1,4 +1,4 @@
-"""F3-SEG-01 segmentos; F3-CAM-01..04 campanas con previsualizacion, envio controlado,
+"""6.16 segmentos; 6.18 campanas con previsualizacion, envio controlado,
 resultados y programacion recurrente."""
 
 from datetime import timedelta
@@ -50,7 +50,7 @@ async def base(db):
     return {"cali": cali, "bogota": bogota, "morosa": morosa}
 
 
-# --- F3-SEG-01 Segmentos ----------------------------------------------------------------------
+# --- 6.16 Segmentos ----------------------------------------------------------------------
 
 
 async def test_filtros_combinables(db, base):
@@ -79,7 +79,7 @@ async def test_segmento_guardado_muestra_su_alcance(client: AsyncClient, db, bas
     assert conteo.json()["muestra"][0]["titular"] == "Ana Cali"
 
 
-# --- F3-CAM-01 Creacion y previsualizacion ----------------------------------------------------
+# --- 6.18 Creacion y previsualizacion ----------------------------------------------------
 
 
 async def _campana(client, headers, **extra) -> dict:
@@ -125,7 +125,7 @@ async def test_solo_comercial_o_admin_crean_campanas(client, db, base):
     assert resp.status_code == 403
 
 
-# --- F3-CAM-02 Envio controlado ---------------------------------------------------------------
+# --- 6.18 Envio controlado ---------------------------------------------------------------
 
 
 async def _lanzada(db, base, **campana) -> Campana:
@@ -198,7 +198,7 @@ async def test_cancelar_detiene_lo_pendiente(db, base):
     )
 
 
-# --- F3-CAM-03 Resultados ---------------------------------------------------------------------
+# --- 6.18 Resultados ---------------------------------------------------------------------
 
 
 async def test_resultados_y_exportacion(client, db, base, headers):
@@ -237,7 +237,7 @@ async def test_resultados_y_exportacion(client, db, base, headers):
     assert csv.text.count("\n") == 4 and "respondio" in csv.text.splitlines()[0]
 
 
-# --- F3-CAM-04 Programadas y recurrentes ------------------------------------------------------
+# --- 6.18 Programadas y recurrentes ------------------------------------------------------
 
 
 async def test_campana_programada_a_futuro(db, base):

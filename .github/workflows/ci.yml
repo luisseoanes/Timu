@@ -305,7 +305,7 @@ jobs:
         run: docker compose exec -T api python -m scripts.operacion_demo
 
       # Despues de los recorridos, para no cambiarles los datos. Version reducida de la prueba
-      # de carga (F4-QAA-02): el 10 % del volumen proyectado y 4 usuarios durante un minuto.
+      # de carga (Seccion 14): el 10 % del volumen proyectado y 4 usuarios durante un minuto.
       # La completa se corre en local (CLAUDE.md, "Prueba de carga").
       - name: Volumen sintetico
         run: docker compose exec -T api python -m scripts.datos_volumen --escala 0.1
@@ -316,7 +316,7 @@ jobs:
           CARGA_DURACION: 1m
         run: docker compose --profile carga run --rm carga
 
-      # F0-07 Respaldo y restauracion en una base nueva, comparada con la de origen: filas por
+      # Seccion C Respaldo y restauracion en una base nueva, comparada con la de origen: filas por
       # tabla y lo que las protege (permisos de timu_app, RLS, politicas, triggers). La
       # comparacion es con el origen tal como esta al terminar: worker y beat se detienen antes,
       # o una tarea que escribe entre el volcado y la comparacion (las encuestas, cada 15 min)

@@ -1,4 +1,4 @@
-"""F1-AFI-02 Contrato de afiliacion en PDF con los datos reales de la familia y la marca de
+"""6.12 Contrato de afiliacion en PDF con los datos reales de la familia y la marca de
 TIMU (como el carnet).
 
 El texto de las condiciones generales es provisional: TIMU debe entregar el texto legal

@@ -23,7 +23,7 @@ from app.core.enums import EstadoServicio, MedioAutorizacion, TipoServicio
 
 
 class Franja(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F1-SER-01 Disponibilidad semanal por ciudad y modalidad. `capacidad` = atenciones
+    """6.5 Disponibilidad semanal por ciudad y modalidad. `capacidad` = atenciones
     simultaneas posibles (profesionales o vehiculos disponibles en esa franja)."""
 
     __tablename__ = "franjas_agenda"
@@ -97,7 +97,7 @@ class Servicio(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class ServicioPaso(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F1-SER-02 Paso del flujo del tipo de servicio, completado en esta atencion."""
+    """6.5 Paso del flujo del tipo de servicio, completado en esta atencion."""
 
     __tablename__ = "servicio_pasos"
     __table_args__ = (UniqueConstraint("servicio_id", "paso_codigo"),)

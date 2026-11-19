@@ -1,8 +1,8 @@
 """6.19 Mensajeria: bandeja de salida con reintentos, estados de entrega y reglas de Meta.
 
 Ningun modulo llama a la API de WhatsApp directamente: todos encolan aqui. Asi cada envio
-queda trazado por destinatario (F1-WHA-01), respeta la ventana de 24 horas y las bajas
-(F1-WHA-04) y solo usa plantillas aprobadas (F1-WHA-03).
+queda trazado por destinatario (6.19), respeta la ventana de 24 horas y las bajas
+(6.19) y solo usa plantillas aprobadas (6.19).
 """
 
 import re
@@ -43,7 +43,7 @@ VENTANA = timedelta(hours=24)
 PALABRAS_BAJA = {"BAJA", "STOP", "NO MAS", "NO MÁS", "DETENER"}
 
 
-# --- Plantillas (F1-WHA-03) -------------------------------------------------------------------
+# --- Plantillas (6.19) -------------------------------------------------------------------
 
 
 def render(cuerpo: str, variables: list[str]) -> str:
@@ -129,7 +129,7 @@ def cambiar_estado_plantilla(
     return plantilla
 
 
-# --- Bajas y ventana (F1-WHA-04) --------------------------------------------------------------
+# --- Bajas y ventana (6.19) --------------------------------------------------------------
 
 
 def _baja_activa(destino: str) -> ColumnElement[bool]:
@@ -169,7 +169,7 @@ def ventana_abierta(db: Session, telefono: str) -> bool:
     return ultimo is not None and ahora() - con_zona(ultimo) < VENTANA
 
 
-# --- Encolado (F1-WHA-01) ---------------------------------------------------------------------
+# --- Encolado (6.19) ---------------------------------------------------------------------
 
 
 def _encolar(db: Session, mensaje: Mensaje) -> Mensaje:
@@ -329,7 +329,7 @@ def pendientes_por_reencolar(db: Session, antiguedad: timedelta) -> list[UUID]:
     return list(ids)
 
 
-# --- Webhook de Meta (F1-WHA-02) --------------------------------------------------------------
+# --- Webhook de Meta (6.19) --------------------------------------------------------------
 
 _ESTADOS_META = {
     "sent": EstadoMensaje.ENVIADO,

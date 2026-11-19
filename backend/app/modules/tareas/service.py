@@ -1,4 +1,4 @@
-"""F1-SER-06 Bandeja de tareas internas generadas por reglas o creadas a mano."""
+"""6.4 Bandeja de tareas internas generadas por reglas o creadas a mano."""
 
 from collections.abc import Callable
 from datetime import timedelta

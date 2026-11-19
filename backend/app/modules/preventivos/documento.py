@@ -1,8 +1,8 @@
-"""F2-PRE-06 Carnet preventivo en PDF con codigo de verificacion, con la marca de TIMU.
+"""6.15 Carnet preventivo en PDF con codigo de verificacion, con la marca de TIMU.
 
 Se ordena como el carnet impreso de TIMU: los datos de la mascota, una tabla por tipo de
 preventivo (vacunacion, desparasitacion interna y externa, esta con el peso de la mascota el dia
-de la aplicacion, F2-PRE-07) y lo que esta pendiente. No lleva datos de la familia: el carnet se
+de la aplicacion, 6.8) y lo que esta pendiente. No lleva datos de la familia: el carnet se
 comparte con terceros, que lo validan con el codigo del pie.
 """
 

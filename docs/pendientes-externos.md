@@ -4,8 +4,10 @@ Lo que falta **fuera del código**, o detrás de un tercero o de una decisión d
 por cerrada la revisión de un requisito. El código y sus pruebas ya están; esto es lo que no
 se puede resolver desde el repositorio. Se tacha cuando se resuelve.
 
-El estado de cada unidad de trabajo está en el [backlog](backlog.md); cómo funciona cada
-integración, en [integraciones](integraciones.md).
+Lo que falta **dentro** del código está al final, en [lo que falta en el
+código](#lo-que-falta-en-el-código); cómo funciona cada integración, en
+[integraciones](integraciones.md). Los requisitos se citan por su número en el [documento de
+requerimientos](documento-requerimientos-funcionales.md), la única fuente de verdad.
 
 Lo que TIMU tiene que hacer para cada integración (Meta, Wompi, Google, Workspace, el dominio) está
 paso a paso en el documento para la cliente, [integraciones para TIMU](integraciones-timu.md); las
@@ -47,7 +49,7 @@ el código, se anota la fecha y quién lo confirmó, y solo entonces se tacha.
 
 ## Requisito 6.1 (con el 6.12)
 
-El código está completo (`F1-FAM-06` a `F1-FAM-09`, `F1-AFI-01`), pero la revisión no se
+El código está completo, pero la revisión no se
 cierra hasta validar el registro en línea contra los terceros reales:
 
 - **Prueba de punta a punta en el sandbox de Wompi de TIMU.** Registro en línea, pago en
@@ -112,7 +114,7 @@ cierra hasta validar el registro en línea contra los terceros reales:
   familias anonimizadas antes de la `0036` no se reprocesan; si producción tiene alguna, hay
   que limpiarla a mano.
 
-## Inteligencia artificial: pasar a Gemini (`F4-IAA-01` a `F4-IAA-04`)
+## Inteligencia artificial: pasar a Gemini (Sección 14, 6.11 y 6.17)
 
 Decidido el 2026-11-10, al preparar el documento de costos para TIMU: la IA se usará sobre
 un modelo económico de Gemini (recomendado `gemini-3.1-flash-lite`, en la capa paga). Falta:
@@ -144,7 +146,7 @@ Apuntado el 2026-11-16, al cerrar `R3-ALI-01` (el espacio de la clínica aliada)
 decisiones de negocio de TIMU; el código está listo para cualquiera de las respuestas.
 
 **1. La familia no recibe el código de su remisión.** El equipo emite la remisión en Aliadas y la
-clínica la valida con su código (`F2-ALI-03`): el código es la prueba de que la familia se
+clínica la valida con su código (`6.22`): el código es la prueba de que la familia se
 presentó, y por eso la clínica no ve las remisiones por usar (decidido con el usuario). Pero
 ningún canal se lo da a la familia: emitirla no envía ningún mensaje y el portal no la muestra.
 Hoy se lo dice el equipo a mano, por fuera de la plataforma, y el requisito 6.22 pide que todo el
@@ -158,7 +160,7 @@ proceso quede registrado. TIMU tiene que decidir por dónde le llega:
 subrayó el usuario): toca a la vez lo que TIMU paga, la relación con las clínicas aliadas y la
 atención de un peludo que puede estar hospitalizado. Sigue **PENDIENTE** de resolverse con TIMU
 aunque ya haya un comportamiento provisional. Al emitirla se valida
-el plan vigente, la cartera al día y el beneficio disponible (`F2-ALI-02`). Después no se vuelve a
+el plan vigente, la cartera al día y el beneficio disponible (`6.22`). Después no se vuelve a
 mirar nada: la clínica la valida y reporta la atención hasta que vence, 30 días después. Esto
 implica que:
 
@@ -192,7 +194,7 @@ Lo que TIMU tiene que confirmar: si la baja corta la vigencia (lo provisional) o
 qué pasa con la mora y la congelación; si la vigencia de 30 días es la que quiere; y si una
 atención hecha antes de la baja y reportada después se paga siempre.
 
-## Recomendación de plan del bot comercial (`F1-PLA-04`, `F3-COM-03`)
+## Recomendación de plan del bot comercial (6.11)
 
 El bot toma los precios del catálogo de planes, el mismo con el que cobra el registro: eso
 está al día. Le falta el criterio. Las reglas `plan.recomendacion` que carga
@@ -210,7 +212,7 @@ distancias reales y cada parada abre la navegación del celular («Cómo llegar�
 coordenadas que usó el optimizador), pero el panel no dibuja un mapa: decidido con el usuario el
 2026-11-12 para no meter una dependencia y un proveedor de teselas sin acordarlos. Para cerrarlo
 hace falta que TIMU elija proveedor y presupuesto: Google Maps JavaScript (de pago por carga,
-con la misma cuenta que ya factura la matriz de distancias de `F2-RUT-02`) o teselas de
+con la misma cuenta que ya factura la matriz de distancias de `6.7`) o teselas de
 OpenStreetMap con un proveedor que admita uso comercial. Con eso, el mapa entra como unidad
 propia.
 
@@ -285,3 +287,17 @@ plataforma sigue el manual y toma planes, precios y coberturas del catálogo de 
   al 40 % (al 80 % en Amigos por Siempre) y las consultas son «al mes» (una en Mi Amigo Fiel,
   dos en Amigos por Siempre). No trae precios: los precios siguen sin confirmar, aplazado por
   TIMU el 2026-11-11.
+
+## Lo que falta en el código
+
+El trabajo abierto que registraba el antiguo backlog por unidades, retirado el 2026-11-19 porque se
+había alejado del documento de requerimientos. Cada punto cita el requisito que lo pide.
+
+| Requisito | Qué falta | Estado |
+| --- | --- | --- |
+| 6.20 | Exportar las respuestas de las encuestas a Excel o CSV («la información deberá poder consultarse posteriormente y, de ser necesario, exportarse a Excel u otro formato»), con familia, mascota, servicio, fecha, profesional y puntaje. | Pendiente |
+| Sección 10 | La migración de la información actual de TIMU: mapeo campo a campo, dos corridas de prueba con conteos cuadrados y plan de reversa antes de la definitiva. | Pendiente: faltan los datos de TIMU |
+| Sección 18 | Un recorrido automático del ciclo completo (captar, convertir, afiliar, gestionar, prevenir, atender, hacer seguimiento, medir y fidelizar). Hay ciclos parciales (afiliación, vacunación, atención virtual) y los recorridos de `e2e-stack/recorridos.spec.ts`; `operacion_demo` recorre buena parte por la API, pero no es una prueba. | Parcial |
+| Sección E de la propuesta | El manual de usuario por perfil (lo promete la propuesta). Hay OpenAPI, README, guía del panel, guía de respaldos y [despliegue de staging](despliegue-staging.md); falta la guía de despliegue de producción. | Parcial |
+| Sección D de la propuesta | La salida a producción: lista de verificación de seguridad, respaldos, monitoreo y plan de reversa ejecutados antes del corte. | Pendiente: falta decidir dónde va producción |
+| — | El CI corre después de empujar a `main` y bloquea el release y el despliegue de staging, pero no impide que un cambio entre (no hay pull requests ni rama protegida). | Parcial, decidido así |

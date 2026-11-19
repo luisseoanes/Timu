@@ -76,7 +76,7 @@ async def login(
 
 @router.post("/refresh", response_model=Sesion, dependencies=[Depends(publico)])
 async def refresh(db: DbSession, request: Request, response: Response) -> Sesion | JSONResponse:
-    """F1-AUT-01 Renueva el access token con la cookie de renovacion, que rota en cada uso:
+    """Seccion 11 Renueva el access token con la cookie de renovacion, que rota en cada uso:
     la anterior deja de servir."""
     token = request.cookies.get(settings.COOKIE_REFRESH_NAME)
     if not token:
@@ -113,7 +113,7 @@ async def logout_todas(db: DbSession, response: Response, usuario: Autenticado) 
 
 @router.post("/recuperar", status_code=status.HTTP_202_ACCEPTED, dependencies=[Depends(publico)])
 async def recuperar(db: DbSession, data: RecuperarIn) -> Mensaje:
-    """F1-AUT-03 Envia un enlace de un solo uso por correo o WhatsApp. La respuesta es la misma
+    """Seccion 11 Envia un enlace de un solo uso por correo o WhatsApp. La respuesta es la misma
     exista o no la cuenta."""
     await db.run_sync(service.solicitar_recuperacion, data.identificador)
     return Mensaje(detail="Si la cuenta existe, enviamos un enlace para restablecer la contrasena")
@@ -146,7 +146,7 @@ async def restablecer(
 
 @router.post("/codigo", status_code=status.HTTP_202_ACCEPTED, dependencies=[Depends(publico)])
 async def solicitar_codigo(db: DbSession, data: CodigoIn) -> Mensaje:
-    """F3-POR-07 Codigo de ingreso de un solo uso por WhatsApp para el portal. La
+    """Seccion 11 Codigo de ingreso de un solo uso por WhatsApp para el portal. La
     respuesta es la misma exista o no la cuenta."""
     await db.run_sync(service.solicitar_codigo, data.telefono)
     return Mensaje(detail="Si el numero tiene cuenta, enviamos un codigo por WhatsApp")

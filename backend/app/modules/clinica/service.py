@@ -34,12 +34,12 @@ from app.modules.servicios.models import Servicio, ServicioPaso
 
 logger = structlog.get_logger(__name__)
 
-# F4-IAA-03 El medico pide a la IA un borrador de respuesta para la solicitud virtual.
+# 6.17 El medico pide a la IA un borrador de respuesta para la solicitud virtual.
 EVENTO_BORRADOR = declarar_evento("ia.borrador_solicitado")
 
 CAMPOS_CLINICOS = ("motivo", "anamnesis", "examen_fisico", "diagnostico", "tratamiento")
 
-# F2-CLI-05 Lo que ve cada perfil. El medico y el admin ven la historia completa; el resto
+# 6.14 Lo que ve cada perfil. El medico y el admin ven la historia completa; el resto
 # del equipo, lo necesario para operar (cuando, por que y quien); la familia, todo lo
 # clinico menos lo de uso interno.
 Vista = Literal["completa", "resumen", "familia"]
@@ -82,7 +82,7 @@ def presentar(entrada: HistoriaClinica, vista: Vista) -> dict[str, Any]:
     return datos
 
 
-# --- F2-CLI-01 Historia -----------------------------------------------------------------------
+# --- 6.14 Historia -----------------------------------------------------------------------
 
 
 def _mascota(db: Session, mascota_id: UUID) -> Mascota:
@@ -178,7 +178,7 @@ def crear_plantilla(
 
 
 def editar_plantilla(db: Session, codigo: str, cambios: dict[str, Any]) -> PlantillaConsulta:
-    """F2-CLI-03 El equipo medico corrige el texto de una plantilla o la retira (`activa`); no
+    """6.14 El equipo medico corrige el texto de una plantilla o la retira (`activa`); no
     se borra (nada de negocio se borra) y la bitacora guarda cada version. La consulta copia
     los textos al crearse: lo ya registrado no cambia."""
     p = db.scalar(select(PlantillaConsulta).where(PlantillaConsulta.codigo == codigo))
@@ -374,7 +374,7 @@ def historia(
     )
 
 
-# --- F2-CLI-02 Adjuntos -----------------------------------------------------------------------
+# --- 6.14 Adjuntos -----------------------------------------------------------------------
 
 
 def adjuntar(
@@ -417,7 +417,7 @@ def adjuntos(db: Session, historia_id: UUID) -> list[AdjuntoClinico]:
 
 
 def url_adjunto(db: Session, adjunto_id: UUID, vista: Vista) -> dict[str, str]:
-    """F2-CLI-05 Solo quien ve la historia clinica completa (o la familia, sobre lo suyo,
+    """6.14 Solo quien ve la historia clinica completa (o la familia, sobre lo suyo,
     resuelto por el alcance antes de llegar aqui) abre un adjunto."""
 
     if vista == "resumen":
@@ -430,7 +430,7 @@ def url_adjunto(db: Session, adjunto_id: UUID, vista: Vista) -> dict[str, str]:
     return {"url": archivos.url(archivo), "nombre": adjunto.nombre_archivo}
 
 
-# --- F2-CLI-03 Formula ------------------------------------------------------------------------
+# --- 6.14 Formula ------------------------------------------------------------------------
 
 
 def emitir_formula(
@@ -476,7 +476,7 @@ def emitir_formula(
     return formula
 
 
-# --- F2-CLI-04 Atencion virtual ---------------------------------------------------------------
+# --- 6.17 Atencion virtual ---------------------------------------------------------------
 
 
 def render(cuerpo: str, variables: list[str]) -> str:

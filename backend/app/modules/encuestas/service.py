@@ -50,7 +50,7 @@ def configuracion(db: Session, tipo_servicio_codigo: str) -> ConfiguracionEncues
     )
 
 
-# --- F3-ENC-01 / 03 Programacion --------------------------------------------------------------
+# --- 6.20 Programacion --------------------------------------------------------------
 
 
 def programar(db: Session, servicio_id: UUID) -> list[Encuesta]:
@@ -137,7 +137,7 @@ def enviar_pendientes(db: Session, momento: datetime | None = None) -> dict[str,
     return resumen
 
 
-# --- F3-ENC-02 / 04 Respuestas y alertas ------------------------------------------------------
+# --- 6.20 Respuestas y alertas ------------------------------------------------------
 
 
 def por_token(db: Session, token: str) -> Encuesta:
@@ -183,7 +183,7 @@ def responder(
     como_sigue: str | None = None,
 ) -> Encuesta:
     """La satisfaccion se responde con un puntaje de 1 a 5 y el seguimiento con como sigue la
-    mascota (6.21). Un puntaje bajo, una duda o una novedad dejan tarea (F3-ENC-04)."""
+    mascota (6.21). Un puntaje bajo, una duda o una novedad dejan tarea (6.20)."""
     if encuesta.estado == "respondida":
         raise ReglaNegocio("La encuesta ya fue respondida")
     if encuesta.tipo == TipoEncuesta.SATISFACCION:
@@ -220,7 +220,7 @@ COMO_SIGUE_TEXTO = {
 def _alertar(
     db: Session, encuesta: Encuesta, servicio: Servicio, motivo: str, prioridad: str
 ) -> None:
-    """F3-ENC-04 / 6.21 Tarea inmediata de servicio al cliente con el contexto de la atencion."""
+    """6.20 / 6.21 Tarea inmediata de servicio al cliente con el contexto de la atencion."""
 
     responsable = db.get(Usuario, encuesta.responsable_id) if encuesta.responsable_id else None
     mascota = db.get(Mascota, servicio.mascota_id) if servicio.mascota_id else None

@@ -1,4 +1,4 @@
-"""F3-COM-01..04 Embudo comercial, conversacion automatizada, recomendacion de plan y
+"""6.11 Embudo comercial, conversacion automatizada, recomendacion de plan y
 paso a asesor."""
 
 from uuid import UUID
@@ -93,7 +93,7 @@ async def planes(db):
     await db.run_sync(fabricas.plan, "mi_amigo_fiel", 75_000, 3)
 
 
-# --- F3-COM-02 / 03 Conversacion y recomendacion ----------------------------------------------
+# --- 6.11 Conversacion y recomendacion ----------------------------------------------
 
 
 @pytest.mark.unit
@@ -190,7 +190,7 @@ async def test_arbol_editable_y_validado(client: AsyncClient, db, comerciales, p
     assert "TIMU v2" in await Chat(db).escribir("hola")
 
 
-# --- F3-COM-01 Embudo -------------------------------------------------------------------------
+# --- 6.11 Embudo -------------------------------------------------------------------------
 
 
 async def test_reparto_por_carga(db, comerciales, planes):

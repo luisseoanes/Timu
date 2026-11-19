@@ -1,6 +1,6 @@
 """6.14 / 6.17 Historia clinica, adjuntos, formulas y atencion veterinaria virtual.
 
-F2-CLI-05 Solo el personal medico escribe. Para leer, cada perfil recibe su vista: el
+6.14 Solo el personal medico escribe. Para leer, cada perfil recibe su vista: el
 medico y el admin la historia completa; comercial y operaciones un resumen (cuando, por
 que, quien); la familia, desde el portal, todo menos lo de uso interno.
 """
@@ -175,7 +175,7 @@ class ResponderIn(BaseModel):
     notas_internas: str | None = None
 
 
-# --- F2-CLI-01 / 05 Historia ------------------------------------------------------------------
+# --- 6.14 Historia ------------------------------------------------------------------
 
 
 @router.get("/mascotas/{mascota_id}/historia")
@@ -259,7 +259,7 @@ async def corregir(
     )
 
 
-# --- F2-CLI-02 Adjuntos -----------------------------------------------------------------------
+# --- 6.14 Adjuntos -----------------------------------------------------------------------
 
 
 @router.post(
@@ -301,7 +301,7 @@ async def url_adjunto(db: DbSession, usuario: Equipo, adjunto_id: UUID) -> dict[
     return await db.run_sync(service.url_adjunto, adjunto_id, service.vista_para(usuario.rol))
 
 
-# --- F2-CLI-03 Plantillas y formulas ----------------------------------------------------------
+# --- 6.14 Plantillas y formulas ----------------------------------------------------------
 
 
 @router.post(
@@ -358,7 +358,7 @@ async def editar_plantilla(db: DbSession, codigo: str, data: PlantillaUpdate) ->
     return await db.run_sync(service.editar_plantilla, codigo, data.model_dump(exclude_unset=True))
 
 
-# --- F2-CLI-04 Atencion virtual ---------------------------------------------------------------
+# --- 6.17 Atencion virtual ---------------------------------------------------------------
 
 
 @router.get("/respuestas-virtuales", response_model=list[RespuestaRead], dependencies=[GESTION])
@@ -420,7 +420,7 @@ async def tomar(db: DbSession, medico: Medico, solicitud_id: UUID) -> SolicitudV
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def pedir_borrador(db: DbSession, medico: Medico, solicitud_id: UUID) -> dict[str, str]:
-    """F4-IAA-03 Pide a la IA un borrador para revisar. Llega a la solicitud en segundos;
+    """6.17 Pide a la IA un borrador para revisar. Llega a la solicitud en segundos;
     nunca se envia a la familia: la respuesta sigue saliendo de una plantilla aprobada."""
 
     solicitud = await db.run_sync(service.obtener_solicitud, solicitud_id)

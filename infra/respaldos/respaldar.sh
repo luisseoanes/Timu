@@ -1,5 +1,5 @@
 #!/bin/sh
-# F0-07 Respaldo de PostgreSQL: dump comprimido, copia fuera del servidor y retencion local.
+# Seccion C Respaldo de PostgreSQL: dump comprimido, copia fuera del servidor y retencion local.
 #
 # Variables: PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE
 #            RESPALDO_DIR (defecto /respaldos)  RETENCION_DIAS (defecto 7)

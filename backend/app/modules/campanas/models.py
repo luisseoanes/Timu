@@ -17,7 +17,7 @@ from app.core.enums import (
 
 
 class Segmento(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F3-SEG-01 Filtros combinables guardados con nombre, reutilizables en campanas y
+    """6.16 Filtros combinables guardados con nombre, reutilizables en campanas y
     reportes. Se evaluan al usarse: el segmento sigue a los datos, no es una lista fija."""
 
     __tablename__ = "segmentos"
@@ -45,7 +45,7 @@ class Campana(Base, UUIDMixin, TimestampMixin, Auditable):
     # borrador | programada | en_envio | finalizada | cancelada
     estado: Mapped[str] = mapped_column(EnumDb(EstadoCampana), default="borrador", index=True)
     programada_para: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    # F3-CAM-04 ninguna | diaria | semanal | mensual
+    # 6.18 ninguna | diaria | semanal | mensual
     recurrencia: Mapped[str] = mapped_column(EnumDb(RecurrenciaCampana), default="ninguna")
     proxima_ejecucion: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     creada_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
@@ -73,7 +73,7 @@ class EjecucionCampana(Base, UUIDMixin, TimestampMixin):
 
 
 class DestinatarioCampana(Base, UUIDMixin, TimestampMixin):
-    """F3-CAM-02 Traza por destinatario: cuando se encolo y con que mensaje, o por que se
+    """6.18 Traza por destinatario: cuando se encolo y con que mensaje, o por que se
     excluyo."""
 
     __tablename__ = "destinatarios_campana"

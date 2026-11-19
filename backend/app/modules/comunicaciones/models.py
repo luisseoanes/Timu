@@ -58,7 +58,7 @@ class Mensaje(Base, UUIDMixin, TimestampMixin):
 
 
 class PlantillaWhatsApp(Base, UUIDMixin, TimestampMixin):
-    """F1-WHA-03 Plantilla registrada en Meta. Cada cambio de texto es una version nueva,
+    """6.19 Plantilla registrada en Meta. Cada cambio de texto es una version nueva,
     porque Meta vuelve a revisarla; solo la version aprobada y activa se usa para enviar."""
 
     __tablename__ = "plantillas_whatsapp"
@@ -87,7 +87,7 @@ class PlantillaWhatsApp(Base, UUIDMixin, TimestampMixin):
 
 
 class ConversacionWhatsApp(Base, UUIDMixin, TimestampMixin):
-    """F1-WHA-04 Ultimo mensaje entrante por numero: define la ventana de 24 horas."""
+    """6.19 Ultimo mensaje entrante por numero: define la ventana de 24 horas."""
 
     __tablename__ = "conversaciones_whatsapp"
     __checks__ = {
@@ -101,7 +101,7 @@ class ConversacionWhatsApp(Base, UUIDMixin, TimestampMixin):
 
 
 class BajaComunicaciones(Base, UUIDMixin, TimestampMixin):
-    """F1-WHA-04 Quien pidio no recibir mas envios masivos (campanas, promociones)."""
+    """6.19 Quien pidio no recibir mas envios masivos (campanas, promociones)."""
 
     __tablename__ = "bajas_comunicaciones"
     __unicos__ = {"destino_activa": (["destino"], "reactivada_en IS NULL")}

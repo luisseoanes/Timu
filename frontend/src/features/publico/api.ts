@@ -8,7 +8,7 @@ export type RespuestaEncuesta =
   | { puntaje: number; comentario?: string }
   | { como_sigue: 'bien' | 'duda' | 'novedad'; comentario?: string }
 
-/** Lo que ve quien abre el enlace de una encuesta (F3-ENC-02). */
+/** Lo que ve quien abre el enlace de una encuesta (6.20). */
 export function useContextoEncuesta(token: string) {
   return useQuery({
     queryKey: ['encuesta-publica', token],
@@ -24,7 +24,7 @@ export function useResponderEncuesta(token: string) {
   })
 }
 
-/** Lo que decía el carnet al emitirse (F2-PRE-06): sus secciones y lo pendiente. */
+/** Lo que decía el carnet al emitirse (6.15): sus secciones y lo pendiente. */
 export function useCarnetVerificado(codigo: string) {
   return useQuery({
     queryKey: ['carnet-verificado', codigo],

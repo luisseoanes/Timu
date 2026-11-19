@@ -1,4 +1,4 @@
-"""F1-SER-06 Bandeja unica de tareas internas."""
+"""6.4 Bandeja unica de tareas internas."""
 
 from datetime import date, datetime
 from typing import Literal

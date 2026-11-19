@@ -41,7 +41,7 @@ export const CAMPOS_CLINICOS = [
 export type CampoClinico = (typeof CAMPOS_CLINICOS)[number]['campo']
 export type DatosEntrada = Partial<Record<CampoClinico, string>> & { fecha?: string }
 
-/** Borrador de la IA para una consulta virtual (F4-IAA-03): lo revisa el médico, nunca sale solo. */
+/** Borrador de la IA para una consulta virtual (6.17): lo revisa el médico, nunca sale solo. */
 export interface BorradorIA {
   borrador: string
   senales_alarma: string[]

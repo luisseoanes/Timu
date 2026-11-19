@@ -1,4 +1,4 @@
-"""F2-ALI-01..04 Convenios, remision con validaciones, acceso minimo de la aliada y
+"""6.22 Convenios, remision con validaciones, acceso minimo de la aliada y
 liquidacion."""
 
 from datetime import timedelta
@@ -89,7 +89,7 @@ async def aliada(client: AsyncClient, db, escenario):
     return await login(client, "recepcion@norte.co")
 
 
-# --- F2-ALI-02 Remision -----------------------------------------------------------------------
+# --- 6.22 Remision -----------------------------------------------------------------------
 
 
 async def test_remision_valida_y_consume_el_cupo(client, db, headers, escenario):
@@ -170,7 +170,7 @@ async def test_sin_convenio_vigente_no_se_remite(client, db, headers, escenario)
     assert resp.status_code == 422 and "convenio" in resp.json()["detail"]
 
 
-# --- F2-ALI-03 Acceso de la aliada ------------------------------------------------------------
+# --- 6.22 Acceso de la aliada ------------------------------------------------------------
 
 
 async def test_aliada_ve_lo_minimo_y_reporta(client, db, headers, escenario, aliada):
@@ -451,7 +451,7 @@ async def test_usuario_aliado_exige_su_clinica(client, headers):
     assert resp.status_code == 422
 
 
-# --- F2-ALI-04 Liquidacion --------------------------------------------------------------------
+# --- 6.22 Liquidacion --------------------------------------------------------------------
 
 
 async def test_liquidacion_por_periodo(client, db, headers, escenario, aliada):

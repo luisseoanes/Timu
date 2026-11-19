@@ -1,11 +1,11 @@
-"""F4-DAS-01 / 02 Indicadores gerenciales: definicion, formula y calculo.
+"""Seccion 8 Indicadores gerenciales: definicion, formula y calculo.
 
 Cada indicador declara su formula en texto: es la definicion acordada, la que se muestra
 en el panel junto al numero y la que documenta docs/indicadores.md. Si cambia la
 formula, cambia aqui y en ese documento a la vez.
 
 Todo se calcula con agregaciones en la base (COUNT, SUM, AVG), filtrado por periodo y,
-opcionalmente, ciudad. El resultado se cachea unos minutos (F4-DAS-02).
+opcionalmente, ciudad. El resultado se cachea unos minutos (Seccion 8).
 """
 
 from collections.abc import Callable

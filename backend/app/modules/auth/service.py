@@ -119,7 +119,7 @@ def authenticate(db: Session, identificador: str, password: str) -> Usuario | No
     return usuario
 
 
-# --- Enlaces de un solo uso (F1-AUT-03 / F1-AUT-04) -------------------------------------------
+# --- Enlaces de un solo uso (Seccion 11 / Seccion 14) -------------------------------------------
 
 
 def emitir_enlace(db: Session, usuario: Usuario, proposito: Proposito) -> str:
@@ -243,7 +243,7 @@ def restablecer(db: Session, token: str, password: str) -> Usuario:
     return usuario
 
 
-# --- Usuario de portal (F1-AUT-04) ------------------------------------------------------------
+# --- Usuario de portal (Seccion 14) ------------------------------------------------------------
 
 
 def crear_usuario_portal(
@@ -289,7 +289,7 @@ def crear_usuario_portal(
     return usuario
 
 
-# --- F3-POR-07 Ingreso con codigo de un solo uso por WhatsApp ---------------------------------
+# --- Seccion 11 Ingreso con codigo de un solo uso por WhatsApp ---------------------------------
 
 PROPOSITO_CODIGO = "codigo_ingreso"
 

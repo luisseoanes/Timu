@@ -124,7 +124,7 @@ class TarifaPeriodicidad(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class Beneficio(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F1-PLA-01 Lo que cubre el plan por tipo de servicio. `cupo` vacio = sin tope de usos.
+    """6.2 Lo que cubre el plan por tipo de servicio. `cupo` vacio = sin tope de usos.
     Lo que la familia lee de el (R3-PUB-04): hasta cuanto cubre por episodio, desde cuantos
     dias de afiliada y el detalle (`detalle`: «el medicamento mas costoso, no superior a...»)."""
 
@@ -183,7 +183,7 @@ class BeneficioAdicional(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class CambioPlan(Base, UUIDMixin, TimestampMixin):
-    """F1-PLA-02 / 6.3 Registro de cada cambio de plan de un peludo, alta o retiro de un
+    """6.3 Registro de cada cambio de plan de un peludo, alta o retiro de un
     peludo y su efecto en lo que cobra cada cuota (`valor_anterior`, `valor_nuevo`)."""
 
     __tablename__ = "cambios_plan"

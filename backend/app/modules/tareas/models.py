@@ -10,7 +10,7 @@ from app.core.enums import AreaTarea, EstadoTarea, Prioridad
 
 
 class Tarea(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F1-SER-06 Tarea interna. `clave` evita que un proceso diario cree la misma dos veces."""
+    """6.4 Tarea interna. `clave` evita que un proceso diario cree la misma dos veces."""
 
     __tablename__ = "tareas"
     # Orden de la bandeja: prioridad (enum: alta, media, baja), vencimiento con los sin fecha

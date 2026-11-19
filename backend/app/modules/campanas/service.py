@@ -121,7 +121,7 @@ def _bajas(db: Session) -> set[str]:
     return set(db.scalars(select(BajaComunicaciones.destino)))
 
 
-# --- F3-CAM-01 Previsualizacion ---------------------------------------------------------------
+# --- 6.18 Previsualizacion ---------------------------------------------------------------
 
 
 def previsualizar(db: Session, campana: Campana, muestra: int = 3) -> dict[str, Any]:
@@ -151,7 +151,7 @@ def previsualizar(db: Session, campana: Campana, muestra: int = 3) -> dict[str, 
     }
 
 
-# --- F3-CAM-02 / 04 Lanzamiento, despacho y programacion --------------------------------------
+# --- 6.18 Lanzamiento, despacho y programacion --------------------------------------
 
 
 def programar(db: Session, campana: Campana, cuando: datetime | None, recurrencia: str) -> Campana:
@@ -327,7 +327,7 @@ def cancelar(db: Session, campana: Campana) -> Campana:
     return campana
 
 
-# --- F3-CAM-03 Resultados ---------------------------------------------------------------------
+# --- 6.18 Resultados ---------------------------------------------------------------------
 
 
 def _filas(db: Session, campana: Campana, ejecucion_id: UUID | None) -> list[Any]:

@@ -1,4 +1,4 @@
-"""F1-CAR-08 Cobro recurrente y F1-CAR-09 conciliacion por webhook de la pasarela."""
+"""6.2 Cobro recurrente y 6.2 conciliacion por webhook de la pasarela."""
 
 import hashlib
 import json
@@ -60,7 +60,7 @@ def al_aprobar(prefijo: str) -> Callable[[AlAprobar], AlAprobar]:
     return registrar
 
 
-# --- F1-CAR-09 Eventos ------------------------------------------------------------------------
+# --- 6.2 Eventos ------------------------------------------------------------------------
 
 
 def _id_evento(evento: dict[str, Any]) -> str:
@@ -166,7 +166,7 @@ def recuperar_transaccion(
     return registro
 
 
-# --- F1-CAR-08 Cobro recurrente ---------------------------------------------------------------
+# --- 6.2 Cobro recurrente ---------------------------------------------------------------
 
 
 def registrar_medio(
@@ -336,7 +336,7 @@ def registrar_resultado(
 def cobrar_recurrentes(
     abrir: Abrir, dia: date | None = None, cliente: ClienteWompi | None = None
 ) -> dict[str, int]:
-    """F1-CAR-08 Cobra las cuotas vencidas con tarjeta autorizada.
+    """6.2 Cobra las cuotas vencidas con tarjeta autorizada.
 
     Cada cobro usa transacciones propias y cortas, nunca una sola para todo el lote:
     1. se registra el intento y se confirma;

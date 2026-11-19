@@ -95,7 +95,7 @@ cada `cambiar_estado`: preventivos importa servicios, así que se lo conecta con
 lugar de dejar el preventivo sin aplicar. «Registrar aplicación» en Preventivos queda para lo que
 se aplicó sin visita (en la clínica o fuera).
 
-Dos huecos conocidos: el peso de la desparasitación (`F2-PRE-07`) no está en el paso «Aplicación»,
+Dos huecos conocidos: el peso de la desparasitación (`6.8`) no está en el paso «Aplicación»,
 así que solo se anota al registrar la aplicación en Preventivos; y una visita preventiva agendada
 desde el portal no se enlaza con ningún preventivo, así que completarla no lo aplica.
 

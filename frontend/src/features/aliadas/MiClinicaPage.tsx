@@ -7,7 +7,7 @@ import { Atendidas } from './Atendidas'
 import { ValidarRemision } from './ValidarRemision'
 
 /**
- * Espacio de la clínica aliada (F2-ALI-03, R3-ALI-01): un mostrador. A la izquierda se valida
+ * Espacio de la clínica aliada (6.22, R3-ALI-01): un mostrador. A la izquierda se valida
  * el código que trae la familia y se reporta la atención; a la derecha, lo que la clínica ya
  * atendió en el mes y lo que cubrió TIMU. Solo ve de la familia lo necesario para atender:
  * titular, últimos dígitos del documento y la mascota. Las remisiones por usar no se listan:

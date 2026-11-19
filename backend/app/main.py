@@ -103,7 +103,7 @@ async def health_live() -> dict[str, str]:
 
 @app.get("/health", tags=["infra"], dependencies=[Depends(publico)])
 async def health(db: DbSession, response: Response) -> dict[str, object]:
-    """F0-08 Estado de base de datos, Redis y trabajadores. 503 si alguno falla."""
+    """Seccion 11 Estado de base de datos, Redis y trabajadores. 503 si alguno falla."""
     checks = {"db": await salud.revisar_db(db), "redis": await salud.revisar_redis()}
     checks["workers"] = await salud.revisar_trabajadores() if checks["redis"] == "ok" else "falla"
     ok = all(v == "ok" for v in checks.values())

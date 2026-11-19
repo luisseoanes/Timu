@@ -198,7 +198,7 @@ class PendienteRead(BaseModel):
     resolucion: str | None
 
 
-# --- Agenda (F1-SER-01) -----------------------------------------------------------------------
+# --- Agenda (6.5) -----------------------------------------------------------------------
 
 
 @agenda_router.get("/disponibilidad", response_model=list[CupoRead], dependencies=[EQUIPO])
@@ -262,7 +262,7 @@ async def bloquear(db: DbSession, data: BloqueoIn) -> dict[str, str]:
 async def elegibilidad(
     db: DbSession, familia_id: UUID, tipo_codigo: str, mascota_id: UUID | None = None
 ) -> Any:
-    """F1-SER-05 Verifica antes de agendar y explica por que no se puede."""
+    """6.5 Verifica antes de agendar y explica por que no se puede."""
     familia = await db.run_sync(familias.obtener, familia_id)
     mascota = await db.run_sync(familias.obtener_mascota, mascota_id) if mascota_id else None
     return await db.run_sync(
@@ -358,8 +358,8 @@ async def resumen(
     "", response_model=ServicioRead, status_code=status.HTTP_201_CREATED, dependencies=[EQUIPO]
 )
 async def agendar(db: DbSession, data: ServicioCreate) -> Servicio:
-    """F1-SER-01 Agenda contra disponibilidad real; rechaza cupos tomados y familias no
-    elegibles (F1-SER-05) con el motivo."""
+    """6.5 Agenda contra disponibilidad real; rechaza cupos tomados y familias no
+    elegibles (6.5) con el motivo."""
     familia = await db.run_sync(familias.obtener, data.familia_id)
     mascota = (
         await db.run_sync(familias.obtener_mascota, data.mascota_id) if data.mascota_id else None
@@ -388,7 +388,7 @@ async def obtener(db: DbSession, servicio_id: UUID) -> Servicio:
 
 @router.post("/{servicio_id}/estado", response_model=ServicioRead, dependencies=[EQUIPO])
 async def cambiar_estado(db: DbSession, servicio_id: UUID, data: Transicion) -> Servicio:
-    """F1-SER-03 Transicion validada, auditada y con sus disparadores."""
+    """6.10 Transicion validada, auditada y con sus disparadores."""
     return await db.run_sync(
         service.cambiar_estado,
         await db.run_sync(service.obtener, servicio_id),
@@ -430,7 +430,7 @@ async def pasos(db: DbSession, servicio_id: UUID) -> list[ServicioPaso]:
 async def completar_paso(
     db: DbSession, usuario: Equipo, servicio_id: UUID, paso_codigo: str, data: PasoIn
 ) -> ServicioPaso:
-    """F1-SER-02 Registra un paso del flujo configurado para el tipo de servicio."""
+    """6.5 Registra un paso del flujo configurado para el tipo de servicio."""
     servicio = await db.run_sync(service.obtener, servicio_id)
     return await db.run_sync(service.completar_paso, servicio, paso_codigo, data.datos, usuario.id)
 
@@ -442,7 +442,7 @@ async def completar_paso(
     dependencies=[EQUIPO],
 )
 async def crear_pendiente(db: DbSession, servicio_id: UUID, data: PendienteIn) -> Pendiente:
-    """F1-SER-04 Pendiente derivado de la atencion (examen, control, procedimiento)."""
+    """6.6 Pendiente derivado de la atencion (examen, control, procedimiento)."""
     servicio = await db.run_sync(service.obtener, servicio_id)
     return await db.run_sync(
         service.crear_pendiente, servicio, data.descripcion, data.requiere_autorizacion

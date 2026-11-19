@@ -1,4 +1,4 @@
-"""F2-RUT-02 Matriz de tiempos de viaje con cache y tope de consultas.
+"""6.7 Matriz de tiempos de viaje con cache y tope de consultas.
 
 1. Lo que ya esta en cache no se vuelve a pedir (Distance Matrix se factura por par).
 2. Lo que falta se pide a Google mientras quede cupo en el tope diario.

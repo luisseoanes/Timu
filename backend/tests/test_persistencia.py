@@ -916,7 +916,7 @@ async def test_una_familia_no_ve_historias_en_borrador(db: AsyncSession):
 
 
 async def test_un_perfil_sin_permiso_no_escribe_la_historia_ni_por_sql(db: AsyncSession):
-    """F2-CLI-05: solo el personal medico escribe la historia clinica."""
+    """6.14: solo el personal medico escribe la historia clinica."""
     familia = await db.run_sync(fabricas.familia)
     mascota_id = await db.scalar(
         text("SELECT id FROM mascotas WHERE familia_id = :f"), {"f": familia.id}

@@ -1,4 +1,4 @@
-"""F1-AFI-01..03 Afiliacion: formulario -> pago -> contrato -> perfil."""
+"""6.1 Afiliacion: formulario -> pago -> contrato -> perfil."""
 
 from decimal import Decimal
 from urllib.parse import parse_qs, urlparse

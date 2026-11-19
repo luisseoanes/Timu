@@ -181,7 +181,7 @@ class CambioHistorial(BaseModel):
 
 
 class FormularioFamilia(BaseModel):
-    """F1-FAM-03 Formulario publico (afiliacion, landing, campana)."""
+    """6.1 Formulario publico (afiliacion, landing, campana)."""
 
     titular_nombre: str = Field(min_length=2, max_length=160)
     tipo_documento: TipoDocumento = TipoDocumento.CC

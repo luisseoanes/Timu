@@ -1,4 +1,4 @@
-"""F0-08 Chequeo de salud de las dependencias: base de datos, Redis y trabajadores Celery."""
+"""Seccion 11 Chequeo de salud de las dependencias: base de datos, Redis y trabajadores Celery."""
 
 import asyncio
 from typing import Literal

@@ -11,7 +11,7 @@ from app.core.enums import EstadoConversacion, EtapaInteresado
 
 
 class Interesado(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F3-COM-01 Persona en el embudo comercial, venga de donde venga, con su origen y su
+    """6.11 Persona en el embudo comercial, venga de donde venga, con su origen y su
     responsable. Al afiliarse queda atada a la familia."""
 
     __tablename__ = "interesados"
@@ -41,7 +41,7 @@ class Interesado(Base, UUIDMixin, TimestampMixin, Auditable):
 
 
 class ArbolConversacion(Base, UUIDMixin, TimestampMixin, Auditable):
-    """F3-COM-02 Arbol de la conversacion comercial, versionado. Se edita como dato: un
+    """6.11 Arbol de la conversacion comercial, versionado. Se edita como dato: un
     cambio en las respuestas no exige desplegar codigo."""
 
     __tablename__ = "arboles_conversacion"

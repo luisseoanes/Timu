@@ -1,4 +1,4 @@
-"""F0-09 Catalogos maestros. Se identifican por `codigo` estable para que la carga sea
+"""Catalogos maestros. Se identifican por `codigo` estable para que la carga sea
 repetible (upsert) y para que el resto del sistema los referencie sin depender del id."""
 
 from typing import Any
@@ -11,7 +11,7 @@ from app.core.enums import TipoPreventivo, TipoServicio
 
 
 class Ciudad(Base, UUIDMixin, TimestampMixin):
-    """Codigo DANE de municipio. Las coordenadas sirven de respaldo al geocodificar (F1-FAM-05)."""
+    """Codigo DANE de municipio. Las coordenadas sirven de respaldo al geocodificar (6.7)."""
 
     __tablename__ = "ciudades"
     __checks__ = {
@@ -50,7 +50,7 @@ class TipoServicioCatalogo(Base, UUIDMixin, TimestampMixin):
     modalidad: Mapped[str] = mapped_column(EnumDb(TipoServicio), index=True)  # enums.TipoServicio
     duracion_min: Mapped[int] = mapped_column(Integer, default=30)
     requiere_autorizacion: Mapped[bool] = mapped_column(Boolean, default=False)
-    # F1-SER-02 Flujo del tipo: [{"codigo", "nombre", "obligatorio", "campos": [...]}].
+    # 6.5 Flujo del tipo: [{"codigo", "nombre", "obligatorio", "campos": [...]}].
     # El servicio no se completa hasta cerrar los pasos obligatorios.
     pasos: Mapped[list[dict[str, Any]]] = mapped_column(JSONTipo, default=list)
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
