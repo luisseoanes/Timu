@@ -57,6 +57,9 @@ VISITAS_POR_RUTA = 3
 # Cada cuantas rutas una parada se omite (la familia no estaba) y un servicio se cancela antes.
 CADA_OMISION = 6
 CADA_CANCELACION = 7
+# Una de cada tantas consultas parte de una plantilla de datos_demo (DEU-15), como haria la medica
+# en una consulta frecuente; el resto escribe cada apartado.
+CADA_PLANTILLA = 3
 
 MEDICO_MEDELLIN = ("medico.medellin@timu.co", "Dr. Andrés Villa")
 
@@ -332,6 +335,7 @@ class Operacion:
     visitas: list[Visita] = field(default_factory=list)
     rutas: list[tuple[str, date]] = field(default_factory=list)
     cancelados: list[str] = field(default_factory=list)
+    con_plantilla: int = 0
 
 
 def dias_habiles(desde: date, hasta: date) -> Iterator[date]:
@@ -534,6 +538,7 @@ def operar_dias(c: Cliente, medicos: dict[str, tuple[Cliente, str]], hoy: date) 
     pendientes_por_ciudad = {ciudad: candidatas(c, ciudad) for ciudad in set(DIAS_RUTA.values())}
     turno = dict.fromkeys(pendientes_por_ciudad, 0)
     motor = dueno()
+    plantillas = [p["codigo"] for p in c.get("/clinica/plantillas")]
     numero = 0
     for dia in dias_habiles(hoy - timedelta(weeks=SEMANAS), hoy - timedelta(days=1)):
         ciudad = DIAS_RUTA.get(dia.weekday())
@@ -601,7 +606,7 @@ def operar_dias(c: Cliente, medicos: dict[str, tuple[Cliente, str]], hoy: date) 
             print(f"  ! sin ruta para {dia} en {ciudad}")
             correr(motor, servicios=servicios, dias=corrimiento)
             continue
-        recorrer(medico, ruta, dia, omitir=numero % CADA_OMISION == 0, op=op)
+        recorrer(medico, ruta, dia, omitir=numero % CADA_OMISION == 0, op=op, plantillas=plantillas)
         correr(motor, servicios=servicios, dias=corrimiento, ruta_id=ruta["id"])
         op.rutas.append((ruta["id"], dia))
     return op
@@ -626,9 +631,16 @@ def planear(c: Cliente, dia: date, ciudad: str, responsable: str) -> dict[str, A
 
 
 def recorrer(
-    medico: Cliente, ruta: dict[str, Any], dia: date, *, omitir: bool, op: Operacion
+    medico: Cliente,
+    ruta: dict[str, Any],
+    dia: date,
+    *,
+    omitir: bool,
+    op: Operacion,
+    plantillas: list[str],
 ) -> None:
-    """La medica sale, atiende cada parada con su consulta firmada y cierra la ruta."""
+    """La medica sale, atiende cada parada con su consulta firmada y cierra la ruta. Parte de
+    las consultas salen de una plantilla, que da todos los apartados."""
     medico.post(f"/rutas/{ruta['id']}/inicio")
     detalle = medico.get(f"/rutas/{ruta['id']}")
     paradas = sorted(detalle["paradas"], key=lambda p: p["orden"])
@@ -643,23 +655,28 @@ def recorrer(
             continue
         medico.post(f"/rutas/paradas/{parada['id']}/en-camino")
         medico.post(f"/rutas/paradas/{parada['id']}/llegada")
-        motivo, anamnesis, examen, diagnostico, tratamiento = azar.choice(CONSULTAS)
-        entrada = medico.post(
-            "/clinica/historias",
-            {
-                "mascota_id": parada["mascota"]["id"],
-                "servicio_id": servicio_id,
-                "tipo": "domiciliaria",
-                "fecha": dia.isoformat(),
+        consulta: dict[str, Any] = {
+            "mascota_id": parada["mascota"]["id"],
+            "servicio_id": servicio_id,
+            "tipo": "domiciliaria",
+            "fecha": dia.isoformat(),
+        }
+        con_plantilla = bool(plantillas) and len(op.visitas) % CADA_PLANTILLA == 0
+        if con_plantilla:
+            consulta["plantilla_codigo"] = azar.choice(plantillas)
+        else:
+            motivo, anamnesis, examen, diagnostico, tratamiento = azar.choice(CONSULTAS)
+            consulta |= {
                 "motivo": motivo,
                 "anamnesis": anamnesis,
                 "examen_fisico": examen,
                 "diagnostico": diagnostico,
                 "tratamiento": tratamiento,
-            },
-        )
+            }
+        entrada = medico.post("/clinica/historias", consulta)
         if entrada:
             medico.post(f"/clinica/historias/{entrada['id']}/firma")
+            op.con_plantilla += con_plantilla
         resp = medico.http.post(
             f"/rutas/paradas/{parada['id']}/salida", data={"nota": "Visita sin novedad."}
         )
@@ -1176,6 +1193,7 @@ MINIMOS = {
     "tareas cerradas": 3,
     "orientaciones cerradas": 2,
     "campanas enviadas": 1,
+    "consultas desde una plantilla": 20,
 }
 
 
@@ -1211,6 +1229,8 @@ def comprobar(op: Operacion) -> None:
                 "SELECT count(*) FROM solicitudes_virtuales WHERE estado = 'cerrada'"
             ),
             "campanas enviadas": contar("SELECT count(*) FROM ejecuciones_campana"),
+            # La consulta no guarda de que plantilla partio: lo cuenta la propia siembra.
+            "consultas desde una plantilla": op.con_plantilla,
         }
     faltan = [f"{k}: {hechos[k]} de {v}" for k, v in MINIMOS.items() if hechos[k] < v]
     if faltan:
