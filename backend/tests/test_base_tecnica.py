@@ -175,6 +175,17 @@ def test_el_seed_no_crea_el_admin_con_la_clave_de_desarrollo_fuera_de_local():
     assert seed.clave_inicial(propia) == "x" * 16
 
 
+def test_los_datos_de_demostracion_se_siembran_en_local_y_staging_pero_no_en_produccion():
+    from scripts import datos_demo
+
+    staging = {**PRODUCCION_VALIDA, "ENVIRONMENT": "staging"}
+    datos_demo.comprobar_ambiente(Settings(_env_file=None, ENVIRONMENT="local"), "datos_demo")
+    datos_demo.comprobar_ambiente(Settings(_env_file=None, **staging), "datos_demo")
+    for ambiente in (PRODUCCION_VALIDA, {"ENVIRONMENT": "test"}):
+        with pytest.raises(SystemExit, match="solo corre en local o en staging"):
+            datos_demo.comprobar_ambiente(Settings(_env_file=None, **ambiente), "datos_demo")
+
+
 # --- F0-06 Endurecimiento HTTP ----------------------------------------------------------------
 
 

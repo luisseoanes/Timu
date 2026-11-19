@@ -7,12 +7,12 @@ repetible: lo que ya existe (por documento, codigo o nombre) no se duplica.
 Uso, con el stack arriba y despues de cargar_catalogos y seed:
     docker compose exec api python -m scripts.datos_demo
 
-Nunca contra produccion: se niega si ENVIRONMENT no es local.
+Corre en local y en el entorno de pruebas desplegado (staging, ver
+docs/despliegue-staging.md); nunca contra produccion: se niega con cualquier otro ENVIRONMENT.
 """
 
 import os
 import re
-import sys
 import time
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -24,13 +24,16 @@ from sqlalchemy import select
 # app.workers.tasks.comunicaciones conecta los mensajes entrantes con quien los contesta (el bot
 # comercial), como en el worker.
 import app.workers.tasks.comunicaciones  # noqa: F401
-from app.core.config import settings
+from app.core.config import Settings, settings
 from app.core.database import sesion_worker
 from app.modules.comunicaciones import service as comunicaciones
 from app.modules.comunicaciones.models import Mensaje
 from scripts.datos_portada import ADICIONALES, ALIADAS, DATOS_TIMU
+from scripts.seed import PLANES_TIMU, clave_inicial
 
 API = os.environ.get("DEMO_API", "http://localhost:8000/api/v1")
+# Donde se siembran datos de demostracion: nunca en produccion, que tiene datos reales.
+AMBIENTES_DE_DEMOSTRACION = ("local", "staging")
 BOGOTA = ZoneInfo("America/Bogota")
 
 FAMILIAS: list[dict[str, Any]] = [
@@ -295,9 +298,17 @@ class _EsperaAlLimite(httpx.HTTPTransport):
         return super().handle_request(request)
 
 
+def comprobar_ambiente(ajustes: Settings, script: str) -> None:
+    """Se niega a sembrar fuera de local y staging."""
+    if ajustes.ENVIRONMENT not in AMBIENTES_DE_DEMOSTRACION:
+        raise SystemExit(f"{script} solo corre en local o en staging, no en {ajustes.ENVIRONMENT}")
+
+
 class Cliente:
-    def __init__(self, email: str = "admin@timu.co", clave: str = "cambiar123") -> None:
+    def __init__(self, email: str = "admin@timu.co", clave: str | None = None) -> None:
+        """Sin clave, la del administrador que creo el seed (en staging, ADMIN_PASSWORD_INICIAL)."""
         self.http = httpx.Client(base_url=API, timeout=30, transport=_EsperaAlLimite())
+        clave = clave or clave_inicial(settings)
         resp = self.http.post("/auth/login", data={"username": email, "password": clave})
         resp.raise_for_status()
 
@@ -559,11 +570,26 @@ def portada(c: Cliente) -> None:
 
 
 def main() -> None:
-    if settings.ENVIRONMENT != "local":
-        sys.exit("datos_demo solo corre en ENVIRONMENT=local")
+    comprobar_ambiente(settings, "datos_demo")
     c = Cliente()
     hoy = datetime.now(BOGOTA).date()
 
+    if not c.get("/planes"):
+        # Desplegado, el seed no los crea (los da de alta Administracion): se crean por la API
+        # con los mismos valores provisionales que el seed pone en local.
+        print("Planes de TIMU")
+        for codigo, nombre, color, ciudades, por_peludos, largos in PLANES_TIMU:
+            c.post(
+                "/planes",
+                {
+                    "codigo": codigo,
+                    "nombre": nombre,
+                    "color": color,
+                    "especies": ["canino", "felino"],
+                    "ciudades": ciudades,
+                    "tarifas": {"por_peludos": por_peludos, **largos},
+                },
+            )
     print("Planes y beneficios")
     planes = {p["codigo"]: p for p in c.get("/planes")}
     for plan in planes.values():
@@ -886,7 +912,8 @@ def main() -> None:
     for familia in (familias[0], familias[3]):
         acceso_portal(c, familia["id"])
 
-    print("Listo. Ingresa a http://localhost:5173 con admin@timu.co / cambiar123")
+    clave_admin = "ADMIN_PASSWORD_INICIAL" if settings.es_desplegado else clave_inicial(settings)
+    print(f"Listo. Ingresa a {settings.FRONTEND_URL} con admin@timu.co / {clave_admin}")
     print(f"Equipo de prueba (clave {CLAVE_EQUIPO}): " + ", ".join(e for e, _, _ in EQUIPO))
     print(
         "Clínica aliada: aliada@timu.co · Portal: ana@example.com (en pausa) y "

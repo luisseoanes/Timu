@@ -15,8 +15,8 @@ una parada, la firma) se recalculan al final a partir de la hora de cada visita.
 Uso, con el stack arriba y despues de datos_demo:
     docker compose exec api python -m scripts.operacion_demo
 
-Es repetible: si ya sembro (su primera familia existe), no hace nada. Nunca contra produccion:
-se niega si ENVIRONMENT no es local.
+Es repetible: si ya sembro (su primera familia existe), no hace nada. Corre en local y en
+staging; nunca contra produccion: se niega con cualquier otro ENVIRONMENT.
 """
 
 import importlib
@@ -40,7 +40,14 @@ from app.workers.celery_app import celery_app
 from app.workers.tasks import campanas as tareas_campanas
 from app.workers.tasks import cartera as tareas_cartera
 from app.workers.tasks import outbox
-from scripts.datos_demo import API, BOGOTA, CLAVE_EQUIPO, Cliente, pagar_lo_vencido
+from scripts.datos_demo import (
+    API,
+    BOGOTA,
+    CLAVE_EQUIPO,
+    Cliente,
+    comprobar_ambiente,
+    pagar_lo_vencido,
+)
 
 # El script drena el outbox como el worker: necesita los mismos manejadores y eventos, que se
 # registran al importar los modulos de tareas.
@@ -1358,8 +1365,7 @@ def campana_enviada(c: Cliente, motor: Any) -> None:
 
 
 def main() -> None:
-    if settings.ENVIRONMENT != "local":
-        sys.exit("operacion_demo solo corre en ENVIRONMENT=local")
+    comprobar_ambiente(settings, "operacion_demo")
     c = Cliente()
     hoy = datetime.now(BOGOTA).date()
     if c.get("/familias", q=FAMILIAS[0]["documento"])["total"]:
