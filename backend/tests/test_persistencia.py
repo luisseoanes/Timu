@@ -1221,6 +1221,7 @@ _LISTADOS = (
     "/api/v1/preventivos/bandeja?vista=agendados",
     "/api/v1/preventivos/bandeja/recuentos",
     "/api/v1/clinica/borradores",
+    "/api/v1/clinica/plantillas/uso",
     "/api/v1/aliadas/remisiones",
     "/api/v1/aliadas/remisiones?estado=emitida",
     "/api/v1/aliadas/remisiones/recuentos",

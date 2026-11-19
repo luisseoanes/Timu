@@ -164,6 +164,8 @@ def crear_plantilla(
     db: Session, nombre: str, campos: dict[str, str], tipo_servicio_codigo: str | None = None
 ) -> PlantillaConsulta:
     nombre = _nombre_libre(db, nombre)
+    if tipo_servicio_codigo is not None:
+        servicios.tipo_servicio(db, tipo_servicio_codigo)
     p = PlantillaConsulta(
         codigo=_codigo_plantilla(db, nombre),
         nombre=nombre,
@@ -188,11 +190,26 @@ def editar_plantilla(db: Session, codigo: str, cambios: dict[str, Any]) -> Plant
     if cambios.get("campos") is not None:
         p.campos = _campos_plantilla(cambios["campos"])
     if "tipo_servicio_codigo" in cambios:
-        p.tipo_servicio_codigo = cambios["tipo_servicio_codigo"]
+        tipo = cambios["tipo_servicio_codigo"]
+        # Solo se valida el que cambia: uno que el catalogo retiro despues se puede conservar.
+        if tipo is not None and tipo != p.tipo_servicio_codigo:
+            servicios.tipo_servicio(db, tipo)
+        p.tipo_servicio_codigo = tipo
     if cambios.get("activa") is not None:
         p.activa = cambios["activa"]
     db.flush()
     return p
+
+
+def uso_de_plantillas(db: Session) -> dict[str, int]:
+    """Cuantas consultas firmadas y vigentes partieron de cada plantilla: ni los borradores ni
+    las versiones ya corregidas. Las que no se han usado no aparecen."""
+    filas = db.execute(
+        select(HistoriaClinica.plantilla_codigo, func.count())
+        .where(HistoriaClinica.plantilla_codigo.is_not(None), HistoriaClinica.estado == "firmada")
+        .group_by(HistoriaClinica.plantilla_codigo)
+    )
+    return {str(codigo): int(total) for codigo, total in filas}
 
 
 def crear_entrada(

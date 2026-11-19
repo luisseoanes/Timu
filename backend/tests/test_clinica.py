@@ -268,6 +268,74 @@ async def test_un_nulo_no_borra_lo_que_la_plantilla_ya_dice(client, equipo):
     assert resp.json() == creada
 
 
+async def test_la_plantilla_se_ata_a_un_tipo_de_atencion_del_catalogo(client, equipo):
+    url = "/api/v1/clinica/plantillas"
+    creada = await client.post(
+        url,
+        json={
+            "nombre": "Otitis externa",
+            "tipo_servicio_codigo": "consulta_domiciliaria",
+            "campos": {"motivo": "Rascado"},
+        },
+        headers=equipo["medica"],
+    )
+    assert creada.status_code == 201, creada.text
+    assert creada.json()["tipo_servicio_codigo"] == "consulta_domiciliaria"
+    codigo = creada.json()["codigo"]
+
+    # Un tipo que no existe se explica; no llega a la llave foranea.
+    falsa = await client.patch(
+        f"{url}/{codigo}", json={"tipo_servicio_codigo": "no_existe"}, headers=equipo["medica"]
+    )
+    assert falsa.status_code == 404
+    otra = await client.post(
+        url,
+        json={"nombre": "Otra", "tipo_servicio_codigo": "no_existe"},
+        headers=equipo["medica"],
+    )
+    assert otra.status_code == 404
+
+    # Sin tipo vale para cualquier atencion.
+    general = await client.patch(
+        f"{url}/{codigo}", json={"tipo_servicio_codigo": None}, headers=equipo["medica"]
+    )
+    assert general.json()["tipo_servicio_codigo"] is None
+
+
+async def test_el_uso_de_una_plantilla_cuenta_las_consultas_firmadas_y_vigentes(
+    client, equipo, mascota_id
+):
+    plantilla = await _plantilla(
+        client, equipo["medica"], "Otitis externa", motivo="Rascado", diagnostico="Otitis"
+    )
+    sin_usar = await _plantilla(client, equipo["medica"], "Control general", motivo="Control")
+    firmada = await _entrada(
+        client, equipo, mascota_id, plantilla_codigo=plantilla["codigo"], diagnostico="Otitis"
+    )
+    firma = await client.post(
+        f"/api/v1/clinica/historias/{firmada['id']}/firma", headers=equipo["medica"]
+    )
+    assert firma.status_code == 200, firma.text
+    # Un borrador todavia no cuenta.
+    await _entrada(client, equipo, mascota_id, plantilla_codigo=plantilla["codigo"])
+
+    url = "/api/v1/clinica/plantillas/uso"
+    assert (await client.get(url, headers=equipo["medica"])).json() == {plantilla["codigo"]: 1}
+    assert sin_usar["codigo"] not in (await client.get(url, headers=equipo["admin"])).json()
+    assert (await client.get(url, headers=equipo["op"])).status_code == 403
+
+    # Corregirla no la cuenta dos veces: la version anterior deja de estar vigente.
+    correccion = await client.post(
+        f"/api/v1/clinica/historias/{firmada['id']}/correccion",
+        json={"diagnostico": "Otitis externa"},
+        headers=equipo["medica"],
+    )
+    assert correccion.status_code == 201, correccion.text
+    nueva = correccion.json()["id"]
+    await client.post(f"/api/v1/clinica/historias/{nueva}/firma", headers=equipo["medica"])
+    assert (await client.get(url, headers=equipo["medica"])).json() == {plantilla["codigo"]: 1}
+
+
 # --- F2-CLI-05 Permisos -----------------------------------------------------------------------
 
 

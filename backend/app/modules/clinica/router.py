@@ -336,6 +336,11 @@ async def plantillas(
     )
 
 
+@router.get("/plantillas/uso", response_model=dict[str, int], dependencies=[GESTION])
+async def uso_de_plantillas(db: DbSession) -> dict[str, int]:
+    return await db.run_sync(service.uso_de_plantillas)
+
+
 @router.post(
     "/plantillas",
     response_model=PlantillaRead,
