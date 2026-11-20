@@ -33,8 +33,10 @@ from sqlalchemy import create_engine, select, text
 
 from app.core.config import settings
 from app.core.database import sesion_worker
+from app.core.enums import Rol
 from app.modules.encuestas import service as encuestas
 from app.modules.encuestas.models import Encuesta
+from app.modules.tareas.service import AREAS_POR_ROL
 from app.workers.celery_app import celery_app
 from app.workers.tasks import campanas as tareas_campanas
 from app.workers.tasks import cartera as tareas_cartera
@@ -43,6 +45,7 @@ from scripts.datos_demo import (
     BOGOTA,
     CLAVE_EQUIPO,
     Cliente,
+    Equipo,
     comprobar_ambiente,
     equipo,
     pagar_lo_vencido,
@@ -1219,8 +1222,11 @@ TAREAS = [
 ]
 
 
-def tareas(c: Cliente, motor: Any) -> None:
-    """Tareas de las ultimas semanas: las mas viejas cerradas y unas abiertas ya vencidas."""
+def tareas(c: Equipo, motor: Any) -> None:
+    """Tareas de las ultimas semanas: las mas viejas cerradas y unas abiertas ya vencidas.
+
+    Cada una la cierra el perfil de su area: los demas no la ven (Seccion 12)."""
+    de_su_area = {area: Rol(rol) for rol, areas in AREAS_POR_ROL.items() for area in areas}
     with motor.begin() as cx:
         for titulo, area, prioridad, plazo, dias, cierre in TAREAS:
             nueva = c.post(
@@ -1230,7 +1236,9 @@ def tareas(c: Cliente, motor: Any) -> None:
             if nueva is None:
                 continue
             if cierre:
-                c.post(f"/tareas/{nueva['id']}/cerrar", {"resolucion": cierre})
+                c.como(de_su_area[area]).post(
+                    f"/tareas/{nueva['id']}/cerrar", {"resolucion": cierre}
+                )
             al_pasado(cx, "tareas", nueva["id"], dias)
 
 

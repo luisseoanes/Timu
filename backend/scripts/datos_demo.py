@@ -399,6 +399,12 @@ class Equipo(Cliente):
 
     def __init__(self, clientes: dict[Rol, Cliente]) -> None:
         self.http = _Despacho(clientes)
+        self.clientes = clientes
+
+    def como(self, rol: Rol) -> Cliente:
+        """El cliente de un perfil concreto: para lo que la API filtra por quien pregunta (las
+        tareas de su area, los servicios del medico), no basta con un perfil que admita la ruta."""
+        return self.clientes[rol]
 
 
 def equipo() -> Equipo:
