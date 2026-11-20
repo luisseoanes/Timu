@@ -1485,7 +1485,9 @@ export interface PlantillaConsultaRead {
 
 export interface SolicitudAfiliacionRead {
   id: string
-  familia_id: string
+  familia_id: string | null
+  ciudad: string
+  contacto_nombre: string | null
   periodicidad: Periodicidad
   peludos: PeludoSolicitudRead[]
   valor_inicial: string

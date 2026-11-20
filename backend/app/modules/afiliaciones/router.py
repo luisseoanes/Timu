@@ -108,7 +108,10 @@ class SolicitudRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    familia_id: UUID
+    # La del registro en linea no la tiene hasta que la familia llena su ficha: la dice el contacto.
+    familia_id: UUID | None
+    ciudad: str
+    contacto_nombre: str | None
     periodicidad: Periodicidad
     peludos: list[PeludoSolicitudRead]
     valor_inicial: Decimal

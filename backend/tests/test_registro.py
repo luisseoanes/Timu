@@ -11,6 +11,7 @@ from sqlalchemy import func, select, text
 
 from app.core.config import settings
 from app.core.database import ContextoDb, fijar_contexto
+from app.core.enums import Rol
 from app.core.tiempo import ahora, hoy
 from app.modules.afiliaciones import registro
 from app.modules.afiliaciones.models import SolicitudAfiliacion
@@ -25,6 +26,7 @@ from app.modules.preventivos.models import EventoPreventivo
 from app.modules.tareas.models import Tarea
 from scripts import seed
 from tests import fabricas
+from tests.conftest import login
 from tests.test_cartera import _evento
 
 pytestmark = pytest.mark.integration
@@ -303,6 +305,20 @@ async def test_el_registro_mueve_el_embudo_comercial(client: AsyncClient, db, ti
     assert await db.scalar(select(func.count()).select_from(Interesado)) == 1
     embudo = await db.run_sync(comercial.embudo, hoy() - timedelta(days=1), hoy())
     assert embudo["por_etapa"]["afiliado"] == 1 and embudo["conversion"] == 1.0
+
+
+async def test_comercial_lista_los_registros_que_aun_no_tienen_familia(
+    client: AsyncClient, db, timu, equipo
+):
+    """Un registro en linea no tiene familia hasta el formulario: el listado de Comercial lo
+    muestra con su contacto (la revision del 2026-11-20 encontro un 500)."""
+    await client.post(API, json=_registro(timu))
+    comercial = await login(client, equipo[Rol.COMERCIAL].email)
+    resp = await client.get("/api/v1/afiliaciones", headers=comercial)
+    assert resp.status_code == 200, resp.text
+    [solicitud] = resp.json()
+    assert (solicitud["familia_id"], solicitud["contacto_nombre"]) == (None, "Ana Ruiz")
+    assert solicitud["ciudad"] == "Medellín"
 
 
 async def test_antes_de_confirmar_el_pago_no_se_completa(client: AsyncClient, timu):
