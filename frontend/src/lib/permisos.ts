@@ -36,6 +36,9 @@ export const PERMISOS = {
   autorizarConLaFamilia: ['atencion_cliente'],
   /** Historia clínica, atención virtual, respuestas aprobadas y plantillas de consulta. */
   clinico: ['medico'],
+  /** El carnet de vacunas de una mascota (6.15): lo emite Atención a la familia y lo consulta el
+   * médico. Operaciones agenda desde la bandeja (decidido con el usuario el 2026-11-20). */
+  verCarnet: ['atencion_cliente', 'medico'],
   /** Lo que firma un profesional. */
   medico: ['medico'],
   /** Planear, iniciar y cancelar rutas. */

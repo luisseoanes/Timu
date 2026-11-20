@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom'
 
 import { FotoEditable } from '@/components/FotoEditable'
 import { Modal } from '@/components/Modal'
+import { useAuth } from '@/features/auth'
 import { useEstadoCuenta } from '@/features/cartera'
 import { mensajeError } from '@/lib/errores'
+import { puede } from '@/lib/permisos'
 import { mesEnCurso, moneda } from '@/lib/formato'
 import type { FamiliaRead, MascotaRead } from '@/types'
 
@@ -36,6 +38,7 @@ export function FichaMascotaModal({
   onCerrar: () => void
 }) {
   const actualizar = useActualizarMascota()
+  const { usuario } = useAuth()
   const editable = Boolean(mascota?.activa) && !familia.dada_de_baja_en
 
   function guardar(e: React.FormEvent<HTMLFormElement>) {
@@ -76,14 +79,22 @@ export function FichaMascotaModal({
         <div className="pila">
           <FotoMascota mascota={mascota} editable={editable} />
           <PlanYServicios familia={familia} mascota={mascota} editable={editable} />
-          <div className="acciones">
-            <Link to={`/panel/clinica/mascotas/${mascota.id}`} className="btn btn-suave">
-              Historia clínica
-            </Link>
-            <Link to={`/panel/preventivos?mascota=${mascota.id}`} className="btn btn-suave">
-              Carnet preventivo
-            </Link>
-          </div>
+          {/* Solo lo que el perfil puede abrir: la historia es del médico; el carnet, de Atención y
+              del médico (Sección 12). */}
+          {(puede(usuario, 'clinico') || puede(usuario, 'verCarnet')) && (
+            <div className="acciones">
+              {puede(usuario, 'clinico') && (
+                <Link to={`/panel/clinica/mascotas/${mascota.id}`} className="btn btn-suave">
+                  Historia clínica
+                </Link>
+              )}
+              {puede(usuario, 'verCarnet') && (
+                <Link to={`/panel/preventivos?mascota=${mascota.id}`} className="btn btn-suave">
+                  Carnet preventivo
+                </Link>
+              )}
+            </div>
+          )}
           <form id="ficha-mascota" key={mascota.id} className="formulario" onSubmit={guardar}>
             <fieldset className="ancho formulario" disabled={!editable}>
               <legend className="ancho">Datos</legend>

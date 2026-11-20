@@ -68,6 +68,10 @@ Decisiones del 2026-11-19, a pregunta del usuario:
   Operaciones, rutas, satisfacción y servicios completados (6.7, 6.8). La API solo les sirve esas
   (`INDICADORES_POR_ROL` en `dashboard/service.py`); los exportables y los filtros siguen siendo de
   Gerencia.
+- **El carnet de vacunas (6.15) lo ven Atención al cliente y el médico** (2026-11-20): Atención lo emite
+  a la familia y el médico lo consulta; Operaciones agenda desde la bandeja de preventivos, que ya le
+  dice qué toca. La historia clínica sigue siendo solo del médico: la ficha de la mascota solo
+  enlaza a lo que el perfil puede abrir.
 - **El Inicio del Administrador dice lo que falta configurar**: lo que impide que algo funcione
   (plantillas de WhatsApp que envía la plataforma o citan las reglas y no están aprobadas en el
   catálogo, con lo que deja de salir sin cada una; Datos de TIMU incompletos; usuarios inactivos),

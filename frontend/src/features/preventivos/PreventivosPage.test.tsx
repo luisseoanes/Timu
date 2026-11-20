@@ -234,6 +234,13 @@ describe('PreventivosPage', () => {
     expect(await screen.findByRole('link', { name: 'Página de verificación' })).toHaveAttribute('href', '/verificar/ABC234')
   })
 
+  it('Operaciones agenda desde la bandeja: no ve el carnet', async () => {
+    server.use(sesionDe('operaciones'))
+    renderizar(<PreventivosPage />, { ruta: `/panel/preventivos?mascota=${LUNA.id}` })
+    expect(await screen.findByRole('tab', { name: 'Por hacer', selected: true })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Carnet por mascota' })).not.toBeInTheDocument()
+  })
+
   it('desde la ficha de una mascota abre directo su carnet', async () => {
     let pedido = ''
     server.use(

@@ -844,11 +844,20 @@ describe('FamiliaDetallePage', () => {
     expect(await within(modal).findByText(/^Plan Esencial: paga .*89\.000 al mes\.$/)).toBeInTheDocument()
     expect(await within(modal).findByText(/Este mes: 1 pendientes y 0 utilizados/)).toBeInTheDocument()
     expect((consultado as URLSearchParams | null)?.get('mascota_id')).toBe(LUNA.id)
-    expect(within(modal).getByRole('link', { name: 'Historia clínica' })).toHaveAttribute('href', `/panel/clinica/mascotas/${LUNA.id}`)
+    // Atención ve el carnet; la historia clínica es del médico (Sección 12).
+    expect(within(modal).queryByRole('link', { name: 'Historia clínica' })).not.toBeInTheDocument()
     expect(within(modal).getByRole('link', { name: 'Carnet preventivo' })).toHaveAttribute('href', `/panel/preventivos?mascota=${LUNA.id}`)
     expect(within(modal).getByLabelText('Peso (kg)')).toHaveValue(12.5)
     expect(within(modal).getByLabelText('Esterilizada (opcional)')).toHaveValue('si')
     expect(within(modal).getByText('Sin foto')).toBeInTheDocument()
+  })
+
+  it('Comercial no ve en la ficha de la mascota ni la historia ni el carnet', async () => {
+    server.use(sesionDe('comercial'), http.get(`${API}/servicios/resumen`, () => HttpResponse.json(resumen())))
+    const { modal } = await abrirFichaDeLuna()
+    expect(within(modal).getByRole('heading', { name: 'Luna' })).toBeInTheDocument()
+    expect(within(modal).queryByRole('link', { name: 'Historia clínica' })).not.toBeInTheDocument()
+    expect(within(modal).queryByRole('link', { name: 'Carnet preventivo' })).not.toBeInTheDocument()
   })
 
   it('dice si la familia no tiene plan y corrige los datos de la mascota', async () => {

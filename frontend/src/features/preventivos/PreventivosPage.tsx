@@ -5,8 +5,10 @@ import { Consulta } from '@/components/Consulta'
 import { Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Pestanas } from '@/components/Pestanas'
+import { useAuth } from '@/features/auth'
 import { SelectorFamilia, useFamilia, useMascotas } from '@/features/familias'
 import { mensajeError } from '@/lib/errores'
+import { puede } from '@/lib/permisos'
 import type { Tono } from '@/lib/estados'
 import { fechaCompacta, peso } from '@/lib/formato'
 import type { FamiliaRead } from '@/types'
@@ -17,15 +19,22 @@ import { dosis } from './preventivo'
 
 export function PreventivosPage() {
   const [params] = useSearchParams()
+  const { usuario } = useAuth()
+  // El carnet solo para quien lo puede leer (la API se lo niega a Operaciones).
+  const conCarnet = puede(usuario, 'verCarnet')
   // Desde la ficha de una mascota se llega con ?mascota=<id>, directo a su carnet.
   const mascota = params.get('mascota')
+  // La pestaña inicial depende del perfil: se espera a saber quién es.
+  if (!usuario) return null
   return (
     <Pestanas
       etiqueta="Secciones de preventivos"
-      inicial={mascota ? 'carnet' : undefined}
+      inicial={mascota && conCarnet ? 'carnet' : undefined}
       pestanas={[
         { valor: 'bandeja', titulo: 'Por hacer', contenido: <BandejaPreventivos /> },
-        { valor: 'carnet', titulo: 'Carnet por mascota', contenido: <CarnetMascota mascotaInicial={mascota} /> },
+        ...(conCarnet
+          ? [{ valor: 'carnet', titulo: 'Carnet por mascota', contenido: <CarnetMascota mascotaInicial={mascota} /> }]
+          : []),
       ]}
     />
   )
