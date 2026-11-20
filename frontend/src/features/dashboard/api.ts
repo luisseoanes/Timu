@@ -143,7 +143,11 @@ export function useVencidos(grupos: GruposVencidos = { mora: true, preventivos: 
       const [mora, preventivos, tareas] = await Promise.all([
         grupos.mora ? grupo<ContratoListado>('/cartera/contratos', { solo_mora: true }) : NADA,
         grupos.preventivos ? grupo<EventoRead>('/preventivos', { pendientes_autorizacion: true }) : NADA,
-        grupos.tareas ? grupo<TareaRead>('/tareas', { vencidas: true, orden: 'vence_el' }) : NADA,
+        // Las de una conversación con el asistente no se cuentan aparte: la línea de Comercial ya
+        // dice la conversación que espera a un asesor (decidido con el usuario el 2026-11-20).
+        grupos.tareas
+          ? grupo<TareaRead>('/tareas', { vencidas: true, orden: 'vence_el', excluir_origen: 'conversacion' })
+          : NADA,
       ])
       return { mora, preventivos, tareas }
     },

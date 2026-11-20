@@ -32,6 +32,7 @@ from app.modules.comunicaciones.models import Mensaje
 from app.modules.ia import service as ia
 from app.modules.planes import service as planes
 from app.modules.tareas import service as tareas
+from app.modules.tareas.models import Tarea
 
 logger = structlog.get_logger(__name__)
 
@@ -388,8 +389,15 @@ def _asesor(db: Session, conversacion: ConversacionComercial, motivo: str, turno
     turno.decir("Te comunico con un asesor de TIMU; te escribira en breve.")
 
 
-def liberar(db: Session, conversacion: ConversacionComercial) -> ConversacionComercial:
-    """El asesor termina: la proxima vez que la persona escriba, vuelve el asistente."""
+def liberar(
+    db: Session, conversacion: ConversacionComercial, asesor: str | None = None
+) -> ConversacionComercial:
+    """El asesor termina: la proxima vez que la persona escriba, vuelve el asistente. La tarea
+    «pasar a asesor» se cierra sola (decidido con el usuario el 2026-11-20): era ese trabajo."""
+    tarea = db.get(Tarea, conversacion.tarea_id) if conversacion.tarea_id else None
+    if tarea is not None and tarea.estado != "cerrada":
+        quien = f" por {asesor}" if asesor else ""
+        tareas.cerrar(db, tarea, f"Conversación atendida{quien}")
     conversacion.estado = "automatica"
     conversacion.nodo = "inicio"
     conversacion.fallos = 0

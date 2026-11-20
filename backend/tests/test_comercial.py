@@ -159,10 +159,16 @@ async def test_pedir_asesor_con_contexto_y_el_bot_se_calla(
 
     conv_id = conv.id
     await db.commit()
+    tarea_id = tarea.id
     liberada = await client.post(
         f"/api/v1/comercial/conversaciones/{conv_id}/liberacion", headers=headers
     )
     assert liberada.json()["estado"] == "automatica"
+    # Terminar la conversacion cierra su tarea «pasar a asesor»: era ese trabajo.
+    db.expire_all()
+    cerrada = await db.get(Tarea, tarea_id)
+    assert cerrada.estado == "cerrada"
+    assert cerrada.resolucion.startswith("Conversación atendida por ")
     assert "Conocer el plan" in await chat.escribir("menu")
 
 

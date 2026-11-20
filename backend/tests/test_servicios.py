@@ -10,7 +10,7 @@ from sqlalchemy import select
 
 from app.core.auditoria import Accion, RegistroAuditoria
 from app.core.enums import Rol
-from app.core.tiempo import ZONA_NEGOCIO, hoy
+from app.core.tiempo import ZONA_NEGOCIO, ahora, hoy
 from app.modules.familias.models import Familia, Mascota
 from app.modules.servicios.models import Franja, Pendiente, Servicio, ServicioPaso
 from app.modules.tareas.models import Tarea
@@ -345,6 +345,37 @@ async def test_cada_perfil_ve_y_trabaja_las_tareas_de_su_area(client: AsyncClien
     assert ajena.status_code == 404
     atencion = (await client.get("/api/v1/tareas", headers=headers)).json()["items"]
     assert {t["titulo"] for t in atencion} == {"Cobrar la cuota", "Llamar"}
+
+
+async def test_iniciar_una_tarea_no_la_saca_de_las_pendientes(client: AsyncClient, db, headers):
+    """Las pendientes son abiertas y en progreso: al iniciar una sigue a la vista hasta cerrarla.
+    Y el recuento puede dejar fuera las que ya dice otra bandeja (las de una conversacion)."""
+    hecha = Tarea(
+        titulo="Hecha",
+        area="servicio_cliente",
+        estado="cerrada",
+        cerrada_en=ahora(),
+        resolucion="Resuelta",
+    )
+    abierta = Tarea(titulo="Llamar", area="servicio_cliente")
+    conversacion = Tarea(
+        titulo="WhatsApp: pasar a asesor", area="servicio_cliente", origen="conversacion"
+    )
+    db.add_all([hecha, abierta, conversacion])
+    await db.commit()
+    await client.post(f"/api/v1/tareas/{abierta.id}/iniciar", headers=headers)
+
+    def titulos(resp):
+        return {t["titulo"] for t in resp.json()["items"]}
+
+    pendientes = await client.get("/api/v1/tareas", params={"estado": "pendiente"}, headers=headers)
+    assert titulos(pendientes) == {"Llamar", "WhatsApp: pasar a asesor"}
+    sin_conversaciones = await client.get(
+        "/api/v1/tareas",
+        params={"estado": "pendiente", "excluir_origen": "conversacion"},
+        headers=headers,
+    )
+    assert titulos(sin_conversaciones) == {"Llamar"}
 
 
 async def test_bandeja_asigna_prioriza_y_cierra(client: AsyncClient, equipo, headers):

@@ -337,8 +337,13 @@ describe('La línea del día', () => {
   })
 
   it('Comercial ve las conversaciones que esperan a un asesor y las renovaciones', async () => {
+    const tareas: URLSearchParams[] = []
     server.use(
       sesionDe('comercial'),
+      http.get(`${API}/tareas`, ({ request }) => {
+        tareas.push(new URL(request.url).searchParams)
+        return HttpResponse.json(pagina([]))
+      }),
       http.get(`${API}/comercial/conversaciones`, () =>
         HttpResponse.json([{ id: 'cv1', interesado_nombre: 'Natalia Gómez' }, { id: 'cv2', interesado_nombre: null }]),
       ),
@@ -350,6 +355,8 @@ describe('La línea del día', () => {
     expect(within(linea).getByRole('link', { name: 'Contestar' })).toHaveAttribute('href', '/panel/comercial?pestana=conversaciones')
     expect(within(linea).getByText('3 contratos por renovar')).toBeInTheDocument()
     expect(within(linea).getByRole('link', { name: 'Ver las renovaciones' })).toHaveAttribute('href', '/panel/cartera?vista=por_renovar')
+    // La tarea «pasar a asesor» de cada conversación no se cuenta otra vez como tarea vencida.
+    expect(tareas[0].get('excluir_origen')).toBe('conversacion')
   })
 })
 

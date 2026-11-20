@@ -62,6 +62,42 @@ describe('TareasPage', () => {
     expect(futura.querySelector('[data-etiqueta="Vence"]')).toHaveTextContent('jue 10 ene')
   })
 
+  it('abre en las pendientes: una tarea iniciada sigue a la vista hasta cerrarla', async () => {
+    const pedidas: (string | null)[] = []
+    let estado = 'abierta'
+    server.use(
+      http.get(`${API}/tareas`, ({ request }) => {
+        pedidas.push(new URL(request.url).searchParams.get('estado'))
+        return HttpResponse.json(pagina([{ ...TAREA, asignada_a_id: USUARIO_ADMIN.id, estado }]))
+      }),
+      http.post(`${API}/tareas/t1/iniciar`, () => {
+        estado = 'en_progreso'
+        return HttpResponse.json({ ...TAREA, estado })
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<TareasPage />)
+    expect(await screen.findByText('Llamar por cuota vencida')).toBeInTheDocument()
+    expect(screen.getByLabelText('Estado de la tarea')).toHaveValue('pendiente')
+    await user.click(screen.getByRole('button', { name: 'Iniciar' }))
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Iniciar' })).not.toBeInTheDocument())
+    expect(screen.getByText('Llamar por cuota vencida')).toBeInTheDocument()
+    expect(new Set(pedidas)).toEqual(new Set(['pendiente']))
+  })
+
+  it('la tarea de una conversación con el asistente lleva a la conversación', async () => {
+    server.use(
+      http.get(`${API}/tareas`, () =>
+        HttpResponse.json(pagina([{ ...TAREA, titulo: 'WhatsApp +573004445588: pasar a asesor', area: 'comercial', origen: 'conversacion' }])),
+      ),
+    )
+    renderizar(<TareasPage />)
+    expect(await screen.findByRole('link', { name: 'Ver la conversación' })).toHaveAttribute(
+      'href',
+      '/panel/comercial?pestana=conversaciones',
+    )
+  })
+
   it('lista las tareas y se toma una sin asignar', async () => {
     let asignacion: unknown = null
     server.use(

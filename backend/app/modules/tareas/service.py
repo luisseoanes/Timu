@@ -5,7 +5,7 @@ from datetime import timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Select, select
+from sqlalchemy import Select, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.enums import AreaTarea, Rol
@@ -84,13 +84,17 @@ def consulta(
     sin_asignar: bool = False,
     vencidas: bool = False,
     familia_id: UUID | None = None,
+    excluir_origen: str | None = None,
 ) -> Select[tuple[Tarea]]:
     stmt = select(Tarea)
     if areas is not None:
         stmt = stmt.where(Tarea.area.in_(areas))
     if area:
         stmt = stmt.where(Tarea.area == area)
-    if estado:
+    if estado == "pendiente":
+        # Lo que falta por hacer: abiertas y en progreso (iniciar una no la saca de la vista).
+        stmt = stmt.where(Tarea.estado != "cerrada")
+    elif estado:
         stmt = stmt.where(Tarea.estado == estado)
     if asignada_a_id:
         stmt = stmt.where(Tarea.asignada_a_id == asignada_a_id)
@@ -100,6 +104,8 @@ def consulta(
         stmt = stmt.where(Tarea.vence_el < hoy(), Tarea.estado != "cerrada")
     if familia_id:
         stmt = stmt.where(Tarea.familia_id == familia_id)
+    if excluir_origen:
+        stmt = stmt.where(or_(Tarea.origen.is_(None), Tarea.origen != excluir_origen))
     return stmt
 
 

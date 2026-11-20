@@ -308,14 +308,15 @@ async def responder_como_asesor(
     response_model=ConversacionRead,
     dependencies=[COMERCIAL],
 )
-async def liberar(db: DbSession, conversacion_id: UUID) -> ConversacionRead:
-    """El asesor termina: vuelve el asistente para la proxima vez que la persona escriba."""
+async def liberar(db: DbSession, usuario: Comercial, conversacion_id: UUID) -> ConversacionRead:
+    """El asesor termina: vuelve el asistente para la proxima vez que la persona escriba, y su
+    tarea «pasar a asesor» se cierra."""
     conv = await db.get(ConversacionComercial, conversacion_id)
     if conv is None:
         raise NoEncontrado("Conversacion no encontrada")
     # Se serializa dentro de la sesion: tras el flush, updated_at queda por recargar.
     return await db.run_sync(
-        lambda s: ConversacionRead.model_validate(conversacion.liberar(s, conv))
+        lambda s: ConversacionRead.model_validate(conversacion.liberar(s, conv, usuario.nombre))
     )
 
 

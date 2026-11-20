@@ -42,7 +42,8 @@ export function TareasPage() {
   const [params] = useSearchParams()
   const [vista, setVista] = useState<Vista>(params.get('vencidas') === '1' ? 'vencidas' : 'todas')
   const [area, setArea] = useState<Area | ''>('')
-  const [estado, setEstado] = useState('abierta')
+  // Pendientes: abiertas y en progreso. Con «Abiertas», iniciar una tarea la sacaba de la vista.
+  const [estado, setEstado] = useState('pendiente')
   const [offset, setOffset] = useState(0)
   const [nueva, setNueva] = useState(false)
   const [cerrando, setCerrando] = useState<TareaRead | null>(null)
@@ -98,6 +99,7 @@ export function TareasPage() {
           ))}
         </select>
         <select className="input bandeja-filtro" value={estado} onChange={(e) => { setEstado(e.target.value); setOffset(0) }} aria-label="Estado de la tarea">
+          <option value="pendiente">Pendientes</option>
           <option value="abierta">Abiertas</option>
           <option value="en_progreso">En progreso</option>
           <option value="cerrada">Cerradas</option>
@@ -186,6 +188,13 @@ export function TareasPage() {
                           )}
                         </td>
                         <td className="tabla-acciones">
+                          {/* La del asistente de WhatsApp es la conversación: se atiende allí, y al
+                              terminarla la tarea se cierra sola. */}
+                          {t.origen === 'conversacion' && t.estado !== 'cerrada' && (
+                            <Link className="btn btn-suave" to="/panel/comercial?pestana=conversaciones">
+                              Ver la conversación
+                            </Link>
+                          )}
                           {!t.asignada_a_id && t.estado !== 'cerrada' && usuario && (
                             <button className="btn btn-suave" type="button" onClick={() => asignar.mutate({ id: t.id, usuario_id: usuario.id })}>
                               Tomar

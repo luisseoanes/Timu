@@ -87,13 +87,16 @@ async def bandeja(
     usuario: Operativo,
     params: ParamsListado,
     area: Area | None = None,
-    estado: Literal["abierta", "en_progreso", "cerrada"] | None = None,
+    estado: Literal["pendiente", "abierta", "en_progreso", "cerrada"] | None = None,
     mias: bool = False,
     sin_asignar: bool = False,
     vencidas: bool = False,
     familia_id: UUID | None = None,
+    excluir_origen: str | None = None,
 ) -> Page[TareaListado]:
-    """Por defecto: prioridad (alta primero) y luego vencimiento mas cercano."""
+    """Por defecto: prioridad (alta primero) y luego vencimiento mas cercano. `pendiente` son
+    las abiertas y las en progreso; `excluir_origen` deja fuera las que ya cuenta otra bandeja
+    (las de una conversacion, que el Inicio de Comercial dice como conversacion)."""
     stmt = service.consulta(
         areas=service.AREAS_POR_ROL[usuario.rol],
         area=area,
@@ -102,6 +105,7 @@ async def bandeja(
         sin_asignar=sin_asignar,
         vencidas=vencidas,
         familia_id=familia_id,
+        excluir_origen=excluir_origen,
     )
     if not params.orden:
         stmt = stmt.order_by(service.ORDEN_PRIORIDAD, Tarea.vence_el.asc().nulls_last())
