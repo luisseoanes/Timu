@@ -320,3 +320,22 @@ async def test_listado_rechaza_orden_no_permitido(client: AsyncClient, headers):
 async def test_listado_rechaza_limite_excesivo(client: AsyncClient, headers):
     resp = await client.get("/api/v1/familias", params={"limit": 500}, headers=headers)
     assert resp.status_code == 422
+
+
+async def test_volver_a_cargar_los_catalogos_no_pisa_las_ciudades_que_activa_el_administrador(db):
+    """`activa` de los datos de arranque solo vale al crear la ciudad: si el administrador activa
+    otra en Catalogos, el siguiente despliegue (que vuelve a cargar) la deja como esta."""
+    from sqlalchemy import select
+
+    from app.modules.catalogos import service as catalogos
+    from app.modules.catalogos.models import Ciudad
+
+    pasto = await db.scalar(select(Ciudad).where(Ciudad.nombre == "Pasto"))
+    assert pasto.activa is False  # fuera de donde opera TIMU
+    pasto.activa = True
+    await db.flush()
+    await db.run_sync(catalogos.cargar)
+    await db.refresh(pasto)
+    assert pasto.activa is True
+    medellin = await db.scalar(select(Ciudad).where(Ciudad.nombre == "Medellín"))
+    assert medellin.activa is True

@@ -7,10 +7,15 @@ produccion: cambiar aqui y volver a correr la carga actualiza sin duplicar.
 
 from typing import Any
 
+# Activas (decidido con el usuario el 2026-11-20, valor provisional hasta que TIMU lo confirme):
+# donde TIMU tiene operacion, Bogota y Medellin con su area metropolitana (el Valle de Aburra, donde
+# estan sus aliadas). `activa` solo se usa al crear la ciudad: despues la decide el administrador en
+# Catalogos, y volver a cargar no la pisa (`SOLO_AL_CREAR`).
 CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "11001",
         "nombre": "Bogotá",
+        "activa": True,
         "departamento": "Bogotá D.C.",
         "latitud": 4.7110,
         "longitud": -74.0721,
@@ -18,6 +23,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "05001",
         "nombre": "Medellín",
+        "activa": True,
         "departamento": "Antioquia",
         "latitud": 6.2442,
         "longitud": -75.5812,
@@ -25,6 +31,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "76001",
         "nombre": "Cali",
+        "activa": False,
         "departamento": "Valle del Cauca",
         "latitud": 3.4516,
         "longitud": -76.5320,
@@ -32,6 +39,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "08001",
         "nombre": "Barranquilla",
+        "activa": False,
         "departamento": "Atlántico",
         "latitud": 10.9685,
         "longitud": -74.7813,
@@ -39,6 +47,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "13001",
         "nombre": "Cartagena",
+        "activa": False,
         "departamento": "Bolívar",
         "latitud": 10.3910,
         "longitud": -75.4794,
@@ -46,6 +55,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "68001",
         "nombre": "Bucaramanga",
+        "activa": False,
         "departamento": "Santander",
         "latitud": 7.1193,
         "longitud": -73.1227,
@@ -53,6 +63,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "66001",
         "nombre": "Pereira",
+        "activa": False,
         "departamento": "Risaralda",
         "latitud": 4.8133,
         "longitud": -75.6961,
@@ -60,6 +71,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "17001",
         "nombre": "Manizales",
+        "activa": False,
         "departamento": "Caldas",
         "latitud": 5.0703,
         "longitud": -75.5138,
@@ -67,6 +79,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "63001",
         "nombre": "Armenia",
+        "activa": False,
         "departamento": "Quindío",
         "latitud": 4.5339,
         "longitud": -75.6811,
@@ -74,6 +87,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "54001",
         "nombre": "Cúcuta",
+        "activa": False,
         "departamento": "Norte de Santander",
         "latitud": 7.8939,
         "longitud": -72.5078,
@@ -81,6 +95,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "73001",
         "nombre": "Ibagué",
+        "activa": False,
         "departamento": "Tolima",
         "latitud": 4.4389,
         "longitud": -75.2322,
@@ -88,6 +103,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "47001",
         "nombre": "Santa Marta",
+        "activa": False,
         "departamento": "Magdalena",
         "latitud": 11.2408,
         "longitud": -74.1990,
@@ -95,6 +111,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "50001",
         "nombre": "Villavicencio",
+        "activa": False,
         "departamento": "Meta",
         "latitud": 4.1420,
         "longitud": -73.6266,
@@ -102,6 +119,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "52001",
         "nombre": "Pasto",
+        "activa": False,
         "departamento": "Nariño",
         "latitud": 1.2136,
         "longitud": -77.2811,
@@ -109,6 +127,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "41001",
         "nombre": "Neiva",
+        "activa": False,
         "departamento": "Huila",
         "latitud": 2.9273,
         "longitud": -75.2819,
@@ -116,6 +135,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "05088",
         "nombre": "Bello",
+        "activa": True,
         "departamento": "Antioquia",
         "latitud": 6.3373,
         "longitud": -75.5580,
@@ -123,6 +143,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "05266",
         "nombre": "Envigado",
+        "activa": True,
         "departamento": "Antioquia",
         "latitud": 6.1759,
         "longitud": -75.5917,
@@ -130,6 +151,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "05360",
         "nombre": "Itagüí",
+        "activa": True,
         "departamento": "Antioquia",
         "latitud": 6.1846,
         "longitud": -75.5991,
@@ -138,6 +160,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "05631",
         "nombre": "Sabaneta",
+        "activa": True,
         "departamento": "Antioquia",
         "latitud": 6.1515,
         "longitud": -75.6166,
@@ -145,6 +168,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "05380",
         "nombre": "La Estrella",
+        "activa": True,
         "departamento": "Antioquia",
         "latitud": 6.1576,
         "longitud": -75.643,
@@ -152,6 +176,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "05129",
         "nombre": "Caldas",
+        "activa": True,
         "departamento": "Antioquia",
         "latitud": 6.0911,
         "longitud": -75.6357,
@@ -159,6 +184,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "05212",
         "nombre": "Copacabana",
+        "activa": True,
         "departamento": "Antioquia",
         "latitud": 6.3487,
         "longitud": -75.5089,
@@ -166,6 +192,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "05308",
         "nombre": "Girardota",
+        "activa": True,
         "departamento": "Antioquia",
         "latitud": 6.3772,
         "longitud": -75.4446,
@@ -173,6 +200,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "05079",
         "nombre": "Barbosa",
+        "activa": True,
         "departamento": "Antioquia",
         "latitud": 6.4386,
         "longitud": -75.333,
@@ -180,6 +208,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "25175",
         "nombre": "Chía",
+        "activa": False,
         "departamento": "Cundinamarca",
         "latitud": 4.8617,
         "longitud": -74.0325,
@@ -187,6 +216,7 @@ CIUDADES: list[dict[str, Any]] = [
     {
         "codigo": "25754",
         "nombre": "Soacha",
+        "activa": False,
         "departamento": "Cundinamarca",
         "latitud": 4.5793,
         "longitud": -74.2168,

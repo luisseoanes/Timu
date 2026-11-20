@@ -54,11 +54,13 @@ async def test_edicion_sin_cambios_reales_no_deja_rastro(client: AsyncClient, db
     creada = await client.post("/api/v1/familias", json=_familia("1002"), headers=headers)
     familia_id = creada.json()["id"]
     await client.patch(f"/api/v1/familias/{familia_id}", json={"ciudad": "Cali"}, headers=headers)
-    await client.patch(f"/api/v1/familias/{familia_id}", json={"ciudad": "Pasto"}, headers=headers)
+    await client.patch(
+        f"/api/v1/familias/{familia_id}", json={"ciudad": "Medellín"}, headers=headers
+    )
 
     registros = await _registros(db, familia_id)
     assert [r.accion for r in registros] == ["crear", "editar"]
-    assert registros[1].cambios == {"ciudad": ["Cali", "Pasto"]}
+    assert registros[1].cambios == {"ciudad": ["Cali", "Medellín"]}
 
 
 async def test_mascota_anidada_tambien_se_audita(client: AsyncClient, db, headers):

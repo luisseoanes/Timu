@@ -24,6 +24,11 @@ CATALOGOS: list[tuple[type[Any], list[dict[str, Any]]]] = [
 ]
 
 
+# Campos de los datos de arranque que solo valen al crear la fila: despues los decide el
+# administrador desde el panel, y volver a cargar los catalogos no los pisa.
+SOLO_AL_CREAR = {"activa"}
+
+
 def _upsert(db: Session, modelo: type[Any], filas: list[dict[str, Any]]) -> dict[str, int]:
     existentes = {o.codigo: o for o in db.scalars(select(modelo))}
     creados = actualizados = 0
@@ -35,6 +40,8 @@ def _upsert(db: Session, modelo: type[Any], filas: list[dict[str, Any]]) -> dict
             continue
         cambio = False
         for campo, valor in fila.items():
+            if campo in SOLO_AL_CREAR:
+                continue
             if getattr(obj, campo) != valor:
                 setattr(obj, campo, valor)
                 cambio = True

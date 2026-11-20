@@ -618,3 +618,32 @@ def test_0050_pasa_el_puntaje_del_seguimiento_a_como_sigue(base_en_0049):
         conn.execute(text("UPDATE encuestas SET puntaje = 4 WHERE tipo = 'seguimiento'"))
     command.downgrade(cfg, "0049")
     assert leer() == [("satisfaccion", 2), ("seguimiento", 1), ("seguimiento", 5)]
+
+
+@pytest.fixture
+def base_en_0059():
+    yield from _base_en("0059")
+
+
+def test_0060_deja_activas_solo_las_ciudades_con_operacion(base_en_0059):
+    """Bogota y Medellin con su area metropolitana quedan activas; las demas, desactivadas. El
+    downgrade las deja todas activas, como estaban."""
+    cfg, engine = base_en_0059
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO ciudades (codigo, nombre, departamento, activa) VALUES"
+                " ('11001', 'Bogotá', 'Bogotá D.C.', true), ('05266', 'Envigado', 'Antioquia',"
+                " true), ('76001', 'Cali', 'Valle del Cauca', true)"
+            )
+        )
+    command.upgrade(cfg, "0060")
+
+    def activas():
+        with engine.connect() as conn:
+            filas = conn.execute(text("SELECT nombre, activa FROM ciudades")).all()
+            return dict(filas)
+
+    assert activas() == {"Bogotá": True, "Envigado": True, "Cali": False}
+    command.downgrade(cfg, "0059")
+    assert activas() == {"Bogotá": True, "Envigado": True, "Cali": True}

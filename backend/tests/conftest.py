@@ -254,6 +254,9 @@ async def db() -> AsyncGenerator[AsyncSession, None]:
         info={CLAVE_CONTEXTO: SISTEMA},
     )
     await session.run_sync(cargar_catalogos)
+    # Las pruebas usan Cali como ciudad neutra, fuera de donde opera TIMU; desde el 2026-11-20 el
+    # catalogo de arranque la deja desactivada (catalogos/datos.py).
+    await session.execute(text("UPDATE ciudades SET activa = true WHERE nombre = 'Cali'"))
     await session.run_sync(sembrar_reglas)
     await session.commit()
     try:
