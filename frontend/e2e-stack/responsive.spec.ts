@@ -74,9 +74,12 @@ async function familiaDemo(page: Page): Promise<Familia> {
 
 /** Una entrada de historia clínica y su mascota, de cualquier familia de datos_demo. */
 async function entradaClinica(page: Page): Promise<{ mascota: string; entrada: string }> {
-  // Las mascotas que atiende el médico: no ve Familias (Sección 12), sí sus servicios.
+  // El médico no ve Familias (Sección 12): parte de sus borradores (datos_demo deja uno en Luna, con
+  // su consulta firmada) y de las mascotas de sus servicios (con operacion_demo hay muchas más).
+  const borradores = await pedir<{ mascota_id: string }[]>(page, '/clinica/borradores')
   const { items } = await pedir<{ items: { mascota: { id: string } | null }[] }>(page, '/servicios?limit=50')
-  for (const id of new Set(items.flatMap((s) => (s.mascota ? [s.mascota.id] : [])))) {
+  const mascotas = [...borradores.map((b) => b.mascota_id), ...items.flatMap((s) => (s.mascota ? [s.mascota.id] : []))]
+  for (const id of new Set(mascotas)) {
     const historia = await pedir<{ id: string }[]>(page, `/clinica/mascotas/${id}/historia`)
     if (historia.length > 0) return { mascota: id, entrada: historia[0].id }
   }
