@@ -254,6 +254,7 @@ MATRIZ = {
     "POST /ia/casos": "A",
     "GET /ia/consultas": "A",
     "GET /ia/consumo": "A",
+    "PUT /ia/presupuesto": "A",
     "GET /ia/prompts": "A",
     "POST /ia/prompts": "A",
     "POST /ia/prompts/sembrar": "A",

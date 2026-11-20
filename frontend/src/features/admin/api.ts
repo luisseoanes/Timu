@@ -144,6 +144,15 @@ export function useConsumoIA() {
 
 // --- Escrituras -------------------------------------------------------------------------------
 
+/** Sección 14 El tope de gasto mensual de la IA: siempre hay uno (US$ 1 como mínimo). */
+export function useCambiarTopeIA() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (presupuesto_usd: number) => (await api.put<ConsumoIA>('/ia/presupuesto', { presupuesto_usd })).data,
+    onSuccess: (consumo) => qc.setQueryData(['ia', 'consumo'], consumo),
+  })
+}
+
 function useMutacion<T, R>(fn: (datos: T) => Promise<R>, ...claves: string[]) {
   const qc = useQueryClient()
   return useMutation({

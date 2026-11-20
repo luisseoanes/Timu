@@ -2,6 +2,7 @@
 evaluacion, activacion, registro de consultas y consumo del presupuesto."""
 
 from datetime import datetime
+from decimal import Decimal
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
@@ -179,4 +180,16 @@ async def consultas(
 @router.get("/consumo", dependencies=[ADMIN])
 async def consumo(db: DbSession) -> dict[str, Any]:
     """Gasto del mes contra el presupuesto, por prompt y resultado."""
+    return await db.run_sync(service.consumo)
+
+
+class PresupuestoIn(BaseModel):
+    # Siempre con tope (decidido con el usuario el 2026-11-20): se sube, no se quita.
+    presupuesto_usd: Decimal = Field(ge=1, le=100_000, decimal_places=2)
+
+
+@router.put("/presupuesto", dependencies=[ADMIN])
+async def cambiar_presupuesto(db: DbSession, data: PresupuestoIn) -> dict[str, Any]:
+    """Seccion 14 El tope de gasto mensual de la IA; devuelve el consumo con el tope nuevo."""
+    await db.run_sync(service.cambiar_presupuesto, data.presupuesto_usd)
     return await db.run_sync(service.consumo)

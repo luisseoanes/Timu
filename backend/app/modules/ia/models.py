@@ -3,7 +3,16 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.auditoria import Auditable
@@ -78,3 +87,22 @@ class CasoPruebaIA(Base, UUIDMixin, TimestampMixin, Auditable):
     entrada: Mapped[str] = mapped_column(Text)
     # {"campo": "alcance", "igual": "fuera"} | {"contiene": [...]} | {"no_contiene": [...]}
     esperado: Mapped[dict[str, Any]] = mapped_column(JSONTipo, default=dict)
+
+
+class ConfiguracionIA(Base, UUIDMixin, TimestampMixin, Auditable):
+    """Seccion 14 El tope de gasto mensual de la IA, que Administracion cambia sin desplegar
+    (decidido con el usuario el 2026-11-20). Siempre hay tope: al llegar a el, la IA se apaga
+    hasta el mes siguiente; para gastar mas se sube, y la auditoria guarda quien y cuando. Una
+    sola fila, que crea la migracion."""
+
+    __tablename__ = "configuracion_ia"
+    __checks__ = {
+        "una_sola_fila": "unica",
+        # Nunca sin freno: el asistente de WhatsApp contesta con IA a quien escriba.
+        "presupuesto_minimo": "presupuesto_mensual_usd >= 1",
+    }
+    __unicos__ = {"unica": (["unica"], None)}
+
+    unica: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Valor provisional (docs/pendientes-externos.md): US$ 50 hasta que TIMU fije el suyo.
+    presupuesto_mensual_usd: Mapped[Decimal] = mapped_column(Numeric(10, 2))

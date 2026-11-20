@@ -40,7 +40,7 @@ function abrir() {
   return userEvent.setup()
 }
 
-describe('gasto del mes', () => {
+describe('tope de gasto', () => {
   it('mide el presupuesto usado', async () => {
     abrir()
     // Dólares con la coma decimal de Colombia, como los pesos.
@@ -52,6 +52,49 @@ describe('gasto del mes', () => {
     server.use(consumo({ gasto_usd: 0, presupuesto_usd: 0, disponible_usd: 0 }))
     abrir()
     expect(await screen.findByRole('meter', { name: 'Presupuesto de IA usado' })).toHaveAttribute('aria-valuenow', '0')
+  })
+
+  it('dice que es un tope de la plataforma, no el saldo de la cuenta del proveedor', async () => {
+    abrir()
+    expect(await screen.findByRole('heading', { name: 'Tope de gasto de la IA' })).toBeInTheDocument()
+    expect(await screen.findByText(/no es el saldo de la cuenta del proveedor/)).toBeInTheDocument()
+    expect(screen.getByText('Queda antes del tope')).toBeInTheDocument()
+  })
+
+  it('el administrador cambia el tope; nunca por debajo de US$ 1', async () => {
+    const enviados: unknown[] = []
+    server.use(
+      http.put(`${API}/ia/presupuesto`, async ({ request }) => {
+        enviados.push(await request.json())
+        return HttpResponse.json({ mes: '2026-10', gasto_usd: 12.5, presupuesto_usd: 80, disponible_usd: 67.5, por_prompt: [] })
+      }),
+    )
+    const user = abrir()
+    const campo = await screen.findByLabelText('Tope mensual (US$)')
+    expect(campo).toHaveValue(50)
+    const guardar = screen.getByRole('button', { name: 'Guardar' })
+    // Sin cambios, o por debajo del mínimo, no hay nada que guardar.
+    expect(guardar).toBeDisabled()
+    await user.clear(campo)
+    await user.type(campo, '0.5')
+    expect(guardar).toBeDisabled()
+    await user.clear(campo)
+    await user.type(campo, '80')
+    await user.click(guardar)
+    await waitFor(() => expect(enviados).toEqual([{ presupuesto_usd: 80 }]))
+    // La tarjeta se pinta con lo que devolvió la API.
+    expect(await screen.findByText(/^US\$\s67,50$/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Tope mensual (US$)')).toHaveValue(80)
+  })
+
+  it('explica por qué no se pudo guardar el tope', async () => {
+    server.use(http.put(`${API}/ia/presupuesto`, () => HttpResponse.json({ detail: 'Valor fuera de rango' }, { status: 422 })))
+    const user = abrir()
+    const campo = await screen.findByLabelText('Tope mensual (US$)')
+    await user.clear(campo)
+    await user.type(campo, '70')
+    await user.click(screen.getByRole('button', { name: 'Guardar' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Valor fuera de rango')
   })
 
   it('explica por qué no pudo consultar el gasto', async () => {

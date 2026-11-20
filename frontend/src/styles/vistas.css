@@ -414,9 +414,11 @@
   .inicio-config .fila { flex-wrap: wrap; }
   .inicio-config .fila > .btn { flex: 1 0 100%; }
 }
-/* Supresión de datos: el documento y «Buscar» en una línea, el botón a la altura del campo. */
-.supresion-busqueda { display: flex; align-items: flex-end; gap: var(--e2); }
-.supresion-busqueda > .campo { flex: 0 1 360px; min-width: 0; }
+/* Un campo y su acción en una línea, el botón a la altura del campo: el documento y «Buscar» en
+   Supresión, el tope de la IA y «Guardar». */
+.campo-con-accion { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--e2); }
+.campo-con-accion > .campo { flex: 0 1 360px; min-width: 0; }
+.campo-con-accion > .error { flex-basis: 100%; }
 .inicio-panel-titulo { margin-bottom: var(--e3); font-family: var(--fuente); font-size: var(--t-seccion); font-weight: 600; color: var(--texto-titulo); }
 .inicio-panel-cabeza { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e3); }
 

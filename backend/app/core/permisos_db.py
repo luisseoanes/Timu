@@ -51,6 +51,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "casos_prueba_ia": "SI",
         "ciudades": "SIU",
         "ciudades_plan": "SIU",
+        "configuracion_ia": "SU",
         "configuraciones_encuesta": "SIU",
         "consultas_ia": "S",
         "contactos_familia": "S",

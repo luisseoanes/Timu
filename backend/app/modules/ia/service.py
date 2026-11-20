@@ -18,7 +18,6 @@ import structlog
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.eventos import declarar_evento
 from app.core.tiempo import ZONA_NEGOCIO, ahora, hoy
@@ -26,7 +25,7 @@ from app.integrations import claude
 from app.modules.clinica.models import SolicitudVirtual
 from app.modules.familias.models import Mascota
 from app.modules.ia import guiones
-from app.modules.ia.models import CasoPruebaIA, ConsultaIA, PromptIA
+from app.modules.ia.models import CasoPruebaIA, ConfiguracionIA, ConsultaIA, PromptIA
 from app.modules.planes.models import Plan
 
 logger = structlog.get_logger(__name__)
@@ -128,6 +127,26 @@ def sembrar(db: Session) -> int:
 # --- Limite de gasto y consulta ---------------------------------------------------------------
 
 
+def _configuracion(db: Session) -> ConfiguracionIA:
+    configuracion = db.scalar(select(ConfiguracionIA))
+    assert configuracion is not None, "la migracion 0058 crea la fila"
+    return configuracion
+
+
+def presupuesto(db: Session) -> Decimal:
+    """Seccion 14 El tope de gasto del mes, que fija Administracion."""
+    return _configuracion(db).presupuesto_mensual_usd
+
+
+def cambiar_presupuesto(db: Session, valor: Decimal) -> Decimal:
+    if valor < 1:
+        raise ReglaNegocio("El tope mensual es de al menos US$ 1: la IA nunca queda sin freno")
+    configuracion = _configuracion(db)
+    configuracion.presupuesto_mensual_usd = valor
+    db.flush()
+    return valor
+
+
 def gasto_mes(db: Session, dia: date | None = None) -> Decimal:
     dia = dia or hoy()
     inicio = datetime.combine(dia.replace(day=1), hora.min, ZONA_NEGOCIO)
@@ -163,7 +182,7 @@ def consultar(
     if not claude.configurado() or prompt is None:
         _registrar(db, **base, estado="desactivada")
         raise IANoDisponible("La capa de IA no esta configurada o no hay prompt activo")
-    if gasto_mes(db) >= Decimal(str(settings.IA_PRESUPUESTO_MENSUAL_USD)):
+    if gasto_mes(db) >= presupuesto(db):
         _registrar(db, **base, estado="presupuesto_agotado")
         raise IANoDisponible("Se agoto el presupuesto mensual de IA")
 
@@ -365,12 +384,12 @@ def consumo(db: Session, dia: date | None = None) -> dict[str, Any]:
         .group_by(ConsultaIA.prompt_codigo, ConsultaIA.estado)
     ).all()
     gasto = gasto_mes(db, dia)
-    presupuesto = Decimal(str(settings.IA_PRESUPUESTO_MENSUAL_USD))
+    tope = presupuesto(db)
     return {
         "mes": f"{dia:%Y-%m}",
         "gasto_usd": float(gasto),
-        "presupuesto_usd": float(presupuesto),
-        "disponible_usd": float(max(presupuesto - gasto, Decimal(0))),
+        "presupuesto_usd": float(tope),
+        "disponible_usd": float(max(tope - gasto, Decimal(0))),
         "por_prompt": [
             {"prompt": p, "estado": e, "consultas": n, "costo_usd": float(c or 0)}
             for p, e, n, c in filas

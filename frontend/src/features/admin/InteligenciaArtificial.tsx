@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 
 import { Consulta } from '@/components/Consulta'
 import { Distintivo } from '@/components/Distintivo'
@@ -10,6 +10,7 @@ import type { PromptRead } from '@/types'
 
 import {
   useActivarPrompt,
+  useCambiarTopeIA,
   useCasos,
   useConsultasIA,
   useConsumoIA,
@@ -26,6 +27,52 @@ const USOS: Record<string, string> = {
   veterinario_borrador: 'Borrador para la atención virtual',
 }
 
+/** El tope mensual, que Administración cambia sin desplegar (decidido con el usuario el 2026-11-20).
+ * Siempre hay uno: se sube o se baja, no se quita (el asistente de WhatsApp contesta con IA a quien
+ * escriba), y la API exige US$ 1 como mínimo. */
+function CambiarTope({ tope }: { tope: number }) {
+  const id = useId()
+  const cambiar = useCambiarTopeIA()
+  const [valor, setValor] = useState(String(tope))
+  const numero = Number(valor)
+  const valido = valor.trim() !== '' && Number.isFinite(numero) && numero >= 1
+  return (
+    <form
+      className="campo-con-accion"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (valido) cambiar.mutate(Math.round(numero * 100) / 100)
+      }}
+    >
+      <div className="campo">
+        <label htmlFor={`${id}-tope`}>Tope mensual (US$)</label>
+        <input
+          id={`${id}-tope`}
+          className="input numero"
+          type="number"
+          inputMode="decimal"
+          min={1}
+          step={0.01}
+          required
+          value={valor}
+          onChange={(e) => {
+            setValor(e.target.value)
+            cambiar.reset()
+          }}
+        />
+      </div>
+      <button className="btn btn-secundario" type="submit" disabled={!valido || numero === tope || cambiar.isPending}>
+        {cambiar.isPending ? 'Guardando…' : 'Guardar'}
+      </button>
+      {cambiar.isError && (
+        <p className="error" role="alert">
+          {mensajeError(cambiar.error, 'No fue posible guardar el tope.')}
+        </p>
+      )}
+    </form>
+  )
+}
+
 /** Capa de IA con control (F4-IAA): prompts versionados, evaluación antes de activar y gasto. */
 export function InteligenciaArtificial() {
   const consumo = useConsumoIA()
@@ -40,13 +87,18 @@ export function InteligenciaArtificial() {
     <div className="pila">
       <section className="tarjeta">
         <div className="tarjeta-cabeza">
-          <h3>Gasto del mes</h3>
+          <h3>Tope de gasto de la IA</h3>
         </div>
         <Consulta consulta={consumo} cargando="Calculando…" error="No fue posible consultar el gasto.">
           {(c) => {
             const uso = c.presupuesto_usd ? c.gasto_usd / c.presupuesto_usd : 0
             return (
               <div className="pila">
+                {/* No es el saldo de la cuenta del proveedor (Google Cloud factura por su lado). */}
+                <p className="apagado">
+                  Lo calcula la plataforma con lo que cuesta cada consulta que hace; no es el saldo de la cuenta del
+                  proveedor. Al llegar al tope, la IA se apaga hasta el mes siguiente.
+                </p>
                 <div className="indicadores">
                   <div className="indicador">
                     <span className="indicador-titulo">Gastado</span>
@@ -58,11 +110,13 @@ export function InteligenciaArtificial() {
                     </div>
                   </div>
                   <div className="indicador">
-                    <span className="indicador-titulo">Disponible</span>
+                    <span className="indicador-titulo">Queda antes del tope</span>
                     <strong className="indicador-valor numero">{dolares(c.disponible_usd)}</strong>
-                    <span className="indicador-detalle">Al agotarse, la IA se apaga sola hasta el mes siguiente</span>
+                    <span className="indicador-detalle">Este mes</span>
                   </div>
                 </div>
+                {/* `key`: tras guardar, el campo vuelve a partir del tope guardado. */}
+                <CambiarTope key={c.presupuesto_usd} tope={c.presupuesto_usd} />
               </div>
             )
           }}

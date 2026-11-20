@@ -10,7 +10,8 @@ from types import SimpleNamespace
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text, update
+from sqlalchemy.exc import DBAPIError
 
 from app.core.config import settings
 from app.core.enums import Rol
@@ -20,7 +21,7 @@ from app.modules.clinica import service as clinica
 from app.modules.comercial.models import ConversacionComercial
 from app.modules.comunicaciones.models import Mensaje
 from app.modules.ia import service
-from app.modules.ia.models import ConsultaIA, PromptIA
+from app.modules.ia.models import ConfiguracionIA, ConsultaIA, PromptIA
 from tests import fabricas
 from tests.conftest import crear_usuario, login
 from tests.test_comercial import Chat
@@ -117,7 +118,9 @@ async def test_sin_clave_no_consulta_pero_registra(db):
 
 async def test_limite_de_gasto_mensual(db, proveedor, monkeypatch):
     await _activo(db, "comercial_guion")
-    monkeypatch.setattr(settings, "IA_PRESUPUESTO_MENSUAL_USD", 0.02)  # cada consulta: 0,014
+    # El tope minimo es US$ 1 (la base lo exige) y cada consulta cuesta 0,014: con un tope de
+    # 0,02 se agota a la segunda sin hacer cien consultas.
+    monkeypatch.setattr(service, "presupuesto", lambda _db: Decimal("0.02"))
     proveedor.respuestas = [{"alcance": "dentro", "respuesta": "ok"}] * 3
     await db.run_sync(service.consultar, "comercial_guion", "uno")
     await db.run_sync(service.consultar, "comercial_guion", "dos")
@@ -128,6 +131,36 @@ async def test_limite_de_gasto_mensual(db, proveedor, monkeypatch):
     assert len(proveedor.llamadas) == 2
     consumo = await db.run_sync(service.consumo)
     assert consumo["gasto_usd"] == pytest.approx(0.028)
+
+
+async def test_administracion_cambia_el_tope_y_nunca_lo_quita(client: AsyncClient, db, admin):
+    """Seccion 14 El tope lo fija Administracion sin desplegar (decidido con el usuario el
+    2026-11-20): se sube o se baja, nunca se quita, y la auditoria guarda quien lo cambio."""
+    admin_id = admin.id  # antes de la peticion: despues, leerlo pediria la base fuera del bucle
+    cabecera = await login(client, admin.email)
+    resp = await client.put(
+        "/api/v1/ia/presupuesto", json={"presupuesto_usd": 120.5}, headers=cabecera
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["presupuesto_usd"] == 120.5
+    assert resp.json()["disponible_usd"] == 120.5
+    assert await db.run_sync(service.presupuesto) == Decimal("120.50")
+    for invalido in (0, 0.5, -10):
+        resp = await client.put(
+            "/api/v1/ia/presupuesto", json={"presupuesto_usd": invalido}, headers=cabecera
+        )
+        assert resp.status_code == 422, invalido
+    cambio = await db.scalar(
+        text(
+            "SELECT usuario_id FROM auditoria WHERE entidad = 'configuracion_ia'"
+            " AND accion = 'editar' ORDER BY created_at DESC LIMIT 1"
+        )
+    )
+    assert cambio == admin_id
+    # Ni saltandose la API: la base exige un tope.
+    with pytest.raises(DBAPIError, match="ck_configuracion_ia_presupuesto_minimo"):
+        async with db.begin_nested():
+            await db.execute(update(ConfiguracionIA).values(presupuesto_mensual_usd=0))
 
 
 async def test_rechazo_y_json_invalido_no_se_usan(db, proveedor):

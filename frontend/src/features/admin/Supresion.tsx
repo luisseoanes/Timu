@@ -29,7 +29,7 @@ export function Supresion() {
         y no se puede deshacer. El historial de pagos y de atención se conserva sin nombres.
       </p>
       <form
-        className="supresion-busqueda"
+        className="campo-con-accion"
         onSubmit={(e) => {
           e.preventDefault()
           setDocumento(escrito.trim())

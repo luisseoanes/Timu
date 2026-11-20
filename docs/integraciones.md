@@ -143,8 +143,11 @@ acota el gasto, a cambio de rutas estimadas cuando se agota.
 
 ## IA
 
-Variables: `ANTHROPIC_API_KEY`, `IA_MODELO` (por defecto `claude-haiku-5-5`, valor provisional),
-`IA_PRESUPUESTO_MENSUAL_USD` (50) e `IA_TIMEOUT_SEGUNDOS` (30).
+Variables: `ANTHROPIC_API_KEY`, `IA_MODELO` (por defecto `claude-haiku-5-5`, valor provisional) e
+`IA_TIMEOUT_SEGUNDOS` (30). El tope de gasto mensual no es una variable: lo cambia Administración en
+la pestaña de IA (tabla `configuracion_ia`, migración 0058, auditado). Siempre hay tope, de US$ 1 como
+mínimo; al llegar a él, la IA se apaga hasta el mes siguiente. Lo calcula la plataforma con el costo
+de cada consulta (`claude.costo`), así que no es el saldo de la cuenta del proveedor.
 
 - **Un solo punto de integración** (`modules/ia`). Los prompts tienen versiones: cada una
   nace en borrador y solo se activa tras correr sus casos de evaluación. Cada consulta queda

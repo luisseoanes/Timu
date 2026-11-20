@@ -170,7 +170,6 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = ""
     # Valor provisional mientras se migra a Gemini (docs/pendientes-externos.md).
     IA_MODELO: str = "claude-haiku-5-5"
-    IA_PRESUPUESTO_MENSUAL_USD: float = 50.0
     IA_TIMEOUT_SEGUNDOS: float = 30.0
 
     # --- Observabilidad (Seccion 11) --------------------------------------------------------------
