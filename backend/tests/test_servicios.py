@@ -378,6 +378,31 @@ async def test_iniciar_una_tarea_no_la_saca_de_las_pendientes(client: AsyncClien
     assert titulos(sin_conversaciones) == {"Llamar"}
 
 
+async def test_una_tarea_solo_se_asigna_a_quien_ve_su_area(
+    client: AsyncClient, db, equipo, headers
+):
+    """Seccion 12: asignarla a otro perfil la perderia (no la veria ni en «Mis tareas")."""
+    ids = {rol: usuario.id for rol, usuario in equipo.items()}
+    tarea = Tarea(titulo="Llamar", area="servicio_cliente")
+    db.add(tarea)
+    await db.commit()
+    tarea_id = tarea.id
+    for rol in (Rol.MEDICO, Rol.GERENCIA, Rol.COMERCIAL):
+        resp = await client.patch(
+            f"/api/v1/tareas/{tarea_id}/asignacion",
+            json={"usuario_id": str(ids[rol])},
+            headers=headers,
+        )
+        assert resp.status_code == 422, rol
+        assert "no ve las tareas de Servicio al cliente" in resp.json()["detail"]
+    ok = await client.patch(
+        f"/api/v1/tareas/{tarea_id}/asignacion",
+        json={"usuario_id": str(ids[Rol.ATENCION_CLIENTE])},
+        headers=headers,
+    )
+    assert ok.status_code == 200, ok.text
+
+
 async def test_bandeja_asigna_prioriza_y_cierra(client: AsyncClient, equipo, headers):
     atencion = equipo[Rol.ATENCION_CLIENTE]
     for titulo, prioridad in (("Llamar", "baja"), ("Urgente", "alta"), ("Revisar", "media")):

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { Page, TareaListado, TareaRead } from '@/types'
+import type { Page, Rol, TareaListado, TareaRead } from '@/types'
 
 export type Area = 'comercial' | 'operaciones' | 'medico' | 'cartera' | 'servicio_cliente'
 
@@ -12,6 +12,16 @@ export const AREAS: { valor: Area; label: string }[] = [
   { valor: 'medico', label: 'Médica' },
   { valor: 'servicio_cliente', label: 'Servicio al cliente' },
 ]
+
+/** Quién ve cada área (Sección 12, `AREAS_POR_ROL` de la API): solo a ellos se asigna una tarea;
+ * a otro perfil se le perdería, porque no la vería ni en «Mis tareas». */
+export const PERFILES_DEL_AREA: Record<Area, readonly Rol[]> = {
+  comercial: ['comercial'],
+  cartera: ['atencion_cliente'],
+  servicio_cliente: ['atencion_cliente'],
+  operaciones: ['operaciones'],
+  medico: ['medico'],
+}
 
 export interface FiltrosTareas {
   area?: Area

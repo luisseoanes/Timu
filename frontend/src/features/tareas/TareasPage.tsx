@@ -16,6 +16,7 @@ import type { FamiliaRead, TareaRead } from '@/types'
 
 import {
   AREAS,
+  PERFILES_DEL_AREA,
   useAsignarTarea,
   useCerrarTarea,
   useCrearTarea,
@@ -179,9 +180,12 @@ export function TareasPage() {
                               onChange={(e) => asignar.mutate({ id: t.id, usuario_id: e.target.value || null })}
                             >
                               <option value="">Sin asignar</option>
-                              {usuarios.data?.map((u) => (
-                                <option key={u.id} value={u.id}>{u.nombre}</option>
-                              ))}
+                              {/* Solo quien ve el área de la tarea; quien ya la tenía, aunque no sea de ella. */}
+                              {usuarios.data
+                                ?.filter((u) => PERFILES_DEL_AREA[t.area as Area]?.includes(u.rol) || u.id === t.asignada_a_id)
+                                .map((u) => (
+                                  <option key={u.id} value={u.id}>{u.nombre}</option>
+                                ))}
                             </select>
                           ) : (
                             nombreDe(t.asignada_a_id)

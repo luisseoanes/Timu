@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.enums import AreaTarea, Rol
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, hoy
+from app.modules.auth.models import Usuario
 from app.modules.familias.models import Familia
 from app.modules.tareas.models import Tarea
 
@@ -117,9 +118,37 @@ def obtener(db: Session, tarea_id: UUID, areas: tuple[str, ...] | None = None) -
     return tarea
 
 
+# Como se dicen las areas y los perfiles en un mensaje de error.
+_NOMBRE_AREA = {
+    AreaTarea.COMERCIAL: "Comercial",
+    AreaTarea.CARTERA: "Cartera",
+    AreaTarea.SERVICIO_CLIENTE: "Servicio al cliente",
+    AreaTarea.OPERACIONES: "Operaciones",
+    AreaTarea.MEDICO: "Médica",
+}
+_NOMBRE_ROL = {
+    Rol.ADMIN: "Administración",
+    Rol.GERENCIA: "Gerencia",
+    Rol.COMERCIAL: "Comercial",
+    Rol.ATENCION_CLIENTE: "Atención al cliente",
+    Rol.OPERACIONES: "Operaciones",
+    Rol.MEDICO: "Médico veterinario",
+}
+
+
 def asignar(db: Session, tarea: Tarea, usuario_id: UUID | None) -> Tarea:
     if tarea.estado == "cerrada":
         raise ReglaNegocio("La tarea ya esta cerrada")
+    if usuario_id is not None:
+        # Seccion 12: cada perfil ve las tareas de su area. Asignarla a quien no la ve la
+        # perderia: no la encontraria ni en «Mis tareas».
+        usuario = db.get(Usuario, usuario_id)
+        if usuario is None or not usuario.activo:
+            raise NoEncontrado("Usuario no encontrado")
+        if tarea.area not in AREAS_POR_ROL.get(usuario.rol, ()):
+            perfil = _NOMBRE_ROL.get(usuario.rol, usuario.rol)
+            area = _NOMBRE_AREA.get(AreaTarea(tarea.area), tarea.area)
+            raise ReglaNegocio(f"{usuario.nombre} ({perfil}) no ve las tareas de {area}")
     tarea.asignada_a_id = usuario_id
     db.flush()
     return tarea

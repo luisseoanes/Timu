@@ -85,6 +85,33 @@ describe('TareasPage', () => {
     expect(new Set(pedidas)).toEqual(new Set(['pendiente']))
   })
 
+  it('solo se asigna a quien ve el área de la tarea', async () => {
+    server.use(
+      http.get(`${API}/auth/equipo`, () =>
+        HttpResponse.json([
+          { id: 'u1', nombre: 'Mariana Ortiz', rol: 'atencion_cliente' },
+          { id: 'u2', nombre: 'Valentina Ríos', rol: 'comercial' },
+          { id: 'u3', nombre: 'Laura Gómez', rol: 'gerencia' },
+          { id: 'u4', nombre: 'Dra. Sara Martínez', rol: 'medico' },
+        ]),
+      ),
+      http.get(`${API}/tareas`, () =>
+        HttpResponse.json(pagina([TAREA, { ...TAREA, id: 't2', titulo: 'Cotizar plan', area: 'comercial', asignada_a_id: 'u4' }])),
+      ),
+    )
+    renderizar(<TareasPage />)
+    const cartera = await screen.findByLabelText('Responsable de Llamar por cuota vencida')
+    await waitFor(() => expect(within(cartera).getAllByRole('option')).toHaveLength(2))
+    expect(within(cartera).getAllByRole('option').map((o) => o.textContent)).toEqual(['Sin asignar', 'Mariana Ortiz'])
+    // Quien ya la tenía sigue en la lista aunque no sea de su área, para poder pasarla a otro.
+    const comercial = screen.getByLabelText('Responsable de Cotizar plan')
+    expect(within(comercial).getAllByRole('option').map((o) => o.textContent)).toEqual([
+      'Sin asignar',
+      'Valentina Ríos',
+      'Dra. Sara Martínez',
+    ])
+  })
+
   it('la tarea de una conversación con el asistente lleva a la conversación', async () => {
     server.use(
       http.get(`${API}/tareas`, () =>
