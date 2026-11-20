@@ -7,8 +7,9 @@ triggers de auditoria. `--escala` lo reduce o lo amplia (el CI usa 0.1).
 
 Crea ademas los usuarios de la prueba de carga (infra/carga/recorrido.js), uno por usuario
 virtual: el limite de peticiones es por usuario, y 20 personas no comparten una sesion.
-`carga-equipo-NN@volumen.example.com` (Atencion al cliente los impares, Comercial los pares) y `carga-portal-NN@volumen.example.com`,
-titular de la familia NN del volumen, todos con la clave CLAVE_CARGA. El dominio no puede
+`carga-equipo-NN@volumen.example.com` (Atencion al cliente los impares, Comercial los pares)
+y `carga-portal-NN@volumen.example.com`, titular de la familia NN del volumen, todos con la
+clave CLAVE_CARGA. El dominio no puede
 ser `.test` ni otro reservado: la API valida el email al responder y daria un 500.
 
 Escribe por SQL como dueno del esquema, con generate_series: es la unica forma de cargar este
