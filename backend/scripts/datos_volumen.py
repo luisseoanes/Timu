@@ -7,7 +7,7 @@ triggers de auditoria. `--escala` lo reduce o lo amplia (el CI usa 0.1).
 
 Crea ademas los usuarios de la prueba de carga (infra/carga/recorrido.js), uno por usuario
 virtual: el limite de peticiones es por usuario, y 20 personas no comparten una sesion.
-`carga-equipo-NN@volumen.example.com` (comercial) y `carga-portal-NN@volumen.example.com`,
+`carga-equipo-NN@volumen.example.com` (Atencion al cliente los impares, Comercial los pares) y `carga-portal-NN@volumen.example.com`,
 titular de la familia NN del volumen, todos con la clave CLAVE_CARGA. El dominio no puede
 ser `.test` ni otro reservado: la API valida el email al responder y daria un 500.
 
@@ -172,7 +172,13 @@ _PASOS: list[tuple[str, str]] = [
         INSERT INTO usuarios (email, nombre, hashed_password, rol, activo)
         SELECT 'carga-' || perfil || '-' || lpad(k::text, 2, '0') || '@volumen.example.com',
             'Carga ' || perfil || ' ' || k, :clave,
-            CASE perfil WHEN 'equipo' THEN 'comercial'::rol ELSE 'familia' END, true
+            CASE
+                WHEN perfil = 'portal' THEN 'familia'::rol
+                -- Seccion 12: cada perfil lee lo suyo; la carga reparte el equipo entre los dos
+                -- que mas consultan (los impares, Atencion al cliente; los pares, Comercial).
+                WHEN k % 2 = 1 THEN 'atencion_cliente'::rol
+                ELSE 'comercial'::rol
+            END, true
         FROM unnest(ARRAY['equipo', 'portal']) AS perfil
         CROSS JOIN generate_series(1, :usuarios) AS k
         """,

@@ -6,7 +6,8 @@
 // 1 % de errores. Entra por la red interna del compose, directo a la API.
 //
 // Cada usuario virtual es una persona: su propio usuario (los impares, del equipo; los
-// pares, del portal), su propia sesion y de 1 a 3 s entre peticiones. Con usuarios
+// pares, del portal), su propia sesion y de 1 a 3 s entre peticiones. Cada perfil del equipo
+// hace lo suyo (Sección 12): los usuarios de equipo alternan Atención al cliente y Comercial. Con usuarios
 // compartidos y sin pausa se mediria el limite de peticiones por usuario, no la base.
 //
 // Local (completa): ver "Prueba de carga" en el CLAUDE.md de la raiz.
@@ -85,19 +86,22 @@ const azar = (lista) => lista[Math.floor(Math.random() * lista.length)];
 
 // [peso, tipo, nombre, ruta]: lo que hace cada perfil en un dia normal. El nombre agrupa
 // las metricas, porque la ruta concreta cambia en cada peticion.
+const COMUNES = [
+  [4, 'consulta', 'buscar familia', () => `/familias?q=Familia%20${Math.floor(Math.random() * 5000)}`],
+  [4, 'consulta', 'ficha de familia', (d) => `/familias/${azar(d.familias)}`],
+  [3, 'consulta', 'tareas', () => '/tareas'],
+  [2, 'consulta', 'cartera', () => '/cartera/contratos?solo_mora=true'],
+  // El Inicio pide sus cifras y su serie de 12 meses a la vez: la serie es 13 calculos.
+  [1, 'dashboard', 'dashboard', () => `/dashboard/indicadores?desde=${desde}&hasta=${hasta}`],
+  [1, 'dashboard', 'evolucion', () => `/dashboard/evolucion?desde=${desde}&hasta=${hasta}`],
+];
 const PETICIONES = {
-  equipo: [
-    [4, 'consulta', 'buscar familia', () => `/familias?q=Familia%20${Math.floor(Math.random() * 5000)}`],
-    [4, 'consulta', 'ficha de familia', (d) => `/familias/${azar(d.familias)}`],
+  atencion: [
+    ...COMUNES,
     [3, 'consulta', 'servicios', () => '/servicios?limit=20'],
-    [3, 'consulta', 'tareas', () => '/tareas'],
-    [2, 'consulta', 'cartera en mora', () => '/cartera/contratos?solo_mora=true'],
     [1, 'consulta', 'encuestas', () => '/encuestas'],
-    [1, 'consulta', 'interesados', () => '/comercial/interesados'],
-    [1, 'dashboard', 'dashboard', () => `/dashboard/indicadores?desde=${desde}&hasta=${hasta}`],
-    // El Inicio pide las cifras y su serie de 12 meses a la vez: la serie es 13 calculos.
-    [1, 'dashboard', 'evolucion', () => `/dashboard/evolucion?desde=${desde}&hasta=${hasta}`],
   ],
+  comercial: [...COMUNES, [2, 'consulta', 'interesados', () => '/comercial/interesados']],
   portal: [
     [1, 'consulta', 'portal: mi familia', () => '/portal/mi-familia'],
     [1, 'consulta', 'portal: estado de cuenta', () => '/portal/estado-cuenta'],
@@ -117,8 +121,11 @@ function elegir(peticiones) {
 
 export default function (datos) {
   const perfil = __VU % 2 === 1 ? 'equipo' : 'portal';
-  const sesion = datos[perfil][Math.floor((__VU - 1) / 2)];
-  const [, tipo, nombre, ruta] = elegir(PETICIONES[perfil]);
+  const indice = Math.floor((__VU - 1) / 2);
+  const sesion = datos[perfil][indice];
+  // carga-equipo-01, 03…: Atención al cliente; 02, 04…: Comercial (scripts.datos_volumen).
+  const peticiones = perfil === 'portal' ? PETICIONES.portal : PETICIONES[indice % 2 === 0 ? 'atencion' : 'comercial'];
+  const [, tipo, nombre, ruta] = elegir(peticiones);
   const resp = http.get(`${API}${ruta(datos)}`, { headers: sesion, tags: { tipo, name: nombre } });
   check(resp, { 'responde 200': (r) => r.status === 200 });
   sleep(1 + Math.random() * 2);

@@ -15,7 +15,8 @@ docker compose -p timu-carga down -v --rmi local && docker compose up -d
 ```
 
 El escenario está en `infra/carga/recorrido.js`. Cada usuario virtual ingresa con su propio
-usuario (`datos_volumen` crea 25 del equipo y 25 del portal) y deja de 1 a 3 s entre
+usuario (`datos_volumen` crea 25 del equipo y 25 del portal; los del equipo alternan Atención al
+cliente y Comercial, y cada uno recorre lo que su perfil lee, Sección 12) y deja de 1 a 3 s entre
 peticiones: con una sesión compartida se mediría el límite de 120 peticiones por minuto y
 por usuario, no la aplicación. El CI corre una versión reducida (10 % del volumen, 4
 usuarios, 1 minuto) en el job del stack.
