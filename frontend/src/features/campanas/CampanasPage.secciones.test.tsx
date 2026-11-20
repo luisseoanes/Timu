@@ -9,6 +9,7 @@ import { ConfiguracionEncuestas } from './Encuestas'
 import { EncuestasPage } from './EncuestasPage'
 import { MensajesPage } from './MensajesPage'
 import { PlantillasWhatsApp } from './PlantillasWhatsApp'
+import { resumenFiltros } from './segmento'
 import { PLAN as PLAN_TIMU, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
@@ -340,6 +341,38 @@ describe('nueva campaña', () => {
         mascotas_min: 2,
       }),
     )
+  })
+
+  it('segmenta por especie, zona, edad y preventivos (6.16, 6.18)', async () => {
+    detalle()
+    let contado: unknown = null
+    server.use(
+      http.post(`${API}/segmentos/previsualizacion`, async ({ request }) => {
+        contado = await request.json()
+        return HttpResponse.json({ total: 2, muestra: [{ titular: 'Ana' }, { titular: 'Beto' }] })
+      }),
+    )
+    const { user, modal } = await abrirNueva()
+    const especies = within(modal).getByRole('group', { name: 'Especies' })
+    await user.click(await within(especies).findByRole('button', { name: 'Gato' }))
+    await user.type(within(modal).getByLabelText('Barrios (separados por coma)'), 'Chapinero, El Poblado')
+    await user.type(within(modal).getByLabelText('Mascota de al menos (años)'), '7')
+    await user.click(within(modal).getByLabelText('Con un preventivo vencido'))
+    await user.type(within(modal).getByLabelText('Con un preventivo que vence en (días)'), '30')
+    await user.click(within(within(modal).getByRole('group', { name: 'Tipos de preventivo' })).getByRole('button', { name: 'Vacunas' }))
+    await user.click(within(modal).getByRole('button', { name: 'Contar audiencia' }))
+    expect(await within(modal).findByRole('status')).toHaveTextContent('2 familias')
+    expect(contado).toMatchObject({
+      especies: ['gato'],
+      barrios: ['Chapinero', 'El Poblado'],
+      edad_min_anios: 7,
+      preventivo_vencido: true,
+      preventivo_en_dias: 30,
+      tipos_preventivo: ['vacuna'],
+    })
+    expect(
+      resumenFiltros({ barrios: ['Chapinero'], edad_min_anios: 7, preventivo_vencido: true, tipos_preventivo: ['vacuna'] }),
+    ).toBe('Chapinero · mascotas de 7 años o más · con un preventivo vencido (vacunas)')
   })
 
   it('explica por qué no pudo contar la audiencia ni crear la campaña', async () => {

@@ -27,7 +27,18 @@ export interface FiltrosSegmento {
   afiliada_desde?: string
   afiliada_hasta?: string
   renovacion_en_dias?: number
+  /** 6.16 Zona: barrios de la familia, sin distinguir mayúsculas. */
+  barrios?: string[]
+  /** 6.16 Edad: alguna mascota activa con esa edad, en años cumplidos. */
+  edad_min_anios?: number
+  edad_max_anios?: number
+  /** 6.16 Condiciones preventivas: un preventivo programado vencido o que vence en N días. */
+  preventivo_vencido?: boolean
+  preventivo_en_dias?: number
+  tipos_preventivo?: TipoPreventivo[]
 }
+
+export type TipoPreventivo = 'vacuna' | 'desparasitacion_interna' | 'desparasitacion_externa'
 
 export interface Previsualizacion {
   total: number

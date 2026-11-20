@@ -14,6 +14,7 @@ from app.modules.campanas import segmentos, service
 from app.modules.campanas.models import Campana, DestinatarioCampana, EjecucionCampana
 from app.modules.cartera import service as cartera
 from app.modules.comunicaciones.models import BajaComunicaciones, Mensaje, PlantillaWhatsApp
+from app.modules.preventivos.models import EventoPreventivo
 from tests import fabricas
 from tests.conftest import crear_usuario, login
 
@@ -64,6 +65,55 @@ async def test_filtros_combinables(db, base):
     assert await contar(ciudades=["Cali"], dias_mora_min=5) == 1
     assert await contar(ciudades=["Bogotá"], dias_mora_min=5) == 0
     assert await contar(sin_servicio_dias=30) == 3
+
+
+async def test_segmentar_por_zona_edad_y_preventivos(client: AsyncClient, db, base, headers):
+    """6.16 zona, edad y condiciones preventivas; 6.18 campanas por zona y preventivas."""
+    cali, bogota, morosa = base["cali"], base["bogota"], base["morosa"]
+    bogota.barrio = "Chapinero"
+    cali.mascotas[0].fecha_nacimiento = hoy() - timedelta(days=200)  # cachorro: 0 anos
+    bogota.mascotas[0].fecha_nacimiento = hoy() - timedelta(days=365 * 9)  # mayor: 8 o 9
+    db.add_all(
+        [
+            EventoPreventivo(
+                mascota_id=cali.mascotas[0].id,
+                tipo="vacuna",
+                fecha_programada=hoy() - timedelta(days=10),
+            ),
+            EventoPreventivo(
+                mascota_id=morosa.mascotas[0].id,
+                tipo="desparasitacion_interna",
+                fecha_programada=hoy() + timedelta(days=5),
+            ),
+        ]
+    )
+    await db.flush()
+
+    def contar(**filtros):
+        return db.run_sync(segmentos.contar, segmentos.FiltrosSegmento(**filtros))
+
+    # Zona: el barrio, sin distinguir mayusculas ni espacios.
+    assert await contar(barrios=["  chapinero "]) == 1
+    assert await contar(barrios=["El Poblado"]) == 2
+    # Edad en anos cumplidos; sin fecha de nacimiento no entra.
+    assert await contar(edad_max_anios=1) == 1
+    assert await contar(edad_min_anios=7) == 1
+    assert await contar(edad_min_anios=1, edad_max_anios=6) == 0
+    # Preventivos vencidos, por vencer y de un tipo.
+    assert await contar(preventivo_vencido=True) == 1
+    assert await contar(preventivo_en_dias=7) == 1
+    assert await contar(preventivo_vencido=True, preventivo_en_dias=7) == 2
+    assert await contar(preventivo_en_dias=7, tipos_preventivo=["vacuna"]) == 0
+
+    # Comercial lo ve igual desde la API (la base le deja leer mascotas y preventivos).
+    await db.commit()
+    resp = await client.post(
+        "/api/v1/segmentos/previsualizacion",
+        json={"preventivo_vencido": True, "preventivo_en_dias": 7},
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["total"] == 2
 
 
 async def test_segmento_guardado_muestra_su_alcance(client: AsyncClient, db, base, headers):
