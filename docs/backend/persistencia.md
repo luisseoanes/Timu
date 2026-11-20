@@ -143,8 +143,13 @@ El plan completo y su avance están en [`docs/registros/plan-persistencia.md`](.
   matriz (`CONDICIONES` admite una expresión por operación). Ojo: una lectura que la base
   filtra no da error, devuelve menos filas, y el código que trata ese dato como opcional sigue
   adelante con un resultado peor (así se detectó la encuesta que nombraba al profesional como
-  «sin asignar»). Vale también para los catálogos: un perfil acotado (`aliada`) que no tiene la tabla en
-  `PERMISOS` la lee vacía (pasó con `especies`). Para buscarlos: contar cada `SELECT` de `publico` también como `sistema` en
+  «sin asignar»). Vale también para los catálogos: un perfil que no tiene la tabla en
+  `PERMISOS` la lee vacía (pasó con `especies` a la aliada y, hasta el 2026-11-20, a Gerencia y a
+  Operaciones, que veían «canino» y un selector de especie sin opciones; ahora lo vigila
+  `test_todo_perfil_del_equipo_lee_los_catalogos_enteros`). Una escritura negada sí falla, con un
+  500, pero solo la ve una prueba que llame la ruta por la API con su perfil: las del servicio
+  corren como `sistema` (así se escapó la cuota de ajuste del cambio de plan, que Atención no
+  podía crear). Para buscarlos: contar cada `SELECT` de `publico` también como `sistema` en
   la misma transacción (`SAVEPOINT`, `set_config('app.rol', 'sistema', true)`, `ROLLBACK TO`)
   y anotar las sentencias en que `publico` ve menos filas. Lo que necesite ver lo de todos,
   como el reparto por carga de los comerciales, va en una función `SECURITY DEFINER` que solo

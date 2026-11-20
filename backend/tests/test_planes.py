@@ -444,6 +444,29 @@ async def test_subir_de_plan_cobra_prorrateo(db):
     assert dinero(ajuste.valor) == esperado
 
 
+async def test_atencion_sube_de_plan_desde_el_panel_y_se_carga_el_ajuste(
+    client: AsyncClient, db, headers
+):
+    """Por la API, con el perfil que la usa: el prorrateo crea una cuota de ajuste, y la base
+    tiene que dejar a Atencion crearla (la revision del 2026-11-20 encontro un 500)."""
+    basico = await db.run_sync(fabricas.plan, "basico", 45_000)
+    superior = await db.run_sync(fabricas.plan, "superior", 75_000)
+    familia, contrato = await fabricas.afiliada(db, hoy() - timedelta(days=10), basico)
+    ids = (contrato.id, familia.mascotas[0].id, superior.id)
+    await db.commit()
+    resp = await client.post(
+        f"/api/v1/planes/contratos/{ids[0]}/cambio",
+        json={"mascota_id": str(ids[1]), "plan_id": str(ids[2])},
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    assert Decimal(resp.json()["ajuste"]) > 0
+    ajuste = await db.scalar(
+        select(Cuota).where(Cuota.contrato_id == ids[0], Cuota.tipo == "ajuste")
+    )
+    assert ajuste is not None
+
+
 async def test_bajar_de_plan_deja_saldo_a_favor(db):
     superior = await db.run_sync(fabricas.plan, "superior", 75_000)
     basico = await db.run_sync(fabricas.plan, "basico", 45_000)

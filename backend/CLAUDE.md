@@ -126,7 +126,9 @@ para dar el mensaje. Una regla nueva entra aquí en una línea y con su detalle 
   `test_pedir_asesor_con_contexto_y_el_bot_se_calla` falla siempre y no es un fallo). Guarda:
   `test_toda_tabla_tiene_rls_y_las_politicas_de_la_matriz`.
 - **Una lectura que la base filtra no da error: devuelve menos filas.** Vale también para un catálogo:
-  un perfil acotado (`aliada`) sin la tabla en `PERMISOS` la lee vacía (pasó con `especies`).
+  un perfil sin la tabla en `PERMISOS` la lee vacía (pasó con `especies` a la aliada, a Gerencia y a
+  Operaciones; `test_todo_perfil_del_equipo_lee_los_catalogos_enteros`). Una escritura que la base
+  niega sí falla, con un 500: una ruta nueva se prueba por la API con su perfil, no solo su servicio.
 - **`publico` solo ve las filas de quien declara la petición** (`acotar_publico`, `LLAVES_PUBLICAS`;
   `usuario` identifica, `autenticado` abre sesión). Lo que necesite ver lo de todos va en una función
   `SECURITY DEFINER` (`comercial_con_menos_carga()`).

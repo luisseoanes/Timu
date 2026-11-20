@@ -111,7 +111,7 @@ PERMISOS: dict[str, dict[str, str]] = {
         "contratos": "SU",
         "convenios_aliadas": "S",
         "conversaciones_whatsapp": "S",
-        "cuotas": "SU",
+        "cuotas": "SIU",
         "datos_timu": "S",
         "documentos_familia": "SIU",
         "encuestas": "S",
