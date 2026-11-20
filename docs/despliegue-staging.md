@@ -25,6 +25,17 @@ igual que el release. Si el CI sale rojo, staging se queda como estaba.
 Cada servicio solo se vuelve a desplegar si el empuje toca su carpeta (*watch patterns*): un cambio
 del panel no reinicia la API.
 
+- **Espera también al release**: con `b8332f5` (2026-11-20) el despliegue se creó en el empuje
+  (02:21:58), esperó en `WAITING` y empezó a construir a las 02:40:25, diez segundos después de que
+  terminara «Publicar» (02:40:15).
+- **Un servicio puede quedarse atrás**: las *watch patterns* miran solo el commit que llega, no lo
+  que no se desplegó antes. Si un commit que toca `frontend/` sale con el CI rojo y el siguiente
+  verde solo toca `backend/`, `web` queda en `SKIPPED` y staging sirve el panel viejo contra la API
+  nueva (pasó con `9c54fe6` y `b8332f5`). Tras un CI rojo, compara el commit del último despliegue
+  `SUCCESS` de cada servicio con `main` y despliega a mano el que se quedó atrás: en el panel de
+  Railway, el servicio → *Deployments* → *Deploy* del último commit, o la mutación
+  `serviceInstanceDeployV2(serviceId, environmentId, commitSha)` de la API de Railway.
+
 | Servicio | Carpeta raíz | Imagen | Arranque | Se despliega si cambia |
 | --- | --- | --- | --- | --- |
 | `api` | `/backend` | `Dockerfile` | `uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips=*`, con `python -m scripts.inicializar` antes (*pre-deploy*) y healthcheck en `/health/live` | `/backend/**` |
