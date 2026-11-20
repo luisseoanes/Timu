@@ -50,8 +50,21 @@ con historia (decidido con el usuario el 2026-11-16, `DEU-14`). Siembra:
   perdidos).
 - **Tareas** cerradas y abiertas vencidas, **remisiones** atendidas, anulada, vencida y por usar,
   **orientaciones virtuales** cerradas y **una campaña** enviada hace tres semanas.
+- **Atenciones de aliadas** (6.22) para la liquidación que ve Gerencia: la Clínica del Norte en
+  Bogotá y dos aliadas de Medellín del catálogo, AnesVet y Centro Veterinario Buenos Aires, cada una
+  con su convenio y su usuario (`aliada.anesvet@timu.co` y `aliada.buenosaires@timu.co`, clave
+  `demo12345`). Atención al cliente emite cada remisión y la clínica reporta la atención por la API,
+  repartidas en los últimos tres meses y también en el mes en curso.
 
-Si su primera familia ya existe, no hace nada. Para repetirla desde cero hace falta un stack
+Si su primera familia ya existe, no hace nada. Las aliadas de Medellín se pueden añadir a una base
+que ya tenía la operación, sin vaciarla (una clínica con remisiones ya está sembrada):
+
+```bash
+docker compose exec -T -w /app api python -c "from datetime import datetime; \
+from scripts import operacion_demo as op; from scripts.datos_demo import BOGOTA; \
+op.aliadas_medellin(op.equipo(), op.dueno(), datetime.now(BOGOTA).date())"
+```
+ Para repetirla desde cero hace falta un stack
 recién levantado (`docker compose down -v` o el proyecto de verificación del `CLAUDE.md` raíz).
 Al terminar comprueba unos mínimos (`MINIMOS`) y sale con error si la siembra quedó corta: el CI
 la corre después de la e2e del stack, para que no se rompa sin que nadie lo vea.

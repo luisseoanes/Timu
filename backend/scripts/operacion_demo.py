@@ -23,7 +23,7 @@ import importlib
 import random
 import sys
 import time
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -1242,41 +1242,74 @@ def tareas(c: Equipo, motor: Any) -> None:
             al_pasado(cx, "tareas", nueva["id"], dias)
 
 
-# (motivo, dias atras, que paso: atendida, anulada, vencida o por usar)
+# (motivo, dias atras, que paso: atendida, anulada, vencida o por usar, valor de la atencion)
 REMISIONES = [
-    ("Radiografía de cadera por cojera", 45, "atendida"),
-    ("Ecografía abdominal por vómito persistente", 33, "atendida"),
-    ("Limpieza dental bajo anestesia", 24, "atendida"),
-    ("Hospitalización por deshidratación", 18, "anulada"),
-    ("Radiografía de tórax por tos", 40, "vencida"),
-    ("Ecografía de control", 4, "por usar"),
+    ("Radiografía de cadera por cojera", 45, "atendida", "180000"),
+    ("Ecografía abdominal por vómito persistente", 33, "atendida", "180000"),
+    ("Limpieza dental bajo anestesia", 24, "atendida", "180000"),
+    ("Hospitalización por deshidratación", 18, "anulada", None),
+    ("Radiografía de tórax por tos", 40, "vencida", None),
+    ("Ecografía de control", 4, "por usar", None),
+    ("Radiografía de control de la cadera", 7, "atendida", "180000"),
+]
+
+# Dos aliadas de Medellin del catalogo, con su convenio, su usuario y lo que reportaron en los
+# ultimos tres meses, tambien en el mes en curso: la liquidacion que ve Gerencia (6.22) tiene asi
+# varias clinicas y meses. Cada atencion se reporta dos dias despues de emitida la remision.
+ALIADAS_MEDELLIN = [
+    (
+        "AnesVet",
+        "aliada.anesvet@timu.co",
+        "Recepción AnesVet",
+        {
+            "beneficio": "Ecografía",
+            "cobertura_pct": 70,
+            "tarifa": "150000",
+            "tope_cubierto": "250000",
+        },
+        [
+            ("Ecografía abdominal por diarrea crónica", 75, "atendida", "150000"),
+            ("Ecografía de control renal", 48, "atendida", "160000"),
+            ("Ecografía por masa abdominal", 16, "atendida", "170000"),
+            ("Ecografía cardíaca", 8, "atendida", "190000"),
+        ],
+    ),
+    (
+        "Centro Veterinario Buenos Aires",
+        "aliada.buenosaires@timu.co",
+        "Recepción Buenos Aires",
+        {
+            "beneficio": "Hospitalización",
+            "cobertura_pct": 60,
+            "tarifa": "300000",
+            "tope_cubierto": "400000",
+        },
+        [
+            ("Hospitalización por gastroenteritis", 62, "atendida", "320000"),
+            ("Hospitalización por deshidratación", 30, "atendida", "280000"),
+            ("Hospitalización tras cirugía de piel", 12, "atendida", "350000"),
+            ("Hospitalización por intoxicación", 4, "atendida", "300000"),
+        ],
+    ),
 ]
 
 
-def remisiones(c: Cliente, motor: Any, hoy: date) -> None:
-    """Remisiones a la clinica aliada de Bogota: atendidas y reportadas por la clinica, una
-    anulada, una que vencio sin usarse y una por usar."""
-    clinica = next((x for x in c.get("/aliadas") if x["ciudad"] == "Bogotá"), None)
-    if clinica is None:
-        return
-    aliada = Cliente("aliada@timu.co", CLAVE_EQUIPO)
-    pares = [
-        (f, m)
-        for f, m in candidatas(c, "Bogotá")
-        # Afiliada desde antes de la remision mas antigua.
-        if f["afiliada_desde"] <= hoy - timedelta(days=max(d for _, d, _ in REMISIONES))
-        and c.get(
-            "/servicios/elegibilidad",
-            familia_id=f["id"],
-            mascota_id=m["id"],
-            tipo_codigo="atencion_aliada",
-        )["elegible"]
-    ]
+def _remitir(
+    c: Cliente,
+    aliada: Cliente,
+    clinica_id: str,
+    pares: Any,
+    lista: Sequence[tuple[str, int, str, str | None]],
+    motor: Any,
+    hoy: date,
+) -> None:
+    """Atencion al cliente emite cada remision y la clinica reporta las atendidas, por la API;
+    despues se llevan al pasado. `pares` se consume: una mascota no recibe dos remisiones."""
     with motor.begin() as cx:
-        for (motivo, dias, final), (_, mascota) in zip(REMISIONES, pares, strict=False):
+        for (motivo, dias, final, valor), (_, mascota) in zip(lista, pares, strict=False):
             remision = c.post(
                 "/aliadas/remisiones",
-                {"clinica_id": clinica["id"], "mascota_id": mascota["id"], "motivo": motivo},
+                {"clinica_id": clinica_id, "mascota_id": mascota["id"], "motivo": motivo},
             )
             if remision is None:
                 continue
@@ -1287,7 +1320,7 @@ def remisiones(c: Cliente, motor: Any, hoy: date) -> None:
                         # Dentro de la vigencia de la remision, que se emitio hoy: despues se
                         # lleva al pasado con ella.
                         "fecha": hoy.isoformat(),
-                        "valor_atencion": "180000",
+                        "valor_atencion": valor,
                         "resumen": "Procedimiento sin complicaciones; se envía el informe.",
                     },
                 )
@@ -1307,6 +1340,66 @@ def remisiones(c: Cliente, motor: Any, hoy: date) -> None:
                 ),
                 {"d": dias - 2, "i": UUID(remision["id"])},
             )
+
+
+def _remitibles(c: Cliente, ciudad: str, hoy: date, dias: int) -> Any:
+    """(familia, mascota) de la ciudad afiliadas desde antes de la remision mas antigua y con el
+    beneficio de atencion en aliada disponible."""
+    return iter(
+        (f, m)
+        for f, m in candidatas(c, ciudad)
+        if f["afiliada_desde"] <= hoy - timedelta(days=dias)
+        and c.get(
+            "/servicios/elegibilidad",
+            familia_id=f["id"],
+            mascota_id=m["id"],
+            tipo_codigo="atencion_aliada",
+        )["elegible"]
+    )
+
+
+def remisiones(c: Cliente, motor: Any, hoy: date) -> None:
+    """Remisiones a la clinica aliada de Bogota: atendidas y reportadas por la clinica, una
+    anulada, una que vencio sin usarse y una por usar. Despues, las de Medellin."""
+    clinica = next((x for x in c.get("/aliadas") if x["ciudad"] == "Bogotá"), None)
+    if clinica is not None:
+        pares = _remitibles(c, "Bogotá", hoy, max(d for _, d, _, _ in REMISIONES))
+        aliada = Cliente("aliada@timu.co", CLAVE_EQUIPO)
+        _remitir(c, aliada, clinica["id"], pares, REMISIONES, motor, hoy)
+    aliadas_medellin(c, motor, hoy)
+
+
+def aliadas_medellin(c: Cliente, motor: Any, hoy: date) -> None:
+    """Convenio, usuario y atenciones reportadas de las aliadas de Medellin. Repetible por su
+    cuenta (una clinica con remisiones ya esta sembrada): se aplica tambien sobre una base que ya
+    tenia la operacion, sin vaciarla (docs/datos-de-demostracion.md)."""
+    clinicas = {x["nombre"]: x for x in c.get("/aliadas")}
+    usuarios = {u["email"] for u in c.get("/auth/usuarios", limit=200)["items"]}
+    for nombre, email, recepcion, convenio, lista in ALIADAS_MEDELLIN:
+        clinica = clinicas.get(nombre)
+        # Sembrada: ya tiene remisiones. El convenio y el usuario, solo si faltan.
+        if clinica is None or c.get("/aliadas/remisiones", clinica_id=clinica["id"]):
+            continue
+        if not c.get(f"/aliadas/{clinica['id']}/convenios"):
+            c.post(
+                f"/aliadas/{clinica['id']}/convenios",
+                {**convenio, "vigente_desde": (hoy - timedelta(days=120)).isoformat()},
+            )
+        if email not in usuarios:
+            c.post(
+                "/auth/usuarios",
+                {
+                    "email": email,
+                    "nombre": recepcion,
+                    "rol": "aliada",
+                    "password": CLAVE_EQUIPO,
+                    "clinica_aliada_id": clinica["id"],
+                },
+            )
+        # Cada clinica parte de todas las de Medellin: hay pocas, y el cupo del beneficio es por
+        # periodo, asi que una remision llevada a un mes pasado no gasta el de hoy.
+        pares = _remitibles(c, "Medellín", hoy, max(d for _, d, _, _ in lista))
+        _remitir(c, Cliente(email, CLAVE_EQUIPO), clinica["id"], pares, lista, motor, hoy)
 
 
 VIRTUALES = [
@@ -1433,6 +1526,8 @@ MINIMOS = {
     "familias congeladas": 1,
     "interesados perdidos": 1,
     "remisiones atendidas": 2,
+    # La liquidacion que ve Gerencia, con varias clinicas (6.22).
+    "aliadas con atenciones": 3,
     "tareas cerradas": 3,
     "orientaciones cerradas": 2,
     "campanas enviadas": 1,
@@ -1469,6 +1564,10 @@ def comprobar(op: Operacion) -> None:
             ),
             "remisiones atendidas": contar(
                 "SELECT count(*) FROM remisiones_aliadas WHERE estado = 'utilizada'"
+            ),
+            "aliadas con atenciones": contar(
+                "SELECT count(DISTINCT clinica_id) FROM remisiones_aliadas"
+                " WHERE estado = 'utilizada'"
             ),
             "tareas cerradas": contar("SELECT count(*) FROM tareas WHERE estado = 'cerrada'"),
             "orientaciones cerradas": contar(
