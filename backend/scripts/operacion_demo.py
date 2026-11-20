@@ -41,6 +41,7 @@ from app.workers.celery_app import celery_app
 from app.workers.tasks import campanas as tareas_campanas
 from app.workers.tasks import cartera as tareas_cartera
 from app.workers.tasks import outbox
+from app.workers.tasks import preventivos as tareas_preventivos
 from scripts.datos_demo import (
     BOGOTA,
     CLAVE_EQUIPO,
@@ -1047,6 +1048,19 @@ PLANTILLA_ENCUESTA = {
 }
 
 
+# 6.21 Lo que contesta la familia al seguimiento: casi siempre bien; a veces una duda o una
+# novedad, que crea la tarea para el equipo.
+COMO_SIGUE = [
+    ("bien", None),
+    ("bien", "Ya come normal, gracias."),
+    ("bien", None),
+    ("bien", "Muy juicioso con la medicación."),
+    ("bien", None),
+    ("duda", "¿Le seguimos dando el antiinflamatorio si ya no cojea?"),
+    ("novedad", "Volvió a vomitar anoche."),
+]
+
+
 def encuestas_respondidas(c: Cliente, op: Operacion, motor: Any) -> None:
     """Cada visita completada deja su encuesta (la programa el outbox): se envia y se responde
     como lo haria la familia, y despues se fecha unas horas tras la visita. La plantilla de
@@ -1074,27 +1088,46 @@ def encuestas_respondidas(c: Cliente, op: Operacion, motor: Any) -> None:
             text(
                 "UPDATE encuestas e SET programada_para = s.termina_en + interval '2 hours'"
                 " FROM servicios s WHERE s.id = e.servicio_id AND e.servicio_id = ANY(:ids)"
+                " AND e.tipo = 'satisfaccion'"
+            ),
+            {"ids": hechas},
+        )
+        # El seguimiento, a los dias que dice la configuracion de su tipo (6.21): los de las
+        # visitas recientes quedan por enviar, como en la operacion real.
+        cx.execute(
+            text(
+                "UPDATE encuestas e SET programada_para = s.termina_en"
+                " + make_interval(days => c.seguimiento_dias)"
+                " FROM servicios s JOIN configuraciones_encuesta c"
+                " ON c.tipo_servicio_codigo = s.tipo_codigo"
+                " WHERE s.id = e.servicio_id AND e.servicio_id = ANY(:ids)"
+                " AND e.tipo = 'seguimiento'"
             ),
             {"ids": hechas},
         )
     with sesion_worker() as db:
         encuestas.enviar_pendientes(db)
-        tokens = list(
-            db.scalars(
-                select(Encuesta.token).where(
+        enviadas = list(
+            db.execute(
+                select(Encuesta.token, Encuesta.tipo).where(
                     Encuesta.servicio_id.in_(hechas), Encuesta.estado == "enviada"
                 )
-            )
+            ).tuples()
         )
     # La familia responde desde el enlace, sin sesion.
     familia = sin_sesion()
-    for n, token in enumerate(tokens):
+    for n, (token, tipo) in enumerate(enviadas):
         if n % 10 >= 7:  # tres de cada diez no responden
             continue
-        puntaje, comentario = azar.choice(COMENTARIOS)
+        if tipo == "seguimiento":
+            como_sigue, comentario = azar.choice(COMO_SIGUE)
+            cuerpo: dict[str, Any] = {"como_sigue": como_sigue}
+        else:
+            puntaje, comentario = azar.choice(COMENTARIOS)
+            cuerpo = {"puntaje": puntaje}
         resp = familia.post(
             f"/encuestas/respuesta/{token}",
-            json={"puntaje": puntaje, **({"comentario": comentario} if comentario else {})},
+            json={**cuerpo, **({"comentario": comentario} if comentario else {})},
         )
         if resp.is_error:
             print(f"  ! encuesta: {resp.status_code} {resp.text[:200]}")
@@ -1706,23 +1739,30 @@ def _familia(c: Cliente, documento: str) -> dict[str, Any] | None:
     return encontradas[0] if encontradas else None
 
 
+# 6.20 / 6.21 Cuando sale la encuesta y cuando el seguimiento, por tipo de atencion: (tipo, dias
+# hasta el seguimiento).
+SEGUIMIENTOS = [("consulta_domiciliaria", 3), ("consulta_clinica", 3), ("control_post", 7)]
+
+
+def configurar_encuestas(c: Cliente) -> None:
+    """La general y la de cada tipo con seguimiento. Va antes de la operacion: el seguimiento de
+    cada visita se programa al completarla."""
+    if c.get("/encuestas/configuracion"):
+        return
+    c.put("/encuestas/configuracion", {"demora_horas": 2, "umbral_alerta": 3})
+    for tipo, dias in SEGUIMIENTOS:
+        c.put(
+            "/encuestas/configuracion",
+            {"tipo_servicio_codigo": tipo, "demora_horas": 2, "seguimiento_dias": dias},
+        )
+
+
 def complementos(c: Equipo, medico: Cliente, hoy: date) -> None:
     """Lo que ninguna otra pantalla sembraba: configuracion de encuestas y seguimiento, segmentos,
     un reporte programado, contactos y documentos de la familia, pendientes
     de una atencion, adjuntos y formulas, un cambio de plan y un retiro del grupo, y registros en
     linea por pagar. Repetible: cada parte mira si ya esta."""
-    # 6.20 / 6.21 Cuando sale la encuesta y cuando el seguimiento, por tipo de atencion.
-    if not c.get("/encuestas/configuracion"):
-        c.put("/encuestas/configuracion", {"demora_horas": 2, "umbral_alerta": 3})
-        for tipo, dias in (
-            ("consulta_domiciliaria", 3),
-            ("consulta_clinica", 3),
-            ("control_post", 7),
-        ):
-            c.put(
-                "/encuestas/configuracion",
-                {"tipo_servicio_codigo": tipo, "demora_horas": 2, "seguimiento_dias": dias},
-            )
+    configurar_encuestas(c)
     if not c.get("/segmentos"):
         for nombre, descripcion, filtros in SEGMENTOS:
             c.post("/segmentos", {"nombre": nombre, "descripcion": descripcion, "filtros": filtros})
@@ -1927,6 +1967,9 @@ def main() -> None:
     motor = dueno()
     print("Preventivos")
     preventivos(c, medico, familias, hoy, motor)
+    # 6.8 Los recordatorios de lo que se acerca, como el beat cada dia.
+    tareas_preventivos.generar_agenda()
+    configurar_encuestas(c)
     print(f"Rutas de las ultimas {SEMANAS} semanas")
     op = operar_dias(c, medicos, hoy)
     print("Fechas de la operación")
@@ -1984,6 +2027,8 @@ MINIMOS = {
     "reportes programados": 1,
     "configuraciones de encuesta": 4,
     "visitas por venir": 10,
+    "seguimientos respondidos": 5,
+    "recordatorios de preventivos": 1,
 }
 
 
@@ -2048,6 +2093,13 @@ def comprobar(op: Operacion) -> None:
             "segmentos": contar("SELECT count(*) FROM segmentos"),
             "reportes programados": contar("SELECT count(*) FROM reportes_programados"),
             "configuraciones de encuesta": contar("SELECT count(*) FROM configuraciones_encuesta"),
+            "seguimientos respondidos": contar(
+                "SELECT count(*) FROM encuestas"
+                " WHERE tipo = 'seguimiento' AND estado = 'respondida'"
+            ),
+            "recordatorios de preventivos": contar(
+                "SELECT count(*) FROM mensajes WHERE plantilla = 'recordatorio_preventivo'"
+            ),
             "visitas por venir": contar(
                 "SELECT count(*) FROM servicios WHERE programado_para > now() + interval '1 day'"
                 " AND estado = 'agendado'"

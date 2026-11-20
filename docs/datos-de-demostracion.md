@@ -45,7 +45,11 @@ con historia (decidido con el usuario el 2026-11-16, `DEU-14`). Siembra:
 - **Citas en la clínica**: los jueves, en Medellín, dos consultas clínicas y un control post
   atención, cada uno con su consulta presencial firmada.
 - **Preventivos** aplicados en su fecha y otros vencidos, para la bandeja.
-- **Encuestas** enviadas y respondidas, con las tareas que deja una calificación baja.
+- **Encuestas** enviadas y respondidas, con las tareas que deja una calificación baja, y el
+  **seguimiento post atención** de cada visita a los días que dice su configuración (6.21): la
+  mayoría responde que su peludo sigue bien, algunas con una duda o una novedad que crea la tarea.
+  Las configuraciones de encuesta se crean antes de recorrer las rutas, y los **recordatorios de
+  preventivos** salen una vez, como el beat cada día (6.8).
 - **Comercial**: interesados que llegaron en las últimas semanas, cada uno en su etapa (también
   perdidos). Los que llegan por WhatsApp escriben al asistente, como en la operación real: él los
   crea y su conversación se ve en la ficha.
