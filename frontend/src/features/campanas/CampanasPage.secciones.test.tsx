@@ -670,6 +670,35 @@ describe('plantillas de WhatsApp', () => {
     )
   })
 
+  it('edita el texto de la versión más reciente como una versión nueva, con el código fijo', async () => {
+    const V1 = { ...PLANTILLA, id: 'p1', version: 1, titulo: 'Recordatorio de renovación' }
+    const V2 = { ...V1, id: 'p2', version: 2, cuerpo: 'Hola {{1}}, tu plan vence.', estado_aprobacion: 'borrador', activa: false }
+    let enviado: unknown = null
+    server.use(
+      http.get(`${API}/comunicaciones/plantillas`, () => HttpResponse.json([V2, V1])),
+      http.post(`${API}/comunicaciones/plantillas`, async ({ request }) => {
+        enviado = await request.json()
+        return HttpResponse.json({ ...V2, version: 3 }, { status: 201 })
+      }),
+    )
+    const user = await abrirPestana('Plantillas de WhatsApp')
+    // Solo la versión más reciente se edita: la vieja ya no lleva el botón.
+    const editar = await screen.findAllByRole('button', { name: 'Editar el texto de Recordatorio de renovación' })
+    expect(editar).toHaveLength(1)
+    await user.click(editar[0])
+    const modal = await screen.findByRole('dialog', { name: 'Editar «Recordatorio de renovación»' })
+    expect(within(modal).getByText(/queda como versión 3, en borrador/)).toBeInTheDocument()
+    expect(within(modal).getByLabelText('Código en Meta')).toHaveAttribute('readonly')
+    const texto = within(modal).getByLabelText(/^Texto/)
+    expect(texto).toHaveValue('Hola {{1}}, tu plan vence.')
+    await user.clear(texto)
+    await user.type(texto, 'Hola {{{{1}}, tu plan vence el {{{{2}}.')
+    await user.click(within(modal).getByRole('button', { name: 'Guardar' }))
+    await waitFor(() =>
+      expect(enviado).toMatchObject({ nombre: V1.nombre, titulo: 'Recordatorio de renovación', cuerpo: 'Hola {{1}}, tu plan vence el {{2}}.', variables: ['1', '2'] }),
+    )
+  })
+
   it('el Inicio del administrador abre la ventana con el código y el nombre que citan las reglas', async () => {
     let enviado: unknown = null
     server.use(

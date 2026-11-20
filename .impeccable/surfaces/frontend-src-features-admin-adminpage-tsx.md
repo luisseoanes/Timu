@@ -2,7 +2,7 @@
 version: 1
 slug: "frontend-src-features-admin-adminpage-tsx"
 primary_target: "frontend/src/features/admin/AdminPage.tsx"
-related_targets: ["frontend/src/features/admin/Usuarios.tsx","frontend/src/features/admin/Planes.tsx","frontend/src/features/admin/Reglas.tsx","frontend/src/features/admin/EditorRegla.tsx","frontend/src/features/admin/ProbarRegla.tsx","frontend/src/features/admin/Catalogos.tsx","frontend/src/features/admin/InteligenciaArtificial.tsx","frontend/src/features/admin/Supresion.tsx"]
+related_targets: ["frontend/src/features/admin/Usuarios.tsx","frontend/src/features/admin/Planes.tsx","frontend/src/features/admin/Reglas.tsx","frontend/src/features/admin/EditorRegla.tsx","frontend/src/features/admin/ProbarRegla.tsx","frontend/src/features/admin/Catalogos.tsx","frontend/src/features/admin/InteligenciaArtificial.tsx","frontend/src/features/admin/Supresion.tsx","frontend/src/features/campanas/PlantillasWhatsApp.tsx"]
 ---
 
 # Panel del equipo · Administración (R2-PAN-10, segunda parte)
@@ -111,6 +111,13 @@ de Gerencia y la pasarela a Cartera) y gana «Plantillas de WhatsApp», «Guion 
   altura del campo), ve solo el nombre del titular, cuántas mascotas y el estado, y confirma en rojo.
   Con un contrato vigente no se ofrece anonimizar: lo dice («Atención al cliente lo cancela antes»)
   con una insignia de alerta, porque la base lo rechazaría.
+- **Plantillas de WhatsApp** (2026-11-20, palabras del usuario: «cuando a la nueva versión se le ponga
+  el aprobado directamente se cambie y solito empiece a enviarse esa»). «Editar texto» en la versión
+  más reciente de cada plantilla abre la ventana con su texto y el código fijo (de solo lectura) y
+  guarda la versión siguiente en borrador; marcarla como aprobada la pone en uso y retira la
+  anterior. «Registrarla», desde el Inicio, abre la misma ventana con el código y el nombre puestos.
+- **Tope de gasto de la IA** (2026-11-20): se cambia en su tarjeta con un campo y «Guardar»; siempre
+  hay tope (sin «quitar»), y la tarjeta dice que no es el saldo de la cuenta del proveedor.
 
 ## Pendiente
 

@@ -5,6 +5,7 @@ import { Consulta } from '@/components/Consulta'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { mensajeError } from '@/lib/errores'
+import type { PlantillaWhatsAppRead } from '@/types'
 
 import { useCrearPlantillaWhatsApp, useEstadoPlantilla, usePlantillasWhatsApp } from './api'
 
@@ -27,11 +28,14 @@ export function PlantillasWhatsApp() {
   // (`?nueva=<código>&titulo=<nombre>`): la ventana se abre con esos dos campos ya puestos.
   const [params, setParams] = useSearchParams()
   const pedida = params.get('nueva')
-  const abierta = nueva || pedida !== null
+  // Editar el texto es registrar la versión siguiente: Meta vuelve a revisarla.
+  const [editando, setEditando] = useState<PlantillaWhatsAppRead | null>(null)
+  const abierta = nueva || pedida !== null || editando !== null
 
   function cerrar() {
     crear.reset()
     setNueva(false)
+    setEditando(null)
     if (pedida !== null) {
       const sin = new URLSearchParams(params)
       sin.delete('nueva')
@@ -49,7 +53,8 @@ export function PlantillasWhatsApp() {
         </button>
       </div>
       <p className="campana-nota campana-intro">
-        Meta aprueba cada plantilla antes de que se pueda usar. Registra aquí el estado que muestra el administrador de WhatsApp.
+        Meta aprueba cada plantilla antes de que se pueda usar. Registra aquí el estado que muestra el administrador de WhatsApp:
+        al marcar como aprobada la versión más reciente, pasa a ser la que se envía.
       </p>
       {estado.isError && (
         <p className="error" role="alert">
@@ -66,10 +71,13 @@ export function PlantillasWhatsApp() {
                   <th>Texto</th>
                   <th>Aprobación de Meta</th>
                   <th>Activa</th>
+                  <th>
+                    <span className="sr-only">Acciones</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {p.map((pl) => (
+                {p.map((pl, i) => (
                   <tr key={pl.id}>
                     <td className="principal" data-etiqueta="Plantilla">
                       {pl.titulo ?? <span className="campana-plantilla">{pl.nombre}</span>}
@@ -102,6 +110,14 @@ export function PlantillasWhatsApp() {
                         onChange={(e) => estado.mutate({ id: pl.id, estado_aprobacion: pl.estado_aprobacion, activa: e.target.checked })}
                       />
                     </td>
+                    <td className="tabla-acciones">
+                      {/* El texto se cambia sobre la versión más reciente (la lista viene de la más nueva a la más vieja). */}
+                      {p.findIndex((otra) => otra.nombre === pl.nombre && otra.idioma === pl.idioma) === i && (
+                        <button className="btn btn-plano btn-accion" type="button" onClick={() => setEditando(pl)} aria-label={`Editar el texto de ${pl.titulo ?? pl.nombre}`}>
+                          Editar texto
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -114,7 +130,12 @@ export function PlantillasWhatsApp() {
         onCambio={(v) => {
           if (!v) cerrar()
         }}
-        titulo="Nueva plantilla de WhatsApp"
+        titulo={editando ? `Editar «${editando.titulo ?? editando.nombre}»` : 'Nueva plantilla de WhatsApp'}
+        descripcion={
+          editando
+            ? `El texto nuevo queda como versión ${editando.version + 1}, en borrador. Hasta que Meta lo apruebe y lo marques como aprobado, se sigue enviando el que está en uso.`
+            : undefined
+        }
         pie={
           <button className="btn btn-primario" type="submit" form="nueva-plantilla-wa" disabled={crear.isPending}>
             Guardar
@@ -143,15 +164,16 @@ export function PlantillasWhatsApp() {
         >
           <label className="campo">
             <span>Nombre para el equipo</span>
-            <input className="input" name="titulo" minLength={3} maxLength={120} placeholder="Aviso de mora" defaultValue={params.get('titulo') ?? ''} />
+            <input className="input" name="titulo" minLength={3} maxLength={120} placeholder="Aviso de mora" defaultValue={editando?.titulo ?? params.get('titulo') ?? ''} />
           </label>
           <label className="campo">
             <span>Código en Meta</span>
-            <input className="input" name="nombre" required pattern="[a-z0-9_]+" defaultValue={pedida ?? ''} />
+            {/* Al editar, el código es el de la plantilla: cambiarlo sería otra plantilla. */}
+            <input className="input" name="nombre" required pattern="[a-z0-9_]+" defaultValue={editando?.nombre ?? pedida ?? ''} readOnly={editando !== null} />
           </label>
           <label className="campo">
             <span>Categoría</span>
-            <select className="input" name="categoria" defaultValue="utility">
+            <select className="input" name="categoria" defaultValue={editando?.categoria ?? 'utility'}>
               {Object.entries(CATEGORIAS).map(([valor, label]) => (
                 <option key={valor} value={valor}>{label}</option>
               ))}
@@ -159,7 +181,7 @@ export function PlantillasWhatsApp() {
           </label>
           <label className="campo ancho">
             <span>Texto (variables {'{{1}}'}, {'{{2}}'}…)</span>
-            <textarea className="input" name="cuerpo" rows={4} required />
+            <textarea className="input" name="cuerpo" rows={4} required defaultValue={editando?.cuerpo ?? ''} />
           </label>
           {crear.isError && (
             <p className="error ancho" role="alert">

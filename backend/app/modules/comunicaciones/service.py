@@ -99,6 +99,16 @@ def crear_version_plantilla(db: Session, datos: dict[str, Any]) -> PlantillaWhat
     return plantilla
 
 
+def _es_la_mas_reciente(db: Session, plantilla: PlantillaWhatsApp) -> bool:
+    ultima = db.scalar(
+        select(func.max(PlantillaWhatsApp.version)).where(
+            PlantillaWhatsApp.nombre == plantilla.nombre,
+            PlantillaWhatsApp.idioma == plantilla.idioma,
+        )
+    )
+    return plantilla.version == ultima
+
+
 def cambiar_estado_plantilla(
     db: Session, plantilla_id: UUID, estado: str, activa: bool | None
 ) -> PlantillaWhatsApp:
@@ -106,6 +116,10 @@ def cambiar_estado_plantilla(
     if plantilla is None:
         raise NoEncontrado("Plantilla no encontrada")
     plantilla.estado_aprobacion = estado
+    if activa is None and estado == "aprobada" and _es_la_mas_reciente(db, plantilla):
+        # Aprobar el texto nuevo es ponerlo en uso (decidido con el usuario el 2026-11-20): pasa a
+        # enviarse solo y la version anterior se retira. Aprobar una version vieja no la activa.
+        activa = True
     if activa:
         if estado != "aprobada":
             raise ReglaNegocio("Solo una plantilla aprobada por Meta puede activarse")

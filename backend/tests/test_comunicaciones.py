@@ -98,6 +98,42 @@ async def test_activar_una_version_desactiva_las_demas(client: AsyncClient, db, 
     assert [(p["version"], p["activa"]) for p in todas] == [(2, True), (1, False)]
 
 
+async def test_aprobar_el_texto_nuevo_lo_pone_en_uso(client: AsyncClient, headers):
+    """6.19 Al marcar como aprobada la version mas reciente, pasa a enviarse sola y se retira la
+    anterior (decidido con el usuario el 2026-11-20); aprobar una version vieja no la activa."""
+    await _plantilla_aprobada(client, headers)
+    v2 = await client.post(
+        "/api/v1/comunicaciones/plantillas",
+        json={
+            "nombre": "recordatorio_pago",
+            "cuerpo": "Hola {{1}}, recuerda tu pago de {{2}}.",
+            "variables": ["nombre", "valor"],
+        },
+        headers=headers,
+    )
+    aprobada = await client.patch(
+        f"/api/v1/comunicaciones/plantillas/{v2.json()['id']}/estado",
+        json={"estado_aprobacion": "aprobada"},
+        headers=headers,
+    )
+    assert aprobada.json()["activa"] is True
+    resp = await _enviar(client, headers)
+    assert resp.json()["contenido"] == "Hola Ana, recuerda tu pago de $45.000."
+
+    todas = (await client.get("/api/v1/comunicaciones/plantillas", headers=headers)).json()
+    v1 = next(p for p in todas if p["version"] == 1)
+    assert v1["activa"] is False
+    # La v1, pausada y vuelta a aprobar, no le quita el puesto a la v2.
+    for estado in ("pausada", "aprobada"):
+        await client.patch(
+            f"/api/v1/comunicaciones/plantillas/{v1['id']}/estado",
+            json={"estado_aprobacion": estado},
+            headers=headers,
+        )
+    todas = (await client.get("/api/v1/comunicaciones/plantillas", headers=headers)).json()
+    assert [(p["version"], p["activa"]) for p in todas] == [(2, True), (1, False)]
+
+
 async def test_no_se_activa_sin_aprobacion(client: AsyncClient, headers):
     creada = await client.post(
         "/api/v1/comunicaciones/plantillas",

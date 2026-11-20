@@ -70,6 +70,8 @@
 .input[aria-invalid="true"] { border-color: var(--texto-error); }
 .input[aria-invalid="true"]:focus { box-shadow: 0 0 0 1px var(--texto-error); }
 .input:disabled { background: var(--superficie-hundida); color: var(--texto-suave); cursor: not-allowed; }
+/* De solo lectura (el código de una plantilla al editar su texto): se ve fijo, pero se puede copiar. */
+.input:read-only:not(select) { background: var(--superficie-hundida); color: var(--texto-suave); }
 
 /* Listas y fechas con la forma del sistema, no la del navegador. La flecha de la lista es un
    chevron de trazo, como los iconos: dos franjas diagonales finas («\» y «/»), degradados del rol
