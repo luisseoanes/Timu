@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.enums import EstadoServicio, TipoServicio
+from app.core.enums import EstadoServicio, Rol, TipoServicio
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.eventos import EventoDominio, declarar_evento
 from app.core.outbox import publicar
@@ -18,6 +18,7 @@ from app.core.tiempo import ZONA_NEGOCIO, ahora, con_zona
 from app.integrations.routing import Coordenada, Visita, insertar_mas_barato, optimizar
 from app.modules.archivos import service as archivos
 from app.modules.auth.models import Usuario
+from app.modules.catalogos import service as catalogos
 from app.modules.catalogos.models import Ciudad, TipoServicioCatalogo
 from app.modules.comunicaciones import service as comunicaciones
 from app.modules.familias.models import Familia, Mascota
@@ -68,11 +69,20 @@ def solicitar(
 
     if not responsables:
         raise ReglaNegocio("Indique al menos un responsable para las rutas")
+    # Solo en una ciudad que el administrador tiene habilitada (catalogo de ciudades activas).
+    ciudad = catalogos.ciudad_valida(db, ciudad)
+    # Quienes salen a campo: el medico y Operaciones, como ofrece el panel.
     activos = set(
-        db.scalars(select(Usuario.id).where(Usuario.id.in_(responsables), Usuario.activo.is_(True)))
+        db.scalars(
+            select(Usuario.id).where(
+                Usuario.id.in_(responsables),
+                Usuario.activo.is_(True),
+                Usuario.rol.in_((Rol.MEDICO, Rol.OPERACIONES)),
+            )
+        )
     )
     if len(activos) != len(set(responsables)):
-        raise ReglaNegocio("Hay responsables inexistentes o inactivos")
+        raise ReglaNegocio("Hay responsables inexistentes, inactivos o que no salen a campo")
     planificacion = PlanificacionRuta(
         fecha=fecha,
         ciudad=ciudad,

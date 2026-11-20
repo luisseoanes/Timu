@@ -12,6 +12,7 @@ from app.core.enums import Rol
 from app.core.tiempo import ZONA_NEGOCIO, hoy
 from app.integrations import mapas
 from app.integrations.routing import Visita, insertar_mas_barato, optimizar
+from app.modules.catalogos.models import Ciudad
 from app.modules.comunicaciones.models import Mensaje, PlantillaWhatsApp
 from app.modules.familias.models import Familia
 from app.modules.rutas import distancias, service
@@ -151,6 +152,38 @@ async def test_planificacion_se_encola_al_worker(client: AsyncClient, db, header
     assert resp.status_code == 202, resp.text
     assert resp.json()["estado"] == "pendiente"
     assert await tareas.de("rutas.planificar") == [(resp.json()["id"],)]
+
+
+async def test_solo_se_planea_en_ciudades_habilitadas_y_con_quien_sale_a_campo(
+    client: AsyncClient, db, headers, tecnico
+):
+    """El administrador habilita las ciudades (Catalogos): en otra no se planea, aunque se pida
+    desde fuera del panel. Y las rutas son de quien sale a campo: medico u Operaciones."""
+    tecnico_id = tecnico.id
+    apagada = await db.scalar(select(Ciudad).where(Ciudad.nombre != "Cali").limit(1))
+    apagada.activa = False
+    apagada_nombre = apagada.nombre
+    comercial = await crear_usuario(db, "ventas-rutas@timu.co", Rol.COMERCIAL)
+    comercial_id = comercial.id
+    await db.commit()
+
+    async def planear(ciudad, responsable):
+        return await client.post(
+            "/api/v1/rutas/planificaciones",
+            json={"fecha": str(DIA), "ciudad": ciudad, "responsables": [str(responsable)]},
+            headers=headers,
+        )
+
+    resp = await planear(apagada_nombre, tecnico_id)
+    assert resp.status_code == 422
+    assert "no esta en el catalogo de ciudades activas" in resp.json()["detail"]
+    resp = await planear("Cali", comercial_id)
+    assert resp.status_code == 422
+    assert "no salen a campo" in resp.json()["detail"]
+    # El nombre se escribe como se quiera: queda el canonico del catalogo.
+    resp = await planear("cali", tecnico_id)
+    assert resp.status_code == 202, resp.text
+    assert resp.json()["ciudad"] == "Cali"
 
 
 async def test_planificar_agrupa_ordena_y_reporta_lo_que_no_cabe(db, dia_con_servicios, tecnico):
