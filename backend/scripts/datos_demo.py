@@ -302,6 +302,14 @@ class _EsperaAlLimite(httpx.HTTPTransport):
         return super().handle_request(request)
 
 
+def sin_sesion() -> httpx.Client:
+    """Un cliente sin cookies (la familia, un enlace de un solo uso) que tambien espera al limite.
+
+    Ingreso y restablecimiento comparten 10 por minuto y por IP: sobre una base vacia, el equipo
+    de prueba y las cuentas de las familias pasan de 10 en el mismo minuto."""
+    return httpx.Client(base_url=API, timeout=30, transport=_EsperaAlLimite())
+
+
 def comprobar_ambiente(ajustes: Settings, script: str) -> None:
     """Se niega a sembrar fuera de local y staging."""
     if ajustes.ENVIRONMENT not in AMBIENTES_DE_DEMOSTRACION:
@@ -511,9 +519,10 @@ def pagar_lo_vencido(c: Cliente, familia: dict[str, Any]) -> None:
 def acceso_portal(c: Cliente, familia_id: str) -> None:
     """Deja entrar a la familia al portal con la clave de prueba."""
     familia = c.get(f"/familias/{familia_id}")
-    puede_entrar = httpx.post(
-        f"{API}/auth/login", data={"username": familia["email"], "password": CLAVE_EQUIPO}
-    ).is_success
+    with sin_sesion() as http:
+        puede_entrar = http.post(
+            "/auth/login", data={"username": familia["email"], "password": CLAVE_EQUIPO}
+        ).is_success
     if puede_entrar:
         return
     if not familia.get("usuario_portal_id"):
@@ -533,9 +542,10 @@ def acceso_portal(c: Cliente, familia_id: str) -> None:
     if token:
         # Fuera del cliente del administrador: activar la cuenta abre la sesion de la familia, y
         # sus cookies sustituirian las del administrador en las peticiones siguientes.
-        httpx.post(
-            f"{API}/auth/restablecer", json={"token": token.group(1), "password": CLAVE_EQUIPO}
-        ).raise_for_status()
+        with sin_sesion() as http:
+            http.post(
+                "/auth/restablecer", json={"token": token.group(1), "password": CLAVE_EQUIPO}
+            ).raise_for_status()
 
 
 def _inicio(cupo: dict[str, Any]) -> datetime:

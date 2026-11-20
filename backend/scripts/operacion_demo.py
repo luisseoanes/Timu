@@ -29,7 +29,6 @@ from datetime import date, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-import httpx
 from sqlalchemy import create_engine, select, text
 
 from app.core.config import settings
@@ -41,13 +40,13 @@ from app.workers.tasks import campanas as tareas_campanas
 from app.workers.tasks import cartera as tareas_cartera
 from app.workers.tasks import outbox
 from scripts.datos_demo import (
-    API,
     BOGOTA,
     CLAVE_EQUIPO,
     Cliente,
     comprobar_ambiente,
     equipo,
     pagar_lo_vencido,
+    sin_sesion,
 )
 
 # El script drena el outbox como el worker: necesita los mismos manejadores y eventos, que se
@@ -1083,7 +1082,7 @@ def encuestas_respondidas(c: Cliente, op: Operacion, motor: Any) -> None:
             )
         )
     # La familia responde desde el enlace, sin sesion.
-    familia = httpx.Client(base_url=API, timeout=30)
+    familia = sin_sesion()
     for n, token in enumerate(tokens):
         if n % 10 >= 7:  # tres de cada diez no responden
             continue

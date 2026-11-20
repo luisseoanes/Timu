@@ -186,6 +186,28 @@ def test_los_datos_de_demostracion_se_siembran_en_local_y_staging_pero_no_en_pro
             datos_demo.comprobar_ambiente(Settings(_env_file=None, **ambiente), "datos_demo")
 
 
+def test_los_scripts_de_demostracion_esperan_al_limite_de_la_api(monkeypatch):
+    # Ingreso y restablecimiento comparten 10 por minuto: sobre una base vacia, datos_demo pasa de
+    # 10 en el mismo minuto (el CI paso por caer en el minuto siguiente). Toda peticion a la API
+    # sale por un cliente que espera a Retry-After, nunca por httpx.post suelto.
+    import httpx
+
+    from scripts import datos_demo
+
+    for script in ("datos_demo", "operacion_demo", "vaciar_staging"):
+        codigo = (Path(datos_demo.__file__).parent / f"{script}.py").read_text()
+        for suelto in ("httpx.post(", "httpx.get(", "httpx.put(", "httpx.patch("):
+            assert suelto not in codigo, (script, suelto)
+
+    respuestas = [httpx.Response(429, headers={"Retry-After": "1"}), httpx.Response(200)]
+    monkeypatch.setattr(httpx.HTTPTransport, "handle_request", lambda _, __: respuestas.pop(0))
+    esperas: list[float] = []
+    monkeypatch.setattr(datos_demo.time, "sleep", esperas.append)
+    with datos_demo.sin_sesion() as http:
+        assert http.post("/auth/restablecer", json={}).status_code == 200
+    assert esperas == [1.5]
+
+
 def test_vaciar_staging_solo_corre_en_staging_y_con_la_confirmacion_escrita():
     from scripts import vaciar_staging
 
