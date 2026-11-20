@@ -19,7 +19,7 @@ function EsperaSesion({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function ProtectedRoute({ roles }: { roles?: Rol[] }) {
+export function ProtectedRoute({ roles }: { roles?: readonly Rol[] }) {
   const { usuario, cargando, errorSesion, reintentarSesion } = useAuth()
   const location = useLocation()
 

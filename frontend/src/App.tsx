@@ -34,15 +34,13 @@ import { RutasPage } from '@/features/rutas'
 import { ServicioDetallePage, ServiciosPage } from '@/features/servicios'
 import { TareasPage } from '@/features/tareas'
 import { AppLayout } from '@/layouts/AppLayout'
-import { PERMISOS } from '@/lib/permisos'
+import { PERFILES_EQUIPO, PERMISOS } from '@/lib/permisos'
 import { AlPanel } from '@/routes/AlPanel'
 import { DIRECCIONES_VIEJAS, MODULOS_DEL_PANEL } from '@/routes/modulos'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { DeLaWebVieja } from '@/routes/WebVieja'
-import type { Rol } from '@/types'
 
 // El panel es del equipo interno; las familias y las aliadas tienen su propio espacio.
-const EQUIPO: Rol[] = ['admin', 'gerencia', 'comercial', 'atencion_cliente', 'operaciones', 'medico']
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -67,7 +65,7 @@ export default function App() {
             <Route index element={<PortadaPage />} />
             <Route path="/planes/:plan" element={<PlanPage />} />
 
-            <Route path="panel" element={<ProtectedRoute roles={EQUIPO} />}>
+            <Route path="panel" element={<ProtectedRoute roles={PERFILES_EQUIPO} />}>
               <Route element={<AppLayout />}>
                 <Route index element={<DashboardPage />} />
                 {/* Cada módulo, solo para los perfiles que lo tienen (Sección 12): el mismo permiso

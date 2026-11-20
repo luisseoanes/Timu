@@ -76,6 +76,10 @@ export function puede(usuario: Usuario | null | undefined, accion: Accion): bool
   return Boolean(usuario && (PERMISOS[accion] as readonly Rol[]).includes(usuario.rol))
 }
 
+/** Los perfiles del equipo (Sección 12), en el orden en que se ofrecen: entran al panel y el
+ * administrador los crea y los cambia en Usuarios. Un perfil nuevo se añade aquí. */
+export const PERFILES_EQUIPO: readonly Rol[] = ['admin', 'gerencia', 'comercial', 'atencion_cliente', 'operaciones', 'medico']
+
 export const NOMBRE_ROL: Record<Rol, string> = {
   admin: 'Administración',
   gerencia: 'Gerencia',

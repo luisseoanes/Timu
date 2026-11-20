@@ -96,6 +96,35 @@ describe('AdminPage', () => {
     await waitFor(() => expect(cambios).toEqual([{ activo: false }, { activo: true }]))
   })
 
+  it('gestiona a todo el equipo: en la fila y al crear se ofrecen los seis perfiles', async () => {
+    // Sección 12: Gerencia y Atención al cliente también se crean y se cambian desde aquí.
+    const PERFILES = ['Administración', 'Gerencia', 'Comercial', 'Atención al cliente', 'Operaciones', 'Médico veterinario']
+    const ATENCION = { ...OPERADOR, id: 'u3', nombre: 'Mariana Ortiz', rol: 'atencion_cliente' }
+    let cambio: unknown = null
+    server.use(
+      http.get(`${API}/auth/usuarios`, () => HttpResponse.json({ items: [ATENCION], total: 1, limit: 25, offset: 0 })),
+      http.patch(`${API}/auth/usuarios/u3`, async ({ request }) => {
+        cambio = await request.json()
+        return HttpResponse.json({ ...ATENCION, rol: 'gerencia' })
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<AdminPage />)
+    const perfil = await screen.findByLabelText('Perfil de Mariana Ortiz')
+    expect(within(perfil).getAllByRole('option').map((o) => o.textContent)).toEqual(PERFILES)
+    await user.selectOptions(perfil, 'gerencia')
+    const ventana = await screen.findByRole('dialog', { name: '¿Mariana Ortiz pasa a Gerencia?' })
+    await user.click(within(ventana).getByRole('button', { name: 'Cambiar el perfil' }))
+    await waitFor(() => expect(cambio).toEqual({ rol: 'gerencia' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: /nuevo usuario/i }))
+    const modal = await screen.findByRole('dialog')
+    expect(within(within(modal).getByLabelText('Perfil')).getAllByRole('option').map((o) => o.textContent)).toEqual([
+      ...PERFILES,
+      'Clínica aliada',
+    ])
+  })
+
   it('crea un usuario de clínica aliada con su clínica', async () => {
     let creado: unknown = null
     server.use(

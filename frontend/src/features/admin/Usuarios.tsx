@@ -9,15 +9,16 @@ import { useAuth } from '@/features/auth'
 import { useClinicas } from '@/features/aliadas'
 import { mensajeError } from '@/lib/errores'
 import { telefono } from '@/lib/formato'
-import { NOMBRE_ROL } from '@/lib/permisos'
+import { NOMBRE_ROL, PERFILES_EQUIPO } from '@/lib/permisos'
 import type { RecuentosUsuarios, Rol, UsuarioRead } from '@/types'
 
 import { useActualizarUsuario, useCrearUsuario, useRecuentosUsuarios, useUsuarios } from './api'
 
-const ROLES_EQUIPO: Rol[] = ['admin', 'comercial', 'operaciones', 'medico', 'aliada']
-// En la fila solo se pasa entre perfiles del equipo: una cuenta de clínica aliada necesita su
-// clínica (auth/service.py la exige), y eso se elige al crearla.
-const ROLES_INTERNOS: Rol[] = ['admin', 'comercial', 'operaciones', 'medico']
+// El administrador gestiona a todo el equipo (Sección 12). En la fila solo se pasa entre perfiles
+// del equipo: una cuenta de clínica aliada necesita su clínica (auth/service.py la exige), y eso
+// se elige al crearla.
+const ROLES_INTERNOS: readonly Rol[] = PERFILES_EQUIPO
+const ROLES_EQUIPO: readonly Rol[] = [...PERFILES_EQUIPO, 'aliada']
 
 type Vista = keyof RecuentosUsuarios
 
