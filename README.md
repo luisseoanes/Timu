@@ -64,12 +64,10 @@ docker compose exec api python -m scripts.operacion_demo   # ocho semanas de ope
 docker compose run --rm inicializar
 ```
 
-`datos_demo` crea familias, servicios, rutas y campañas, y estos usuarios con la clave
-`demo12345`: `medico@timu.co`, `operaciones@timu.co`, `comercial@timu.co`,
-`gerencia@timu.co` (administrador para los recorridos e2e), `aliada@timu.co` (clínica
-aliada) y, en el portal de familias, `ana@example.com` (con el plan en pausa por cuotas
-vencidas) y `jorge@example.com` (al día). Solo crea lo que falta: no actualiza lo ya
-sembrado. `operacion_demo`, después, siembra dos meses de historia: cartera en cada estado,
+`datos_demo` crea familias, servicios, rutas y campañas, un usuario por perfil del equipo, la
+clínica aliada y dos familias con acceso al portal, todos con la clave `demo12345` (la tabla
+de usuarios está en [datos de demostración](docs/datos-de-demostracion.md)). Solo crea lo que
+falta: no actualiza lo ya sembrado. `operacion_demo`, después, siembra dos meses de historia: cartera en cada estado,
 rutas pasadas con sus consultas, preventivos, encuestas, comercial, tareas, remisiones y una
 campaña. Qué deja cada uno y cómo ampliarlos: [datos de demostración](docs/datos-de-demostracion.md).
 
