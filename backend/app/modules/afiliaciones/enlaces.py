@@ -9,13 +9,16 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.errores import ReglaNegocio
+from app.core.plantillas import declarar_plantilla
 from app.core.security import generar_token_opaco, hash_token
 from app.modules.afiliaciones.models import SolicitudAfiliacion
 from app.modules.comunicaciones import service as comunicaciones
 
 logger = structlog.get_logger(__name__)
 
-PLANTILLA = "completar_afiliacion"
+PLANTILLA = declarar_plantilla(
+    "completar_afiliacion", "Completar la afiliación", "el enlace para completar la afiliación"
+)
 
 
 def url_formulario(token: str) -> str:

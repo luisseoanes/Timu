@@ -16,6 +16,7 @@ from app.core.config import settings
 from app.core.database import nuevo_id
 from app.core.enums import MESES_PERIODICIDAD, EstadoAfiliacion, Periodicidad
 from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
+from app.core.plantillas import declarar_plantilla
 from app.core.tiempo import ahora, hoy
 from app.modules.archivos import service as archivos
 from app.modules.archivos.models import Archivo
@@ -288,8 +289,12 @@ def reevaluar_estado(db: Session, contrato: Contrato, dia: date | None = None) -
 
 
 _PLANTILLAS_TRANSICION = {
-    "congelada": "afiliacion_congelada",
-    "reactivada": "afiliacion_reactivada",
+    "congelada": declarar_plantilla(
+        "afiliacion_congelada", "Afiliación congelada", "el aviso de que el plan se congeló"
+    ),
+    "reactivada": declarar_plantilla(
+        "afiliacion_reactivada", "Afiliación reactivada", "el aviso de que el plan se reactivó"
+    ),
 }
 
 

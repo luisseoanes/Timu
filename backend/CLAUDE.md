@@ -42,6 +42,9 @@ los registros que agregan dominios (`app/models.py`, `app/transiciones.py`), en 
   el manejador va en `app/workers/tasks/<dominio>.py` con `@al_ocurrir`, y el nombre se declara con
   `declarar_evento` en el dominio que publica. Un evento que agota `MAX_INTENTOS` queda como
   `outbox.abandonado`.
+- **Una plantilla de WhatsApp que envía el código se declara** con `declarar_plantilla(código, título,
+  uso)` (`app/core/plantillas.py`) en el dominio que la envía, nunca escrita a mano en
+  `encolar_plantilla`: así el Inicio del administrador dice cuáles faltan y qué deja de salir.
 - **Ningún dominio orquesta lo que no es suyo**: `familias` es la ficha; la baja, las altas y bajas de
   mascotas, la anonimización y el formulario público los orquesta `afiliaciones/ciclo.py`; la vida del
   contrato es de `cartera/contratos.py`.

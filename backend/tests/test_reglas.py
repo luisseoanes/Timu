@@ -17,6 +17,7 @@ from app.modules.reglas.motor import (
     validar_accion,
     validar_condicion,
 )
+from app.modules.reglas.service import orden_alfabetico
 from tests import fabricas
 
 
@@ -613,6 +614,14 @@ async def test_el_administrador_ve_las_plantillas_que_citan_las_reglas_y_faltan(
     assert faltantes["aviso_mora"]["reglas"], "dice que reglas la citan"
     # No esta en el catalogo: hay que registrarla, no esperar a que Meta la apruebe.
     assert faltantes["aviso_mora"]["registrada"] is False
+    # Tambien las que envia el codigo sin regla, con lo que deja de enviarse sin ellas.
+    assert faltantes["bienvenida"]["usos"] == ["la bienvenida al afiliarse"]
+    assert faltantes["bienvenida"]["reglas"] == []
+    assert faltantes["bienvenida"]["titulo"] == "Bienvenida"
+    assert faltantes["aviso_mora"]["usos"] == []
+    titulos = [p["titulo"] for p in resp.json()]
+    assert titulos == sorted(titulos, key=orden_alfabetico), "por el nombre, como un diccionario"
+    assert titulos.index("Código de ingreso") < titulos.index("Cuota vencida")
 
     # Registrada pero sin aprobar: sigue faltando, y ya no es por registrarla.
     db.add(

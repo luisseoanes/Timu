@@ -20,6 +20,7 @@ from app.core.config import settings
 from app.core.database import nuevo_id
 from app.core.enums import EstadoPago, Periodicidad
 from app.core.errores import ErrorDominio, NoEncontrado, ReglaNegocio
+from app.core.plantillas import declarar_plantilla
 from app.core.tiempo import ahora, hoy
 from app.integrations.payments import construir_link_pago
 from app.modules.afiliaciones import documento, enlaces
@@ -418,12 +419,15 @@ def _calendario_preventivo(db: Session, familia: Familia, desde: date) -> None:
         preventivos.calendario_inicial(db, mascota, desde)
 
 
+PLANTILLA_BIENVENIDA = declarar_plantilla("bienvenida", "Bienvenida", "la bienvenida al afiliarse")
+
+
 def _bienvenida(db: Session, familia: Familia, contratados: list[Plan]) -> None:
     try:
         comunicaciones.encolar_plantilla(
             db,
             telefono=familia.telefono,
-            plantilla="bienvenida",
+            plantilla=PLANTILLA_BIENVENIDA,
             variables=[familia.titular_nombre, ", ".join(p.nombre for p in contratados)],
             familia_id=familia.id,
         )

@@ -360,8 +360,10 @@ describe('Inicio del administrador', () => {
     server.use(
       http.get(`${API}/reglas/plantillas-faltantes`, () =>
         HttpResponse.json([
-          { codigo: 'aviso_mora', titulo: 'Aviso de mora', reglas: ['Aviso de mora a los 25 días'], registrada: false },
-          { codigo: 'cuota_vencida', titulo: 'Cuota vencida', reglas: ['Aviso de mora a 1 día'], registrada: true },
+          { codigo: 'aviso_mora', titulo: 'Aviso de mora', reglas: ['Aviso de mora a los 25 días'], usos: [], registrada: false },
+          { codigo: 'cuota_vencida', titulo: 'Cuota vencida', reglas: ['Aviso de mora a 1 día'], usos: [], registrada: true },
+          // Una que envía la plataforma sin regla: dice qué deja de salir.
+          { codigo: 'bienvenida', titulo: 'Bienvenida', reglas: [], usos: ['la bienvenida al afiliarse'], registrada: false },
         ]),
       ),
       http.get(`${API}/institucional`, () => HttpResponse.json({ ...DATOS_COMPLETOS, mision: null })),
@@ -372,10 +374,12 @@ describe('Inicio del administrador', () => {
     // espera a Meta.
     expect(await screen.findByText('La plantilla «Aviso de mora» no está registrada')).toBeInTheDocument()
     expect(screen.getByText('La plantilla «Cuota vencida» no está aprobada en Meta')).toBeInTheDocument()
-    expect(screen.getByText('Sus avisos no se envían. La usa: Aviso de mora a los 25 días.')).toBeInTheDocument()
+    expect(screen.getByText('Sin ella no sale por WhatsApp «Aviso de mora a los 25 días».')).toBeInTheDocument()
+    expect(screen.getByText('La plantilla «Bienvenida» no está registrada')).toBeInTheDocument()
+    expect(screen.getByText('Sin ella no sale por WhatsApp la bienvenida al afiliarse.')).toBeInTheDocument()
     expect(screen.getByText('Datos de TIMU: falta la misión')).toBeInTheDocument()
     expect(screen.getByText('2 usuarios inactivos')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Registrarla' })).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: 'Registrarla' })[0]).toHaveAttribute(
       'href',
       '/panel/admin?pestana=plantillas&nueva=aviso_mora&titulo=Aviso+de+mora',
     )
@@ -383,7 +387,7 @@ describe('Inicio del administrador', () => {
     expect(screen.getByRole('link', { name: 'Completar los datos' })).toHaveAttribute('href', '/panel/admin?pestana=timu')
     // Son cosas del mismo peso: ninguna acción va en verde (decidido con el usuario el 2026-11-20).
     expect(document.querySelectorAll('.btn-primario')).toHaveLength(0)
-    expect(document.querySelectorAll('.inicio-config .btn-suave')).toHaveLength(4)
+    expect(document.querySelectorAll('.inicio-config .btn-suave')).toHaveLength(5)
   })
 
   it('con todo configurado lo dice', async () => {

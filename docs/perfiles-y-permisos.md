@@ -69,8 +69,10 @@ Decisiones del 2026-11-19, a pregunta del usuario:
   (`INDICADORES_POR_ROL` en `dashboard/service.py`); los exportables y los filtros siguen siendo de
   Gerencia.
 - **El Inicio del Administrador dice lo que falta configurar**: lo que impide que algo funcione
-  (plantillas que citan las reglas y no están en el catálogo, Datos de TIMU incompletos, usuarios
-  inactivos), cada fila con su pestaña.
+  (plantillas de WhatsApp que envía la plataforma o citan las reglas y no están aprobadas en el
+  catálogo, con lo que deja de salir sin cada una; Datos de TIMU incompletos; usuarios inactivos),
+  cada fila con su pestaña. Las acciones van todas iguales, sin verde (2026-11-20); la plantilla que no
+  está registrada se registra desde ahí, con su código y su nombre ya puestos.
 
 ## Lo que se filtra por fila
 

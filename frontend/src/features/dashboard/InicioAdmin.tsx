@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
 import { Icono } from '@/components/Icono'
-import type { DatosTimuRead } from '@/types'
+import type { DatosTimuRead, PlantillaFaltante } from '@/types'
 
 import { useLoQueFalta } from './api'
 import { Saludo } from './Saludo'
@@ -31,6 +31,11 @@ function lista(cosas: string[]): string {
   return cosas.length > 1 ? `${cosas.slice(0, -1).join(', ')} y ${cosas.at(-1)}` : (cosas[0] ?? '')
 }
 
+/** Lo que no sale por WhatsApp sin la plantilla: lo que envía la plataforma y las reglas que la citan. */
+function queDejaDeSalir(p: PlantillaFaltante): string {
+  return `Sin ella no sale por WhatsApp ${lista([...p.usos, ...p.reglas.map((r) => `«${r}»`)])}.`
+}
+
 /** El Inicio del administrador: lo que falta configurar, lo que impide que algo funcione primero
  * (decidido con el usuario el 2026-11-19, docs/perfiles-y-permisos.md). Configura y no opera. */
 export function InicioAdmin() {
@@ -52,7 +57,7 @@ export function InicioAdmin() {
               titulo: p.registrada
                 ? `La plantilla «${p.titulo}» no está aprobada en Meta`
                 : `La plantilla «${p.titulo}» no está registrada`,
-              detalle: `Sus avisos no se envían. La usa: ${lista(p.reglas)}.`,
+              detalle: queDejaDeSalir(p),
               accion: p.registrada
                 ? { texto: 'Ver las plantillas', destino: { pestana: 'plantillas' } }
                 : { texto: 'Registrarla', destino: { pestana: 'plantillas', nueva: p.codigo, titulo: p.titulo } },

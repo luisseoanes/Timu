@@ -85,6 +85,7 @@ migración `0036` no se reprocesaron: si producción tiene alguna, se limpia a m
 | La base garantiza, Python explica: enums nativos, claves foráneas a catálogos, `CHECK`, únicos parciales, transiciones de estado por trigger, nada de negocio se borra. | `tests/test_persistencia.py`, `tests/test_migraciones.py` |
 | Un efecto externo no ocurre si la transacción que lo origina se revierte (outbox). | `tests/test_outbox.py` |
 | Todo evento publicado o escuchado está declarado (`declarar_evento`): un nombre mal escrito falla en el acto, no deja el efecto sin hacer. | `test_publicar_un_evento_sin_declarar_falla_en_el_acto`, `test_suscribirse_a_un_evento_sin_declarar_falla_al_importar` |
+| Toda plantilla de WhatsApp que envía el código está declarada (`declarar_plantilla`): el Inicio del administrador dice cuáles faltan en el catálogo y qué deja de salir sin cada una. | `test_cada_plantilla_que_envia_el_codigo_esta_declarada` |
 | Un evento que agota sus reintentos se registra como error (llega a Sentry) y la fila conserva su `ultimo_error`. | `test_un_evento_que_agota_los_intentos_avisa_como_error` |
 | Respaldo diario restaurable, verificado en una base nueva. | Paso **Respaldo y restauración verificada** del job del stack |
 

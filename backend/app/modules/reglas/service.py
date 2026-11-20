@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core.enums import EstadoAfiliacion, EstadoServicio, TipoServicio
 from app.core.errores import ReglaNegocio
+from app.core.plantillas import plantillas_declaradas
 from app.core.tiempo import hoy
 from app.modules.catalogos.models import Ciudad, Especie, TipoServicioCatalogo
 from app.modules.comunicaciones import service as comunicaciones
@@ -222,27 +223,43 @@ def nombres(db: Session) -> dict[str, dict[str, str]]:
 
 
 def plantillas_faltantes(db: Session) -> list[dict[str, Any]]:
-    """Seccion 12 Lo que falta configurar: las plantillas que citan las reglas activas y no tienen
-    version aprobada y activa en el catalogo. Sin ella, esos avisos no salen por ningun canal.
-    `registrada` distingue la que falta del todo (se registra) de la que espera a Meta."""
-    titulos = titulos_plantillas(db)
+    """Seccion 12 Lo que falta configurar: las plantillas que envia la plataforma y no tienen
+    version aprobada y activa en el catalogo: las que declara cada dominio (`core/plantillas.py`,
+    con lo que dejan de enviar) y las que citan las reglas activas. Sin ella, esos mensajes no salen
+    por WhatsApp. `registrada` distingue la que falta del todo (se registra) de la que espera a
+    Meta."""
+    declaradas = plantillas_declaradas()
+    titulos = {
+        **{c: d.titulo for c, d in declaradas.items()},
+        **titulos_plantillas(db),
+    }
     registradas = set(db.scalars(select(PlantillaWhatsApp.nombre).distinct()))
-    por_plantilla: dict[str, list[str]] = {}
+    por_regla: dict[str, list[str]] = {}
     reglas = db.scalars(select(Regla).where(Regla.activa).order_by(Regla.prioridad, Regla.nombre))
     for regla in reglas:
         codigo = (regla.accion or {}).get("plantilla")
         if codigo:
-            por_plantilla.setdefault(codigo, []).append(regla.nombre)
-    return [
+            por_regla.setdefault(codigo, []).append(regla.nombre)
+    faltantes = [
         {
             "codigo": codigo,
             "titulo": titulos.get(codigo, codigo),
-            "reglas": nombres,
+            "reglas": por_regla.get(codigo, []),
+            "usos": declaradas[codigo].usos if codigo in declaradas else [],
             "registrada": codigo in registradas,
         }
-        for codigo, nombres in sorted(por_plantilla.items())
+        for codigo in por_regla.keys() | declaradas.keys()
         if comunicaciones.plantilla_vigente(db, codigo) is None
     ]
+    # Por el nombre que lee el administrador, no por el codigo de Meta.
+    return sorted(faltantes, key=lambda p: orden_alfabetico(p["titulo"]))
+
+
+def orden_alfabetico(texto: str) -> str:
+    """Clave para ordenar como un diccionario: sin tildes ni mayusculas («Codigo» antes que
+    «Cuota»); sin esto, las letras con tilde van detras de la z."""
+    sin_tildes = unicodedata.normalize("NFKD", texto)
+    return "".join(c for c in sin_tildes if not unicodedata.combining(c)).casefold()
 
 
 def titulos_plantillas(db: Session) -> dict[str, str]:

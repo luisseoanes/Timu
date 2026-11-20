@@ -193,11 +193,14 @@ def _lista(valores: dict[str, str] | None) -> list[OpcionRegla] | None:
 
 
 class PlantillaFaltante(BaseModel):
-    """Una plantilla que citan las reglas y no esta aprobada y activa: sus avisos no salen."""
+    """Una plantilla que envia la plataforma y no esta aprobada y activa: esos mensajes no salen."""
 
     codigo: str
     titulo: str
+    # Las reglas activas que la citan.
     reglas: list[str]
+    # Lo que deja de enviarse sin ella, en minuscula («la bienvenida al afiliarse»).
+    usos: list[str]
     # False: no esta en el catalogo y hay que registrarla; True: esta, pero sin version aprobada.
     registrada: bool
 

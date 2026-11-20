@@ -12,6 +12,7 @@ from app.core.config import settings
 from app.core.database import acotar_publico, nuevo_id
 from app.core.enums import PropositoToken, Rol
 from app.core.errores import Conflicto, ErrorDominio, NoEncontrado, ReglaNegocio
+from app.core.plantillas import declarar_plantilla
 from app.core.security import (
     generar_token_opaco,
     hash_password,
@@ -34,6 +35,18 @@ Proposito = Literal["recuperacion", "activacion"]
 class EnlaceInvalido(ErrorDominio):
     status_code = 400
     codigo = "enlace_invalido"
+
+
+# Por WhatsApp a quien no tiene correo: sin la plantilla, el enlace no le llega.
+PLANTILLA_ACTIVAR = declarar_plantilla(
+    "activar_cuenta", "Activar la cuenta", "el enlace para activar la cuenta del portal"
+)
+PLANTILLA_RECUPERAR = declarar_plantilla(
+    "recuperar_clave", "Recuperar la contraseña", "el enlace para recuperar la contraseña"
+)
+PLANTILLA_CODIGO = declarar_plantilla(
+    "codigo_ingreso", "Código de ingreso", "el código para entrar al portal con el celular"
+)
 
 
 def _normalizar_identificador(identificador: str) -> tuple[str, str] | None:
@@ -171,7 +184,7 @@ def _enviar_enlace(db: Session, usuario: Usuario, proposito: Proposito, token: s
         )
         comunicaciones.encolar_correo(db, email=usuario.email, asunto=asunto, cuerpo=cuerpo)
     elif usuario.telefono:
-        plantilla = "recuperar_clave" if proposito == "recuperacion" else "activar_cuenta"
+        plantilla = PLANTILLA_RECUPERAR if proposito == "recuperacion" else PLANTILLA_ACTIVAR
         try:
             comunicaciones.encolar_plantilla(
                 db,
@@ -345,7 +358,7 @@ def solicitar_codigo(db: Session, telefono: str) -> None:
         comunicaciones.encolar_plantilla(
             db,
             telefono=usuario.telefono,
-            plantilla="codigo_ingreso",
+            plantilla=PLANTILLA_CODIGO,
             variables=[usuario.nombre, codigo],
         )
     except ReglaNegocio:

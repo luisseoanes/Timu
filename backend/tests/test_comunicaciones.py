@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import json
 from datetime import timedelta
+from pathlib import Path
 from uuid import UUID
 
 import pytest
@@ -434,3 +435,26 @@ async def test_la_plantilla_tiene_nombre_para_el_equipo_y_lo_conserva(client: As
         url, json={"nombre": "aviso_x", "cuerpo": "Hola de nuevo", "variables": []}, headers=headers
     )
     assert (segunda.json()["version"], segunda.json()["titulo"]) == (2, "Aviso de prueba")
+
+
+def test_cada_plantilla_que_envia_el_codigo_esta_declarada():
+    """6.19 Lo que falta configurar dice que plantillas faltan y que deja de enviarse sin ellas
+    (`core/plantillas.py`). Una plantilla escrita a mano en un envio se le escaparia: cada
+    `encolar_plantilla` la cita por una constante de `declarar_plantilla` o por una variable."""
+    import ast
+
+    from app.core.plantillas import plantillas_declaradas
+
+    sueltas = []
+    for fichero in Path("app/modules").rglob("*.py"):
+        for nodo in ast.walk(ast.parse(fichero.read_text())):
+            if (
+                isinstance(nodo, ast.Call)
+                and getattr(nodo.func, "attr", None) == "encolar_plantilla"
+            ):
+                for argumento in nodo.keywords:
+                    if argumento.arg == "plantilla" and isinstance(argumento.value, ast.Constant):
+                        sueltas.append(f"{fichero}:{nodo.lineno}")
+    assert sueltas == [], f"Plantilla escrita a mano: declararla con declarar_plantilla ({sueltas})"
+    for codigo in ("bienvenida", "activar_cuenta", "recordatorio_preventivo", "tecnico_en_camino"):
+        assert plantillas_declaradas()[codigo].usos, codigo

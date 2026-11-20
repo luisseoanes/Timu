@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.enums import EstadoServicio, Rol
 from app.core.errores import Conflicto, NoEncontrado, Prohibido, ReglaNegocio
 from app.core.eventos import declarar_evento
+from app.core.plantillas import declarar_plantilla
 from app.core.tiempo import ahora, hoy
 from app.modules.archivos import service as archivos
 from app.modules.archivos.models import Archivo
@@ -60,6 +61,11 @@ _PASOS_DESDE_LA_CONSULTA = {
 
 
 catalogos.conectar_campos_de_la_consulta(frozenset(_PASOS_DESDE_LA_CONSULTA))
+
+# Fuera de la ventana de 24 h, el aviso de que la respuesta esta en el portal (6.17).
+PLANTILLA_RESPUESTA = declarar_plantilla(
+    "respuesta_virtual", "Respuesta de la atención virtual", "el aviso de la respuesta virtual"
+)
 
 
 def vista_para(rol: Rol) -> Vista:
@@ -590,7 +596,7 @@ def responder(
                 comunicaciones.encolar_plantilla(
                     db,
                     telefono=familia.telefono,
-                    plantilla="respuesta_virtual",
+                    plantilla=PLANTILLA_RESPUESTA,
                     variables=[familia.titular_nombre],
                     familia_id=familia.id,
                 )

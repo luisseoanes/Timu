@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.core.database import acotar_publico
 from app.core.enums import ComoSigueMascota, EstadoServicio, TipoEncuesta
 from app.core.errores import NoEncontrado, ReglaNegocio
+from app.core.plantillas import declarar_plantilla
 from app.core.tiempo import ZONA_NEGOCIO, ahora, con_zona
 from app.modules.auth.models import Usuario
 from app.modules.catalogos.models import TipoServicioCatalogo
@@ -26,6 +27,14 @@ logger = structlog.get_logger(__name__)
 
 # Respuesta por WhatsApp: se acepta un numero de 1 a 5 dentro de este plazo desde el envio.
 VENTANA_RESPUESTA = timedelta(hours=72)
+
+# Las de la configuracion por defecto; Administracion puede elegir otras por tipo de servicio.
+PLANTILLA_ENCUESTA = declarar_plantilla(
+    "encuesta_satisfaccion", "Encuesta de satisfacción", "la encuesta después de cada servicio"
+)
+PLANTILLA_SEGUIMIENTO = declarar_plantilla(
+    "seguimiento_post", "Seguimiento después del servicio", "la pregunta de cómo sigue la mascota"
+)
 
 
 def configuracion(db: Session, tipo_servicio_codigo: str) -> ConfiguracionEncuesta:
@@ -43,9 +52,9 @@ def configuracion(db: Session, tipo_servicio_codigo: str) -> ConfiguracionEncues
     return general or ConfiguracionEncuesta(
         encuesta_activa=True,
         demora_horas=2,
-        plantilla_encuesta="encuesta_satisfaccion",
+        plantilla_encuesta=PLANTILLA_ENCUESTA,
         seguimiento_dias=None,
-        plantilla_seguimiento="seguimiento_post",
+        plantilla_seguimiento=PLANTILLA_SEGUIMIENTO,
         umbral_alerta=3,
     )
 

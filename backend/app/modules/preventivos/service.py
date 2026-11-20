@@ -14,6 +14,7 @@ from app.core.config import settings
 from app.core.database import acotar_publico
 from app.core.enums import EstadoServicio
 from app.core.errores import NoEncontrado, ReglaNegocio
+from app.core.plantillas import declarar_plantilla
 from app.core.tiempo import ahora, hoy
 from app.modules.archivos import service as archivos
 from app.modules.auth.models import Usuario
@@ -33,7 +34,11 @@ logger = structlog.get_logger(__name__)
 # Hasta esta edad se asume que la mascota no ha completado la serie inicial.
 EDAD_SERIE_INICIAL_SEMANAS = 52
 
-PLANTILLA_RECORDATORIO = "recordatorio_preventivo"
+PLANTILLA_RECORDATORIO = declarar_plantilla(
+    "recordatorio_preventivo",
+    "Recordatorio de preventivo",
+    "el recordatorio de vacunas y desparasitación",
+)
 
 
 def fechas_esquema(

@@ -13,6 +13,7 @@ from app.core.enums import EstadoServicio, TipoServicio
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.eventos import EventoDominio, declarar_evento
 from app.core.outbox import publicar
+from app.core.plantillas import declarar_plantilla
 from app.core.tiempo import ZONA_NEGOCIO, ahora, con_zona
 from app.integrations.routing import Coordenada, Visita, insertar_mas_barato, optimizar
 from app.modules.archivos import service as archivos
@@ -35,8 +36,12 @@ MODALIDADES_EN_CASA = (TipoServicio.DOMICILIARIO, TipoServicio.PREVENTIVO)
 # barrio, y quien sale a campo no debe leerlo como tal.
 BARRIO_SIN_REGISTRAR = "Sin registrar"
 
-PLANTILLA_VENTANA = "ventana_llegada"
-PLANTILLA_EN_CAMINO = "tecnico_en_camino"
+PLANTILLA_VENTANA = declarar_plantilla(
+    "ventana_llegada", "Ventana de llegada", "la franja en que llega el médico a casa"
+)
+PLANTILLA_EN_CAMINO = declarar_plantilla(
+    "tecnico_en_camino", "Médico en camino", "el aviso de que el médico va en camino"
+)
 
 
 def _segundos(dt: datetime) -> int:
