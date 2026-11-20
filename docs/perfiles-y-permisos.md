@@ -87,6 +87,8 @@ Además de qué rutas puede llamar cada perfil:
   escribe (6.17).
 - **Tareas**: cada perfil ve las de su área (`comercial` → Comercial; `cartera` y
   `servicio_cliente` → Atención al cliente; `operaciones` → Operaciones; `medico` → Médico).
+  Una tarea solo se asigna a quien ve su área. Guarda quién la pidió (o qué regla la creó) y lo dice en
+  la bandeja; quien la pide a otra área la sigue en «Pedidas por mí», sin trabajarla (2026-11-20).
 
 ## Pantallas que cruzan dominios
 

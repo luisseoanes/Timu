@@ -1,10 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import { TareasPage } from './TareasPage'
-import { USUARIO_ADMIN } from '@/test/handlers'
+import { sesionDe, USUARIO_ADMIN } from '@/test/handlers'
 import { server } from '@/test/server'
 import { renderizar } from '@/test/utils'
 import type { TareaListado } from '@/types'
@@ -24,16 +24,22 @@ const TAREA: TareaListado = {
   servicio_id: null,
   contrato_id: null,
   origen: null,
+  creada_por_id: null,
   cerrada_en: null,
   resolucion: null,
   created_at: '2026-10-18T10:00:00Z',
   familia: null,
   servicio: null,
+  creada_por: null,
+  origen_nombre: null,
 }
 
 const pagina = (items: unknown[]) => ({ items, total: items.length, limit: 25, offset: 0 })
 
 describe('TareasPage', () => {
+  // Las tareas de cartera son de Atención al cliente: la bandeja se abre con su perfil.
+  beforeEach(() => server.use(sesionDe('atencion_cliente')))
+
   it('dice en texto que una tarea está vencida y a quién afecta', async () => {
     server.use(
       http.get(`${API}/tareas`, () =>
@@ -96,7 +102,7 @@ describe('TareasPage', () => {
         ]),
       ),
       http.get(`${API}/tareas`, () =>
-        HttpResponse.json(pagina([TAREA, { ...TAREA, id: 't2', titulo: 'Cotizar plan', area: 'comercial', asignada_a_id: 'u4' }])),
+        HttpResponse.json(pagina([TAREA, { ...TAREA, id: 't2', titulo: 'Cotizar plan', area: 'servicio_cliente', asignada_a_id: 'u4' }])),
       ),
     )
     renderizar(<TareasPage />)
@@ -107,7 +113,7 @@ describe('TareasPage', () => {
     const comercial = screen.getByLabelText('Responsable de Cotizar plan')
     expect(within(comercial).getAllByRole('option').map((o) => o.textContent)).toEqual([
       'Sin asignar',
-      'Valentina Ríos',
+      'Mariana Ortiz',
       'Dra. Sara Martínez',
     ])
   })
@@ -117,6 +123,7 @@ describe('TareasPage', () => {
       http.get(`${API}/tareas`, () =>
         HttpResponse.json(pagina([{ ...TAREA, titulo: 'WhatsApp +573004445588: pasar a asesor', area: 'comercial', origen: 'conversacion' }])),
       ),
+      sesionDe('comercial'),
     )
     renderizar(<TareasPage />)
     expect(await screen.findByRole('link', { name: 'Ver la conversación' })).toHaveAttribute(
@@ -130,7 +137,7 @@ describe('TareasPage', () => {
     server.use(
       http.get(`${API}/tareas`, () => HttpResponse.json(pagina([TAREA]))),
       http.get(`${API}/auth/equipo`, () => HttpResponse.json([])),
-      http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'operaciones' })),
+      http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'atencion_cliente' })),
       http.patch(`${API}/tareas/t1/asignacion`, async ({ request }) => {
         asignacion = await request.json()
         return HttpResponse.json({ ...TAREA, asignada_a_id: USUARIO_ADMIN.id })
@@ -142,6 +149,41 @@ describe('TareasPage', () => {
     expect(within(fila).getByText('Alta')).toBeInTheDocument()
     await user.click(within(fila).getByRole('button', { name: 'Tomar' }))
     await waitFor(() => expect(asignacion).toEqual({ usuario_id: USUARIO_ADMIN.id }))
+  })
+
+  it('dice quién pidió cada tarea y las pedidas a otra área se siguen sin trabajarlas', async () => {
+    const pedidas: (string | null)[] = []
+    server.use(
+      sesionDe('comercial'),
+      http.get(`${API}/tareas`, ({ request }) => {
+        pedidas.push(new URL(request.url).searchParams.get('pedidas_por_mi'))
+        return HttpResponse.json(
+          pagina([
+            {
+              ...TAREA,
+              titulo: 'Revisar la dirección de Ana',
+              area: 'operaciones',
+              creada_por_id: 'u2',
+              creada_por: { id: 'u2', nombre: 'Valentina Ríos', rol: 'comercial' },
+            },
+            { ...TAREA, id: 't2', titulo: 'Gestionar renovación', area: 'comercial', origen: 'renovacion_30', origen_nombre: 'Gestionar renovación 30 días antes' },
+          ]),
+        )
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<TareasPage />)
+    await user.click(await screen.findByRole('button', { name: 'Pedidas por mí' }))
+    await waitFor(() => expect(pedidas.at(-1)).toBe('true'))
+    const pedida = (await screen.findByText('Revisar la dirección de Ana')).closest('tr')!
+    expect(within(pedida).getByText('Pedida por Valentina Ríos (Comercial)')).toBeInTheDocument()
+    // Es de Operaciones: se sigue, pero ni se toma, ni se cierra, ni se le cambia el responsable.
+    expect(within(pedida).queryByRole('button', { name: 'Tomar' })).not.toBeInTheDocument()
+    expect(within(pedida).queryByRole('button', { name: 'Cerrar' })).not.toBeInTheDocument()
+    expect(within(pedida).queryByRole('combobox')).not.toBeInTheDocument()
+    const automatica = screen.getByText('Gestionar renovación').closest('tr')!
+    expect(within(automatica).getByText('Automática: «Gestionar renovación 30 días antes»')).toBeInTheDocument()
+    expect(within(automatica).getByRole('button', { name: 'Cerrar' })).toBeInTheDocument()
   })
 
   it('cambia de vista y consulta con el filtro correspondiente', async () => {
@@ -196,6 +238,38 @@ describe('TareasPage', () => {
     await waitFor(() =>
       expect(creada).toEqual({ titulo: 'Confirmar dirección', area: 'operaciones', prioridad: 'alta', vence_en_dias: 2 }),
     )
+  })
+
+  it('al crear, el responsable se elige solo entre quienes ven el área', async () => {
+    let creada: unknown = null
+    server.use(
+      http.get(`${API}/auth/equipo`, () =>
+        HttpResponse.json([
+          { id: 'u1', nombre: 'Mariana Ortiz', rol: 'atencion_cliente' },
+          { id: 'u3', nombre: 'Carlos Peña', rol: 'operaciones' },
+          { id: 'u4', nombre: 'Laura Gómez', rol: 'gerencia' },
+        ]),
+      ),
+      http.post(`${API}/tareas`, async ({ request }) => {
+        creada = await request.json()
+        return HttpResponse.json(TAREA, { status: 201 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<TareasPage />)
+    await user.click(await screen.findByRole('button', { name: /nueva tarea/i }))
+    const modal = await screen.findByRole('dialog')
+    const responsable = within(modal).getByLabelText('Responsable (opcional)')
+    await waitFor(() => expect(within(responsable).getAllByRole('option')).toHaveLength(2))
+    expect(within(responsable).getAllByRole('option').map((o) => o.textContent)).toEqual(['La toma alguien del área', 'Carlos Peña'])
+    await user.selectOptions(responsable, 'u3')
+    // Otra área: el responsable de la anterior ya no vale.
+    await user.selectOptions(within(modal).getByLabelText('¿Para qué área?'), 'cartera')
+    expect(within(modal).getByLabelText('Responsable (opcional)')).toHaveValue('')
+    await user.selectOptions(within(modal).getByLabelText('Responsable (opcional)'), 'u1')
+    await user.type(within(modal).getByLabelText('Qué hay que hacer'), 'Llamar a Ana')
+    await user.click(within(modal).getByRole('button', { name: 'Crear tarea' }))
+    await waitFor(() => expect(creada).toMatchObject({ area: 'cartera', asignada_a_id: 'u1' }))
   })
 
   it('muestra el error del servidor', async () => {

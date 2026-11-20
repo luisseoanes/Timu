@@ -50,6 +50,7 @@ class TareaRead(BaseModel):
     servicio_id: UUID | None
     contrato_id: UUID | None
     origen: str | None
+    creada_por_id: UUID | None
     cerrada_en: datetime | None
     resolucion: str | None
     created_at: datetime
@@ -66,11 +67,20 @@ class ServicioDeTarea(BaseModel):
     mascota_nombre: str | None
 
 
+class PersonaDeTarea(BaseModel):
+    id: UUID
+    nombre: str
+    rol: Rol
+
+
 class TareaListado(TareaRead):
-    """Fila de la bandeja: la tarea con a quien afecta (R2-PAN-05)."""
+    """Fila de la bandeja: la tarea con a quien afecta (R2-PAN-05) y quien la pidio, o la regla
+    que la creo (`origen_nombre`)."""
 
     familia: FamiliaDeTarea | None
     servicio: ServicioDeTarea | None
+    creada_por: PersonaDeTarea | None
+    origen_nombre: str | None
 
 
 class Asignacion(BaseModel):
@@ -93,12 +103,16 @@ async def bandeja(
     vencidas: bool = False,
     familia_id: UUID | None = None,
     excluir_origen: str | None = None,
+    pedidas_por_mi: bool = False,
 ) -> Page[TareaListado]:
     """Por defecto: prioridad (alta primero) y luego vencimiento mas cercano. `pendiente` son
     las abiertas y las en progreso; `excluir_origen` deja fuera las que ya cuenta otra bandeja
-    (las de una conversacion, que el Inicio de Comercial dice como conversacion)."""
+    (las de una conversacion, que el Inicio de Comercial dice como conversacion).
+    `pedidas_por_mi`: las que pidio quien pregunta, tambien las de otras areas, para seguirlas
+    (decidido con el usuario el 2026-11-20); trabajarlas sigue siendo del area."""
     stmt = service.consulta(
-        areas=service.AREAS_POR_ROL[usuario.rol],
+        areas=None if pedidas_por_mi else service.AREAS_POR_ROL[usuario.rol],
+        creada_por_id=usuario.id if pedidas_por_mi else None,
         area=area,
         estado=estado,
         asignada_a_id=usuario.id if mias else None,
@@ -123,12 +137,23 @@ async def bandeja(
         {t.familia_id for t in pagina.items if t.familia_id},
         {t.servicio_id for t in pagina.items if t.servicio_id},
     )
+    personas, reglas = await db.run_sync(
+        service.quien_la_pidio,
+        {t.creada_por_id for t in pagina.items if t.creada_por_id},
+        {t.origen for t in pagina.items if t.origen},
+    )
     return Page[TareaListado](
         items=[
             TareaListado(
                 **t.model_dump(),
                 familia=FamiliaDeTarea(**familias[t.familia_id]) if t.familia_id else None,
                 servicio=ServicioDeTarea(**servicios[t.servicio_id]) if t.servicio_id else None,
+                creada_por=(
+                    PersonaDeTarea(**personas[t.creada_por_id])
+                    if t.creada_por_id in personas
+                    else None
+                ),
+                origen_nombre=reglas.get(t.origen) if t.origen else None,
             )
             for t in pagina.items
         ],
@@ -139,9 +164,10 @@ async def bandeja(
 
 
 @router.post("", response_model=TareaRead, status_code=status.HTTP_201_CREATED)
-async def crear(db: DbSession, data: TareaCreate) -> Tarea:
+async def crear(db: DbSession, usuario: Operativo, data: TareaCreate) -> Tarea:
     tarea = await db.run_sync(
         service.crear,
+        creada_por_id=usuario.id,
         titulo=data.titulo,
         descripcion=data.descripcion,
         area=data.area,

@@ -1232,6 +1232,7 @@ _LISTADOS = (
     "/api/v1/cartera/eventos-pasarela?estado=error",
     "/api/v1/cartera/eventos-pasarela/recuentos",
     # El buscador de Mensajes: texto libre (trigramas), una conversacion y un rango de fechas.
+    "/api/v1/tareas?pedidas_por_mi=true",
     "/api/v1/comunicaciones/mensajes?q=vacuna",
     "/api/v1/comunicaciones/mensajes?q=3001112",
     "/api/v1/comunicaciones/mensajes?destino=%2B573001112233&orden=-created_at&limit=200",

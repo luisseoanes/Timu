@@ -33,6 +33,7 @@ def crear(
     contrato_id: UUID | None = None,
     origen: str | None = None,
     clave: str | None = None,
+    creada_por_id: UUID | None = None,
 ) -> Tarea | None:
     """Crea la tarea. Con `clave`, si ya existe no crea otra y devuelve None."""
     if clave and db.scalar(select(Tarea.id).where(Tarea.clave == clave)):
@@ -48,6 +49,7 @@ def crear(
         contrato_id=contrato_id,
         origen=origen,
         clave=clave,
+        creada_por_id=creada_por_id,
     )
     db.add(tarea)
     db.flush()
@@ -86,6 +88,7 @@ def consulta(
     vencidas: bool = False,
     familia_id: UUID | None = None,
     excluir_origen: str | None = None,
+    creada_por_id: UUID | None = None,
 ) -> Select[tuple[Tarea]]:
     stmt = select(Tarea)
     if areas is not None:
@@ -105,6 +108,8 @@ def consulta(
         stmt = stmt.where(Tarea.vence_el < hoy(), Tarea.estado != "cerrada")
     if familia_id:
         stmt = stmt.where(Tarea.familia_id == familia_id)
+    if creada_por_id:
+        stmt = stmt.where(Tarea.creada_por_id == creada_por_id)
     if excluir_origen:
         stmt = stmt.where(or_(Tarea.origen.is_(None), Tarea.origen != excluir_origen))
     return stmt
@@ -184,6 +189,37 @@ _describir_servicios: DescribirServicios | None = None
 def conectar_servicios(describir: DescribirServicios) -> None:
     global _describir_servicios
     _describir_servicios = describir
+
+
+# El nombre de la regla que creo una tarea (su `origen` es el codigo). reglas no puede ser importado
+# aqui sin cerrar un ciclo: reglas le conecta como nombrar sus codigos al importarse.
+NombrarOrigenes = Callable[[Session, set[str]], dict[str, str]]
+
+_nombrar_origenes: NombrarOrigenes | None = None
+
+
+def conectar_origenes(nombrar: NombrarOrigenes) -> None:
+    global _nombrar_origenes
+    _nombrar_origenes = nombrar
+
+
+def quien_la_pidio(
+    db: Session, creadores: set[UUID], origenes: set[str]
+) -> tuple[dict[UUID, dict[str, Any]], dict[str, str]]:
+    """Quien pidio cada tarea de la pagina (su nombre y perfil) y el nombre de la regla de las
+    automaticas, en lote."""
+    personas = (
+        {
+            u.id: {"id": u.id, "nombre": u.nombre, "rol": u.rol}
+            for u in db.execute(
+                select(Usuario.id, Usuario.nombre, Usuario.rol).where(Usuario.id.in_(creadores))
+            )
+        }
+        if creadores
+        else {}
+    )
+    reglas = _nombrar_origenes(db, origenes) if origenes and _nombrar_origenes else {}
+    return personas, reglas
 
 
 def a_quien_afecta(

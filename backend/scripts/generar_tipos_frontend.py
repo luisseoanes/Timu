@@ -67,6 +67,7 @@ ESQUEMAS = [
     "EventoPasarelaRead",
     "TareaRead",
     "TareaListado",
+    "PersonaDeTarea",
     "FamiliaDeTarea",
     "ServicioDeTarea",
     "ServicioRead",

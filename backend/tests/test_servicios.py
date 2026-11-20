@@ -12,6 +12,7 @@ from app.core.auditoria import Accion, RegistroAuditoria
 from app.core.enums import Rol
 from app.core.tiempo import ZONA_NEGOCIO, ahora, hoy
 from app.modules.familias.models import Familia, Mascota
+from app.modules.reglas.models import Regla
 from app.modules.servicios.models import Franja, Pendiente, Servicio, ServicioPaso
 from app.modules.tareas.models import Tarea
 from tests import fabricas
@@ -401,6 +402,54 @@ async def test_una_tarea_solo_se_asigna_a_quien_ve_su_area(
         headers=headers,
     )
     assert ok.status_code == 200, ok.text
+
+
+async def test_quien_pide_una_tarea_a_otra_area_la_sigue_y_el_area_la_trabaja(
+    client: AsyncClient, db, equipo
+):
+    """Comercial pide una tarea a Operaciones: le llega sin responsable (la toma alguien del
+    area) y diciendo quien la pidio; Comercial la sigue en «Pedidas por mi», sin trabajarla."""
+    comercial = await login(client, equipo[Rol.COMERCIAL].email)
+    operaciones = await login(client, equipo[Rol.OPERACIONES].email)
+    creada = await client.post(
+        "/api/v1/tareas",
+        json={"titulo": "Revisar la direccion de Ana", "area": "operaciones"},
+        headers=comercial,
+    )
+    assert creada.status_code == 201, creada.text
+    tarea_id = creada.json()["id"]
+
+    def titulos(resp):
+        return [t["titulo"] for t in resp.json()["items"]]
+
+    # Operaciones la ve, sin responsable, y sabe quien la pidio.
+    bandeja = await client.get("/api/v1/tareas", headers=operaciones)
+    [fila] = [t for t in bandeja.json()["items"] if t["id"] == tarea_id]
+    assert fila["asignada_a_id"] is None
+    assert fila["creada_por"]["nombre"] == equipo[Rol.COMERCIAL].nombre
+    assert fila["creada_por"]["rol"] == "comercial"
+    # Comercial no la tiene en su bandeja (es de otra area), pero si en las que pidio.
+    assert "Revisar la direccion de Ana" not in titulos(
+        await client.get("/api/v1/tareas", headers=comercial)
+    )
+    pedidas = await client.get("/api/v1/tareas", params={"pedidas_por_mi": True}, headers=comercial)
+    assert titulos(pedidas) == ["Revisar la direccion de Ana"]
+    # Seguirla no es trabajarla: tomarla o cerrarla es del area.
+    tomar = await client.post(f"/api/v1/tareas/{tarea_id}/iniciar", headers=comercial)
+    assert tomar.status_code == 404
+
+
+async def test_la_bandeja_dice_que_regla_creo_cada_tarea_automatica(
+    client: AsyncClient, db, headers
+):
+    regla = await db.scalar(select(Regla).where(Regla.activa).limit(1))
+    db.add(Tarea(titulo="Llamar por la renovacion", area="cartera", origen=regla.codigo))
+    await db.commit()
+    nombre = regla.nombre
+    bandeja = await client.get("/api/v1/tareas", headers=headers)
+    [fila] = [t for t in bandeja.json()["items"] if t["titulo"] == "Llamar por la renovacion"]
+    assert fila["origen_nombre"] == nombre
+    assert fila["creada_por"] is None
 
 
 async def test_bandeja_asigna_prioriza_y_cierra(client: AsyncClient, equipo, headers):

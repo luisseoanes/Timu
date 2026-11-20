@@ -395,6 +395,7 @@ export interface TareaRead {
   servicio_id: string | null
   contrato_id: string | null
   origen: string | null
+  creada_por_id: string | null
   cerrada_en: string | null
   resolucion: string | null
   created_at: string
@@ -413,11 +414,20 @@ export interface TareaListado {
   servicio_id: string | null
   contrato_id: string | null
   origen: string | null
+  creada_por_id: string | null
   cerrada_en: string | null
   resolucion: string | null
   created_at: string
   familia: FamiliaDeTarea | null
   servicio: ServicioDeTarea | null
+  creada_por: PersonaDeTarea | null
+  origen_nombre: string | null
+}
+
+export interface PersonaDeTarea {
+  id: string
+  nombre: string
+  rol: Rol
 }
 
 export interface FamiliaDeTarea {

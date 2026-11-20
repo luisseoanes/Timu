@@ -30,6 +30,8 @@ export interface FiltrosTareas {
   sin_asignar?: boolean
   vencidas?: boolean
   familia_id?: string
+  /** Las que pidió quien pregunta, también de otras áreas: para seguirlas, no para trabajarlas. */
+  pedidas_por_mi?: boolean
   limit?: number
   offset?: number
 }

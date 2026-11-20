@@ -22,6 +22,7 @@ from app.modules.reglas.contextos import Contexto
 from app.modules.reglas.datos import PLANTILLAS_DE_LAS_REGLAS, REGLAS
 from app.modules.reglas.models import Regla
 from app.modules.reglas.motor import cumple, vigente
+from app.modules.tareas import service as tareas
 
 
 @dataclass(frozen=True)
@@ -266,3 +267,12 @@ def titulos_plantillas(db: Session) -> dict[str, str]:
     """El nombre de cada plantilla para decir una regla en palabras: el del catalogo y, para las
     de mora que aun no estan en el, el provisional."""
     return {**PLANTILLAS_DE_LAS_REGLAS, **comunicaciones.titulos_plantillas(db)}
+
+
+def _nombres_de_reglas(db: Session, codigos: set[str]) -> dict[str, str]:
+    """El nombre de cada regla por su codigo: la bandeja de tareas dice que regla creo cada una."""
+    filas = db.execute(select(Regla.codigo, Regla.nombre).where(Regla.codigo.in_(codigos)))
+    return dict(filas.tuples().all())
+
+
+tareas.conectar_origenes(_nombres_de_reglas)

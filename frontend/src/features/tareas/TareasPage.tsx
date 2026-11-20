@@ -11,7 +11,8 @@ import { useNombreTipoServicio } from '@/features/catalogos'
 import { SelectorFamilia } from '@/features/familias'
 import { mensajeError } from '@/lib/errores'
 import { fechaCortaConDia, hoyISO } from '@/lib/formato'
-import type { FamiliaRead, TareaRead } from '@/types'
+import { NOMBRE_ROL, puede } from '@/lib/permisos'
+import type { FamiliaRead, TareaListado, TareaRead } from '@/types'
 
 
 import {
@@ -26,16 +27,26 @@ import {
   type FiltrosTareas,
 } from './api'
 
-type Vista = 'mias' | 'sin_asignar' | 'vencidas' | 'todas'
+type Vista = 'mias' | 'pedidas' | 'sin_asignar' | 'vencidas' | 'todas'
 
 const VISTAS: { valor: Vista; label: string }[] = [
   { valor: 'mias', label: 'Mis tareas' },
+  // Las que pedí, también a otras áreas: para seguirlas (decidido con el usuario el 2026-11-20).
+  { valor: 'pedidas', label: 'Pedidas por mí' },
   { valor: 'sin_asignar', label: 'Sin asignar' },
   { valor: 'vencidas', label: 'Vencidas' },
   { valor: 'todas', label: 'Todas' },
 ]
 
 const POR_PAGINA = 25
+
+/** De dónde salió una tarea que no pidió nadie desde el panel, en palabras. */
+function origenAutomatico(t: TareaListado): string | null {
+  if (t.origen === 'conversacion') return 'el asistente de WhatsApp la pasó a un asesor'
+  if (t.origen === 'encuesta') return 'una encuesta con novedad'
+  if (t.origen_nombre) return `«${t.origen_nombre}»`
+  return null
+}
 
 /** Bandeja de tareas del equipo (6.4): lo que alguien tiene que resolver y para cuándo. */
 export function TareasPage() {
@@ -57,6 +68,7 @@ export function TareasPage() {
     mias: vista === 'mias' || undefined,
     sin_asignar: vista === 'sin_asignar' || undefined,
     vencidas: vista === 'vencidas' || undefined,
+    pedidas_por_mi: vista === 'pedidas' || undefined,
     limit: POR_PAGINA,
     offset,
   }
@@ -136,6 +148,9 @@ export function TareasPage() {
                   {d.items.map((t) => {
                     const vencida = t.estado !== 'cerrada' && t.vence_el !== null && t.vence_el < hoyISO()
                     const area = AREAS.find((a) => a.valor === t.area)?.label ?? t.area
+                    // Una de otra área (en «Pedidas por mí») se sigue, pero la trabaja su área.
+                    const trabajable = Boolean(usuario && PERFILES_DEL_AREA[t.area as Area]?.includes(usuario.rol))
+                    const automatica = origenAutomatico(t)
                     return (
                       <tr key={t.id}>
                         <td className="principal" data-etiqueta="Tarea">
@@ -146,6 +161,13 @@ export function TareasPage() {
                           {/* A quién afecta: la familia y, si es de un servicio, cuál y de quién. */}
                           <div className="bandeja-detalle">
                             <span>{area}</span>
+                            {t.creada_por ? (
+                              <span>
+                                Pedida por {t.creada_por.nombre} ({NOMBRE_ROL[t.creada_por.rol]})
+                              </span>
+                            ) : (
+                              automatica && <span>Automática: {automatica}</span>
+                            )}
                             {t.familia && <Link to={`/panel/familias/${t.familia.id}`}>{t.familia.titular_nombre}</Link>}
                             {t.servicio && (
                               <Link to={`/panel/servicios/${t.servicio.id}`}>
@@ -172,7 +194,7 @@ export function TareasPage() {
                           <Distintivo dominio="prioridad" valor={t.prioridad} />
                         </td>
                         <td data-etiqueta="Responsable">
-                          {t.estado !== 'cerrada' ? (
+                          {t.estado !== 'cerrada' && trabajable ? (
                             <select
                               className="input tarea-responsable"
                               value={t.asignada_a_id ?? ''}
@@ -192,6 +214,8 @@ export function TareasPage() {
                           )}
                         </td>
                         <td className="tabla-acciones">
+                          {trabajable && (
+                            <>
                           {/* La del asistente de WhatsApp es la conversación: se atiende allí, y al
                               terminarla la tarea se cierra sola. */}
                           {t.origen === 'conversacion' && t.estado !== 'cerrada' && (
@@ -214,6 +238,8 @@ export function TareasPage() {
                               Cerrar
                             </button>
                           )}
+                            </>
+                          )}
                         </td>
                       </tr>
                     )
@@ -233,7 +259,12 @@ export function TareasPage() {
 
 function NuevaTareaModal({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => void }) {
   const crear = useCrearTarea()
+  const { usuario } = useAuth()
+  const equipo = useEquipo()
   const [familia, setFamilia] = useState<FamiliaRead | null>(null)
+  const [area, setArea] = useState<Area>('operaciones')
+  // El responsable, solo entre quienes ven el área: a otro se le perdería (Sección 12).
+  const delArea = (equipo.data ?? []).filter((u) => PERFILES_DEL_AREA[area].includes(u.rol))
 
   function guardar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -243,10 +274,11 @@ function NuevaTareaModal({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
       {
         titulo: String(d.get('titulo')).trim(),
         descripcion: String(d.get('descripcion') ?? '').trim() || undefined,
-        area: d.get('area') as Area,
+        area,
         prioridad: d.get('prioridad') as 'baja' | 'media' | 'alta',
         vence_en_dias: dias ? Number(dias) : undefined,
         familia_id: familia?.id,
+        asignada_a_id: String(d.get('asignada_a_id') ?? '') || undefined,
       },
       {
         onSuccess: () => {
@@ -283,13 +315,23 @@ function NuevaTareaModal({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
           <textarea className="input" name="descripcion" rows={2} />
         </label>
         <label className="campo">
-          <span>Área</span>
-          <select className="input" name="area" defaultValue="operaciones">
+          <span>¿Para qué área?</span>
+          <select className="input" name="area" value={area} onChange={(e) => setArea(e.target.value as Area)}>
             {AREAS.map((a) => (
               <option key={a.valor} value={a.valor}>{a.label}</option>
             ))}
           </select>
         </label>
+        <div className="campo">
+          <label htmlFor="nueva-tarea-responsable">Responsable (opcional)</label>
+          {/* `key`: al cambiar de área, el responsable elegido de la otra ya no vale. */}
+          <select key={area} id="nueva-tarea-responsable" className="input" name="asignada_a_id" defaultValue="">
+            <option value="">La toma alguien del área</option>
+            {delArea.map((u) => (
+              <option key={u.id} value={u.id}>{u.nombre}</option>
+            ))}
+          </select>
+        </div>
         <label className="campo">
           <span>Prioridad</span>
           <select className="input" name="prioridad" defaultValue="media">
@@ -302,9 +344,12 @@ function NuevaTareaModal({ abierto, onCerrar }: { abierto: boolean; onCerrar: ()
           <span>Vence en (días)</span>
           <input className="input" name="vence_en_dias" type="number" min={0} />
         </label>
-        <div className="ancho">
-          <SelectorFamilia valor={familia} onCambio={setFamilia} etiqueta="Familia relacionada (opcional)" />
-        </div>
+        {/* Buscar una familia pide verlas: el médico, que también crea tareas, no las ve. */}
+        {puede(usuario, 'verFamilias') && (
+          <div className="ancho">
+            <SelectorFamilia valor={familia} onCambio={setFamilia} etiqueta="Familia relacionada (opcional)" />
+          </div>
+        )}
         {crear.isError && (
           <p className="error ancho" role="alert">
             {mensajeError(crear.error, 'No fue posible crear la tarea.')}

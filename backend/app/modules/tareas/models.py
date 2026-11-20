@@ -29,6 +29,8 @@ class Tarea(Base, UUIDMixin, TimestampMixin, Auditable):
     estado: Mapped[str] = mapped_column(EnumDb(EstadoTarea), default="abierta", index=True)
     vence_el: Mapped[date | None] = mapped_column(Date, index=True)
     asignada_a_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
+    # Quien la pidio desde el panel; vacio si la creo una regla o el sistema (mira `origen`).
+    creada_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
     familia_id: Mapped[UUID | None] = mapped_column(ForeignKey("familias.id"), index=True)
     servicio_id: Mapped[UUID | None] = mapped_column(ForeignKey("servicios.id"), index=True)
     contrato_id: Mapped[UUID | None] = mapped_column(ForeignKey("contratos.id"), index=True)
