@@ -198,6 +198,8 @@ servicio necesita `del_medico(db, servicio_id, medico)`. Las trampas conocidas, 
 
 - **Nunca dos `pytest` a la vez contra `db-test`**, tampoco el de un subagente (un revisor): el fixture
   `esquema` recrea el esquema al arrancar y la otra suite deja de valer.
+- Para ver que una prueba de RLS falla sin el arreglo, quita la matriz **y** la migración: la base de
+  pruebas se crea con las migraciones, y con la migración puesta la prueba sigue pasando.
 - Dentro de una prueba todo comparte `created_at`: se comparan conjuntos, no órdenes por fecha.
 - Tras `await db.commit()` los objetos ORM caducan (`MissingGreenlet`): guarda los ids antes.
 - Una fila con estado avanzado se inserta ya en él: el trigger de transiciones solo valida `UPDATE`.
