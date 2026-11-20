@@ -435,6 +435,142 @@ def equipo() -> Equipo:
 # de Meta en el worker (`procesar_evento_whatsapp`), en orden y en su propia transacción: por el
 # webhook esperaría al drenado del outbox, de minuto en minuto, y podría responderse desordenado.
 NUMERO_CONVERSACION = "573004445588"
+# Las plantillas de WhatsApp que envia la plataforma, con texto provisional y dadas por aprobadas
+# (decidido con el usuario el 2026-11-20): asi salen en la demo los avisos de mora, los
+# recordatorios, la bienvenida y el seguimiento (6.2, 6.8, 6.19, 6.21), y quedan en el historial de
+# cada familia. El texto y la aprobacion en Meta los pone TIMU (docs/pendientes-externos.md).
+# «Medico en camino» queda sin registrar a proposito: Administracion la ve en «Lo que falta
+# configurar». (nombre, titulo, categoria, cuerpo, variables)
+PLANTILLAS_DEMO = [
+    (
+        "aviso_mora",
+        "Aviso de mora",
+        "utility",
+        "Hola {{1}}, tu plan TIMU tiene un saldo de {{2}} desde el {{3}}. Ponte al día para que "
+        "tu peludo siga protegido.",
+        ["titular", "saldo", "vencimiento"],
+    ),
+    (
+        "cuota_vencida",
+        "Cuota vencida",
+        "utility",
+        "Hola {{1}}, tu cuota de {{2}} venció el {{3}}. Puedes pagarla por los medios de siempre.",
+        ["titular", "saldo", "vencimiento"],
+    ),
+    (
+        "aviso_congelamiento",
+        "Aviso de congelamiento",
+        "utility",
+        "Hola {{1}}, tu saldo de {{2}} sigue pendiente desde el {{3}}. Si no se paga, el plan se "
+        "congela y se pausan los servicios.",
+        ["titular", "saldo", "vencimiento"],
+    ),
+    (
+        "afiliacion_congelada",
+        "Afiliación congelada",
+        "utility",
+        "Hola {{1}}, tu plan TIMU quedó congelado por el saldo pendiente. Al pagar se reactiva "
+        "enseguida.",
+        ["titular"],
+    ),
+    (
+        "afiliacion_reactivada",
+        "Afiliación reactivada",
+        "utility",
+        "Hola {{1}}, recibimos tu pago: tu plan TIMU está activo otra vez. ¡Gracias!",
+        ["titular"],
+    ),
+    (
+        "bienvenida",
+        "Bienvenida",
+        "utility",
+        "¡Bienvenidos a TIMU, {{1}}! Ya están afiliados: {{2}}. Te escribimos para agendar la "
+        "primera visita.",
+        ["titular", "peludos"],
+    ),
+    (
+        "completar_afiliacion",
+        "Completar la afiliación",
+        "utility",
+        "Hola {{1}}, completa la afiliación de tu peludo en este enlace: {{2}}",
+        ["nombre", "enlace"],
+    ),
+    (
+        "recordatorio_preventivo",
+        "Recordatorio de preventivo",
+        "utility",
+        "Hola {{1}}, a {{2}} le toca {{3}} el {{4}}. Responde a este mensaje para agendarlo.",
+        ["titular", "mascota", "preventivo", "fecha"],
+    ),
+    (
+        "ventana_llegada",
+        "Ventana de llegada",
+        "utility",
+        "Hola {{1}}, el médico de TIMU llega a tu casa entre las {{2}} y las {{3}}.",
+        ["titular", "desde", "hasta"],
+    ),
+    (
+        "seguimiento_post",
+        "Seguimiento después del servicio",
+        "utility",
+        "Hola {{1}}, ¿cómo sigue {{2}} después de la atención? ¿Tienen alguna duda con la "
+        "medicación o las recomendaciones? Cuéntanos aquí: {{3}}",
+        ["titular", "mascota", "enlace"],
+    ),
+    (
+        "respuesta_virtual",
+        "Respuesta de la atención virtual",
+        "utility",
+        "Hola {{1}}, el médico de TIMU ya respondió tu consulta virtual. Mírala en el portal.",
+        ["titular"],
+    ),
+    (
+        "activar_cuenta",
+        "Activar la cuenta",
+        "utility",
+        "Hola {{1}}, activa tu cuenta del portal de TIMU en este enlace: {{2}}",
+        ["nombre", "enlace"],
+    ),
+    (
+        "recuperar_clave",
+        "Recuperar la contraseña",
+        "utility",
+        "Hola {{1}}, para crear una contraseña nueva entra a: {{2}}",
+        ["nombre", "enlace"],
+    ),
+    (
+        "codigo_ingreso",
+        "Código de ingreso",
+        "authentication",
+        "Hola {{1}}, tu código para entrar a TIMU es {{2}}. No lo compartas.",
+        ["nombre", "codigo"],
+    ),
+]
+
+
+def plantillas_whatsapp(c: Cliente) -> None:
+    """Registra las que falten y las da por aprobadas; al aprobarse, se activan solas."""
+    existentes = {p["nombre"] for p in c.get("/comunicaciones/plantillas")}
+    for nombre, titulo, categoria, cuerpo, variables in PLANTILLAS_DEMO:
+        if nombre in existentes:
+            continue
+        nueva = c.post(
+            "/comunicaciones/plantillas",
+            {
+                "nombre": nombre,
+                "titulo": titulo,
+                "categoria": categoria,
+                "cuerpo": cuerpo,
+                "variables": variables,
+            },
+        )
+        if nueva:
+            c.http.patch(
+                f"/comunicaciones/plantillas/{nueva['id']}/estado",
+                json={"estado_aprobacion": "aprobada", "activa": True},
+            )
+
+
 CONVERSACION = ("Hola", "1", "Bogotá", "quiero hablar con un asesor")
 
 
@@ -918,6 +1054,9 @@ def main() -> None:
         for i, interesado in enumerate(c.get("/comercial/interesados", limit=10)["items"]):
             etapa = ("contactado", "cotizado", "en_afiliacion")[i % 3]
             c.http.patch(f"/comercial/interesados/{interesado['id']}", json={"etapa": etapa})
+
+    print("Plantillas de WhatsApp (provisionales)")
+    plantillas_whatsapp(c)
 
     print("Conversación de WhatsApp")
     conversacion_de_prueba(c)

@@ -57,6 +57,23 @@ con historia (decidido con el usuario el 2026-11-16, `DEU-14`). Siembra:
   `demo12345`). Atención al cliente emite cada remisión y la clínica reporta la atención por la API,
   repartidas en los últimos tres meses y también en el mes en curso.
 
+- **Lo que ninguna pantalla tenía** (revisión del 2026-11-20, `complementos`): la configuración de
+  encuestas con seguimiento post atención por tipo de servicio (6.20, 6.21), tres segmentos (6.16),
+  un reporte semanal de Gerencia (Sección 8), dos contactos de Claudia Rincón y un examen subido a
+  la ficha de Patricia Lozano (6.1), cuatro pendientes de consultas del médico de Bogotá (uno sin
+  autorización, uno esperando, uno autorizado en gestión y uno rechazado; 6.6), un examen adjunto
+  y una fórmula (6.14), el cambio de plan de Tom y el retiro de Oliver de la manada de Claudia
+  (6.3), dos registros en línea, uno por pagar y otro pagado por transferencia (6.12), y **la agenda
+  de los próximos 12 días** sin rutear: consultas a domicilio mientras las familias tengan cupo y,
+  después, preventivos programados que se autorizan y se agendan como en la bandeja (6.5, 6.7, 6.8).
+  Operaciones planea esas rutas y el médico las recorre mientras se prueba.
+
+`datos_demo` registra además las plantillas de WhatsApp que envía la plataforma, con texto
+provisional y aprobadas (`PLANTILLAS_DEMO`), salvo «Médico en camino», que queda sin registrar para
+que Administración vea «Lo que falta configurar». Con ellas salen los avisos de mora, los
+recordatorios de preventivos, la bienvenida y el seguimiento, y quedan en el historial de cada
+familia.
+
 Si su primera familia ya existe, no hace nada. Las aliadas de Medellín se pueden añadir a una base
 que ya tenía la operación, sin vaciarla (una clínica con remisiones ya está sembrada):
 
@@ -64,6 +81,15 @@ que ya tenía la operación, sin vaciarla (una clínica con remisiones ya está 
 docker compose exec -T -w /app api python -c "from datetime import datetime; \
 from scripts import operacion_demo as op; from scripts.datos_demo import BOGOTA; \
 op.aliadas_medellin(op.equipo(), op.dueno(), datetime.now(BOGOTA).date())"
+```
+
+Lo de la revisión del 2026-11-20, sobre una base ya sembrada (cada parte mira si ya está; la agenda
+completa cada día hasta sus visitas): `datos_demo` otra vez, por las plantillas, y
+
+```bash
+docker compose exec -T -w /app api python -c "from datetime import datetime; \
+from scripts import operacion_demo as op; from scripts.datos_demo import BOGOTA, Cliente, CLAVE_EQUIPO; \
+op.complementos(op.equipo(), Cliente('medico@timu.co', CLAVE_EQUIPO), datetime.now(BOGOTA).date())"
 ```
 
 Igual con los interesados de WhatsApp de una base sembrada antes del 2026-11-20, que se crearon a mano

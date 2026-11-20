@@ -1533,6 +1533,369 @@ def campana_enviada(c: Cliente, motor: Any) -> None:
         )
 
 
+# --- Lo que la operacion no dejaba (revision del 2026-11-20) --------------------------------
+#
+# Pantallas que quedaban vacias en la demo: cada paso crea lo suyo solo si falta, asi que se
+# aplica tambien sobre una base que ya tenia la operacion, sin vaciarla (como `aliadas_medellin`).
+
+# Un PDF minimo y valido: un examen que la familia trajo de fuera (6.1, 6.14).
+PDF_DEMO = (
+    b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"
+    b"2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n"
+    b"3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 300 144]>>endobj\n"
+    b"trailer<</Root 1 0 R>>\n%%EOF\n"
+)
+
+# 6.16 Segmentos guardados que Comercial reutiliza en sus campanas.
+SEGMENTOS = [
+    (
+        "Perros mayores de 8 años",
+        "Para la campaña de chequeo geriátrico.",
+        {"especies": ["canino"], "edad_min_anios": 8, "estados": ["activa"]},
+    ),
+    (
+        "Familias en mora de más de 15 días",
+        "Para el seguimiento de cartera por WhatsApp.",
+        {"dias_mora_min": 15},
+    ),
+    (
+        "Preventivos vencidos en Medellín",
+        "Vacunas o desparasitaciones atrasadas.",
+        {"ciudades": ["Medellín"], "preventivo_vencido": True},
+    ),
+]
+
+# 6.12 Familias que llenaron el registro en la web y aun no pagan: Comercial les ve el pago por
+# hacer y puede registrar el pago manual. (ciudad, contacto, peludos, si Comercial ya registro el
+# pago, que deja el enlace para completar la ficha)
+REGISTROS_EN_LINEA = [
+    (
+        "Medellín",
+        ("Camila Restrepo", "3004561201", "camila.restrepo@example.com"),
+        [("Simba", "felino", "colita_feliz")],
+        False,
+    ),
+    (
+        "Bogotá",
+        ("Andrés Gómez", "3004561202", "andres.gomez@example.com"),
+        [("Toby", "canino", "mi_amigo_fiel"), ("Kira", "canino", "mi_amigo_fiel")],
+        True,
+    ),
+]
+
+# 6.6 Lo que dejan pendiente las consultas: (descripcion, requiere autorizacion, que hace Atencion)
+PENDIENTES = [
+    ("Control en 15 días para revisar la herida", False, None),
+    ("Examen de sangre completo (hemograma y química)", True, None),
+    ("Ecografía abdominal", True, "autoriza"),
+    ("Radiografía de cadera", True, "rechaza"),
+]
+
+
+# 6.5 / 6.7 La agenda de los proximos dias, sin rutear: Operaciones la planea y el medico la
+# recorre mientras se prueba. Las fechas son relativas al dia en que se siembra.
+DIAS_DE_AGENDA = 12
+VISITAS_POR_DIA = {"Bogotá": 3, "Medellín": 2}
+MOTIVOS_AGENDA = [
+    "Control general",
+    "Revisión de la piel: se rasca mucho",
+    "Control de peso",
+    "No quiere comer desde ayer",
+    "Cojea de la pata trasera",
+    "Revisión de oídos",
+]
+
+
+def _preventivos_por_agendar(
+    c: Equipo, familias: list[dict[str, Any]], hasta: date
+) -> list[tuple[dict[str, Any], dict[str, Any]]]:
+    """Los preventivos programados y sin visita de las familias, el mas proximo primero."""
+    salida = []
+    for familia in familias:
+        for mascota in (m for m in familia["mascotas"] if m["activa"]):
+            for e in c.get("/preventivos", mascota_id=mascota["id"], estado="programado", limit=50)[
+                "items"
+            ]:
+                if e["servicio_id"] is None and e["fecha_programada"] <= hasta.isoformat():
+                    salida.append((familia, e))
+    return sorted(salida, key=lambda par: par[1]["fecha_programada"])
+
+
+def _cupos(c: Cliente, dia: date, ciudad: str, tipo: str) -> list[datetime]:
+    """Los inicios libres del dia, con hora y media entre uno y otro."""
+    horas: list[datetime] = []
+    for cupo in c.get(
+        "/agenda/disponibilidad", fecha=dia.isoformat(), ciudad=ciudad, tipo_codigo=tipo
+    ):
+        inicio = datetime.fromisoformat(cupo["inicio"])
+        if cupo["disponibles"] > 0 and (not horas or inicio >= horas[-1] + timedelta(minutes=90)):
+            horas.append(inicio)
+    return horas
+
+
+def agenda_proxima(c: Equipo, hoy: date) -> None:
+    """Visitas en los proximos dias, en cupos de la agenda: cada dia y ciudad se completa hasta
+    sus visitas. Primero consultas a domicilio, rotando entre las familias activas de la ciudad (la
+    que ya gasto el cupo de su plan, y la operacion de ocho semanas gasta muchos, se deja de
+    intentar); despues, preventivos programados, que se autorizan y se agendan como en la
+    bandeja (6.8, 6.9)."""
+    fin = hoy + timedelta(days=DIAS_DE_AGENDA)
+    for ciudad, cuantas in VISITAS_POR_DIA.items():
+        familias = [
+            f
+            for f in c.get("/familias", ciudad=ciudad, estado="activa", limit=100)["items"]
+            if any(m["activa"] for m in f["mascotas"])
+        ]
+        preventivos = _preventivos_por_agendar(c, familias, fin + timedelta(days=30))
+        turno = 0
+        agendadas = 0
+        for n in range(1, DIAS_DE_AGENDA + 1):
+            dia = hoy + timedelta(days=n)
+            abiertos = c.get(
+                "/servicios",
+                ciudad=ciudad,
+                desde=dia.isoformat(),
+                hasta=dia.isoformat(),
+                abiertos=True,
+                limit=1,
+            )
+            faltan = cuantas - abiertos["total"]
+            for inicio in _cupos(c, dia, ciudad, "consulta_domiciliaria") if faltan > 0 else []:
+                if faltan <= 0 or not familias:
+                    break
+                familia = familias[turno % len(familias)]
+                mascotas = [m for m in familia["mascotas"] if m["activa"]]
+                resp = c.http.post(
+                    "/servicios",
+                    json={
+                        "familia_id": familia["id"],
+                        "mascota_id": mascotas[turno % len(mascotas)]["id"],
+                        "tipo_codigo": "consulta_domiciliaria",
+                        "inicio": inicio.isoformat(),
+                        "observaciones": MOTIVOS_AGENDA[turno % len(MOTIVOS_AGENDA)],
+                    },
+                )
+                if resp.status_code == 422 and "cupo" in resp.text:
+                    familias.remove(familia)
+                    continue
+                turno += 1
+                if resp.is_error:
+                    print(f"  ! agenda de {ciudad}: {resp.status_code} {resp.text[:160]}")
+                else:
+                    faltan -= 1
+            while faltan > 0 and preventivos:
+                _, evento = preventivos.pop(0)
+                horas = _cupos(c, dia, ciudad, evento["tipo_servicio_codigo"])
+                if not horas:
+                    break
+                if evento["requiere_autorizacion"] and not evento["autorizado"]:
+                    c.post(
+                        "/preventivos/autorizaciones",
+                        {"eventos": [evento["id"]], "medio": "whatsapp"},
+                    )
+                if c.post(
+                    f"/preventivos/{evento['id']}/agendar", {"inicio": horas[-1].isoformat()}
+                ):
+                    faltan -= 1
+            agendadas += cuantas - abiertos["total"] - faltan
+        print(f"  {ciudad}: {agendadas} visitas agendadas en los próximos {DIAS_DE_AGENDA} días")
+
+
+def _familia(c: Cliente, documento: str) -> dict[str, Any] | None:
+    encontradas = c.get("/familias", q=documento)["items"]
+    return encontradas[0] if encontradas else None
+
+
+def complementos(c: Equipo, medico: Cliente, hoy: date) -> None:
+    """Lo que ninguna otra pantalla sembraba: configuracion de encuestas y seguimiento, segmentos,
+    un reporte programado, contactos y documentos de la familia, pendientes
+    de una atencion, adjuntos y formulas, un cambio de plan y un retiro del grupo, y registros en
+    linea por pagar. Repetible: cada parte mira si ya esta."""
+    # 6.20 / 6.21 Cuando sale la encuesta y cuando el seguimiento, por tipo de atencion.
+    if not c.get("/encuestas/configuracion"):
+        c.put("/encuestas/configuracion", {"demora_horas": 2, "umbral_alerta": 3})
+        for tipo, dias in (
+            ("consulta_domiciliaria", 3),
+            ("consulta_clinica", 3),
+            ("control_post", 7),
+        ):
+            c.put(
+                "/encuestas/configuracion",
+                {"tipo_servicio_codigo": tipo, "demora_horas": 2, "seguimiento_dias": dias},
+            )
+    if not c.get("/segmentos"):
+        for nombre, descripcion, filtros in SEGMENTOS:
+            c.post("/segmentos", {"nombre": nombre, "descripcion": descripcion, "filtros": filtros})
+    # Seccion 8 El resumen que Gerencia recibe por correo cada semana.
+    if not c.get("/dashboard/reportes"):
+        c.post(
+            "/dashboard/reportes",
+            {
+                "nombre": "Resumen semanal de la operación",
+                "periodicidad": "semanal",
+                "destinatarios": ["gerencia@timu.co"],
+            },
+        )
+    # 6.1 Usuarios asociados y documentos de la familia.
+    claudia = _familia(c, "52456005")
+    if claudia and not c.get(f"/familias/{claudia['id']}")["contactos"]:
+        c.post(
+            f"/familias/{claudia['id']}/contactos",
+            {"nombre": "Martín Rincón", "telefono": "3009871001", "relacion": "Esposo"},
+        )
+        c.post(
+            f"/familias/{claudia['id']}/contactos",
+            {"nombre": "Sofía Rincón", "telefono": "3009871002", "relacion": "Hija"},
+        )
+    patricia = _familia(c, "1018456001")
+    if patricia:
+        subidos = [
+            d
+            for d in c.get(f"/familias/{patricia['id']}/documentos")
+            if d.get("origen") == "subido"
+        ]
+        if not subidos:
+            resp = c.http.post(
+                f"/familias/{patricia['id']}/documentos",
+                files={"archivo": ("examen-laboratorio-max.pdf", PDF_DEMO, "application/pdf")},
+                data={
+                    "categoria": "examen_externo",
+                    "descripcion": "Examen de laboratorio que trajo la familia",
+                    "mascota_id": patricia["mascotas"][0]["id"],
+                    "visible_familia": "true",
+                },
+            )
+            if resp.is_error:
+                print(f"  ! documento: {resp.status_code} {resp.text[:200]}")
+
+    _pendientes_y_clinica(c, medico)
+    _cambios_de_plan(c)
+    _registros_en_linea(c)
+    agenda_proxima(c, hoy)
+
+
+def _pendientes_y_clinica(c: Equipo, medico: Cliente) -> None:
+    """6.6 y 6.14 En las ultimas consultas del medico de Bogota: lo que quedo pendiente (Atencion
+    autoriza uno y la familia rechaza otro), un examen adjunto y una formula."""
+    if c.get("/pendientes"):
+        return
+    completados = [
+        s
+        for s in medico.get("/servicios", estado="completado", limit=40)["items"]
+        if s.get("mascota_id") and s["tipo_codigo"] == "consulta_domiciliaria"
+    ]
+    for servicio, (descripcion, requiere, decision) in zip(completados, PENDIENTES, strict=False):
+        pendiente = medico.post(
+            f"/servicios/{servicio['id']}/pendientes",
+            {"descripcion": descripcion, "requiere_autorizacion": requiere},
+        )
+        if pendiente is None or decision is None:
+            continue
+        c.post(
+            f"/pendientes/{pendiente['id']}/autorizacion",
+            {"aprobado": decision == "autoriza", "medio": "whatsapp"},
+        )
+        if decision == "autoriza":
+            c.post(f"/pendientes/{pendiente['id']}/avance", {"estado": "en_gestion"})
+    # Un examen y una formula en la consulta mas reciente que tenga historia.
+    for servicio in completados[:5]:
+        entradas = [
+            e
+            for e in medico.get(f"/clinica/mascotas/{servicio['mascota_id']}/historia")
+            if e.get("estado") == "firmada"
+        ]
+        if not entradas:
+            continue
+        historia = entradas[0]["id"]
+        resp = medico.http.post(
+            f"/clinica/historias/{historia}/adjuntos",
+            files={"archivo": ("hemograma.pdf", PDF_DEMO, "application/pdf")},
+            data={"descripcion": "Hemograma de control"},
+        )
+        if resp.is_error:
+            print(f"  ! adjunto: {resp.status_code} {resp.text[:200]}")
+        medico.post(
+            f"/clinica/historias/{historia}/formulas",
+            {
+                "items": [
+                    {
+                        "medicamento": "Meloxicam",
+                        "presentacion": "Suspensión oral 1,5 mg/ml",
+                        "dosis": "0,1 mg/kg",
+                        "frecuencia": "Cada 24 horas",
+                        "duracion": "5 días",
+                    },
+                    {
+                        "medicamento": "Omeprazol",
+                        "presentacion": "Cápsulas de 10 mg",
+                        "dosis": "1 cápsula",
+                        "frecuencia": "Cada 24 horas en ayunas",
+                        "duracion": "7 días",
+                    },
+                ],
+                "indicaciones": "Dar con comida. Si vomita o deja de comer, escribir a TIMU.",
+            },
+        )
+        break
+
+
+def _cambios_de_plan(c: Equipo) -> None:
+    """6.3 Tom, de Hernan Castillo, pasa a Mi Amigo Fiel; Oliver se va de la manada de Claudia
+    Rincon, y a Mia le cambia la tarifa de grupo que pagaba con el."""
+    hernan = _familia(c, "79456002")
+    claudia = _familia(c, "52456005")
+    if not hernan or not claudia:
+        return
+    planes = {p["codigo"]: p["id"] for p in c.get("/planes")}
+    cuenta = c.get(f"/cartera/familias/{hernan['id']}/estado-cuenta")
+    tom = next((m for m in cuenta["mascotas"] if m["nombre"] == "Tom"), None)
+    if tom and tom["plan_id"] != planes["mi_amigo_fiel"]:
+        c.post(
+            f"/planes/contratos/{cuenta['contrato']['id']}/cambio",
+            {"mascota_id": tom["mascota_id"], "plan_id": planes["mi_amigo_fiel"]},
+        )
+    oliver = next((m for m in claudia["mascotas"] if m["nombre"] == "Oliver"), None)
+    if oliver and oliver["activa"]:
+        c.post(f"/mascotas/{oliver['id']}/baja", {"motivo": "Se fue a vivir con otra familia"})
+
+
+def _registros_en_linea(c: Equipo) -> None:
+    """6.12 Formulario -> pago -> afiliacion: dos familias empiezan en la web y una ya pago por
+    transferencia (Comercial la registro); a la otra le falta pagar. Cada una, si falta."""
+    planes = {p["codigo"]: p["id"] for p in c.get("/planes")}
+    web = sin_sesion()
+    for ciudad, (nombre, telefono, email), peludos, pagado in REGISTROS_EN_LINEA:
+        solicitud = next(
+            (s for s in c.get("/afiliaciones") if s["contacto_nombre"] == nombre), None
+        )
+        if solicitud is None:
+            resp = web.post(
+                "/afiliaciones/registro",
+                json={
+                    "ciudad": ciudad,
+                    "peludos": [
+                        {"nombre": n, "especie": e, "plan_id": planes[p]} for n, e, p in peludos
+                    ],
+                    "periodicidad": "mensual",
+                    "contacto": {"nombre": nombre, "telefono": telefono, "email": email},
+                    "acepta_condiciones": True,
+                    "acepta_tratamiento_datos": True,
+                },
+            )
+            if resp.is_error:
+                print(f"  ! registro de {nombre}: {resp.status_code} {resp.text[:200]}")
+                continue
+            referencia = resp.json()["referencia"]
+            solicitud = next(
+                s for s in c.get("/afiliaciones") if s["referencia_pago"] == referencia
+            )
+        if pagado and solicitud["estado"] == "pendiente_pago":
+            c.post(
+                f"/afiliaciones/{solicitud['id']}/pago-manual",
+                {"medio": "transferencia", "comprobante": "Transferencia Bancolombia 004512"},
+            )
+
+
 # --- Orquestacion ---------------------------------------------------------------------------
 
 
@@ -1576,6 +1939,8 @@ def main() -> None:
     remisiones(c, motor, hoy)
     clinica_virtual(c, medico, motor, hoy)
     campana_enviada(c, motor)
+    print("Lo que ninguna pantalla tenía: pendientes, documentos, segmentos, registros en línea…")
+    complementos(c, medico, hoy)
     print(
         f"Listo: {len(op.rutas)} rutas, {sum(not v.omitida for v in op.visitas)} visitas,"
         f" {sum(v.omitida for v in op.visitas)} omitidas, {len(op.cancelados)} canceladas"
@@ -1606,6 +1971,19 @@ MINIMOS = {
     "preventivos aplicados en ruta": 20,
     "consultas en clínica": 10,
     "controles en clínica": 5,
+    # Lo que ninguna pantalla tenia hasta la revision del 2026-11-20 (`complementos`).
+    "avisos de mora enviados": 1,
+    "pendientes de una atención": 4,
+    "registros en línea": 2,
+    "cambios de plan": 2,
+    "contactos de la familia": 2,
+    "documentos subidos": 1,
+    "adjuntos clínicos": 1,
+    "fórmulas": 1,
+    "segmentos": 3,
+    "reportes programados": 1,
+    "configuraciones de encuesta": 4,
+    "visitas por venir": 10,
 }
 
 
@@ -1656,6 +2034,23 @@ def comprobar(op: Operacion) -> None:
             "controles en clínica": contar(
                 "SELECT count(*) FROM servicios"
                 " WHERE tipo_codigo = 'control_post' AND estado = 'completado'"
+            ),
+            "avisos de mora enviados": contar(
+                "SELECT count(*) FROM avisos_cartera WHERE NOT omitido"
+            ),
+            "pendientes de una atención": contar("SELECT count(*) FROM pendientes"),
+            "registros en línea": contar("SELECT count(*) FROM solicitudes_afiliacion"),
+            "cambios de plan": contar("SELECT count(*) FROM cambios_plan"),
+            "contactos de la familia": contar("SELECT count(*) FROM contactos_familia"),
+            "documentos subidos": contar("SELECT count(*) FROM documentos_familia"),
+            "adjuntos clínicos": contar("SELECT count(*) FROM adjuntos_clinicos"),
+            "fórmulas": contar("SELECT count(*) FROM formulas"),
+            "segmentos": contar("SELECT count(*) FROM segmentos"),
+            "reportes programados": contar("SELECT count(*) FROM reportes_programados"),
+            "configuraciones de encuesta": contar("SELECT count(*) FROM configuraciones_encuesta"),
+            "visitas por venir": contar(
+                "SELECT count(*) FROM servicios WHERE programado_para > now() + interval '1 day'"
+                " AND estado = 'agendado'"
             ),
             "consultas desde una plantilla": contar(
                 "SELECT count(*) FROM historias_clinicas"
