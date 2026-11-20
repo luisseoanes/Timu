@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { delay, http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -282,6 +282,17 @@ describe('ficha del interesado', () => {
     server.use(http.get(`${API}/comercial/interesados/:id`, () => HttpResponse.json(interesado({ telefono: null, email: 'p@x.co' }))))
     abrir()
     expect(await screen.findByText('Sin celular: no hay conversación de WhatsApp.')).toBeInTheDocument()
+  })
+
+  it('sin mensajes dice si llegó por WhatsApp registrado a mano o si aún no ha escrito', async () => {
+    conConversacion({ conversacion: null, mensajes: [] })
+    abrir()
+    // Llegado por WhatsApp sin mensajes: alguien lo registró a mano.
+    expect(await screen.findByText('No hay mensajes suyos en el WhatsApp de TIMU: se registró a mano.')).toBeInTheDocument()
+    cleanup()
+    server.use(http.get(`${API}/comercial/interesados/:id`, () => HttpResponse.json(interesado({ origen: 'referido' }))))
+    abrir()
+    expect(await screen.findByText('Todavía no ha escrito por WhatsApp.')).toBeInTheDocument()
   })
 
   it('dice lo que escribió en la portada, lo más reciente primero (R3-PUB-04)', async () => {

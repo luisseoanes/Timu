@@ -256,7 +256,13 @@ function Conversacion({
       ) : error ? (
         <p className="error" role="alert">No fue posible cargar la conversación.</p>
       ) : !conversacion || conversacion.mensajes.length === 0 ? (
-        <p className="apagado">Todavía no ha escrito por WhatsApp.</p>
+        // Quien escribe al WhatsApp de TIMU llega con su conversación: «WhatsApp» sin mensajes es
+        // que alguien lo registró a mano (escribió a otro número, por ejemplo).
+        <p className="apagado">
+          {i.origen === 'whatsapp'
+            ? 'No hay mensajes suyos en el WhatsApp de TIMU: se registró a mano.'
+            : 'Todavía no ha escrito por WhatsApp.'}
+        </p>
       ) : (
         <ol
           ref={lista}

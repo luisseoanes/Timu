@@ -44,10 +44,12 @@ from app.workers.tasks import outbox
 from scripts.datos_demo import (
     BOGOTA,
     CLAVE_EQUIPO,
+    ESCRIBE_PAULA,
     Cliente,
     Equipo,
     comprobar_ambiente,
     equipo,
+    escribir_al_asistente,
     pagar_lo_vencido,
     sin_sesion,
 )
@@ -1168,9 +1170,11 @@ def al_pasado(cx: Any, tabla: str, fila_id: str, dias: int, *, donde: str = "id"
     )
 
 
-# (nombre, celular, ciudad, origen, etapa a la que llega, dias atras, motivo si se perdio)
+# (nombre, celular, ciudad, origen, etapa a la que llega, dias atras, motivo si se perdio). Los
+# que llegan por WhatsApp escriben al asistente (CONVERSACIONES): el los crea, ya contactados, y
+# su etapa la pone la conversacion.
 INTERESADOS = [
-    ("Marta Lucía Ospina", "3112340001", "Bogotá", "whatsapp", "nuevo", 2, None),
+    ("Marta Lucía Ospina", "3112340001", "Bogotá", "whatsapp", "contactado", 2, None),
     ("Jaime Cárdenas", "3112340002", "Bogotá", "formulario", "nuevo", 5, None),
     ("Paola Jiménez", "3112340003", "Medellín", "referido", "contactado", 9, None),
     ("Oscar Duarte", "3112340004", "Bogotá", "evento", "contactado", 16, None),
@@ -1186,12 +1190,79 @@ INTERESADOS = [
 ORDEN_EMBUDO = ["contactado", "cotizado", "en_afiliacion"]
 
 
+# Lo que escribe cada interesado que llega por WhatsApp. Marta pregunta y se queda a medias;
+# Mauricio cuenta sus mascotas y el asistente le recomienda un plan (queda cotizado).
+CONVERSACIONES = {
+    "3112340001": ("Hola", "1", "Bogotá"),
+    "3112340006": ("Buenas tardes", "1", "Medellín", "un perro"),
+    # Cotizado por el asistente; despues el comercial la lleva a afiliacion.
+    "3112340010": ("Hola", "1", "Bogotá", "2 gatos"),
+    # La de datos_demo (Paula Diaz).
+    "3005551234": ESCRIBE_PAULA,
+}
+
+
+def _conversacion_al_pasado(cx: Any, telefono: str, dias: int) -> None:
+    """Sus mensajes y su conversacion, a la fecha en que llego (como el interesado)."""
+    for sentencia in (
+        "UPDATE mensajes SET created_at = created_at - make_interval(days => :d),"
+        " updated_at = updated_at - make_interval(days => :d),"
+        " enviado_en = enviado_en - make_interval(days => :d),"
+        " entregado_en = entregado_en - make_interval(days => :d),"
+        " leido_en = leido_en - make_interval(days => :d) WHERE destino = :t",
+        "UPDATE conversaciones_comerciales SET created_at = created_at - make_interval(days => :d),"
+        " updated_at = updated_at - make_interval(days => :d) WHERE telefono = :t",
+        "UPDATE conversaciones_whatsapp SET created_at = created_at - make_interval(days => :d),"
+        " updated_at = updated_at - make_interval(days => :d),"
+        " ultimo_entrante_en = ultimo_entrante_en - make_interval(days => :d) WHERE telefono = :t",
+    ):
+        cx.execute(text(sentencia), {"d": dias, "t": telefono})
+
+
+def conversaciones_por_whatsapp(c: Cliente, motor: Any) -> None:
+    """A una base ya sembrada, sin vaciarla: los interesados de WhatsApp que se crearon a mano
+    (antes del 2026-11-20) escriben ahora al asistente, y sus mensajes se llevan a la fecha en que
+    llegaron. Repetible: quien ya tiene mensajes se deja como esta."""
+    dias_de = {telefono: dias for _, telefono, _, _, _, dias, _ in INTERESADOS}
+    with motor.begin() as cx:
+        for telefono in CONVERSACIONES:
+            dias = dias_de.get(telefono, 0)
+            existentes = c.get("/comercial/interesados", q=telefono)["items"]
+            if not existentes:
+                continue
+            conversacion = c.get(f"/comercial/interesados/{existentes[0]['id']}/conversacion")
+            if conversacion["mensajes"]:
+                continue
+            escribir_al_asistente(f"57{telefono}", CONVERSACIONES[telefono])
+            _conversacion_al_pasado(cx, f"+57{telefono}", dias)
+            print(f"  {existentes[0]['nombre']} escribió al asistente")
+
+
 def comercial(c: Cliente, motor: Any) -> None:
     """El embudo en el tiempo: interesados que llegaron en las ultimas semanas, cada uno en la
     etapa a la que llego. Ninguno llega a afiliado: eso lo pone la afiliacion en linea al
     aprobarse el pago, y la pasarela de pruebas aun no esta (pendientes-externos, Wompi)."""
     with motor.begin() as cx:
         for nombre, telefono, ciudad, origen, etapa, dias, motivo in INTERESADOS:
+            if telefono in CONVERSACIONES:
+                escribir_al_asistente(f"57{telefono}", CONVERSACIONES[telefono])
+                creados = c.get("/comercial/interesados", q=telefono)["items"]
+                if not creados:
+                    print(f"  ! el asistente no creo a {nombre}")
+                    continue
+                # El asistente no pregunta el nombre: lo anota quien la atiende.
+                c.http.patch(f"/comercial/interesados/{creados[0]['id']}", json={"nombre": nombre})
+                # Lo que falta del embudo hasta su etapa lo avanza el comercial.
+                actual = (
+                    ORDEN_EMBUDO.index(creados[0]["etapa"])
+                    if creados[0]["etapa"] in ORDEN_EMBUDO
+                    else 0
+                )
+                for paso in ORDEN_EMBUDO[actual + 1 : ORDEN_EMBUDO.index(etapa) + 1]:
+                    c.http.patch(f"/comercial/interesados/{creados[0]['id']}", json={"etapa": paso})
+                al_pasado(cx, "interesados", creados[0]["id"], dias)
+                _conversacion_al_pasado(cx, f"+57{telefono}", dias)
+                continue
             nuevo = c.post(
                 "/comercial/interesados",
                 {"nombre": nombre, "telefono": telefono, "ciudad": ciudad, "origen": origen},

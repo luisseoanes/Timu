@@ -151,6 +151,9 @@ FAMILIAS: list[dict[str, Any]] = [
     },
 ]
 
+# Paula llega por WhatsApp: escribe al asistente (ESCRIBE_PAULA), que la crea con su conversación.
+ESCRIBE_PAULA = ("Hola", "1")
+
 INTERESADOS = [
     ("Paula Díaz", "3005551234", "whatsapp"),
     ("Andrés Mejía", "3112223344", "referido"),
@@ -435,15 +438,11 @@ NUMERO_CONVERSACION = "573004445588"
 CONVERSACION = ("Hola", "1", "Bogotá", "quiero hablar con un asesor")
 
 
-def conversacion_de_prueba(c: Cliente) -> None:
-    if c.get("/comercial/interesados", q=NUMERO_CONVERSACION[-7:])["total"]:
-        return
-    for n, texto in enumerate(CONVERSACION):
-        evento = {
-            "from": NUMERO_CONVERSACION,
-            "id": f"wamid.demo.{NUMERO_CONVERSACION}.{n}",
-            "type": "text",
-        }
+def escribir_al_asistente(numero: str, mensajes: tuple[str, ...]) -> None:
+    """Una persona escribe al WhatsApp de TIMU: cada mensaje recorre el camino de uno de Meta
+    (`procesar_evento_whatsapp`), y el asistente crea al interesado y le contesta."""
+    for n, texto in enumerate(mensajes):
+        evento = {"from": numero, "id": f"wamid.demo.{numero}.{n}", "type": "text"}
         with sesion_worker() as db:
             comunicaciones.procesar_evento_whatsapp(
                 db,
@@ -457,6 +456,12 @@ def conversacion_de_prueba(c: Cliente) -> None:
                     ]
                 },
             )
+
+
+def conversacion_de_prueba(c: Cliente) -> None:
+    if c.get("/comercial/interesados", q=NUMERO_CONVERSACION[-7:])["total"]:
+        return
+    escribir_al_asistente(NUMERO_CONVERSACION, CONVERSACION)
     [interesado] = c.get("/comercial/interesados", q=NUMERO_CONVERSACION[-7:])["items"]
     # El bot no pregunta el nombre: lo anota quien la atiende.
     c.http.patch(f"/comercial/interesados/{interesado['id']}", json={"nombre": "Natalia Gómez"})
@@ -901,6 +906,11 @@ def main() -> None:
     print("Comercial")
     if c.get("/comercial/interesados", limit=1)["total"] == 0:
         for nombre, telefono, origen in INTERESADOS:
+            if origen == "whatsapp":
+                escribir_al_asistente(f"57{telefono}", ESCRIBE_PAULA)
+                [creada] = c.get("/comercial/interesados", q=telefono)["items"]
+                c.http.patch(f"/comercial/interesados/{creada['id']}", json={"nombre": nombre})
+                continue
             c.post(
                 "/comercial/interesados",
                 {"nombre": nombre, "telefono": telefono, "ciudad": "Bogotá", "origen": origen},

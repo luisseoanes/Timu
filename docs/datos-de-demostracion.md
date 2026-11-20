@@ -47,7 +47,8 @@ con historia (decidido con el usuario el 2026-11-16, `DEU-14`). Siembra:
 - **Preventivos** aplicados en su fecha y otros vencidos, para la bandeja.
 - **Encuestas** enviadas y respondidas, con las tareas que deja una calificación baja.
 - **Comercial**: interesados que llegaron en las últimas semanas, cada uno en su etapa (también
-  perdidos).
+  perdidos). Los que llegan por WhatsApp escriben al asistente, como en la operación real: él los
+  crea y su conversación se ve en la ficha.
 - **Tareas** cerradas y abiertas vencidas, **remisiones** atendidas, anulada, vencida y por usar,
   **orientaciones virtuales** cerradas y **una campaña** enviada hace tres semanas.
 - **Atenciones de aliadas** (6.22) para la liquidación que ve Gerencia: la Clínica del Norte en
@@ -64,6 +65,9 @@ docker compose exec -T -w /app api python -c "from datetime import datetime; \
 from scripts import operacion_demo as op; from scripts.datos_demo import BOGOTA; \
 op.aliadas_medellin(op.equipo(), op.dueno(), datetime.now(BOGOTA).date())"
 ```
+
+Igual con los interesados de WhatsApp de una base sembrada antes del 2026-11-20, que se crearon a mano
+y salían sin conversación: `op.conversaciones_por_whatsapp(op.equipo(), op.dueno())`.
  Para repetirla desde cero hace falta un stack
 recién levantado (`docker compose down -v` o el proyecto de verificación del `CLAUDE.md` raíz).
 Al terminar comprueba unos mínimos (`MINIMOS`) y sale con error si la siembra quedó corta: el CI
