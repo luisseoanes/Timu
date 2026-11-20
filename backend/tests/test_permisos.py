@@ -403,3 +403,23 @@ async def test_perfil_no_autorizado_recibe_403(client: AsyncClient, db):
     )
     assert resp.status_code == 403
     assert resp.json()["codigo"] == "prohibido"
+
+
+async def test_todo_perfil_del_equipo_lee_los_catalogos_enteros(client: AsyncClient, equipo):
+    """Seccion 12: los catalogos son configuracion, no datos de nadie. Un perfil que pasa la
+    guarda pero no esta en la matriz de RLS no recibe un 403: recibe el catalogo vacio (asi le
+    pasaba a Gerencia y a Operaciones con las especies, hasta la revision del 2026-11-20)."""
+    catalogos = [
+        f"/api/v1{ruta.split(' ', 1)[1]}"
+        for ruta, letras in MATRIZ.items()
+        if ruta.startswith("GET /catalogos/") and "{" not in ruta and letras == "AGCTOMF"
+    ]
+    assert "/api/v1/catalogos/especies" in catalogos
+    admin = await login(client, equipo[Rol.ADMIN].email)
+    esperado = {ruta: (await client.get(ruta, headers=admin)).json() for ruta in catalogos}
+    assert all(esperado.values()), "la base de pruebas trae los catalogos cargados"
+    for rol, usuario in equipo.items():
+        cabecera = await login(client, usuario.email)
+        for ruta in catalogos:
+            resp = await client.get(ruta, headers=cabecera)
+            assert resp.json() == esperado[ruta], f"{rol.value} no ve entero {ruta}"
