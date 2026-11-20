@@ -282,8 +282,13 @@ jobs:
 
       # Recorridos de extremo a extremo contra este mismo stack, sin nada simulado: panel,
       # portal de familias y clinica aliada con los usuarios que crea datos_demo.
+      # datos_demo habla con la API con los usuarios de la suite (sobre todo atencion@timu.co) y el
+      # cupo es de 120 peticiones por minuto y por usuario: sin esperar a que se renueve, los
+      # primeros recorridos heredaban un 429 (paso el 2026-11-20).
       - name: Datos de demostracion
-        run: docker compose exec -T api python -m scripts.datos_demo
+        run: |
+          docker compose exec -T api python -m scripts.datos_demo
+          sleep 61
 
       - name: Recorridos contra el stack real
         run: |

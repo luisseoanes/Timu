@@ -18,7 +18,9 @@ condicionan cómo se escribe un recorrido. Las rutas son relativas a `frontend/`
 - **Cupo de la API** (120 peticiones por minuto y por usuario): repartido entre los perfiles, ninguno
   va al borde. `datos_demo` y `operacion_demo` hablan con la API con los mismos usuarios (cada ruta
   con el perfil que la admite), así que el barrido justo después puede recibir algún 429: espera a
-  `Retry-After` y vuelve a cargar.
+  `Retry-After` y vuelve a cargar. Los recorridos no esperan: el CI deja pasar un minuto entre
+  `datos_demo` y la suite (el 2026-11-20 dos recorridos de Atención heredaron el cupo gastado por la
+  siembra), y en local se hace lo mismo.
 - **Datos gruesos**: con `operacion_demo` sembrado hay muchas más filas (remisiones, rutas,
   interesados). Un recorrido busca lo que dejó `datos_demo` por su identidad (el motivo, el
   nombre), nunca el primero del listado: la primera remisión emitida, por ejemplo, puede ser una
