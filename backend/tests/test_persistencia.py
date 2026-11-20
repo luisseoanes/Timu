@@ -1231,6 +1231,11 @@ _LISTADOS = (
     "/api/v1/auth/usuarios/recuentos",
     "/api/v1/cartera/eventos-pasarela?estado=error",
     "/api/v1/cartera/eventos-pasarela/recuentos",
+    # El buscador de Mensajes: texto libre (trigramas), una conversacion y un rango de fechas.
+    "/api/v1/comunicaciones/mensajes?q=vacuna",
+    "/api/v1/comunicaciones/mensajes?q=3001112",
+    "/api/v1/comunicaciones/mensajes?destino=%2B573001112233&orden=-created_at&limit=200",
+    "/api/v1/comunicaciones/mensajes?desde=2026-11-01&hasta=2026-11-20",
 )
 # Los de la clinica aliada, con la sesion de una aliada (R3-ALI-01).
 _LISTADOS_DE_ALIADA = ("/api/v1/aliadas/mi-clinica/atendidas?desde=2026-10-01&hasta=2026-10-31",)

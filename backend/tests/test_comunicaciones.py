@@ -12,7 +12,7 @@ from httpx import AsyncClient
 from sqlalchemy import select
 
 from app.core.config import settings
-from app.core.tiempo import ahora
+from app.core.tiempo import ahora, hoy
 from app.integrations.whatsapp import ErrorWhatsApp
 from app.modules.comunicaciones import service
 from app.modules.comunicaciones.models import ConversacionWhatsApp, Mensaje
@@ -471,6 +471,59 @@ async def test_la_plantilla_tiene_nombre_para_el_equipo_y_lo_conserva(client: As
         url, json={"nombre": "aviso_x", "cuerpo": "Hola de nuevo", "variables": []}, headers=headers
     )
     assert (segunda.json()["version"], segunda.json()["titulo"]) == (2, "Aviso de prueba")
+
+
+async def test_buscar_mensajes_por_texto_numero_y_fecha(client: AsyncClient, db, headers):
+    """Mensajes: texto libre en el mensaje o el numero, la conversacion de un numero y las
+    fechas (dias de Colombia)."""
+    hace_un_mes = ahora() - timedelta(days=30)
+    db.add_all(
+        [
+            Mensaje(
+                canal="whatsapp",
+                direccion="entrante",
+                destino="+573001112233",
+                contenido="Hola, ¿la vacuna de Max?",
+            ),
+            Mensaje(
+                canal="whatsapp",
+                direccion="saliente",
+                destino="+573001112233",
+                contenido="Sí, el jueves",
+            ),
+            Mensaje(
+                canal="whatsapp",
+                direccion="saliente",
+                destino="+573209998877",
+                contenido="Tu cuota vence pronto",
+            ),
+            Mensaje(
+                canal="whatsapp",
+                direccion="saliente",
+                destino="+573209998877",
+                contenido="Recordatorio viejo",
+                created_at=hace_un_mes,
+            ),
+        ]
+    )
+    await db.commit()
+
+    async def contenidos(**params):
+        resp = await client.get("/api/v1/comunicaciones/mensajes", params=params, headers=headers)
+        assert resp.status_code == 200, resp.text
+        return {m["contenido"] for m in resp.json()["items"]}
+
+    assert await contenidos(q="VACUNA") == {"Hola, ¿la vacuna de Max?"}
+    # Por el numero, con o sin espacios.
+    assert await contenidos(q="300 111 2233") == {"Hola, ¿la vacuna de Max?", "Sí, el jueves"}
+    assert await contenidos(destino="+573001112233", direccion="entrante") == {
+        "Hola, ¿la vacuna de Max?"
+    }
+    hoy_co = hoy()
+    recientes = await contenidos(desde=str(hoy_co - timedelta(days=7)), hasta=str(hoy_co))
+    assert "Recordatorio viejo" not in recientes and "Tu cuota vence pronto" in recientes
+    corto = await client.get("/api/v1/comunicaciones/mensajes", params={"q": "ho"}, headers=headers)
+    assert corto.status_code == 422
 
 
 def test_cada_plantilla_que_envia_el_codigo_esta_declarada():

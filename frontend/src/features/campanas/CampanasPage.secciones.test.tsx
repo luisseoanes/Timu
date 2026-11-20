@@ -602,6 +602,55 @@ describe('mensajes y bajas', () => {
     expect(screen.getByText('Escribió')).toBeInTheDocument()
   })
 
+  it('busca por texto o número, por quién escribió y por fechas, y se quitan los filtros', async () => {
+    const pedidos: URLSearchParams[] = []
+    server.use(
+      http.get(`${API}/comunicaciones/bajas`, () => HttpResponse.json([])),
+      http.get(`${API}/comunicaciones/mensajes`, ({ request }) => {
+        pedidos.push(new URL(request.url).searchParams)
+        return HttpResponse.json(pagina([]))
+      }),
+    )
+    const user = await abrirPestana('Mensajes')
+    const buscador = await screen.findByLabelText('Buscar en el mensaje o el número')
+    // Con menos de tres caracteres no se busca.
+    await user.type(buscador, 'va')
+    await user.type(buscador, 'cuna')
+    await waitFor(() => expect(pedidos.at(-1)?.get('q')).toBe('vacuna'))
+    expect(pedidos.some((p) => p.get('q') === 'va')).toBe(false)
+    await user.selectOptions(screen.getByLabelText('Quién escribió'), 'entrante')
+    await user.type(screen.getByLabelText('Desde'), '2026-11-01')
+    await waitFor(() => expect(pedidos.at(-1)?.get('desde')).toBe('2026-11-01'))
+    expect(pedidos.at(-1)?.get('direccion')).toBe('entrante')
+    expect(await screen.findByText('Ningún mensaje coincide con la búsqueda.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Quitar filtros' }))
+    await waitFor(() => expect(pedidos.at(-1)?.get('q')).toBeNull())
+    expect(pedidos.at(-1)?.get('direccion')).toBeNull()
+    expect(screen.getByLabelText('Buscar en el mensaje o el número')).toHaveValue('')
+  })
+
+  it('un mensaje abre la conversación entera con su número, marcado y en orden', async () => {
+    const entrante = { ...MENSAJE, id: 'm0', direccion: 'entrante', plantilla: null, contenido: '¿Cuándo vence mi cuota?', estado: 'recibido', error: null, created_at: '2026-10-24T12:00:00Z' }
+    const conversacion: string[] = []
+    server.use(
+      http.get(`${API}/comunicaciones/bajas`, () => HttpResponse.json([])),
+      http.get(`${API}/comunicaciones/mensajes`, ({ request }) => {
+        const destino = new URL(request.url).searchParams.get('destino')
+        if (destino) conversacion.push(destino)
+        // La API los da del más nuevo al más viejo; la ventana los pone en orden.
+        return HttpResponse.json(pagina(destino ? [MENSAJE, entrante] : [MENSAJE]))
+      }),
+    )
+    const user = await abrirPestana('Mensajes')
+    await user.click(await screen.findByRole('button', { name: /^Ver la conversación con/ }))
+    const ventana = await screen.findByRole('dialog', { name: /^Conversación con/ })
+    const burbujas = await within(ventana).findAllByRole('listitem')
+    expect(burbujas.map((b) => b.querySelector('p')?.textContent)).toEqual(['¿Cuándo vence mi cuota?', 'Su cuota vence mañana'])
+    expect(burbujas[1]).toHaveAttribute('aria-current', 'true')
+    expect(conversacion).toEqual(['573001112233'])
+    expect(within(ventana).getByRole('link', { name: 'Ver la familia' })).toHaveAttribute('href', '/panel/familias/f1')
+  })
+
   it('filtra por estado y muestra el vacío', async () => {
     const estados: (string | null)[] = []
     server.use(http.get(`${API}/comunicaciones/bajas`, () => HttpResponse.json([])),

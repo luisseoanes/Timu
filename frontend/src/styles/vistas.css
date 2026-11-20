@@ -1545,6 +1545,20 @@
 /* En la bandeja de mensajes, el cuerpo en dos líneas y en peso normal: manda quién y cuándo. */
 .tabla .mensaje-contenido { font-weight: 400; color: var(--texto); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .mensaje-direccion { display: inline-flex; align-items: center; gap: var(--e1); font-weight: 600; }
+/* El buscador de Mensajes: el texto se lleva la fila; las fechas, a su ancho, con su etiqueta encima. */
+.mensajes-filtros { align-items: flex-end; }
+.mensajes-filtros > .buscador { flex: 1 1 260px; }
+.mensajes-fecha { flex: 0 0 auto; }
+.mensajes-fecha > .input { width: auto; }
+/* El mensaje abre su conversación: un botón que se lee como el texto de la fila. */
+.mensaje-abrir {
+  display: block; width: 100%; min-height: 44px; padding: 0; border: 0; background: none;
+  font: inherit; color: inherit; text-align: left; cursor: pointer;
+}
+.mensaje-abrir:hover .mensaje-contenido { text-decoration: underline; text-underline-offset: 3px; }
+/* En la ventana, la conversación se desplaza dentro; el mensaje desde el que se abrió, marcado. */
+.mensajes-conversacion { max-height: min(60vh, 560px); }
+.comercial-mensaje[data-destacado] { box-shadow: 0 0 0 2px var(--foco); }
 .mensaje-direccion[data-direccion="entrante"] { color: var(--estado-info-texto); }
 
 /* ===== Aliadas (R2-PAN-10): remisiones en bandeja, clínicas en listado con ficha ===== */

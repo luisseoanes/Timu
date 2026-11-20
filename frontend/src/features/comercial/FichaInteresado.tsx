@@ -2,14 +2,15 @@ import * as Menu from '@radix-ui/react-dropdown-menu'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
+import { BurbujaMensaje } from '@/components/BurbujaMensaje'
 import { Consulta } from '@/components/Consulta'
 import { Distintivo, Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { useEquipo } from '@/features/auth'
 import { mensajeError } from '@/lib/errores'
-import { diaISO, fechaCompacta, fechaHora, hora, telefono } from '@/lib/formato'
-import type { ConversacionDelInteresado, InteresadoRead, MensajeRead } from '@/types'
+import { diaISO, fechaCompacta, fechaHora, telefono } from '@/lib/formato'
+import type { ConversacionDelInteresado, InteresadoRead } from '@/types'
 
 import {
   ETAPAS,
@@ -273,7 +274,7 @@ function Conversacion({
           onScroll={(e) => setHayAnteriores(e.currentTarget.scrollTop > 1)}
         >
           {conversacion.mensajes.map((m) => (
-            <Mensaje key={m.id} mensaje={m} />
+            <BurbujaMensaje key={m.id} mensaje={m} />
           ))}
         </ol>
       )}
@@ -307,20 +308,6 @@ function Conversacion({
         </form>
       )}
     </section>
-  )
-}
-
-function Mensaje({ mensaje: m }: { mensaje: MensajeRead }) {
-  const entrante = m.direccion === 'entrante'
-  return (
-    <li className="comercial-mensaje" data-direccion={m.direccion}>
-      <span className="sr-only">{entrante ? 'Escribió:' : 'Respondimos:'}</span>
-      <p>{m.contenido ?? (m.plantilla ? `Plantilla «${m.plantilla}»` : '—')}</p>
-      <span className="comercial-mensaje-hora numero" title={fechaHora(m.created_at)}>
-        {fechaCompacta(diaISO(m.created_at))} · {hora(m.created_at)}
-        {m.estado === 'fallido' && ' · no se envió'}
-      </span>
-    </li>
   )
 }
 

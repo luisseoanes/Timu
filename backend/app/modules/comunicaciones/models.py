@@ -2,7 +2,16 @@ from datetime import datetime
 from enum import StrEnum, nonmember
 from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base, EnumDb, JSONTipo, TimestampMixin, UUIDMixin
@@ -35,6 +44,23 @@ class Mensaje(Base, UUIDMixin, TimestampMixin):
         "intentos_no_negativos": "intentos >= 0",
     }
     __columna_familia__ = "familia_id"
+    # El buscador de Mensajes (texto libre en el mensaje o el numero, y fechas): sin estos
+    # indices recorreria la tabla entera, que crece con cada envio (migracion 0059).
+    __table_args__ = (
+        Index(
+            "ix_mensajes_contenido_trgm",
+            "contenido",
+            postgresql_using="gin",
+            postgresql_ops={"contenido": "gin_trgm_ops"},
+        ),
+        Index(
+            "ix_mensajes_destino_trgm",
+            "destino",
+            postgresql_using="gin",
+            postgresql_ops={"destino": "gin_trgm_ops"},
+        ),
+        Index("ix_mensajes_created_at", "created_at"),
+    )
 
     familia_id: Mapped[UUID | None] = mapped_column(ForeignKey("familias.id"), index=True)
     canal: Mapped[str] = mapped_column(EnumDb(CanalComunicacion), default="whatsapp", index=True)

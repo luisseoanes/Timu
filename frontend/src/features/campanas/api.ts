@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
 import type {
@@ -124,11 +124,37 @@ export function usePlantillasWhatsApp() {
   })
 }
 
-export function useMensajes(filtros: { estado?: string; limit?: number; offset?: number }) {
+export interface FiltrosMensajes {
+  estado?: string
+  /** Texto libre en el mensaje o el número (tres caracteres o más). */
+  q?: string
+  direccion?: 'entrante' | 'saliente'
+  desde?: string
+  hasta?: string
+  limit?: number
+  offset?: number
+}
+
+export function useMensajes(filtros: FiltrosMensajes) {
   return useQuery({
     queryKey: ['comunicaciones', 'mensajes', filtros],
+    placeholderData: keepPreviousData,
     queryFn: async () =>
       (await api.get<Page<MensajeRead>>('/comunicaciones/mensajes', { params: { ...filtros, orden: '-created_at' } })).data,
+  })
+}
+
+/** La conversación con un número, de lo más viejo a lo más nuevo (los últimos 200 mensajes). */
+export function useConversacion(destino: string | null) {
+  return useQuery({
+    queryKey: ['comunicaciones', 'conversacion', destino],
+    enabled: destino !== null,
+    queryFn: async () =>
+      (
+        await api.get<Page<MensajeRead>>('/comunicaciones/mensajes', {
+          params: { destino, orden: '-created_at', limit: 200 },
+        })
+      ).data.items.reverse(),
   })
 }
 

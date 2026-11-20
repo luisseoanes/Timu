@@ -1,13 +1,15 @@
 """6.18 / 6.19 Plantillas, envios, traza de mensajes y bajas."""
 
-from typing import Annotated
+from datetime import date, datetime, time, timedelta
+from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy import or_, select
 
 from app.api.deps import DbSession, requiere
 from app.core.enums import Rol
+from app.core.tiempo import ZONA_NEGOCIO
 from app.modules.comunicaciones import service
 from app.modules.comunicaciones.models import BajaComunicaciones, Mensaje, PlantillaWhatsApp
 from app.modules.comunicaciones.schemas import (
@@ -74,8 +76,30 @@ async def listar_mensajes(
     estado: str | None = None,
     canal: str | None = None,
     campana_id: UUID | None = None,
+    q: Annotated[str | None, Query(min_length=3, max_length=120)] = None,
+    destino: str | None = None,
+    direccion: Literal["entrante", "saliente"] | None = None,
+    desde: date | None = None,
+    hasta: date | None = None,
 ) -> Page[MensajeRead]:
+    """`q` busca en el texto del mensaje y en el numero (tres letras o mas, por los indices de
+    trigramas); `destino` es la conversacion con un numero; `desde` y `hasta`, dias de Colombia."""
     stmt = select(Mensaje)
+    if q:
+        patron = f"%{q.strip()}%"
+        digitos = "".join(c for c in q if c.isdigit())
+        numero = [Mensaje.destino.ilike(f"%{digitos}%")] if len(digitos) >= 3 else []
+        stmt = stmt.where(or_(Mensaje.contenido.ilike(patron), *numero))
+    if destino:
+        stmt = stmt.where(Mensaje.destino == destino)
+    if direccion:
+        stmt = stmt.where(Mensaje.direccion == direccion)
+    if desde:
+        stmt = stmt.where(Mensaje.created_at >= datetime.combine(desde, time.min, ZONA_NEGOCIO))
+    if hasta:
+        stmt = stmt.where(
+            Mensaje.created_at < datetime.combine(hasta + timedelta(days=1), time.min, ZONA_NEGOCIO)
+        )
     if familia_id:
         stmt = stmt.where(Mensaje.familia_id == familia_id)
     if estado:
