@@ -223,8 +223,10 @@ def nombres(db: Session) -> dict[str, dict[str, str]]:
 
 def plantillas_faltantes(db: Session) -> list[dict[str, Any]]:
     """Seccion 12 Lo que falta configurar: las plantillas que citan las reglas activas y no tienen
-    version aprobada y activa en el catalogo. Sin ella, esos avisos no salen por ningun canal."""
+    version aprobada y activa en el catalogo. Sin ella, esos avisos no salen por ningun canal.
+    `registrada` distingue la que falta del todo (se registra) de la que espera a Meta."""
     titulos = titulos_plantillas(db)
+    registradas = set(db.scalars(select(PlantillaWhatsApp.nombre).distinct()))
     por_plantilla: dict[str, list[str]] = {}
     reglas = db.scalars(select(Regla).where(Regla.activa).order_by(Regla.prioridad, Regla.nombre))
     for regla in reglas:
@@ -232,7 +234,12 @@ def plantillas_faltantes(db: Session) -> list[dict[str, Any]]:
         if codigo:
             por_plantilla.setdefault(codigo, []).append(regla.nombre)
     return [
-        {"codigo": codigo, "titulo": titulos.get(codigo, codigo), "reglas": nombres}
+        {
+            "codigo": codigo,
+            "titulo": titulos.get(codigo, codigo),
+            "reglas": nombres,
+            "registrada": codigo in registradas,
+        }
         for codigo, nombres in sorted(por_plantilla.items())
         if comunicaciones.plantilla_vigente(db, codigo) is None
     ]

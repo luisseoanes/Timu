@@ -356,22 +356,34 @@ describe('La línea del día', () => {
 describe('Inicio del administrador', () => {
   beforeEach(() => server.use(sesionDe('admin')))
 
-  it('dice lo que falta configurar, con una sola acción verde: la de lo primero que bloquea', async () => {
+  it('dice lo que falta configurar, con todas las acciones iguales', async () => {
     server.use(
       http.get(`${API}/reglas/plantillas-faltantes`, () =>
-        HttpResponse.json([{ codigo: 'aviso_mora', titulo: 'Aviso de mora', reglas: ['Aviso de mora a los 25 días'] }]),
+        HttpResponse.json([
+          { codigo: 'aviso_mora', titulo: 'Aviso de mora', reglas: ['Aviso de mora a los 25 días'], registrada: false },
+          { codigo: 'cuota_vencida', titulo: 'Cuota vencida', reglas: ['Aviso de mora a 1 día'], registrada: true },
+        ]),
       ),
       http.get(`${API}/institucional`, () => HttpResponse.json({ ...DATOS_COMPLETOS, mision: null })),
       http.get(`${API}/auth/usuarios/recuentos`, () => HttpResponse.json({ equipo: 6, aliadas: 1, familias: 2, inactivos: 2 })),
     )
     renderizar(<DashboardPage />)
-    expect(await screen.findByText('La plantilla «Aviso de mora» no está aprobada en el catálogo')).toBeInTheDocument()
+    // La que no está en el catálogo se registra, con su código y su nombre ya puestos; la que está
+    // espera a Meta.
+    expect(await screen.findByText('La plantilla «Aviso de mora» no está registrada')).toBeInTheDocument()
+    expect(screen.getByText('La plantilla «Cuota vencida» no está aprobada en Meta')).toBeInTheDocument()
     expect(screen.getByText('Sus avisos no se envían. La usa: Aviso de mora a los 25 días.')).toBeInTheDocument()
     expect(screen.getByText('Datos de TIMU: falta la misión')).toBeInTheDocument()
     expect(screen.getByText('2 usuarios inactivos')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Ver las plantillas' })).toHaveClass('btn-primario')
+    expect(screen.getByRole('link', { name: 'Registrarla' })).toHaveAttribute(
+      'href',
+      '/panel/admin?pestana=plantillas&nueva=aviso_mora&titulo=Aviso+de+mora',
+    )
+    expect(screen.getByRole('link', { name: 'Ver las plantillas' })).toHaveAttribute('href', '/panel/admin?pestana=plantillas')
     expect(screen.getByRole('link', { name: 'Completar los datos' })).toHaveAttribute('href', '/panel/admin?pestana=timu')
-    expect(document.querySelectorAll('.btn-primario')).toHaveLength(1)
+    // Son cosas del mismo peso: ninguna acción va en verde (decidido con el usuario el 2026-11-20).
+    expect(document.querySelectorAll('.btn-primario')).toHaveLength(0)
+    expect(document.querySelectorAll('.inicio-config .btn-suave')).toHaveLength(4)
   })
 
   it('con todo configurado lo dice', async () => {

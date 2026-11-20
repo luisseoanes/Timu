@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
 import { Icono } from '@/components/Icono'
@@ -22,6 +23,22 @@ export function PlantillasWhatsApp() {
   const crear = useCrearPlantillaWhatsApp()
   const estado = useEstadoPlantilla()
   const [nueva, setNueva] = useState(false)
+  // El Inicio del administrador pide registrar una plantilla que citan las reglas
+  // (`?nueva=<código>&titulo=<nombre>`): la ventana se abre con esos dos campos ya puestos.
+  const [params, setParams] = useSearchParams()
+  const pedida = params.get('nueva')
+  const abierta = nueva || pedida !== null
+
+  function cerrar() {
+    crear.reset()
+    setNueva(false)
+    if (pedida !== null) {
+      const sin = new URLSearchParams(params)
+      sin.delete('nueva')
+      sin.delete('titulo')
+      setParams(sin, { replace: true })
+    }
+  }
 
   return (
     <section className="tarjeta">
@@ -93,12 +110,9 @@ export function PlantillasWhatsApp() {
         )}
       </Consulta>
       <Modal
-        abierto={nueva}
+        abierto={abierta}
         onCambio={(v) => {
-          if (!v) {
-            crear.reset()
-            setNueva(false)
-          }
+          if (!v) cerrar()
         }}
         titulo="Nueva plantilla de WhatsApp"
         pie={
@@ -123,17 +137,17 @@ export function PlantillasWhatsApp() {
                 cuerpo,
                 variables: [...new Set(variables)],
               },
-              { onSuccess: () => setNueva(false) },
+              { onSuccess: cerrar },
             )
           }}
         >
           <label className="campo">
             <span>Nombre para el equipo</span>
-            <input className="input" name="titulo" minLength={3} maxLength={120} placeholder="Aviso de mora" />
+            <input className="input" name="titulo" minLength={3} maxLength={120} placeholder="Aviso de mora" defaultValue={params.get('titulo') ?? ''} />
           </label>
           <label className="campo">
             <span>Código en Meta</span>
-            <input className="input" name="nombre" required pattern="[a-z0-9_]+" />
+            <input className="input" name="nombre" required pattern="[a-z0-9_]+" defaultValue={pedida ?? ''} />
           </label>
           <label className="campo">
             <span>Categoría</span>

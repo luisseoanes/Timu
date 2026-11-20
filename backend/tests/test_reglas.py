@@ -4,6 +4,7 @@ import pytest
 from httpx import AsyncClient
 
 from app.core.enums import Rol
+from app.modules.comunicaciones.models import PlantillaWhatsApp
 from app.modules.reglas import acciones, motor, service
 from app.modules.reglas.contextos import CONTEXTOS, CarteraEstado, campos_del_evento
 from app.modules.reglas.models import Regla
@@ -610,3 +611,21 @@ async def test_el_administrador_ve_las_plantillas_que_citan_las_reglas_y_faltan(
     faltantes = {p["codigo"]: p for p in resp.json()}
     assert "aviso_mora" in faltantes
     assert faltantes["aviso_mora"]["reglas"], "dice que reglas la citan"
+    # No esta en el catalogo: hay que registrarla, no esperar a que Meta la apruebe.
+    assert faltantes["aviso_mora"]["registrada"] is False
+
+    # Registrada pero sin aprobar: sigue faltando, y ya no es por registrarla.
+    db.add(
+        PlantillaWhatsApp(
+            nombre="aviso_mora",
+            cuerpo="Hola {{1}}",
+            variables=["v1"],
+            estado_aprobacion="enviada",
+            activa=False,  # solo una aprobada puede estar activa (la base lo exige)
+        )
+    )
+    await db.commit()
+    resp = await client.get(
+        "/api/v1/reglas/plantillas-faltantes", headers=await login(client, admin.email)
+    )
+    assert {p["codigo"]: p for p in resp.json()}["aviso_mora"]["registrada"] is True

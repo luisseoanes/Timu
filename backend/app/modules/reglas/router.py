@@ -198,6 +198,8 @@ class PlantillaFaltante(BaseModel):
     codigo: str
     titulo: str
     reglas: list[str]
+    # False: no esta en el catalogo y hay que registrarla; True: esta, pero sin version aprobada.
+    registrada: bool
 
 
 @router.get("/plantillas-faltantes", response_model=list[PlantillaFaltante], dependencies=[ADMIN])

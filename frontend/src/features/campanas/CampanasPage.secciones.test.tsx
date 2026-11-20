@@ -670,6 +670,26 @@ describe('plantillas de WhatsApp', () => {
     )
   })
 
+  it('el Inicio del administrador abre la ventana con el código y el nombre que citan las reglas', async () => {
+    let enviado: unknown = null
+    server.use(
+      http.post(`${API}/comunicaciones/plantillas`, async ({ request }) => {
+        enviado = await request.json()
+        return HttpResponse.json(PLANTILLA, { status: 201 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<PlantillasWhatsApp />, { ruta: '/panel/admin?pestana=plantillas&nueva=aviso_mora&titulo=Aviso+de+mora' })
+    const modal = await screen.findByRole('dialog', { name: 'Nueva plantilla de WhatsApp' })
+    expect(within(modal).getByLabelText('Código en Meta')).toHaveValue('aviso_mora')
+    expect(within(modal).getByLabelText('Nombre para el equipo')).toHaveValue('Aviso de mora')
+    await user.type(within(modal).getByLabelText(/^Texto/), 'Hola {{{{1}}, tu cuota está en mora.')
+    await user.click(within(modal).getByRole('button', { name: 'Guardar' }))
+    await waitFor(() => expect(enviado).toMatchObject({ nombre: 'aviso_mora', titulo: 'Aviso de mora', variables: ['1'] }))
+    // Al guardar se cierra y no vuelve a abrirse sola.
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+
   it('explica por qué no se pudo registrar la plantilla', async () => {
     server.use(http.post(`${API}/comunicaciones/plantillas`, () => HttpResponse.json({ detail: 'Nombre repetido' }, { status: 409 })),
     )

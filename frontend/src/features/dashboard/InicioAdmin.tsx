@@ -23,7 +23,8 @@ interface Pendiente {
   bloquea: boolean
   titulo: string
   detalle?: string
-  accion: { texto: string; pestana: string }
+  /** A dónde lleva, dentro de Administración (`pestana` y lo que la pestaña necesita). */
+  accion: { texto: string; destino: Record<string, string> }
 }
 
 function lista(cosas: string[]): string {
@@ -43,12 +44,18 @@ export function InicioAdmin() {
         </h2>
         <Consulta consulta={falta} cargando="Revisando la configuración…" error="No fue posible revisar la configuración.">
           {({ plantillas, datos, usuarios }) => {
-            const pendientes: Pendiente[] = plantillas.map((p) => ({
+            // La que falta del todo se registra (la ventana sale con su código y su nombre); la que
+            // ya está espera a que Meta la apruebe.
+            const pendientes: Pendiente[] = plantillas.map((p): Pendiente => ({
               clave: p.codigo,
               bloquea: true,
-              titulo: `La plantilla «${p.titulo}» no está aprobada en el catálogo`,
+              titulo: p.registrada
+                ? `La plantilla «${p.titulo}» no está aprobada en Meta`
+                : `La plantilla «${p.titulo}» no está registrada`,
               detalle: `Sus avisos no se envían. La usa: ${lista(p.reglas)}.`,
-              accion: { texto: 'Ver las plantillas', pestana: 'plantillas' },
+              accion: p.registrada
+                ? { texto: 'Ver las plantillas', destino: { pestana: 'plantillas' } }
+                : { texto: 'Registrarla', destino: { pestana: 'plantillas', nueva: p.codigo, titulo: p.titulo } },
             }))
             const vacios = DATOS_NECESARIOS.filter(([campo]) => !datos[campo]).map(([, nombre]) => nombre)
             if (vacios.length > 0) {
@@ -57,7 +64,7 @@ export function InicioAdmin() {
                 bloquea: true,
                 titulo: `Datos de TIMU: falta ${lista(vacios)}`,
                 detalle: 'La portada y los documentos los dicen tal como estén aquí.',
-                accion: { texto: 'Completar los datos', pestana: 'timu' },
+                accion: { texto: 'Completar los datos', destino: { pestana: 'timu' } },
               })
             }
             if (usuarios.inactivos > 0) {
@@ -66,15 +73,15 @@ export function InicioAdmin() {
                 bloquea: false,
                 titulo: usuarios.inactivos === 1 ? '1 usuario inactivo' : `${usuarios.inactivos} usuarios inactivos`,
                 detalle: 'No pueden entrar. Se vuelven a activar desde Usuarios.',
-                accion: { texto: 'Ver los usuarios', pestana: 'usuarios' },
+                accion: { texto: 'Ver los usuarios', destino: { pestana: 'usuarios' } },
               })
             }
             if (pendientes.length === 0) return <p className="apagado">Todo está configurado.</p>
-            // Una sola acción verde: la de lo primero que impide que algo funcione.
-            const principal = pendientes.findIndex((p) => p.bloquea)
+            // Todas las acciones iguales (decidido con el usuario el 2026-11-20): son cosas del mismo
+            // peso y ninguna va antes que otra; lo que bloquea lo dice su icono.
             return (
               <ul className="inicio-config">
-                {pendientes.map((p, i) => (
+                {pendientes.map((p) => (
                   <li key={p.clave} className="fila">
                     <span className="fila-icono" data-bloquea={p.bloquea || undefined}>
                       <Icono nombre={p.bloquea ? 'alerta' : 'usuario'} size={16} />
@@ -83,7 +90,7 @@ export function InicioAdmin() {
                       <strong>{p.titulo}</strong>
                       {p.detalle && <span>{p.detalle}</span>}
                     </div>
-                    <Link className={`btn ${i === principal ? 'btn-primario' : 'btn-suave'}`} to={`/panel/admin?pestana=${p.accion.pestana}`}>
+                    <Link className="btn btn-suave" to={`/panel/admin?${new URLSearchParams(p.accion.destino)}`}>
                       {p.accion.texto}
                     </Link>
                   </li>

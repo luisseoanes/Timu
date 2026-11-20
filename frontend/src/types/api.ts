@@ -88,6 +88,7 @@ export interface PlantillaFaltante {
   codigo: string
   titulo: string
   reglas: string[]
+  registrada: boolean
 }
 
 export interface CambioHistorial {

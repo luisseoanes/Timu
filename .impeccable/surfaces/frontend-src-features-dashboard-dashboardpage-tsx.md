@@ -2,7 +2,7 @@
 version: 1
 slug: "frontend-src-features-dashboard-dashboardpage-tsx"
 primary_target: "frontend/src/features/dashboard/DashboardPage.tsx"
-related_targets: ["frontend/src/features/dashboard/api.ts","frontend/src/features/dashboard/InicioAdmin.tsx","frontend/src/features/dashboard/cifras.ts","frontend/src/features/dashboard/ReportesProgramados.tsx"]
+related_targets: ["frontend/src/features/dashboard/api.ts","frontend/src/features/dashboard/InicioAdmin.tsx","frontend/src/features/dashboard/cifras.ts","frontend/src/features/dashboard/ReportesProgramados.tsx","frontend/src/features/campanas/PlantillasWhatsApp.tsx"]
 ---
 
 # Panel del equipo · Inicio (R2-PAN-04)
@@ -98,7 +98,11 @@ administrador dice lo que falta configurar». Sustituye a «Mismo tablero, orden
   y los preventivos por autorizar; Operaciones sus tareas y la agenda de servicios. Sin filtros ni
   descargas: los cortes son de Gerencia.
 - **Administrador** (`InicioAdmin.tsx`): «Lo que falta configurar», una fila por cosa, lo que bloquea
-  primero en tono de alerta y con la única acción verde; en el celular la acción baja a lo ancho.
+  primero y en tono de alerta; en el celular la acción baja a lo ancho. Todas las acciones iguales,
+  suaves, sin verde (el usuario, 2026-11-20: «el primer botón es diferente a los demás cuando
+  deberían ser todos iguales»). Una plantilla que citan las reglas y no está en el catálogo dice «no
+  está registrada» y «Registrarla» abre la ventana de Plantillas con su código y su nombre; la que
+  está y espera a Meta dice «no está aprobada en Meta» y lleva a la lista.
 
 ## Pendiente
 
