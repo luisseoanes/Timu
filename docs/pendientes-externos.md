@@ -299,6 +299,11 @@ había alejado del documento de requerimientos. Cada punto cita el requisito que
 
 | Requisito | Qué falta | Estado |
 | --- | --- | --- |
+| 6.5 | Los días bloqueados de la agenda («Bloquear un día» en Servicios) no se ven ni se deshacen: no hay listado ni baja, y uno bloqueado por error deja la agenda sin cupos ese día. Encontrado en la revisión por perfiles del 2026-11-20. | Pendiente: decidir con el usuario |
+| 6.6 | El pendiente de una atención es texto libre: no dice qué servicio es, así que no identifica la cobertura del plan ni el valor (puntos 2 y 3), no crea tarea para el equipo (punto 4) y al autorizarlo no inicia la programación (punto 7). Sí registra la autorización o el rechazo y no avanza sin ella. Revisión del 2026-11-20. | Parcial: decidir con el usuario |
+| 6.10 | Los estados del servicio son solicitado, agendado, en ruta, en atención, completado, pendiente de autorización, reprogramado y cancelado. Faltan, como estados o como equivalencia documentada, «contactado», «confirmado», «no autorizado» y «sin respuesta». Revisión del 2026-11-20. | Parcial: decidir con el usuario |
+| 6.12 | El pago manual de un registro en línea (`POST /afiliaciones/{id}/pago-manual`) no tiene pantalla: sin la pasarela, Comercial no puede completar desde el panel la afiliación de quien se registró en la web. Revisión del 2026-11-20. | Pendiente: decidir con el usuario |
+| 6.14 | El kardex (registro de la medicación administrada) no existe en la historia clínica. Revisión del 2026-11-20. | Pendiente: decidir con el usuario |
 | 6.20 | Exportar las respuestas de las encuestas a Excel o CSV («la información deberá poder consultarse posteriormente y, de ser necesario, exportarse a Excel u otro formato»), con familia, mascota, servicio, fecha, profesional y puntaje. | Pendiente |
 | Sección 10 | La migración de la información actual de TIMU: mapeo campo a campo, dos corridas de prueba con conteos cuadrados y plan de reversa antes de la definitiva. | Pendiente: faltan los datos de TIMU |
 | Sección 18 | Un recorrido automático del ciclo completo (captar, convertir, afiliar, gestionar, prevenir, atender, hacer seguimiento, medir y fidelizar). Hay ciclos parciales (afiliación, vacunación, atención virtual) y los recorridos de `e2e-stack/recorridos.spec.ts`; `operacion_demo` recorre buena parte por la API, pero no es una prueba. | Parcial |
