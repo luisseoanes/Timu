@@ -53,6 +53,11 @@ hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
   cierre `R4` (recorrido, auditoría, documentación y umbrales). **Recomendado** (2026-11-18):
   `R4-CIE-01` a `R4-CIE-04` en orden; la demostración ya recorre todos los casos. `R4-CIE-01` se
   cerró el 2026-11-19; sigue `R4-CIE-02`. Se le pregunta al usuario antes de empezar cada una.
+  **En pausa desde el 2026-11-20**: el usuario revisa el panel perfil por perfil (cerrados
+  Administración, Gerencia, Comercial y Operaciones; Médicos a medias; faltan Atención al cliente,
+  el portal y la clínica aliada), y los clientes prueban en staging. Los huecos de requisito que
+  salieron están en «Lo que falta en el código» de [pendientes externos](pendientes-externos.md).
+  Antes de `R4-CIE-02`, preguntar si la revisión terminó.
 - **La portada pública de `timu.com.co` está hecha: `R3-PUB-04`** (2026-11-18). Antes de publicarla
   en el dominio quedan cosas de TIMU, en [pendientes externos](pendientes-externos.md): los valores
   provisionales sacados de la web vieja, el permiso de las personas de las fotos del equipo, la
