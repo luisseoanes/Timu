@@ -140,8 +140,10 @@ cómo volver a sembrar: [`docs/despliegue-staging.md`](docs/despliegue-staging.m
 - **El panel de staging es el compilado** (`frontend/Dockerfile.despliegue`, Caddy): un cambio que toca
   su build, el `Caddyfile` o cómo llega a `/api` se prueba con esa imagen, no con `npm run dev`.
 - **Tras empujar, se comprueba también el despliegue** de los servicios que el cambio toca (`railway
-  deployment list -s <servicio> -e staging --json`, o el panel de Railway): un despliegue fallido deja
-  staging en la versión anterior sin que el CI lo diga.
+  deployment list -p <proyecto> -s <servicio> -e staging --json`, con el id del proyecto de
+  [`docs/despliegue-staging.md`](docs/despliegue-staging.md): sin `-p` responde «No linked project
+  found»; o el panel de Railway): un despliegue fallido deja staging en la versión anterior sin que
+  el CI lo diga.
 
 ## Dónde está cada cosa
 

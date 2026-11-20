@@ -111,7 +111,7 @@ ssh_api python -m scripts.vaciar_staging --confirmar staging   # esquema public 
 ssh_api python -m scripts.inicializar                          # migraciones desde la 0001, admin
 ssh_api sh -c "DEMO_API=$API python -m scripts.datos_demo"     # ~1 min
 ssh_api sh -c "DEMO_API=$API nohup python -m scripts.operacion_demo > /tmp/operacion.log 2>&1 &"
-ssh_api tail -n 3 /tmp/operacion.log   # ~5 min, hasta «Listo: … rutas, … visitas…»
+ssh_api tail -n 3 /tmp/operacion.log   # ~5 min, hasta «Listo: … rutas, … visitas…» y sin «quedó corta»
 ```
 
 - **`DEMO_API` va con la URL pública de la API, en HTTPS**: staging tiene `COOKIE_SECURE=true`, y
@@ -120,7 +120,11 @@ ssh_api tail -n 3 /tmp/operacion.log   # ~5 min, hasta «Listo: … rutas, … v
 - **Los planes los crea `datos_demo`**: desplegado, `seed` no los crea (los da de alta
   Administración), y si no hay ninguno el script crea los tres de TIMU por la API, con los valores
   provisionales de `seed.PLANES_TIMU`.
-- `operacion_demo` va en segundo plano porque la sesión SSH se corta antes de que termine.
+- `operacion_demo` va en segundo plano porque la sesión SSH se corta antes de que termine. El
+  contenedor no tiene `ps` ni `pgrep`: se sabe que terminó por el registro. «Listo» sale antes de
+  comprobar los mínimos; si alguno queda corto, después escribe «La operación quedó corta» y el
+  script termina con error.
+- Todo comando `railway` lleva `-p $P`: este repositorio no tiene un proyecto enlazado.
 - Las fechas son relativas al día en que se siembra: la ruta de la médica de `datos_demo` cae en el
   primer día con cupo de esa semana, y con los días se queda en el pasado.
 
