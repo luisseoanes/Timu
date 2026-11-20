@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 
 import { Consulta } from '@/components/Consulta'
 import { Icono } from '@/components/Icono'
 import { descargar } from '@/lib/descargas'
 import { mensajeError } from '@/lib/errores'
-import { hoyISO, moneda } from '@/lib/formato'
+import { fecha, hoyISO, moneda } from '@/lib/formato'
 
 import { type FilaLiquidacion, useLiquidacion } from './api'
 
@@ -16,6 +16,16 @@ export function Liquidacion() {
   const [hasta, setHasta] = useState(hoy)
   const liquidacion = useLiquidacion(desde, hasta, Boolean(desde && hasta))
   const [errorCsv, setErrorCsv] = useState<string | null>(null)
+  // Las clínicas con su detalle a la vista: se abren y se cierran por separado.
+  const [abiertas, setAbiertas] = useState<ReadonlySet<string>>(new Set())
+
+  function alternar(clinica: string) {
+    setAbiertas((antes) => {
+      const despues = new Set(antes)
+      if (!despues.delete(clinica)) despues.add(clinica)
+      return despues
+    })
+  }
 
   return (
     <section className="tarjeta">
@@ -69,22 +79,69 @@ export function Liquidacion() {
                 </tr>
               </thead>
               <tbody>
-                {d.map((f) => (
-                  <tr key={f.clinica_id}>
-                    <td className="principal" data-etiqueta="Clínica">
-                      {f.clinica}
-                      {f.nit && (
-                        <div className="bandeja-detalle">
-                          <span className="numero">NIT {f.nit}</span>
-                        </div>
+                {d.map((f) => {
+                  const abierta = abiertas.has(f.clinica_id)
+                  return (
+                    <Fragment key={f.clinica_id}>
+                      <tr className="liquidacion-fila" data-abierta={abierta || undefined}>
+                        <td className="principal" data-etiqueta="Clínica">
+                          {/* El detalle de cada atención, el mismo del CSV, sin descargarlo. */}
+                          <button
+                            className="liquidacion-abrir"
+                            type="button"
+                            aria-expanded={abierta}
+                            aria-controls={`liquidacion-${f.clinica_id}`}
+                            onClick={() => alternar(f.clinica_id)}
+                          >
+                            <Icono nombre="abajo" size={16} />
+                            {f.clinica}
+                          </button>
+                          {f.nit && (
+                            <div className="bandeja-detalle">
+                              <span className="numero">NIT {f.nit}</span>
+                            </div>
+                          )}
+                        </td>
+                        <td className="numero" data-etiqueta="Atenciones">{f.atenciones}</td>
+                        <td className="numero" data-etiqueta="Valor de las atenciones">{moneda(f.valor_atenciones)}</td>
+                        <td className="numero" data-etiqueta="Cubre TIMU">{moneda(f.valor_cubierto)}</td>
+                        <td className="numero" data-etiqueta="Pagan las familias">{moneda(f.valor_familias)}</td>
+                      </tr>
+                      {abierta && (
+                        <tr className="liquidacion-detalle" id={`liquidacion-${f.clinica_id}`}>
+                          <td colSpan={5}>
+                            <table className="tabla tabla-apilable liquidacion-atenciones" aria-label={`Atenciones de ${f.clinica}`}>
+                              <thead>
+                                <tr>
+                                  <th>Remisión</th>
+                                  <th>Atendida</th>
+                                  <th>Beneficio</th>
+                                  <th>Valor</th>
+                                  <th>Cubre TIMU</th>
+                                  <th>Paga la familia</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {f.detalle.map((a) => (
+                                  <tr key={a.codigo}>
+                                    <td className="numero" data-etiqueta="Remisión">{a.codigo}</td>
+                                    <td data-etiqueta="Atendida">{fecha(a.fecha_atencion)}</td>
+                                    <td data-etiqueta="Beneficio">{a.beneficio ?? '—'}</td>
+                                    <td className="numero" data-etiqueta="Valor">{moneda(a.valor_atencion)}</td>
+                                    <td className="numero" data-etiqueta="Cubre TIMU">{moneda(a.valor_cubierto)}</td>
+                                    <td className="numero" data-etiqueta="Paga la familia">
+                                      {moneda(Number(a.valor_atencion) - Number(a.valor_cubierto))}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                    <td className="numero" data-etiqueta="Atenciones">{f.atenciones}</td>
-                    <td className="numero" data-etiqueta="Valor de las atenciones">{moneda(f.valor_atenciones)}</td>
-                    <td className="numero" data-etiqueta="Cubre TIMU">{moneda(f.valor_cubierto)}</td>
-                    <td className="numero" data-etiqueta="Pagan las familias">{moneda(f.valor_familias)}</td>
-                  </tr>
-                ))}
+                    </Fragment>
+                  )
+                })}
               </tbody>
               {d.length > 1 && (
                 <tfoot>

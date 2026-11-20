@@ -452,6 +452,30 @@ describe('liquidación', () => {
     await waitFor(() => expect(periodos).toContain('2026-09-01..2026-09-30'))
   })
 
+  it('cada clínica abre ahí mismo el detalle de sus atenciones, sin descargar el CSV', async () => {
+    const detalle = [
+      { codigo: 'ABCD2345', fecha_atencion: '2026-11-06', beneficio: 'Radiografía', valor_atencion: '180000.00', valor_cubierto: '144000.00' },
+      { codigo: 'EFGH6789', fecha_atencion: '2026-11-14', beneficio: null, valor_atencion: '270000.00', valor_cubierto: '216000.00' },
+    ]
+    server.use(http.get(`${API}/aliadas/liquidacion`, () => HttpResponse.json([{ ...FILA, detalle }])))
+    const user = await abrirPestana('Liquidación')
+    const abrir = await screen.findByRole('button', { name: 'Clínica Norte' })
+    expect(abrir).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('table', { name: 'Atenciones de Clínica Norte' })).not.toBeInTheDocument()
+    await user.click(abrir)
+    expect(abrir).toHaveAttribute('aria-expanded', 'true')
+    const tabla = screen.getByRole('table', { name: 'Atenciones de Clínica Norte' })
+    const filas = within(tabla).getAllByRole('row').slice(1)
+    expect(filas).toHaveLength(2)
+    expect(within(filas[0]).getByText('ABCD2345')).toBeInTheDocument()
+    expect(within(filas[0]).getByText('Radiografía')).toBeInTheDocument()
+    // Lo que paga la familia: el valor menos lo que cubre TIMU.
+    expect(within(filas[0]).getByText(/^\$\s36\.000$/)).toBeInTheDocument()
+    expect(within(filas[1]).getByText('—')).toBeInTheDocument()
+    await user.click(abrir)
+    expect(screen.queryByRole('table', { name: 'Atenciones de Clínica Norte' })).not.toBeInTheDocument()
+  })
+
   it('sin atenciones lo dice y explica si el CSV falla', async () => {
     server.use(
       http.get(`${API}/aliadas/liquidacion`, ({ request }) =>

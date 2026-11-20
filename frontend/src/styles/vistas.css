@@ -1569,6 +1569,18 @@
 .liquidacion-tabla tfoot :is(th, td) { border-top: 2px solid var(--borde); font-weight: 700; color: var(--texto-titulo); }
 /* El total es la cabecera de su fila (un th), pero se lee como las celdas, no como etiqueta. */
 .liquidacion-tabla tfoot th { font-size: var(--t-cuerpo); letter-spacing: normal; text-transform: none; text-align: left; }
+/* Cada clínica abre debajo el detalle de sus atenciones, el mismo del CSV. */
+.liquidacion-abrir {
+  display: inline-flex; align-items: center; gap: var(--e2); min-height: 44px; padding: 0;
+  border: 0; background: none; font: inherit; font-weight: 600; color: var(--texto-titulo);
+  text-align: left; cursor: pointer;
+}
+.liquidacion-abrir:hover { text-decoration: underline; text-underline-offset: 3px; }
+.liquidacion-abrir svg { flex: none; color: var(--texto-suave); transition: transform var(--duracion) var(--curva); }
+.liquidacion-abrir[aria-expanded="true"] svg { transform: rotate(180deg); }
+.liquidacion-tabla > tbody > .liquidacion-detalle > td { padding: 0 var(--e3) var(--e4); background: var(--superficie-hundida); }
+/* Lo que se lee (remisión, fecha, beneficio) a la izquierda; las cifras, a la derecha. */
+.liquidacion-atenciones :is(th, td):nth-child(-n + 3) { text-align: left; }
 @media (max-width: 599px) {
   .liquidacion-periodo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
