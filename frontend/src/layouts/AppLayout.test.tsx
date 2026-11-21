@@ -91,7 +91,7 @@ describe('AppLayout en escritorio', () => {
       }),
     )
     abrir()
-    const menu = await abrirMenu(/^Cuenta de /)
+    const menu = await abrirMenu(/, cuenta de /)
     expect(menu).toHaveTextContent('Atención al cliente')
     await userEvent.setup().click(within(menu).getByRole('menuitem', { name: 'Cerrar sesión' }))
     await vi.waitFor(() => expect(salio).toBe(true))

@@ -231,6 +231,9 @@
 }
 .bandeja-titulo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e1) var(--e2); }
 .bandeja-detalle { display: flex; flex-wrap: wrap; gap: 0 var(--e3); margin-top: 2px; font-size: var(--t-menor); font-weight: 400; color: var(--texto-suave); }
+/* Los enlaces de la línea de detalle van seguidos (la familia, el servicio): 24 px de alto cada uno
+   para no tocar el de al lado (WCAG 2.5.8). */
+.bandeja-detalle a { display: inline-flex; align-items: center; min-height: 24px; }
 .tarea-descripcion { margin-top: var(--e1); max-width: 60ch; font-size: var(--t-menor); font-weight: 400; color: var(--texto); }
 /* La fecha y «· vencida» bajan de línea enteras, nunca partidas por dentro. */
 .bandeja-vencida { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 var(--e1); font-weight: 600; color: var(--texto-error); }
@@ -1967,6 +1970,9 @@
 .contacto-whatsapp strong { color: var(--texto-titulo); }
 .contacto-lista { margin: 0; display: grid; gap: var(--e5); }
 .contacto-lista dd { margin: var(--e1) 0 0; display: grid; gap: 2px; justify-items: start; }
+/* Dos teléfonos seguidos no se tocan por error (WCAG 2.5.8): cada uno con su alto, 44 px con el pulgar. */
+.contacto-lista dd a { display: inline-flex; align-items: center; min-height: 32px; }
+@media (max-width: 899px), (pointer: coarse) { .contacto-lista dd a { min-height: 44px; } }
 .contacto-horario { font-size: var(--t-menor); color: var(--texto-suave); }
 .contacto-form { display: grid; gap: var(--e5); padding: var(--e6); border: 1px solid var(--borde); border-radius: var(--r-panel); background: var(--superficie); }
 .contacto-form h3 { margin: 0; font-size: var(--t-seccion); color: var(--texto-titulo); }

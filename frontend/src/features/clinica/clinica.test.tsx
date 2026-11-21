@@ -278,7 +278,7 @@ describe('Consulta de la historia', () => {
       }),
     )
     const user = conConsulta({})
-    await user.click(await screen.findByRole('button', { name: 'Tratamiento, escrito' }))
+    await user.click(await screen.findByRole('button', { name: 'Plan (Tratamiento), escrito' }))
     // Abierto desde la historia, sin visita, el borrador dice su propia modalidad.
     const cabeza = screen.getByRole('region', { name: 'Consulta de Luna' }).querySelector('header')!
     expect(within(cabeza).getByText('Domiciliaria')).toBeInTheDocument()

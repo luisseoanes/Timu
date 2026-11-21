@@ -8,12 +8,14 @@ import { rutaDemo } from './datos'
 import { sesion, type Perfil } from './sesiones'
 
 /**
- * Recorrido responsive y de contraste (R0-QAA-02, docs/hoja-de-ruta-rediseno.md).
+ * Recorrido responsive y de accesibilidad (R0-QAA-02, docs/hoja-de-ruta-rediseno.md).
  *
  * Abre cada ruta de `src/App.tsx` con el perfil que la usa, contra el stack real y los datos
  * de `scripts.datos_demo`, y la mide a 375, 768, 900 y 1280 px. Falla si el documento desborda en
  * horizontal (una tabla dentro de su propio contenedor con desplazamiento sí se permite) o si
- * axe-core encuentra texto con contraste insuficiente (WCAG 2.2 AA, 1.4.3).
+ * axe-core encuentra un fallo de WCAG 2.2 A o AA: el contraste (1.4.3) y, desde R4-CIE-02, todas
+ * las demás reglas (el nombre con el texto visible, los enlaces que solo se distinguen por el
+ * color, el tamaño de los objetivos, el acceso por teclado a lo que se desplaza…).
  *
  * Una ruta con `pestanas` se mide también con cada una de sus pestañas abierta: su contenido
  * no está en el DOM hasta que se elige. La clave de un fallo lleva entonces la pestaña
@@ -33,7 +35,7 @@ import { sesion, type Perfil } from './sesiones'
 const ANCHOS = [375, 768, 900, 1280] as const
 const ALTO = 900
 
-type Fallo = 'desborde' | 'contraste'
+type Fallo = 'desborde' | 'accesibilidad'
 
 interface Ruta {
   /** La ruta tal como la declara App.tsx: el `path` o `index` dentro de su espacio. */
@@ -271,9 +273,12 @@ async function desbordes(page: Page): Promise<string[]> {
   })
 }
 
-async function contrastes(page: Page): Promise<string[]> {
-  const { violations } = await new AxeBuilder({ page }).withRules(['color-contrast']).analyze()
-  return violations.flatMap((v) => v.nodes.slice(0, 3).map((n) => n.target.join(' ')))
+/** Los fallos de WCAG 2.2 A y AA que encuentra axe-core: la regla y hasta tres elementos de cada una. */
+async function accesibilidad(page: Page): Promise<string[]> {
+  const { violations } = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+    .analyze()
+  return violations.flatMap((v) => v.nodes.slice(0, 3).map((n) => `${v.id}: ${n.target.join(' ')}`))
 }
 
 async function esperarPantalla(page: Page) {
@@ -288,7 +293,7 @@ async function medir(page: Page, vista: string, encontrados: Map<string, string[
     await page.evaluate(() => new Promise((listo) => requestAnimationFrame(() => requestAnimationFrame(listo))))
     const medidas: [Fallo, string[]][] = [
       ['desborde', await desbordes(page)],
-      ['contraste', await contrastes(page)],
+      ['accesibilidad', await accesibilidad(page)],
     ]
     for (const [fallo, detalle] of medidas) {
       if (detalle.length > 0) encontrados.set(`${vista}@${ancho}:${fallo}`, detalle)
@@ -335,7 +340,7 @@ async function cargarConDatos(page: Page, fallos: FalloApi[], cargar: (reintento
 }
 
 for (const perfil of [null, 'atencion', 'admin', 'gerencia', 'comercial', 'operaciones', 'medico', 'familia', 'aliada'] as const) {
-  test.describe(perfil ? `responsive y contraste · ${perfil}` : 'responsive y contraste · público', () => {
+  test.describe(perfil ? `responsive y accesibilidad · ${perfil}` : 'responsive y accesibilidad · público', () => {
     test.use({ storageState: perfil ? sesion(perfil) : { cookies: [], origins: [] } })
 
     for (const ruta of RUTAS.filter((r) => r.perfil === perfil)) {

@@ -128,13 +128,10 @@ export function Mensajes() {
                       <tr key={m.id}>
                         <td className="principal" data-etiqueta="Mensaje">
                           {/* El mensaje abre la conversación entera con ese número, para ponerse en contexto. */}
-                          <button
-                            className="mensaje-abrir"
-                            type="button"
-                            onClick={() => setAbierto(m)}
-                            aria-label={`Ver la conversación con ${telefono(m.destino)}`}
-                          >
+                          {/* El nombre del botón es el mensaje que se ve, y después lo que hace (WCAG 2.5.3). */}
+                          <button className="mensaje-abrir" type="button" onClick={() => setAbierto(m)}>
                             <span className="mensaje-contenido">{m.contenido ?? (m.plantilla ? `Plantilla «${nombrePlantilla(m.plantilla)}»` : '—')}</span>
+                            <span className="sr-only">: ver la conversación con {telefono(m.destino)}</span>
                           </button>
                           <div className="bandeja-detalle">
                             {/* La dirección en palabras: una flecha sola no la lee nadie con lector de pantalla. */}

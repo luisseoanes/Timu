@@ -54,14 +54,15 @@ async function abrir(page: Page, url: string, rutas: Record<string, unknown>) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 }
 
-/** Sin desborde horizontal ni texto con contraste insuficiente, a los anchos del barrido. */
+/** Sin desborde horizontal ni fallos de WCAG 2.2 A o AA (axe-core), a los anchos del barrido. */
 async function medir(page: Page) {
   for (const ancho of [375, 1280]) {
     await page.setViewportSize({ width: ancho, height: 900 })
     const desborda = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1)
     expect(desborda, `desborda a ${ancho} px`).toBe(false)
-    const { violations } = await new AxeBuilder({ page }).withRules(['color-contrast']).analyze()
-    expect(violations.flatMap((v) => v.nodes.map((n) => n.target.join(' '))), `contraste a ${ancho} px`).toEqual([])
+    // Todas las reglas de WCAG 2.2 A y AA, como el barrido contra el stack (R4-CIE-02).
+    const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze()
+    expect(violations.flatMap((v) => v.nodes.map((n) => `${v.id}: ${n.target.join(' ')}`)), `accesibilidad a ${ancho} px`).toEqual([])
   }
 }
 
@@ -121,7 +122,7 @@ const COTIZACION_REGISTRO = ['mensual', 'trimestral', 'semestral', 'anual'].map(
   ahorro: '0.00',
 }))
 
-test('el registro arma la manada, compara y paga sin desbordar ni perder contraste', async ({ page }) => {
+test('el registro arma la manada, compara y paga sin desbordar ni fallos de accesibilidad', async ({ page }) => {
   await page.route('**/api/v1/**', (ruta) => ruta.fulfill({ status: 401, json: { detail: 'Sin sesión' } }))
   await page.route('**/api/v1/afiliaciones/registro/ciudades', (ruta) => ruta.fulfill({ json: ['Bogotá', 'Medellín'] }))
   await page.route('**/api/v1/afiliaciones/registro/planes**', (ruta) =>

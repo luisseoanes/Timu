@@ -40,6 +40,9 @@ p  { margin: 0; text-wrap: pretty; }
 
 a { color: var(--texto-enlace); text-decoration: none; }
 a:hover { color: var(--texto-enlace-hover); }
+/* Un enlace dentro de una frase se distingue sin el color (WCAG 1.4.1): subrayado. Los que son
+   controles por sí mismos (botones planos, navegación, filas, celdas) llevan clase o van sueltos. */
+:where(p, li, dd, span) a:not([class]) { text-decoration: underline; text-decoration-thickness: 1px; }
 
 :focus-visible {
   outline: 2px solid var(--foco);

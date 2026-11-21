@@ -95,7 +95,7 @@ describe('MiClinicaPage', () => {
     const user = userEvent.setup()
     renderizar(<MiClinicaPage />)
     expect(await screen.findByText('Clínica Veterinaria del Norte')).toBeInTheDocument()
-    await user.click(await screen.findByRole('button', { name: 'Cuenta de Recepción Clínica del Norte' }))
+    await user.click(await screen.findByRole('button', { name: 'RC, cuenta de Recepción Clínica del Norte' }))
     expect(await screen.findByText('Clínica Veterinaria del Norte · Medellín')).toBeInTheDocument()
   })
 

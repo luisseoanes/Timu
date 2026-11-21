@@ -113,7 +113,7 @@ export function PlantillasWhatsApp() {
                     <td className="tabla-acciones">
                       {/* El texto se cambia sobre la versión más reciente (la lista viene de la más nueva a la más vieja). */}
                       {p.findIndex((otra) => otra.nombre === pl.nombre && otra.idioma === pl.idioma) === i && (
-                        <button className="btn btn-plano btn-accion" type="button" onClick={() => setEditando(pl)} aria-label={`Editar el texto de ${pl.titulo ?? pl.nombre}`}>
+                        <button className="btn btn-plano btn-accion" type="button" onClick={() => setEditando(pl)} aria-label={`Editar texto de ${pl.titulo ?? pl.nombre}`}>
                           Editar texto
                         </button>
                       )}

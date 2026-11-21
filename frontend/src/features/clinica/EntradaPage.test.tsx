@@ -112,7 +112,7 @@ describe('consulta en borrador', () => {
     )
     const user = abrir({ diagnostico: null, anamnesis: 'a', examen_fisico: 'b' })
     expect(await screen.findByRole('heading', { name: 'Diagnóstico' })).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Tratamiento, escrito' }))
+    await user.click(screen.getByRole('button', { name: 'Plan (Tratamiento), escrito' }))
     await user.click(screen.getByRole('button', { name: 'Firmar consulta' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Para firmar falta: Diagnóstico.')
     expect(screen.getByRole('heading', { name: 'Diagnóstico' })).toBeInTheDocument()

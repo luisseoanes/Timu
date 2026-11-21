@@ -642,7 +642,7 @@ describe('mensajes y bajas', () => {
       }),
     )
     const user = await abrirPestana('Mensajes')
-    await user.click(await screen.findByRole('button', { name: /^Ver la conversación con/ }))
+    await user.click(await screen.findByRole('button', { name: /: ver la conversación con/ }))
     const ventana = await screen.findByRole('dialog', { name: /^Conversación con/ })
     const burbujas = await within(ventana).findAllByRole('listitem')
     expect(burbujas.map((b) => b.querySelector('p')?.textContent)).toEqual(['¿Cuándo vence mi cuota?', 'Su cuota vence mañana'])
@@ -765,7 +765,7 @@ describe('plantillas de WhatsApp', () => {
     )
     const user = await abrirPestana('Plantillas de WhatsApp')
     // Solo la versión más reciente se edita: la vieja ya no lleva el botón.
-    const editar = await screen.findAllByRole('button', { name: 'Editar el texto de Recordatorio de renovación' })
+    const editar = await screen.findAllByRole('button', { name: 'Editar texto de Recordatorio de renovación' })
     expect(editar).toHaveLength(1)
     await user.click(editar[0])
     const modal = await screen.findByRole('dialog', { name: 'Editar «Recordatorio de renovación»' })

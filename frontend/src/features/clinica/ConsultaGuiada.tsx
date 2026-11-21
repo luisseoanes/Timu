@@ -183,7 +183,8 @@ export function ConsultaGuiada({
               <button
                 type="button"
                 aria-current={i === actual ? 'step' : undefined}
-                aria-label={`${e.titulo}, ${escrito ? 'escrito' : 'sin escribir'}`}
+                // El nombre lleva lo que se ve (WCAG 2.5.3): «Plan» es el corto de «Tratamiento».
+                aria-label={`${e.titulo.includes(e.corto) ? e.titulo : `${e.corto} (${e.titulo})`}, ${escrito ? 'escrito' : 'sin escribir'}`}
                 disabled={ocupada}
                 onClick={() => void ir(i)}
               >

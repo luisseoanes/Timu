@@ -205,7 +205,8 @@ function Ficha({ plan: p }: { plan: PlanRead }) {
       <section className="bloque" aria-labelledby="plan-beneficios">
         <h3 id="plan-beneficios">Beneficios</h3>
         {p.beneficios.length ? (
-          <div className="scroll-x">
+          // En el celular la tabla se desplaza: el teclado tiene que poder llegar (WCAG 2.1.1).
+          <div className="scroll-x" tabIndex={0} role="region" aria-labelledby="plan-beneficios">
             {/* Dos columnas cortas: caben en fila también en el celular (techo 63). */}
             <table className="tabla bandeja-tabla plan-beneficios">
               <thead>

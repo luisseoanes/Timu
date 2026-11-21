@@ -17,8 +17,9 @@ export function MenuCuenta({ nombre, detalle, alSalir }: { nombre: string | unde
 
   return (
     <Menu.Root>
-      {/* Bajo ProtectedRoute el usuario ya llegó; sin nombre solo queda la palabra. */}
-      <Menu.Trigger className="cuenta" aria-label={nombre ? `Cuenta de ${nombre}` : 'Cuenta'}>
+      {/* Bajo ProtectedRoute el usuario ya llegó; sin nombre solo queda la palabra. El nombre empieza
+          por las iniciales que se ven (WCAG 2.5.3): quien maneja la pantalla por voz dice «MO». */}
+      <Menu.Trigger className="cuenta" aria-label={nombre ? `${iniciales}, cuenta de ${nombre}` : 'Cuenta'}>
         {iniciales || '—'}
       </Menu.Trigger>
       <Menu.Portal>
