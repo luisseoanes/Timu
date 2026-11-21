@@ -6,14 +6,14 @@ import { Distintivo } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { Pestanas } from '@/components/Pestanas'
 import { useAuth } from '@/features/auth'
-import { useNombreTipoServicio } from '@/features/catalogos'
-import { SelectorFamilia, useMascotas } from '@/features/familias'
+import { useEspecies, useNombreTipoServicio } from '@/features/catalogos'
+import { useMascotas } from '@/features/familias'
 import { useRutas } from '@/features/rutas'
+import { mensajeError } from '@/lib/errores'
 import { fecha, hora, hoyISO } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
-import type { FamiliaRead } from '@/types'
 
-import { useBorradores } from './api'
+import { useBorradores, useBuscarMascotas } from './api'
 import { AtencionVirtual } from './AtencionVirtual'
 import { Plantillas } from './Plantillas'
 import { Respuestas } from './Respuestas'
@@ -125,25 +125,47 @@ function TrabajoPendiente() {
   )
 }
 
+/** El médico abre la historia de cualquier mascota, sin pasar por Familias (Sección 12). */
 function BuscarHistoria() {
-  const [familia, setFamilia] = useState<FamiliaRead | null>(null)
+  const [q, setQ] = useState('')
+  const resultados = useBuscarMascotas(q)
+  const especies = useEspecies()
+  const especie = (codigo: string) => especies.data?.find((e) => e.codigo === codigo)?.nombre ?? codigo
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
         <h3>Abrir una historia clínica</h3>
       </div>
-      <SelectorFamilia valor={familia} onCambio={setFamilia} etiqueta="Familia de la mascota" />
-      {familia && (
-        <div className="mascotas" style={{ marginTop: 'var(--e4)' }}>
-          {(familia.mascotas ?? []).map((m) => (
-            <Link key={m.id} to={`/panel/clinica/mascotas/${m.id}`} className="acceso">
-              <Icono nombre="huella" />
-              {m.nombre}
-              <span className="apagado">{m.activa ? m.especie : 'De baja'}</span>
-            </Link>
-          ))}
-        </div>
-      )}
+      <label className="campo">
+        <span>Mascota o titular</span>
+        <span className="buscador">
+          <Icono nombre="buscar" size={18} />
+          <input type="search" placeholder="Nombre de la mascota, del titular o documento" value={q} onChange={(e) => setQ(e.target.value)} />
+        </span>
+      </label>
+      {q.trim().length > 1 &&
+        (resultados.isError ? (
+          // Un fallo se dice: antes, el 403 de /familias dejaba la lista vacía sin decir nada.
+          <p className="aviso-error" role="alert">
+            {mensajeError(resultados.error, 'No fue posible buscar la mascota.')}
+          </p>
+        ) : (
+          <ul className="opciones" aria-label="Mascotas encontradas">
+            {resultados.isPending && <li className="apagado">Buscando…</li>}
+            {resultados.data?.items.length === 0 && <li className="apagado">Ninguna mascota coincide.</li>}
+            {resultados.data?.items.map((m) => (
+              <li key={m.id}>
+                <Link className="opcion" to={`/panel/clinica/mascotas/${m.id}`}>
+                  <strong>{m.nombre}</strong>
+                  <span>
+                    {especie(m.especie)} · {m.titular_nombre}
+                    {!m.activa && ' · De baja'}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ))}
     </section>
   )
 }

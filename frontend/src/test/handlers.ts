@@ -141,6 +141,11 @@ export const handlers = [
     HttpResponse.json({ items: [FAMILIA], total: 1, limit: 50, offset: 0 }),
   ),
   http.get(`${API}/familias/:id`, () => HttpResponse.json(FAMILIA)),
+  // 6.14 El buscador y el titular de la historia clínica del médico (R4-CIE-02): la mascota pedida, de FAMILIA.
+  http.get(`${API}/clinica/mascotas/:id`, ({ params }) => {
+    const m = FAMILIA.mascotas?.find((x) => x.id === params.id) ?? FAMILIA.mascotas![0]
+    return HttpResponse.json({ id: params.id, nombre: m.nombre, especie: m.especie, raza: m.raza, activa: m.activa, familia_id: FAMILIA.id, titular_nombre: FAMILIA.titular_nombre, ciudad: FAMILIA.ciudad })
+  }),
   http.get(`${API}/familias/:id/historial`, () => HttpResponse.json([])),
   // La línea y los planes de cada familia (R2-PAN-02): vacíos salvo que la prueba los defina.
   http.get(`${API}/afiliaciones/lineas`, ({ request }) =>

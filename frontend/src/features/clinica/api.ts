@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/api/client'
-import type { AdjuntoRead, FormulaRead, PlantillaConsultaRead, RespuestaRead, ServicioRead, SolicitudVirtualRead } from '@/types'
+import type { AdjuntoRead, FormulaRead, MascotaClinica, Page, PlantillaConsultaRead, RespuestaRead, ServicioRead, SolicitudVirtualRead } from '@/types'
 
 /**
  * Entrada de historia clínica tal como la presenta el backend (clinica/service.py:
@@ -66,6 +66,27 @@ export function useHistoria(mascotaId: string, incluirCorregidas = false) {
           params: { incluir_corregidas: incluirCorregidas || undefined },
         })
       ).data,
+  })
+}
+
+/**
+ * 6.14 Las mascotas cuya historia abre el médico, por su nombre, el del titular o su documento. El
+ * médico no tiene Familias (Sección 12): esta búsqueda es del módulo clínico (R4-CIE-02).
+ */
+export function useBuscarMascotas(q: string) {
+  const texto = q.trim()
+  return useQuery({
+    queryKey: ['clinica', 'mascotas', texto],
+    enabled: texto.length > 1,
+    queryFn: async () => (await api.get<Page<MascotaClinica>>('/clinica/mascotas', { params: { q: texto, limit: 8 } })).data,
+  })
+}
+
+/** De quién es la mascota de una historia, sin abrir su familia. */
+export function useMascotaClinica(mascotaId: string) {
+  return useQuery({
+    queryKey: ['clinica', 'mascota', mascotaId],
+    queryFn: async () => (await api.get<MascotaClinica>(`/clinica/mascotas/${mascotaId}`)).data,
   })
 }
 

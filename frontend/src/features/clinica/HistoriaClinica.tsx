@@ -6,11 +6,11 @@ import { Distintivo } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { useAuth } from '@/features/auth'
 import { useEspecies } from '@/features/catalogos'
-import { useFamilia, useMascotas } from '@/features/familias'
+import { useMascotas } from '@/features/familias'
 import { edad, fecha, peso } from '@/lib/formato'
 import { puede } from '@/lib/permisos'
 
-import { useHistoria, type EntradaHistoria } from './api'
+import { useHistoria, useMascotaClinica, type EntradaHistoria } from './api'
 import { anteriorFirmada } from './consulta'
 import { ConsultaGuiada } from './ConsultaGuiada'
 import { LecturaConsulta } from './LecturaConsulta'
@@ -38,7 +38,8 @@ export function HistoriaClinica({
   const { state } = useLocation() as { state: { estacion?: number } | null }
   const especies = useEspecies()
   const mascota = useMascotas([mascotaId]).get(mascotaId)
-  const familia = useFamilia(mascota?.familia_id)
+  // El titular sale del módulo clínico: el médico no abre Familias (Sección 12).
+  const titular = useMascotaClinica(mascotaId).data
   const [verCorregidas, setVerCorregidas] = useState(false)
   const historia = useHistoria(mascotaId, verCorregidas)
   const completa = puede(usuario, 'clinico')
@@ -56,7 +57,7 @@ export function HistoriaClinica({
     <p className="consulta-identidad">
       <strong>
         {mascota.nombre}
-        {familia.data && ` · ${familia.data.titular_nombre}`}
+        {titular && ` · ${titular.titular_nombre}`}
       </strong>
       <span className="numero">{[especie?.toLowerCase(), mascota.peso_kg != null && peso(mascota.peso_kg)].filter(Boolean).join(' · ')}</span>
     </p>
@@ -114,7 +115,8 @@ export function HistoriaClinica({
         <header className="historia-mascota">
           <h2 id="historia-titulo">{mascota?.nombre ?? '…'}</h2>
           <p className="historia-mascota-datos">
-            {familia.data && <Link to={`/panel/familias/${familia.data.id}`}>{familia.data.titular_nombre}</Link>}
+            {titular &&
+              (puede(usuario, 'verFamilias') ? <Link to={`/panel/familias/${titular.familia_id}`}>{titular.titular_nombre}</Link> : <span>{titular.titular_nombre}</span>)}
             {especie && (
               <span>
                 {especie.toLowerCase()}

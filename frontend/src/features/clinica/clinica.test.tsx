@@ -53,6 +53,14 @@ describe('Historia clínica de una mascota', () => {
     expect(screen.getByText(/Elige una consulta para leerla/)).toBeInTheDocument()
   })
 
+  it('dice de quién es la mascota, y solo enlaza la familia a quien abre Familias', async () => {
+    // El titular sale del módulo clínico (R4-CIE-02): antes salía de /familias, que al médico le da 403.
+    server.use(comoMedico)
+    abrir(`/panel/clinica/mascotas/${LUNA.id}`)
+    const datos = await screen.findByText('Ana Ruiz')
+    expect(datos.closest('a')).toBeNull()
+  })
+
   it('el resto del equipo ve el resumen y no puede crear consultas', async () => {
     server.use(http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'operaciones' })))
     abrir(`/panel/clinica/mascotas/${LUNA.id}`)

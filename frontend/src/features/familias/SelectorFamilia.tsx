@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import { Icono } from '@/components/Icono'
+import { mensajeError } from '@/lib/errores'
 import type { FamiliaRead } from '@/types'
 
 import { useFamilias } from './api'
@@ -65,6 +66,12 @@ export function SelectorFamilia({
       {q.trim().length > 1 && (
         <ul className="opciones" aria-label="Familias encontradas">
           {resultados.isPending && <li className="apagado">Buscando…</li>}
+          {/* Un fallo (un perfil sin Familias, la red) se dice: la lista vacía se leía como «no hay». */}
+          {resultados.isError && (
+            <li className="apagado" role="alert">
+              {mensajeError(resultados.error, 'No fue posible buscar la familia.')}
+            </li>
+          )}
           {resultados.data?.items.length === 0 && <li className="apagado">Ninguna familia coincide.</li>}
           {resultados.data?.items.map((f) => (
             <li key={f.id}>

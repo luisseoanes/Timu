@@ -62,17 +62,40 @@ async function elegirFamilia(user: ReturnType<typeof userEvent.setup>, contenedo
 }
 
 describe('historia clínica', () => {
-  it('lista las mascotas de la familia elegida, también las dadas de baja', async () => {
-    const familia: FamiliaRead = {
-      ...FAMILIA,
-      mascotas: [LUNA, { ...LUNA, id: 'm2', nombre: 'Tom', especie: 'gato', activa: false }],
-    }
-    server.use(http.get(`${API}/familias`, () => HttpResponse.json({ items: [familia], total: 1, limit: 6, offset: 0 })))
+  it('busca la mascota por su nombre o el del titular y abre su historia, también las dadas de baja', async () => {
+    // El médico no tiene Familias (Sección 12): la búsqueda es del módulo clínico (R4-CIE-02).
+    const pedidas: (string | null)[] = []
+    server.use(
+      http.get(`${API}/clinica/mascotas`, ({ request }) => {
+        pedidas.push(new URL(request.url).searchParams.get('q'))
+        const comun = { especie: 'canino', raza: null, familia_id: FAMILIA.id, titular_nombre: 'Ana Ruiz', ciudad: 'Bogotá' }
+        return HttpResponse.json({
+          items: [
+            { ...comun, id: LUNA.id, nombre: 'Luna', activa: true },
+            { ...comun, id: 'm2', nombre: 'Tom', especie: 'felino', activa: false },
+          ],
+          total: 2,
+          limit: 8,
+          offset: 0,
+        })
+      }),
+    )
     const user = userEvent.setup()
     renderizar(<ClinicaPage />)
-    await elegirFamilia(user, document.body)
-    expect(await screen.findByRole('link', { name: /luna/i })).toHaveAttribute('href', `/panel/clinica/mascotas/${LUNA.id}`)
-    expect(screen.getByRole('link', { name: /tom/i })).toHaveTextContent('De baja')
+    await user.type(await screen.findByLabelText('Mascota o titular'), 'Ana')
+    const lista = await screen.findByRole('list', { name: 'Mascotas encontradas' })
+    expect(await within(lista).findByRole('link', { name: /luna/i })).toHaveAttribute('href', `/panel/clinica/mascotas/${LUNA.id}`)
+    expect(within(lista).getByRole('link', { name: /tom/i })).toHaveTextContent('Ana Ruiz · De baja')
+    expect(pedidas.at(-1)).toBe('Ana')
+  })
+
+  it('si la búsqueda falla lo dice, en vez de dejar la lista vacía', async () => {
+    server.use(http.get(`${API}/clinica/mascotas`, () => HttpResponse.json({ detail: 'No tienes permiso' }, { status: 403 })))
+    const user = userEvent.setup()
+    renderizar(<ClinicaPage />)
+    await user.type(await screen.findByLabelText('Mascota o titular'), 'Ana')
+    expect(await screen.findByRole('alert')).toHaveTextContent('No tienes permiso')
+    expect(screen.queryByRole('list', { name: 'Mascotas encontradas' })).not.toBeInTheDocument()
   })
 })
 
