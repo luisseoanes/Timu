@@ -94,8 +94,8 @@ vuelve un bloque: la primera celda es el título y el resto, pares etiqueta y va
 cada celda lleva `data-etiqueta` con el texto de su cabecera, y la de acciones va en
 `td.tabla-acciones` (sin etiqueta), que se pasa a una fila de botones debajo. Apilado, el valor va
 a la derecha de su etiqueta; si es largo y se parte, sus líneas empiezan a la izquierda. Una
-columna de acciones que en una vista siempre estaría vacía no se pinta (Remisiones utilizadas y
-anuladas). Las tablas de los módulos aún sin rediseñar la adoptan en su unidad.
+columna de acciones que en una vista siempre estaría vacía no se pinta (Remisiones utilizadas,
+vencidas y anuladas). Las tablas de los módulos aún sin rediseñar la adoptan en su unidad.
 
 ## Ventanas — `Modal`
 

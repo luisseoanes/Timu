@@ -183,9 +183,12 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
   con lo que implica cada opción. Mientras se precisa con TIMU (es delicado), el usuario decidió
   el 2026-11-16 que la baja corte la vigencia ese día sin anularla: lo atendido hasta la baja se
   sigue reportando, también desde la pantalla de la clínica con una remisión ya vencida.
-- **Una remisión que vence sin usarse deja su servicio agendado para siempre**, y con él ocupado el
-  cupo del beneficio: ninguna tarea lo cierra (anularla a mano sí lo cancela). Encontrado el
-  2026-11-16 al revisar la baja; es anterior a esta unidad. Decisión abierta con el usuario.
+- ~~**Una remisión que vence sin usarse deja su servicio agendado para siempre**~~ Resuelto el
+  2026-11-21: estado propio `vencida` (decidido con el usuario), al que la pasa la tarea diaria
+  pasado el plazo para reportar (7 días, provisional), cancelando su servicio; vista «Vencidas» en
+  la bandeja ([pendientes externos](../pendientes-externos.md#remisiones-a-clínicas-aliadas-requisito-622)).
+  Antes: con él quedaba ocupado el cupo del beneficio y ninguna tarea lo cerraba (anularla a mano sí
+  lo cancelaba). Encontrado el 2026-11-16 al revisar la baja.
 - ~~**`datos_demo` escribe sin tildes**~~ Resuelto el 2026-11-16: los nombres y textos que ve el
   equipo llevan sus tildes (la clínica, su usuario, la remisión, las familias, el equipo, la
   historia de Luna), con la e2e ajustada y la base local recreada.

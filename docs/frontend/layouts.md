@@ -430,8 +430,8 @@ lleno en la bandeja: cada ventana tiene el suyo.
 
 ### Remisiones y usuarios (R2-PAN-10)
 
-Remisiones, en Aliadas: «Por usar» (la de entrada, por la que vence antes), «Utilizadas», «Anuladas» y
-«Todas» con su recuento, y «Emitir remisión» en verde en la cabecera. Cada fila: el titular y la
+Remisiones, en Aliadas: «Por usar» (la de entrada, por la que vence antes), «Utilizadas», «Vencidas»
+(las que vencieron sin usarse y pasaron el plazo para reportar), «Anuladas» y «Todas» con su recuento, y «Emitir remisión» en verde en la cabecera. Cada fila: el titular y la
 mascota (enlace a la familia), el código y el motivo; la clínica; lo que cubre («80 % hasta $ 200.000»,
 o «Cubrió …» si ya se atendió); cuándo vence (la vencida, con icono y palabra) o cuándo se atendió; y
 «Anular», que confirma en rojo. La pestaña Liquidación pide el período y da una fila por clínica con su

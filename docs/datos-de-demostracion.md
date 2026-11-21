@@ -53,7 +53,7 @@ con historia (decidido con el usuario el 2026-11-16, `DEU-14`). Siembra:
 - **Comercial**: interesados que llegaron en las últimas semanas, cada uno en su etapa (también
   perdidos). Los que llegan por WhatsApp escriben al asistente, como en la operación real: él los
   crea y su conversación se ve en la ficha.
-- **Tareas** cerradas y abiertas vencidas, **remisiones** atendidas, anulada, vencida y por usar,
+- **Tareas** cerradas y abiertas vencidas, **remisiones** atendidas, anulada, vencida y por usar (la vencida, emitida hace 40 días, pasa a «Vencidas» la primera vez que corre `aliadas.vencer_remisiones`, a las 4:10),
   **orientaciones virtuales** cerradas y **una campaña** enviada hace tres semanas.
 - **Atenciones de aliadas** (6.22) para la liquidación que ve Gerencia: la Clínica del Norte en
   Bogotá y dos aliadas de Medellín del catálogo, AnesVet y Centro Veterinario Buenos Aires, cada una

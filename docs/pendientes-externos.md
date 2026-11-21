@@ -45,6 +45,7 @@ el código, se anota la fecha y quién lo confirmó, y solo entonces se tacha.
 | Que las personas de las fotos del equipo aceptan salir en la web pública | TIMU confirmó el 2026-11-11 que las fotos son suyas, no que las personas que aparecen (la médica con el bulldog, la recepción, el saludo frente al logo) autorizan su uso en la web (Ley 1581: la imagen es un dato personal). La portada no se publica en el dominio sin esa confirmación. Aparte, las fotos que vienen de las piezas impresas (el parque, los gatitos, los recortes) parecen de banco de imágenes: TIMU confirma que su licencia permite usarlas en la web, o se cambian | `frontend/src/assets/portada/` (su `README.md`) | PENDIENTE |
 | Política de tratamiento de datos (habeas data) que enlaza el formulario de contacto | La web actual la publica en `https://timu.com.co/wp-content/uploads/2025/05/Habeas-Data-TIMU.pdf`, sembrada en local. **Ese enlace muere cuando la web nueva sustituya a WordPress**: antes de cambiar el dominio, TIMU confirma que el documento sigue vigente y se aloja de nuevo (o TIMU da otro enlace), y Administración lo escribe. Sin enlace, el formulario solo dice para qué se usan los datos | `scripts/datos_portada.py` (`DATOS_TIMU`); Administración → Datos de TIMU | PENDIENTE |
 | Mapa de las rutas | Sin mapa: cada parada abre la navegación del celular («Cómo llegar»). TIMU eligió Google Maps (informado por el usuario el 2026-11-21): sigue pendiente hasta que el mapa esté construido ([detalle](#mapa-de-las-rutas-requisito-67-r2-pan-06)) | `rutas` | PENDIENTE |
+| Plazo para reportar lo atendido con una remisión ya vencida | 7 días tras la vigencia. Pasado ese plazo sin reporte, el proceso diario la pasa a «vencida» y cancela su servicio, lo que libera el cupo del beneficio (6.22, 2026-11-21) | `REMISION_GRACIA_REPORTE_DIAS` (`core/config.py`, `.env.example`) | PENDIENTE |
 | Ventana de la bandeja de preventivos | 30 días | `VENTANA_BANDEJA_DIAS` (`preventivos/service.py`) | PENDIENTE |
 | Fotos originales para las páginas públicas | Las páginas públicas van sin fotos | — | PENDIENTE |
 | Sandbox de Wompi de TIMU | No admite valor provisional: sin credenciales no hay prueba de punta a punta | — | PENDIENTE |
@@ -195,8 +196,18 @@ Opciones para TIMU:
   dejan servir hasta que vencen, porque la familia sigue siendo de TIMU y puede ponerse al día.
 
 Lo que TIMU tiene que confirmar: si la baja corta la vigencia (lo provisional) o anula del todo;
-qué pasa con la mora y la congelación; si la vigencia de 30 días es la que quiere; y si una
-atención hecha antes de la baja y reportada después se paga siempre.
+qué pasa con la mora y la congelación; si la vigencia de 30 días es la que quiere; si una
+atención hecha antes de la baja y reportada después se paga siempre; y cuántos días tiene la
+clínica para reportarla (hoy 7, provisional).
+
+**Resuelto el 2026-11-21: la remisión que vence sin usarse.** Su servicio quedaba agendado para
+siempre y el cupo del beneficio ocupado, porque nada lo cerraba salvo anularla a mano (encontrado
+el 2026-11-16). Ahora tiene un estado propio, `vencida` (decidido con el usuario, frente a
+anularla, para distinguir la que caduca de la que alguien anula): pasado el plazo para reportar
+(`REMISION_GRACIA_REPORTE_DIAS` tras la vigencia), la tarea diaria `aliadas.vencer_remisiones`
+la pasa a `vencida` y cancela su servicio. El reporte fuera de plazo se rechaza aunque la tarea
+aún no haya corrido, la clínica ve hasta qué día puede reportar (`reportar_hasta`) y la bandeja de
+Aliadas tiene la vista «Vencidas».
 
 ## Recomendación de plan del bot comercial (6.11)
 
