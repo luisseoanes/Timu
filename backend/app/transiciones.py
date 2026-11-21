@@ -42,7 +42,7 @@ TRANSICIONES: dict[tuple[str, str], Grafo] = {
     },
     ("tareas", "estado"): {"abierta": {"en_progreso", "cerrada"}, "en_progreso": {"cerrada"}},
     ("historias_clinicas", "estado"): {"borrador": {"firmada"}, "firmada": {"corregida"}},
-    ("remisiones_aliadas", "estado"): {"emitida": {"utilizada", "anulada"}},
+    ("remisiones_aliadas", "estado"): {"emitida": {"utilizada", "anulada", "vencida"}},
     ("rutas", "estado"): {
         # Planificada a finalizada: todas sus paradas omitidas antes de arrancar.
         "planificada": {"en_curso", "cancelada", "finalizada"},

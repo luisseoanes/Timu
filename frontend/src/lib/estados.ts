@@ -117,6 +117,7 @@ const REMISION: Record<string, Estado> = {
   emitida: { label: 'Emitida', tono: 'info' },
   utilizada: { label: 'Utilizada', tono: 'ok' },
   anulada: { label: 'Anulada', tono: 'neutro' },
+  vencida: { label: 'Vencida', tono: 'neutro' },
 }
 
 const PENDIENTE: Record<string, Estado> = {

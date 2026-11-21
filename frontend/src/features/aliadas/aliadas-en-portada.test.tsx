@@ -38,7 +38,7 @@ const EN_PORTADA: ClinicaRead = {
 
 beforeEach(() =>
   server.use(
-    http.get(`${API}/aliadas/remisiones/recuentos`, () => HttpResponse.json({ emitida: 0, utilizada: 0, anulada: 0, todas: 0 })),
+    http.get(`${API}/aliadas/remisiones/recuentos`, () => HttpResponse.json({ emitida: 0, utilizada: 0, anulada: 0, vencida: 0, todas: 0 })),
     http.get(`${API}/aliadas/remisiones`, () => HttpResponse.json([])),
     http.get(`${API}/aliadas/:id/convenios`, () => HttpResponse.json([])),
   ),

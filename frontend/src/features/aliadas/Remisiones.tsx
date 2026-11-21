@@ -19,6 +19,11 @@ type Vista = keyof RecuentosRemisiones
 const VISTAS: { valor: Vista; label: string; vacio: string }[] = [
   { valor: 'emitida', label: 'Por usar', vacio: 'No hay remisiones por usar. Al emitir una, aparece aquí hasta que la clínica reporte la atención.' },
   { valor: 'utilizada', label: 'Utilizadas', vacio: 'Ninguna clínica ha reportado todavía una atención.' },
+  {
+    valor: 'vencida',
+    label: 'Vencidas',
+    vacio: 'Ninguna remisión ha vencido sin usarse. Si la clínica no reporta la atención en el plazo, la remisión vence y libera el cupo del beneficio.',
+  },
   { valor: 'anulada', label: 'Anuladas', vacio: 'No se ha anulado ninguna remisión.' },
   { valor: 'todas', label: 'Todas', vacio: 'Aún no se ha emitido ninguna remisión.' },
 ]
@@ -34,7 +39,7 @@ export function Remisiones() {
   const remisiones = useRemisiones({ estado: vista === 'todas' ? undefined : vista, clinica_id: clinicaId })
   // Filtradas, todas son de la misma clínica: su nombre sale de ellas, sin otra consulta.
   const nombreClinica = remisiones.data?.[0]?.clinica
-  // Solo una remisión por usar se anula: en Utilizadas y Anuladas no hay columna de acciones.
+  // Solo una remisión por usar se anula: en Utilizadas, Vencidas y Anuladas no hay columna de acciones.
   const conAcciones = vista === 'emitida' || vista === 'todas'
 
   function verTodas() {

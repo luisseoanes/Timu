@@ -80,6 +80,7 @@ class RemisionAliada(Base, UUIDMixin, TimestampMixin, Auditable):
             "estado <> 'utilizada' OR (fecha_atencion IS NOT NULL" " AND reportada_en IS NOT NULL)"
         ),
         "anulada_con_motivo": "estado <> 'anulada' OR motivo_anulacion IS NOT NULL",
+        "vencida_sin_reporte": "estado::text <> 'vencida' OR reportada_en IS NULL",
     }
     __columna_familia__ = "familia_id"
 
@@ -94,7 +95,7 @@ class RemisionAliada(Base, UUIDMixin, TimestampMixin, Auditable):
     cobertura_pct: Mapped[int] = mapped_column(Integer)
     tope_cubierto: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     vence_en: Mapped[date] = mapped_column(Date)
-    # emitida | utilizada | anulada
+    # emitida | utilizada | anulada | vencida
     estado: Mapped[str] = mapped_column(EnumDb(EstadoRemision), default="emitida", index=True)
     emitida_por_id: Mapped[UUID | None] = mapped_column(ForeignKey("usuarios.id"), index=True)
     # 6.22 Lo que reporta la aliada.

@@ -18,6 +18,7 @@ celery_app = Celery(
     backend=settings.REDIS_URL,
     include=[
         "app.workers.tasks.afiliaciones",
+        "app.workers.tasks.aliadas",
         "app.workers.tasks.cartera",
         "app.workers.tasks.preventivos",
         "app.workers.tasks.comunicaciones",
@@ -117,6 +118,11 @@ celery_app.conf.update(
         "dashboard-reportes": {
             "task": "dashboard.enviar_reportes",
             "schedule": crontab(hour=7, minute=0),
+        },
+        # 6.22 remisiones sin usar pasado el plazo para reportar: vencen y liberan el cupo
+        "aliadas-vencer-remisiones": {
+            "task": "aliadas.vencer_remisiones",
+            "schedule": crontab(hour=4, minute=10),
         },
         # 6.20 encuestas y seguimientos cuya hora llego
         "encuestas-enviar-pendientes": {

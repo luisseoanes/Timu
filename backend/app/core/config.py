@@ -132,6 +132,10 @@ class Settings(BaseSettings):
 
     # Clinicas aliadas (6.22): dias de vigencia de una remision.
     REMISION_VIGENCIA_DIAS: int = 30
+    # Dias que tiene la clinica, pasada la vigencia, para reportar una atencion hecha dentro de
+    # ella. Despues, la remision sin usar pasa a vencida y su servicio se cancela (libera el
+    # cupo). Valor provisional hasta que lo fije TIMU (docs/pendientes-externos.md).
+    REMISION_GRACIA_REPORTE_DIAS: int = 7
 
     # --- Sesion del navegador: el token viaja en cookie httpOnly -------------------------------
     # SECURE debe quedar en True en cualquier ambiente servido por HTTPS.

@@ -238,7 +238,7 @@ def recuentos(db: Session, clinica_id: UUID | None = None) -> dict[str, int]:
     if clinica_id:
         stmt = stmt.where(RemisionAliada.clinica_id == clinica_id)
     por_estado = dict(db.execute(stmt).tuples().all())
-    conteo = {e: por_estado.get(e, 0) for e in ("emitida", "utilizada", "anulada")}
+    conteo = {e: por_estado.get(e, 0) for e in ("emitida", "utilizada", "anulada", "vencida")}
     return {**conteo, "todas": sum(conteo.values())}
 
 
@@ -290,6 +290,36 @@ def cortar_vigencia_al_cancelar(db: Session, contrato: Contrato) -> None:
 cartera.conectar_al_cancelar(cortar_vigencia_al_cancelar)
 
 
+def reportar_hasta(remision: RemisionAliada) -> date:
+    """Ultimo dia en que la clinica puede reportar una atencion hecha dentro de la vigencia."""
+    return remision.vence_en + timedelta(days=settings.REMISION_GRACIA_REPORTE_DIAS)
+
+
+def vencer_sin_uso(db: Session) -> int:
+    """6.22 Una remision sin usar pasado el plazo para reportar vence: su servicio se cancela y
+    libera el cupo del beneficio. Antes quedaba agendado para siempre (encontrado el
+    2026-11-16). Cada remision en su savepoint: una rara no revierte el lote."""
+    limite = hoy() - timedelta(days=settings.REMISION_GRACIA_REPORTE_DIAS)
+    vencidas = 0
+    for remision in db.scalars(
+        select(RemisionAliada).where(
+            RemisionAliada.estado == "emitida", RemisionAliada.vence_en < limite
+        )
+    ):
+        with db.begin_nested():
+            remision.estado = "vencida"
+            servicio = db.get(Servicio, remision.servicio_id)
+            assert servicio is not None
+            # Si alguien ya cerro el servicio desde Servicios, no hay nada que liberar.
+            if servicio.estado not in (EstadoServicio.CANCELADO, EstadoServicio.COMPLETADO):
+                servicios.cambiar_estado(
+                    db, servicio, EstadoServicio.CANCELADO, "Remisión vencida sin usar"
+                )
+            vencidas += 1
+    db.flush()
+    return vencidas
+
+
 def cubre(remision: RemisionAliada, valor_atencion: Decimal) -> tuple[Decimal, Decimal]:
     """Lo que cubre TIMU de una atencion (porcentaje y tope de la remision) y lo que asume la
     familia. La misma cuenta al reportar y al mostrarla antes, para que no se digan dos cifras."""
@@ -312,9 +342,12 @@ def vista_aliada(db: Session, codigo: str, clinica_id: UUID) -> dict[str, Any]:
     especie = db.scalar(select(Especie.nombre).where(Especie.codigo == mascota.especie))
     emitida = con_zona(remision.created_at).astimezone(ZONA_NEGOCIO).date()
     vigente = remision.estado == "emitida" and remision.vence_en >= hoy()
-    # Sin usar, tambien vencida: una atencion hecha dentro de su vigencia se reporta despues.
+    # Sin usar, tambien vencida (hasta `reportar_hasta`): una atencion hecha dentro de su
+    # vigencia se reporta despues.
     hasta = min(remision.vence_en, hoy())
-    reportable = remision.estado == "emitida" and hasta >= emitida
+    reportable = (
+        remision.estado == "emitida" and hasta >= emitida and hoy() <= reportar_hasta(remision)
+    )
     familia_asume = (
         remision.valor_atencion - remision.valor_cubierto
         if remision.valor_atencion is not None and remision.valor_cubierto is not None
@@ -324,8 +357,9 @@ def vista_aliada(db: Session, codigo: str, clinica_id: UUID) -> dict[str, Any]:
         "codigo": remision.codigo,
         "estado": remision.estado,
         "vigente": vigente,
-        "vencida": remision.estado == "emitida" and not vigente,
+        "vencida": remision.estado == "vencida" or (remision.estado == "emitida" and not vigente),
         "vence_en": remision.vence_en,
+        "reportar_hasta": reportar_hasta(remision) if reportable else None,
         "emitida_en": emitida,
         "atencion_desde": emitida if reportable else None,
         "atencion_hasta": hasta if reportable else None,
@@ -377,8 +411,13 @@ def reportar_atencion(
     convenio) y el servicio se completa."""
 
     remision = _de_la_clinica(db, codigo, clinica_id)
+    if remision.estado == "vencida":
+        raise ReglaNegocio("La remision vencio sin usarse: paso el plazo para reportar la atencion")
     if remision.estado != "emitida":
         raise ReglaNegocio("La remision ya fue utilizada o anulada")
+    # El plazo vale aunque el proceso diario aun no la haya pasado a vencida.
+    if hoy() > reportar_hasta(remision):
+        raise ReglaNegocio("La remision vencio sin usarse: paso el plazo para reportar la atencion")
     if fecha > hoy():
         raise ReglaNegocio("La fecha de atencion no puede ser futura")
     emitida = con_zona(remision.created_at).astimezone(ZONA_NEGOCIO).date()

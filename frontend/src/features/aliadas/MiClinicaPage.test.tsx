@@ -20,6 +20,7 @@ const VISTA: RemisionVistaAliada = {
   emitida_en: '2026-11-10',
   atencion_desde: '2026-11-10',
   atencion_hasta: '2026-11-16',
+  reportar_hasta: '2026-12-23',
   titular: 'Jorge Ramírez',
   documento_ultimos: '6123',
   mascota: { nombre: 'Rocky', especie: 'canino', especie_nombre: 'Canino', raza: 'Labrador' },
@@ -225,6 +226,7 @@ describe('MiClinicaPage', () => {
       emitida_en: '2026-10-07',
       atencion_desde: '2026-10-07',
       atencion_hasta: '2026-11-06',
+      reportar_hasta: '2026-11-13',
     }
     server.use(
       http.get(`${API}/aliadas/mi-clinica/remisiones/:codigo`, () => HttpResponse.json(vencida)),
@@ -247,7 +249,8 @@ describe('MiClinicaPage', () => {
       }),
     )
     const user = await validar('KXKQNX86')
-    expect(await screen.findByText(/Venció el 6 nov y ya no se puede usar/)).toBeInTheDocument()
+    expect(await screen.findByText(/Venció el 6 nov y ya no se puede usar para atender/)).toBeInTheDocument()
+    expect(screen.getByText(/se puede reportar hasta el 13 nov/)).toBeInTheDocument()
     expect(screen.getByText('Vencida')).toBeInTheDocument()
     // El formulario no queda abierto: lo normal ante una vencida es no atender.
     expect(screen.queryByLabelText('Valor de la atención')).not.toBeInTheDocument()
@@ -267,6 +270,28 @@ describe('MiClinicaPage', () => {
     await user.click(screen.getByRole('button', { name: 'Reportar atención' }))
     expect(await screen.findByText('Atendida')).toBeInTheDocument()
     expect(reporte).toMatchObject({ fecha: '2026-11-06', valor_atencion: '1000' })
+  })
+
+  it('una remisión que venció sin usarse y pasó el plazo ya no deja reportar', async () => {
+    server.use(
+      http.get(`${API}/aliadas/mi-clinica/remisiones/:codigo`, () =>
+        HttpResponse.json({
+          ...VISTA,
+          estado: 'vencida',
+          vigente: false,
+          vencida: true,
+          vence_en: '2026-10-06',
+          atencion_desde: null,
+          atencion_hasta: null,
+          reportar_hasta: null,
+        }),
+      ),
+    )
+    await validar('NKENX8LM')
+    expect(await screen.findByText(/Venció el 6 oct sin usarse y ya pasó el plazo para reportar/)).toBeInTheDocument()
+    expect(screen.queryByText(/se puede reportar hasta/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Reportar una atención/ })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Valor de la atención')).not.toBeInTheDocument()
   })
 
   it('una remisión anulada lo dice', async () => {

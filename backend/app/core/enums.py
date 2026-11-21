@@ -362,6 +362,8 @@ class EstadoRemision(StrEnum):
     EMITIDA = "emitida"
     UTILIZADA = "utilizada"
     ANULADA = "anulada"
+    # Sin usar y pasado el plazo para reportar: su servicio se cancela y libera el cupo.
+    VENCIDA = "vencida"
 
 
 class EstadoRuta(StrEnum):

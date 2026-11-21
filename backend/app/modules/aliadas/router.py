@@ -156,14 +156,16 @@ class RemisionRead(BaseModel):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def vencida(self) -> bool:
-        """Emitida y sin usar pasada su fecha: la clinica ya no la acepta."""
-        return self.estado == "emitida" and self.vence_en < hoy()
+        """Sin usar pasada su fecha: la clinica ya no la acepta. Emitida, aun puede reportar lo
+        atendido dentro de la vigencia; vencida, ya paso tambien ese plazo."""
+        return self.estado == "vencida" or (self.estado == "emitida" and self.vence_en < hoy())
 
 
 class RecuentosRemisiones(BaseModel):
     emitida: int
     utilizada: int
     anulada: int
+    vencida: int
     todas: int
 
 
@@ -198,6 +200,8 @@ class RemisionVistaAliada(BaseModel):
     # anulo.
     atencion_desde: date | None
     atencion_hasta: date | None
+    # Ultimo dia para reportarla (vigencia mas el plazo de gracia); despues vence sin usarse.
+    reportar_hasta: date | None
     titular: str
     documento_ultimos: str
     mascota: MascotaRemitida

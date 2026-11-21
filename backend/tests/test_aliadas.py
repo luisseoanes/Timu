@@ -3,13 +3,13 @@ liquidacion."""
 
 from datetime import timedelta
 from decimal import Decimal
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import text, update
 
-from app.core.enums import Rol
+from app.core.enums import EstadoServicio, Rol
 from app.core.tiempo import hoy
 from app.modules.aliadas.models import RemisionAliada
 from app.modules.servicios.models import Servicio
@@ -141,7 +141,13 @@ async def test_la_bandeja_dice_de_quien_es_cada_remision_y_cuantas_hay(
     assert fila["vencida"] is True
 
     recuentos = await client.get("/api/v1/aliadas/remisiones/recuentos", headers=headers)
-    assert recuentos.json() == {"emitida": 1, "utilizada": 0, "anulada": 0, "todas": 1}
+    assert recuentos.json() == {
+        "emitida": 1,
+        "utilizada": 0,
+        "anulada": 0,
+        "vencida": 0,
+        "todas": 1,
+    }
     de_otra = await client.get(
         "/api/v1/aliadas/remisiones/recuentos",
         params={"clinica_id": str(uuid4())},
@@ -390,6 +396,91 @@ async def test_cancelar_el_contrato_corta_la_vigencia_de_las_remisiones_por_usar
     )
     assert antes.status_code == 200, antes.text
     assert antes.json()["estado"] == "utilizada"
+
+
+async def test_la_remision_sin_usar_vence_pasado_el_plazo_y_libera_el_cupo(
+    client, db, headers, escenario, aliada, en_worker, monkeypatch
+):
+    """6.22 Antes, una remision que vencia sin usarse dejaba su servicio agendado para siempre y
+    el cupo del beneficio ocupado. Pasado el plazo para reportar, vence y libera el cupo."""
+    from app.core.config import settings
+    from app.workers.tasks.aliadas import vencer_remisiones
+
+    remision = (await _remitir(client, headers, escenario)).json()
+    url = f"/api/v1/aliadas/mi-clinica/remisiones/{remision['codigo']}"
+    vence = HOY + timedelta(days=settings.REMISION_VIGENCIA_DIAS)
+    plazo = vence + timedelta(days=settings.REMISION_GRACIA_REPORTE_DIAS)
+    assert (await client.get(url, headers=aliada)).json()["reportar_hasta"] == str(plazo)
+    assert (await _remitir(client, headers, escenario)).status_code == 422  # cupo anual usado
+
+    # El ultimo dia del plazo sigue por usar: la clinica aun puede reportar lo atendido.
+    monkeypatch.setattr("app.modules.aliadas.service.hoy", lambda: plazo)
+    assert await en_worker(vencer_remisiones) == {"vencidas": 0}
+
+    monkeypatch.setattr("app.modules.aliadas.service.hoy", lambda: plazo + timedelta(days=1))
+    assert await en_worker(vencer_remisiones) == {"vencidas": 1}
+    await db.commit()
+    fila = await db.get(RemisionAliada, remision["id"])
+    servicio = await db.get(Servicio, remision["servicio_id"])
+    await db.refresh(fila)
+    await db.refresh(servicio)
+    assert (fila.estado, servicio.estado) == ("vencida", "cancelado")
+    assert (await en_worker(vencer_remisiones)) == {"vencidas": 0}
+
+    vista = (await client.get(url, headers=aliada)).json()
+    assert (vista["estado"], vista["vencida"], vista["reportar_hasta"]) == ("vencida", True, None)
+    reporte = await client.post(
+        f"{url}/atencion",
+        json={"fecha": str(HOY), "valor_atencion": "100000", "resumen": "Consulta"},
+        headers=aliada,
+    )
+    assert reporte.status_code == 422 and "plazo" in reporte.json()["detail"]
+    recuentos = await client.get("/api/v1/aliadas/remisiones/recuentos", headers=headers)
+    assert recuentos.json()["vencida"] == 1
+    # El cupo del beneficio queda libre.
+    assert (await _remitir(client, headers, escenario)).status_code == 201
+
+
+async def test_pasado_el_plazo_no_se_reporta_aunque_aun_no_haya_vencido(
+    client, headers, escenario, aliada, monkeypatch
+):
+    """El plazo vale por si mismo: no depende de la hora a la que corra el proceso diario."""
+    from app.core.config import settings
+
+    remision = (await _remitir(client, headers, escenario)).json()
+    url = f"/api/v1/aliadas/mi-clinica/remisiones/{remision['codigo']}"
+    dias = settings.REMISION_VIGENCIA_DIAS + settings.REMISION_GRACIA_REPORTE_DIAS + 1
+    monkeypatch.setattr("app.modules.aliadas.service.hoy", lambda: HOY + timedelta(days=dias))
+    vista = (await client.get(url, headers=aliada)).json()
+    assert vista["estado"] == "emitida" and vista["reportar_hasta"] is None
+    reporte = await client.post(
+        f"{url}/atencion",
+        json={"fecha": str(HOY), "valor_atencion": "100000", "resumen": "Consulta"},
+        headers=aliada,
+    )
+    assert reporte.status_code == 422 and "plazo" in reporte.json()["detail"]
+
+
+async def test_vence_aunque_su_servicio_ya_se_haya_cancelado(
+    client, db, headers, escenario, en_worker, monkeypatch
+):
+    """Si alguien cancelo el servicio desde Servicios, no hay cupo que liberar: solo vence."""
+    from app.modules.servicios import service as servicios
+    from app.workers.tasks.aliadas import vencer_remisiones
+
+    remision = (await _remitir(client, headers, escenario)).json()
+
+    def cancelar(s):
+        servicio = s.get(Servicio, UUID(remision["servicio_id"]))
+        servicios.cambiar_estado(s, servicio, EstadoServicio.CANCELADO, "La familia desistio")
+
+    await db.run_sync(cancelar)
+    await db.commit()
+    monkeypatch.setattr("app.modules.aliadas.service.hoy", lambda: HOY + timedelta(days=60))
+    assert await en_worker(vencer_remisiones) == {"vencidas": 1}
+    fila = await db.get(RemisionAliada, remision["id"])
+    await db.refresh(fila)
+    assert fila.estado == "vencida"
 
 
 async def test_la_baja_no_toca_las_remisiones_ya_usadas(client, db, headers, escenario, aliada):

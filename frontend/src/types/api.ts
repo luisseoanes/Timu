@@ -793,6 +793,7 @@ export interface RecuentosRemisiones {
   emitida: number
   utilizada: number
   anulada: number
+  vencida: number
   todas: number
 }
 
@@ -1034,6 +1035,7 @@ export interface RemisionVistaAliada {
   emitida_en: string
   atencion_desde: string | null
   atencion_hasta: string | null
+  reportar_hasta: string | null
   titular: string
   documento_ultimos: string
   mascota: MascotaRemitida

@@ -37,7 +37,7 @@ const REMISION: RemisionRead = {
 }
 
 beforeEach(() => {
-  server.use(http.get(`${API}/aliadas/remisiones/recuentos`, () => HttpResponse.json({ emitida: 1, utilizada: 0, anulada: 0, todas: 1 })))
+  server.use(http.get(`${API}/aliadas/remisiones/recuentos`, () => HttpResponse.json({ emitida: 1, utilizada: 0, anulada: 0, vencida: 0, todas: 1 })))
 })
 
 describe('AliadasPage', () => {

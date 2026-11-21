@@ -128,7 +128,12 @@ function EstadoRemision({ r }: { r: RemisionVistaAliada }) {
         <Insignia tono="peligro" icono="alerta">
           Vencida
         </Insignia>
-        <span>Venció el {fechaCompacta(r.vence_en)} y ya no se puede usar. La familia puede pedirle una nueva a TIMU.</span>
+        <span>
+          {r.estado === 'vencida'
+            ? `Venció el ${fechaCompacta(r.vence_en)} sin usarse y ya pasó el plazo para reportar.`
+            : `Venció el ${fechaCompacta(r.vence_en)} y ya no se puede usar para atender.`}
+          {r.reportar_hasta && ` Lo atendido hasta ese día se puede reportar hasta el ${fechaCompacta(r.reportar_hasta)}.`} La familia puede pedirle una nueva a TIMU.
+        </span>
       </>
     )
   }

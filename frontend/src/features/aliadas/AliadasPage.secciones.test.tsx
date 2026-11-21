@@ -59,7 +59,7 @@ const REMISION: RemisionRead = {
 
 beforeEach(() =>
   server.use(
-    http.get(`${API}/aliadas/remisiones/recuentos`, () => HttpResponse.json({ emitida: 1, utilizada: 1, anulada: 0, todas: 2 })),
+    http.get(`${API}/aliadas/remisiones/recuentos`, () => HttpResponse.json({ emitida: 1, utilizada: 1, anulada: 0, vencida: 0, todas: 2 })),
     http.get(`${API}/aliadas`, () => HttpResponse.json([CLINICA])),
     http.get(`${API}/aliadas/remisiones`, () => HttpResponse.json([])),
     http.get(`${API}/aliadas/:id/convenios`, () => HttpResponse.json([CONVENIO])),
@@ -120,8 +120,10 @@ describe('remisiones', () => {
     renderizar(<AliadasPage />)
     expect(await screen.findByText(/No hay remisiones por usar/)).toBeInTheDocument()
     expect(await screen.findByRole('button', { name: 'Por usar 1' })).toHaveAttribute('aria-pressed', 'true')
+    await user.click(screen.getByRole('button', { name: 'Vencidas 0' }))
+    expect(await screen.findByText(/Ninguna remisión ha vencido sin usarse/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Todas 2' }))
-    await waitFor(() => expect(estados).toEqual(['emitida', null]))
+    await waitFor(() => expect(estados).toEqual(['emitida', 'vencida', null]))
     expect(await screen.findByText('Aún no se ha emitido ninguna remisión.')).toBeInTheDocument()
   })
 

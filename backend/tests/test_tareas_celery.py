@@ -14,6 +14,7 @@ from celery.exceptions import Retry
 from app.workers import celery_app as modulo_celery
 from app.workers.celery_app import celery_app
 from app.workers.tasks import (
+    aliadas,
     campanas,
     cartera,
     comunicaciones,
@@ -43,6 +44,7 @@ def test_el_planificador_solo_programa_tareas_que_existen():
     ("tarea", "esperado"),
     [
         (cartera.generar_cuotas, {"emitidas": 0}),
+        (aliadas.vencer_remisiones, {"vencidas": 0}),
         (cartera.detectar_renovaciones, {"tareas_creadas": 0}),
         (campanas.lanzar_programadas, {"lanzadas": 0}),
         (comunicaciones.reencolar_pendientes, {"reencolados": 0}),
