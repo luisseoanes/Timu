@@ -6,13 +6,14 @@ from typing import Any, Literal
 from uuid import UUID
 
 import structlog
-from sqlalchemy import func, select
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.enums import EstadoServicio, Rol
 from app.core.errores import Conflicto, NoEncontrado, Prohibido, ReglaNegocio
 from app.core.eventos import declarar_evento
 from app.core.plantillas import declarar_plantilla
+from app.core.scope import Alcance, restringir
 from app.core.tiempo import ahora, hoy
 from app.modules.archivos import service as archivos
 from app.modules.archivos.models import Archivo
@@ -96,6 +97,52 @@ def _mascota(db: Session, mascota_id: UUID) -> Mascota:
     if mascota is None:
         raise NoEncontrado("Mascota no encontrada")
     return mascota
+
+
+def consulta_mascotas(alcance: Alcance, q: str | None) -> Select[tuple[Mascota, Familia]]:
+    """6.14 La historia clinica es del medico, que no tiene Familias (Seccion 12): busca la
+    mascota por su nombre, el del titular o su documento, y recibe solo lo que necesita para
+    abrir la historia (R4-CIE-02: antes el buscador pedia /familias y le daba 403)."""
+    stmt = select(Mascota, Familia).join(Familia, Familia.id == Mascota.familia_id)
+    if q and q.strip():
+        patron = f"%{q.strip()}%"
+        stmt = stmt.where(
+            or_(
+                Mascota.nombre.ilike(patron),
+                Familia.titular_nombre.ilike(patron),
+                Familia.documento.ilike(patron),
+            )
+        )
+    return restringir(stmt, Familia, alcance)
+
+
+def buscar_mascotas(
+    db: Session, alcance: Alcance, q: str | None, limit: int, offset: int
+) -> tuple[list[tuple[Mascota, Familia]], int]:
+    stmt = consulta_mascotas(alcance, q)
+    total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+    filas = db.execute(
+        stmt.order_by(Familia.titular_nombre, Mascota.nombre, Mascota.id)
+        .limit(limit)
+        .offset(offset)
+    ).tuples()
+    return list(filas), total
+
+
+def mascota_con_titular(db: Session, alcance: Alcance, mascota_id: UUID) -> tuple[Mascota, Familia]:
+    """De quien es la mascota de una historia, sin abrir su familia."""
+    fila = db.execute(
+        restringir(
+            select(Mascota, Familia)
+            .join(Familia, Familia.id == Mascota.familia_id)
+            .where(Mascota.id == mascota_id),
+            Familia,
+            alcance,
+        )
+    ).first()
+    if fila is None:
+        raise NoEncontrado("Mascota no encontrada")
+    return fila.tuple()
 
 
 def obtener(db: Session, historia_id: UUID) -> HistoriaClinica:

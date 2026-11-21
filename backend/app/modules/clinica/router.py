@@ -9,10 +9,10 @@ from datetime import date, datetime
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.api.deps import DbSession, requiere
+from app.api.deps import AlcanceActual, DbSession, requiere
 from app.core.enums import Rol
 from app.core.errores import ReglaNegocio
 from app.core.eventos import EventoDominio
@@ -27,6 +27,7 @@ from app.modules.clinica.models import (
     RespuestaVirtual,
     SolicitudVirtual,
 )
+from app.schemas.common import Page
 
 router = APIRouter(prefix="/clinica", tags=["clinica"])
 
@@ -173,6 +174,52 @@ class ResponderIn(BaseModel):
 
 
 # --- 6.14 Historia ------------------------------------------------------------------
+
+
+class MascotaClinica(BaseModel):
+    """6.14 Lo que el medico necesita para abrir una historia: la mascota y de quien es."""
+
+    id: UUID
+    nombre: str
+    especie: str
+    raza: str | None
+    activa: bool
+    familia_id: UUID
+    titular_nombre: str
+    ciudad: str
+
+
+def _clinica(mascota: Any, familia: Any) -> MascotaClinica:
+    return MascotaClinica(
+        id=mascota.id,
+        nombre=mascota.nombre,
+        especie=mascota.especie,
+        raza=mascota.raza,
+        activa=mascota.activa,
+        familia_id=familia.id,
+        titular_nombre=familia.titular_nombre,
+        ciudad=familia.ciudad,
+    )
+
+
+@router.get("/mascotas", response_model=Page[MascotaClinica], dependencies=[MEDICO])
+async def buscar_mascotas(
+    db: DbSession,
+    alcance: AlcanceActual,
+    q: str | None = None,
+    limit: Annotated[int, Query(ge=1, le=50)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> Page[MascotaClinica]:
+    """Las mascotas cuya historia puede abrir el medico, por nombre, titular o documento."""
+    filas, total = await db.run_sync(service.buscar_mascotas, alcance, q, limit, offset)
+    return Page[MascotaClinica](
+        items=[_clinica(m, f) for m, f in filas], total=total, limit=limit, offset=offset
+    )
+
+
+@router.get("/mascotas/{mascota_id}", response_model=MascotaClinica, dependencies=[MEDICO])
+async def mascota(db: DbSession, alcance: AlcanceActual, mascota_id: UUID) -> MascotaClinica:
+    return _clinica(*await db.run_sync(service.mascota_con_titular, alcance, mascota_id))
 
 
 @router.get("/mascotas/{mascota_id}/historia")

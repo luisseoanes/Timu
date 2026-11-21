@@ -184,6 +184,8 @@ MATRIZ = {
     "POST /clinica/historias/{historia_id}/correccion": "M",
     "POST /clinica/historias/{historia_id}/firma": "M",
     "POST /clinica/historias/{historia_id}/formulas": "M",
+    "GET /clinica/mascotas": "M",
+    "GET /clinica/mascotas/{mascota_id}": "M",
     "GET /clinica/mascotas/{mascota_id}/historia": "M",
     "GET /clinica/plantillas": "M",
     "POST /clinica/plantillas": "M",

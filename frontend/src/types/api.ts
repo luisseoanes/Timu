@@ -1049,6 +1049,17 @@ export interface RemisionVistaAliada {
   valor_familia: string | null
 }
 
+export interface MascotaClinica {
+  id: string
+  nombre: string
+  especie: string
+  raza: string | null
+  activa: boolean
+  familia_id: string
+  titular_nombre: string
+  ciudad: string
+}
+
 export interface CoberturaAliada {
   valor_atencion: string
   valor_cubierto: string

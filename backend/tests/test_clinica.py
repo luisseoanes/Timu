@@ -11,7 +11,7 @@ from app.core.enums import EstadoServicio, Rol, TipoServicio
 from app.core.tiempo import ahora, hoy
 from app.modules.clinica.models import HistoriaClinica
 from app.modules.comunicaciones.models import ConversacionWhatsApp, Mensaje
-from app.modules.familias.models import Mascota
+from app.modules.familias.models import Familia, Mascota
 from app.modules.servicios import service as servicios
 from app.modules.servicios.models import Servicio, ServicioPaso
 from tests import fabricas
@@ -358,6 +358,61 @@ async def test_solo_el_personal_medico_lee_la_historia(client, equipo, mascota_i
         assert (await client.get(historia, headers=equipo[perfil])).status_code == 403, perfil
     (completa,) = (await client.get(historia, headers=equipo["otro"])).json()
     assert completa["notas_internas"] == "Ojo"
+
+
+async def test_el_medico_busca_la_mascota_sin_abrir_familias(client, db, equipo, mascota_id):
+    """6.14 La historia es del medico, que no tiene Familias (Seccion 12). Antes, «Abrir una
+    historia clinica» buscaba en /familias y le daba 403: el buscador salia vacio en silencio."""
+    mascota = await db.get(Mascota, mascota_id)
+    familia = await db.get(Familia, mascota.familia_id)
+    # Las peticiones confirman la transaccion y caducan los objetos: los datos, antes.
+    nombre, titular, documento, familia_id = (
+        mascota.nombre,
+        familia.titular_nombre,
+        familia.documento,
+        familia.id,
+    )
+    assert (
+        await client.get("/api/v1/familias", params={"q": "Ana"}, headers=equipo["medica"])
+    ).status_code == 403
+    for q in (nombre[:3], titular, documento):
+        pagina = await client.get(
+            "/api/v1/clinica/mascotas", params={"q": q}, headers=equipo["medica"]
+        )
+        assert pagina.status_code == 200, pagina.text
+        assert str(mascota_id) in [m["id"] for m in pagina.json()["items"]], q
+    (fila,) = (
+        await client.get(
+            "/api/v1/clinica/mascotas",
+            params={"q": documento},
+            headers=equipo["medica"],
+        )
+    ).json()["items"]
+    assert (fila["titular_nombre"], fila["familia_id"]) == (titular, str(familia_id))
+    vacia = await client.get(
+        "/api/v1/clinica/mascotas", params={"q": "no-existe-nadie"}, headers=equipo["medica"]
+    )
+    assert vacia.json() == {"items": [], "total": 0, "limit": 20, "offset": 0}
+
+
+async def test_la_historia_dice_de_quien_es_la_mascota(client, db, equipo, mascota_id):
+    mascota = await db.get(Mascota, mascota_id)
+    familia = await db.get(Familia, mascota.familia_id)
+    esperado = (mascota.nombre, familia.titular_nombre)
+    datos = (
+        await client.get(f"/api/v1/clinica/mascotas/{mascota_id}", headers=equipo["medica"])
+    ).json()
+    assert (datos["nombre"], datos["titular_nombre"]) == esperado
+    nadie = await client.get(
+        "/api/v1/clinica/mascotas/01900000-0000-7000-8000-000000000000", headers=equipo["medica"]
+    )
+    assert nadie.status_code == 404
+
+
+async def test_buscar_mascotas_es_del_medico(client, equipo):
+    for perfil in ("op", "admin"):
+        resp = await client.get("/api/v1/clinica/mascotas", headers=equipo[perfil])
+        assert resp.status_code == 403, perfil
 
 
 # --- 6.14 Adjuntos -----------------------------------------------------------------------

@@ -127,6 +127,7 @@ ESQUEMAS = [
     "RemisionRead",
     "MascotaRemitida",
     "RemisionVistaAliada",
+    "MascotaClinica",
     "CoberturaAliada",
     "MiClinica",
     "AtendidaAliada",
