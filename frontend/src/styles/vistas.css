@@ -2071,3 +2071,12 @@
   .plan-linea li { grid-template-columns: 24px minmax(0, 1fr); align-items: center; }
   .plan-cuerpo { padding: var(--e7) var(--e4) var(--e8); }
 }
+
+/* --- Zonas táctiles de 44 px que faltaban (auditoría de R4-CIE-02) -------------------------
+   La regla común (componentes.css) cubre botones y campos; las pestañas, los segmentos de las
+   bandejas, el círculo de la cuenta y «Ver cada una» de la línea medían 24–40 px en el celular.
+   Va al final para ganar a sus reglas propias de este fichero. */
+@media (max-width: 899px), (pointer: coarse) {
+  .pestana, .segmento-opcion, .linea-tramo-boton, .parada-portal-cuerpo > .linea-tramo-boton { min-height: 44px; }
+  .cuenta { width: 44px; height: 44px; }
+}
