@@ -75,7 +75,7 @@ function Pendientes() {
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
-        <h3>Pendientes derivados de atenciones</h3>
+        <h2>Pendientes derivados de atenciones</h2>
         <select className="input servicios-filtro" value={estado} onChange={(e) => setEstado(e.target.value)} aria-label="Estado del pendiente">
           <option value="">Todos</option>
           {['pendiente_autorizacion', 'autorizado', 'en_gestion', 'resuelto', 'rechazado'].map((e) => (
@@ -234,7 +234,7 @@ function Franjas() {
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
-        <h3>Franjas de agenda</h3>
+        <h2>Franjas de agenda</h2>
         <div className="acciones">
           <button className="btn btn-plano" type="button" onClick={() => setBloqueo(true)}>
             Bloquear un día

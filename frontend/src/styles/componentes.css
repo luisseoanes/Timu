@@ -138,6 +138,9 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
   gap: var(--e3); margin-bottom: var(--e4);
 }
 .tarjeta-cabeza a { font-size: var(--t-menor); font-weight: 700; }
+/* El título de una tarjeta de primer nivel es un h2 (el h1 es el de la página; auditoría de R4-CIE-02),
+   con el aspecto de sección de siempre: Inter, no GeosansLight. */
+.tarjeta-cabeza > h2 { font-family: var(--fuente); font-size: var(--t-seccion); font-weight: 600; }
 
 /* --- Distintivos de estado ------------------------------------- */
 .distintivo {

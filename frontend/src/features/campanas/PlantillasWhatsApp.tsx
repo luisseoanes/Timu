@@ -47,7 +47,7 @@ export function PlantillasWhatsApp() {
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
-        <h3>Plantillas de WhatsApp</h3>
+        <h2>Plantillas de WhatsApp</h2>
         <button className="btn btn-suave" type="button" onClick={() => setNueva(true)}>
           <Icono nombre="mas" size={16} /> Nueva plantilla
         </button>

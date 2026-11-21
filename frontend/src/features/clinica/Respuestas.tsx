@@ -20,7 +20,7 @@ export function Respuestas() {
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
-        <h3>Respuestas aprobadas</h3>
+        <h2>Respuestas aprobadas</h2>
         <button className="btn btn-suave" type="button" onClick={() => setNueva(true)}>
           <Icono nombre="mas" size={16} /> Nueva respuesta
         </button>

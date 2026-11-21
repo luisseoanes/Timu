@@ -42,7 +42,7 @@ function Respuestas({ usuario }: { usuario: Usuario }) {
       {analiza && (
       <section className="tarjeta">
         <div className="tarjeta-cabeza">
-          <h3>Satisfacción del mes</h3>
+          <h2>Satisfacción del mes</h2>
         </div>
         <Consulta consulta={resumen} cargando="Calculando…" error="No fue posible calcular la satisfacción.">
           {(r) => (
@@ -77,7 +77,7 @@ function Respuestas({ usuario }: { usuario: Usuario }) {
       )}
       <section className="tarjeta">
         <div className="tarjeta-cabeza">
-          <h3>Respuestas</h3>
+          <h2>Respuestas</h2>
           <label className="acciones">
             <input type="checkbox" checked={soloBajas} onChange={(e) => { setSoloBajas(e.target.checked); setOffset(0) }} />
             Sólo calificaciones de 3 o menos
@@ -140,7 +140,7 @@ export function ConfiguracionEncuestas() {
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
-        <h3>Configuración general</h3>
+        <h2>Configuración general</h2>
       </div>
       <Consulta consulta={configuracion} cargando="Cargando…" error="No fue posible cargar la configuración.">
         {() => (

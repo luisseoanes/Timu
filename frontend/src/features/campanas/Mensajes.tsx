@@ -66,7 +66,7 @@ export function Mensajes() {
     <div className="con-rail">
       <section className="tarjeta">
         <div className="tarjeta-cabeza">
-          <h3>Mensajes de WhatsApp</h3>
+          <h2>Mensajes de WhatsApp</h2>
         </div>
         <div className="filtros bandeja-filtros mensajes-filtros">
           <label className="buscador">
@@ -165,7 +165,7 @@ export function Mensajes() {
       <aside className="rail">
         <section className="tarjeta">
           <div className="tarjeta-cabeza">
-            <h3>Dados de baja</h3>
+            <h2>Dados de baja</h2>
           </div>
           <p className="apagado">No reciben campañas masivas; los avisos del servicio sí les llegan.</p>
           <form

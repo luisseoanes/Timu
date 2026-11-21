@@ -35,7 +35,7 @@ export function AtencionVirtual() {
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
-        <h3>Cola de orientación virtual</h3>
+        <h2>Cola de orientación virtual</h2>
         <button className="btn btn-suave" type="button" onClick={() => setNueva(true)}>
           <Icono nombre="mas" size={16} /> Registrar solicitud
         </button>

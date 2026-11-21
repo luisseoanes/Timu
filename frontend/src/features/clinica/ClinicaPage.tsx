@@ -67,10 +67,10 @@ function TrabajoPendiente() {
   return (
     <section className="tarjeta" aria-labelledby="pendiente-titulo">
       <div className="tarjeta-cabeza">
-        <h3 id="pendiente-titulo">Tu trabajo de hoy</h3>
+        <h2 id="pendiente-titulo">Tu trabajo de hoy</h2>
       </div>
       <section className="bloque clinica-bloque" aria-labelledby="visitas-titulo">
-        <h4 id="visitas-titulo">En tu ruta</h4>
+        <h3 id="visitas-titulo">En tu ruta</h3>
         <Consulta
           consulta={rutas}
           cargando="Cargando tu ruta…"
@@ -96,7 +96,7 @@ function TrabajoPendiente() {
         </Consulta>
       </section>
       <section className="bloque clinica-bloque" aria-labelledby="borradores-titulo">
-        <h4 id="borradores-titulo">Consultas sin firmar</h4>
+        <h3 id="borradores-titulo">Consultas sin firmar</h3>
         <Consulta
           consulta={borradores}
           cargando="Cargando tus borradores…"
@@ -134,7 +134,7 @@ function BuscarHistoria() {
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
-        <h3>Abrir una historia clínica</h3>
+        <h2>Abrir una historia clínica</h2>
       </div>
       <label className="campo">
         <span>Mascota o titular</span>

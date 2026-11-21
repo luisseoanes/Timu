@@ -88,7 +88,7 @@ export function TareasPage() {
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
-        <h3>Tareas</h3>
+        <h2>Tareas</h2>
         <button className="btn btn-primario" type="button" onClick={() => setNueva(true)}>
           <Icono nombre="mas" size={16} /> Nueva tarea
         </button>

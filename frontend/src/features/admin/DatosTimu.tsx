@@ -32,13 +32,13 @@ export function DatosTimu() {
       {(d) => (
         <section className="tarjeta pila datos-timu" aria-labelledby="datos-timu">
           <div className="tarjeta-cabeza">
-            <h3 id="datos-timu">Lo que dice la portada de TIMU</h3>
+            <h2 id="datos-timu">Lo que dice la portada de TIMU</h2>
             <button className="btn btn-primario" type="button" onClick={() => setEditando(true)}>
               <Icono nombre="editar" size={16} /> Editar
             </button>
           </div>
           <section className="bloque" aria-labelledby="datos-quienes">
-            <h4 id="datos-quienes" className="subtitulo">Quiénes somos</h4>
+            <h3 id="datos-quienes" className="subtitulo">Quiénes somos</h3>
             <dl className="ficha">
               <Dato titulo="Presentación" ancho>{d.presentacion ?? sinEscribir('la muestra')}</Dato>
               <Dato titulo="Misión" ancho>{d.mision ?? sinEscribir('la muestra')}</Dato>
@@ -47,7 +47,7 @@ export function DatosTimu() {
             </dl>
           </section>
           <section className="bloque" aria-labelledby="datos-clinica">
-            <h4 id="datos-clinica" className="subtitulo">La clínica</h4>
+            <h3 id="datos-clinica" className="subtitulo">La clínica</h3>
             <dl className="ficha">
               <Dato titulo="Nombre">{d.clinica_nombre ?? sinEscribir('la muestra')}</Dato>
               <Dato titulo="Dónde">
@@ -59,7 +59,7 @@ export function DatosTimu() {
             </dl>
           </section>
           <section className="bloque" aria-labelledby="datos-contacto">
-            <h4 id="datos-contacto" className="subtitulo">Contacto</h4>
+            <h3 id="datos-contacto" className="subtitulo">Contacto</h3>
             <dl className="ficha">
               <Dato titulo="WhatsApp">{d.whatsapp ? <span className="numero">{telefono(d.whatsapp)}</span> : sinEscribir('ofrece escribir por WhatsApp')}</Dato>
               <Dato titulo="Teléfonos">
@@ -96,7 +96,7 @@ export function DatosTimu() {
             </dl>
           </section>
           <section className="bloque" aria-labelledby="datos-empresa">
-            <h4 id="datos-empresa" className="subtitulo">La empresa, al pie de la portada</h4>
+            <h3 id="datos-empresa" className="subtitulo">La empresa, al pie de la portada</h3>
             <dl className="ficha">
               <Dato titulo="Razón social">{d.razon_social ?? sinEscribir('la dice')}</Dato>
               <Dato titulo="NIT">{d.nit ? <span className="numero">{d.nit}</span> : sinEscribir('lo dice')}</Dato>

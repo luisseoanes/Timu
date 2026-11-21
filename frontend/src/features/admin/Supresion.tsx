@@ -22,7 +22,7 @@ export function Supresion() {
   return (
     <section className="tarjeta pila" aria-labelledby={`${id}-titulo`}>
       <div className="tarjeta-cabeza">
-        <h3 id={`${id}-titulo`}>Supresión de datos</h3>
+        <h2 id={`${id}-titulo`}>Supresión de datos</h2>
       </div>
       <p className="apagado">
         Cuando una familia pide que se borren sus datos (Ley 1581), se anonimiza: sus datos personales se sustituyen

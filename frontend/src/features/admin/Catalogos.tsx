@@ -45,14 +45,14 @@ export function Catalogos() {
       <div className="dos-columnas">
         <section className="tarjeta">
           <div className="tarjeta-cabeza">
-            <h3>
+            <h2>
               Ciudades con cobertura{' '}
               {ciudades.data && (
                 <span className="apagado numero">
                   {ciudades.data.filter((c) => c.activa).length} de {ciudades.data.length}
                 </span>
               )}
-            </h3>
+            </h2>
           </div>
           <p className="admin-nota">{AL_APAGAR.ciudades}</p>
           <Consulta consulta={ciudades} cargando="Cargando las ciudades…" error="No fue posible cargar las ciudades.">
@@ -72,7 +72,7 @@ export function Catalogos() {
         <div className="pila">
           <section className="tarjeta">
             <div className="tarjeta-cabeza">
-              <h3>Tipos de servicio</h3>
+              <h2>Tipos de servicio</h2>
             </div>
             <p className="admin-nota">{AL_APAGAR['tipos-servicio']}</p>
             <Consulta consulta={tipos} cargando="Cargando los tipos…" error="No fue posible cargar los tipos.">
@@ -92,7 +92,7 @@ export function Catalogos() {
           </section>
           <section className="tarjeta">
             <div className="tarjeta-cabeza">
-              <h3>Esquemas preventivos</h3>
+              <h2>Esquemas preventivos</h2>
             </div>
             <p className="admin-nota">{AL_APAGAR['esquemas-preventivos']}</p>
             <Consulta consulta={esquemas} cargando="Cargando los esquemas…" error="No fue posible cargar los esquemas.">

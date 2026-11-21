@@ -25,7 +25,7 @@ export function ReportesProgramados() {
     <div className="pila">
       <section className="tarjeta">
         <div className="tarjeta-cabeza">
-          <h3>Reportes programados</h3>
+          <h2>Reportes programados</h2>
           <button className="btn btn-primario" type="button" onClick={() => setEditando('nuevo')}>
             <Icono nombre="mas" size={16} /> Nuevo reporte
           </button>

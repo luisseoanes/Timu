@@ -59,7 +59,7 @@ export function Remisiones() {
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
-        <h3>Remisiones a clínicas aliadas</h3>
+        <h2>Remisiones a clínicas aliadas</h2>
         <button className="btn btn-primario" type="button" onClick={() => setNueva(true)}>
           <Icono nombre="mas" size={16} /> Emitir remisión
         </button>

@@ -87,7 +87,7 @@ export function InteligenciaArtificial() {
     <div className="pila">
       <section className="tarjeta">
         <div className="tarjeta-cabeza">
-          <h3>Tope de gasto de la IA</h3>
+          <h2>Tope de gasto de la IA</h2>
         </div>
         <Consulta consulta={consumo} cargando="Calculando…" error="No fue posible consultar el gasto.">
           {(c) => {
@@ -125,7 +125,7 @@ export function InteligenciaArtificial() {
 
       <section className="tarjeta">
         <div className="tarjeta-cabeza">
-          <h3>Prompts</h3>
+          <h2>Prompts</h2>
           {/* Sin prompts, lo que toca es cargar las versiones iniciales: ese es el verde. */}
           {prompts.data?.length === 0 ? (
             <div className="acciones">
@@ -155,7 +155,7 @@ export function InteligenciaArtificial() {
 
       <section className="tarjeta">
         <div className="tarjeta-cabeza">
-          <h3>Casos de prueba</h3>
+          <h2>Casos de prueba</h2>
           <button className="btn btn-suave" type="button" onClick={() => setNuevoCaso(true)}>
             <Icono nombre="mas" size={16} /> Nuevo caso
           </button>
@@ -178,7 +178,7 @@ export function InteligenciaArtificial() {
 
       <section className="tarjeta">
         <div className="tarjeta-cabeza">
-          <h3>Últimas consultas</h3>
+          <h2>Últimas consultas</h2>
         </div>
         <Consulta consulta={consultas} cargando="Cargando…" error="No fue posible cargar las consultas." vacio="Aún no se ha consultado la IA." estaVacio={(d) => d.length === 0}>
           {(d) => (

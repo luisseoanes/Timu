@@ -50,7 +50,7 @@ export function Usuarios() {
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
-        <h3>Usuarios</h3>
+        <h2>Usuarios</h2>
         <button className="btn btn-primario" type="button" onClick={() => setNuevo(true)}>
           <Icono nombre="mas" size={16} /> Nuevo usuario
         </button>

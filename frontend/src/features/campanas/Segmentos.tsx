@@ -21,7 +21,7 @@ export function Segmentos() {
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
-        <h3>Segmentos guardados</h3>
+        <h2>Segmentos guardados</h2>
         {puede(usuario, 'mercadeo') && (
           <button className="btn btn-suave" type="button" onClick={() => setNuevo(true)}>
             <Icono nombre="mas" size={16} /> Nuevo segmento

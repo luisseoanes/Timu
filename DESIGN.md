@@ -595,7 +595,7 @@ de ser fija.
 
 **La regla de sin desborde.** Ninguna ruta desborda en horizontal a 375, 768, 900 ni 1280 px, ni
 tiene un fallo de WCAG 2.2 A o AA según axe-core (desde R4-CIE-02, todas sus reglas, no solo el
-contraste); las rutas con pestañas se comprueban
+contraste), ni encabezados que salten un nivel (el título de una tarjeta de primer nivel es un h2); las rutas con pestañas se comprueban
 pestaña por pestaña, y las que abren una ficha desde la URL, con la ficha abierta. Lo vigila
 `frontend/e2e-stack/responsive.spec.ts`, sin lista de excepciones: un fallo se arregla.
 

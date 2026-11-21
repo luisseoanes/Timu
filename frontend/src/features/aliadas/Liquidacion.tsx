@@ -30,7 +30,7 @@ export function Liquidacion() {
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
-        <h3>Liquidación a aliadas</h3>
+        <h2>Liquidación a aliadas</h2>
         <button
           className="btn btn-suave"
           type="button"

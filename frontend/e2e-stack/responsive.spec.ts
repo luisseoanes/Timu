@@ -15,7 +15,8 @@ import { sesion, type Perfil } from './sesiones'
  * horizontal (una tabla dentro de su propio contenedor con desplazamiento sí se permite) o si
  * axe-core encuentra un fallo de WCAG 2.2 A o AA: el contraste (1.4.3) y, desde R4-CIE-02, todas
  * las demás reglas (el nombre con el texto visible, los enlaces que solo se distinguen por el
- * color, el tamaño de los objetivos, el acceso por teclado a lo que se desplaza…).
+ * color, el tamaño de los objetivos, el acceso por teclado a lo que se desplaza…), o si los
+ * encabezados saltan un nivel (un h1 seguido de un h3).
  *
  * Una ruta con `pestanas` se mide también con cada una de sus pestañas abierta: su contenido
  * no está en el DOM hasta que se elige. La clave de un fallo lleva entonces la pestaña
@@ -35,7 +36,7 @@ import { sesion, type Perfil } from './sesiones'
 const ANCHOS = [375, 768, 900, 1280] as const
 const ALTO = 900
 
-type Fallo = 'desborde' | 'accesibilidad'
+type Fallo = 'desborde' | 'accesibilidad' | 'encabezados'
 
 interface Ruta {
   /** La ruta tal como la declara App.tsx: el `path` o `index` dentro de su espacio. */
@@ -281,6 +282,25 @@ async function accesibilidad(page: Page): Promise<string[]> {
   return violations.flatMap((v) => v.nodes.slice(0, 3).map((n) => `${v.id}: ${n.target.join(' ')}`))
 }
 
+/**
+ * Encabezados que saltan un nivel (un h1 seguido de un h3): quien navega por encabezados cree que
+ * falta una sección. No lo exige WCAG, pero la auditoría de R4-CIE-02 lo encontró en 35 vistas.
+ * Lo que oculta una ventana abierta o un `hidden` no cuenta.
+ */
+async function saltosDeEncabezado(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const saltos: string[] = []
+    let anterior = 0
+    for (const h of document.querySelectorAll<HTMLElement>('h1, h2, h3, h4, h5, h6')) {
+      if (h.closest('[hidden], [aria-hidden="true"]')) continue
+      const nivel = Number(h.tagName[1])
+      if (anterior > 0 && nivel > anterior + 1) saltos.push(`h${anterior} → ${h.tagName.toLowerCase()} «${h.textContent?.trim().slice(0, 40)}»`)
+      anterior = nivel
+    }
+    return saltos.slice(0, 3)
+  })
+}
+
 async function esperarPantalla(page: Page) {
   await page.waitForLoadState('networkidle')
   await page.evaluate(() => document.fonts.ready)
@@ -294,6 +314,7 @@ async function medir(page: Page, vista: string, encontrados: Map<string, string[
     const medidas: [Fallo, string[]][] = [
       ['desborde', await desbordes(page)],
       ['accesibilidad', await accesibilidad(page)],
+      ['encabezados', await saltosDeEncabezado(page)],
     ]
     for (const [fallo, detalle] of medidas) {
       if (detalle.length > 0) encontrados.set(`${vista}@${ancho}:${fallo}`, detalle)

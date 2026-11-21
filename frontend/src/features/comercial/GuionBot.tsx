@@ -16,7 +16,7 @@ export function GuionBot() {
   return (
     <section className="tarjeta">
       <div className="tarjeta-cabeza">
-        <h3>Guion del asistente comercial</h3>
+        <h2>Guion del asistente comercial</h2>
       </div>
       <p className="comercial-nota">
         Cada paso tiene su mensaje y sus opciones. Al publicar se valida el guion completo y la versión anterior queda guardada.
