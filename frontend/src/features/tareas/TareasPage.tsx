@@ -1,3 +1,4 @@
+import * as Menu from '@radix-ui/react-dropdown-menu'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
@@ -52,7 +53,12 @@ function origenAutomatico(t: TareaListado): string | null {
 export function TareasPage() {
   const { usuario } = useAuth()
   const [params] = useSearchParams()
-  const [vista, setVista] = useState<Vista>(params.get('vencidas') === '1' ? 'vencidas' : 'todas')
+  // Abre en lo propio (crítica de R4-CIE-02: abría en «Todas»), y sin nada propio en lo que nadie
+  // tiene. Hasta que se elige una vista, la de entrada depende de si hay tareas propias pendientes.
+  const [elegida, setElegida] = useState<Vista | null>(params.get('vencidas') === '1' ? 'vencidas' : null)
+  const propias = useTareas({ mias: true, estado: 'pendiente', limit: 1 })
+  const vista: Vista = elegida ?? (propias.data?.total === 0 ? 'sin_asignar' : 'mias')
+  const setVista = (v: Vista) => setElegida(v)
   const [area, setArea] = useState<Area | ''>('')
   // Pendientes: abiertas y en progreso. Con «Abiertas», iniciar una tarea la sacaba de la vista.
   const [estado, setEstado] = useState('pendiente')
@@ -176,7 +182,11 @@ export function TareasPage() {
                               </Link>
                             )}
                           </div>
-                          {t.descripcion && <div className="tarea-descripcion">{t.descripcion}</div>}
+                          {t.descripcion && (
+                            <div className="tarea-descripcion" title={t.descripcion}>
+                              {t.descripcion}
+                            </div>
+                          )}
                         </td>
                         <td data-etiqueta="Vence">
                           {/* Lo vencido se dice en texto e icono, no solo en rojo. */}
@@ -193,52 +203,19 @@ export function TareasPage() {
                         <td data-etiqueta="Prioridad">
                           <Distintivo dominio="prioridad" valor={t.prioridad} />
                         </td>
-                        <td data-etiqueta="Responsable">
-                          {t.estado !== 'cerrada' && trabajable ? (
-                            <select
-                              className="input tarea-responsable"
-                              value={t.asignada_a_id ?? ''}
-                              aria-label={`Responsable de ${t.titulo}`}
-                              onChange={(e) => asignar.mutate({ id: t.id, usuario_id: e.target.value || null })}
-                            >
-                              <option value="">Sin asignar</option>
-                              {/* Solo quien ve el área de la tarea; quien ya la tenía, aunque no sea de ella. */}
-                              {usuarios.data
-                                ?.filter((u) => PERFILES_DEL_AREA[t.area as Area]?.includes(u.rol) || u.id === t.asignada_a_id)
-                                .map((u) => (
-                                  <option key={u.id} value={u.id}>{u.nombre}</option>
-                                ))}
-                            </select>
-                          ) : (
-                            nombreDe(t.asignada_a_id)
-                          )}
-                        </td>
+                        <td data-etiqueta="Responsable">{nombreDe(t.asignada_a_id)}</td>
                         <td className="tabla-acciones">
                           {trabajable && (
-                            <>
-                          {/* La del asistente de WhatsApp es la conversación: se atiende allí, y al
-                              terminarla la tarea se cierra sola. */}
-                          {t.origen === 'conversacion' && t.estado !== 'cerrada' && (
-                            <Link className="btn btn-suave" to="/panel/comercial?pestana=conversaciones">
-                              Ver la conversación
-                            </Link>
-                          )}
-                          {!t.asignada_a_id && t.estado !== 'cerrada' && usuario && (
-                            <button className="btn btn-suave" type="button" onClick={() => asignar.mutate({ id: t.id, usuario_id: usuario.id })}>
-                              Tomar
-                            </button>
-                          )}
-                          {t.estado === 'abierta' && t.asignada_a_id && (
-                            <button className="btn btn-plano" type="button" onClick={() => iniciar.mutate(t.id)}>
-                              Iniciar
-                            </button>
-                          )}
-                          {t.estado !== 'cerrada' && (
-                            <button className="btn btn-plano" type="button" onClick={() => setCerrando(t)}>
-                              Cerrar
-                            </button>
-                          )}
-                            </>
+                            <AccionesTarea
+                              tarea={t}
+                              usuarioId={usuario?.id}
+                              equipo={(usuarios.data ?? []).filter(
+                                (u) => PERFILES_DEL_AREA[t.area as Area]?.includes(u.rol) || u.id === t.asignada_a_id,
+                              )}
+                              onAsignar={(usuarioId) => asignar.mutate({ id: t.id, usuario_id: usuarioId })}
+                              onIniciar={() => iniciar.mutate(t.id)}
+                              onCerrar={() => setCerrando(t)}
+                            />
                           )}
                         </td>
                       </tr>
@@ -254,6 +231,101 @@ export function TareasPage() {
       <NuevaTareaModal abierto={nueva} onCerrar={() => setNueva(false)} />
       <CerrarTareaModal tarea={cerrando} onCerrar={() => setCerrando(null)} />
     </section>
+  )
+}
+
+/**
+ * Lo que se hace con una tarea, sin tres controles por fila (crítica de R4-CIE-02): una sola acción
+ * a la vista —«Tomar» si nadie la tiene, «Cerrar» si es de quien mira, la conversación si viene del
+ * asistente— y el resto (asignarla a otra persona, iniciarla, cerrarla) en el menú de tres puntos.
+ */
+function AccionesTarea({
+  tarea: t,
+  usuarioId,
+  equipo,
+  onAsignar,
+  onIniciar,
+  onCerrar,
+}: {
+  tarea: TareaListado
+  usuarioId: string | undefined
+  /** Quienes ven el área de la tarea, y quien ya la tenía. */
+  equipo: { id: string; nombre: string }[]
+  onAsignar: (usuarioId: string | null) => void
+  onIniciar: () => void
+  onCerrar: () => void
+}) {
+  if (t.estado === 'cerrada') return null
+  const conversacion = t.origen === 'conversacion'
+  const libre = !t.asignada_a_id
+  const mia = Boolean(usuarioId) && t.asignada_a_id === usuarioId
+  return (
+    <>
+      {/* La del asistente de WhatsApp es la conversación: se atiende allí, y al terminarla la tarea se
+          cierra sola. */}
+      {conversacion ? (
+        <Link className="btn btn-suave" to="/panel/comercial?pestana=conversaciones">
+          Ver la conversación
+        </Link>
+      ) : libre && usuarioId ? (
+        <button className="btn btn-suave" type="button" onClick={() => onAsignar(usuarioId)}>
+          Tomar
+        </button>
+      ) : (
+        mia && (
+          <button className="btn btn-suave" type="button" onClick={onCerrar}>
+            Cerrar
+          </button>
+        )
+      )}
+      <Menu.Root modal={false}>
+        <Menu.Trigger className="btn btn-plano btn-icono" aria-label={`Más acciones de ${t.titulo}`}>
+          <Icono nombre="puntos" size={18} />
+        </Menu.Trigger>
+        <Menu.Portal>
+          <Menu.Content className="menu" align="end" sideOffset={6}>
+            <Menu.Sub>
+              <Menu.SubTrigger className="menu-item menu-item-sub">
+                Asignar a…
+                <Icono nombre="derecha" size={14} />
+              </Menu.SubTrigger>
+              <Menu.Portal>
+                <Menu.SubContent className="menu" sideOffset={4}>
+                  <Menu.Item className="menu-item" disabled={libre} onSelect={() => onAsignar(null)}>
+                    Sin asignar
+                  </Menu.Item>
+                  {equipo.map((u) => (
+                    <Menu.Item
+                      key={u.id}
+                      className={u.id === t.asignada_a_id ? 'menu-item active' : 'menu-item'}
+                      disabled={u.id === t.asignada_a_id}
+                      onSelect={() => onAsignar(u.id)}
+                    >
+                      {u.id === usuarioId ? `${u.nombre} (tú)` : u.nombre}
+                    </Menu.Item>
+                  ))}
+                </Menu.SubContent>
+              </Menu.Portal>
+            </Menu.Sub>
+            {t.estado === 'abierta' && !libre && (
+              <Menu.Item className="menu-item" onSelect={onIniciar}>
+                Iniciar
+              </Menu.Item>
+            )}
+            {!mia && !conversacion && (
+              <Menu.Item className="menu-item" onSelect={onCerrar}>
+                Cerrar
+              </Menu.Item>
+            )}
+            {t.familia && (
+              <Menu.Item className="menu-item" asChild>
+                <Link to={`/panel/familias/${t.familia.id}`}>Ver la familia</Link>
+              </Menu.Item>
+            )}
+          </Menu.Content>
+        </Menu.Portal>
+      </Menu.Root>
+    </>
   )
 }
 

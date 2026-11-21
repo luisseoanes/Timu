@@ -85,8 +85,14 @@ describe('TareasPage', () => {
     renderizar(<TareasPage />)
     expect(await screen.findByText('Llamar por cuota vencida')).toBeInTheDocument()
     expect(screen.getByLabelText('Estado de la tarea')).toHaveValue('pendiente')
-    await user.click(screen.getByRole('button', { name: 'Iniciar' }))
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Iniciar' })).not.toBeInTheDocument())
+    // Iniciar va en el menú de tres puntos: a la vista, solo la acción que toca (Cerrar, es suya).
+    expect(screen.getByRole('button', { name: 'Cerrar' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Más acciones de Llamar por cuota vencida' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Iniciar' }))
+    await waitFor(() => expect(estado).toBe('en_progreso'))
+    await user.click(await screen.findByRole('button', { name: 'Más acciones de Llamar por cuota vencida' }))
+    expect(await screen.findByRole('menuitem', { name: 'Asignar a…' })).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('menuitem', { name: 'Iniciar' })).not.toBeInTheDocument())
     expect(screen.getByText('Llamar por cuota vencida')).toBeInTheDocument()
     expect(new Set(pedidas)).toEqual(new Set(['pendiente']))
   })
@@ -105,17 +111,21 @@ describe('TareasPage', () => {
         HttpResponse.json(pagina([TAREA, { ...TAREA, id: 't2', titulo: 'Cotizar plan', area: 'servicio_cliente', asignada_a_id: 'u4' }])),
       ),
     )
+    const user = userEvent.setup()
     renderizar(<TareasPage />)
-    const cartera = await screen.findByLabelText('Responsable de Llamar por cuota vencida')
-    await waitFor(() => expect(within(cartera).getAllByRole('option')).toHaveLength(2))
-    expect(within(cartera).getAllByRole('option').map((o) => o.textContent)).toEqual(['Sin asignar', 'Mariana Ortiz'])
+    // Asignar va en el menú de tres puntos («Asignar a…»), no en un desplegable por fila.
+    async function asignables(titulo: string) {
+      await user.click(await screen.findByRole('button', { name: `Más acciones de ${titulo}` }))
+      await user.click(await screen.findByRole('menuitem', { name: 'Asignar a…' }))
+      const sub = (await screen.findAllByRole('menu')).at(-1)!
+      await waitFor(() => expect(within(sub).getAllByRole('menuitem').length).toBeGreaterThan(1))
+      const nombres = within(sub).getAllByRole('menuitem').map((o) => o.textContent)
+      await user.keyboard('{Escape}{Escape}')
+      return nombres
+    }
+    expect(await asignables('Llamar por cuota vencida')).toEqual(['Sin asignar', 'Mariana Ortiz'])
     // Quien ya la tenía sigue en la lista aunque no sea de su área, para poder pasarla a otro.
-    const comercial = screen.getByLabelText('Responsable de Cotizar plan')
-    expect(within(comercial).getAllByRole('option').map((o) => o.textContent)).toEqual([
-      'Sin asignar',
-      'Mariana Ortiz',
-      'Dra. Sara Martínez',
-    ])
+    expect(await asignables('Cotizar plan')).toEqual(['Sin asignar', 'Mariana Ortiz', 'Dra. Sara Martínez'])
   })
 
   it('la tarea de una conversación con el asistente lleva a la conversación', async () => {
@@ -180,10 +190,34 @@ describe('TareasPage', () => {
     // Es de Operaciones: se sigue, pero ni se toma, ni se cierra, ni se le cambia el responsable.
     expect(within(pedida).queryByRole('button', { name: 'Tomar' })).not.toBeInTheDocument()
     expect(within(pedida).queryByRole('button', { name: 'Cerrar' })).not.toBeInTheDocument()
-    expect(within(pedida).queryByRole('combobox')).not.toBeInTheDocument()
+    expect(within(pedida).queryByRole('button', { name: /Más acciones/ })).not.toBeInTheDocument()
     const automatica = screen.getByText('Gestionar renovación').closest('tr')!
     expect(within(automatica).getByText('Automática: «Gestionar renovación 30 días antes»')).toBeInTheDocument()
-    expect(within(automatica).getByRole('button', { name: 'Cerrar' })).toBeInTheDocument()
+    // Sin responsable, lo que toca es tomarla; cerrarla queda en el menú.
+    expect(within(automatica).getByRole('button', { name: 'Tomar' })).toBeInTheDocument()
+  })
+
+  it('abre en «Mis tareas» y, sin tareas propias pendientes, en «Sin asignar»', async () => {
+    // Crítica de R4-CIE-02: abría en «Todas», aunque existe «Mis tareas».
+    const consultas: string[] = []
+    server.use(
+      http.get(`${API}/tareas`, ({ request }) => {
+        const q = new URL(request.url).searchParams
+        consultas.push(q.toString())
+        return HttpResponse.json(pagina(q.get('mias') ? [] : [TAREA]))
+      }),
+    )
+    renderizar(<TareasPage />)
+    expect(await screen.findByRole('button', { name: 'Sin asignar' })).toHaveAttribute('aria-pressed', 'true')
+    await waitFor(() => expect(consultas.some((c) => c.includes('sin_asignar=true'))).toBe(true))
+    expect(await screen.findByText('Llamar por cuota vencida')).toBeInTheDocument()
+  })
+
+  it('con tareas propias abre en «Mis tareas»', async () => {
+    server.use(http.get(`${API}/tareas`, () => HttpResponse.json(pagina([{ ...TAREA, asignada_a_id: USUARIO_ADMIN.id }]))))
+    renderizar(<TareasPage />)
+    await screen.findByText('Llamar por cuota vencida')
+    expect(screen.getByRole('button', { name: 'Mis tareas' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('cambia de vista y consulta con el filtro correspondiente', async () => {
@@ -212,7 +246,8 @@ describe('TareasPage', () => {
     )
     const user = userEvent.setup()
     renderizar(<TareasPage />)
-    await user.click(await screen.findByRole('button', { name: 'Cerrar' }))
+    await user.click(await screen.findByRole('button', { name: 'Más acciones de Llamar por cuota vencida' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Cerrar' }))
     const modal = await screen.findByRole('dialog')
     await user.type(within(modal).getByLabelText('Cómo se resolvió'), 'Pagó por transferencia')
     await user.click(within(modal).getByRole('button', { name: 'Cerrar tarea' }))

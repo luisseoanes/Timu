@@ -74,6 +74,9 @@
 .menu-item[data-highlighted] { background: var(--superficie-seleccion); color: var(--texto-titulo); }
 .menu-item.active { color: var(--texto-titulo); font-weight: 700; }
 .menu-item-peligro, .menu-item-peligro[data-highlighted] { color: var(--texto-error); }
+/* Un submenú: su flecha a la derecha, lejos del texto. */
+.menu-item-sub { justify-content: space-between; gap: var(--e3); }
+.menu-item[data-disabled] { color: var(--texto-suave); cursor: default; }
 .menu-etiqueta { display: grid; padding: var(--e2) var(--e3); }
 .menu-etiqueta strong { color: var(--texto-titulo); font-size: var(--t-cuerpo); }
 .menu-etiqueta span { color: var(--texto-suave); font-size: var(--t-menor); }
@@ -234,7 +237,9 @@
 /* Los enlaces de la línea de detalle van seguidos (la familia, el servicio): 24 px de alto cada uno
    para no tocar el de al lado (WCAG 2.5.8). */
 .bandeja-detalle a { display: inline-flex; align-items: center; min-height: 24px; }
-.tarea-descripcion { margin-top: var(--e1); max-width: 60ch; font-size: var(--t-menor); font-weight: 400; color: var(--texto); }
+/* Una línea: la fila se lee de un vistazo; el texto entero queda en el título del elemento. */
+.tarea-descripcion { margin-top: var(--e1); max-width: 60ch; font-size: var(--t-menor); font-weight: 400; color: var(--texto);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; line-clamp: 1; overflow: hidden; }
 /* La fecha y «· vencida» bajan de línea enteras, nunca partidas por dentro. */
 .bandeja-vencida { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 var(--e1); font-weight: 600; color: var(--texto-error); }
 .bandeja-vencida > span { white-space: nowrap; }
@@ -297,7 +302,6 @@
 .preventivos-carnet .fila-cuerpo .bandeja-vencida { display: inline-flex; flex-wrap: wrap; color: var(--texto-error); }
 .preventivos-carnet .fila-cuerpo .bandeja-vencida span { display: inline; color: inherit; white-space: nowrap; }
 .preventivos-carnet .fila-icono[data-tono="peligro"] { background: var(--estado-peligro-fondo); color: var(--estado-peligro-texto); }
-.tarea-responsable { min-width: 150px; }
 
 /* ===== Inicio (R2-PAN-04): «La línea de hoy» =====
    Saludo con los filtros, la franja de cifras (cada una abre su serie) y, debajo, la línea del
