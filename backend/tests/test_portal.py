@@ -3,7 +3,7 @@ actualizacion de datos e ingreso con codigo por WhatsApp."""
 
 import re
 from datetime import datetime, time, timedelta
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
 from httpx import AsyncClient
@@ -87,6 +87,7 @@ async def test_ve_su_plan_y_estado_de_cuenta(client, portal):
     # Lo decide el backend y lo dice el plan: si puede agendar y que (DEU-2), incluida la
     # consulta en la clinica, que el portal no ofrecia.
     assert plan["motivo_sin_agendar"] is None
+    assert plan["motivo_sin_alta"] is None and plan["aviso_pausa"] is None
     modalidades = {t["modalidad"] for t in plan["tipos_agendables"]}
     assert modalidades == {"domiciliario", "preventivo", "clinico"}
     cuenta = (await client.get("/api/v1/portal/estado-cuenta", headers=h)).json()
@@ -701,6 +702,20 @@ async def test_el_plan_dice_por_que_no_se_puede_agendar(client, db, portal, monk
     await db.commit()
     plan = (await client.get("/api/v1/portal/plan", headers=portal["headers"])).json()
     assert plan["motivo_sin_agendar"].startswith("Tu plan está en pausa por cuotas vencidas")
+    # R4-CIE-02: en pausa tampoco se agrega un peludo, y el plan lo dice antes del formulario con
+    # el mismo texto con que la cotizacion lo rechaza; y dice que sigue la orientacion virtual.
+    assert plan["motivo_sin_alta"] == (
+        "Tu plan está en pausa por cuotas vencidas: al pagarlas, podrás agregar un peludo."
+    )
+    assert "Sí puedes hablar con un veterinario" in plan["aviso_pausa"]
+    # El estado del plan se comprueba antes que el plan elegido: cualquier id sirve.
+    cotizacion = await client.post(
+        "/api/v1/portal/peludos/cotizacion",
+        json={"especie": "canino", "plan_id": str(uuid4())},
+        headers=portal["headers"],
+    )
+    assert cotizacion.status_code == 422
+    assert cotizacion.json()["detail"] == plan["motivo_sin_alta"]
     contrato = await db.get(Contrato, portal["contrato_id"])
     contrato.estado = "activa"
     renovacion = contrato.fecha_renovacion

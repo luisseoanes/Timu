@@ -16,6 +16,7 @@ from app.core.enums import EstadoAfiliacion, EstadoServicio, TipoServicio
 from app.core.errores import NoEncontrado, ReglaNegocio
 from app.core.tiempo import ahora, con_zona, hoy
 from app.integrations.payments import construir_link_pago
+from app.modules.afiliaciones import altas
 from app.modules.cartera import contratos
 from app.modules.cartera import service as cartera
 from app.modules.cartera.models import AplicacionPago, Cuota, Pago
@@ -68,6 +69,23 @@ def _motivo_sin_agendar(contrato: Any) -> str | None:
     return None
 
 
+def _aviso_pausa(contrato: Any) -> str | None:
+    """Que sigue disponible con cuotas vencidas, dicho de frente (R4-CIE-02). Valor provisional
+    del 2026-11-21, el comportamiento de hoy: no se agenda ni se agrega un peludo, y la
+    orientacion virtual sigue. Lo confirma TIMU (docs/pendientes-externos.md)."""
+    if contrato.estado == EstadoAfiliacion.CONGELADA:
+        return (
+            "Mientras el plan esté en pausa no se pueden agendar servicios ni agregar peludos. "
+            "Sí puedes hablar con un veterinario."
+        )
+    if contrato.estado == EstadoAfiliacion.EN_MORA:
+        return (
+            "Mientras tengas cuotas vencidas no se pueden agendar servicios ni agregar peludos. "
+            "Sí puedes hablar con un veterinario."
+        )
+    return None
+
+
 def plan(db: Session, familia: Familia) -> dict[str, Any]:
     """La afiliacion vigente: cada peludo con su plan, lo que paga y sus beneficios con el
     cupo que le queda (cada uno tiene el suyo)."""
@@ -107,6 +125,8 @@ def plan(db: Session, familia: Familia) -> dict[str, Any]:
         "mascotas": peludos,
         "estado": contrato.estado,
         "motivo_sin_agendar": _motivo_sin_agendar(contrato),
+        "motivo_sin_alta": altas.motivo_sin_alta(contrato),
+        "aviso_pausa": _aviso_pausa(contrato),
         "tipos_agendables": [
             {"codigo": t.codigo, "nombre": t.nombre, "modalidad": t.modalidad}
             for t in db.scalars(

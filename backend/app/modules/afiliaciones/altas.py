@@ -57,16 +57,27 @@ class Cotizacion:
     cuotas_adelantadas: int
 
 
+def motivo_sin_alta(contrato: Contrato | None) -> str | None:
+    """Por que la familia no puede agregar un peludo ahora, en sus palabras, o None si puede. El
+    portal lo dice antes del formulario y la cotizacion lo rechaza con el mismo texto (R4-CIE-02:
+    antes lo ofrecia en verde y el rechazo llegaba al final, sin tildes y sin la salida real)."""
+    if contrato is None:
+        return "No tienes una afiliación vigente: afilia a tu peludo desde el inicio."
+    if contrato.estado == EstadoAfiliacion.CONGELADA:
+        return "Tu plan está en pausa por cuotas vencidas: al pagarlas, podrás agregar un peludo."
+    if contrato.estado == EstadoAfiliacion.EN_MORA:
+        return "Tienes cuotas vencidas: al pagarlas, podrás agregar un peludo."
+    if contrato.estado != EstadoAfiliacion.ACTIVA:
+        return "Escríbenos por WhatsApp para agregar un peludo."
+    return None
+
+
 def contrato_para_alta(db: Session, familia: Familia) -> Contrato:
     contrato = contratos.contrato_vigente(db, familia.id)
-    if contrato is None:
-        raise ReglaNegocio("No tienes una afiliacion vigente: afilia a tu peludo desde el inicio")
-    if contrato.estado == EstadoAfiliacion.EN_MORA:
-        raise ReglaNegocio(
-            "Tu afiliacion tiene pagos pendientes: ponte al dia para agregar un peludo"
-        )
-    if contrato.estado != EstadoAfiliacion.ACTIVA:
-        raise ReglaNegocio("Tu afiliacion no esta activa: escribenos para agregar un peludo")
+    motivo = motivo_sin_alta(contrato)
+    if motivo:
+        raise ReglaNegocio(motivo)
+    assert contrato is not None
     return contrato
 
 

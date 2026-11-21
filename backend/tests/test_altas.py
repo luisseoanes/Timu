@@ -197,7 +197,8 @@ async def test_en_mora_o_con_un_nombre_repetido_no_se_agrega(client: AsyncClient
         json={"especie": "canino", "plan_id": portal["plan_id"]},
         headers=portal["headers"],
     )
-    assert resp.status_code == 422 and "ponte al dia" in resp.text
+    assert resp.status_code == 422
+    assert resp.json()["detail"] == "Tienes cuotas vencidas: al pagarlas, podrás agregar un peludo."
 
 
 async def test_un_pago_en_curso_impide_otro_y_uno_rechazado_se_reemplaza(
