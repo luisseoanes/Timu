@@ -6,7 +6,8 @@ import { mensajeError } from '@/lib/errores'
 import { fecha, hoyISO, moneda } from '@/lib/formato'
 import type { AltaPeludoRead, Periodicidad } from '@/types'
 
-import { useAgregarPeludo, useAltasPeludo, useCotizacionAlta, usePlanesAlta } from './api'
+import { useAgregarPeludo, useAltasPeludo, useCotizacionAlta, useMiPlan, usePlanesAlta } from './api'
+import { ConWhatsApp } from './Contacto'
 
 /** Solo perros y gatos (decisión de TIMU), como en el registro en línea. */
 const ESPECIES = [
@@ -28,6 +29,11 @@ export function PortalAgregarPeludo() {
   const altas = useAltasPeludo()
   const ultima = altas.data?.find((a) => a.estado !== 'cancelada')
   const esperando = ultima?.estado === 'pendiente_pago' && ultima.estado_pago === 'pendiente'
+  // Antes del formulario, no al final: con cuotas vencidas o sin plan, el alta no se puede
+  // (R4-CIE-02). El texto es el mismo con que la cotización lo rechaza.
+  const plan = useMiPlan()
+  const sinAlta = plan.data === null ? 'No tienes una afiliación vigente: afilia a tu peludo desde el inicio.' : (plan.data?.motivo_sin_alta ?? null)
+  const debe = plan.data?.estado === 'congelada' || plan.data?.estado === 'en_mora'
   return (
     <div className="pila">
       <header className="portal-peludo-cabeza">
@@ -37,7 +43,13 @@ export function PortalAgregarPeludo() {
         <h1>Agregar un peludo</h1>
       </header>
       {ultima && <EstadoAlta alta={ultima} />}
-      {!esperando && <FormularioAlta />}
+      {plan.isSuccess && sinAlta !== null ? (
+        <p className="portal-aviso">
+          <ConWhatsApp texto={sinAlta} /> {debe && <Link to="/portal/pagos">Ir a tus pagos</Link>}
+        </p>
+      ) : (
+        !esperando && plan.isSuccess && <FormularioAlta />
+      )}
     </div>
   )
 }

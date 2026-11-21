@@ -24,6 +24,7 @@ import {
   useMisServicios,
   type BeneficioPortal,
 } from './api'
+import { ConWhatsApp } from './Contacto'
 import { AccesoPeludo } from './InicioPortal'
 import { delPeludo, recorrido, vencidasDe } from './linea'
 import { LineaPortal } from './LineaPortal'
@@ -39,14 +40,26 @@ export function PortalMascotas() {
     return [m.raza ? `${especie} · ${m.raza}` : especie, edad(m.fecha_nacimiento)].filter(Boolean).join(' · ')
   }
   const linea = useMiLinea()
+  const plan = useMiPlan()
+  // No se ofrece lo que el backend va a rechazar (R4-CIE-02): con el plan en pausa, el alta fallaba al
+  // final del formulario. Sin plan (null) tampoco se puede agregar.
+  const sinAlta = plan.data === null ? 'No tienes una afiliación vigente.' : (plan.data?.motivo_sin_alta ?? null)
+  const debe = plan.data?.estado === 'congelada' || plan.data?.estado === 'en_mora'
   return (
     <div className="pila">
       <header className="portal-cabecera">
         <h1>Tus peludos</h1>
-        <Link to="/portal/mascotas/nueva" className="btn btn-primario">
-          <Icono nombre="mas" size={16} /> Agregar un peludo
-        </Link>
+        {plan.data && sinAlta === null && (
+          <Link to="/portal/mascotas/nueva" className="btn btn-primario">
+            <Icono nombre="mas" size={16} /> Agregar un peludo
+          </Link>
+        )}
       </header>
+      {plan.isSuccess && sinAlta !== null && (
+        <p className="portal-aviso">
+          <ConWhatsApp texto={sinAlta} /> {debe && <Link to="/portal/pagos">Ir a tus pagos</Link>}
+        </p>
+      )}
       <Consulta
         consulta={familia}
         cargando="Cargando tus peludos…"
@@ -147,7 +160,7 @@ export function PortalMascota() {
                   {
                     valor: 'plan',
                     titulo: 'Su plan',
-                    contenido: <PlanPeludo nombre={mascota.nombre} plan={delPlan} />,
+                    contenido: <PlanPeludo nombre={mascota.nombre} plan={delPlan} aviso={plan.data?.aviso_pausa ?? null} />,
                   },
                 ]}
               />
@@ -310,9 +323,12 @@ function HistoriaPortal({ mascotaId }: { mascotaId: string }) {
 function PlanPeludo({
   nombre,
   plan,
+  aviso,
 }: {
   nombre: string
   plan?: { plan: string; valor_mensual: string; beneficios: BeneficioPortal[] }
+  /** Con cuotas vencidas, qué sigue y qué no: los beneficios no se marcan como disponibles. */
+  aviso: string | null
 }) {
   const nombreTipo = useNombreTipoServicio()
   if (!plan) return <p className="apagado">{nombre} no está en un plan vigente.</p>
@@ -321,10 +337,11 @@ function PlanPeludo({
       <h3 id="plan-peludo-titulo">
         {plan.plan} · <span className="numero">{moneda(plan.valor_mensual)}</span> al mes
       </h3>
+      {aviso && <p className="portal-aviso">{aviso}</p>}
       <ul className="beneficios">
         {plan.beneficios.map((b) => (
           <li key={b.tipo_servicio}>
-            <Icono nombre="check" size={14} /> {nombreTipo(b.tipo_servicio)}: {cupo(b)}
+            {!aviso && <Icono nombre="check" size={14} />} {nombreTipo(b.tipo_servicio)}: {cupo(b)}
             {b.cobertura_pct < 100 && ` · cubre el ${b.cobertura_pct} %`}
           </li>
         ))}

@@ -40,6 +40,8 @@ const MOTIVOS: Record<string, string> = { congelada: 'Tu plan está en pausa por
 const plan = (estado: string) => ({
   estado,
   motivo_sin_agendar: MOTIVOS[estado] ?? null,
+  motivo_sin_alta: null,
+  aviso_pausa: null,
   tipos_agendables: [
     { codigo: 'consulta_domiciliaria', nombre: 'Consulta domiciliaria', modalidad: 'domiciliario' },
     { codigo: 'vacunacion', nombre: 'Vacunación', modalidad: 'preventivo' },

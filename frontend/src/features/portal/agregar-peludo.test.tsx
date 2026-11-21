@@ -48,10 +48,17 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 
+// El plan de la familia: si se puede agregar un peludo lo dice el backend (R4-CIE-02).
+const miPlan = (estado = 'activa', motivo_sin_alta: string | null = null) => ({
+  estado, motivo_sin_alta, aviso_pausa: null, motivo_sin_agendar: null, tipos_agendables: [], mascotas: [],
+  periodicidad: 'mensual', valor_periodo: '40000.00', valor_mensual: '40000.00', fecha_inicio: '2026-01-01', fecha_renovacion: '2027-01-01',
+})
+
 function portal(altas: unknown[] = []) {
   const cotizaciones: unknown[] = []
   server.use(
     http.get(`${API}/auth/me`, () => HttpResponse.json({ ...USUARIO_ADMIN, rol: 'familia', nombre: 'Ana Ruiz' })),
+    http.get(`${API}/portal/plan`, () => HttpResponse.json(miPlan())),
     http.get(`${API}/portal/peludos/altas`, () => HttpResponse.json(altas)),
     http.get(`${API}/portal/peludos/planes`, () =>
       HttpResponse.json([plan('p-perro', 'Mi Amigo Fiel', ['canino']), plan('p-gato', 'Colita Feliz', ['felino'])]),
@@ -65,7 +72,8 @@ function portal(altas: unknown[] = []) {
 }
 
 async function llenar(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText('Nombre'), 'Kira')
+  // El formulario aparece cuando el plan dice que se puede agregar.
+  await user.type(await screen.findByLabelText('Nombre'), 'Kira')
   await user.type(screen.getByLabelText('Raza (opcional)'), 'Criolla')
   fireEvent.change(screen.getByLabelText('Fecha de nacimiento (aproximada)'), { target: { value: '2023-01-10' } })
   await user.type(screen.getByLabelText('Peso en kg'), '8.5')
@@ -136,7 +144,18 @@ describe('Agregar un peludo desde el portal', () => {
     expect(screen.getByRole('button', { name: /^pagar/i })).toBeDisabled()
   })
 
-  it('con la afiliación en mora explica por qué no se puede', async () => {
+  it('con el plan en pausa lo dice antes del formulario y lleva a pagar', async () => {
+    // R4-CIE-02: antes la familia llenaba todo y el rechazo llegaba al elegir el plan.
+    portal()
+    const motivo = 'Tu plan está en pausa por cuotas vencidas: al pagarlas, podrás agregar un peludo.'
+    server.use(http.get(`${API}/portal/plan`, () => HttpResponse.json(miPlan('congelada', motivo))))
+    renderizar(<PortalAgregarPeludo />)
+    expect(await screen.findByText(motivo)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ir a tus pagos' })).toHaveAttribute('href', '/portal/pagos')
+    expect(screen.queryByLabelText('Nombre')).not.toBeInTheDocument()
+  })
+
+  it('si la cotización lo rechaza igual (el plan cambió mientras llenaba), explica por qué', async () => {
     portal()
     server.use(
       http.post(`${API}/portal/peludos/cotizacion`, () =>

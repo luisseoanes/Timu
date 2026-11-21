@@ -12,6 +12,7 @@ import { estadoCuota } from '@/lib/estados'
 import { diaISO, fechaCortaConDia, moneda } from '@/lib/formato'
 
 import { useMiCuenta, useMiPlan, useMisPagos, usePagarPortal } from './api'
+import { ConWhatsApp } from './Contacto'
 import { MarcasPlan } from './MarcasPlan'
 import { alPagar } from './plan'
 import { avisoDelPago } from './pagos'
@@ -47,7 +48,7 @@ export function PortalPagos() {
       </header>
       {aviso && (
         <p className={`portal-aviso portal-aviso-${aviso.tono}`} role="status">
-          {aviso.texto}
+          <ConWhatsApp texto={aviso.texto} />
         </p>
       )}
 
@@ -59,7 +60,9 @@ export function PortalPagos() {
           {(c) => {
             const todoVencido = c !== null && Number(c.saldo_vencido) > 0 && Number(c.saldo_vencido) === Number(c.saldo_pendiente)
             return c === null ? (
-              <p className="apagado">Aún no tienes un plan con cuotas. Escríbenos por WhatsApp para afiliarte.</p>
+              <p className="apagado">
+                Aún no tienes un plan con cuotas. <ConWhatsApp texto="Escríbenos por WhatsApp" /> para afiliarte.
+              </p>
             ) : (
               <div className="pila">
                 {/* De qué plan es la cuenta, con su color (techo 40). */}

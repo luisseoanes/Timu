@@ -141,6 +141,14 @@ export const handlers = [
     HttpResponse.json({ items: [FAMILIA], total: 1, limit: 50, offset: 0 }),
   ),
   http.get(`${API}/familias/:id`, () => HttpResponse.json(FAMILIA)),
+  // Cómo se llega a TIMU (Datos de TIMU, público): el portal enlaza el WhatsApp y el teléfono (R4-CIE-02).
+  http.get(`${API}/institucional`, () =>
+    HttpResponse.json({
+      id: 'dt1', razon_social: 'TIMU S.A.S.', nit: null, presentacion: null, mision: null, vision: null, valores: [],
+      clinica_nombre: null, clinica_direccion: null, clinica_barrio: null, clinica_ciudad: null, clinica_horario: null,
+      horario_atencion: null, telefonos: ['+576044440000'], whatsapp: '+573001234567', correo: null, redes: [], politica_datos_url: null,
+    }),
+  ),
   // 6.14 El buscador y el titular de la historia clínica del médico (R4-CIE-02): la mascota pedida, de FAMILIA.
   http.get(`${API}/clinica/mascotas/:id`, ({ params }) => {
     const m = FAMILIA.mascotas?.find((x) => x.id === params.id) ?? FAMILIA.mascotas![0]

@@ -6,6 +6,8 @@ import { alPagar, cupo, estadoDelPlan, finDeLinea, frase, motivoSinAgendar, plan
 const plan = (estado: string, mascotas = ['Luna', 'Michi'], motivo: string | null = null): PlanPortal => ({
   estado,
   motivo_sin_agendar: motivo,
+  motivo_sin_alta: null,
+  aviso_pausa: null,
   tipos_agendables: [],
   periodicidad: 'mensual',
   valor_periodo: '75000.00',

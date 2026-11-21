@@ -4,6 +4,7 @@ import { Modal } from '@/components/Modal'
 import { mensajeError } from '@/lib/errores'
 import { fechaCortaConDia, fechaHora, hora, hoyISO } from '@/lib/formato'
 
+import { Urgencias } from './Contacto'
 import { useAgendarPortal, useDisponibilidadPortal, useMiFamilia, useMiPlan, useOrientacionVirtual, usePreventivosPorAgendar } from './api'
 
 // Agendar una cita y pedir orientación: se abren desde el inicio, la ficha de cada peludo y
@@ -191,7 +192,7 @@ export function OrientacionModal({ abierto, onCerrar }: { abierto: boolean; onCe
         }
       }}
       titulo="Orientación virtual"
-      descripcion="Un médico veterinario te responde por WhatsApp. Si es una urgencia, llama a la línea de emergencias."
+      descripcion="Un médico veterinario te responde por WhatsApp."
       pie={
         !pedir.isSuccess && (
           <button className="btn btn-primario" type="submit" form="orientacion" disabled={pedir.isPending}>
@@ -200,6 +201,7 @@ export function OrientacionModal({ abierto, onCerrar }: { abierto: boolean; onCe
         )
       }
     >
+      <Urgencias />
       {pedir.isSuccess ? (
         <p className="aviso-ok" role="status">
           Recibimos tu consulta. Te escribimos pronto por WhatsApp.

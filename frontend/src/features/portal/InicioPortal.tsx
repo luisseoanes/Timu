@@ -11,6 +11,7 @@ import type { EstacionRead, MascotaRead } from '@/types'
 import { AgendarModal, OrientacionModal } from './Agenda'
 import { useMiCuenta, useMiFamilia, useMiLinea, useMiPlan, useMisServicios } from './api'
 import { conProximoCobro, recorrido, vencidasDe } from './linea'
+import { ConWhatsApp } from './Contacto'
 import { LineaPortal } from './LineaPortal'
 import { MarcasPlan } from './MarcasPlan'
 import { estadoDelPlan, finDeLinea, frase, motivoSinAgendar } from './plan'
@@ -49,7 +50,11 @@ export function PortalInicio() {
                 {p && <MarcasPlan plan={p} />}
                 {p && <Insignia tono={estadoDelPlan(p.estado).tono}>{estadoDelPlan(p.estado).label}</Insignia>}
               </div>
-              <p className="portal-plan-frase">{frase(p, linea.data ? vencidas(estaciones, 'cuota') : null)}</p>
+              <p className="portal-plan-frase">
+                <ConWhatsApp texto={frase(p, linea.data ? vencidas(estaciones, 'cuota') : null)} />
+              </p>
+              {/* Qué sigue disponible con cuotas vencidas, de frente (R4-CIE-02); lo dice el backend. */}
+              {p?.aviso_pausa && <p className="portal-aviso">{p.aviso_pausa}</p>}
             </>
           )}
         </Consulta>

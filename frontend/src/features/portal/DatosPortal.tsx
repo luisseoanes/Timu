@@ -5,6 +5,7 @@ import { Icono } from '@/components/Icono'
 import { mensajeError } from '@/lib/errores'
 
 import { urlContrato, useActualizarMisDatos, useMiFamilia, useMiPlan } from './api'
+import { EnlaceWhatsApp } from './Contacto'
 import { DocumentosPortal } from './DocumentosPortal'
 
 /**
@@ -73,7 +74,9 @@ export function PortalDatos() {
                   </dd>
                 </div>
               </dl>
-              <p className="apagado ancho">Para cambiar el titular o el documento, escríbenos por WhatsApp.</p>
+              <p className="apagado ancho">
+                Para cambiar el titular o el documento, <EnlaceWhatsApp texto="escríbenos por WhatsApp" />.
+              </p>
               <label className="campo">
                 <span>Celular (WhatsApp)</span>
                 <input className="input" name="telefono" defaultValue={f.telefono} inputMode="tel" autoComplete="tel" required />

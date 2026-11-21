@@ -7,6 +7,7 @@ import type {
   ColorPlan,
   CotizacionAltaRead,
   CupoRead,
+  DatosTimuRead,
   DocumentoRead,
   EstadoCuenta,
   FamiliaRead,
@@ -43,6 +44,11 @@ export interface PlanPortal {
   mascotas: { mascota_id: string; mascota: string; plan: string; color: ColorPlan; valor_mensual: string; beneficios: BeneficioPortal[] }[]
   /** Por qué la familia no puede agendar sola ahora, en sus palabras; null si puede. Lo decide el backend. */
   motivo_sin_agendar: string | null
+  /** Por qué no puede agregar un peludo ahora; null si puede. El mismo texto con que la cotización lo
+   * rechaza (R4-CIE-02). */
+  motivo_sin_alta: string | null
+  /** Con cuotas vencidas, qué sigue disponible y qué no, en palabras; null con el plan al día. */
+  aviso_pausa: string | null
   /** Lo que la familia puede agendar sola: en casa, preventivos y en la clínica. */
   tipos_agendables: { codigo: string; nombre: string; modalidad: string }[]
 }
@@ -67,6 +73,15 @@ export function useMiFamilia() {
 }
 
 /** Sin contrato vigente la familia aún no tiene plan: 404 no es un error aquí. */
+/** Cómo se llega a TIMU (Administración → Datos de TIMU): el WhatsApp y los teléfonos. Es público. */
+export function useContactoTimu() {
+  return useQuery({
+    queryKey: ['institucional'],
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => (await api.get<DatosTimuRead>('/institucional')).data,
+  })
+}
+
 export function useMiPlan() {
   return useQuery({
     queryKey: ['portal', 'plan'],

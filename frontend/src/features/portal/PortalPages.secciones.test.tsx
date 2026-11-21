@@ -42,6 +42,8 @@ const cita = (cambios: Partial<ServicioPortalRead>): ServicioPortalRead => {
 const PLAN = {
   estado: 'activa',
   motivo_sin_agendar: null as string | null,
+  motivo_sin_alta: null as string | null,
+  aviso_pausa: null as string | null,
   tipos_agendables: [
     { codigo: 'consulta_domiciliaria', nombre: 'Consulta domiciliaria', modalidad: 'domiciliario' },
     { codigo: 'vacunacion', nombre: 'Vacunación', modalidad: 'preventivo' },
@@ -115,6 +117,16 @@ describe('inicio del portal', () => {
     // Solo los peludos activos, cada uno al día.
     expect(screen.getByRole('link', { name: /luna/i })).toHaveTextContent('Al día')
     expect(screen.queryByRole('link', { name: /tom/i })).not.toBeInTheDocument()
+  })
+
+  it('ante una urgencia da el teléfono de TIMU para llamar', async () => {
+    // R4-CIE-02: decía «llama a la línea de emergencias» sin número. El de urgencias lo dará TIMU.
+    const user = userEvent.setup()
+    renderizar(<PortalInicio />)
+    await user.click(await screen.findByRole('button', { name: /hablar con un veterinario/i }))
+    const modal = await screen.findByRole('dialog')
+    expect(await within(modal).findByText(/¿Es una urgencia\?/)).toBeInTheDocument()
+    expect(within(modal).getByRole('link', { name: /604/ })).toHaveAttribute('href', 'tel:+576044440000')
   })
 
   it('pide orientación virtual solo sobre las mascotas activas', async () => {
@@ -276,6 +288,17 @@ describe('mascotas', () => {
     expect(screen.queryByText(/ilimitado/)).not.toBeInTheDocument()
   })
 
+  it('con el plan en pausa, su plan lo dice de frente y no marca los beneficios como disponibles', async () => {
+    // R4-CIE-02: el Inicio decía «recuperan sus beneficios» y aquí salían todos con ✓.
+    server.use(carnet(), http.get(`${API}/portal/plan`, () => HttpResponse.json({ ...PLAN, estado: 'congelada', aviso_pausa: 'Mientras el plan esté en pausa no se pueden agendar servicios ni agregar peludos. Sí puedes hablar con un veterinario.' })))
+    const user = abrirMascota()
+    await user.click(await screen.findByRole('tab', { name: 'Su plan' }))
+    const aviso = await screen.findByText(/Mientras el plan esté en pausa/)
+    const bloque = aviso.closest('section')!
+    expect(bloque.querySelectorAll('.beneficios svg')).toHaveLength(0)
+    expect(within(bloque).getByText(/sin tope de usos este año/)).toBeInTheDocument()
+  })
+
   it('su línea solo trae lo suyo y deja agendar lo vencido con el plan al día', async () => {
     server.use(
       carnet(),
@@ -355,6 +378,27 @@ describe('citas', () => {
     expect(within(anteriores).getByText('Atendida')).toBeInTheDocument()
     expect(within(anteriores).queryByRole('button')).not.toBeInTheDocument()
     expect(pedidas).toEqual([null, 'true'])
+  })
+
+  it('con el plan en pausa, Peludos no ofrece agregar uno y dice por qué antes del formulario', async () => {
+    const motivo = 'Tu plan está en pausa por cuotas vencidas: al pagarlas, podrás agregar un peludo.'
+    server.use(http.get(`${API}/portal/plan`, () => HttpResponse.json({ ...PLAN, estado: 'congelada', motivo_sin_alta: motivo })))
+    renderizar(<PortalMascotas />)
+    expect(await screen.findByText(motivo)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ir a tus pagos' })).toHaveAttribute('href', '/portal/pagos')
+    expect(screen.queryByRole('link', { name: /agregar un peludo/i })).not.toBeInTheDocument()
+  })
+
+  it('con el plan al día, Peludos ofrece agregar uno', async () => {
+    server.use(http.get(`${API}/portal/plan`, () => HttpResponse.json(PLAN)))
+    renderizar(<PortalMascotas />)
+    expect(await screen.findByRole('link', { name: /agregar un peludo/i })).toHaveAttribute('href', '/portal/mascotas/nueva')
+  })
+
+  it('«escríbenos por WhatsApp» es un enlace al WhatsApp de TIMU', async () => {
+    // R4-CIE-02: ninguno de los «escríbenos» del portal era un enlace.
+    renderizar(<PortalDatos />)
+    expect(await screen.findByRole('link', { name: 'escríbenos por WhatsApp' })).toHaveAttribute('href', 'https://wa.me/573001234567')
   })
 
   it('con el plan en pausa no ofrece agendar y lleva a pagar', async () => {
