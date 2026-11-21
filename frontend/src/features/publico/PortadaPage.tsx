@@ -173,7 +173,7 @@ export function PortadaPage() {
             <span className="esqueleto-linea" aria-hidden="true" />
           </div>
         ) : lista.length === 0 ? (
-          <p className="apagado">Aún no vendemos planes en {ciudad}.</p>
+          <p className="apagado">Aún no vendemos planes en {ciudad}. Elige otra ciudad, o escríbenos y te avisamos cuando lleguemos.</p>
         ) : (
           <>
             <Comparador planes={lista} titulo={`Lo que cubre cada plan en ${ciudad}`} totalPeludos={peludos} />

@@ -241,8 +241,8 @@ describe('Portada (R3-PUB-04)', () => {
   it('en una ciudad sin planes lo dice en vez de inventar precios', async () => {
     server.use(http.get(`${REGISTRO}/planes`, () => HttpResponse.json([])))
     renderizar(<PortadaPage />)
-    expect(await screen.findByText('Aún no vendemos planes en Medellín.')).toBeInTheDocument()
-    expect(screen.getByText('Aún no vendemos planes en esta ciudad.')).toBeInTheDocument()
+    expect(await screen.findByText(/^Aún no vendemos planes en Medellín\. Elige otra ciudad/)).toBeInTheDocument()
+    expect(screen.getByText(/^Aún no vendemos planes en esta ciudad\. Elige otra/)).toBeInTheDocument()
   })
 })
 

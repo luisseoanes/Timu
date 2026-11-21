@@ -64,7 +64,7 @@ function Proximas() {
         consulta={citas}
         cargando="Cargando tus citas…"
         error="No pudimos cargar tus citas."
-        vacio="No tienes citas próximas."
+        vacio="No tienes citas próximas. Cuando agendes una, la verás aquí con su fecha y su franja."
         estaVacio={(d) => d.length === 0}
       >
         {(d) => (
@@ -104,7 +104,7 @@ function Pasadas() {
       consulta={todas}
       cargando="Cargando tus citas…"
       error="No pudimos cargar tus citas."
-      vacio="Aún no tienes citas pasadas."
+      vacio="Aún no tienes citas pasadas. Las atendidas y las canceladas quedan aquí."
       estaVacio={(d) => pasadas(d).length === 0}
     >
       {(d) => (

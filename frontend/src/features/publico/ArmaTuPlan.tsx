@@ -101,7 +101,7 @@ export function ArmaTuPlan({
               {total === 1 ? 'al mes' : 'al mes cada uno'}
             </>
           ) : (
-            'Aún no vendemos planes en esta ciudad.'
+            'Aún no vendemos planes en esta ciudad. Elige otra, o escríbenos y te avisamos cuando lleguemos.'
           )}
         </p>
         <Link className="btn btn-primario arma-ir" to={enlaceAfiliacion({ ciudad: manada.ciudad, perros: manada.perros, gatos: manada.gatos })}>

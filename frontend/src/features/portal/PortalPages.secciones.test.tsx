@@ -258,7 +258,7 @@ describe('mascotas', () => {
       http.post(`${API}/portal/mascotas/:id/carnet/pdf`, () => HttpResponse.json({ detail: 'Generador caído' }, { status: 503 })),
     )
     const user = abrirMascota()
-    expect(await screen.findByText('Aún no tiene vacunas ni desparasitaciones en su calendario.')).toBeInTheDocument()
+    expect(await screen.findByText(/^Aún no tiene vacunas ni desparasitaciones en su calendario\. Cuando el equipo/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /descargar pdf/i }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Generador caído')
   })
@@ -330,7 +330,7 @@ describe('mascotas', () => {
     server.use(carnet(), http.get(`${API}/portal/mascotas/:id/historia`, () => HttpResponse.json([])))
     const user = abrirMascota()
     await user.click(await screen.findByRole('tab', { name: 'Historia clínica' }))
-    expect(await screen.findByText('Aún no tiene consultas registradas.')).toBeInTheDocument()
+    expect(await screen.findByText(/^Aún no tiene consultas registradas\. Después de cada consulta/)).toBeInTheDocument()
   })
 })
 
@@ -533,7 +533,7 @@ describe('pagos', () => {
     server.use(http.get(`${API}/portal/estado-cuenta`, () => HttpResponse.json({ detail: 'Sin contrato' }, { status: 404 })))
     renderizar(<PortalPagos />)
     expect(await screen.findByText(/Aún no tienes un plan con cuotas/)).toBeInTheDocument()
-    expect(await screen.findByText('Aún no tienes pagos.')).toBeInTheDocument()
+    expect(await screen.findByText(/^Aún no tienes pagos\. Los que hagas/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Pagar/ })).not.toBeInTheDocument()
   })
 

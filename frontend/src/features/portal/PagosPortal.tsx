@@ -152,7 +152,7 @@ function HistorialPagos() {
           {errorComprobante}
         </p>
       )}
-      <Consulta consulta={pagos} cargando="Cargando tus pagos…" error="No pudimos cargar tus pagos." vacio="Aún no tienes pagos." estaVacio={(d) => d.length === 0}>
+      <Consulta consulta={pagos} cargando="Cargando tus pagos…" error="No pudimos cargar tus pagos." vacio="Aún no tienes pagos. Los que hagas desde el portal quedan aquí, con su comprobante." estaVacio={(d) => d.length === 0}>
         {(d) => (
           <ul className="portal-lista">
             {d.map((p) => (

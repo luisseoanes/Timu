@@ -240,7 +240,7 @@ describe('Portal de la familia', () => {
     server.use(http.get(`${API}/portal/plan`, () => HttpResponse.json(plan('activa'))))
     const user = userEvent.setup()
     renderizar(<PortalCitas />)
-    expect(await screen.findByText('No tienes citas próximas.')).toBeInTheDocument()
+    expect(await screen.findByText(/^No tienes citas próximas\. Cuando agendes una/)).toBeInTheDocument()
     await user.click(await screen.findByRole('button', { name: /agendar una cita/i }))
     const modal = await screen.findByRole('dialog')
     await waitFor(() => expect(within(modal).getByRole('option', { name: 'Consulta domiciliaria · en casa' })).toBeInTheDocument())

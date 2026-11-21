@@ -242,7 +242,7 @@ function CarnetPortal({ mascotaId }: { mascotaId: string }) {
         consulta={carnet}
         cargando="Cargando el carnet…"
         error="No pudimos cargar el carnet."
-        vacio="Aún no tiene vacunas ni desparasitaciones en su calendario."
+        vacio="Aún no tiene vacunas ni desparasitaciones en su calendario. Cuando el equipo programe una, aparece aquí con su fecha."
         estaVacio={(c) => c.aplicados.length + c.vencidos.length + c.proximos.length === 0}
       >
         {(c) => (
@@ -297,7 +297,7 @@ function HistoriaPortal({ mascotaId }: { mascotaId: string }) {
         consulta={historia}
         cargando="Cargando la historia…"
         error="No pudimos cargar la historia."
-        vacio="Aún no tiene consultas registradas."
+        vacio="Aún no tiene consultas registradas. Después de cada consulta, aquí queda lo que registró el médico."
         estaVacio={(d) => d.length === 0}
       >
         {(d) => (
