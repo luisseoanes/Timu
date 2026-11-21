@@ -1,12 +1,14 @@
+import * as Menu from '@radix-ui/react-dropdown-menu'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Insignia } from '@/components/Distintivo'
+import { Icono } from '@/components/Icono'
 import { Modal } from '@/components/Modal'
 import { useEstadoCuenta } from '@/features/cartera'
 import { useEspecies } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
-import { fecha } from '@/lib/formato'
+import { fecha, peso } from '@/lib/formato'
 import type { FamiliaRead, MascotaRead } from '@/types'
 
 import { useAgregarMascota, useBajaMascota, type NuevaMascota } from './api'
@@ -59,7 +61,7 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
                   <td data-etiqueta="Raza">{m.raza ?? '—'}</td>
                   <td data-etiqueta="Sexo">{m.sexo ?? '—'}</td>
                   <td data-etiqueta="Nacimiento" className="numero">{fecha(m.fecha_nacimiento)}</td>
-                  <td data-etiqueta="Peso" className="numero">{m.peso_kg ? `${m.peso_kg} kg` : '—'}</td>
+                  <td data-etiqueta="Peso" className="numero sin-cortes">{m.peso_kg ? peso(m.peso_kg) : '—'}</td>
                   <td data-etiqueta="Estado">
                     {m.activa ? (
                       <Insignia tono="ok">Activa</Insignia>
@@ -76,10 +78,21 @@ export function MascotasFamilia({ familia }: { familia: FamiliaRead }) {
                     <Link to={`/panel/clinica/mascotas/${m.id}`} className="btn btn-plano">
                       Historia
                     </Link>
+                    {/* Lo destructivo va en el menú, no junto a lo que se usa a diario: a 1280 la tabla
+                        dejaba «Dar de baja» fuera de la vista (crítica de R4-CIE-02). */}
                     {m.activa && (
-                      <button className="btn btn-plano btn-plano-peligro" type="button" onClick={() => setDeBaja(m)}>
-                        Dar de baja
-                      </button>
+                      <Menu.Root modal={false}>
+                        <Menu.Trigger className="btn btn-plano btn-icono" aria-label={`Más acciones de ${m.nombre}`}>
+                          <Icono nombre="puntos" size={18} />
+                        </Menu.Trigger>
+                        <Menu.Portal>
+                          <Menu.Content className="menu" align="end" sideOffset={6}>
+                            <Menu.Item className="menu-item menu-item-peligro" onSelect={() => setDeBaja(m)}>
+                              Dar de baja
+                            </Menu.Item>
+                          </Menu.Content>
+                        </Menu.Portal>
+                      </Menu.Root>
                     )}
                   </td>
                 </tr>

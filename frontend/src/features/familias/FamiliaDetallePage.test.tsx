@@ -655,8 +655,13 @@ describe('FamiliaDetallePage', () => {
     )
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
 
+    // Dar de baja va en el menú de tres puntos de la fila, en rojo (crítica de R4-CIE-02).
     const tabla = screen.getByRole('table')
-    await user.click(within(tabla).getByRole('button', { name: 'Dar de baja' }))
+    expect(within(tabla).queryByRole('button', { name: 'Dar de baja' })).not.toBeInTheDocument()
+    await user.click(within(tabla).getByRole('button', { name: 'Más acciones de Luna' }))
+    const baja_ = await screen.findByRole('menuitem', { name: 'Dar de baja' })
+    expect(baja_).toHaveClass('menu-item-peligro')
+    await user.click(baja_)
     modal = await screen.findByRole('dialog', { name: 'Dar de baja a Luna' })
     await user.type(within(modal).getByLabelText('Motivo'), 'Falleció')
     // Confirmar una baja es destructivo: va en rojo, no en el verde de la acción principal.
