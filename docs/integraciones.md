@@ -38,7 +38,7 @@ cliente: [integraciones para TIMU](integraciones-timu.md), la versión en Markdo
 | Dominio | **La plataforma reemplaza la web actual en `timu.com.co`** (sin subdominio). El cambio de DNS no puede tocar los registros del correo y conviene hacerlo después de la verificación de Meta | La portada pública, que estaba fuera de alcance ([hoja de ruta](hoja-de-ruta-rediseno.md)) |
 | Google Maps | Decidida (cuenta de Google Cloud de TIMU) | La Distance Matrix API que usa `integrations/mapas.py` quedó como «legacy»: un proyecto nuevo puede no habilitarla. Pasar a la Routes API (`computeRouteMatrix`) |
 | IA | Gemini (decidido el 2026-11-10) | Adaptar el conector |
-| Mapa visual de las rutas | **Por decidir** (recomendada Google Maps JavaScript) | — |
+| Mapa visual de las rutas | **Google Maps** (Maps JavaScript API, opción A del documento; lo eligió TIMU y lo informó el usuario el 2026-11-21) | Construir el mapa (`6.7`, [pendientes externos](pendientes-externos.md#mapa-de-las-rutas-requisito-67-r2-pan-06)). Clave de navegador aparte de la del servidor, restringida a timu.com.co, y un límite diario de cargas en la consola de Google para no pasar de las 10.000 gratis al mes |
 | Calendario | Por decidir. La propuesta firmada lo da como incluido: «Integraciones (WhatsApp, pasarela de pago, calendario) — Incluido» | Nada construido todavía. Recomendado: calendario ICS suscribible más invitación en las confirmaciones |
 | Hojas de cálculo, formularios, redes, APIs externas | Por decidir (opciones en el documento) | El 6.20 pide exportar las encuestas a Excel y hoy no se puede (`Sección 8` dice «cualquier vista» y solo cubre el dashboard, la liquidación y los destinatarios) |
 

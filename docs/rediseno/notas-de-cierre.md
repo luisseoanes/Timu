@@ -17,7 +17,7 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
 ### Lo que quedó de Rutas tras su cierre
 
 - **Mapa embebido** (requisito 6.7): decidido con el usuario dejarlo fuera; cada parada abre la
-  navegación del celular. Para cerrarlo, TIMU elige proveedor y presupuesto
+  navegación del celular. TIMU eligió Google Maps (informado el 2026-11-21): queda construirlo
   ([pendientes externos](../pendientes-externos.md#mapa-de-las-rutas-requisito-67-r2-pan-06)).
 - ~~**Registrar los pasos de la atención desde la propia parada**~~ Resuelto en `R2-PAN-05`: la consulta es el registro de la visita y «Registrar la atención» la abre. Antes: hoy «Registrar la atención»
   lleva a la ficha del servicio. Se decide al rediseñar ese detalle en `R2-PAN-05`.

@@ -26,7 +26,7 @@ Todas las cuentas quedan a nombre de TIMU: si algún día cambia de proveedor de
 | Correo con Google Workspace | Enlaces de acceso y reportes por correo | **Decidida** | TIMU: cuenta de envío y registros del dominio |
 | Google Maps (direcciones y rutas) | Ubicar direcciones y ordenar las rutas | **Decidida** | TIMU: cuenta de Google Cloud |
 | Inteligencia artificial (Gemini) | Bot comercial y borradores de orientación virtual | **Decidida** | TIMU: misma cuenta de Google Cloud |
-| Mapa visual de las rutas | Ver servicios y recorrido en un mapa | Por decidir | Elegir opción (sección 4.1) |
+| Mapa visual de las rutas | Ver servicios y recorrido en un mapa | **Decidida** (Google Maps, sección 4.1) | TIMU: activar Maps JavaScript API en la misma cuenta de Google Cloud |
 | Calendario | Agenda del equipo y confirmaciones | Por decidir | Elegir opción (sección 4.2) |
 | Portada pública en timu.com.co | La web de TIMU, con los planes y la afiliación | Por decidir | Elegir opción (sección 4.3) |
 | Hojas de cálculo | Exportar, importar y migrar datos | Por decidir | Elegir opción (sección 4.4) |
@@ -38,7 +38,7 @@ Todas las cuentas quedan a nombre de TIMU: si algún día cambia de proveedor de
 
 **Una sola cuenta de Google Cloud**
 
-Google Maps y Gemini (y el mapa visual, si se elige Google) cuelgan de una misma cuenta de Google Cloud de TIMU, con un medio de pago. Google solo cobra por encima de su capa gratuita mensual, y se pueden poner alertas de presupuesto para que avise antes de cualquier cobro.
+Google Maps, el mapa visual de las rutas y Gemini cuelgan de una misma cuenta de Google Cloud de TIMU, con un medio de pago. Google solo cobra por encima de su capa gratuita mensual, y se pueden poner alertas de presupuesto para que avise antes de cualquier cobro.
 
 **Cómo compartirnos los accesos**
 
@@ -285,6 +285,8 @@ La plataforma usa un número nuevo, y el actual sigue en la aplicación como hoy
 En cada caso recomendamos la opción que mejor cumple el documento de requerimientos de TIMU, no la que sea más fácil de construir para nosotros. Al lado de cada título va el requisito que la pide.
 
 ### 4.1 Mapa visual de las rutas
+
+> **Decidido: opción A, Google Maps dentro del panel** (informado el 21 de noviembre de 2026). TIMU activa **Maps JavaScript API** en el mismo proyecto de Google Cloud, o nos da acceso para hacerlo. Nosotros creamos una clave aparte para el mapa, restringida a timu.com.co, construimos el mapa y dejamos en Google un límite diario de cargas. Google da 10.000 cargas del mapa gratis al mes y cobra US$ 7 por cada 1.000 de más; con ese límite, el mapa no pasa de lo gratuito. Si un día se alcanzara, el mapa no se mostraría ese día, pero las rutas seguirían funcionando.
 
 Requisito 6.7: «visualizar usuarios/servicios en un mapa y proponer una secuencia de atención que optimice desplazamientos». Hoy la plataforma ya propone la secuencia, y cada parada abre la navegación del celular, pero no dibuja el mapa dentro del panel.
 
@@ -590,13 +592,13 @@ Lo que la plataforma ya hace (por ejemplo, las tareas de cobro del 6.2) se deja 
 
 - Darnos acceso al portafolio de Meta.
 - Darnos un usuario en Wompi, o compartir las llaves de pruebas por un canal seguro.
-- Crear el proyecto de Google Cloud con facturación y darnos acceso; activar Geocoding API y Routes API, y Gemini en la capa de pago.
+- Crear el proyecto de Google Cloud con facturación y darnos acceso; activar Geocoding API, Routes API y Maps JavaScript API, y Gemini en la capa de pago.
 - Crear la cuenta de envío en Workspace con su contraseña de aplicación, y publicar SPF, DKIM y DMARC en el dominio.
 - Confirmar quién administra el dominio timu.com.co y la web actual. El día del cambio, esa persona apunta timu.com.co y www.timu.com.co a la plataforma sin tocar los registros del correo.
 
 **Para decidir**
 
-- Mapa visual de las rutas (4.1), calendario (4.2), portada pública y cuándo se cambia el dominio (4.3), hojas de cálculo (4.4), formularios (4.5), redes sociales (4.6) y otras herramientas (4.7).
+- Calendario (4.2), portada pública y cuándo se cambia el dominio (4.3), hojas de cálculo (4.4), formularios (4.5), redes sociales (4.6) y otras herramientas (4.7).
 
 **Para entregarnos**
 

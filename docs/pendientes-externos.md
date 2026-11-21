@@ -44,7 +44,7 @@ el código, se anota la fecha y quién lo confirmó, y solo entonces se tacha.
 | Beneficios adicionales y topes de cada plan | Los de la web: servicio fúnebre, desparasitante externo, especialistas, cirugía, exámenes, procedimientos, profilaxis, certificados, peluquería y precios preferenciales de terceros, con los topes de Mi Amigo Fiel (cirugía hasta $850.000, exámenes hasta $350.000). Donde la web se contradice con el plegable 2026 (la hospitalización de Mi Amigo Fiel, 80 % frente a 40 %), manda el plegable | `scripts/datos_portada.py` (`ADICIONALES`); Administración → Planes | PENDIENTE |
 | Que las personas de las fotos del equipo aceptan salir en la web pública | TIMU confirmó el 2026-11-11 que las fotos son suyas, no que las personas que aparecen (la médica con el bulldog, la recepción, el saludo frente al logo) autorizan su uso en la web (Ley 1581: la imagen es un dato personal). La portada no se publica en el dominio sin esa confirmación. Aparte, las fotos que vienen de las piezas impresas (el parque, los gatitos, los recortes) parecen de banco de imágenes: TIMU confirma que su licencia permite usarlas en la web, o se cambian | `frontend/src/assets/portada/` (su `README.md`) | PENDIENTE |
 | Política de tratamiento de datos (habeas data) que enlaza el formulario de contacto | La web actual la publica en `https://timu.com.co/wp-content/uploads/2025/05/Habeas-Data-TIMU.pdf`, sembrada en local. **Ese enlace muere cuando la web nueva sustituya a WordPress**: antes de cambiar el dominio, TIMU confirma que el documento sigue vigente y se aloja de nuevo (o TIMU da otro enlace), y Administración lo escribe. Sin enlace, el formulario solo dice para qué se usan los datos | `scripts/datos_portada.py` (`DATOS_TIMU`); Administración → Datos de TIMU | PENDIENTE |
-| Mapa de las rutas | Sin mapa: cada parada abre la navegación del celular («Cómo llegar») | `rutas` | PENDIENTE |
+| Mapa de las rutas | Sin mapa: cada parada abre la navegación del celular («Cómo llegar»). TIMU eligió Google Maps (informado por el usuario el 2026-11-21): sigue pendiente hasta que el mapa esté construido ([detalle](#mapa-de-las-rutas-requisito-67-r2-pan-06)) | `rutas` | PENDIENTE |
 | Ventana de la bandeja de preventivos | 30 días | `VENTANA_BANDEJA_DIAS` (`preventivos/service.py`) | PENDIENTE |
 | Fotos originales para las páginas públicas | Las páginas públicas van sin fotos | — | PENDIENTE |
 | Sandbox de Wompi de TIMU | No admite valor provisional: sin credenciales no hay prueba de punta a punta | — | PENDIENTE |
@@ -214,11 +214,25 @@ nueva.
 El requisito pide «visualizar usuarios/servicios en un mapa». Las rutas se planean con
 distancias reales y cada parada abre la navegación del celular («Cómo llegar», con las
 coordenadas que usó el optimizador), pero el panel no dibuja un mapa: decidido con el usuario el
-2026-11-12 para no meter una dependencia y un proveedor de teselas sin acordarlos. Para cerrarlo
-hace falta que TIMU elija proveedor y presupuesto: Google Maps JavaScript (de pago por carga,
-con la misma cuenta que ya factura la matriz de distancias de `6.7`) o teselas de
-OpenStreetMap con un proveedor que admita uso comercial. Con eso, el mapa entra como unidad
-propia.
+2026-11-12 para no meter una dependencia y un proveedor de teselas sin acordarlos.
+
+**TIMU eligió Google Maps** (Maps JavaScript API, la opción A de la sección 4.1 de
+[integraciones para TIMU](integraciones-timu.md); lo informó el usuario el 2026-11-21), en el
+mismo proyecto de Google Cloud que factura la geocodificación y la matriz de distancias. Ya no
+falta nada de TIMU salvo habilitar esa API (o darnos acceso al proyecto); lo que queda es
+nuestro, y entra como unidad propia:
+
+- **Una clave de navegador aparte** de `GOOGLE_MAPS_API_KEY`, que es del servidor: la del
+  mapa se ve en el navegador, así que va restringida a timu.com.co y solo a Maps JavaScript API.
+- **El costo** (tarifas globales consultadas el 2026-11-21): Dynamic Maps es un SKU Essentials
+  con 10.000 cargas gratis al mes y US$ 7 por cada 1.000 de 10.001 a 100.000; su cupo es aparte
+  del de Geocoding y del de la matriz. A TIMU se le dijo que el mapa **no pasará de lo
+  gratuito**, así que lleva un límite diario de cargas en la consola de Google (Google Maps
+  Platform → Cuotas) y se carga solo en la vista de rutas, no en cada pantalla. Google cobra por
+  «carga correcta del mapa» y su página no aclara, para la API de JavaScript, si mover o acercar
+  el mapa genera cargas nuevas: medirlo al construirlo.
+- **Agotado el límite del día**, el mapa no se muestra y las rutas siguen funcionando como hoy
+  («Cómo llegar»); el panel no puede quedarse en blanco ni romperse.
 
 ## Marca e identidad ([manual de marca](manual-de-marca.md))
 
@@ -301,6 +315,7 @@ había alejado del documento de requerimientos. Cada punto cita el requisito que
 | --- | --- | --- |
 | 6.5 | Los días bloqueados de la agenda («Bloquear un día» en Servicios) no se ven ni se deshacen: no hay listado ni baja, y uno bloqueado por error deja la agenda sin cupos ese día. Encontrado en la revisión por perfiles del 2026-11-20. | Pendiente: decidir con el usuario |
 | 6.6 | El pendiente de una atención es texto libre: no dice qué servicio es, así que no identifica la cobertura del plan ni el valor (puntos 2 y 3), no crea tarea para el equipo (punto 4) y al autorizarlo no inicia la programación (punto 7). Sí registra la autorización o el rechazo y no avanza sin ella. Revisión del 2026-11-20. | Parcial: decidir con el usuario |
+| 6.7 | El mapa de las rutas con Google Maps («visualizar usuarios/servicios en un mapa»), que TIMU eligió (informado el 2026-11-21): clave de navegador, límite diario de cargas y caída a «Cómo llegar» ([detalle](#mapa-de-las-rutas-requisito-67-r2-pan-06)). | Pendiente |
 | 6.10 | Los estados del servicio son solicitado, agendado, en ruta, en atención, completado, pendiente de autorización, reprogramado y cancelado. Faltan, como estados o como equivalencia documentada, «contactado», «confirmado», «no autorizado» y «sin respuesta». Revisión del 2026-11-20. | Parcial: decidir con el usuario |
 | 6.12 | El pago manual de un registro en línea (`POST /afiliaciones/{id}/pago-manual`) no tiene pantalla: sin la pasarela, Comercial no puede completar desde el panel la afiliación de quien se registró en la web. Revisión del 2026-11-20. | Pendiente: decidir con el usuario |
 | 6.14 | El kardex (registro de la medicación administrada) no existe en la historia clínica. Revisión del 2026-11-20. | Pendiente: decidir con el usuario |
