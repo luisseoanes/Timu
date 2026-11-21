@@ -1,7 +1,8 @@
 import * as Menu from '@radix-ui/react-dropdown-menu'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
+import { CargandoPantalla } from '@/components/CargandoPantalla'
 import { Icono, type NombreIcono } from '@/components/Icono'
 import { MarcaTimu } from '@/components/MarcaTimu'
 import { MenuCuenta } from '@/components/MenuCuenta'
@@ -166,7 +167,9 @@ export function AppLayout() {
             <p>{actual.sub}</p>
           </header>
         )}
-        <Outlet />
+        <Suspense fallback={<CargandoPantalla />}>
+          <Outlet />
+        </Suspense>
       </main>
 
       {movil && (

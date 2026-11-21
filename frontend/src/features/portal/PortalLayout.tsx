@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 
+import { CargandoPantalla } from '@/components/CargandoPantalla'
 import { Icono, type NombreIcono } from '@/components/Icono'
 import { MarcaTimu } from '@/components/MarcaTimu'
 import { MenuCuenta } from '@/components/MenuCuenta'
@@ -60,7 +61,9 @@ export function PortalLayout() {
         <MenuCuenta nombre={usuario?.nombre} detalle="Portal de familias" alSalir={logout} />
       </header>
       <main className="contenido portal-contenido">
-        <Outlet />
+        <Suspense fallback={<CargandoPantalla />}>
+          <Outlet />
+        </Suspense>
       </main>
       {movil && (
         <nav className="barra-inferior" aria-label="Portal">

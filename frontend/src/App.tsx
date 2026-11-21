@@ -1,26 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { type ComponentType, lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
-import { AdminPage } from '@/features/admin'
-import { AliadasPage, MiClinicaPage } from '@/features/aliadas'
 import { AuthProvider, LoginPage, RecuperarPage, RestablecerPage } from '@/features/auth'
-import { CampanasPage, EncuestasPage, MensajesPage } from '@/features/campanas'
-import { CarteraPage } from '@/features/cartera'
-import { ClinicaPage, EntradaPage, HistoriaMascotaPage } from '@/features/clinica'
-import { ComercialPage } from '@/features/comercial'
-import { DashboardPage } from '@/features/dashboard'
-import { FamiliaDetallePage, FamiliasPage } from '@/features/familias'
-import {
-  PortalAgregarPeludo,
-  PortalCitas,
-  PortalDatos,
-  PortalInicio,
-  PortalLayout,
-  PortalMascota,
-  PortalMascotas,
-  PortalPagos,
-} from '@/features/portal'
-import { GestionarPreventivo, PreventivosPage } from '@/features/preventivos'
 import {
   CompletarRegistroPage,
   EncuestaPage,
@@ -30,15 +12,70 @@ import {
   RegistroResultadoPage,
   VerificarCarnetPage,
 } from '@/features/publico'
-import { RutasPage } from '@/features/rutas'
-import { ServicioDetallePage, ServiciosPage } from '@/features/servicios'
-import { TareasPage } from '@/features/tareas'
+import { CargandoPantalla } from '@/components/CargandoPantalla'
 import { AppLayout } from '@/layouts/AppLayout'
 import { PERFILES_EQUIPO, PERMISOS } from '@/lib/permisos'
 import { AlPanel } from '@/routes/AlPanel'
 import { DIRECCIONES_VIEJAS, MODULOS_DEL_PANEL } from '@/routes/modulos'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { DeLaWebVieja } from '@/routes/WebVieja'
+
+
+// El paquete va partido (auditoría de R4-CIE-02: uno solo de 998 kB, y la portada descargaba el
+// panel entero): las páginas públicas y el ingreso cargan con la app; cada módulo del panel, el
+// portal y la clínica aliada, al abrirse. La pantalla carga dentro de su layout (CargandoPantalla).
+
+// Un cargador por módulo (cada uno es un trozo del paquete) y sus páginas, al abrirse.
+const admin = () => import('@/features/admin')
+const aliadas = () => import('@/features/aliadas')
+const campanas = () => import('@/features/campanas')
+const cartera = () => import('@/features/cartera')
+const clinica = () => import('@/features/clinica')
+const comercial = () => import('@/features/comercial')
+const dashboard = () => import('@/features/dashboard')
+const familias = () => import('@/features/familias')
+const portal = () => import('@/features/portal')
+const preventivos = () => import('@/features/preventivos')
+const rutas = () => import('@/features/rutas')
+const servicios = () => import('@/features/servicios')
+const tareas = () => import('@/features/tareas')
+
+/**
+ * La página `nombre` del módulo que carga `cargar`, cuando se abre por primera vez. Devuelve el tipo de
+ * la página, para que sus props se sigan comprobando; `lazy` solo pide que sea un componente.
+ */
+function perezosa<M, K extends keyof M>(cargar: () => Promise<M>, nombre: K): M[K] {
+  return lazy(async () => ({ default: (await cargar())[nombre] as unknown as ComponentType })) as unknown as M[K]
+}
+
+const AdminPage = perezosa(admin, 'AdminPage')
+const AliadasPage = perezosa(aliadas, 'AliadasPage')
+const MiClinicaPage = perezosa(aliadas, 'MiClinicaPage')
+const CampanasPage = perezosa(campanas, 'CampanasPage')
+const EncuestasPage = perezosa(campanas, 'EncuestasPage')
+const MensajesPage = perezosa(campanas, 'MensajesPage')
+const CarteraPage = perezosa(cartera, 'CarteraPage')
+const ClinicaPage = perezosa(clinica, 'ClinicaPage')
+const EntradaPage = perezosa(clinica, 'EntradaPage')
+const HistoriaMascotaPage = perezosa(clinica, 'HistoriaMascotaPage')
+const ComercialPage = perezosa(comercial, 'ComercialPage')
+const DashboardPage = perezosa(dashboard, 'DashboardPage')
+const FamiliaDetallePage = perezosa(familias, 'FamiliaDetallePage')
+const FamiliasPage = perezosa(familias, 'FamiliasPage')
+const PortalAgregarPeludo = perezosa(portal, 'PortalAgregarPeludo')
+const PortalCitas = perezosa(portal, 'PortalCitas')
+const PortalDatos = perezosa(portal, 'PortalDatos')
+const PortalInicio = perezosa(portal, 'PortalInicio')
+const PortalLayout = perezosa(portal, 'PortalLayout')
+const PortalMascota = perezosa(portal, 'PortalMascota')
+const PortalMascotas = perezosa(portal, 'PortalMascotas')
+const PortalPagos = perezosa(portal, 'PortalPagos')
+const GestionarPreventivo = perezosa(preventivos, 'GestionarPreventivo')
+const PreventivosPage = perezosa(preventivos, 'PreventivosPage')
+const RutasPage = perezosa(rutas, 'RutasPage')
+const ServicioDetallePage = perezosa(servicios, 'ServicioDetallePage')
+const ServiciosPage = perezosa(servicios, 'ServiciosPage')
+const TareasPage = perezosa(tareas, 'TareasPage')
 
 // El panel es del equipo interno; las familias y las aliadas tienen su propio espacio.
 
@@ -51,6 +88,8 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
+          {/* El portal y la clínica aliada cargan con su layout: hasta tenerlo, el esqueleto. */}
+          <Suspense fallback={<CargandoPantalla />}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/recuperar" element={<RecuperarPage />} />
@@ -141,6 +180,7 @@ export default function App() {
             ))}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
