@@ -230,7 +230,7 @@ test.describe('atención en cartera y preventivos', () => {
 
   test('la cartera abre en lo que se debe y cobra desde la fila con las cuotas de la familia', async ({ page }) => {
     await page.goto('/panel/cartera')
-    await expect(page.getByRole('button', { name: /^En mora \d+$/ })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('button', { name: /^Vencidas \d+$/ })).toHaveAttribute('aria-pressed', 'true')
     // datos_demo deja a Ana Ruiz con cuotas vencidas.
     await page.getByRole('button', { name: 'Registrar pago de Ana Ruiz' }).click()
     const ventana = page.getByRole('dialog', { name: 'Registrar pago de Ana Ruiz' })

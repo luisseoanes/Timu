@@ -183,6 +183,9 @@ export const handlers = [
   http.get(`${API}/portal/servicios`, () => HttpResponse.json([])),
   http.get(`${API}/tareas`, () => HttpResponse.json(vacia)),
   http.get(`${API}/preventivos`, () => HttpResponse.json(vacia)),
+  http.get(`${API}/preventivos/bandeja/recuentos`, () =>
+    HttpResponse.json({ por_autorizar: 0, por_agendar: 0, agendados: 0, todos: 0 }),
+  ),
   http.get(`${API}/cartera/contratos`, () => HttpResponse.json(vacia)),
   http.get(`${API}/dashboard/definiciones`, () => HttpResponse.json([])),
   // Sin historia: la franja no dice variación ni dibuja series. Las pruebas del Inicio la dan.

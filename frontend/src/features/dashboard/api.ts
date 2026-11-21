@@ -8,6 +8,7 @@ import type {
   EventoRead,
   Page,
   PlantillaFaltante,
+  RecuentosBandeja,
   RecuentosUsuarios,
   ReporteRead,
   ServicioListado,
@@ -127,6 +128,20 @@ async function grupo<T>(ruta: string, params: Record<string, unknown>): Promise<
 
 const NADA: Grupo<never> = { total: 0, primero: undefined }
 
+/**
+ * Los preventivos por autorizar, contados con la regla de la bandeja a la que lleva «Autorizar»
+ * (su ventana la fija el backend). Antes se contaban todos, sin fecha, y el Inicio decía 62 donde
+ * la bandeja decía 15 (R4-CIE-02). El primero es el más antiguo, que cae siempre dentro de ella.
+ */
+async function preventivosPorAutorizar(): Promise<Grupo<EventoRead>> {
+  const [recuentos, primero] = await Promise.all([
+    api.get<RecuentosBandeja>('/preventivos/bandeja/recuentos'),
+    grupo<EventoRead>('/preventivos', { pendientes_autorizacion: true }),
+  ])
+  const total = recuentos.data.por_autorizar
+  return { total, primero: total > 0 ? primero.primero : undefined }
+}
+
 /** Qué grupos de lo vencido pide cada perfil (Sección 12): solo los que puede leer. */
 export interface GruposVencidos {
   mora: boolean
@@ -142,7 +157,7 @@ export function useVencidos(grupos: GruposVencidos = { mora: true, preventivos: 
     queryFn: async () => {
       const [mora, preventivos, tareas] = await Promise.all([
         grupos.mora ? grupo<ContratoListado>('/cartera/contratos', { solo_mora: true }) : NADA,
-        grupos.preventivos ? grupo<EventoRead>('/preventivos', { pendientes_autorizacion: true }) : NADA,
+        grupos.preventivos ? preventivosPorAutorizar() : NADA,
         // Las de una conversación con el asistente no se cuentan aparte: la línea de Comercial ya
         // dice la conversación que espera a un asesor (decidido con el usuario el 2026-11-20).
         grupos.tareas

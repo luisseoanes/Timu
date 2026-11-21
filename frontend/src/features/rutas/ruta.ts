@@ -16,6 +16,15 @@ export function paradaActual(ruta: RutaRead): ParadaRead | undefined {
   )
 }
 
+/**
+ * Una parada que nadie ha empezado y cuya franja (o, sin franja, su hora estimada) ya pasó. La
+ * médica la veía «Próxima» mientras Operaciones la veía sin atender (R4-CIE-02).
+ */
+export function atrasada(parada: ParadaRead, ahora: Date = new Date()): boolean {
+  const fin = parada.ventana_hasta ?? parada.llegada_estimada
+  return parada.estado === 'pendiente' && fin !== null && new Date(fin) < ahora
+}
+
 /** Las paradas que siguen en la ruta, en su orden: una omitida ya no es de la ruta. */
 export function enRuta(ruta: RutaRead): ParadaRead[] {
   return ruta.paradas.filter((p) => p.estado !== 'omitida')

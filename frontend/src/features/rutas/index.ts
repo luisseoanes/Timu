@@ -2,3 +2,4 @@
 // (App, layouts) importan de aquí. Lo demás es interno (ver docs/frontend/conventions.md).
 export { RutasPage } from './RutasPage'
 export { useRutas } from './api'
+export { atrasada } from './ruta'

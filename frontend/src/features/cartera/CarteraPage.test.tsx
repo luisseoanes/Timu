@@ -67,7 +67,7 @@ describe('CarteraPage', () => {
     expect(screen.getByText(/cargando la cartera/i)).toBeInTheDocument()
   })
 
-  it('abre en «En mora»: lo que debe cada familia, desde cuándo y su plan', async () => {
+  it('abre en «Vencidas»: lo que debe cada familia, desde cuándo y su plan', async () => {
     const consultas: string[] = []
     server.use(
       http.get(RUTA, ({ request }) => {
@@ -79,7 +79,7 @@ describe('CarteraPage', () => {
     const enlace = await screen.findByRole('link', { name: FAMILIA.titular_nombre })
     expect(enlace).toHaveAttribute('href', `/panel/familias/${FAMILIA.id}`)
     expect(consultas[0]).toContain('solo_mora=true')
-    expect(screen.getByRole('button', { name: /en mora/i })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: /^vencidas/i })).toHaveAttribute('aria-pressed', 'true')
     const fila = within(enlace.closest('tr')!)
     // Lo vencido con su importe y la palabra, no solo en rojo.
     expect(fila.getByText(/178\.000/)).toBeInTheDocument()

@@ -8,7 +8,7 @@ import { Distintivo } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { useAuth, useEquipo } from '@/features/auth'
 import { useCiudades, useNombreTipoServicio } from '@/features/catalogos'
-import { useRutas } from '@/features/rutas'
+import { atrasada, useRutas } from '@/features/rutas'
 import { descargar } from '@/lib/descargas'
 import { mensajeError } from '@/lib/errores'
 import { diaISO, fecha, fechaCorta, fechaCortaConDia, hora, hoyISO } from '@/lib/formato'
@@ -305,9 +305,10 @@ function LineaEquipo({ rol }: { rol: Rol | undefined }) {
             antes.push({
               clave,
               estado: 'vencida',
-              titulo: plural(mora.total, 'contrato en mora', 'contratos en mora'),
+              // La vista cuenta toda cuota vencida; «en mora» es el estado del contrato desde el día 5.
+              titulo: plural(mora.total, 'contrato con cuotas vencidas', 'contratos con cuotas vencidas'),
               detalle: mora.primero && `El más atrasado: ${mora.primero.titular}, ${plural(mora.primero.dias_mora, 'día', 'días')}`,
-              accion: { texto: 'Ver la mora', to: '/panel/cartera?mora=1' },
+              accion: { texto: 'Ver las vencidas', to: '/panel/cartera?mora=1' },
             })
           }
           if (clave === 'tareas' && tareas.total > 0) {
@@ -475,13 +476,28 @@ function LineaMedico() {
           .flatMap((r) => r.paradas)
           .sort((a, b) => a.orden - b.orden)
         const faltan = paradas.filter((p) => p.estado !== 'completada' && p.estado !== 'omitida')
-        const despues: Estacion[] = faltan.map((p, i) => ({
+        // Una parada cuya franja ya pasó va antes de Hoy, como Operaciones la ve: sin atender.
+        const atrasadas = faltan.filter((p) => atrasada(p))
+        const siguientes = faltan.filter((p) => !atrasada(p))
+        const estacion = (p: (typeof faltan)[number]) => ({
           clave: p.id,
-          estado: i === 0 ? 'proxima' : 'futura',
           hora: p.llegada_estimada ? hora(p.llegada_estimada) : undefined,
           titulo: p.mascota ? `${nombreTipo(p.tipo_codigo)} · ${p.mascota.nombre}` : nombreTipo(p.tipo_codigo),
           detalle: [p.familia.titular_nombre, p.familia.barrio ?? p.familia.direccion].filter(Boolean).join(' · '),
-          accion: i === 0 ? { texto: 'Abrir mi ruta', to: '/panel/rutas' } : undefined,
+        })
+        const abrir = { texto: 'Abrir mi ruta', to: '/panel/rutas' }
+        antes.push(
+          ...atrasadas.map((p, i): Estacion => ({
+            ...estacion(p),
+            estado: 'vencida',
+            detalle: `${p.ventana_hasta ? `Su franja terminó a las ${hora(p.ventana_hasta)}` : 'Ya pasó su hora'} · ${estacion(p).detalle}`,
+            accion: i === 0 ? abrir : undefined,
+          })),
+        )
+        const despues: Estacion[] = siguientes.map((p, i) => ({
+          ...estacion(p),
+          estado: i === 0 ? 'proxima' : 'futura',
+          accion: i === 0 && atrasadas.length === 0 ? abrir : undefined,
         }))
         const hechas = paradas.length - faltan.length
         return (

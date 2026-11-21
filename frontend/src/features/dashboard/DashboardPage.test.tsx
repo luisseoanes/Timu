@@ -225,20 +225,27 @@ describe('La línea del día', () => {
       http.get(`${API}/tareas`, () =>
         HttpResponse.json(pagina([{ id: 't1', titulo: 'Llamar a Jorge', vence_el: '2026-11-05' }], 3)),
       ),
-      http.get(`${API}/preventivos`, () => HttpResponse.json(pagina([{ id: 'p1', fecha_programada: '2026-11-04' }], 25))),
+      // El total sale del recuento de la bandeja a la que lleva «Autorizar» (R4-CIE-02), no del
+      // listado: los 62 sin fecha frente a los 15 de la bandeja.
+      http.get(`${API}/preventivos`, () => HttpResponse.json(pagina([{ id: 'p1', fecha_programada: '2026-11-04' }], 62))),
+      http.get(`${API}/preventivos/bandeja/recuentos`, () => HttpResponse.json({ por_autorizar: 15, por_agendar: 0, agendados: 0, todos: 80 })),
     )
     renderizar(<DashboardPage />)
     const linea = await screen.findByRole('list', { name: 'El día de la operación' })
-    expect(await within(linea).findByText('5 contratos en mora')).toBeInTheDocument()
+    expect(await within(linea).findByText('5 contratos con cuotas vencidas')).toBeInTheDocument()
+    expect(within(linea).getByText('15 preventivos por autorizar')).toBeInTheDocument()
     expect(within(linea).getByText('El más atrasado: Ana Ruiz, 84 días')).toBeInTheDocument()
     expect(within(linea).getByText('Llamar a Jorge · venció el 5 nov')).toBeInTheDocument()
-    expect(within(linea).getByRole('link', { name: 'Ver la mora' })).toHaveClass('btn-primario')
+    expect(within(linea).getByRole('link', { name: 'Ver las vencidas' })).toHaveClass('btn-primario')
     expect(within(linea).getByRole('link', { name: 'Ver las tareas' })).toHaveClass('btn-secundario')
-    expect(within(linea).getByRole('link', { name: 'Ver la mora' })).toHaveAttribute('href', '/panel/cartera?mora=1')
+    expect(within(linea).getByRole('link', { name: 'Ver las vencidas' })).toHaveAttribute('href', '/panel/cartera?mora=1')
   })
 
   it('un preventivo por autorizar que aún no llega va después de hoy', async () => {
-    server.use(http.get(`${API}/preventivos`, () => HttpResponse.json(pagina([{ id: 'p1', fecha_programada: '2999-01-04' }], 2))))
+    server.use(
+      http.get(`${API}/preventivos`, () => HttpResponse.json(pagina([{ id: 'p1', fecha_programada: '2999-01-04' }], 2))),
+      http.get(`${API}/preventivos/bandeja/recuentos`, () => HttpResponse.json({ por_autorizar: 2, por_agendar: 0, agendados: 0, todos: 2 })),
+    )
     renderizar(<DashboardPage />)
     const linea = await screen.findByRole('list', { name: 'El día de la operación' })
     const estaciones = await within(linea).findAllByRole('listitem')
@@ -434,9 +441,13 @@ describe('Inicio del médico', () => {
         ]),
       ),
     )
+    // Antes de la hora de Nala (14:30 UTC del 13 nov): todavía es lo siguiente, no lo atrasado.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-13T13:00:00Z'))
     renderizar(<DashboardPage />)
     expect(await screen.findByRole('heading', { level: 1, name: 'Hola, Sara' })).toBeInTheDocument()
     const linea = await screen.findByRole('list', { name: 'Tu jornada' })
+    vi.useRealTimers()
     expect(await within(linea).findByText('2 consultas sin firmar')).toBeInTheDocument()
     expect(within(linea).getByText('La más antigua es del 4 nov')).toBeInTheDocument()
     expect(within(linea).getByRole('link', { name: 'Firmar las consultas' })).toHaveClass('btn-primario')
@@ -445,6 +456,33 @@ describe('Inicio del médico', () => {
     expect(within(linea).queryByText(/Luna/)).not.toBeInTheDocument()
     expect(within(linea).getByRole('link', { name: 'Abrir mi ruta' })).toHaveClass('btn-secundario')
     expect(screen.queryByRole('list', { name: 'Cifras del período' })).not.toBeInTheDocument()
+  })
+
+  it('la parada cuya franja ya pasó va antes de Hoy, sin atender, con su ruta en verde', async () => {
+    // R4-CIE-02: Operaciones la veía «sin atender» y la médica, como lo siguiente.
+    server.use(
+      http.get(`${API}/rutas`, () =>
+        HttpResponse.json([
+          {
+            id: 'r1',
+            estado: 'en_curso',
+            paradas: [
+              { id: 'p2', orden: 1, estado: 'pendiente', tipo_codigo: 'consulta_domiciliaria', llegada_estimada: '2026-11-13T13:10:00Z', ventana_hasta: '2026-11-13T14:00:00Z', familia: { titular_nombre: 'Laura Gómez', barrio: 'Laureles' }, mascota: { nombre: 'Nala' } },
+            ],
+          },
+        ]),
+      ),
+    )
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-13T14:15:00Z'))
+    renderizar(<DashboardPage />)
+    const linea = await screen.findByRole('list', { name: 'Tu jornada' })
+    vi.useRealTimers()
+    const estaciones = await within(linea).findAllByRole('listitem')
+    expect(estaciones[0]).toHaveTextContent('Consulta domiciliaria · Nala')
+    expect(estaciones[0]).toHaveTextContent(/Su franja terminó a las/)
+    expect(estaciones[1]).toHaveTextContent(/^Hoy/)
+    expect(within(linea).getByRole('link', { name: 'Abrir mi ruta' })).toHaveClass('btn-primario')
   })
 
   it('sin ruta lo dice, y lista sus tareas abiertas', async () => {

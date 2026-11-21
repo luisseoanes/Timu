@@ -8,7 +8,7 @@ import { edad, hora, peso, rangoHoras } from '@/lib/formato'
 import type { MascotaDeParada, ParadaRead, RutaRead } from '@/types'
 
 import { AccionesParada } from './AccionesParada'
-import { aQuien, descripcion, donde, enRuta, estadoEstacion, paradaActual, partirDireccion, type EstadoEstacion } from './ruta'
+import { aQuien, atrasada, descripcion, donde, enRuta, estadoEstacion, paradaActual, partirDireccion, type EstadoEstacion } from './ruta'
 
 /**
  * La ruta como una línea vertical de metro (contrato de la superficie): las paradas hechas se
@@ -139,8 +139,9 @@ function Estacion({
         {estado === 'actual' ? (
           <p className="estacion-hora">
             {cuando}
-            {/* La que toca sin haber salido aún no tiene estado propio en la API: es «próxima». */}
-            <Distintivo dominio="ruta" valor={parada.estado === 'pendiente' ? 'proxima' : parada.estado} />
+            {/* La que toca sin haber salido aún no tiene estado propio en la API: es «próxima», o
+                «atrasada» si su franja ya pasó. */}
+            <Distintivo dominio="ruta" valor={parada.estado !== 'pendiente' ? parada.estado : atrasada(parada) ? 'atrasada' : 'proxima'} />
           </p>
         ) : (
           <button className="estacion-resumen" type="button" aria-expanded={abierta} aria-controls={id} onClick={() => setAbierta(!abierta)}>

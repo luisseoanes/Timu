@@ -77,6 +77,8 @@ const RUTA: Record<string, Estado> = {
   pendiente: { label: 'Pendiente', tono: 'info' },
   // Derivado: la parada pendiente que toca ahora (features/rutas/ruta.ts).
   proxima: { label: 'Próxima', tono: 'info' },
+  // Derivado: pendiente con la franja ya pasada (features/rutas/ruta.ts, `atrasada`).
+  atrasada: { label: 'Atrasada', tono: 'alerta' },
   en_camino: { label: 'En camino', tono: 'info' },
   en_sitio: { label: 'En sitio', tono: 'info' },
   completada: { label: 'Completada', tono: 'ok' },

@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RutasPage } from './RutasPage'
 import { hoyISO } from '@/lib/formato'
@@ -176,11 +176,32 @@ describe('la ruta de quien sale a campo', () => {
         return HttpResponse.json(ruta([parada(1, 'pendiente'), parada(2, 'pendiente')]))
       }),
     )
-    const user = userEvent.setup()
-    renderizar(<RutasPage />)
-    expect(await screen.findByText('Próxima')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Iniciar ruta' }))
-    await waitFor(() => expect(iniciada).toBe(true))
+    // Antes de la franja de la primera parada (15:20 a 16:00 UTC del 24 oct): aún es «Próxima».
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-24T14:00:00Z'))
+    try {
+      const user = userEvent.setup()
+      renderizar(<RutasPage />)
+      expect(await screen.findByText('Próxima')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Iniciar ruta' }))
+      await waitFor(() => expect(iniciada).toBe(true))
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('la parada que nadie empezó y cuya franja ya pasó se dice atrasada, no próxima', async () => {
+    // R4-CIE-02: a las 9:15 la médica veía «Próxima» la visita de las 8:00 que Operaciones ya veía sin atender.
+    conRutas([ruta([parada(1, 'pendiente'), parada(2, 'pendiente')], { estado: 'planificada' })])
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-24T17:00:00Z'))
+    try {
+      renderizar(<RutasPage />)
+      expect(await screen.findByText('Atrasada')).toBeInTheDocument()
+      expect(screen.queryByText('Próxima')).not.toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('la parada que toca lleva una sola acción de estado: salir hacia la familia y después llegar', async () => {

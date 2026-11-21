@@ -4,6 +4,7 @@ import type { ParadaRead, RutaRead } from '@/types'
 
 import {
   aQuien,
+  atrasada,
   avance,
   comoLlegar,
   descripcion,
@@ -152,5 +153,18 @@ describe('a quién y dónde', () => {
     // Lo decide el catálogo, no los nombres de los campos: un campo nuevo que llene la consulta no
     // obliga a tocar el panel.
     expect(laConsultaLosRegistra([{ ...aplicacion, codigo: 'peso', campos: ['peso'], lo_registra_la_consulta: true }])).toBe(true)
+  })
+})
+
+describe('atrasada', () => {
+  const ahora = new Date('2026-11-12T16:30:00Z')
+  it('una pendiente cuya franja ya terminó, o sin franja cuya hora ya pasó', () => {
+    expect(atrasada(parada(1, 'pendiente', { ventana_hasta: '2026-11-12T16:00:00Z' }), ahora)).toBe(true)
+    expect(atrasada(parada(1, 'pendiente', { ventana_hasta: null }), ahora)).toBe(true)
+  })
+  it('no lo está mientras dure su franja, ni la que ya se empezó, ni la que no tiene hora', () => {
+    expect(atrasada(parada(1, 'pendiente', { ventana_hasta: '2026-11-12T17:00:00Z' }), ahora)).toBe(false)
+    expect(atrasada(parada(1, 'en_camino', { ventana_hasta: '2026-11-12T16:00:00Z' }), ahora)).toBe(false)
+    expect(atrasada(parada(1, 'pendiente', { ventana_hasta: null, llegada_estimada: null }), ahora)).toBe(false)
   })
 })

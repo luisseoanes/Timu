@@ -22,7 +22,8 @@ import { RegistrarPagoModal } from './RegistrarPagoModal'
 type Vista = keyof RecuentosCartera
 
 const VISTAS: { valor: Vista; label: string; vacio: string }[] = [
-  { valor: 'en_mora', label: 'En mora', vacio: 'Nadie debe cuotas vencidas. Cuando una cuota pase su fecha sin pagarse, la familia aparece aquí.' },
+  // «Vencidas», no «En mora»: lista toda cuota vencida, y el contrato pasa a «en mora» el día 5.
+  { valor: 'en_mora', label: 'Vencidas', vacio: 'Nadie debe cuotas vencidas. Cuando una cuota pase su fecha sin pagarse, la familia aparece aquí.' },
   { valor: 'por_renovar', label: 'Por renovar', vacio: 'Ningún contrato vence en los próximos 90 días.' },
   { valor: 'todos', label: 'Todos', vacio: 'Ningún contrato coincide con la búsqueda.' },
 ]
@@ -60,7 +61,7 @@ export function CarteraPage() {
 function BandejaCartera() {
   const { usuario } = useAuth()
   const [params, setParams] = useSearchParams()
-  // Sin vista, «En mora» para quien cobra: es lo que se cobra hoy, y adonde lleva «Ver la mora» del
+  // Sin vista, «Vencidas» para quien cobra: es lo que se cobra hoy, y adonde lleva «Ver las vencidas» del
   // Inicio (`?mora=1`); «Por renovar» para Comercial, que es lo suyo (6.4).
   const porDefecto: Vista = usuario?.rol === 'comercial' ? 'por_renovar' : 'en_mora'
   const vista: Vista = VISTAS.find((v) => v.valor === params.get('vista'))?.valor ?? porDefecto
