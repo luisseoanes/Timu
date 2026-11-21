@@ -25,11 +25,11 @@ actualiza aquí.
 | Fase | Unidades | Hecho | Parcial | Pendiente |
 | --- | ---: | ---: | ---: | ---: |
 | R0 — Preparación | 4 | 4 | 0 | 0 |
-| R1 — Fundaciones | 7 | 6 | 1 | 0 |
+| R1 — Fundaciones | 7 | 7 | 0 | 0 |
 | R2 — Panel del equipo | 10 | 10 | 0 | 0 |
 | R3 — Familias, aliada y páginas públicas | 7 | 7 | 0 | 0 |
-| R4 — Cierre | 4 | 1 | 0 | 3 |
-| **Total** | **32** | **28** | **1** | **3** |
+| R4 — Cierre | 4 | 2 | 0 | 2 |
+| **Total** | **32** | **30** | **0** | **2** |
 
 Al cierre de `R2-PAN-10` (2026-11-15) el panel del equipo está rediseñado entero, y con `R3-PUB-01`
 (el mismo día) también el acceso. Con `R3-ALI-01` (2026-11-16), el espacio de la clínica aliada, y
@@ -57,16 +57,16 @@ hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
   perfil. **La revisión terminó el 2026-11-21**: el usuario revisó por su cuenta Médicos, Atención
   al cliente, el portal y la clínica aliada sin encontrar nada más. Los huecos de requisito que
   salieron están en «Lo que falta en el código» de [pendientes externos](pendientes-externos.md).
-  **Lo siguiente es `R4-CIE-02`**, preguntando al usuario antes de empezar.
+  `R4-CIE-02` (auditoría y crítica) se cerró el 2026-11-21 ([lo que se hizo](rediseno/auditoria-r4-cie-02.md)).
+  **Lo siguiente es `R4-CIE-03`**, preguntando al usuario antes de empezar.
 - **La portada pública de `timu.com.co` está hecha: `R3-PUB-04`** (2026-11-18). Antes de publicarla
   en el dominio quedan cosas de TIMU, en [pendientes externos](pendientes-externos.md): los valores
   provisionales sacados de la web vieja, el permiso de las personas de las fotos del equipo, la
   licencia de las fotos de las piezas y volver a alojar la política de datos.
 - **Los push van al cerrar cada unidad o lote**, no por commit (decidido con el usuario el
   2026-11-16), después de la batería local completa.
-- **`R1-CMP-03` sigue parcial** y se cierra en `R4-CIE-02`: comprobar que cada vacío de R3 explique
-  qué hacer (R3 se cerró sin esa revisión sistemática). `R1-CMP-02` se cerró el 2026-11-21 sin orden
-  común por columnas (ver su fila).
+- **`R1-CMP-02` y `R1-CMP-03` están cerrados** (2026-11-21): el primero sin orden común por columnas
+  (ver su fila) y el segundo con la revisión de los vacíos de R3 hecha en `R4-CIE-02`.
 - **El mapa de las rutas (6.7) es una unidad aparte, fuera del cierre del rediseño** (decidido con
   el usuario el 2026-11-21). TIMU eligió Google Maps; se construye después de R4, con la línea
   nueva, su sorteo de superficie si la composición queda abierta y su revisor final hasta `ship`,
@@ -192,7 +192,7 @@ salen de su contrato.
 | `R1-PLA-01` | Color de plan en el catálogo | El catálogo de planes gana un campo de color (`verde`, `naranja` o `azul`), con migración, restricción en la base, `Literal` en el schema y tipos del panel regenerados. Administración → Planes permite elegirlo. La interfaz no deduce nunca el color a partir del nombre del plan (regla 5 del manual). | Hecho: migración `0038` (enum `color_plan`), los tres planes de TIMU con el color del manual y los demás en verde; selector en Administración → Planes y marcador junto a cada plan. |
 | `R1-CMP-01` | Acciones y campos | Botones (principal, secundario, suave, destructivo y de icono), campos de texto, listas, áreas de texto, casillas, opciones e interruptores, cada uno con su etiqueta, ayuda y error. Tienen todos los estados y una zona táctil de 44 px o más en el móvil. | Hecho: `.btn-secundario` y `.btn-peligro` nuevos, estados completos, campos con estado inválido y deshabilitado, 44 px y letra de 16 px en pantallas táctiles; selección de texto, cursor, casillas y barras de desplazamiento con la paleta. |
 | `R1-CMP-02` | Datos | La tabla con su versión para el móvil (la forma la fija la dirección), la paginación, los filtros y el orden. El distintivo de estado (pastilla, icono y texto) y el marcador de plan (regla 4 del manual). | Hecho. Antes, parcial: `Insignia` (pastilla con icono por tono) sustituye a los 23 distintivos escritos a mano, y el marcador de plan está hecho. La versión móvil de la tabla está hecha con las de Familias: `tabla-apilable` pasa a una fila por bloque cuando su contenedor mide menos de 640 px, con la etiqueta de cada celda en `data-etiqueta`. Cada módulo la adopta en su unidad. **Hecho (2026-11-21)**: la paginación común es `Paginacion` (diez listados) y los filtros comunes, `.bandeja-filtros` (siete bandejas; `docs/frontend/components.md`). Sin orden común por columnas, decidido con el usuario el 2026-11-21: los listados llevan el orden fijo que da la API, y la Sección 8 de los requisitos pide filtrar y exportar las vistas, no ordenarlas. |
-| `R1-CMP-03` | Capas y avisos | La ventana modal sobre Radix (en el móvil, hoja que sube desde abajo), los avisos, las pestañas y los menús. Los estados de carga con esqueleto, los vacíos que explican qué hacer y los errores con «Reintentar». | Parcial: esqueleto de carga anunciado a los lectores de pantalla, «Reintentar» solo ante fallos pasajeros y la ventana modal como hoja inferior en pantallas estrechas. Que cada vacío diga qué hacer se revisa con cada pantalla: R2 ya está, y R3 se cerró el 2026-11-17 sin una revisión sistemática de sus vacíos, que se hace en `R4-CIE-02`. Los menús existen desde R2 (Radix DropdownMenu, en `docs/frontend/components.md`): lo reversible de un registro va en el de tres puntos. |
+| `R1-CMP-03` | Capas y avisos | La ventana modal sobre Radix (en el móvil, hoja que sube desde abajo), los avisos, las pestañas y los menús. Los estados de carga con esqueleto, los vacíos que explican qué hacer y los errores con «Reintentar». | Hecho (2026-11-21): los vacíos de R3 dicen qué aparecerá o qué hacer (`R4-CIE-02`). Antes, parcial: esqueleto de carga anunciado a los lectores de pantalla, «Reintentar» solo ante fallos pasajeros y la ventana modal como hoja inferior en pantallas estrechas. Que cada vacío diga qué hacer se revisa con cada pantalla: R2 ya está, y R3 se cerró el 2026-11-17 sin una revisión sistemática de sus vacíos, que se hace en `R4-CIE-02`. Los menús existen desde R2 (Radix DropdownMenu, en `docs/frontend/components.md`): lo reversible de un registro va en el de tres puntos. |
 | `R1-CMP-04` | Marca e iconos | `MarcaTimu` pasa a ser el marcador de texto del manual (sección 13), con el lema «Medicina veterinaria prepagada». Los iconos se ajustan al lenguaje de la dirección. | Hecho: `MarcaTimu` pinta el logo en SVG sacado del vector de TIMU (2026-11-11), completo o compacto, a color o en blanco; antes era un marcador de texto. Los iconos se mantienen: un trazo y sin relleno, como los pictogramas de señalética de la dirección. |
 
 ## R2 — Panel del equipo
@@ -233,7 +233,7 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 | ID | Trabajo | Criterio de aceptación | Estado |
 | --- | --- | --- | --- |
 | `R4-CIE-01` | Recorrido completo | La lista de rutas pendientes de `R0-QAA-02` está vacía (desde `R2-PAN-10`) y se elimina. El recorrido cubre todas las rutas a los cuatro anchos (375, 768, 900 y 1280 px). | Hecho (2026-11-19): `PENDIENTES` y su prueba se retiraron, y un fallo hace fallar el barrido. Además, decidido con el usuario, el barrido mide abiertas las fichas que cada pantalla abre desde la URL (plantilla, ruta, campaña, clínica aliada, interesado, plan y regla), con un registro de `datos_demo` buscado por su nombre: en el celular son lo que se ve al tocar una fila, y no eran una ruta propia. |
-| `R4-CIE-02` | Auditoría | `/impeccable audit` en cada espacio y `/impeccable critique` en el panel y el portal. Se corrigen todos los hallazgos P0 y P1; los P2 y P3 quedan como deuda escrita. | Pendiente |
+| `R4-CIE-02` | Auditoría | `/impeccable audit` en cada espacio y `/impeccable critique` en el panel y el portal. Se corrigen todos los hallazgos P0 y P1; los P2 y P3 quedan como deuda escrita. | Hecho (2026-11-21): auditoría de los cuatro espacios (17/20) y crítica del panel (25/40) y del portal (24/40), con sus seis P1 de la auditoría y sus seis de las críticas corregidos, y los P2 que eligió el usuario (encabezados, táctiles de 44 px, el paquete partido, «Dar de baja» en el menú). El barrido pide ahora todas las reglas WCAG 2.2 A y AA y que los encabezados no salten un nivel. Detalle en [auditoría y crítica](rediseno/auditoria-r4-cie-02.md); lo que queda, en la deuda (`DEU-71` a `DEU-82`). |
 | `R4-CIE-03` | Documentación final | La skill refresca `DESIGN.md`. Se reescriben `docs/frontend/` (componentes, plantillas y convenciones) y la sección 15 del manual. El `CLAUDE.md` describe las guardas definitivas, y los tres `CLAUDE.md` se condensan (el del backend pasa de 35 KB) sin perder ninguna regla: lo que sea historia o explicación larga va a `docs/`. | Pendiente. Adelantado el 2026-11-16: el `CLAUDE.md` del backend pasó de 36 KB a 14 KB (el detalle, en `docs/backend/`) y el detalle de la e2e del stack salió del de la raíz (`docs/frontend/e2e-stack.md`). |
 | `R4-CIE-04` | Umbrales de cobertura | Los umbrales de `vitest.config.ts` se ajustan a lo medido, según la regla del `CLAUDE.md`. | Pendiente |
 

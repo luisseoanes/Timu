@@ -411,15 +411,18 @@ GeosansLight de 34 px) con el día. `AppLayout` no pinta la cabecera del módulo
 
 Lo que hay por resolver, en una tabla a todo el ancho que se apila en el celular: la tarea con su
 estado al lado, su área y a quién afecta (la familia y, si es de un servicio, cuál y de quién, con
-enlace a cada uno), cuándo vence (lo vencido con icono y la palabra, no solo en rojo),
-la prioridad y el responsable (una lista para reasignar), con «Tomar», «Iniciar» y «Cerrar» en la
-fila. Las vistas (mías, sin asignar, vencidas, todas) son un selector segmentado que en el celular
-pasa a dos filas de dos. «Nueva tarea» es la verde.
+enlace a cada uno) y su descripción en una línea; cuándo vence (lo vencido con icono y la palabra, no
+solo en rojo), la prioridad y el responsable en texto. Una sola acción a la vista por fila (R4-CIE-02):
+«Tomar» si nadie la tiene, «Cerrar» si es de quien mira, «Ver la conversación» si viene del
+asistente; el resto («Asignar a…» en submenú, solo con quienes ven el área, «Iniciar», «Cerrar»,
+«Ver la familia») en el menú de tres puntos. Las vistas (mías, pedidas por mí, sin asignar, vencidas,
+todas) son un selector segmentado que en el celular pasa a dos columnas; abre en «Mis tareas» y, sin
+tareas propias pendientes, en «Sin asignar». «Nueva tarea» es la verde.
 
 ### Cartera (R2-PAN-08)
 
-La misma bandeja, a todo el ancho, para cobrar y renovar. Las vistas «En mora» (la de entrada, adonde
-lleva «Ver la mora» del Inicio), «Por renovar» (los vigentes en la ventana de 90 días) y «Todos», con
+La misma bandeja, a todo el ancho, para cobrar y renovar. Las vistas «Vencidas» (la de entrada, adonde
+lleva «Ver las vencidas» del Inicio: toda cuota vencida, aunque el contrato pase a «en mora» el día 5), «Por renovar» (los vigentes en la ventana de 90 días) y «Todos», con
 su recuento (`GET /cartera/contratos/recuentos`); el buscador y la ciudad viven en la URL. Cada fila:
 la familia (el titular enlaza a la pestaña Cartera de su ficha, que tiene el estado de cuenta) con su
 plan (cuadrado y nombre), el contrato y la ciudad; lo que debe con icono y «hace N días» o «Al día»;

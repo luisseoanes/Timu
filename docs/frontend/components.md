@@ -123,7 +123,17 @@ rechaza un número suelto.
 ## Menús — Radix DropdownMenu
 
 `.menu` y `.menu-item` (en `vistas.css`): el «Más» de la barra, la cuenta y «Gestionar
-afiliación». `.menu-item-peligro` para una entrada destructiva, tras un `.menu-separador`.
+afiliación». `.menu-item-peligro` para una entrada destructiva, tras un `.menu-separador`. Un
+submenú (`Menu.Sub`, con `.menu-item-sub` y la flecha `derecha`) elige entre varios sin abrir una
+ventana: «Asignar a…» en Tareas. En una fila, el de tres puntos lleva lo que no es la acción del día:
+«Dar de baja» en la tabla de Mascotas de la ficha, «Iniciar» y «Asignar a…» en Tareas.
+
+## Carga de una pantalla — `CargandoPantalla`
+
+El paquete va partido (R4-CIE-02): las páginas públicas y el ingreso cargan con la app; cada módulo
+del panel, el portal y la clínica aliada, al abrirse (`lazy` en `App.tsx`). Mientras llega su código,
+la pantalla pinta `CargandoPantalla` (el esqueleto de `Consulta`) dentro de su layout, que no
+desaparece: el `Suspense` va alrededor del `Outlet` de `AppLayout` y de `PortalLayout`.
 Lo raro o destructivo va en un menú, no junto a la acción principal.
 
 ## Menú de la cuenta — `MenuCuenta`
