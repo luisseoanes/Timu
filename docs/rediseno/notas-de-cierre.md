@@ -146,8 +146,8 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
   bandeja sin recuento en sus vistas (la API no los cuenta) y con la vista fuera de la URL; los casos de
   prueba de la IA enseñan lo esperado en JSON; y el formulario de reportes lleva un `style` en línea en su
   `fieldset`. Los dos últimos son anteriores a esta unidad.
-- **Las reglas se editan en JSON** (decidido el editor por campos, pendiente: `DEU-8`): se leen y se prueban en palabras, pero cambiar una condición o una
-  acción sigue siendo escribir el JSON del motor. Un editor por campos es trabajo nuevo.
+- ~~**Las reglas se editan en JSON**~~ Resuelto el 2026-11-17 (`DEU-8`): editor por campos, con lo que quedó en «Lo que quedó del editor de reglas» más abajo. Antes: se leían y se probaban en palabras, pero cambiar una condición o una
+  acción era escribir el JSON del motor.
 - ~~**Pasar una cuenta a clínica aliada, o de clínica aliada al equipo, no se hace desde la fila**~~ Decidido con el usuario no hacerlo: se crea otra cuenta (`DEU-9`). Antes:
   necesita la clínica, que solo se elige al crear el usuario. Hoy hay que crear la cuenta nueva.
 - ~~**Las plantillas de WhatsApp no tienen nombre legible**~~ Resuelto el 2026-11-16 (`DEU-10`).: las reglas y las campañas enseñan el código

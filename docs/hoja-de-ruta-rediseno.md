@@ -25,11 +25,11 @@ actualiza aquí.
 | Fase | Unidades | Hecho | Parcial | Pendiente |
 | --- | ---: | ---: | ---: | ---: |
 | R0 — Preparación | 4 | 4 | 0 | 0 |
-| R1 — Fundaciones | 7 | 5 | 2 | 0 |
+| R1 — Fundaciones | 7 | 6 | 1 | 0 |
 | R2 — Panel del equipo | 10 | 10 | 0 | 0 |
 | R3 — Familias, aliada y páginas públicas | 7 | 7 | 0 | 0 |
 | R4 — Cierre | 4 | 1 | 0 | 3 |
-| **Total** | **32** | **27** | **2** | **3** |
+| **Total** | **32** | **28** | **1** | **3** |
 
 Al cierre de `R2-PAN-10` (2026-11-15) el panel del equipo está rediseñado entero, y con `R3-PUB-01`
 (el mismo día) también el acceso. Con `R3-ALI-01` (2026-11-16), el espacio de la clínica aliada, y
@@ -37,7 +37,7 @@ con `R3-PUB-03` (2026-11-17), la encuesta y la verificación del carnet. Con `R3
 registro en línea: **R3 está completa**. Con `R3-PUB-04` (2026-11-18), la portada pública de
 `timu.com.co`, que la amplió a petición del usuario.
 
-### Dónde se retoma (2026-11-18, tras `DEU-14`)
+### Dónde se retoma (2026-11-21, revisión por perfiles cerrada)
 
 Para la sesión siguiente, que no tiene la conversación anterior: todo lo decidido está en esta
 hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
@@ -53,20 +53,26 @@ hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
   cierre `R4` (recorrido, auditoría, documentación y umbrales). **Recomendado** (2026-11-18):
   `R4-CIE-01` a `R4-CIE-04` en orden; la demostración ya recorre todos los casos. `R4-CIE-01` se
   cerró el 2026-11-19; sigue `R4-CIE-02`. Se le pregunta al usuario antes de empezar cada una.
-  **En pausa desde el 2026-11-20**: el usuario revisa el panel perfil por perfil (cerrados
-  Administración, Gerencia, Comercial y Operaciones; Médicos a medias; faltan Atención al cliente,
-  el portal y la clínica aliada), y los clientes prueban en staging. Los huecos de requisito que
+  Estuvo en pausa del 2026-11-20 al 2026-11-21 mientras el usuario revisaba el panel perfil por
+  perfil. **La revisión terminó el 2026-11-21**: el usuario revisó por su cuenta Médicos, Atención
+  al cliente, el portal y la clínica aliada sin encontrar nada más. Los huecos de requisito que
   salieron están en «Lo que falta en el código» de [pendientes externos](pendientes-externos.md).
-  Antes de `R4-CIE-02`, preguntar si la revisión terminó.
+  **Lo siguiente es `R4-CIE-02`**, preguntando al usuario antes de empezar.
 - **La portada pública de `timu.com.co` está hecha: `R3-PUB-04`** (2026-11-18). Antes de publicarla
   en el dominio quedan cosas de TIMU, en [pendientes externos](pendientes-externos.md): los valores
   provisionales sacados de la web vieja, el permiso de las personas de las fotos del equipo, la
   licencia de las fotos de las piezas y volver a alojar la política de datos.
 - **Los push van al cerrar cada unidad o lote**, no por commit (decidido con el usuario el
   2026-11-16), después de la batería local completa.
-- **`R1-CMP-02` y `R1-CMP-03` siguen parciales** y se cierran en R4: la paginación, los filtros y el
-  orden comunes, y comprobar en `R4-CIE-02` que cada vacío de R3 explique qué hacer (R3 se cerró
-  sin esa revisión sistemática).
+- **`R1-CMP-03` sigue parcial** y se cierra en `R4-CIE-02`: comprobar que cada vacío de R3 explique
+  qué hacer (R3 se cerró sin esa revisión sistemática). `R1-CMP-02` se cerró el 2026-11-21 sin orden
+  común por columnas (ver su fila).
+- **El mapa de las rutas (6.7) es una unidad aparte, fuera del cierre del rediseño** (decidido con
+  el usuario el 2026-11-21). TIMU eligió Google Maps; se construye después de R4, con la línea
+  nueva, su sorteo de superficie si la composición queda abierta y su revisor final hasta `ship`,
+  cuando haya acceso al proyecto de Google Cloud de TIMU con Maps JavaScript API habilitada. Qué
+  hay que construir y lo que se le prometió a TIMU (clave de navegador, límite diario de cargas,
+  caída a «Cómo llegar»): [pendientes externos](pendientes-externos.md#mapa-de-las-rutas-requisito-67-r2-pan-06).
 - **Datos**: `datos_demo` y luego `operacion_demo` (ocho semanas de operación). La base local se
   recreó y sembró con los dos el 2026-11-16. Sin pasarela de pruebas (Wompi, pendiente de TIMU)
   ningún interesado llega a «afiliado».
@@ -185,7 +191,7 @@ salen de su contrato.
 | `R1-TOK-02` | Tipografía y escalas | Inter sustituye a Poppins y Nunito Sans. La escala tipográfica (fija, en rem), el espaciado, los radios, las sombras y el movimiento salen del contrato de dirección. Las cifras que se comparan en columna usan números tabulares. | Hecho: `@fontsource-variable/inter` 5.3.0. Inter, algo más ancha, destapó un desborde en Tareas: los hijos de `.contenido` ahora pueden encoger, y eso resolvió además cuatro desbordes antiguos. |
 | `R1-PLA-01` | Color de plan en el catálogo | El catálogo de planes gana un campo de color (`verde`, `naranja` o `azul`), con migración, restricción en la base, `Literal` en el schema y tipos del panel regenerados. Administración → Planes permite elegirlo. La interfaz no deduce nunca el color a partir del nombre del plan (regla 5 del manual). | Hecho: migración `0038` (enum `color_plan`), los tres planes de TIMU con el color del manual y los demás en verde; selector en Administración → Planes y marcador junto a cada plan. |
 | `R1-CMP-01` | Acciones y campos | Botones (principal, secundario, suave, destructivo y de icono), campos de texto, listas, áreas de texto, casillas, opciones e interruptores, cada uno con su etiqueta, ayuda y error. Tienen todos los estados y una zona táctil de 44 px o más en el móvil. | Hecho: `.btn-secundario` y `.btn-peligro` nuevos, estados completos, campos con estado inválido y deshabilitado, 44 px y letra de 16 px en pantallas táctiles; selección de texto, cursor, casillas y barras de desplazamiento con la paleta. |
-| `R1-CMP-02` | Datos | La tabla con su versión para el móvil (la forma la fija la dirección), la paginación, los filtros y el orden. El distintivo de estado (pastilla, icono y texto) y el marcador de plan (regla 4 del manual). | Parcial: `Insignia` (pastilla con icono por tono) sustituye a los 23 distintivos escritos a mano, y el marcador de plan está hecho. La versión móvil de la tabla está hecha con las de Familias: `tabla-apilable` pasa a una fila por bloque cuando su contenedor mide menos de 640 px, con la etiqueta de cada celda en `data-etiqueta`. Cada módulo la adopta en su unidad. Faltan la paginación, los filtros y el orden comunes. |
+| `R1-CMP-02` | Datos | La tabla con su versión para el móvil (la forma la fija la dirección), la paginación, los filtros y el orden. El distintivo de estado (pastilla, icono y texto) y el marcador de plan (regla 4 del manual). | Hecho. Antes, parcial: `Insignia` (pastilla con icono por tono) sustituye a los 23 distintivos escritos a mano, y el marcador de plan está hecho. La versión móvil de la tabla está hecha con las de Familias: `tabla-apilable` pasa a una fila por bloque cuando su contenedor mide menos de 640 px, con la etiqueta de cada celda en `data-etiqueta`. Cada módulo la adopta en su unidad. **Hecho (2026-11-21)**: la paginación común es `Paginacion` (diez listados) y los filtros comunes, `.bandeja-filtros` (siete bandejas; `docs/frontend/components.md`). Sin orden común por columnas, decidido con el usuario el 2026-11-21: los listados llevan el orden fijo que da la API, y la Sección 8 de los requisitos pide filtrar y exportar las vistas, no ordenarlas. |
 | `R1-CMP-03` | Capas y avisos | La ventana modal sobre Radix (en el móvil, hoja que sube desde abajo), los avisos, las pestañas y los menús. Los estados de carga con esqueleto, los vacíos que explican qué hacer y los errores con «Reintentar». | Parcial: esqueleto de carga anunciado a los lectores de pantalla, «Reintentar» solo ante fallos pasajeros y la ventana modal como hoja inferior en pantallas estrechas. Que cada vacío diga qué hacer se revisa con cada pantalla: R2 ya está, y R3 se cerró el 2026-11-17 sin una revisión sistemática de sus vacíos, que se hace en `R4-CIE-02`. Los menús existen desde R2 (Radix DropdownMenu, en `docs/frontend/components.md`): lo reversible de un registro va en el de tres puntos. |
 | `R1-CMP-04` | Marca e iconos | `MarcaTimu` pasa a ser el marcador de texto del manual (sección 13), con el lema «Medicina veterinaria prepagada». Los iconos se ajustan al lenguaje de la dirección. | Hecho: `MarcaTimu` pinta el logo en SVG sacado del vector de TIMU (2026-11-11), completo o compacto, a color o en blanco; antes era un marcador de texto. Los iconos se mantienen: un trazo y sin relleno, como los pictogramas de señalética de la dirección. |
 
@@ -257,7 +263,7 @@ Viven en dos anexos de `docs/rediseno/`, separados de esta hoja el 2026-11-16:
 
 ### Orden de lo que sigue
 
-El orden vigente está en [«Dónde se retoma»](#dónde-se-retoma-2026-11-18-tras-deu-14). El primero, confirmado por
+El orden vigente está en [«Dónde se retoma»](#dónde-se-retoma-2026-11-21-revisión-por-perfiles-cerrada). El primero, confirmado por
 el usuario el 2026-11-12, empezaba por lo que más se usa desde el celular (Rutas, Clínica y el portal)
 y ya está hecho.
 
@@ -313,5 +319,6 @@ Confirmadas por el usuario el 2026-11-10 y el 2026-11-11, cada una escrita donde
   la plataforma reemplazará la web en `timu.com.co`, hace falta antes del cambio de dominio. **El
   2026-11-17 el usuario decidió que entra**, con su alcance por conversar (ver «Dónde se retoma»). Las demás páginas públicas
   sí entran: ingreso, registro en línea, encuesta y verificación de carnet.
+- **El mapa de las rutas (6.7).** Unidad aparte, después de R4 (ver «Dónde se retoma»).
 - **Contenidos de la web pública timu.com.co.** Es de TIMU; sus contradicciones con el manual
   están en pendientes externos.
