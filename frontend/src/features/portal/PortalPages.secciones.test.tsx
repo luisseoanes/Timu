@@ -348,6 +348,8 @@ describe('citas', () => {
     renderizar(<PortalCitas />)
     const proximas = await screen.findByRole('list', { name: 'Citas próximas' })
     expect(await within(proximas).findByText(motivo)).toBeInTheDocument()
+    // El título de cada cita cuelga del h1 de la página: es un h2, no un h3 (lo encontró el barrido).
+    expect(within(proximas).getByRole('heading', { level: 2 })).toBeInTheDocument()
     expect(within(proximas).queryByRole('button', { name: 'Cambiar la fecha' })).not.toBeInTheDocument()
     expect(within(proximas).getByRole('button', { name: 'Cancelar' })).toBeInTheDocument()
   })

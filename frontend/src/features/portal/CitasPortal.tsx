@@ -137,10 +137,11 @@ function Cita({ cita, children }: { cita: ServicioPortalRead; children?: React.R
         )}
       </p>
       <div className="cita-que">
-        <h3>
+        {/* h2: la página no tiene otro nivel entre su h1 y cada cita (el barrido falla si se salta). */}
+        <h2>
           {nombreTipo(cita.tipo_codigo)}
           {peludo && <span className="apagado"> · {peludo}</span>}
-        </h3>
+        </h2>
         <Insignia tono={estado.tono} icono={estado.icono}>
           {estado.label}
         </Insignia>

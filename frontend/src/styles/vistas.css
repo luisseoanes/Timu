@@ -1059,7 +1059,7 @@
 .cita-cuando strong { font-weight: 600; }
 .cita-cuando span { font-size: var(--t-menor); color: var(--texto-suave); }
 .cita-que { flex: 1 1 14rem; display: grid; gap: var(--e1); justify-items: start; min-width: 0; }
-.cita-que h3 { font-size: var(--t-cuerpo); color: var(--texto-titulo); }
+.cita-que h2 { font-family: var(--fuente); font-weight: 600; font-size: var(--t-cuerpo); color: var(--texto-titulo); }
 .cita-que p { font-size: var(--t-menor); color: var(--texto-suave); }
 /* Las acciones de una fila van siempre a la derecha, también cuando bajan a su propia fila. */
 .cita-acciones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--e2); margin-left: auto; }
