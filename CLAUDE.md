@@ -10,7 +10,7 @@ hay que construir es el documento de requerimientos de TIMU**:
 copia literal del PDF (`~/Descargas/documento-requerimientos-funcionales.pdf`); no se edita.
 La propuesta (`docs/propuesta-timu-puntos-15-19.md`) responde a ese documento. El antiguo
 backlog por unidades se retiró el 2026-11-19 porque se había alejado de los requisitos: su
-trabajo abierto está en [`docs/pendientes-externos.md`](docs/pendientes-externos.md#lo-que-falta-en-el-código).
+trabajo abierto está en [`docs/pendiente-en-el-codigo.md`](docs/pendiente-en-el-codigo.md).
 
 El código y la documentación citan los dos documentos así:
 

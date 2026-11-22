@@ -56,7 +56,7 @@ hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
   Estuvo en pausa del 2026-11-20 al 2026-11-21 mientras el usuario revisaba el panel perfil por
   perfil. **La revisión terminó el 2026-11-21**: el usuario revisó por su cuenta Médicos, Atención
   al cliente, el portal y la clínica aliada sin encontrar nada más. Los huecos de requisito que
-  salieron están en «Lo que falta en el código» de [pendientes externos](pendientes-externos.md).
+  salieron están en [lo que falta en el código](pendiente-en-el-codigo.md).
   `R4-CIE-02` (auditoría y crítica) se cerró el 2026-11-21 ([lo que se hizo](rediseno/auditoria-r4-cie-02.md)).
   **Lo siguiente es `R4-CIE-03`**, preguntando al usuario antes de empezar.
 - **La portada pública de `timu.com.co` está hecha: `R3-PUB-04`** (2026-11-18). Antes de publicarla

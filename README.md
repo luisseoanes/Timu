@@ -160,7 +160,8 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Cómo se escriben los commits, cómo se trabaja sobre `main` y cómo salen las versiones |
 | [docs/documento-requerimientos-funcionales.md](docs/documento-requerimientos-funcionales.md) | Lo que TIMU pidió, copia literal del PDF y única fuente de verdad: los requisitos que cita el código (6.10, Sección 8…) |
 | [docs/propuesta-timu-puntos-15-19.md](docs/propuesta-timu-puntos-15-19.md) | Contrato funcional: la propuesta que responde a ese documento (secciones A a E) |
-| [docs/pendientes-externos.md](docs/pendientes-externos.md) | Lo que falta fuera del código para cerrar un requisito: sandbox de Wompi, plantillas de Meta, decisiones de TIMU |
+| [docs/pendiente-en-el-codigo.md](docs/pendiente-en-el-codigo.md) | Lo que falta en el código, con el requisito que lo pide: la lista del trabajo abierto |
+| [docs/pendientes-externos.md](docs/pendientes-externos.md) | Lo que falta fuera del código para cerrar un requisito: sandbox de Wompi, plantillas de Meta, decisiones de TIMU y sus valores provisionales |
 | [docs/estandares-calidad.md](docs/estandares-calidad.md) | Cada estándar de calidad pedido (Secciones 3 y 4) traducido a reglas, con la prueba que las hace cumplir y la deuda que queda |
 | [docs/integraciones.md](docs/integraciones.md) | Cada servicio externo: qué hace, variables, dónde vive en el código, estado de validación y lo decidido con TIMU |
 | [docs/integraciones-timu.md](docs/integraciones-timu.md) | Para la cliente: qué tiene que hacer TIMU en cada integración decidida y las opciones de las que faltan |
