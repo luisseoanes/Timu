@@ -261,7 +261,8 @@ caracteres: compruébalo con un comando que falle (exit ≠ 0) encadenado con `&
 
 Con mucho trabajo sin commit, los commits se construyen en un worktree aparte: cómo, con sus
 trampas (el enlace a `node_modules`, las versiones intermedias, los tipos por commit), en
-[`CONTRIBUTING.md` §2](CONTRIBUTING.md#tamaño).
+[`CONTRIBUTING.md` §2](CONTRIBUTING.md#tamaño). Para fundir un `--fixup` sin editor:
+`GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash --autostash origin/main`.
 
 ## Convenciones de escritura
 

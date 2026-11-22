@@ -43,6 +43,8 @@ y el registro, la encuesta y el carnet con sus marcos;
   si cambias un schema del backend, se regenera en el mismo cambio. Un `Literal` en el
   schema llega como unión de cadenas y deja que TypeScript rechace valores que la API no
   acepta.
+- **Una página nueva en `App.tsx` va con `perezosa(<módulo>, '<Página>')`**, nunca con un import
+  estático: el paquete principal (públicas e ingreso) ronda los 500 kB y cada módulo es su trozo.
 - **Los estilos son CSS propio con cascada de orden fijo**: `tokens → base → componentes →
   vistas`, impuesto por `src/styles/index.css`. Alterar ese orden rompe las vistas.
 - **Ningún color, radio o sombra literal en un componente**: todo sale de `tokens.css`.
@@ -91,6 +93,8 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   van con `btn-peligro`.
 - **Las tablas nuevas usan `tabla-apilable`**, con `data-etiqueta` en cada celda y las acciones
   de fila en `td.tabla-acciones`.
+- **El título de una tarjeta de primer nivel es un `h2` en `.tarjeta-cabeza`** (Inter, no GeosansLight:
+  `.tarjeta-cabeza > h2`) y sus apartados, `h3`: el barrido falla si los encabezados saltan un nivel.
 - **GeosansLight (`--fuente-titulos`) solo en `h1` y `h2` de 20 px o más**; uno más pequeño
   vuelve a Inter. El logo es `MarcaTimu` (completo o `compacta`), con la receta de sus SVG en
   `src/assets/marca/README.md`.
@@ -169,3 +173,7 @@ están en [`docs/hoja-de-ruta-rediseno.md`](../docs/hoja-de-ruta-rediseno.md).
   a `/login`. La portada (`/`) se compara entera, no como prefijo.
 - La guarda de tokens toma por color un nombre de variable con una palabra de color en inglés
   (`--linea-red` falló): nómbralas en español.
+- Dos Playwright a la vez se pisan: cada uno vacía `test-results/` al empezar y el otro falla con
+  `ENOENT … .trace`. `test:e2e` y `test:e2e:stack`, uno detrás de otro.
+- Si el hook de diseño no devuelve nada (ni siquiera «No deterministic…»), pasa el detector a mano:
+  `.claude/skills/impeccable/scripts/impeccable detect --json <fichero>`.
