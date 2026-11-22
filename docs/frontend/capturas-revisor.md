@@ -201,3 +201,28 @@ cualquier cosa contra `db-test`**: su `pytest` recrea el esquema y la suite en m
   piensa primero para el celular) y sin `toggle` en `buildPath`. La página se abre con
   `xdg-open <url>`. El boceto elegido se copia a `docs/rediseno/boceto-<superficie>.html`:
   `.impeccable/mocks/` no se versiona.
+
+## Auditoría renderizada (`/impeccable audit` y `critique`)
+
+El detector sobre el código (`impeccable detect --json frontend/src`) no ve lo que solo existe al
+pintar: el contraste real, los encabezados de cada pestaña, una tabla que no cabe. La auditoría de
+`R4-CIE-02` ([lo que encontró](../rediseno/auditoria-r4-cie-02.md)) se midió así, con las
+sesiones de arriba:
+
+- **El detector sobre la página pintada, por CDP.** Chromium de Playwright lanzado con
+  `chromium.launch({ args: ['--remote-debugging-port=9222'] })`, una sola página abierta a la vez,
+  y por cada ruta, pestaña y ficha `impeccable detect --cdp 9222 --target <ruta de la URL> --json`
+  (sale con 2 cuando hay hallazgos). Antes de fiarse de un resultado vacío, se inyecta en la
+  página un texto en degradado y otro gris sobre gris: si el detector no los ve, no está leyendo
+  la página. Con dos agentes a la vez, un puerto cada uno.
+- **axe con todas las reglas**: `new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa',
+  'wcag21a', 'wcag21aa', 'wcag22aa'])`, lo mismo que pide el barrido de `e2e-stack/`. Con un
+  resultado de cero, comprueba que ninguna ruta acabó en `/login`: una sesión caída mide el
+  ingreso y da un cero falso.
+- **Los objetivos táctiles a 390 px**, con `getBoundingClientRect` de lo que se toca: por debajo
+  de 24 px falla WCAG 2.5.8, y por debajo de 44 incumple el criterio del sistema (`R1-CMP-01`).
+  El enlace de una fila de listado mide 22 px, pero su `::after` cubre la fila: no cuenta.
+- **El informe.** `impeccable audit-storage` no existe en la versión instalada (`critique-storage`
+  sí, y guarda en `.impeccable/critique/`, fuera del repositorio): el informe de una auditoría va
+  a `docs/rediseno/`. Los scripts de una medición viven en el scratchpad de `/tmp`, que se vacía
+  al reiniciar el equipo: lo que deba sobrevivir, al repositorio.
