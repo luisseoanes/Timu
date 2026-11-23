@@ -30,8 +30,13 @@ describe('Supresión de datos', () => {
     await user.click(screen.getByRole('button', { name: 'Buscar' }))
     expect(await screen.findByText('Ana Ruiz')).toBeInTheDocument()
     expect(screen.getByText('2 mascotas · Cancelada')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Anonimizar' }))
+    const enLaFila = screen.getByRole('button', { name: 'Anonimizar' })
+    // DEU-83: en la fila, plano rojo; el rojo lleno confirma en la ventana.
+    expect(enLaFila).toHaveClass('btn-plano-peligro')
+    expect(enLaFila).not.toHaveClass('btn-peligro')
+    await user.click(enLaFila)
     const modal = await screen.findByRole('dialog', { name: 'Anonimizar a Ana Ruiz' })
+    expect(within(modal).getByRole('button', { name: 'Anonimizar' })).toHaveClass('btn-peligro')
     await user.click(within(modal).getByRole('button', { name: 'Anonimizar' }))
     // Tras anonimizar se vuelve a pedir la familia, para decir que ya está anonimizada.
     await waitFor(() => expect(pedidos.slice(0, 2)).toEqual(['buscar 1020304050', 'anonimizar']))

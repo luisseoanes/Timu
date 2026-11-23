@@ -74,7 +74,8 @@ export function Supresion() {
               ) : f.con_contrato_vigente ? (
                 <Insignia tono="alerta">Contrato vigente</Insignia>
               ) : (
-                <button className="btn btn-peligro" type="button" onClick={() => setConfirmando(f)}>
+                // En la fila, plano rojo; el rojo lleno es para confirmar en la ventana (DEU-83).
+                <button className="btn btn-plano btn-plano-peligro" type="button" onClick={() => setConfirmando(f)}>
                   Anonimizar
                 </button>
               )}
