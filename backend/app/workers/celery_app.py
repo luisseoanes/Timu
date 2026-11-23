@@ -100,10 +100,11 @@ celery_app.conf.update(
             "task": "cartera.detectar_renovaciones",
             "schedule": crontab(hour=6, minute=30),
         },
-        # 6.8 / 6.13 agenda preventiva del dia
+        # 6.8 / 6.13 agenda preventiva del dia. Envia WhatsApp a las familias: de dia, no de
+        # madrugada como el resto de procesos diarios (DEU-82).
         "preventivos-generar-agenda": {
             "task": "preventivos.generar_agenda",
-            "schedule": crontab(hour=5, minute=30),
+            "schedule": crontab(hour=9, minute=0),
         },
         # 6.18 campanas: lanzar las programadas y despachar al ritmo permitido
         "campanas-lanzar-programadas": {

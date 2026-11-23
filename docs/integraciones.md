@@ -113,7 +113,7 @@ nombre y las mismas variables:
 | `codigo_ingreso` | Ingreso al portal con código | `auth/service.py` |
 | `cuota_vencida`, `aviso_mora`, `aviso_congelamiento` | 1, 5 y 15, y 25 días de mora (reglas configurables) | `reglas/datos.py` |
 | `afiliacion_congelada`, `afiliacion_reactivada` | Cambio de estado del contrato | `cartera/service.py` |
-| `recordatorio_preventivo` | Días antes de un evento preventivo (`PREVENTIVO_ANTICIPACION_DIAS`) | `preventivos/service.py` |
+| `recordatorio_preventivo` | Días antes de un evento preventivo (`PREVENTIVO_ANTICIPACION_DIAS`), a las 9:00 y uno por familia: titular, sus peludos, cada preventivo (con su peludo si hay varios y su fecha si no coinciden) y la fecha más próxima. Lo ya vencido no se recuerda | `preventivos/service.py` |
 | `ventana_llegada`, `tecnico_en_camino` | Ruta del día | `rutas/service.py` |
 | `encuesta_satisfaccion`, `seguimiento_post` | Tras un servicio (configurables por tipo) | `encuestas/service.py` |
 | `respuesta_virtual` | Respuesta de orientación virtual fuera de la ventana | `clinica/service.py` |

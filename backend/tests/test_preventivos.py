@@ -202,26 +202,82 @@ async def test_un_peso_imposible_no_se_registra(client: AsyncClient, db, headers
 # --- 6.8 Agenda -------------------------------------------------------------------------
 
 
-async def test_agenda_diaria_avisa_una_sola_vez(db):
+def _plantilla_recordatorio(db) -> None:
     db.add(
         PlantillaWhatsApp(
             nombre=service.PLANTILLA_RECORDATORIO,
-            cuerpo="Hola {{1}}, a {{2}} le toca {{3}} el {{4}}",
-            variables=["titular", "mascota", "preventivo", "fecha"],
+            cuerpo="Hola {{1}}, se acercan los preventivos de {{2}}: {{3}}. El primero, el {{4}}",
+            variables=["titular", "peludos", "preventivos", "primera fecha"],
             estado_aprobacion="aprobada",
             activa=True,
         )
     )
+
+
+async def _mensajes_de(db, familia) -> list[Mensaje]:
+    return list(await db.scalars(select(Mensaje).where(Mensaje.familia_id == familia.id)))
+
+
+async def test_agenda_diaria_avisa_una_sola_vez(db):
+    _plantilla_recordatorio(db)
     familia, mascota = await _cachorro(db)
     resumen = await db.run_sync(service.agenda_diaria, HOY)
     # Los que caen dentro de la anticipacion (hoy): polivalente, rabia no (12 semanas),
-    # desparasitaciones si.
-    assert resumen["avisados"] >= 1
+    # desparasitaciones si. Todos van en un solo mensaje (DEU-82).
+    assert resumen["avisados"] >= 2 and resumen["mensajes"] == 1
     otra_vez = await db.run_sync(service.agenda_diaria, HOY)
     assert otra_vez["avisados"] == 0
-    mensajes = list(await db.scalars(select(Mensaje).where(Mensaje.familia_id == familia.id)))
-    assert len(mensajes) == resumen["avisados"]
+    mensajes = await _mensajes_de(db, familia)
+    assert len(mensajes) == 1
     assert mascota.nombre in mensajes[0].contenido
+
+
+async def test_la_agenda_junta_los_peludos_de_una_familia_en_un_mensaje(db):
+    """DEU-82: siete WhatsApp seguidos a una familia, uno por preventivo. Ahora uno solo, que
+    dice de quien es cada preventivo y, si no caen el mismo dia, cuando."""
+    _plantilla_recordatorio(db)
+    familia, _ = await fabricas.afiliada(db, HOY, mascotas=2)
+    luna, toby = familia.mascotas
+    luna.nombre, toby.nombre = "Luna", "Toby"
+    luna.fecha_nacimiento = HOY - timedelta(weeks=10)
+    toby.fecha_nacimiento = HOY - timedelta(weeks=9)
+    await db.flush()
+    for mascota in (luna, toby):
+        await db.run_sync(service.calendario_inicial, mascota, HOY)
+    resumen = await db.run_sync(service.agenda_diaria, HOY)
+    assert resumen["mensajes"] == 1
+    [mensaje] = await _mensajes_de(db, familia)
+    _, peludos, preventivos, primera = mensaje.variables
+    assert peludos == "Luna y Toby"
+    assert " de Luna" in preventivos and " de Toby" in preventivos
+    # Toby nacio una semana despues: sus fechas no coinciden y cada preventivo dice la suya.
+    assert "(" in preventivos
+    avisados = [
+        e
+        for m in (luna, toby)
+        for e in await db.scalars(
+            select(EventoPreventivo).where(EventoPreventivo.mascota_id == m.id)
+        )
+        if e.notificado_en is not None
+    ]
+    assert len(avisados) == resumen["avisados"]
+    assert primera == f"{min(e.fecha_programada for e in avisados):%d/%m/%Y}"
+
+
+async def test_la_agenda_no_recuerda_lo_ya_vencido(db):
+    """DEU-82: un preventivo de una fecha pasada no se «recuerda»: lo gestiona el equipo."""
+    _plantilla_recordatorio(db)
+    familia, mascota = await _cachorro(db)
+    eventos = list(
+        await db.scalars(select(EventoPreventivo).where(EventoPreventivo.mascota_id == mascota.id))
+    )
+    for evento in eventos:
+        evento.fecha_programada = HOY - timedelta(days=3)
+    await db.flush()
+    resumen = await db.run_sync(service.agenda_diaria, HOY)
+    assert resumen == {"avisados": 0, "mensajes": 0, "sin_aviso": 0}
+    assert await _mensajes_de(db, familia) == []
+    assert all(e.notificado_en is None for e in eventos)
 
 
 async def test_agenda_sin_plantilla_no_marca_como_avisado(db):

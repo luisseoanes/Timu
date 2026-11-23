@@ -438,13 +438,42 @@ def _vigente(db: Session, familia_id: UUID) -> bool:
     return contratos.contrato_vigente(db, familia_id) is not None
 
 
+def _y(partes: list[str]) -> str:
+    """«a», «a y b», «a, b y c»."""
+    return partes[0] if len(partes) == 1 else f"{', '.join(partes[:-1])} y {partes[-1]}"
+
+
+def _variables_recordatorio(
+    familia: Familia, avisos: list[tuple[EventoPreventivo, Mascota, str]]
+) -> list[str]:
+    """Las cuatro variables de `recordatorio_preventivo` para todos los preventivos que se
+    acercan en una familia: el titular, sus peludos, cada preventivo (con su peludo si hay
+    varios y su fecha si no caen el mismo dia) y la fecha mas proxima."""
+    peludos = list(dict.fromkeys(m.nombre for _, m, _ in avisos))
+    fechas = {e.fecha_programada for e, _, _ in avisos}
+    preventivos = []
+    for evento, mascota, nombre in avisos:
+        texto = f"{nombre} de {mascota.nombre}" if len(peludos) > 1 else nombre
+        if len(fechas) > 1:
+            texto += f" ({evento.fecha_programada:%d/%m})"
+        preventivos.append(texto)
+    return [
+        familia.titular_nombre,
+        _y(peludos),
+        _y(list(dict.fromkeys(preventivos))),
+        f"{min(fechas):%d/%m/%Y}",
+    ]
+
+
 def agenda_diaria(db: Session, dia: date | None = None) -> dict[str, int]:
     """Avisa a la familia de los preventivos que se acercan (una sola vez por evento) para
-    que los agende. Solo mascotas activas de familias con plan vigente."""
+    que los agende, en un solo mensaje por familia con todos sus peludos. No recuerda lo ya
+    vencido: eso lo gestiona el equipo desde la bandeja. Solo mascotas activas de familias con
+    plan vigente. La programa el beat de dia (`celery_app.py`): el aviso llega a un celular."""
 
     dia = dia or hoy()
     limite = dia + timedelta(days=settings.PREVENTIVO_ANTICIPACION_DIAS)
-    resumen = {"avisados": 0, "sin_aviso": 0}
+    resumen = {"avisados": 0, "mensajes": 0, "sin_aviso": 0}
     filas = db.execute(
         select(EventoPreventivo, Mascota, Familia)
         .join(Mascota, Mascota.id == EventoPreventivo.mascota_id)
@@ -453,36 +482,37 @@ def agenda_diaria(db: Session, dia: date | None = None) -> dict[str, int]:
             EventoPreventivo.estado == "programado",
             EventoPreventivo.notificado_en.is_(None),
             EventoPreventivo.servicio_id.is_(None),
+            EventoPreventivo.fecha_programada >= dia,
             EventoPreventivo.fecha_programada <= limite,
             Mascota.activa.is_(True),
             Familia.dada_de_baja_en.is_(None),
         )
         .order_by(EventoPreventivo.fecha_programada)
     ).all()
+    por_familia: dict[UUID, tuple[Familia, list[tuple[EventoPreventivo, Mascota, str]]]] = {}
     for evento, mascota, familia in filas:
-        if not _vigente(db, familia.id):
-            continue
         esquema = _esquema(db, evento.esquema_codigo)
         nombre = esquema.nombre if esquema else evento.tipo
+        por_familia.setdefault(familia.id, (familia, []))[1].append((evento, mascota, nombre))
+    for familia, avisos in por_familia.values():
+        if not _vigente(db, familia.id):
+            continue
         try:
             with db.begin_nested():
                 comunicaciones.encolar_plantilla(
                     db,
                     telefono=familia.telefono,
                     plantilla=PLANTILLA_RECORDATORIO,
-                    variables=[
-                        familia.titular_nombre,
-                        mascota.nombre,
-                        nombre,
-                        f"{evento.fecha_programada:%d/%m/%Y}",
-                    ],
+                    variables=_variables_recordatorio(familia, avisos),
                     familia_id=familia.id,
                 )
-                evento.notificado_en = ahora()
-            resumen["avisados"] += 1
+                for evento, _, _ in avisos:
+                    evento.notificado_en = ahora()
+            resumen["avisados"] += len(avisos)
+            resumen["mensajes"] += 1
         except ReglaNegocio as e:
             logger.error("Recordatorio preventivo sin enviar: %s", e)
-            resumen["sin_aviso"] += 1
+            resumen["sin_aviso"] += len(avisos)
     db.flush()
     return resumen
 

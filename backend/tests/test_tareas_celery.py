@@ -40,6 +40,14 @@ def test_el_planificador_solo_programa_tareas_que_existen():
     assert programadas - set(celery_app.tasks) == set()
 
 
+@pytest.mark.unit
+def test_la_agenda_preventiva_se_envia_de_dia():
+    """DEU-82: el recordatorio de preventivos llega a un celular y salia a las 5:30 de la
+    madrugada, con los demas procesos diarios."""
+    hora = celery_app.conf.beat_schedule["preventivos-generar-agenda"]["schedule"].hour
+    assert hora and all(8 <= h <= 19 for h in hora)
+
+
 @pytest.mark.parametrize(
     ("tarea", "esperado"),
     [

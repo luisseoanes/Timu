@@ -499,8 +499,9 @@ PLANTILLAS_DEMO = [
         "recordatorio_preventivo",
         "Recordatorio de preventivo",
         "utility",
-        "Hola {{1}}, a {{2}} le toca {{3}} el {{4}}. Responde a este mensaje para agendarlo.",
-        ["titular", "mascota", "preventivo", "fecha"],
+        "Hola {{1}}, se acercan los preventivos de {{2}}: {{3}}. El primero es el {{4}}."
+        " Responde a este mensaje para agendarlos.",
+        ["titular", "peludos", "preventivos", "primera fecha"],
     ),
     (
         "ventana_llegada",
