@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { EstacionRead } from '@/types'
 
-import { esGrupoVencidas, esTramo, orientacion, paradas, recorrido, resumen, type Elemento } from './linea'
+import { colorDeEstacion, colorDeLinea, esGrupoVencidas, esTramo, orientacion, paradas, recorrido, resumen, type Elemento } from './linea'
 
 /** Cada elemento en una palabra: «hoy», «tramo», «vencidas» o la fecha y el estado de la parada. */
 const clave = (e: Elemento) => ('tipo' in e ? e.tipo : `${e.fecha} ${e.estado}`)
@@ -87,5 +87,29 @@ describe('línea de la familia', () => {
     expect(orientacion(900, 7)).toBe('horizontal')
     expect(orientacion(600, 7)).toBe('vertical')
     expect(orientacion(0, 0)).toBe('horizontal')
+  })
+})
+
+describe('el color de la línea con uno o varios planes (DEU-78)', () => {
+  const verde = { color: 'verde' as const, mascotas: ['Luna'] }
+  const naranja = { color: 'naranja' as const, mascotas: ['Michi'] }
+
+  it('con un plan va en su color, sin plan en gris y con varios en marino', () => {
+    expect(colorDeLinea([verde])).toBe('verde')
+    expect(colorDeLinea([])).toBe('ninguno')
+    expect(colorDeLinea([verde, naranja])).toBe('varios')
+    // Dos planes del mismo color no son «varios».
+    expect(colorDeLinea([verde, { color: 'verde', mascotas: ['Max'] }])).toBe('verde')
+  })
+
+  it('con varios planes, cada estación toma el del plan de su peludo', () => {
+    const planes = [verde, naranja]
+    expect(colorDeEstacion(planes, [{ mascota: 'Luna' }])).toBe('verde')
+    expect(colorDeEstacion(planes, [{ mascota: 'Michi' }])).toBe('naranja')
+    // Una cuota es de la familia, y un día con los dos peludos no es de un plan: marino.
+    expect(colorDeEstacion(planes, [{ mascota: null }])).toBeUndefined()
+    expect(colorDeEstacion(planes, [{ mascota: 'Luna' }, { mascota: 'Michi' }])).toBeUndefined()
+    // Con un solo plan no hace falta: el punto ya va en el color de la línea.
+    expect(colorDeEstacion([verde], [{ mascota: 'Luna' }])).toBeUndefined()
   })
 })

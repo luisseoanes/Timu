@@ -5,7 +5,8 @@ import { Distintivo } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { mensajeError } from '@/lib/errores'
 import { fechaCorta, fechaCortaConDia, moneda } from '@/lib/formato'
-import type { ColorPlan, EstacionRead, EstadoCuenta, ServicioPortalRead } from '@/types'
+import { colorDeEstacion, type ColorLinea } from '@/features/familias'
+import type { EstacionRead, EstadoCuenta, PlanDeFamiliaRead, ServicioPortalRead } from '@/types'
 
 import { usePagarPortal } from './api'
 import { accionPrincipal, meses, PROXIMO_COBRO, type Elemento } from './linea'
@@ -13,8 +14,10 @@ import { accionPrincipal, meses, PROXIMO_COBRO, type Elemento } from './linea'
 interface Props {
   elementos: Elemento[]
   hoy: string
-  /** El color del plan (catálogo); sin plan, la línea va en gris. */
-  color: ColorPlan | null
+  /** El color del plan (catálogo); sin plan, la línea va en gris, y con varios, en marino. */
+  color: ColorLinea | null
+  /** Los planes de la familia: con varios, cada estación va en el color del de su peludo. */
+  planes?: PlanDeFamiliaRead[]
   cuenta: EstadoCuenta | null
   servicios: ServicioPortalRead[]
   /** Por qué no se puede agendar ahora, o null si se puede. */
@@ -32,7 +35,7 @@ interface Props {
  * plegado arriba, lo vencido agrupado con su acción, la marca de hoy y lo que viene. Cada
  * estación dice en palabras qué es y qué hacer: la familia no tiene por qué leer un diagrama.
  */
-export function LineaPortal({ elementos, hoy, color, cuenta, servicios, sinAgendar, onAgendar, etiqueta, fin, dePeludo = false }: Props) {
+export function LineaPortal({ elementos, hoy, color, planes = [], cuenta, servicios, sinAgendar, onAgendar, etiqueta, fin, dePeludo = false }: Props) {
   const pagar = usePagarPortal()
   const [desplegado, setDesplegado] = useState(false)
   const idHechas = useId()
@@ -78,7 +81,7 @@ export function LineaPortal({ elementos, hoy, color, cuenta, servicios, sinAgend
 
         if (e.tipo === 'hechas') {
           return (
-            <li key="hechas" className="parada-portal" data-estado="hecha">
+            <li key="hechas" className="parada-portal" data-estado="hecha" data-color={colorDeEstacion(planes, e.estaciones)}>
               <span className="parada-portal-punto" aria-hidden="true" />
               <div className="parada-portal-cuerpo">
                 <button
@@ -170,7 +173,7 @@ export function LineaPortal({ elementos, hoy, color, cuenta, servicios, sinAgend
         const valor = estacion.tipo === 'cuota' ? porPagar(estacion.referencia_id) : null
         const estado = estacion.tipo === 'servicio' ? estadoServicio(estacion.referencia_id) : undefined
         return (
-          <li key={`${estacion.tipo}-${estacion.referencia_id}-${i}`} className="parada-portal" data-estado={estacion.estado}>
+          <li key={`${estacion.tipo}-${estacion.referencia_id}-${i}`} className="parada-portal" data-estado={estacion.estado} data-color={colorDeEstacion(planes, [estacion])}>
             <Punto estado={estacion.estado} />
             <div className="parada-portal-cuerpo">
               <h3>

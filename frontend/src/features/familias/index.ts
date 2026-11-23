@@ -4,3 +4,4 @@ export { FamiliaDetallePage, type GestionarPreventivoProps } from './FamiliaDeta
 export { FamiliasPage } from './FamiliasPage'
 export { SelectorFamilia } from './SelectorFamilia'
 export { useFamilia, useMascotas } from './api'
+export { colorDeEstacion, colorDeLinea, type ColorLinea } from './linea'

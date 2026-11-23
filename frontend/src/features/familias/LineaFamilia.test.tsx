@@ -80,6 +80,25 @@ describe('Familias con la línea de metro', () => {
     await waitFor(() => expect(fila.querySelector('.linea-mini')).toHaveAttribute('data-color', 'ninguno'))
   })
 
+  it('con dos planes la línea va en marino y cada parada en el plan de su peludo (DEU-78)', async () => {
+    const dosPlanes: LineaFamiliaRead = {
+      ...LINEA,
+      planes: [
+        { plan_id: 'p1', nombre: 'Mi Amigo Fiel', color: 'verde', mascotas: ['Luna'] },
+        { plan_id: 'p2', nombre: 'Colita Feliz', color: 'naranja', mascotas: ['Michi'] },
+      ],
+      estaciones: [...LINEA.estaciones, estacion(50, 'futura', 'Desparasitación', { tipo: 'preventivo', mascota: 'Michi' })],
+    }
+    server.use(http.get('*/api/v1/familias/:id/linea', () => HttpResponse.json(dosPlanes)))
+    abrirFicha()
+    const linea = await screen.findByRole('list', { name: 'Línea de la familia' })
+    expect(linea).toHaveAttribute('data-color', 'varios')
+    const parada = (nombre: RegExp) => screen.getByRole('button', { name: nombre }).closest('li')!
+    expect(parada(/^Vacuna de Luna/)).toHaveAttribute('data-color', 'verde')
+    expect(parada(/^Desparasitación de Michi/)).toHaveAttribute('data-color', 'naranja')
+    expect(parada(/^Cuota de diciembre/)).not.toHaveAttribute('data-color')
+  })
+
   it('bajo la línea quedan a la vista las mascotas con su plan y la cartera', async () => {
     conLinea()
     abrirFicha()

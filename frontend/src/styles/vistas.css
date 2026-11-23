@@ -987,6 +987,7 @@
 .linea-portal[data-color="verde"] { --color-linea: var(--plan-verde); }
 .linea-portal[data-color="naranja"] { --color-linea: var(--plan-naranja); }
 .linea-portal[data-color="azul"] { --color-linea: var(--plan-azul); }
+.linea-portal[data-color="varios"] { --color-linea: var(--plan-varios); }
 .parada-portal, .linea-portal-hoy { position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: var(--e4); }
 .parada-portal::before, .linea-portal-hoy::before {
   content: ""; position: absolute; left: 8px; top: 0; bottom: 0; width: 8px;
@@ -999,10 +1000,10 @@
   position: relative; z-index: var(--capa-elevada);
   width: 24px; height: 24px; margin-top: var(--e3);
   display: grid; place-items: center;
-  border: 4px solid var(--color-linea); border-radius: var(--r-pastilla);
+  border: 4px solid var(--color-punto, var(--color-linea)); border-radius: var(--r-pastilla);
   background: var(--superficie); color: var(--peligro-accion-texto);
 }
-.parada-portal[data-estado="hecha"] .parada-portal-punto { background: var(--color-linea); }
+.parada-portal[data-estado="hecha"] .parada-portal-punto { background: var(--color-punto, var(--color-linea)); }
 .parada-portal[data-estado="vencida"] .parada-portal-punto { border-color: var(--peligro-accion-fondo); background: var(--peligro-accion-fondo); }
 .parada-portal[data-estado="proxima"] .parada-portal-punto { border-color: var(--texto-titulo); box-shadow: 0 0 0 3px var(--indicador-seleccion); }
 .parada-portal-cuerpo { display: grid; gap: 2px; min-width: 0; padding-block: var(--e3) var(--e4); }
@@ -1170,6 +1171,11 @@
 .linea[data-color="verde"], .linea-mini[data-color="verde"] { --color-linea: var(--plan-verde); }
 .linea[data-color="naranja"], .linea-mini[data-color="naranja"] { --color-linea: var(--plan-naranja); }
 .linea[data-color="azul"], .linea-mini[data-color="azul"] { --color-linea: var(--plan-azul); }
+.linea[data-color="varios"], .linea-mini[data-color="varios"] { --color-linea: var(--plan-varios); }
+/* Con varios planes, cada parada en el de su peludo (DEU-78); el estado (vencida, próxima) manda sobre el plan. */
+:is(.parada, .parada-portal, .linea-mini-punto)[data-color="verde"] { --color-punto: var(--plan-verde); }
+:is(.parada, .parada-portal, .linea-mini-punto)[data-color="naranja"] { --color-punto: var(--plan-naranja); }
+:is(.parada, .parada-portal, .linea-mini-punto)[data-color="azul"] { --color-punto: var(--plan-azul); }
 
 .linea { position: relative; display: flex; align-items: flex-start; list-style: none; margin: 0; padding: 0; }
 .linea::before {
@@ -1182,12 +1188,12 @@
   width: 24px; height: 24px; padding: 0;
   display: grid; place-items: center;
   border-radius: var(--r-pastilla);
-  border: 4px solid var(--color-linea);
+  border: 4px solid var(--color-punto, var(--color-linea));
   background: var(--superficie);
   color: var(--peligro-accion-texto);
   cursor: pointer;
 }
-.parada[data-estado="hecha"] .parada-punto { background: var(--color-linea); }
+.parada[data-estado="hecha"] .parada-punto { background: var(--color-punto, var(--color-linea)); }
 .parada[data-estado="proxima"] .parada-punto { border-color: var(--texto-titulo); box-shadow: 0 0 0 3px var(--indicador-seleccion); }
 .parada[data-estado="vencida"] .parada-punto { border-color: var(--peligro-accion-fondo); background: var(--peligro-accion-fondo); }
 .parada-etiqueta {
@@ -1218,8 +1224,8 @@
 /* Miniatura de una fila del listado: solo dibujo; el resumen va en aria-label. */
 .linea-mini { position: relative; display: flex; align-items: center; justify-content: space-between; height: 12px; }
 .linea-mini::before { content: ""; position: absolute; left: 0; right: 0; top: 5px; height: 2px; background: var(--color-linea); }
-.linea-mini-punto { position: relative; width: 10px; height: 10px; border-radius: var(--r-pastilla); border: 2px solid var(--color-linea); background: var(--superficie); }
-.linea-mini-punto[data-estado="hecha"] { background: var(--color-linea); }
+.linea-mini-punto { position: relative; width: 10px; height: 10px; border-radius: var(--r-pastilla); border: 2px solid var(--color-punto, var(--color-linea)); background: var(--superficie); }
+.linea-mini-punto[data-estado="hecha"] { background: var(--color-punto, var(--color-linea)); }
 .linea-mini-punto[data-estado="proxima"] { border-color: var(--texto-titulo); }
 .linea-mini-punto[data-estado="vencida"] { border-color: var(--peligro-accion-fondo); background: var(--peligro-accion-fondo); }
 .linea-mini-hoy { position: relative; width: 2px; height: 12px; background: var(--texto-titulo); }

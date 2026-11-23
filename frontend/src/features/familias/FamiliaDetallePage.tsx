@@ -163,7 +163,7 @@ function Ficha({
         ) : lineaError || !linea ? (
           <p className="error">No fue posible cargar la línea de la familia.</p>
         ) : (
-          <LineaFamilia estaciones={estaciones} color={planes[0]?.color} onActivar={atender} />
+          <LineaFamilia estaciones={estaciones} planes={planes} onActivar={atender} />
         )}
       </section>
 

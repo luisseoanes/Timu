@@ -49,6 +49,7 @@ colors:
   plan-naranja: "#D48200"
   plan-azul: "#477095"
   plan-ninguno: "#A0A1AF"
+  plan-varios: "#111537"
   plan-verde-texto: "#111537"
   plan-naranja-texto: "#111537"
   plan-azul-texto: "#FFFFFF"
@@ -905,7 +906,10 @@ la 1 y la 2 (verde y azul, ΔE 20,4) sin excepción; uno de una serie, la 1. El 
 El elemento que identifica el producto. `LineaFamilia` dibuja el año de la familia como un plano
 de metro: espaciado esquemático, no proporcional al tiempo.
 - **Línea:** 8 px, pastilla, del color del plan (`data-color` del catálogo) o gris
-  (`plan-ninguno`) sin plan.
+  (`plan-ninguno`) sin plan. Con varios planes, marina (`plan-varios`): pintarla con uno diría que
+  todos los peludos están en él. Entonces cada estación lleva el color del plan de su peludo (la
+  de una cuota, o la que junta peludos de planes distintos, se queda en marino), también en la
+  miniatura del listado; el estado (vencida, próxima) manda sobre el plan.
 - **Estaciones:** botones circulares de 24 px con borde de 4 px. Hecha: llena del color de la
   línea. Próxima: anillo marino con halo verde hondo de 3 px (3:1 sobre blanco). Vencida: roja con el icono de
   alerta en blanco. Programada: contorno del color de la línea sobre blanco. Los eventos del
@@ -1286,7 +1290,8 @@ panel no deduce nada de un código ni copia una regla del backend para decidir q
 `LineaPortal` es la línea de la familia contada a la familia: vertical siempre, abierta en «Hoy»
 y en un panel blanco. Las estaciones no son botones: cada una dice en palabras qué es y, si
 toca, lleva su acción debajo. La familia no tiene por qué leer un diagrama.
-- **Línea:** 8 px del color del plan (`data-color`), o gris sin plan; cada parada dibuja su
+- **Línea:** 8 px del color del plan (`data-color`), o gris sin plan; con varios planes, marina, y
+  cada estación en el color del plan de su peludo, como la de la familia. Cada parada dibuja su
   tramo y la primera y la última lo cierran en pastilla. Columna de 24 px para la estación y el
   texto a 16 px; entre una parada y la siguiente, un hilo sobre el texto.
 - **Estaciones:** las mismas formas de 24 px con borde de 4 px que la línea de la familia (hecha

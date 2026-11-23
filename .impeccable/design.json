@@ -634,6 +634,21 @@
           "#E2E3E7"
         ]
       },
+      "plan-varios": {
+        "role": "neutral",
+        "displayName": "Varios planes",
+        "canonical": "var(--marino-900)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#C4C4CD",
+          "#E2E3E7"
+        ]
+      },
       "plan-verde-texto": {
         "role": "neutral",
         "displayName": "Texto sobre plan verde",

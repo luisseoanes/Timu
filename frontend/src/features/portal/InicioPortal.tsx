@@ -5,6 +5,7 @@ import { Consulta } from '@/components/Consulta'
 import { Insignia } from '@/components/Distintivo'
 import { Icono } from '@/components/Icono'
 import { useAuth } from '@/features/auth'
+import { colorDeLinea } from '@/features/familias'
 import { hoyISO } from '@/lib/formato'
 import type { EstacionRead, MascotaRead } from '@/types'
 
@@ -104,7 +105,8 @@ export function PortalInicio() {
             <LineaPortal
               elementos={recorrido(conProximoCobro(l.estaciones, cuenta.data?.proximo_cobro, hoy), hoy, orden)}
               hoy={hoy}
-              color={l.planes[0]?.color ?? null}
+              color={colorDeLinea(l.planes)}
+              planes={l.planes}
               fin={finDeLinea(plan.data)}
               cuenta={cuenta.data ?? null}
               servicios={servicios.data ?? []}

@@ -2,9 +2,9 @@ import { useLayoutEffect, useRef, useState } from 'react'
 
 import { Icono } from '@/components/Icono'
 import { fechaCorta, hoyISO } from '@/lib/formato'
-import type { ColorPlan, EstacionRead } from '@/types'
+import type { EstacionRead, PlanDeFamiliaRead } from '@/types'
 
-import { esGrupoVencidas, esHoy, esTramo, orientacion, recorrido, resumen, type Parada } from './linea'
+import { colorDeEstacion, colorDeLinea, esGrupoVencidas, esHoy, esTramo, orientacion, recorrido, resumen, type Parada } from './linea'
 
 const ESTADO: Record<Parada['estado'], string> = {
   hecha: 'hecha',
@@ -26,9 +26,6 @@ function rotulo(parada: Parada): string {
   const [primera, ...resto] = parada.estaciones
   return resto.length === 0 ? primera.titulo : `${primera.titulo} y ${resto.length} más`
 }
-
-/** Color de la línea: el del plan o gris si la familia no tiene. */
-type ColorLinea = ColorPlan | 'ninguno'
 
 /** Orientación según el ancho real de la línea y cuántos elementos lleva. Sin ResizeObserver
  * (pruebas en jsdom) se queda horizontal. */
@@ -60,11 +57,12 @@ function useOrientacion(elementos: number) {
  */
 export function LineaFamilia({
   estaciones,
-  color = 'ninguno',
+  planes = [],
   onActivar,
 }: {
   estaciones: EstacionRead[]
-  color?: ColorLinea
+  /** Los planes de la familia: dan el color de la línea y, si son varios, el de cada parada. */
+  planes?: PlanDeFamiliaRead[]
   onActivar?: (parada: Parada) => void
 }) {
   const [desplegado, setDesplegado] = useState(false)
@@ -80,7 +78,7 @@ export function LineaFamilia({
     )
   }
   return (
-    <ol ref={ref} className="linea" data-color={color} data-orientacion={forma} aria-label="Línea de la familia">
+    <ol ref={ref} className="linea" data-color={colorDeLinea(planes)} data-orientacion={forma} aria-label="Línea de la familia">
       {elementos.map((el, i) => {
         if (esHoy(el)) {
           return (
@@ -123,7 +121,7 @@ export function LineaFamilia({
         }
         const siempre = el.estado === 'vencida' || el.estado === 'proxima'
         return (
-          <li key={`${el.fecha}-${i}`} className="parada" data-estado={el.estado} data-rotulada={siempre}>
+          <li key={`${el.fecha}-${i}`} className="parada" data-estado={el.estado} data-rotulada={siempre} data-color={colorDeEstacion(planes, el.estaciones)}>
             <button className="parada-punto" type="button" aria-label={nombre(el)} onClick={() => onActivar?.(el)}>
               {el.estado === 'vencida' && <Icono nombre="alerta" size={12} />}
             </button>
@@ -139,19 +137,19 @@ export function LineaFamilia({
 }
 
 /** La línea en miniatura de una fila del listado: dibujo para quien ve, resumen para quien no. */
-export function LineaMini({ estaciones, color = 'ninguno' }: { estaciones: EstacionRead[]; color?: ColorLinea }) {
+export function LineaMini({ estaciones, planes = [] }: { estaciones: EstacionRead[]; planes?: PlanDeFamiliaRead[] }) {
   const elementos = recorrido(estaciones, hoyISO())
   return (
-    <span className="linea-mini" data-color={color} role="img" aria-label={resumen(estaciones, fechaCorta)}>
+    <span className="linea-mini" data-color={colorDeLinea(planes)} role="img" aria-label={resumen(estaciones, fechaCorta)}>
       {elementos.map((el, i) =>
         esHoy(el) ? (
           <span key="hoy" className="linea-mini-hoy" />
         ) : esTramo(el) ? (
-          <span key="tramo" className="linea-mini-punto" data-estado="hecha" />
+          <span key="tramo" className="linea-mini-punto" data-estado="hecha" data-color={colorDeEstacion(planes, el.paradas.flatMap((pa) => pa.estaciones))} />
         ) : esGrupoVencidas(el) ? (
           <span key="vencidas" className="linea-mini-punto" data-estado="vencida" />
         ) : (
-          <span key={`${el.fecha}-${i}`} className="linea-mini-punto" data-estado={el.estado} />
+          <span key={`${el.fecha}-${i}`} className="linea-mini-punto" data-estado={el.estado} data-color={colorDeEstacion(planes, el.estaciones)} />
         ),
       )}
     </span>

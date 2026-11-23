@@ -140,7 +140,7 @@ export function FamiliasLista({ seleccionada }: { seleccionada?: string }) {
                         {vencidas} {vencidas === 1 ? 'vencida' : 'vencidas'}
                       </span>
                     )}
-                    {linea && <LineaMini estaciones={delPerfil} color={planes[0]?.color} />}
+                    {linea && <LineaMini estaciones={delPerfil} planes={planes} />}
                   </li>
                 )
               })}

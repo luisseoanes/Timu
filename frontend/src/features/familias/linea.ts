@@ -1,5 +1,5 @@
 import { puede } from '@/lib/permisos'
-import type { EstacionRead, Usuario } from '@/types'
+import type { ColorPlan, EstacionRead, PlanDeFamiliaRead, Usuario } from '@/types'
 
 /**
  * La línea de la familia como un plano de metro (contrato de dirección del panel,
@@ -7,6 +7,33 @@ import type { EstacionRead, Usuario } from '@/types'
  * Las estaciones del mismo día comparten parada; las hechas antiguas se pliegan en un tramo;
  * lo vencido y lo próximo siempre se ve.
  */
+
+/**
+ * El color de la línea: el de su plan, gris sin plan y, con varios planes, «varios» (marino), porque
+ * pintarla con uno solo diría que todos los peludos están en él (DEU-78).
+ */
+export type ColorLinea = ColorPlan | 'ninguno' | 'varios'
+
+export function colorDeLinea(planes: Pick<PlanDeFamiliaRead, 'color'>[]): ColorLinea {
+  const colores = [...new Set(planes.map((p) => p.color))]
+  if (colores.length === 0) return 'ninguno'
+  return colores.length === 1 ? colores[0] : 'varios'
+}
+
+/**
+ * Con varios planes, el punto de una estación toma el color del plan de su peludo; si es de la
+ * familia (una cuota) o junta peludos de planes distintos, se queda en el marino de la línea.
+ * Con uno solo no hace falta: el punto ya va en el color de la línea.
+ */
+export function colorDeEstacion(
+  planes: Pick<PlanDeFamiliaRead, 'color' | 'mascotas'>[],
+  estaciones: Pick<EstacionRead, 'mascota'>[],
+): ColorPlan | undefined {
+  if (colorDeLinea(planes) !== 'varios' || estaciones.length === 0) return undefined
+  const colores = new Set(estaciones.map((e) => planes.find((p) => e.mascota !== null && p.mascotas.includes(e.mascota))?.color))
+  const [unico] = colores
+  return colores.size === 1 ? unico : undefined
+}
 
 export type EstadoParada = EstacionRead['estado']
 

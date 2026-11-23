@@ -169,6 +169,33 @@ describe('Portal de la familia', () => {
     expect(within(lista).getByRole('button', { name: /^Pagar \$\s75\.000$/ })).toHaveClass('btn-primario')
   })
 
+  it('con dos planes la línea va en marino y cada estación en el plan de su peludo (DEU-78)', async () => {
+    server.use(
+      ...comoFamilia,
+      http.get(`${API}/portal/plan`, () => HttpResponse.json(plan('activa'))),
+      http.get(`${API}/portal/linea`, () =>
+        HttpResponse.json({
+          ...linea([
+            estacion(5, 'futura', 'Vacuna', { tipo: 'preventivo', mascota: 'Luna', mascota_id: LUNA_ID }),
+            estacion(6, 'futura', 'Desparasitación', { tipo: 'preventivo', mascota: 'Max', mascota_id: 'max' }),
+            estacion(9, 'futura', 'Cuota de diciembre'),
+          ]),
+          planes: [
+            { plan_id: 'p1', nombre: 'Mi Amigo Fiel', color: 'verde', mascotas: ['Luna'] },
+            { plan_id: 'p2', nombre: 'Colita Feliz', color: 'naranja', mascotas: ['Max'] },
+          ],
+        }),
+      ),
+    )
+    renderizar(<PortalInicio />)
+    const lista = await screen.findByRole('list', { name: /tu línea/i })
+    expect(lista).toHaveAttribute('data-color', 'varios')
+    const estacionDe = (texto: RegExp) => within(lista).getByText(texto).closest('li')!
+    expect(estacionDe(/Vacuna · Luna/)).toHaveAttribute('data-color', 'verde')
+    expect(estacionDe(/Desparasitación · Max/)).toHaveAttribute('data-color', 'naranja')
+    expect(estacionDe(/Cuota de diciembre/)).not.toHaveAttribute('data-color')
+  })
+
   it('si la línea no carga, no afirma que los peludos estén al día ni cuenta cuotas', async () => {
     server.use(
       ...comoFamilia,
