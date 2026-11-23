@@ -651,7 +651,9 @@ juego (`Icono`): trazo de 1.6, extremos y uniones redondeados, 20 px por defecto
 
 ## Components
 
-### Buttons
+### Comunes
+
+#### Buttons
 Firmes y planos; el color dice la jerarquía, no la forma.
 - **Shape:** esquina de campo (6 px), 40 px de alto (44 en táctil), 0 20 px de relleno, 600 a
   14 px, icono y texto separados 8 px.
@@ -671,7 +673,7 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   azul de 2 px separado 2 px; al pulsar baja 1 px.
 - **Deshabilitado:** el mismo gris neutro para todas las variantes, para que no parezca otra.
 
-### Chips (distintivos de estado)
+#### Chips (distintivos de estado)
 - **Style:** pastilla de fondo tintado y texto oscuro del mismo tono (contraste ≥ 7), 12 px en
   700, 3 × 10 px de relleno, icono de 12 px delante.
 - **State:** cinco tonos (`ok`, `alerta`, `info`, `peligro`, `neutro`), cada uno con su icono.
@@ -683,7 +685,7 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   de aviso y «Por agendar» el calendario en tono informativo (R2-PAN-08): el triángulo de alerta
   es de lo vencido, y dos seguidos en una fila diluían esa señal.
 
-### Cards / Containers
+#### Cards / Containers
 - **Corner Style:** panel (12 px) para las columnas del listado y la ficha; tarjeta (8 px) para
   métricas, indicadores y avisos.
 - **Background:** blanco sobre el lienzo.
@@ -697,7 +699,7 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   flotando a media altura; `.ancho` ocupa la fila entera, para lo que es texto y no dato
   («Cuándo aplica», «Qué hace», «Servicios que presta», «Especies»).
 
-### Inputs / Fields
+#### Inputs / Fields
 - **Style:** blanco, borde de control de 1 px, esquina de campo, 40 px de alto, 8 × 12 px de
   relleno. La etiqueta va encima en 13 px y 600, marino; la ayuda debajo en 12 px suave y
   enlazada con `aria-describedby`. El buscador es el mismo control con icono, para que junto a
@@ -726,7 +728,7 @@ Firmes y planos; el color dice la jerarquía, no la forma.
 - **Formulario:** rejilla de dos columnas con 16 px; una a 900 px o menos. Casillas y radios de
   18 px con `accent-color` verde hondo.
 
-### Navigation
+#### Navigation
 - **Barra de marca:** marino noche, 64 px, fija. Marca en texto blanco a la izquierda; módulos
   en 13 px y 600, marino claro (`texto-sobre-marca-suave`); hover a blanco sobre marino de
   hover; activo en blanco con subrayado verde de 4 px. Buscador blanco a la derecha y avatar
@@ -748,12 +750,12 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   iniciales en la pastilla translúcida y, al abrirlo, el nombre, un detalle (el perfil en el panel,
   «Portal de familias», la clínica y su ciudad) y «Cerrar sesión».
 
-### Tabs
+#### Tabs
 - Sobre Radix Tabs (`Pestanas`): 13 px en 700, texto suave, subrayado de 3 px verde hondo en la
   activa y hilo bajo la lista. Por debajo de 600 px no se reparten en varias filas: se desplazan
   en la suya.
 
-### Ventanas (Modal)
+#### Ventanas (Modal)
 - Sobre Radix Dialog: blanca, esquina de panel, sombra flotante, 560 px de ancho como máximo y
   20 px de relleno, sobre el velo marino. Cabecera (título de 16 px, descripción de 13 px suave y
   cierre con botón de icono) y pie fijos; solo el cuerpo se desplaza, así la acción principal
@@ -772,7 +774,7 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   por detrás; el resto del cuerpo se desplaza bajo ella. En la hoja inferior (menos de 600 px) no se
   fija: ocuparía media hoja.
 
-### Tabla apilable
+#### Tabla apilable
 - **Escritorio:** cabeceras en etiqueta (12 px, mayúsculas espaciadas, texto suave), celdas con
   12 px de relleno e hilo entre filas, fila en hover sobre lienzo, acciones a la derecha.
 - **Contenedor de menos de 640 px:** cada fila es un bloque. La primera celda es su título en
@@ -784,18 +786,66 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   los convenios de una clínica, la liquidación, los beneficios de un plan y las consultas de la IA; las tablas de los demás módulos la adoptan en su
   unidad de la hoja de ruta.
 
-### Historial
+#### Historial
 - Lista de cambios con la fecha (suave, tabular) en una columna de hasta 11 rem a la izquierda y
   qué cambió a la derecha (título de 14 px y detalle suave); hilo entre entradas. Por debajo de
   600 px la fecha va encima.
 
-### Espera de sesión
+#### Espera de sesión
 - Mientras se comprueba la sesión (`ProtectedRoute`): la marca y un esqueleto centrados en el
   lienzo. Si falla, un aviso blanco con esquina de panel, icono de error, título de 16 px y el
   botón para reintentar. El esqueleto es una barra del color de pista que respira
   (opacidad 1 → 0.45, 1.2 s).
 
-### La línea de la familia (componente propio)
+#### Bandejas (componente común: Tareas, Cartera, Preventivos, Conversaciones, Remisiones y Usuarios)
+Lo que hay por resolver, en una `tabla-apilable` a todo el ancho de un panel blanco.
+- **Vistas:** un selector segmentado (pastilla hundida con hilo, 4 px de relleno; la vista activa
+  en blanco y marino, las demás en texto suave, 13 px en 700) con el recuento de cada vista en
+  cifras tabulares a la derecha de su nombre, suave y en texto en la activa: cuánto hay sin
+  entrar. Es un grupo de botones con `aria-pressed`; la vista vive en la URL.
+- **Filtros:** en una fila, las vistas, el buscador y las listas. Por debajo de 1180 px las vistas
+  ocupan su fila y el buscador baja junto con las listas (si no, la ciudad bajaba sola y el
+  buscador cortaba su texto). Por debajo de 600 px, cuatro vistas van en dos filas de dos (al
+  desplazarse, la activa quedaba fuera) y tres en una fila de tres; buscador y listas, a todo el
+  ancho.
+- **Fila:** el título en marino y, debajo, el detalle en 13 px suave separado 12 px por pieza. La
+  acción de la fila es suave, a la derecha; apilada, la primera va a todo el ancho, al pulgar.
+- **Lo vencido:** icono de alerta, fecha (o importe) y la palabra, en rojo de error y 600: «⚠ 4 nov
+  · vencido», «⚠ $ 225.000 · hace 85 días». El separador cierra la primera pieza, así que si
+  bajan de línea ninguna empieza con él, y cada pieza baja entera.
+
+### El panel
+
+#### El Inicio del panel (componentes propios)
+«La línea de hoy»: el día del equipo como una línea de metro, con las cifras del período encima.
+- **Franja de cifras** (`FranjaCifras`): seis celdas blancas separadas por hilos (un hueco de 1 px
+  sobre fondo `borde`), en 2, 3 o 6 columnas según el contenedor. Cada celda: etiqueta de 12 px,
+  cifra de 24 px en 600, la variación contra el período comparable con flecha y palabra («3 más»,
+  «12%», «4 puntos»; verde oscuro si es buena noticia, rojo de error si es mala, suave si no
+  cambia) y su serie en miniatura de 2 px en `--serie-1`, cortada donde no hay dato y punteada en
+  el mes en curso, con punto hueco. Con qué se compara se dice una vez, en la línea del saludo.
+- **La cifra abre su serie**: la celda es un botón (`aria-expanded`); abierta, fondo de selección
+  y subrayado verde hondo de 3 px abajo. Debajo se abre un panel con el título («Recaudo en los
+  últimos 12 meses»), la cifra con su variación, la fórmula del indicador y el gráfico. Escape lo
+  cierra y devuelve el foco a la cifra.
+- **Gráfico de serie** (`GraficoSerie`): un solo eje, rejilla de hilo sólida, líneas de 2 px,
+  puntos de 8 px con anillo de 2 px del color de superficie, el año bajo el primer mes rotulado y
+  donde cambia, y el mes en curso punteado con el punto hueco y una nota que lo dice. La cruz da el
+  valor de cada mes con el cursor o con las flechas (con anuncio para lectores de pantalla), y
+  «Ver los datos» abre la misma serie como tabla apilable. Versión `compacto` (180 px) en la
+  columna del Inicio.
+- **Línea del día** (`LineaDelDia`): la gramática de la línea de la ruta, marina, en un panel. Lo
+  vencido agrupado arriba con un ejemplo («El más atrasado: Ana Ruiz, 84 días»), la marca de Hoy y
+  lo que viene; cada estación lleva su acción. La primera acción es el único verde de la vista;
+  las de consulta («Ver», «Ver la agenda») nunca lo llevan.
+
+**La regla de las series que se distinguen.** El manual pone el azul en segundo lugar: verde,
+azul, naranja y marino. Antes del 2026-11-15 las series 1 y 2 eran el verde-600 y el naranja-600,
+casi iguales para quien no distingue el rojo del verde (ΔE 2,7, medido con el validador de la
+skill `dataviz`), y el Inicio usaba la 1 y la 3 como excepción. Ahora un gráfico de dos series usa
+la 1 y la 2 (verde y azul, ΔE 20,4) sin excepción; uno de una serie, la 1. El rojo nunca es una serie.
+
+#### La línea de la familia (componente propio)
 El elemento que identifica el producto. `LineaFamilia` dibuja el año de la familia como un plano
 de metro: espaciado esquemático, no proporcional al tiempo.
 - **Línea:** 8 px, pastilla, del color del plan (`data-color` del catálogo) o gris
@@ -822,55 +872,7 @@ de metro: espaciado esquemático, no proporcional al tiempo.
   marca de hoy de 2 × 12 px; es dibujo (`role="img"`) con el resumen en `aria-label`, y la fila
   repite las vencidas en texto.
 
-### La línea del portal (componente propio)
-`LineaPortal` es la línea de la familia contada a la familia: vertical siempre, abierta en «Hoy»
-y en un panel blanco. Las estaciones no son botones: cada una dice en palabras qué es y, si
-toca, lleva su acción debajo. La familia no tiene por qué leer un diagrama.
-- **Línea:** 8 px del color del plan (`data-color`), o gris sin plan; cada parada dibuja su
-  tramo y la primera y la última lo cierran en pastilla. Columna de 24 px para la estación y el
-  texto a 16 px; entre una parada y la siguiente, un hilo sobre el texto.
-- **Estaciones:** las mismas formas de 24 px con borde de 4 px que la línea de la familia (hecha
-  llena, vencida roja con el icono de alerta, próxima con anillo marino y halo verde hondo de
-  3 px, futura en contorno). Título en 14 px marino (rojo de error si está vencida), con la
-  fecha delante en cifras tabulares; detalle en 13 px suave.
-- **Hecho, plegado:** todo lo anterior a hoy que ya se hizo va en una sola estación llena con
-  la pastilla «N hechas» (la del tramo plegado), que despliega la lista con fecha y qué.
-- **Vencido, agrupado:** las cuotas vencidas en una estación («3 cuotas vencidas · $ 225.000»,
-  los meses y «Pagar …»); los preventivos vencidos en otra («7 preventivos vencidos desde el 4
-  nov», cuántos por peludo con enlace a cada uno, y «Agendar» o el motivo por el que aún no se
-  puede). Una visita vencida va suelta. Los grupos se ordenan por lo más antiguo.
-- **Hoy:** una marca marina de 24 × 4 px que cruza la línea y «Hoy · jue 12 nov» en etiqueta.
-- **Lo que viene:** cada estación con su fecha y su título («· Michi» en la del inicio; en la
-  ficha del peludo sobra). Una cuota muestra su valor; un servicio, su distintivo y el enlace a
-  las citas.
-- **Próximo cobro:** si el estado de cuenta anuncia un cobro cuya cuota aún no existe (el plan
-  en pausa no las genera), entra como estación «Próximo cobro» con su valor y sin botón de pago.
-- **Cierre:** si no hay nada después de hoy, la línea no muere en «Hoy»: cierra con una
-  estación en contorno y una frase que dice qué aparecerá ahí.
-- **Una sola acción verde:** `accionPrincipal` la elige por urgencia (pagar lo vencido, si no
-  agendar los preventivos vencidos, si no pagar la próxima cuota); las demás acciones de la
-  línea son secundarias y, sin ninguna de esas tres, la línea no lleva verde. En el celular las
-  acciones ocupan su fila y la principal sube a 48 px y 16 px.
-
-### Acceso a un peludo
-- Tarjeta blanca (esquina de tarjeta, mínimo 56 px de alto) que abre la ficha: foto o huella en
-  un círculo de 40 px con hilo y fondo de lienzo, el nombre en marino y debajo «N vencidos» en
-  rojo de error y 600, o «Al día» en suave. Mientras la línea no ha llegado no dice ninguna de
-  las dos. Hover en verde tenue.
-- En la ficha, sin foto, la huella va en el mismo círculo a 56 px, no en un hueco vacío.
-
-**La regla del estado dicho.** El estado del plan se le dice a la familia con sus palabras: una
-pastilla (Activo, Cuotas vencidas, «En pausa» con tono de aviso, Cancelado) y al lado una frase
-que explica por qué y qué hacer («Tus 3 cuotas vencidas pausaron el plan. Al pagar, Luna y Michi
-recuperan sus beneficios.»). La pastilla y la frase usan la misma palabra; el panel conserva la
-del equipo («congelada»). Los cupos del plan se dicen de frente («le quedan 4 de 6 este año»,
-«sin tope de usos este mes»), nunca «ilimitado». Si se puede agendar o no lo decide el plan, y
-la línea dice por qué antes de ofrecerlo.
-
-**La regla de hoy a la vista.** En el portal, «Hoy» está en la primera pantalla del celular: lo
-hecho se pliega y lo vencido se agrupa en vez de crecer una estación por cuota o por vacuna.
-
-### La línea de la ruta (componente propio)
+#### La línea de la ruta (componente propio)
 `LineaRuta` dibuja la ruta del día con la misma gramática que la línea de la familia, en
 vertical siempre: es una lista que se recorre de arriba abajo.
 - **Línea:** 8 px marina, nunca del color de un plan (una ruta no es un plan). Recorrida en
@@ -902,7 +904,7 @@ entero. Leído a pleno sol, «100-» arriba y «12» abajo parecen dos cifras.
 quien hace la ruta. Quien coordina también puede avanzarla, pero como secundaria: en su vista la
 acción principal es planear.
 
-### La guía de la consulta (componente propio)
+#### La guía de la consulta (componente propio)
 `ConsultaGuiada` recorre la consulta clínica como una línea de cinco estaciones (motivo,
 anamnesis, examen físico, diagnóstico, tratamiento): un apartado por pantalla.
 - **Guía:** horizontal, en un panel blanco. Cinco columnas iguales para que lo recorrido (marino)
@@ -924,7 +926,7 @@ anamnesis, examen físico, diagnóstico, tratamiento): un apartado por pantalla.
   apartado, el texto hasta 75ch), con «Emitir fórmula» y «Corregir»; el título va a 24 px, no a
   34: no es el nombre de nada.
 
-### Las plantillas de consulta (DEU-15)
+#### Las plantillas de consulta
 La pestaña «Plantillas de consulta» de Clínica, en listado con ficha, con la abierta en la URL
 (`?plantilla=`). La página controla la pestaña: una plantilla que aparece en la URL lleva a la
 suya, y «Volver» cierra la ficha sin salir de ella.
@@ -954,7 +956,7 @@ suya, y «Volver» cierra la ficha sin salir de ella.
   no se conoce el tipo de la visita, o si falla, solo las generales. Sin visita, todas y sin
   agrupar.
 
-### Servicios y Tareas (R2-PAN-05)
+#### Servicios y Tareas
 Servicios hereda el listado con ficha; Tareas, la tabla apilable.
 - **Listado agrupado por día:** rótulo en etiqueta («HOY · SÁB 14 NOV · 4», con su recuento) y
   filas con «Mascota · Tipo» en el título, la hora tabular, el titular y la ciudad debajo, y
@@ -972,53 +974,7 @@ Servicios hereda el listado con ficha; Tareas, la tabla apilable.
 - **Tareas:** la tarea con su estado al lado y debajo su área y a quién afecta, con enlaces; lo
   vencido con icono y la palabra («jue 5 nov · vencida»), nunca solo en rojo.
 
-### El Inicio del panel (componentes propios, R2-PAN-04)
-«La línea de hoy»: el día del equipo como una línea de metro, con las cifras del período encima.
-- **Franja de cifras** (`FranjaCifras`): seis celdas blancas separadas por hilos (un hueco de 1 px
-  sobre fondo `borde`), en 2, 3 o 6 columnas según el contenedor. Cada celda: etiqueta de 12 px,
-  cifra de 24 px en 600, la variación contra el período comparable con flecha y palabra («3 más»,
-  «12%», «4 puntos»; verde oscuro si es buena noticia, rojo de error si es mala, suave si no
-  cambia) y su serie en miniatura de 2 px en `--serie-1`, cortada donde no hay dato y punteada en
-  el mes en curso, con punto hueco. Con qué se compara se dice una vez, en la línea del saludo.
-- **La cifra abre su serie**: la celda es un botón (`aria-expanded`); abierta, fondo de selección
-  y subrayado verde hondo de 3 px abajo. Debajo se abre un panel con el título («Recaudo en los
-  últimos 12 meses»), la cifra con su variación, la fórmula del indicador y el gráfico. Escape lo
-  cierra y devuelve el foco a la cifra.
-- **Gráfico de serie** (`GraficoSerie`): un solo eje, rejilla de hilo sólida, líneas de 2 px,
-  puntos de 8 px con anillo de 2 px del color de superficie, el año bajo el primer mes rotulado y
-  donde cambia, y el mes en curso punteado con el punto hueco y una nota que lo dice. La cruz da el
-  valor de cada mes con el cursor o con las flechas (con anuncio para lectores de pantalla), y
-  «Ver los datos» abre la misma serie como tabla apilable. Versión `compacto` (180 px) en la
-  columna del Inicio.
-- **Línea del día** (`LineaDelDia`): la gramática de la línea de la ruta, marina, en un panel. Lo
-  vencido agrupado arriba con un ejemplo («El más atrasado: Ana Ruiz, 84 días»), la marca de Hoy y
-  lo que viene; cada estación lleva su acción. La primera acción es el único verde de la vista;
-  las de consulta («Ver», «Ver la agenda») nunca lo llevan.
-
-**La regla de las series que se distinguen.** El manual pone el azul en segundo lugar: verde,
-azul, naranja y marino. Antes del 2026-11-15 las series 1 y 2 eran el verde-600 y el naranja-600,
-casi iguales para quien no distingue el rojo del verde (ΔE 2,7, medido con el validador de la
-skill `dataviz`), y el Inicio usaba la 1 y la 3 como excepción. Ahora un gráfico de dos series usa
-la 1 y la 2 (verde y azul, ΔE 20,4) sin excepción; uno de una serie, la 1. El rojo nunca es una serie.
-
-### Bandejas (componente común: Tareas, Cartera, Preventivos, Conversaciones, Remisiones y Usuarios)
-Lo que hay por resolver, en una `tabla-apilable` a todo el ancho de un panel blanco.
-- **Vistas:** un selector segmentado (pastilla hundida con hilo, 4 px de relleno; la vista activa
-  en blanco y marino, las demás en texto suave, 13 px en 700) con el recuento de cada vista en
-  cifras tabulares a la derecha de su nombre, suave y en texto en la activa: cuánto hay sin
-  entrar. Es un grupo de botones con `aria-pressed`; la vista vive en la URL.
-- **Filtros:** en una fila, las vistas, el buscador y las listas. Por debajo de 1180 px las vistas
-  ocupan su fila y el buscador baja junto con las listas (si no, la ciudad bajaba sola y el
-  buscador cortaba su texto). Por debajo de 600 px, cuatro vistas van en dos filas de dos (al
-  desplazarse, la activa quedaba fuera) y tres en una fila de tres; buscador y listas, a todo el
-  ancho.
-- **Fila:** el título en marino y, debajo, el detalle en 13 px suave separado 12 px por pieza. La
-  acción de la fila es suave, a la derecha; apilada, la primera va a todo el ancho, al pulgar.
-- **Lo vencido:** icono de alerta, fecha (o importe) y la palabra, en rojo de error y 600: «⚠ 4 nov
-  · vencido», «⚠ $ 225.000 · hace 85 días». El separador cierra la primera pieza, así que si
-  bajan de línea ninguna empieza con él, y cada pieza baja entera.
-
-### Cartera y Preventivos (R2-PAN-08)
+#### Cartera y Preventivos
 Dos bandejas de trabajo: cada fila dice a quién, cuánto o qué, desde cuándo, y lleva la única
 acción que le toca.
 - **Cartera:** vistas «En mora» (la de entrada), «Por renovar» (contratos en su ventana de 90 días)
@@ -1062,7 +1018,7 @@ acción que le toca.
 autorización: «Luna · Antirrábica canina, refuerzo» (`pedido`). La dosis es «dosis N» en la serie
 inicial y «refuerzo» después, sin número: «dosis 1, refuerzo» se leía como dos cosas a la vez.
 
-### Comercial y Campañas (R2-PAN-09)
+#### Comercial y Campañas
 Los dos en listado con ficha, con el registro abierto en la URL (`?interesado=`, `?campana=`).
 «Nuevo interesado» y «Nueva campaña» son verdes solo sin ficha abierta; con ella pasan a suaves,
 porque el verde es de la ficha.
@@ -1121,7 +1077,7 @@ un asesor, el verde es «Enviar» (contestarle) y «Pasar a <etapa>» queda suav
 pasar a la etapa siguiente que dice la API (`siguiente_etapa`; el panel no copia el embudo) y
 «Enviar» queda secundario.
 
-### Aliadas y Administración (R2-PAN-10)
+#### Aliadas y Administración
 Lo que se toca poco, con los dos patrones ya construidos: lo que hay por resolver en bandeja y cada
 registro en listado con ficha, abierto en la URL (`?clinica=`, `?plan=`, `?regla=`). Como en
 Comercial, «Nueva clínica», «Nuevo plan» y «Nueva regla» son verdes solo sin ficha abierta (con
@@ -1235,69 +1191,59 @@ cosa en palabras (`condicion_texto`, `accion_texto`, `retirada`, los grupos de u
 es una remisión y si venció) y los estados llegan a la vista por `Distintivo` con su nombre. El
 panel no deduce nada de un código ni copia una regla del backend para decidir qué mostrar.
 
-### El acceso (R3-PUB-01)
-Ingreso, recuperación, restablecimiento y activación comparten `AccesoLayout`: el único sitio de
-la aplicación donde la marca se presenta, y un formulario que no hace nada más (ver Layout).
-- **Panel de marca (desde 900 px):** marino plano (`superficie-marca`), sin tarjeta, sin borde y
-  sin sombra, 40 px de relleno arriba y abajo. Arriba, el logo completo en blanco (`MarcaTimu
-  claro`, 104 px de alto); a media altura, la frase de la pantalla en GeosansLight de 34 px en
-  blanco («Tu peludito, bien cuidado.»; en la activación, «Te damos la bienvenida a la manada
-  TIMU.») y, 40 px debajo, la línea de marca; abajo, la nota «Datos protegidos · Ley 1581 de
-  2012» con el icono del escudo, en 13 px y marino-200 (`texto-sobre-marca-suave`).
-- **Franja (por debajo de 900 px):** el mismo marino, 20 × 16 px de relleno, con el logo compacto
-  en blanco (28 px) y debajo la línea en miniatura: estaciones y marca de Hoy sin rótulos ni la
-  palabra «Hoy». La frase y la nota se ocultan; la nota baja bajo el formulario, separada por un
-  hilo y con el escudo en verde oscuro (`accion-suave-texto`).
-- **La línea de marca** (`LineaDeMarca`): el año de una familia (Afiliación, Vacunas, Visita en
-  casa, Renovación) en la señalética del metro y con los colores que admite el marino (regla 6
-  del manual). Tramo de 8 px; lo recorrido en verde-500 (`indicador-sobre-marca`), lo que falta
-  translúcido (`borde-sobre-marca`). Estaciones de 24 px con borde de 4 px: hechas llenas de
-  verde-500; la próxima con anillo blanco y halo verde-500 de 3 px, su rótulo en blanco y 600;
-  la programada en contorno marino-200 sobre el marino. «Hoy», justo antes de la próxima, es una
-  marca blanca de 4 × 24 px con «Hoy» en etiqueta blanca encima. Las cuatro columnas son
-  `minmax(max-content, 1fr)` y los rótulos (13 px, marino-200) no se parten: la línea crece antes
-  que cortar «Visita en casa». Es dibujo (`aria-hidden`): no dice nada que la pantalla necesite.
-- **Formulario:** columna de 400 px con 24 px entre bloques y 16 px entre campos. El título en
-  `h1` de 34 px y, si hace falta, una frase en texto suave debajo; campos con icono (ver
-  Inputs); el verde a todo el ancho y de 48 px en 16 px (`btn-grande`); lo secundario en plano y
-  centrado («Volver al ingreso», «Ir al ingreso», con la flecha de volver).
-- **Quién ingresa:** bajo «Hola de nuevo», un selector segmentado (Radix Tabs) «Equipo y
-  aliadas» (icono de clínica) / «Familias» (huella). Equipo y clínica aliada: correo,
-  contraseña, «¿Olvidaste tu contraseña?» a la derecha y «Ingresar». Familias: el celular
-  registrado con la ayuda «Te enviamos un código de un solo uso por WhatsApp.», el verde «Recibir
-  código» y debajo, plano, «Ingresar con contraseña» (correo o celular), que vuelve con «Recibir
-  un código por WhatsApp». Enviado el código, un aviso ok nombra el número con `telefono()` y el
-  campo del código va centrado a 20 px con espaciado ancho. Si se llega desde una ruta del portal,
-  el selector abre en Familias. Credenciales que no coinciden se dicen en palabras propias («El
-  correo o la contraseña no coinciden»); un bloqueo o una caída, con su causa.
-- **Recuperación:** «Recupera tu acceso» con «Correo o celular» y «Enviar enlace». Enviada, el
-  título cambia a «Revisa tu correo o tu WhatsApp» y la frase nombra el dato escrito («Si hay una
-  cuenta con <lo que escribió>, en unos minutos te llega un enlace…»), igual exista o no la cuenta.
-- **La pantalla del enlace** (`RestablecerPage`, `/restablecer` y `/activar`): antes de pedir
-  nada, la API dice si el enlace sirve (`POST /auth/enlace`, con el token en el cuerpo: vigente,
-  usado, vencido o inválido, su propósito y el nombre de pila). Mientras comprueba, un esqueleto
-  de tres líneas con «Comprobando el enlace…» para lectores de pantalla. Vigente: «Hola, Ana», la
-  frase según el propósito, la contraseña nueva con «Al menos 8 caracteres.» y su confirmación
-  (si no coinciden, el error bajo el campo y el verde deshabilitado), y el verde «Activar mi
-  cuenta» o «Guardar y entrar». Al guardar se entra directo, al espacio de cada perfil. Si el
-  enlace deja de servir con la pantalla abierta, el aviso de error lo dice con «Pide uno nuevo».
-- **El enlace que no sirve:** el título dice qué pasó («Este enlace ya se usó», «Este enlace
-  venció», «Este enlace no sirve», «El enlace está incompleto») y la frase qué hacer; el verde es
-  «Pedir un enlace nuevo» y «Ir al ingreso» va plano y centrado. Si el servidor no respondió:
-  «No pudimos comprobar el enlace», el aviso con su causa y, si el error es pasajero,
-  «Reintentar» como verde (la comprobación comparte el límite del ingreso y no se reintenta
-  sola).
+### El portal de la familia
 
-**La regla del enlace que se dice de entrada.** El acceso no pide una contraseña con un enlace que
-no sirve: lo dice la API al abrirlo, y la pantalla responde a lo que dijo. El panel no deduce el
-estado de un enlace ni deja escribir dos veces la clave para enterarse después.
+#### La línea del portal (componente propio)
+`LineaPortal` es la línea de la familia contada a la familia: vertical siempre, abierta en «Hoy»
+y en un panel blanco. Las estaciones no son botones: cada una dice en palabras qué es y, si
+toca, lleva su acción debajo. La familia no tiene por qué leer un diagrama.
+- **Línea:** 8 px del color del plan (`data-color`), o gris sin plan; cada parada dibuja su
+  tramo y la primera y la última lo cierran en pastilla. Columna de 24 px para la estación y el
+  texto a 16 px; entre una parada y la siguiente, un hilo sobre el texto.
+- **Estaciones:** las mismas formas de 24 px con borde de 4 px que la línea de la familia (hecha
+  llena, vencida roja con el icono de alerta, próxima con anillo marino y halo verde hondo de
+  3 px, futura en contorno). Título en 14 px marino (rojo de error si está vencida), con la
+  fecha delante en cifras tabulares; detalle en 13 px suave.
+- **Hecho, plegado:** todo lo anterior a hoy que ya se hizo va en una sola estación llena con
+  la pastilla «N hechas» (la del tramo plegado), que despliega la lista con fecha y qué.
+- **Vencido, agrupado:** las cuotas vencidas en una estación («3 cuotas vencidas · $ 225.000»,
+  los meses y «Pagar …»); los preventivos vencidos en otra («7 preventivos vencidos desde el 4
+  nov», cuántos por peludo con enlace a cada uno, y «Agendar» o el motivo por el que aún no se
+  puede). Una visita vencida va suelta. Los grupos se ordenan por lo más antiguo.
+- **Hoy:** una marca marina de 24 × 4 px que cruza la línea y «Hoy · jue 12 nov» en etiqueta.
+- **Lo que viene:** cada estación con su fecha y su título («· Michi» en la del inicio; en la
+  ficha del peludo sobra). Una cuota muestra su valor; un servicio, su distintivo y el enlace a
+  las citas.
+- **Próximo cobro:** si el estado de cuenta anuncia un cobro cuya cuota aún no existe (el plan
+  en pausa no las genera), entra como estación «Próximo cobro» con su valor y sin botón de pago.
+- **Cierre:** si no hay nada después de hoy, la línea no muere en «Hoy»: cierra con una
+  estación en contorno y una frase que dice qué aparecerá ahí.
+- **Una sola acción verde:** `accionPrincipal` la elige por urgencia (pagar lo vencido, si no
+  agendar los preventivos vencidos, si no pagar la próxima cuota); las demás acciones de la
+  línea son secundarias y, sin ninguna de esas tres, la línea no lleva verde. En el celular las
+  acciones ocupan su fila y la principal sube a 48 px y 16 px.
 
-**La regla de la frase que le habla a quien llega.** El panel de marca dice una frase a la persona
-que llega, no vende la plataforma: ni funciones con icono, ni antetítulo. La frase cambia con la
-pantalla (la activación le da la bienvenida a la familia) y el título del formulario la saluda
-por su nombre cuando la API lo sabe.
+#### Acceso a un peludo
+- Tarjeta blanca (esquina de tarjeta, mínimo 56 px de alto) que abre la ficha: foto o huella en
+  un círculo de 40 px con hilo y fondo de lienzo, el nombre en marino y debajo «N vencidos» en
+  rojo de error y 600, o «Al día» en suave. Mientras la línea no ha llegado no dice ninguna de
+  las dos. Hover en verde tenue.
+- En la ficha, sin foto, la huella va en el mismo círculo a 56 px, no en un hueco vacío.
 
-### Mi clínica (R3-ALI-01)
+**La regla del estado dicho.** El estado del plan se le dice a la familia con sus palabras: una
+pastilla (Activo, Cuotas vencidas, «En pausa» con tono de aviso, Cancelado) y al lado una frase
+que explica por qué y qué hacer («Tus 3 cuotas vencidas pausaron el plan. Al pagar, Luna y Michi
+recuperan sus beneficios.»). La pastilla y la frase usan la misma palabra; el panel conserva la
+del equipo («congelada»). Los cupos del plan se dicen de frente («le quedan 4 de 6 este año»,
+«sin tope de usos este mes»), nunca «ilimitado». Si se puede agendar o no lo decide el plan, y
+la línea dice por qué antes de ofrecerlo.
+
+**La regla de hoy a la vista.** En el portal, «Hoy» está en la primera pantalla del celular: lo
+hecho se pliega y lo vencido se agrupa en vez de crecer una estación por cuota o por vacuna.
+
+### La clínica aliada
+
+#### Mi clínica
 El espacio de la clínica aliada (`/aliada`) es un mostrador: a la izquierda, el código que trae la
 familia y la remisión que abre, con su reporte; a la derecha, lo atendido en el mes (ver Layout).
 De la familia solo se ve lo necesario para atender: el titular, los últimos dígitos de su documento
@@ -1380,184 +1326,71 @@ antes de reportar, no al terminar: lo calcula la API con la misma cuenta del rep
 valor que se está escribiendo. El panel no copia la regla de cobertura ni el tope para adelantar
 una cifra; si la API no respondió, lo dice en vez de estimar.
 
-### La encuesta y la verificación del carnet (R3-PUB-03)
-Las dos páginas públicas a las que se llega desde un enlace: la familia, desde el WhatsApp de la
-encuesta; un tercero (clínica, guardería, aerolínea), desde el código impreso en el carnet.
-- **La encuesta hereda el acceso:** el panel de marca con la frase según el tipo («Tu opinión nos
-  ayuda a cuidar mejor a Nina.»; en el seguimiento, «Seguimos pendientes de Nina.»; sin mascota,
-  la del acceso) y el formulario de 400 px anclado arriba (ver Layout). El `h1` hace la pregunta
-  («¿Cómo te fue en la atención de Nina?», «¿Cómo sigue Nina después de la atención?») y debajo,
-  en texto suave, de qué atención se pregunta («Consulta domiciliaria del martes, 27 de
-  octubre.»). El verde es «Enviar respuesta», a todo el ancho y de 48 px (`btn-grande`),
-  deshabilitado hasta elegir.
-- **La calificación** (`.calificacion`, satisfacción, 6.20): un `fieldset` con su `legend` («Califica
-  la atención», 13 px y 700, sin relleno) y cinco opciones iguales en fila; cada una, el número en
-  20 px y la palabra debajo (Muy mala, Mala, Regular, Buena, Excelente), con borde de control y
-  el radio oculto. Al pasar, borde de control hover y texto marino; elegida, borde y fondo de
-  selección; con el foco, anillo azul de 2 px.
-- **El seguimiento** (`.calificacion-seguimiento`, 6.21): tres respuestas apiladas, una por fila de
-  48 px, con su icono de 20 px a la izquierda y la frase entera en 16 px: «Sigue bien» (check, en
-  ok), «Tenemos una duda» (ayuda, en info) y «Algo no va bien» (el triángulo, en alerta). Elegida,
-  toma la selección del sistema; «Algo no va bien» elegida toma el tinte de alerta (borde y fondo
-  de alerta) y abre debajo un `aviso-alerta`: «Si es una urgencia, no esperes: escríbenos ya por el
-  chat de WhatsApp en el que te llegó este enlace.». La etiqueta del comentario cambia con la
-  respuesta («¿Cuál es tu duda? (opcional)», «¿Qué notaste? (opcional)»).
-- **«¡Gracias!»** dice qué pasa ahora según lo que devuelve la API (`te_contactamos`): «Alguien del
-  equipo TIMU te va a contactar para saber más y ayudarte con Nina.» o «Tu respuesta nos ayuda a
-  cuidar mejor a Nina.». No deduce del puntaje si habrá contacto, ni promete una hora que la
-  plataforma no puede asegurar (decidido con el usuario).
-- **Un error al enviar** se dice en palabras propias: «Esta encuesta ya tenía una respuesta.» (422),
-  «Intenta de nuevo en un momento» si es pasajero, y si no, que abra otra vez el enlace.
-- **Los estados de la encuesta:** mientras abre, el esqueleto de tres líneas del acceso con «Abriendo
-  la encuesta…» para lectores de pantalla. Un enlace que no sirve: «Esta encuesta no está
-  disponible» y qué hacer («Ábrelo de nuevo desde el mensaje de WhatsApp…»), sin aviso ni botón.
-  Si el servidor no respondió: «No pudimos abrir la encuesta», el aviso con su causa y
-  «Reintentar» como verde. Ya respondida: «Ya nos respondiste». Respondida en otra pestaña con
-  esta abierta (422): el aviso «Esta encuesta ya tenía una respuesta.» y el verde deshabilitado.
-- **En el panel** (Campañas, Encuestas): la respuesta del seguimiento se dice con un distintivo
-  en palabras («Sigue bien» ok, «Tiene una duda» info, «Algo no va bien» alerta) y la fila dice
-  «Seguimiento ·» antes de la fecha; la de satisfacción sigue con su puntaje («4 / 5»).
-- **El veredicto del carnet:** el `h1` es el veredicto: «Carnet auténtico» (34 px, GeosansLight)
-  con el escudo de 32 px delante en el texto de ok. Debajo, en texto suave, «Carnet preventivo
-  emitido por TIMU.» y una ficha de pares en fila que se parte (`.verificacion-datos`: Mascota
-  «Coco · Canino · Pug», Código y Emitido, en `.numero`), etiqueta de 12 px en mayúsculas
-  espaciadas en 700 y valor marino en 600.
-- **Lo que decía el carnet:** las secciones del PDF en el mismo orden y con sus títulos
-  (Vacunación, Desparasitación interna, Desparasitación externa), cada una un `h2` de 16 px en la
-  fuente de texto y una `tabla-apilable` con las columnas del PDF: las vacunas, Vacuna, Dosis y
-  Aplicada; las desparasitaciones, Aplicada y Peso; y todas, Producto, Lote, Próxima y Aplicó. Los
-  encabezados no se parten. Sin aplicaciones, «Sin aplicaciones registradas.». Después, «Pendiente
-  al emitirse»: Preventivo y Programado para; la columna Estado solo sale si algo está vencido, y
-  solo lo vencido lleva distintivo («Vencido», alerta): lo próximo dice su fecha y nada más
-  (decidido con el usuario); sin nada, «No había nada pendiente.»; un carnet emitido antes de guardarse lo
-  pendiente lo dice en una frase («Este carnet se emitió antes de que la verificación guardara lo
-  pendiente.»). No hay datos de la familia.
-- **El pie** (`.verificacion-pie`, 13 px suave): qué certifica («Certifica que TIMU emitió este
-  carnet el … y que lo de arriba es lo que decía ese día. Lo aplicado después no aparece: pide a la
-  familia un carnet nuevo.») y la huella SHA-256 del PDF entera, en texto normal, cifras tabulares
-  y partida en cualquier carácter (`overflow-wrap: anywhere`) antes que recortada.
-- **Código que no existe:** el `h1` «No encontramos este carnet», la frase que nombra el código en
-  `.numero` y dice cómo es («son diez letras y números») y, debajo, «Código del carnet» con
-  «Verificar» al lado (hasta 440 px), que lleva a la verificación del código corregido en
-  mayúsculas. Si el servidor no respondió: «No pudimos verificar el carnet», el aviso con su causa
-  y «Reintentar».
+### El acceso y las páginas públicas
 
-**La regla del veredicto como título.** Lo que una verificación concluye es el `h1` de la página,
-con su icono, no una etiqueta ni un distintivo encima de otro título: quien verifica lee primero
-la respuesta. Lo que la sostiene (de quién es, el código, cuándo se emitió) va debajo como ficha.
+#### El acceso
+Ingreso, recuperación, restablecimiento y activación comparten `AccesoLayout`: el único sitio de
+la aplicación donde la marca se presenta, y un formulario que no hace nada más (ver Layout).
+- **Panel de marca (desde 900 px):** marino plano (`superficie-marca`), sin tarjeta, sin borde y
+  sin sombra, 40 px de relleno arriba y abajo. Arriba, el logo completo en blanco (`MarcaTimu
+  claro`, 104 px de alto); a media altura, la frase de la pantalla en GeosansLight de 34 px en
+  blanco («Tu peludito, bien cuidado.»; en la activación, «Te damos la bienvenida a la manada
+  TIMU.») y, 40 px debajo, la línea de marca; abajo, la nota «Datos protegidos · Ley 1581 de
+  2012» con el icono del escudo, en 13 px y marino-200 (`texto-sobre-marca-suave`).
+- **Franja (por debajo de 900 px):** el mismo marino, 20 × 16 px de relleno, con el logo compacto
+  en blanco (28 px) y debajo la línea en miniatura: estaciones y marca de Hoy sin rótulos ni la
+  palabra «Hoy». La frase y la nota se ocultan; la nota baja bajo el formulario, separada por un
+  hilo y con el escudo en verde oscuro (`accion-suave-texto`).
+- **La línea de marca** (`LineaDeMarca`): el año de una familia (Afiliación, Vacunas, Visita en
+  casa, Renovación) en la señalética del metro y con los colores que admite el marino (regla 6
+  del manual). Tramo de 8 px; lo recorrido en verde-500 (`indicador-sobre-marca`), lo que falta
+  translúcido (`borde-sobre-marca`). Estaciones de 24 px con borde de 4 px: hechas llenas de
+  verde-500; la próxima con anillo blanco y halo verde-500 de 3 px, su rótulo en blanco y 600;
+  la programada en contorno marino-200 sobre el marino. «Hoy», justo antes de la próxima, es una
+  marca blanca de 4 × 24 px con «Hoy» en etiqueta blanca encima. Las cuatro columnas son
+  `minmax(max-content, 1fr)` y los rótulos (13 px, marino-200) no se parten: la línea crece antes
+  que cortar «Visita en casa». Es dibujo (`aria-hidden`): no dice nada que la pantalla necesite.
+- **Formulario:** columna de 400 px con 24 px entre bloques y 16 px entre campos. El título en
+  `h1` de 34 px y, si hace falta, una frase en texto suave debajo; campos con icono (ver
+  Inputs); el verde a todo el ancho y de 48 px en 16 px (`btn-grande`); lo secundario en plano y
+  centrado («Volver al ingreso», «Ir al ingreso», con la flecha de volver).
+- **Quién ingresa:** bajo «Hola de nuevo», un selector segmentado (Radix Tabs) «Equipo y
+  aliadas» (icono de clínica) / «Familias» (huella). Equipo y clínica aliada: correo,
+  contraseña, «¿Olvidaste tu contraseña?» a la derecha y «Ingresar». Familias: el celular
+  registrado con la ayuda «Te enviamos un código de un solo uso por WhatsApp.», el verde «Recibir
+  código» y debajo, plano, «Ingresar con contraseña» (correo o celular), que vuelve con «Recibir
+  un código por WhatsApp». Enviado el código, un aviso ok nombra el número con `telefono()` y el
+  campo del código va centrado a 20 px con espaciado ancho. Si se llega desde una ruta del portal,
+  el selector abre en Familias. Credenciales que no coinciden se dicen en palabras propias («El
+  correo o la contraseña no coinciden»); un bloqueo o una caída, con su causa.
+- **Recuperación:** «Recupera tu acceso» con «Correo o celular» y «Enviar enlace». Enviada, el
+  título cambia a «Revisa tu correo o tu WhatsApp» y la frase nombra el dato escrito («Si hay una
+  cuenta con <lo que escribió>, en unos minutos te llega un enlace…»), igual exista o no la cuenta.
+- **La pantalla del enlace** (`RestablecerPage`, `/restablecer` y `/activar`): antes de pedir
+  nada, la API dice si el enlace sirve (`POST /auth/enlace`, con el token en el cuerpo: vigente,
+  usado, vencido o inválido, su propósito y el nombre de pila). Mientras comprueba, un esqueleto
+  de tres líneas con «Comprobando el enlace…» para lectores de pantalla. Vigente: «Hola, Ana», la
+  frase según el propósito, la contraseña nueva con «Al menos 8 caracteres.» y su confirmación
+  (si no coinciden, el error bajo el campo y el verde deshabilitado), y el verde «Activar mi
+  cuenta» o «Guardar y entrar». Al guardar se entra directo, al espacio de cada perfil. Si el
+  enlace deja de servir con la pantalla abierta, el aviso de error lo dice con «Pide uno nuevo».
+- **El enlace que no sirve:** el título dice qué pasó («Este enlace ya se usó», «Este enlace
+  venció», «Este enlace no sirve», «El enlace está incompleto») y la frase qué hacer; el verde es
+  «Pedir un enlace nuevo» y «Ir al ingreso» va plano y centrado. Si el servidor no respondió:
+  «No pudimos comprobar el enlace», el aviso con su causa y, si el error es pasajero,
+  «Reintentar» como verde (la comprobación comparte el límite del ingreso y no se reintenta
+  sola).
 
-**La regla de la huella entera.** Un código, una huella o un número que alguien compara con otro
-documento se muestra entero: se parte de línea si no cabe, nunca se recorta con «…» ni se abrevia.
+**La regla del enlace que se dice de entrada.** El acceso no pide una contraseña con un enlace que
+no sirve: lo dice la API al abrirlo, y la pantalla responde a lo que dijo. El panel no deduce el
+estado de un enlace ni deja escribir dos veces la clave para enterarse después.
 
-**La regla del enlace en palabras propias.** Una página a la que se llega desde un enlace dice lo
-que pasó con sus palabras y qué hacer («Esta encuesta no está disponible», «No encontramos este
-carnet»), nunca el `detail` del servidor: quien llega no pidió nada todavía y no sabe qué es un
-token. Solo un fallo pasajero muestra su causa, junto a «Reintentar».
+**La regla de la frase que le habla a quien llega.** El panel de marca dice una frase a la persona
+que llega, no vende la plataforma: ni funciones con icono, ni antetítulo. La frase cambia con la
+pantalla (la activación le da la bienvenida a la familia) y el título del formulario la saluda
+por su nombre cuando la API lo sabe.
 
-### El registro en línea (R3-PUB-02)
-«Cada peludo, su plan»: una familia que no está afiliada dice quiénes son sus peludos, elige un plan
-para cada uno, paga en Wompi y después completa sus datos (`/afiliacion`, `/afiliacion/resultado`,
-`/afiliacion/completar`), en el marco del registro (ver Layout). Precios, coberturas y condiciones
-salen del catálogo público de la API; el panel no escribe ninguno.
-- **La manada:** el `h1` «¿Quiénes se unen a la manada?» y debajo, en texto suave, «Plan de salud
-  prepagado para perros y gatos. Tres pasos: tu manada, el pago y los datos de la familia.»;
-  después la ciudad («¿En qué ciudad vives?», una lista de hasta 320 px). La primera ciudad abre
-  una ventana «Antes de seguir» («Por ahora afiliamos solo perros y gatos.») cuyo verde nombra lo
-  que se confirma («Confirmo que solo voy a afiliar perros o gatos»); cambiarla después limpia los
-  planes elegidos, porque cada ciudad vende los suyos. Debajo, una ficha por peludo y, al final,
-  «Otro peludo» (`.registro-otro`): 56 px, borde discontinuo de 1,5 px en `borde-control-hover`,
-  esquina de panel y sin fondo; al pasar, blanco y borde continuo. Es la única caja discontinua del
-  sistema: dice «aquí cabe otro», no es un panel.
-- **La ficha de un peludo** (`FichaPeludo`, `.registro-ficha`): panel blanco con hilo, esquina de
-  panel, 20 px de relleno y 16 entre bloques; es contenedor (`container-type: inline-size`). El
-  `h2` es el nombre y la especie («Toby · Perro», la especie en texto suave) con «Quitar a Toby» en
-  plano a la derecha si hay más de uno. Nombre y especie van en una fila: el campo y, al lado, el
-  segmentado «Es» Perro / Gato (`.registro-segmento`, los dos segmentos pegados con borde de
-  control, 40 px y 44 en pantallas táctiles; el elegido, lleno de marino con texto blanco y 600).
-  Cambiar la especie limpia el plan.
-  Un nombre repetido en la manada es un error bajo el campo.
-- **Los planes como opciones en su color** (`.registro-planes`, fieldset «Su plan»): tres columnas
-  iguales a 8 px, también en el celular. Cada opción, esquina de campo, 56 px, borde de 2 px del
-  color del plan (`data-color` del catálogo), el nombre en 600 y debajo el precio con la tarifa por
-  número de peludos («$ 35.500 al mes», «al mes» sin partirse). Al pasar, lienzo; elegida, llena
-  del color del plan con su par de texto (ver Colors); con el foco, doble anillo blanco y azul. En
-  una ficha de menos de 360 px, 64 px de alto, 8 de relleno, nombre a 13 px y precio a 12, para que
-  lo que cubre el plan elegido suba a la primera pantalla por encima de la barra.
-- **Lo que cubre** (`.registro-cobertura`): el plan elegido se abre debajo, con borde de hilo y
-  esquina de campo. La cabecera «Lo que cubre Mi Amigo Fiel» va llena del color del plan con su par
-  de texto. Después, una fila por servicio con hilo entre ellas: el servicio a la izquierda y lo que
-  dice la API (`texto` del beneficio: «1 al mes», «2 al año · cubre el 40 %») a la derecha en 600,
-  marino y cifras tabulares. Al pie, sobre el lienzo, las condiciones como pares de etiqueta en
-  mayúsculas y valor: Carencia, No cubre y Términos (enlace «Términos y condiciones de <plan>»).
-  Cada una solo si el catálogo la trae; sin ninguna, no hay pie. Sin plan elegido, una nota: «Elige
-  un plan para ver todo lo que cubre y sus condiciones.».
-- **Comparar los planes** (botón plano con la flecha, «Comparar los 3 planes» / «Cerrar la
-  comparación», `aria-expanded`): despliega dentro de la ficha una `tabla` con las mismas filas para
-  todos los planes, en el orden del catálogo: «Al mes», cada servicio que trae alguno (el que un plan
-  no trae dice «No incluye») y, si alguno las tiene, Carencia y No cubre. Las cabeceras de plan van
-  llenas de su color, sin mayúsculas. Una fila igual en todos ocupa todas las columnas y se dice una
-  vez: «4 al año · igual en los 3» (la nota en texto suave). En un contenedor de menos de 480 px se
-  apila: cada servicio es un bloque con hilo y cada valor lleva delante su plan con su marcador de
-  color (`.registro-comparador-plan`), porque la columna de color ya no se ve; lo igual va a todo el
-  ancho.
-- **El resumen de la manada** (`.registro-resumen`, `aside` «Tu afiliación»): panel blanco, 20 px
-  de relleno y 16 entre bloques. «Tu manada en Medellín» (16 px, Inter 600); cada peludo con su
-  nombre en 600 y debajo el marcador de plan, el plan y su valor («Mi Amigo Fiel · $ 69.000»), o
-  «Sin plan todavía» apagado. Bajo un hilo, el total en `aria-live`: «2 peludos · tarifa de 2» en
-  13 px suave y la cifra en 24 px y 600 («$ 91.500 al mes»); en la barra del celular, la cifra a
-  16 px en la misma fila. Antes de poder calcular, «Elige un plan para cada peludo y ves el total.».
-  El verde «Elegir cómo pagar», a todo el ancho y de 48 px (`btn-grande`), deshabilitado hasta que
-  cada peludo tiene un nombre propio en la manada y un plan. Debajo, la confianza: «El pago lo procesa Wompi.» con el candado
-  y «¿Dudas? Escríbenos por WhatsApp» (`Contacto`), que solo aparece si la API da el número.
-- **El pago** (`PagoRegistro`): «Volver a la manada» en plano arriba; el `h1` «¿Cómo quieres
-  pagar?» y la frase, que solo promete ahorro si algún periodo lo trae («Pagando por varios meses
-  ahorras.»; si no, «Puedes pagar varios meses de una vez.»). Las periodicidades en 2 × 2
-  (`.registro-periodos`, fieldset «Cada cuánto»): cada una con borde de control, el nombre en 600 y
-  el valor del periodo; elegida, el tono de selección (borde e hilo interior de
-  `indicador-seleccion` sobre `superficie-seleccion`); «Ahorras $ X» en 13 px, 600 y texto de ok solo
-  en la que lo da la API. Después, «¿A quién le enviamos el comprobante?» (nombre a todo el ancho;
-  celular y correo en dos columnas, una por debajo de 900 px) con la nota de que el enlace llega por
-  correo y WhatsApp; las casillas de aceptación, con «Leer el contrato con lo que elegiste (PDF)» en
-  plano (el modelo que genera la API con lo elegido); y el verde «Pagar $ X» a todo el ancho y de
-  48 px. El resumen va al final como bloque, sin verde.
-- **El resultado del pago** (`ResultadoRegistroPage`): el `h1` dice lo que pasó («Estamos
-  confirmando tu pago», «Tu pago no se aprobó», «Este registro se cerró», «Tu afiliación ya está
-  activa»), sacado del estado que da la API. La espera es un pulso verde de 12 px
-  (`.registro-espera-pulso`, `accion-fondo`, 1,4 s de ida y vuelta, apagado sin movimiento) junto a
-  la frase con el importe y la hora de la última consulta («última vez a las 3:42 p. m.»), en
-  `role="status"`. El rechazo: «Intentar de nuevo» (otro enlace de pago para lo mismo elegido),
-  «Empezar de nuevo con otra forma de pago» en plano y el contacto. La manada pagada va al final
-  (`ManadaPagada`), con «Pagaste» o «Por pagar» y la cifra.
-- **Los datos de la familia** (`CompletarRegistroPage`): el formulario por bloques
-  (`.registro-bloque`: `fieldset` blanco con hilo, esquina de panel, 20 px de relleno y la `legend`
-  en 16 px y 600): Titular, Otros contactos (opcional), uno por peludo («Toby · Perro», la especie
-  suave) y Tu acceso al portal. La foto de cada peludo se elige con un botón secundario propio
-  («Elegir foto» / «Cambiar foto», icono de subir) sobre el `input` de archivo oculto, con el foco
-  visible en el botón.
-- **En Administración → Planes:** «Condiciones que ve quien se afilia» (Carencia, Exclusiones y el
-  enlace a los términos, solo `https`) en la ficha del plan y en la ventana de editar; cada ayuda
-  dice qué pasa vacío («Vacío: el registro no dice nada de la carencia.»), y la ficha dice «Sin
-  escribir: el registro no la muestra.».
-
-**La regla del plan de frente.** El plan se elige en su color y con todo lo que cubre a la vista
-antes de pagar: opciones del color del catálogo, la elegida abierta con cada servicio, su carencia y
-lo que no cubre, y la comparación a un toque dentro de la misma ficha. Nunca un `<select>` de planes,
-ni las condiciones en letra pequeña al final o detrás de un enlace.
-
-**La regla de lo que el catálogo no dice.** Lo que se le muestra a quien se afilia (precio, lo que
-cubre cada servicio, carencia, exclusiones, términos, el número de WhatsApp) sale de la API; si la
-API no lo da, no se muestra: ni un texto por defecto, ni «ilimitado», ni un enlace vacío. Para que
-aparezca, TIMU lo escribe en el catálogo (Administración → Planes).
-
-**La regla del ahorro que se sostiene.** Una promesa de ahorro (en la frase, en una opción) solo se
-dice si el dato de la API la sostiene para lo que se está eligiendo: sin descuento en ningún
-periodo, la frase no habla de ahorrar y ninguna opción dice «Ahorras».
-
-**La regla de lo igual una vez.** En una comparación, lo que es igual en todas las opciones se dice
-una sola vez, a todo el ancho y con «igual en los N»; las columnas quedan para lo que cambia, y la
-diferencia salta a la vista.
-
-### La portada pública y la página de cada plan (R3-PUB-04)
+#### La portada pública y la página de cada plan
 «Álbum de la manada»: la portada abre con la gente y los peludos reales de TIMU y deja la oferta a
 un toque; cada plan tiene su página con todo lo que cubre (ver Layout). Lo que dice de un plan sale
 del catálogo, de las aliadas lo que decide Administración → Aliadas y de TIMU lo que se escribe en
@@ -1679,6 +1512,183 @@ línea: el del plan para un plan, `linea-aliadas` para la red.
 **La regla del verde que arma.** En la portada el único verde lleno es el de «Arma tu plan» («Ver
 mis planes»); en la página de un plan, «Afiliar a mi peludo con <plan>». La afiliación de la barra
 va en contorno y el envío del contacto en secundario.
+
+#### El registro en línea
+«Cada peludo, su plan»: una familia que no está afiliada dice quiénes son sus peludos, elige un plan
+para cada uno, paga en Wompi y después completa sus datos (`/afiliacion`, `/afiliacion/resultado`,
+`/afiliacion/completar`), en el marco del registro (ver Layout). Precios, coberturas y condiciones
+salen del catálogo público de la API; el panel no escribe ninguno.
+- **La manada:** el `h1` «¿Quiénes se unen a la manada?» y debajo, en texto suave, «Plan de salud
+  prepagado para perros y gatos. Tres pasos: tu manada, el pago y los datos de la familia.»;
+  después la ciudad («¿En qué ciudad vives?», una lista de hasta 320 px). La primera ciudad abre
+  una ventana «Antes de seguir» («Por ahora afiliamos solo perros y gatos.») cuyo verde nombra lo
+  que se confirma («Confirmo que solo voy a afiliar perros o gatos»); cambiarla después limpia los
+  planes elegidos, porque cada ciudad vende los suyos. Debajo, una ficha por peludo y, al final,
+  «Otro peludo» (`.registro-otro`): 56 px, borde discontinuo de 1,5 px en `borde-control-hover`,
+  esquina de panel y sin fondo; al pasar, blanco y borde continuo. Es la única caja discontinua del
+  sistema: dice «aquí cabe otro», no es un panel.
+- **La ficha de un peludo** (`FichaPeludo`, `.registro-ficha`): panel blanco con hilo, esquina de
+  panel, 20 px de relleno y 16 entre bloques; es contenedor (`container-type: inline-size`). El
+  `h2` es el nombre y la especie («Toby · Perro», la especie en texto suave) con «Quitar a Toby» en
+  plano a la derecha si hay más de uno. Nombre y especie van en una fila: el campo y, al lado, el
+  segmentado «Es» Perro / Gato (`.registro-segmento`, los dos segmentos pegados con borde de
+  control, 40 px y 44 en pantallas táctiles; el elegido, lleno de marino con texto blanco y 600).
+  Cambiar la especie limpia el plan.
+  Un nombre repetido en la manada es un error bajo el campo.
+- **Los planes como opciones en su color** (`.registro-planes`, fieldset «Su plan»): tres columnas
+  iguales a 8 px, también en el celular. Cada opción, esquina de campo, 56 px, borde de 2 px del
+  color del plan (`data-color` del catálogo), el nombre en 600 y debajo el precio con la tarifa por
+  número de peludos («$ 35.500 al mes», «al mes» sin partirse). Al pasar, lienzo; elegida, llena
+  del color del plan con su par de texto (ver Colors); con el foco, doble anillo blanco y azul. En
+  una ficha de menos de 360 px, 64 px de alto, 8 de relleno, nombre a 13 px y precio a 12, para que
+  lo que cubre el plan elegido suba a la primera pantalla por encima de la barra.
+- **Lo que cubre** (`.registro-cobertura`): el plan elegido se abre debajo, con borde de hilo y
+  esquina de campo. La cabecera «Lo que cubre Mi Amigo Fiel» va llena del color del plan con su par
+  de texto. Después, una fila por servicio con hilo entre ellas: el servicio a la izquierda y lo que
+  dice la API (`texto` del beneficio: «1 al mes», «2 al año · cubre el 40 %») a la derecha en 600,
+  marino y cifras tabulares. Al pie, sobre el lienzo, las condiciones como pares de etiqueta en
+  mayúsculas y valor: Carencia, No cubre y Términos (enlace «Términos y condiciones de <plan>»).
+  Cada una solo si el catálogo la trae; sin ninguna, no hay pie. Sin plan elegido, una nota: «Elige
+  un plan para ver todo lo que cubre y sus condiciones.».
+- **Comparar los planes** (botón plano con la flecha, «Comparar los 3 planes» / «Cerrar la
+  comparación», `aria-expanded`): despliega dentro de la ficha una `tabla` con las mismas filas para
+  todos los planes, en el orden del catálogo: «Al mes», cada servicio que trae alguno (el que un plan
+  no trae dice «No incluye») y, si alguno las tiene, Carencia y No cubre. Las cabeceras de plan van
+  llenas de su color, sin mayúsculas. Una fila igual en todos ocupa todas las columnas y se dice una
+  vez: «4 al año · igual en los 3» (la nota en texto suave). En un contenedor de menos de 480 px se
+  apila: cada servicio es un bloque con hilo y cada valor lleva delante su plan con su marcador de
+  color (`.registro-comparador-plan`), porque la columna de color ya no se ve; lo igual va a todo el
+  ancho.
+- **El resumen de la manada** (`.registro-resumen`, `aside` «Tu afiliación»): panel blanco, 20 px
+  de relleno y 16 entre bloques. «Tu manada en Medellín» (16 px, Inter 600); cada peludo con su
+  nombre en 600 y debajo el marcador de plan, el plan y su valor («Mi Amigo Fiel · $ 69.000»), o
+  «Sin plan todavía» apagado. Bajo un hilo, el total en `aria-live`: «2 peludos · tarifa de 2» en
+  13 px suave y la cifra en 24 px y 600 («$ 91.500 al mes»); en la barra del celular, la cifra a
+  16 px en la misma fila. Antes de poder calcular, «Elige un plan para cada peludo y ves el total.».
+  El verde «Elegir cómo pagar», a todo el ancho y de 48 px (`btn-grande`), deshabilitado hasta que
+  cada peludo tiene un nombre propio en la manada y un plan. Debajo, la confianza: «El pago lo procesa Wompi.» con el candado
+  y «¿Dudas? Escríbenos por WhatsApp» (`Contacto`), que solo aparece si la API da el número.
+- **El pago** (`PagoRegistro`): «Volver a la manada» en plano arriba; el `h1` «¿Cómo quieres
+  pagar?» y la frase, que solo promete ahorro si algún periodo lo trae («Pagando por varios meses
+  ahorras.»; si no, «Puedes pagar varios meses de una vez.»). Las periodicidades en 2 × 2
+  (`.registro-periodos`, fieldset «Cada cuánto»): cada una con borde de control, el nombre en 600 y
+  el valor del periodo; elegida, el tono de selección (borde e hilo interior de
+  `indicador-seleccion` sobre `superficie-seleccion`); «Ahorras $ X» en 13 px, 600 y texto de ok solo
+  en la que lo da la API. Después, «¿A quién le enviamos el comprobante?» (nombre a todo el ancho;
+  celular y correo en dos columnas, una por debajo de 900 px) con la nota de que el enlace llega por
+  correo y WhatsApp; las casillas de aceptación, con «Leer el contrato con lo que elegiste (PDF)» en
+  plano (el modelo que genera la API con lo elegido); y el verde «Pagar $ X» a todo el ancho y de
+  48 px. El resumen va al final como bloque, sin verde.
+- **El resultado del pago** (`ResultadoRegistroPage`): el `h1` dice lo que pasó («Estamos
+  confirmando tu pago», «Tu pago no se aprobó», «Este registro se cerró», «Tu afiliación ya está
+  activa»), sacado del estado que da la API. La espera es un pulso verde de 12 px
+  (`.registro-espera-pulso`, `accion-fondo`, 1,4 s de ida y vuelta, apagado sin movimiento) junto a
+  la frase con el importe y la hora de la última consulta («última vez a las 3:42 p. m.»), en
+  `role="status"`. El rechazo: «Intentar de nuevo» (otro enlace de pago para lo mismo elegido),
+  «Empezar de nuevo con otra forma de pago» en plano y el contacto. La manada pagada va al final
+  (`ManadaPagada`), con «Pagaste» o «Por pagar» y la cifra.
+- **Los datos de la familia** (`CompletarRegistroPage`): el formulario por bloques
+  (`.registro-bloque`: `fieldset` blanco con hilo, esquina de panel, 20 px de relleno y la `legend`
+  en 16 px y 600): Titular, Otros contactos (opcional), uno por peludo («Toby · Perro», la especie
+  suave) y Tu acceso al portal. La foto de cada peludo se elige con un botón secundario propio
+  («Elegir foto» / «Cambiar foto», icono de subir) sobre el `input` de archivo oculto, con el foco
+  visible en el botón.
+- **En Administración → Planes:** «Condiciones que ve quien se afilia» (Carencia, Exclusiones y el
+  enlace a los términos, solo `https`) en la ficha del plan y en la ventana de editar; cada ayuda
+  dice qué pasa vacío («Vacío: el registro no dice nada de la carencia.»), y la ficha dice «Sin
+  escribir: el registro no la muestra.».
+
+**La regla del plan de frente.** El plan se elige en su color y con todo lo que cubre a la vista
+antes de pagar: opciones del color del catálogo, la elegida abierta con cada servicio, su carencia y
+lo que no cubre, y la comparación a un toque dentro de la misma ficha. Nunca un `<select>` de planes,
+ni las condiciones en letra pequeña al final o detrás de un enlace.
+
+**La regla de lo que el catálogo no dice.** Lo que se le muestra a quien se afilia (precio, lo que
+cubre cada servicio, carencia, exclusiones, términos, el número de WhatsApp) sale de la API; si la
+API no lo da, no se muestra: ni un texto por defecto, ni «ilimitado», ni un enlace vacío. Para que
+aparezca, TIMU lo escribe en el catálogo (Administración → Planes).
+
+**La regla del ahorro que se sostiene.** Una promesa de ahorro (en la frase, en una opción) solo se
+dice si el dato de la API la sostiene para lo que se está eligiendo: sin descuento en ningún
+periodo, la frase no habla de ahorrar y ninguna opción dice «Ahorras».
+
+**La regla de lo igual una vez.** En una comparación, lo que es igual en todas las opciones se dice
+una sola vez, a todo el ancho y con «igual en los N»; las columnas quedan para lo que cambia, y la
+diferencia salta a la vista.
+
+#### La encuesta y la verificación del carnet
+Las dos páginas públicas a las que se llega desde un enlace: la familia, desde el WhatsApp de la
+encuesta; un tercero (clínica, guardería, aerolínea), desde el código impreso en el carnet.
+- **La encuesta hereda el acceso:** el panel de marca con la frase según el tipo («Tu opinión nos
+  ayuda a cuidar mejor a Nina.»; en el seguimiento, «Seguimos pendientes de Nina.»; sin mascota,
+  la del acceso) y el formulario de 400 px anclado arriba (ver Layout). El `h1` hace la pregunta
+  («¿Cómo te fue en la atención de Nina?», «¿Cómo sigue Nina después de la atención?») y debajo,
+  en texto suave, de qué atención se pregunta («Consulta domiciliaria del martes, 27 de
+  octubre.»). El verde es «Enviar respuesta», a todo el ancho y de 48 px (`btn-grande`),
+  deshabilitado hasta elegir.
+- **La calificación** (`.calificacion`, satisfacción, 6.20): un `fieldset` con su `legend` («Califica
+  la atención», 13 px y 700, sin relleno) y cinco opciones iguales en fila; cada una, el número en
+  20 px y la palabra debajo (Muy mala, Mala, Regular, Buena, Excelente), con borde de control y
+  el radio oculto. Al pasar, borde de control hover y texto marino; elegida, borde y fondo de
+  selección; con el foco, anillo azul de 2 px.
+- **El seguimiento** (`.calificacion-seguimiento`, 6.21): tres respuestas apiladas, una por fila de
+  48 px, con su icono de 20 px a la izquierda y la frase entera en 16 px: «Sigue bien» (check, en
+  ok), «Tenemos una duda» (ayuda, en info) y «Algo no va bien» (el triángulo, en alerta). Elegida,
+  toma la selección del sistema; «Algo no va bien» elegida toma el tinte de alerta (borde y fondo
+  de alerta) y abre debajo un `aviso-alerta`: «Si es una urgencia, no esperes: escríbenos ya por el
+  chat de WhatsApp en el que te llegó este enlace.». La etiqueta del comentario cambia con la
+  respuesta («¿Cuál es tu duda? (opcional)», «¿Qué notaste? (opcional)»).
+- **«¡Gracias!»** dice qué pasa ahora según lo que devuelve la API (`te_contactamos`): «Alguien del
+  equipo TIMU te va a contactar para saber más y ayudarte con Nina.» o «Tu respuesta nos ayuda a
+  cuidar mejor a Nina.». No deduce del puntaje si habrá contacto, ni promete una hora que la
+  plataforma no puede asegurar (decidido con el usuario).
+- **Un error al enviar** se dice en palabras propias: «Esta encuesta ya tenía una respuesta.» (422),
+  «Intenta de nuevo en un momento» si es pasajero, y si no, que abra otra vez el enlace.
+- **Los estados de la encuesta:** mientras abre, el esqueleto de tres líneas del acceso con «Abriendo
+  la encuesta…» para lectores de pantalla. Un enlace que no sirve: «Esta encuesta no está
+  disponible» y qué hacer («Ábrelo de nuevo desde el mensaje de WhatsApp…»), sin aviso ni botón.
+  Si el servidor no respondió: «No pudimos abrir la encuesta», el aviso con su causa y
+  «Reintentar» como verde. Ya respondida: «Ya nos respondiste». Respondida en otra pestaña con
+  esta abierta (422): el aviso «Esta encuesta ya tenía una respuesta.» y el verde deshabilitado.
+- **En el panel** (Campañas, Encuestas): la respuesta del seguimiento se dice con un distintivo
+  en palabras («Sigue bien» ok, «Tiene una duda» info, «Algo no va bien» alerta) y la fila dice
+  «Seguimiento ·» antes de la fecha; la de satisfacción sigue con su puntaje («4 / 5»).
+- **El veredicto del carnet:** el `h1` es el veredicto: «Carnet auténtico» (34 px, GeosansLight)
+  con el escudo de 32 px delante en el texto de ok. Debajo, en texto suave, «Carnet preventivo
+  emitido por TIMU.» y una ficha de pares en fila que se parte (`.verificacion-datos`: Mascota
+  «Coco · Canino · Pug», Código y Emitido, en `.numero`), etiqueta de 12 px en mayúsculas
+  espaciadas en 700 y valor marino en 600.
+- **Lo que decía el carnet:** las secciones del PDF en el mismo orden y con sus títulos
+  (Vacunación, Desparasitación interna, Desparasitación externa), cada una un `h2` de 16 px en la
+  fuente de texto y una `tabla-apilable` con las columnas del PDF: las vacunas, Vacuna, Dosis y
+  Aplicada; las desparasitaciones, Aplicada y Peso; y todas, Producto, Lote, Próxima y Aplicó. Los
+  encabezados no se parten. Sin aplicaciones, «Sin aplicaciones registradas.». Después, «Pendiente
+  al emitirse»: Preventivo y Programado para; la columna Estado solo sale si algo está vencido, y
+  solo lo vencido lleva distintivo («Vencido», alerta): lo próximo dice su fecha y nada más
+  (decidido con el usuario); sin nada, «No había nada pendiente.»; un carnet emitido antes de guardarse lo
+  pendiente lo dice en una frase («Este carnet se emitió antes de que la verificación guardara lo
+  pendiente.»). No hay datos de la familia.
+- **El pie** (`.verificacion-pie`, 13 px suave): qué certifica («Certifica que TIMU emitió este
+  carnet el … y que lo de arriba es lo que decía ese día. Lo aplicado después no aparece: pide a la
+  familia un carnet nuevo.») y la huella SHA-256 del PDF entera, en texto normal, cifras tabulares
+  y partida en cualquier carácter (`overflow-wrap: anywhere`) antes que recortada.
+- **Código que no existe:** el `h1` «No encontramos este carnet», la frase que nombra el código en
+  `.numero` y dice cómo es («son diez letras y números») y, debajo, «Código del carnet» con
+  «Verificar» al lado (hasta 440 px), que lleva a la verificación del código corregido en
+  mayúsculas. Si el servidor no respondió: «No pudimos verificar el carnet», el aviso con su causa
+  y «Reintentar».
+
+**La regla del veredicto como título.** Lo que una verificación concluye es el `h1` de la página,
+con su icono, no una etiqueta ni un distintivo encima de otro título: quien verifica lee primero
+la respuesta. Lo que la sostiene (de quién es, el código, cuándo se emitió) va debajo como ficha.
+
+**La regla de la huella entera.** Un código, una huella o un número que alguien compara con otro
+documento se muestra entero: se parte de línea si no cabe, nunca se recorta con «…» ni se abrevia.
+
+**La regla del enlace en palabras propias.** Una página a la que se llega desde un enlace dice lo
+que pasó con sus palabras y qué hacer («Esta encuesta no está disponible», «No encontramos este
+carnet»), nunca el `detail` del servidor: quien llega no pidió nada todavía y no sabe qué es un
+token. Solo un fallo pasajero muestra su causa, junto a «Reintentar».
 
 ## Do's and Don'ts
 
