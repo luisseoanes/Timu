@@ -8,12 +8,8 @@ import type { AltaPeludoRead, Periodicidad } from '@/types'
 
 import { useAgregarPeludo, useAltasPeludo, useCotizacionAlta, useMiPlan, usePlanesAlta } from './api'
 import { ConWhatsApp } from './Contacto'
+import { ESPECIES_DE_LA_FAMILIA } from './especies'
 
-/** Solo perros y gatos (decisión de TIMU), como en el registro en línea. */
-const ESPECIES = [
-  { codigo: 'canino', nombre: 'Perro' },
-  { codigo: 'felino', nombre: 'Gato' },
-] as const
 const CADA: Record<Periodicidad, string> = {
   mensual: 'al mes',
   trimestral: 'cada trimestre',
@@ -128,7 +124,7 @@ function FormularioAlta() {
               setPlanId('')
             }}
           >
-            {ESPECIES.map((e) => (
+            {ESPECIES_DE_LA_FAMILIA.map((e) => (
               <option key={e.codigo} value={e.codigo}>
                 {e.nombre}
               </option>

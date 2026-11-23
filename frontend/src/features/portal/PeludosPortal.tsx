@@ -29,6 +29,7 @@ import { AccesoPeludo } from './InicioPortal'
 import { delPeludo, recorrido, vencidasDe } from './linea'
 import { LineaPortal } from './LineaPortal'
 import { cupo, finDeLinea, motivoSinAgendar } from './plan'
+import { nombreEspecie } from './especies'
 
 // --- Tus peludos ------------------------------------------------------------------------------
 
@@ -36,7 +37,7 @@ export function PortalMascotas() {
   const familia = useMiFamilia()
   const especies = useEspecies()
   const detalle = (m: MascotaRead) => {
-    const especie = especies.data?.find((e) => e.codigo === m.especie)?.nombre ?? m.especie
+    const especie = nombreEspecie(m.especie, especies.data)
     return [m.raza ? `${especie} · ${m.raza}` : especie, edad(m.fecha_nacimiento)].filter(Boolean).join(' · ')
   }
   const linea = useMiLinea()
@@ -178,7 +179,7 @@ export function PortalMascota() {
 
 function DatosPeludo({ mascota, plan, color }: { mascota: MascotaRead; plan?: string; color: string | null }) {
   const especies = useEspecies()
-  const especie = especies.data?.find((e) => e.codigo === mascota.especie)?.nombre ?? mascota.especie
+  const especie = nombreEspecie(mascota.especie, especies.data)
   const datos = [mascota.raza ? `${especie} · ${mascota.raza}` : especie, edad(mascota.fecha_nacimiento), mascota.peso_kg ? peso(mascota.peso_kg) : null]
   return (
     <p className="portal-peludo-datos">

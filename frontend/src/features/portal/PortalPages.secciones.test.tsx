@@ -397,6 +397,19 @@ describe('citas', () => {
     expect(await screen.findByRole('link', { name: /agregar un peludo/i })).toHaveAttribute('href', '/portal/mascotas/nueva')
   })
 
+  it('Peludos dice «Perro» como el alta, no el nombre del catálogo (DEU-80)', async () => {
+    server.use(
+      http.get(`${API}/portal/plan`, () => HttpResponse.json(PLAN)),
+      http.get(`${API}/catalogos/especies`, () => HttpResponse.json([{ codigo: 'canino', nombre: 'Canino', activa: true }])),
+      http.get(`${API}/portal/mi-familia`, () =>
+        HttpResponse.json({ ...FAMILIA, mascotas: [{ ...FAMILIA.mascotas![0]!, especie: 'canino', raza: 'Criolla' }] }),
+      ),
+    )
+    renderizar(<PortalMascotas />)
+    expect(await screen.findByText(/Perro · Criolla/)).toBeInTheDocument()
+    expect(screen.queryByText(/Canino/)).not.toBeInTheDocument()
+  })
+
   it('«escríbenos por WhatsApp» es un enlace al WhatsApp de TIMU', async () => {
     // R4-CIE-02: ninguno de los «escríbenos» del portal era un enlace.
     renderizar(<PortalDatos />)
