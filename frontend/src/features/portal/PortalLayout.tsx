@@ -5,6 +5,7 @@ import { CargandoPantalla } from '@/components/CargandoPantalla'
 import { Icono, type NombreIcono } from '@/components/Icono'
 import { MarcaTimu } from '@/components/MarcaTimu'
 import { MenuCuenta } from '@/components/MenuCuenta'
+import { ID_CONTENIDO, SaltarAlContenido } from '@/components/SaltarAlContenido'
 import { useAuth } from '@/features/auth'
 
 const NAV: { to: string; label: string; icono: NombreIcono; end?: boolean }[] = [
@@ -51,6 +52,7 @@ export function PortalLayout() {
 
   return (
     <div className="shell portal" data-movil={movil}>
+      <SaltarAlContenido />
       <header className="barra-marca">
         <MarcaTimu claro compacta />
         {!movil && (
@@ -60,7 +62,7 @@ export function PortalLayout() {
         )}
         <MenuCuenta nombre={usuario?.nombre} detalle="Portal de familias" alSalir={logout} />
       </header>
-      <main className="contenido portal-contenido">
+      <main id={ID_CONTENIDO} className="contenido portal-contenido" tabIndex={-1}>
         <Suspense fallback={<CargandoPantalla />}>
           <Outlet />
         </Suspense>

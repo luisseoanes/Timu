@@ -6,6 +6,7 @@ import { CargandoPantalla } from '@/components/CargandoPantalla'
 import { Icono, type NombreIcono } from '@/components/Icono'
 import { MarcaTimu } from '@/components/MarcaTimu'
 import { MenuCuenta } from '@/components/MenuCuenta'
+import { ID_CONTENIDO, SaltarAlContenido } from '@/components/SaltarAlContenido'
 import { useAuth } from '@/features/auth'
 import { NOMBRE_ROL, puede, type Accion } from '@/lib/permisos'
 import type { Rol } from '@/types'
@@ -123,6 +124,7 @@ export function AppLayout() {
 
   return (
     <div className="shell" data-movil={movil}>
+      <SaltarAlContenido />
       <header className="barra-marca">
         <MarcaTimu claro compacta />
         {!movil && (
@@ -160,7 +162,7 @@ export function AppLayout() {
         <MenuCuenta nombre={usuario?.nombre} detalle={usuario ? NOMBRE_ROL[usuario.rol] : ''} alSalir={logout} />
       </header>
 
-      <main className="contenido">
+      <main id={ID_CONTENIDO} className="contenido" tabIndex={-1}>
         {!actual.cabeceraPropia && (
           <header className="cabecera-pagina">
             <h1>{actual.titulo}</h1>

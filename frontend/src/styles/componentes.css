@@ -474,6 +474,18 @@ a.fila:hover strong { color: var(--texto-enlace); }
 /* En una ventana de agendar, las franjas en columnas iguales: las horas quedan alineadas. */
 .cupos-rejilla { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
+/* --- Saltar al contenido (DEU-79): fuera de la vista hasta que recibe el foco --- */
+.saltar-contenido {
+  position: absolute; left: var(--e3); top: var(--e3); z-index: var(--capa-menu);
+  padding: var(--e2) var(--e4);
+  border-radius: var(--r-campo); background: var(--superficie); color: var(--texto-titulo);
+  font-weight: 600; box-shadow: var(--sombra-3);
+  transform: translateY(calc(-100% - var(--e4)));
+}
+.saltar-contenido:focus-visible { transform: none; }
+/* El destino del salto recibe el foco para que el Tab siga desde ahí; no es un control. */
+.contenido:focus { outline: none; }
+
 /* --- Borrador de IA: siempre se distingue de lo que escribe el profesional --- */
 .borrador-ia {
   display: grid; gap: var(--e2);

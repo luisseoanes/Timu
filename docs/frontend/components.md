@@ -136,6 +136,12 @@ la pantalla pinta `CargandoPantalla` (el esqueleto de `Consulta`) dentro de su l
 desaparece: el `Suspense` va alrededor del `Outlet` de `AppLayout` y de `PortalLayout`. Una
 página nueva entra en `App.tsx` con `perezosa(<módulo>, '<Página>')`, nunca con un import estático.
 
+## Saltar al contenido — `SaltarAlContenido`
+
+`src/components/SaltarAlContenido.tsx`: el primer elemento de `AppLayout`, `PortalLayout` y
+`MiClinicaPage`, que solo se ve al enfocarlo con el teclado y pasa el foco al `main` (`id` en
+`ID_CONTENIDO`, con `tabIndex={-1}`). Un espacio con sesión nuevo lo lleva igual.
+
 ## Menú de la cuenta — `MenuCuenta`
 
 El de la barra marina de los tres espacios (`AppLayout`, `PortalLayout` y `MiClinicaPage`):

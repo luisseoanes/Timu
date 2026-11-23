@@ -77,6 +77,17 @@ describe('AppLayout en escritorio', () => {
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
   })
 
+  it('el primer Tab lleva a «Saltar al contenido», que pasa el foco al contenido (DEU-79)', async () => {
+    const user = userEvent.setup()
+    abrir()
+    await screen.findByRole('navigation', { name: 'Módulos' })
+    await user.tab()
+    const saltar = screen.getByRole('link', { name: 'Saltar al contenido' })
+    expect(saltar).toHaveFocus()
+    await user.click(saltar)
+    expect(screen.getByRole('main')).toHaveFocus()
+  })
+
   it('marca «Más» cuando el módulo abierto está dentro', async () => {
     abrir('/panel/aliadas')
     expect(await screen.findByRole('button', { name: 'Más' })).toHaveAttribute('data-activo', 'true')

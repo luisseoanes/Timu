@@ -754,6 +754,10 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   en 13 px y 600, marino claro (`texto-sobre-marca-suave`); hover a blanco sobre marino de
   hover; activo en blanco con subrayado verde de 4 px. Buscador blanco a la derecha y avatar
   circular con iniciales en una pastilla translúcida. Foco en verde sobre la marca.
+- **Saltar al contenido:** el primer elemento enfocable del panel, el portal y la clínica aliada
+  (`SaltarAlContenido`), fuera de la vista hasta recibir el foco del teclado; entonces aparece
+  arriba a la izquierda, sobre la barra: blanco, esquina de campo, marino en 600 y la sombra de lo
+  que flota. Lleva el foco al `main` sin tocar la URL.
 - **«Más»:** los módulos que no caben, en un menú (Radix DropdownMenu) blanco con esquina de
   tarjeta y sombra flotante; el elemento resaltado en verde tenue. Arriba lleva una flecha;
   en la barra inferior, tres puntos (nunca «+», que se lee como crear).

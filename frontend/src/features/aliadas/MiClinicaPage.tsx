@@ -1,5 +1,6 @@
 import { MarcaTimu } from '@/components/MarcaTimu'
 import { MenuCuenta } from '@/components/MenuCuenta'
+import { ID_CONTENIDO, SaltarAlContenido } from '@/components/SaltarAlContenido'
 import { useAuth } from '@/features/auth'
 
 import { useMiClinica } from './api'
@@ -19,6 +20,7 @@ export function MiClinicaPage() {
 
   return (
     <div className="shell aliada">
+      <SaltarAlContenido />
       <header className="barra-marca">
         <MarcaTimu claro compacta />
         {/* En un computador compartido de recepción, en qué clínica se está. */}
@@ -29,7 +31,7 @@ export function MiClinicaPage() {
           alSalir={logout}
         />
       </header>
-      <main className="contenido aliada-contenido">
+      <main id={ID_CONTENIDO} className="contenido aliada-contenido" tabIndex={-1}>
         <div className="aliada-mostrador">
           <ValidarRemision />
           <Atendidas />
