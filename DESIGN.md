@@ -1259,8 +1259,9 @@ ella, suaves).
   «Apagado» en neutro) y la acción al lado: «Apagar» plano, que confirma en rojo con la nota como
   descripción y «Dejarlo activo»; «Encender», suave y directo. No se borran: hay registros que los
   usan.
-- **Inteligencia artificial:** el gasto del mes en indicadores (`dolares()`: «US$ 50,00»; cuatro
-  decimales en el costo de una consulta) y la barra del presupuesto; los prompts, cada versión con
+- **Inteligencia artificial:** lo gastado este mes y lo que queda antes del tope en la fila de
+  cifras (`.cifras`, `dolares()`: «US$ 50,00»; cuatro decimales en el costo de una consulta), con la
+  barra del presupuesto debajo y «25% del tope de US$ 50,00», hasta 560 px de ancho; los prompts, cada versión con
   su distintivo de estado, «Correr casos» en plano de acción y «Activar» suave, y las instrucciones
   plegadas. Un solo verde: «Cargar versiones iniciales» sin prompts, «Nueva versión» con ellos.
   El tope mensual se cambia ahí mismo («Tope mensual (US$)» y «Guardar» en secundario, en un campo

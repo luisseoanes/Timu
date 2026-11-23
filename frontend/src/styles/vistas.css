@@ -2088,6 +2088,8 @@
 .admin-indice a:hover { color: var(--texto-titulo); background: var(--superficie); }
 .admin-indice a[aria-current="page"] { background: var(--superficie); color: var(--texto-titulo); font-weight: 600; }
 .admin-indice-movil { display: none; }
+/* El tope de la IA (DEU-72): la fila de cifras, la barra y lo que mide, al ancho de lo que se lee. */
+.ia-tope { container-type: inline-size; display: grid; gap: var(--e2); max-width: 560px; }
 @media (max-width: 1179px) {
   .admin { grid-template-columns: minmax(0, 1fr); gap: var(--e4); }
   .admin-indice { display: none; }

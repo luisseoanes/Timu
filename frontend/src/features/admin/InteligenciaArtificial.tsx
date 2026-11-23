@@ -99,21 +99,25 @@ export function InteligenciaArtificial() {
                   Lo calcula la plataforma con lo que cuesta cada consulta que hace; no es el saldo de la cuenta del
                   proveedor. Al llegar al tope, la IA se apaga hasta el mes siguiente.
                 </p>
-                <div className="indicadores">
-                  <div className="indicador">
-                    <span className="indicador-titulo">Gastado</span>
-                    <strong className="indicador-valor numero">{dolares(c.gasto_usd)}</strong>
-                    <span className="indicador-detalle">de {dolares(c.presupuesto_usd)} · {porcentaje(uso)}</span>
-                    {/* La barra junto a la cifra que mide (techo 64). */}
-                    <div className="barra-presupuesto" role="meter" aria-label="Presupuesto de IA usado" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(uso * 100)}>
-                      <span style={{ width: `${Math.min(100, uso * 100)}%` }} />
+                {/* Las dos cifras en la fila de cifras con hilos (DEU-72: eran dos recuadros dentro de
+                    la tarjeta) y, debajo, la barra con lo que mide (techo 64). */}
+                <div className="ia-tope">
+                  <dl className="cifras">
+                    <div>
+                      <dt>Gastado este mes</dt>
+                      <dd className="numero">{dolares(c.gasto_usd)}</dd>
                     </div>
+                    <div>
+                      <dt>Queda antes del tope</dt>
+                      <dd className="numero">{dolares(c.disponible_usd)}</dd>
+                    </div>
+                  </dl>
+                  <div className="barra-presupuesto" role="meter" aria-label="Presupuesto de IA usado" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(uso * 100)}>
+                    <span style={{ width: `${Math.min(100, uso * 100)}%` }} />
                   </div>
-                  <div className="indicador">
-                    <span className="indicador-titulo">Queda antes del tope</span>
-                    <strong className="indicador-valor numero">{dolares(c.disponible_usd)}</strong>
-                    <span className="indicador-detalle">Este mes</span>
-                  </div>
+                  <p className="apagado">
+                    <span className="numero">{porcentaje(uso)}</span> del tope de <span className="numero">{dolares(c.presupuesto_usd)}</span>
+                  </p>
                 </div>
                 {/* `key`: tras guardar, el campo vuelve a partir del tope guardado. */}
                 <CambiarTope key={c.presupuesto_usd} tope={c.presupuesto_usd} />

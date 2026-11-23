@@ -61,6 +61,15 @@ describe('tope de gasto', () => {
     expect(screen.getByText('Queda antes del tope')).toBeInTheDocument()
   })
 
+  it('lo gastado y lo que queda van en la fila de cifras, cada importe con su nombre (DEU-72)', async () => {
+    abrir()
+    const fila = (await screen.findByText('Gastado este mes')).closest('dl')!
+    expect(fila).toHaveClass('cifras')
+    expect(within(fila).getAllByRole('term').map((t) => t.textContent)).toEqual(['Gastado este mes', 'Queda antes del tope'])
+    expect(within(fila).getAllByRole('definition')).toHaveLength(2)
+    expect(screen.getByText(/del tope de/)).toHaveTextContent(/^25\s?%\sdel tope de US\$\s50,00$/)
+  })
+
   it('el administrador cambia el tope; nunca por debajo de US$ 1', async () => {
     const enviados: unknown[] = []
     server.use(
