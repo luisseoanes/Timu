@@ -587,6 +587,11 @@ a.fila:hover strong { color: var(--texto-enlace); }
 .esqueleto-linea:nth-child(3) { width: 80%; }
 .esqueleto-linea:nth-child(4) { width: 55%; }
 @keyframes esqueleto { from { opacity: 1; } to { opacity: .45; } }
+/* Con movimiento reducido, base.css apaga todas las animaciones; el pulso del esqueleto no desplaza
+   nada y sin él la carga parece colgada (DEU-74): sigue, al doble de lento y sin curva. */
+@media (prefers-reduced-motion: reduce) {
+  .esqueleto-linea { animation: esqueleto 2.4s linear infinite alternate !important; }
+}
 .consulta-error { flex-wrap: wrap; align-items: center; justify-content: space-between; }
 
 @media (max-width: 600px) {

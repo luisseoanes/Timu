@@ -859,7 +859,7 @@
       },
       {
         "name": "reducido",
-        "value": "prefers-reduced-motion: reduce → sin transiciones ni animaciones",
+        "value": "prefers-reduced-motion: reduce → sin transiciones ni animaciones, salvo el pulso del esqueleto de carga (2,4 s, lineal)",
         "purpose": "Accesibilidad."
       }
     ],

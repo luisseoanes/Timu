@@ -820,7 +820,8 @@ Firmes y planos; el color dice la jerarquía, no la forma.
 - Mientras se comprueba la sesión (`ProtectedRoute`): la marca y un esqueleto centrados en el
   lienzo. Si falla, un aviso blanco con esquina de panel, icono de error, título de 16 px y el
   botón para reintentar. El esqueleto es una barra del color de pista que respira
-  (opacidad 1 → 0.45, 1.2 s).
+  (opacidad 1 → 0.45, 1.2 s); con movimiento reducido sigue respirando, a 2,4 s y sin curva, porque
+  solo cambia la opacidad y sin él la espera parece colgada. Lo demás se apaga.
 - **Mientras llega una pantalla** (`CargandoPantalla`): el código va partido por espacio y por
   módulo (la portada no descarga el panel), y lo que se ve mientras llega es el mismo esqueleto de
   tres líneas de una consulta que carga, con «Cargando…» para lectores de pantalla. Va dentro del

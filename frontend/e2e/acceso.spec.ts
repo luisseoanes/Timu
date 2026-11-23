@@ -36,6 +36,18 @@ test.describe('con movimiento reducido', () => {
     expect(tramos.map((t) => t.nombre)).toEqual(['none', 'none'])
     expect(hoy).toBe('none')
   })
+
+  test('el esqueleto de carga sigue latiendo, más lento, para que la espera no parezca colgada (DEU-74)', async ({ page }) => {
+    // Sin respuesta de /auth/me, la espera de sesión se queda con su esqueleto.
+    await page.route('**/api/v1/auth/me', () => {})
+    await page.goto('/panel')
+    const linea = page.locator('.esqueleto-linea').first()
+    await expect(linea).toBeVisible()
+    expect(await linea.evaluate((el) => [getComputedStyle(el).animationName, getComputedStyle(el).animationDuration])).toEqual([
+      'esqueleto',
+      '2.4s',
+    ])
+  })
 })
 
 test('el selector segmentado lleva la esquina de un campo, también en el celular (DEU-71)', async ({ page }) => {
