@@ -483,13 +483,10 @@
 }
 @media (max-width: 899px) {
   .dos-columnas, .rail { grid-template-columns: 1fr; }
-  .accesos { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ================= Detalle de un registro ================= */
 /* Columna principal con pestañas y columna derecha de acciones (misma grilla del panel). */
-.detalle-cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e3); margin-bottom: var(--e4); }
-.detalle-cabeza h2 { font-size: var(--t-titulo); }
 .pila { display: grid; gap: var(--e4); align-content: start; }
 /* Como en .contenido: sin esto, una tabla ancha estira su tarjeta en vez de desplazarse
    dentro de su .scroll-x. */

@@ -81,7 +81,7 @@
   --superficie-marca:       var(--marino-900);  /* paneles de marca: ingreso, cabecera del portal */
   --superficie-marca-hover: var(--marino-800);
   --superficie-sobre-marca: rgb(255 255 255 / 8%);   /* tarjeta translúcida sobre la marca */
-  --pista:                  var(--marino-100);  /* pista de barras y anillos; decorativa */
+  --pista:                  var(--marino-100);  /* pista de las barras; decorativa */
   --velo:                   rgb(17 21 55 / 50%);    /* detrás de una ventana modal */
 
   /* Texto */

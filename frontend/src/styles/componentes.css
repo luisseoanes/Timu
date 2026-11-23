@@ -183,22 +183,6 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
    estrecha, sin tope, la fila le daba todo su ancho y el texto se montaba encima. */
 .fila-lado { flex: 0 1 auto; max-width: 40%; text-wrap: balance; text-align: right; font-size: var(--t-menor); color: var(--texto-suave); }
 
-/* --- Accesos rápidos ------------------------------------------- */
-.accesos { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--e3); }
-.acceso {
-  display: grid; justify-items: center; gap: 6px;
-  padding: var(--e4) var(--e2);
-  border-radius: var(--r-tarjeta);
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  color: var(--texto);
-  font-size: var(--t-menor);
-  font-weight: 700;
-  cursor: pointer;
-  text-align: center;
-}
-.acceso:hover { border-color: var(--borde-control-hover); color: var(--texto-titulo); }
-.acceso[aria-current="true"] { background: var(--accion-fondo); border-color: var(--indicador-seleccion); color: var(--accion-texto); }
 
 /* --- Tablas ---------------------------------------------------- */
 .tabla { width: 100%; border-collapse: collapse; }
@@ -250,28 +234,6 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
   .tabla-apilable .tabla-acciones:empty { display: none; }
   .tabla-apilable tbody tr:hover td { background: none; }
 }
-
-/* --- Anillo de progreso ---------------------------------------- */
-.anillo { position: relative; display: grid; place-items: center; }
-.anillo svg { transform: rotate(-90deg); }
-.anillo-pista { fill: none; stroke: var(--pista); }
-.anillo-valor { fill: none; stroke: var(--serie-1); stroke-linecap: round; }
-.anillo-cifra {
-  position: absolute; inset: 0;
-  display: grid; place-items: center;
-  font-family: var(--fuente); font-size: var(--t-cifra); font-weight: 600; color: var(--texto-titulo);
-}
-
-/* --- Métrica compacta ------------------------------------------ */
-.metricas { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e2); }
-.metrica {
-  display: grid; justify-items: center; gap: 2px;
-  padding: var(--e3) var(--e2);
-  border-radius: var(--r-tarjeta);
-  background: var(--superficie-hundida);
-}
-.metrica b { font-family: var(--fuente); font-size: var(--t-seccion); color: var(--texto-titulo); }
-.metrica span { font-size: var(--t-etiqueta); color: var(--texto-suave); text-align: center; }
 
 /* --- Aviso ----------------------------------------------------- */
 .aviso {
@@ -480,7 +442,6 @@ fieldset.formulario { border: 0; padding: 0; margin: 0; min-width: 0; }
 /* Barras horizontales de una sola serie: un tono, valor rotulado, sin leyenda. */
 a.fila { color: inherit; }
 a.fila:hover strong { color: var(--texto-enlace); }
-a.acceso { text-decoration: none; }
 
 /* --- Selector con búsqueda (familia, mascota) ------------------- */
 .seleccion {
@@ -512,15 +473,6 @@ a.acceso { text-decoration: none; }
 .cupo:disabled { opacity: .45; cursor: default; }
 /* En una ventana de agendar, las franjas en columnas iguales: las horas quedan alineadas. */
 .cupos-rejilla { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-
-/* --- Línea de tiempo (pasos, historia) ------------------------- */
-.linea-tiempo { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e4); }
-.linea-tiempo > li { position: relative; padding-left: var(--e6); }
-.linea-tiempo > li::before {
-  content: ""; position: absolute; left: 6px; top: 6px; width: 10px; height: 10px;
-  border-radius: var(--r-pastilla); background: var(--borde-control);
-}
-.linea-tiempo > li.hecho::before { background: var(--indicador-seleccion); }
 
 /* --- Borrador de IA: siempre se distingue de lo que escribe el profesional --- */
 .borrador-ia {
