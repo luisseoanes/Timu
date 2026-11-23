@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { Consulta } from '@/components/Consulta'
@@ -109,24 +109,16 @@ function MiRuta({ dia, elegirDia }: { dia: string; elegirDia: React.ReactNode })
         {/* Sin la pastilla de estado de la ruta: la línea ya lo dice (iniciar, en sitio, todas
             hechas), y en el celular cada fila de más aleja las paradas del pulgar. */}
         <p className="rutas-resumen numero">
-          {[...(mias.length > 0 ? resumen(mias).split(' · ') : []), ...(hasta ? [`hasta las ${hasta}`] : [])].map(
-            (pieza, i) => (
-              // Cada pieza se parte por separado; el punto va aparte, con el mismo aire a cada lado.
-              // El espacio entre piezas no ocupa sitio en el flex, pero separa el texto que leen
-              // los lectores de pantalla.
-              <Fragment key={pieza}>
-                {i > 0 && (
-                  <>
-                    {' '}
-                    <span className="rutas-separador" aria-hidden="true">
-                      ·
-                    </span>{' '}
-                  </>
-                )}
-                <span className={pieza.startsWith('hasta') ? 'apagado' : undefined}>{pieza}</span>
-              </Fragment>
-            ),
-          )}
+          {/* Cada pieza lleva su punto delante; la que empieza una línea lo deja fuera de la vista
+              (DEU-80: en el celular quedaba «· 18 km ·», con un punto colgado a cada lado). */}
+          <span className="rutas-piezas">
+            {[...(mias.length > 0 ? resumen(mias).split(' · ') : []), ...(hasta ? [`hasta las ${hasta}`] : [])].map((pieza, i) => (
+              <span key={pieza} className={pieza.startsWith('hasta') ? 'rutas-pieza apagado' : 'rutas-pieza'}>
+                {i > 0 && <span className="sr-only">, </span>}
+                {pieza}
+              </span>
+            ))}
+          </span>
         </p>
         {elegirDia}
       </div>

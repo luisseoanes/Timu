@@ -309,6 +309,24 @@ test.describe('médico en ruta', () => {
     await expect(paradas.getByRole('link', { name: /^Llamar a / }).first()).toHaveAttribute('href', /^tel:\+57/)
     await expect(page.getByRole('alert')).toHaveCount(0)
   })
+
+  test('el resumen de la ruta se parte sin dejar un punto colgado (DEU-80)', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 700 })
+    const yo = await (await page.request.get('/api/v1/auth/me')).json()
+    await page.goto((await rutaDemo(page.request, yo.id)).url)
+    const resumen = page.locator('.rutas-resumen').first()
+    await expect(resumen).toBeVisible()
+    // La pieza que empieza una línea lleva su punto en el aire recortado, a la izquierda de la fila.
+    const { piezas, lineas, colgados } = await resumen.evaluate((p) => {
+      const borde = p.getBoundingClientRect().left
+      const cajas = [...p.querySelectorAll('.rutas-pieza')].map((s) => s.getBoundingClientRect())
+      const empiezan = cajas.filter((r, i) => i === 0 || r.top > cajas[i - 1]!.top + 1)
+      return { piezas: cajas.length, lineas: empiezan.length, colgados: empiezan.filter((r) => r.left >= borde - 1).length }
+    })
+    expect(piezas, 'paradas, kilómetros y hora de llegada').toBeGreaterThan(2)
+    expect(lineas, 'a 320 px el resumen se parte').toBeGreaterThan(1)
+    expect(colgados, 'piezas que empiezan línea con su punto a la vista').toBe(0)
+  })
 })
 
 test.describe('médico en clínica', () => {

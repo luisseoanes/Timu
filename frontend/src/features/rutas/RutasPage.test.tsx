@@ -81,8 +81,10 @@ const POR_RUTEAR: PorRutearRead = {
 }
 
 /** El resumen de la ruta propia, leído como texto corrido: va en piezas que se parten por separado. */
+/** El resumen de la ruta propia: los puntos que se ven son del CSS (DEU-80) y el lector de pantalla
+ * oye comas, así que «1 de 3 paradas · 13,8 km» se busca como «1 de 3 paradas, 13,8 km». */
 const resumenPropio = (texto: string) =>
-  screen.getByText((_, el) => el?.tagName === 'P' && el.textContent?.replace(/\s+/g, ' ').trim() === texto)
+  screen.getByText((_, el) => el?.tagName === 'P' && el.textContent?.replace(/\s+/g, ' ').trim() === texto.replaceAll(' · ', ', '))
 
 /** Los pasos obligatorios de una consulta domiciliaria, ya registrados (TIPOS_SERVICIO). */
 const PASOS_HECHOS = ['valoracion', 'plan'].map((paso_codigo) => ({
