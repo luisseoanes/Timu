@@ -1,13 +1,8 @@
 # Documentación del frontend — TIMU
 
-> **En rediseño.** La interfaz se está rediseñando con la marca real de TIMU; el orden, el
-> estado de cada unidad y el siguiente paso están en la
-> [hoja de ruta](../hoja-de-ruta-rediseno.md) («Dónde se retoma»). La unidad siguiente no se
-> empieza sin que el usuario lo diga. El panel del equipo está rediseñado entero (R2) y
-> el portal de familias también, igual que el acceso (ingreso, recuperación y activación). El
-> espacio de la clínica aliada está rediseñado desde `R3-ALI-01`, la encuesta y la verificación
-> del carnet desde `R3-PUB-03`, el registro en línea desde `R3-PUB-02` y la portada pública con la
-> página de cada plan desde `R3-PUB-04`: no queda ninguna pantalla con la composición anterior.
+Todas las pantallas están rediseñadas con la marca real de TIMU. Cómo se hizo, unidad por unidad, y
+lo que queda del cierre (`R4`) están en la [hoja de ruta](../hoja-de-ruta-rediseno.md); la deuda que
+quedó escrita, en [deuda del rediseño](../rediseno/deuda.md).
 
 ## Qué leer antes de escribir una pantalla
 
@@ -39,13 +34,15 @@ frontend/src/
                      por módulo (Familias, Rutas, Clínica, bandejas, Comercial, Aliadas…)
     index.css        Índice que impone el orden de la cascada
   assets/            El logo en SVG y GeosansLight, con la receta para regenerarlos
-  components/        Piezas compartidas sin lógica de dominio (Modal, Consulta, Pestanas,
-                     Paginacion, Distintivo e Insignia, Icono, MarcaTimu, MenuCuenta,
-                     AnilloProgreso, FotoEditable)
+  api/client.ts      El único cliente de la API: sesión por cookie, renovación y errores
+  components/        Piezas compartidas sin lógica de dominio (Modal, Consulta, CargandoPantalla,
+                     Pestanas, Paginacion, Distintivo e Insignia, Icono, MarcaTimu, MenuCuenta,
+                     FotoEditable, BurbujaMensaje y AccesoLayout)
   features/<dominio>/  Pantallas y consultas por dominio (auth, familias, dashboard, …)
   layouts/           AppLayout: barra marina, barra inferior en el celular y cabecera
-  lib/               errores, permisos, formato, estados y descargas
-  routes/            ProtectedRoute: espera de sesión y guardas por perfil
+  lib/               errores, permisos, formato, estados, enlaces y descargas
+  routes/            ProtectedRoute (espera de sesión y guardas por perfil), y las redirecciones
+                     de las direcciones antiguas del panel (AlPanel) y de la web vieja (WebVieja)
   types/             api.ts, generado desde el OpenAPI del backend (no se edita a mano)
   test/              MSW (handlers, server), setup y guardas de la suite
 ```

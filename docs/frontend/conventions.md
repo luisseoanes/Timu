@@ -58,6 +58,10 @@ por rutas relativas que ESLint no ve.
 - El cliente de axios de `src/api/client.ts` es el único que habla con la API: agrega el
   token y devuelve al ingreso cuando la sesión expira. Ningún componente arma una URL.
 - Las tres pantallas obligatorias de cualquier consulta son cargando, error y vacío.
+- **Cada módulo es su propio trozo del paquete.** Una página nueva entra en `App.tsx` con
+  `perezosa(<módulo>, '<Página>')`, nunca con un import estático: el principal (las páginas
+  públicas y el ingreso) ronda los 500 kB. Mientras llega el código, la pantalla pinta
+  `CargandoPantalla` dentro de su layout ([components.md](components.md)).
 
 ## Componentes interactivos
 
@@ -140,7 +144,17 @@ resultado.
 - Un botón que sólo tenga icono lleva `aria-label`; los iconos son `aria-hidden`.
 - El estado nunca se comunica sólo con color: la insignia lleva icono y texto además del tono,
   y lo vencido de una fila se dice en texto («3 vencidas»), no solo con un punto rojo.
-- Los campos siempre tienen etiqueta visible asociada.
+- Los campos siempre tienen etiqueta visible asociada, y el nombre accesible de un control empieza
+  por su texto visible (WCAG 2.5.3): el botón de la cuenta no se llama «cuenta de …» si dice «MO».
+- **Los encabezados no saltan un nivel**: el `h1` de la página, el `h2` de cada tarjeta de primer
+  nivel (`.tarjeta-cabeza > h2`) y el `h3` de sus apartados.
+- Un enlace dentro de una frase (sin clase, en `p`, `li`, `dd` o `span`) va subrayado: no se
+  distingue solo por el color (WCAG 1.4.1, en `base.css`).
+- Los objetivos táctiles miden 44 px en pantallas estrechas o táctiles (botones, campos, pestañas,
+  segmentos, la cuenta) y nunca menos de 24 px (WCAG 2.5.8). Lo que se desplaza recibe el foco para
+  poder moverlo con el teclado.
+- El barrido de `e2e-stack/responsive.spec.ts` pasa axe-core con todas las reglas WCAG 2.2 A y AA en
+  cada ruta, pestaña y ficha, a 375, 768, 900 y 1280 px, y falla si los encabezados saltan un nivel.
 - Con `prefers-reduced-motion` se desactivan transiciones y animaciones (ya está en
   `base.css`).
 
@@ -159,7 +173,8 @@ de la paleta en vez de un rol, usa una variable que no está definida, si un par
 mínimo, si un rol de texto o de control no tiene ningún par declarado, o si un `z-index` no
 sale de la escala `--capa-*`, o si un radio o el espaciado de una etiqueta se escriben a mano
 (`--r-…`, `--tracking-etiqueta`). **Un rol nuevo llega con su par.** Las sombras no las vigila la
-guarda: se revisan en el diff (solo hay una, `--sombra-3`, para lo que flota). Los `.svg` tampoco: sus colores son el activo de la
+guarda: se revisan en el diff (solo hay una de profundidad, `--sombra-3`, para lo que flota; los
+anillos de `box-shadow` con `--foco` marcan el foco o el mensaje destacado, no profundidad). Los `.svg` tampoco: sus colores son el activo de la
 marca, no colores de la interfaz.
 
 ## Qué revisar antes de empujar
@@ -173,28 +188,17 @@ marca, no colores de la interfaz.
 5. ¿Hay **una sola acción verde llena** por vista, y las confirmaciones destructivas van con
    `btn-peligro`?
 6. ¿Las tablas son `tabla-apilable`, con `data-etiqueta` en cada celda?
-7. ¿Se ve bien a 1440, 1180, 900 y **390** px? Las ventanas, por encima de todo; los títulos,
+7. ¿Los encabezados siguen `h1` → `h2` → `h3` sin saltos, y el nombre accesible de cada control
+   empieza por su texto visible?
+8. ¿Se ve bien a 1440, 1180, 900 y **390** px? Las ventanas, por encima de todo; los títulos,
    sin pisarse; nada que desborde dentro de una pestaña (si la pantalla tiene pestañas, su
    ruta lleva `pestanas: true` en el barrido de `e2e-stack/responsive.spec.ts`, y si abre una ficha
    desde la URL, la declara en `fichas`).
-8. ¿Los textos están en español, en voz activa y sin jerga?
-9. ¿`npm run verificar` pasa? (lint + tipos + cobertura + build, lo mismo que el CI)
+9. ¿Los textos están en español, en voz activa y sin jerga?
+10. ¿`npm run verificar` pasa? (lint + tipos + cobertura + build, lo mismo que el CI)
 
 ## Deuda conocida
 
 - **Sin tema oscuro.** Decisión de producto; los tokens están listos para agregarlo.
-
-Encontrado al escribir `DESIGN.md` (`R2-PAN-03`), fuera de lo que ya se rediseñó:
-
-- **Los módulos sin rediseñar** contradicen el sistema en puntos que sus unidades de la hoja de
-  ruta corrigen, como la opacidad de `.cupo:disabled` (la usa el selector de horarios del portal
-  y del panel).
-- **`.impeccable/design.json` va algo por detrás de `DESIGN.md`.** Al cerrar `R2-PAN-08`
-  (2026-11-14) el documentador le añadió las reglas que faltaban (número de casa, acción de quien
-  recorre, series que se distinguen y una sola redacción), el «don't» de las siluetas, los componentes
-  de las bandejas, la franja de cifras del Inicio y los pasos de la atención. Siguen sin estar la
-  línea del día y el gráfico de serie del Inicio. Se completa con `/impeccable document` o en
-  `R4-CIE-03`.
-- ~~**Ciudades y departamentos sin tildes**~~ Resuelto el 2026-11-16 (migración `0048`): «Bogotá»,
-  «Medellín», «Atlántico». El nombre sigue siendo la clave por la que se guarda la ciudad; la API
-  acepta escribirla con o sin tildes y devuelve el nombre del catálogo.
+- Lo demás que quedó escrito al cerrar el rediseño (los P2 y P3 de la auditoría y lo que espera una
+  decisión) está en [deuda del rediseño](../rediseno/deuda.md), con su estado.

@@ -5,13 +5,6 @@ Los componentes no saben en qué página están: la rejilla la pone la plantilla
 cada decisión visual está en [`DESIGN.md`](../../DESIGN.md) y en el contrato de la
 superficie (`.impeccable/surfaces/`).
 
-> En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)). **Rediseñado:** la estructura
-> del panel, el listado con ficha (Familias, Rutas y Clínica), la ruta propia del médico, la
-> consulta guiada, el inicio del panel, las bandejas (Tareas, Cartera y Preventivos), Comercial y Campañas, Aliadas y Administración, las ventanas, la espera de sesión, el portal de familias entero, el acceso y el espacio de la clínica aliada. **Aún con la composición anterior** (aunque ya con la paleta, la
-> tipografía y el logo): el detalle de un registro y las
-> páginas públicas. Cada uno se rehace en su
-> unidad.
-
 ## Estructura del panel — `AppLayout`
 
 ```
@@ -76,12 +69,12 @@ ficha es la ruta abierta con su línea (`LineaRuta`). En los dos, el registro ab
 URL (`/familias/:id`, `/rutas?ruta=`), igual que los filtros. En Clínica el listado es la
 historia de la mascota (su ficha y sus consultas) y la ficha, la consulta abierta: guiada si es
 un borrador propio, leída si no (`/clinica/mascotas/:id`, `?nueva=1`, `?servicio=` y
-`/clinica/historias/:id`). Su pestaña «Plantillas de consulta» (`DEU-15`) es otro listado con ficha
+`/clinica/historias/:id`). Su pestaña «Plantillas de consulta» es otro listado con ficha
 (`?plantilla=`): cada fila dice en palabras qué apartados prellena, las inactivas van al final con su
 insignia y la ficha lee la plantilla por apartado, como la consulta firmada, dice en cuántas consultas
 firmadas se usó y lleva «Editar plantilla» en verde y activar o desactivar en el menú. La consulta de
 una visita ofrece las plantillas de su tipo de atención y las generales; sin visita, todas. La página controla la pestaña: una plantilla que llega
-en la URL abre «Plantillas de consulta», y «Volver» se queda en ella. En Servicios (R2-PAN-05) el listado agrupa los servicios por día
+en la URL abre «Plantillas de consulta», y «Volver» se queda en ella. En Servicios el listado agrupa los servicios por día
 («Hoy · sáb 14 nov», «Mañana · …») y cada fila dice a quién se atiende: la mascota y el tipo en
 el título, la hora, el titular y la ciudad debajo, y «Por autorizar» si espera la autorización.
 Los filtros (estado, ciudad, desde y hasta, en dos columnas) viven en la URL; sin `desde` la
@@ -100,7 +93,7 @@ la ficha dentro (`FichaServicio`), así que el listado no salta al abrir uno. Al
 final del listado, la ficha se trae a la vista. Los demás módulos que
 abren un registro deberían partir de aquí.
 
-En Comercial (R2-PAN-09) el listado son los interesados, con las vistas «Abiertos», «Afiliados» y
+En Comercial el listado son los interesados, con las vistas «Abiertos», «Afiliados» y
 «Perdidos» (con su recuento, de `/comercial/interesados/recuentos`), el buscador y, en «Abiertos»,
 los grupos por etapa con el rótulo de los días de Servicios. La ficha (`/comercial?interesado=`)
 lleva la línea de etapas, los datos (el responsable se cambia ahí), y la conversación de WhatsApp
@@ -114,7 +107,7 @@ envío y «Cómo le fue». Enviar ahora confirma con la audiencia («Enviar ahor
 programar no, porque se cancela antes de salir. Segmentos, Encuestas, Mensajes y Plantillas de
 WhatsApp siguen en sus pestañas, cada una en su fichero (`CampanasPage.tsx` solo arma las pestañas).
 
-En Aliadas (R2-PAN-10) la pestaña Clínicas y convenios es un listado con ficha (`/aliadas?clinica=`):
+En Aliadas la pestaña Clínicas y convenios es un listado con ficha (`/aliadas?clinica=`):
 la ficha dice sus datos, sus convenios en tabla apilable (beneficio y plan, lo que cubre, la tarifa y
 la vigencia) y las remisiones que tiene por usar. «Nuevo convenio» es la verde, para administración;
 activar o desactivar la clínica va en el menú. Una clínica recién registrada abre su ficha. En
@@ -123,7 +116,7 @@ cada peludo, el pago por periodo, sus beneficios y dónde se vende, con «Editar
 reglas van agrupadas por el evento que las evalúa, y la abierta dice en palabras cuándo aplica y qué
 hace (lo genera el motor del backend) y se prueba ahí mismo, con un campo por cada dato que mira la
 condición. Una regla de un evento retirado se lee pero no se edita. «Editar regla» y «Nueva regla»
-(`DEU-8`) abren la misma ventana (`EditorRegla.tsx`), que escribe la regla por campos con lo que la
+abren la misma ventana (`EditorRegla.tsx`), que escribe la regla por campos con lo que la
 API declara de cada evento (`GET /reglas/eventos`) y la dice en palabras arriba mientras se escribe
 (`POST /reglas/describir`, cada 300 ms sin cambios y solo con la regla completa). La lógica de leer y
 armar la condición vive en `admin/reglas.ts`; el panel no conoce los campos de ningún evento.
@@ -193,10 +186,10 @@ color sobre el lienzo y un esqueleto anunciado a los lectores de pantalla, sin l
 ningún espacio. Si el servidor no responde, una tarjeta con su título, la explicación y
 «Reintentar».
 
-## Acceso — `.ingreso` (`AccesoLayout`, R3-PUB-01)
+## Acceso — `.ingreso` (`AccesoLayout`)
 
 La misma plantilla sirve al ingreso, la recuperación, el restablecimiento y la activación, y a la
-encuesta (`R3-PUB-03`), la otra página a la que la familia llega desde un enlace. Vive en
+encuesta, la otra página a la que la familia llega desde un enlace. Vive en
 `src/components/AccesoLayout.tsx`: es solo presentación y la usan `auth` y `publico`.
 
 ```
@@ -238,7 +231,7 @@ encuesta (`R3-PUB-03`), la otra página a la que la familia llega desde un enlac
   seguimiento (6.21), con tres respuestas en fila (`.calificacion-seguimiento`). «¡Gracias!» dice
   qué pasa después según `te_contactamos`.
 
-## Registro en línea — `.registro` (`MarcoRegistro`, R3-PUB-02)
+## Registro en línea — `.registro` (`MarcoRegistro`)
 
 El registro (`/afiliacion`), el resultado del pago y el formulario de la familia comparten el marco:
 la franja marina con el logo compacto y, debajo, el contenido con la manada a la derecha.
@@ -266,7 +259,7 @@ la franja marina con el logo compacto y, debajo, el contenido con la manada a la
   otros contactos, cada peludo y el acceso). La plantilla pública antigua se retiró; el nombre
   `.publica` lo usa ahora el marco de la portada (abajo).
 
-## Portada y página de cada plan — `.publica` (`MarcoPublico`, R3-PUB-04)
+## Portada y página de cada plan — `.publica` (`MarcoPublico`)
 
 La portada (`/`) y cada plan (`/planes/<plan>`) comparten el marco: la barra marina pegada arriba
 (logo completo desde 1024 px y compacto debajo, las secciones, «Ingresar» —o «Ir a mi espacio» con la
@@ -297,7 +290,7 @@ alto de la barra (`scroll-margin-top`).
   línea (horizontal; vertical por debajo de 600 px) y, debajo, lo que cubre a la izquierda y el precio
   y las condiciones a la derecha, fijos al bajar; por debajo de 900 px, una columna.
 
-## Verificación del carnet — `.verificacion` (R3-PUB-03)
+## Verificación del carnet — `.verificacion`
 
 Un documento para un tercero (clínica, guardería, aerolínea) que tecleó la dirección impresa en el
 PDF: una columna de 760 px sobre el lienzo, sin tarjeta.
@@ -320,7 +313,7 @@ Certifica que TIMU emitió este carnet el … · huella SHA-256 entera
   las secciones (`CarnetVerificadoRead`). Un carnet emitido antes lo dice en una frase.
 - Un código que no existe: «No encontramos este carnet» y un campo para corregirlo.
 
-## Mi clínica — `.aliada` (clínica aliada, R3-ALI-01)
+## Mi clínica — `.aliada-mostrador` (clínica aliada)
 
 El espacio de la clínica aliada (`/aliada`) es un mostrador: lo que se hace ahora a la izquierda y
 lo ya hecho a la derecha.
@@ -358,9 +351,10 @@ lo ya hecho a la derecha.
   (`.aliada-cifras`, dos celdas separadas por hilos) entre el valor y el resumen y el verde abajo a
   la derecha (a todo el ancho y de 48 px en el celular).
 - **Lo atendido** (`Atendidas`): el título con el mes al lado (`?mes=` en la URL), cuatro cifras
-  en 2×2 (`.aliada-cifras-mes`) y la lista con hilo (`.aliada-atendidas-lista`).
+  (`.aliada-cifras`, en una fila, o en filas de libro de cuentas en un contenedor estrecho; sin
+  atenciones no se pintan) y la lista con hilo (`.aliada-atendidas-lista`).
 
-## Inicio — `.inicio` («La línea de hoy», R2-PAN-04)
+## Inicio — `.inicio` («La línea de hoy»)
 
 El módulo se llama «Inicio» y su pantalla escribe su propio `h1`: el saludo («Hola, Valentina»,
 GeosansLight de 34 px) con el día. `AppLayout` no pinta la cabecera del módulo (`cabeceraPropia`).
@@ -412,14 +406,14 @@ GeosansLight de 34 px) con el día. `AppLayout` no pinta la cabecera del módulo
 Lo que hay por resolver, en una tabla a todo el ancho que se apila en el celular: la tarea con su
 estado al lado, su área y a quién afecta (la familia y, si es de un servicio, cuál y de quién, con
 enlace a cada uno) y su descripción en una línea; cuándo vence (lo vencido con icono y la palabra, no
-solo en rojo), la prioridad y el responsable en texto. Una sola acción a la vista por fila (R4-CIE-02):
+solo en rojo), la prioridad y el responsable en texto. Una sola acción a la vista por fila:
 «Tomar» si nadie la tiene, «Cerrar» si es de quien mira, «Ver la conversación» si viene del
 asistente; el resto («Asignar a…» en submenú, solo con quienes ven el área, «Iniciar», «Cerrar»,
 «Ver la familia») en el menú de tres puntos. Las vistas (mías, pedidas por mí, sin asignar, vencidas,
 todas) son un selector segmentado que en el celular pasa a dos columnas; abre en «Mis tareas» y, sin
 tareas propias pendientes, en «Sin asignar». «Nueva tarea» es la verde.
 
-### Cartera (R2-PAN-08)
+### Cartera
 
 La misma bandeja, a todo el ancho, para cobrar y renovar. Las vistas «Vencidas» (la de entrada, adonde
 lleva «Ver las vencidas» del Inicio: toda cuota vencida, aunque el contrato pase a «en mora» el día 5), «Por renovar» (los vigentes en la ventana de 90 días) y «Todos», con
@@ -431,7 +425,7 @@ la cuota y su periodicidad; la renovación («21 ago 2027», con «ya se puede r
 cuota más antigua y su saldo) y «Renovar» si es renovable, que se confirma en una ventana. Sin verde
 lleno en la bandeja: cada ventana tiene el suyo.
 
-### Remisiones y usuarios (R2-PAN-10)
+### Remisiones y usuarios
 
 Remisiones, en Aliadas: «Por usar» (la de entrada, por la que vence antes), «Utilizadas», «Vencidas»
 (las que vencieron sin usarse y pasaron el plazo para reportar), «Anuladas» y «Todas» con su recuento, y «Emitir remisión» en verde en la cabecera. Cada fila: el titular y la
@@ -444,7 +438,7 @@ antes, porque cierra las sesiones de esa persona; «Desactivar» confirma en roj
 directo. La propia fila lleva «Tú», sin acciones. Los eventos de la pasarela, en Reportes, son otra
 bandeja: «Con error», «Procesados» y «Todos», con «Reprocesar».
 
-### Preventivos (R2-PAN-08)
+### Preventivos
 
 Dos pestañas: «Por hacer» (la bandeja) y «Carnet por mascota». La bandeja va por siguiente paso:
 «Por autorizar», «Por agendar» (los dos, lo que vence en el próximo mes), «Agendados» y «Todos», con
@@ -458,11 +452,7 @@ otras repetiría la vista), «Agendar visita» si toca agendar y un menú con «
 visita» (médico y administración, si está autorizado) y «Cancelar preventivo». Apilada, el menú va
 arriba a la derecha del bloque. El siguiente paso de cada preventivo lo dice la API (`siguiente`).
 
-## Detalle de un registro — `.detalle-cabeza`
-
-Las fichas que aún no siguen el patrón de Familias: volver, el título en `h2` y sus datos.
-
-## Portal de familias — `PortalLayout` (R3-POR-01)
+## Portal de familias — `PortalLayout`
 
 La estructura del panel con los destinos de la familia: barra marina con el logo, Inicio,
 Peludos, Citas, Pagos y Mis datos, y el menú de la cuenta; por debajo de 900 px, la barra
@@ -505,7 +495,7 @@ línea (sus preventivos y sus visitas, por `mascota_id`), y las pestañas Carnet
 clínica y Su plan, con el cupo de cada beneficio dicho de frente («le quedan 5 de 6 este
 año», «sin tope de usos este mes»; nunca «ilimitado»).
 
-### Citas, pagos y datos (R3-POR-02)
+### Citas, pagos y datos
 
 La misma cabecera (`.portal-cabecera`: `h1` y la acción de la vista) y paneles blancos
 (`.portal-panel`, con `.portal-panel-titulo`) con filas (`.portal-lista`, `.citas`): qué a la

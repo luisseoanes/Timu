@@ -7,10 +7,6 @@ usa en el código. Las clases viven en
 `vistas.css`). Si una pantalla necesita algo que no está aquí, se agrega a ese fichero y a
 este documento, no dentro de la vista.
 
-> En rediseño ([hoja de ruta](../hoja-de-ruta-rediseno.md)): la estructura del panel,
-> Familias, Rutas y Clínica ya usan la línea nueva; el resto de pantallas usa estas mismas piezas con la
-> composición anterior hasta su unidad.
-
 ## Botones — `.btn`
 
 | Variante | Clase | Cuándo |
@@ -60,11 +56,13 @@ disculpas: *El correo o la contraseña no coinciden. Intenta de nuevo.*
 ## Tarjetas — `.tarjeta`
 
 Superficie blanca y radio de panel, sin sombra (las superficies son planas). Contenedor de un
-bloque de contenido. Dentro de la ficha de familia pierden fondo y relleno: blanco sobre
+bloque de contenido. El título de una tarjeta de primer nivel es un `h2` en `.tarjeta-cabeza` (con
+aspecto de encabezado de bloque, en Inter) y sus apartados, `h3`: el barrido de
+`e2e-stack/responsive.spec.ts` falla si los encabezados de una pantalla saltan un nivel. Dentro de la ficha de familia pierden fondo y relleno: blanco sobre
 blanco solo añadía sangría.
 
 - `.tarjeta-cabeza` — título a la izquierda y enlace, dato o acción a la derecha.
-- `.bloque` — un apartado dentro de una tarjeta (título `h4` y su tabla o lista), separado del
+- `.bloque` — un apartado dentro de una tarjeta (título `h3` y su tabla o lista), separado del
   anterior.
 
 ## Insignias de estado — `Insignia` y `Distintivo`
@@ -95,7 +93,7 @@ cada celda lleva `data-etiqueta` con el texto de su cabecera, y la de acciones v
 `td.tabla-acciones` (sin etiqueta), que se pasa a una fila de botones debajo. Apilado, el valor va
 a la derecha de su etiqueta; si es largo y se parte, sus líneas empiezan a la izquierda. Una
 columna de acciones que en una vista siempre estaría vacía no se pinta (Remisiones utilizadas,
-vencidas y anuladas). Las tablas de los módulos aún sin rediseñar la adoptan en su unidad.
+vencidas y anuladas).
 
 ## Ventanas — `Modal`
 
@@ -127,14 +125,16 @@ afiliación». `.menu-item-peligro` para una entrada destructiva, tras un `.menu
 submenú (`Menu.Sub`, con `.menu-item-sub` y la flecha `derecha`) elige entre varios sin abrir una
 ventana: «Asignar a…» en Tareas. En una fila, el de tres puntos lleva lo que no es la acción del día:
 «Dar de baja» en la tabla de Mascotas de la ficha, «Iniciar» y «Asignar a…» en Tareas.
+Lo raro o destructivo va en un menú, no junto a la acción principal: una fila deja a la vista una
+sola acción, la que le toca a quien mira.
 
 ## Carga de una pantalla — `CargandoPantalla`
 
-El paquete va partido (R4-CIE-02): las páginas públicas y el ingreso cargan con la app; cada módulo
+El paquete va partido: las páginas públicas y el ingreso cargan con la app; cada módulo
 del panel, el portal y la clínica aliada, al abrirse (`lazy` en `App.tsx`). Mientras llega su código,
 la pantalla pinta `CargandoPantalla` (el esqueleto de `Consulta`) dentro de su layout, que no
-desaparece: el `Suspense` va alrededor del `Outlet` de `AppLayout` y de `PortalLayout`.
-Lo raro o destructivo va en un menú, no junto a la acción principal.
+desaparece: el `Suspense` va alrededor del `Outlet` de `AppLayout` y de `PortalLayout`. Una
+página nueva entra en `App.tsx` con `perezosa(<módulo>, '<Página>')`, nunca con un import estático.
 
 ## Menú de la cuenta — `MenuCuenta`
 
@@ -237,6 +237,19 @@ el que sigue la tira se desvanece (`data-desborda` en `.pestanas-lista`, «derec
 «ambos»), y la pestaña activa se trae a la vista al montarse y al cambiar. Son secciones de un
 registro, no navegación entre módulos.
 
+## Conversación — `BurbujaMensaje`
+
+`src/components/BurbujaMensaje.tsx`: un mensaje de WhatsApp en una lista `.comercial-mensajes`, lo
+que escribió la persona a la izquierda y lo que le escribimos a la derecha. La usan la ficha del
+interesado y la conversación que abre un mensaje en Mensajes, que marca con `destacado` (y
+`aria-current`) el mensaje del que se partió.
+
+## Campo con su acción — `.campo-con-accion`
+
+Un campo de hasta 360 px y su botón en una línea, alineados abajo para que el botón quede a la
+altura del campo y no de la etiqueta; el error baja a su fila. «Buscar» en Supresión de datos y
+«Guardar» del tope de la IA.
+
 ## Historial — `.historial`
 
 Lista de cambios de un registro: lo más reciente primero, fecha a la izquierda y qué cambió a
@@ -253,11 +266,6 @@ Lista compacta: icono cuadrado, cuerpo con título y subtítulo, y un dato o ins
 derecha (próximos servicios, movimientos de cartera). La fecha de la derecha se parte en dos
 líneas antes de apretar el texto.
 
-## Accesos rápidos — `.accesos` / `.acceso`
-
-Botones en fila con icono y texto (inicio del panel). Nunca más de cuatro: es un atajo, no un
-menú.
-
 ## Avisos — `.aviso`, `.aviso-error`, `.aviso-ok`, `.aviso-alerta`
 
 Bloque informativo dentro de una tarjeta, o resultado de una acción en las páginas de acceso.
@@ -273,7 +281,7 @@ prueba en `e2e/publicas.spec.ts`, no en jsdom). `.calificacion`, cinco en fila c
 palabra; `.calificacion-seguimiento`, tres filas de 48 px con icono y frase, y la novedad elegida
 con el tinte de alerta. El `legend` va sin relleno, alineado con las etiquetas de los campos.
 
-## Planes del registro — `.registro-plan` y `.registro-cobertura` (R3-PUB-02)
+## Planes del registro — `.registro-plan` y `.registro-cobertura`
 
 El plan se elige como pastilla en su color (borde del color; elegida, llena con su par de texto
 `--plan-*-texto`), nunca en un desplegable, en tres columnas también en el celular. El elegido se
@@ -282,7 +290,7 @@ abre con «Lo que cubre <plan>»: cabecera del color del plan, cada beneficio co
 términos) solo si el catálogo las tiene. El comparador (`.registro-comparador`, `features/publico/Comparador.tsx`)
 pone el precio, cada servicio, los beneficios adicionales y las condiciones lado a lado; lo que es
 igual en todos lo dice una vez, centrado sobre las columnas con fondo hundido, y se apila bajo 480 px
-de contenedor con el plan en color en cada valor. Lo usan el registro y la portada (`R3-PUB-04`), los
+de contenedor con el plan en color en cada valor. Lo usan el registro y la portada, los
 dos en `publico`: por eso no sube a `src/components/`.
 
 ## Indicadores — `.indicadores` / `.indicador`
@@ -300,11 +308,13 @@ hueco de sus columnas. En un contenedor de menos de 480 px pasan a filas de libr
 etiqueta a la izquierda y el importe a la derecha, en columna. Sin datos (un mes sin atenciones) no
 se pintan ceros: basta la frase del vacío.
 
-## Anillo de progreso — `AnilloProgreso` y barras — `.barras`
+## Gráficos — `GraficoSerie`, las barras del Inicio y `.barra-presupuesto`
 
-El anillo resume un porcentaje (`role="img"` con su etiqueta) y se acompaña de `.metricas`.
-Las barras comparan magnitudes de una sola serie (`--serie-1`), con el valor rotulado y sin
-leyenda; es una lista accesible con `aria-label`.
+`GraficoSerie` (`features/dashboard`) pinta la evolución de una o varias series en el tablero de
+Gerencia, con leyenda solo si hay más de una; las barras del Inicio (`.inicio-barras`) comparan
+magnitudes de una sola serie (`--serie-1`) con el valor rotulado y sin leyenda, y
+`.barra-presupuesto` dice cuánto del tope mensual de la IA va gastado. Las series salen de los
+roles `--serie-*`, nunca del color de un plan ni de un estado. El aspecto, en `DESIGN.md`.
 
 ## Bandejas — `.bandeja-*`
 
@@ -354,12 +364,6 @@ Chips con `aria-pressed` para elegir un horario disponible, un estado o una ciud
 filtro. Los agotados quedan deshabilitados. `.cupos-rejilla` los pone en tres columnas iguales,
 solo cuando cada franja es una hora suelta (la ventana de agendar un preventivo): las franjas que
 dicen el rango («10:00 a. m. – 11:00 a. m.») se partirían.
-
-## Línea de tiempo — `.linea-tiempo`
-
-Lista con un punto por elemento; `li.hecho` lo marca como hecho. Los pasos de una atención,
-la historia clínica y el carnet del portal. Las paradas de una ruta ya no la usan: tienen
-`LineaRuta`.
 
 ## Borrador de IA — `.borrador-ia`
 

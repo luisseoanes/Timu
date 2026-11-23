@@ -443,20 +443,24 @@ con su origen y su función en la sección 9, añadir el rol en la sección 10, 
 con su mínimo. Si un par no llega, la prueba falla antes del commit. Un cambio de color que no
 pasa por aquí no se acepta.
 
-La guarda automática hará fallar la suite si:
+La guarda automática (`frontend/src/test/tokens.test.ts`) hace fallar la suite si:
 
 - aparece un color escrito a mano (`#hex`, `rgb()`, `hsl()`, `oklch()` o un nombre de color)
-  en `src/` fuera de `tokens.css`;
+  en `src/` fuera de `tokens.css`, también en un `style={{}}` o en un atributo de SVG (`fill`,
+  `stroke`);
 - un componente usa un paso de la paleta en lugar de un rol;
 - se usa un `var(--…)` que no está definido;
-- un par declarado queda por debajo de su mínimo, o un rol de texto o de borde no tiene ningún
-  par declarado.
+- un par declarado queda por debajo de su mínimo, o un rol de texto, de borde de control, de foco,
+  de indicador o de serie no tiene ningún par declarado;
+- un `z-index` no sale de la escala `--capa-*`, o un radio o el espaciado de una etiqueta se
+  escriben a mano en lugar de `--r-…` y `--tracking-etiqueta`.
 
-Además, Playwright recorre todas las rutas a 375, 768, 900 y 1280 px. Falla si algo desborda la
-pantalla en horizontal o si `axe-core` encuentra un contraste insuficiente en la página ya
-dibujada.
+Las sombras no las vigila: hay una sola de profundidad (`--sombra-3`, para lo que flota) y se
+revisan en el diff. Los `.svg` del logo tampoco: sus colores son el activo de la marca.
 
-> Estado a 2026-11-10: las tres capas están en `tokens.css` (`R1-TOK-01`) y la guarda las
-> vigila. Con la paleta de la marca, el recorrido de Playwright ya no encuentra ningún fallo de
-> contraste; quedan nueve desbordes del responsive anterior, que resuelve el rediseño de cada
-> pantalla.
+Además, Playwright recorre todas las pantallas (con cada pestaña y cada ficha que abren desde la
+URL) a 375, 768, 900 y 1280 px (`frontend/e2e-stack/responsive.spec.ts`). Falla si algo desborda
+la pantalla en horizontal, si `axe-core` encuentra cualquier fallo de las reglas WCAG 2.2 A y AA en
+la página ya dibujada (contraste, nombre con el texto visible, enlaces solo por color, tamaño de los
+objetivos, teclado…) o si los encabezados saltan un nivel. No hay lista de excepciones: un fallo se
+arregla.
