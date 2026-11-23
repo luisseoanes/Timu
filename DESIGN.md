@@ -846,7 +846,8 @@ le toca.
 
 #### Bandejas (componente común: Tareas, Cartera, Preventivos, Conversaciones, Remisiones y Usuarios)
 Lo que hay por resolver, en una `tabla-apilable` a todo el ancho de un panel blanco.
-- **Vistas:** un selector segmentado (pastilla hundida con hilo, 4 px de relleno; la vista activa
+- **Vistas:** un selector segmentado (hundido con hilo y la esquina de un campo en todos los
+  anchos, 4 px de relleno y opciones con esquina fina, concéntricas; la vista activa
   en blanco y marino, las demás en texto suave, 13 px en 700) con el recuento de cada vista en
   cifras tabulares a la derecha de su nombre, suave y en texto en la activa: cuánto hay sin
   entrar. Es un grupo de botones con `aria-pressed`; la vista vive en la URL.

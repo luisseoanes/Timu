@@ -223,9 +223,8 @@
 /* Como las pestañas: por debajo del ancho en que caben, las vistas se desplazan en su fila. */
 /* En el celular, las cuatro vistas en dos filas de dos: desplazándose, la activa quedaba fuera. */
 @media (max-width: 599px) {
-  .segmento.bandeja-vistas { width: 100%; grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: var(--r-tarjeta); }
+  .segmento.bandeja-vistas { width: 100%; grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bandeja-filtro { flex: 1 1 100%; width: 100%; }
-  .segmento.bandeja-vistas .segmento-opcion { border-radius: var(--r-campo); }
 }
 /* Apilada, la celda de la tarea es un bloque: como flexible, ponía título, área y descripción en
    una sola fila estrecha y partía las palabras («Operacion/es»). */
@@ -626,11 +625,12 @@
 .ingreso-volver { justify-self: center; }
 .ingreso-esqueleto { padding-block: var(--e6); }
 
-/* Selector Equipo / Familias */
+/* Selector segmentado: el radio de un control en todos los anchos (DEU-71; en dos filas, una
+   pastilla se leía como una tarjeta dentro de otra), y sus opciones concéntricas con el relleno. */
 .segmento {
   display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
   padding: 4px; gap: 4px;
-  border-radius: var(--r-pastilla);
+  border-radius: var(--r-campo);
   background: var(--superficie-hundida);
   border: 1px solid var(--borde);
 }
@@ -638,7 +638,7 @@
   font: inherit; font-weight: 700; font-size: var(--t-menor);
   display: inline-flex; align-items: center; justify-content: center; gap: var(--e2);
   padding: 9px var(--e3);
-  border: 0; border-radius: var(--r-pastilla);
+  border: 0; border-radius: var(--r-fino);
   background: transparent; color: var(--texto-suave); cursor: pointer;
   transition: background var(--duracion) var(--curva), color var(--duracion) var(--curva);
 }

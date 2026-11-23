@@ -37,3 +37,13 @@ test.describe('con movimiento reducido', () => {
     expect(hoy).toBe('none')
   })
 })
+
+test('el selector segmentado lleva la esquina de un campo, también en el celular (DEU-71)', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.route('**/api/v1/**', (ruta) => ruta.fulfill({ status: 401, json: { detail: 'Sin sesión' } }))
+  await page.goto('/login')
+  const radio = (el: ReturnType<Page['locator']>) => el.evaluate((e) => getComputedStyle(e).borderTopLeftRadius)
+  const segmento = page.locator('.segmento').first()
+  await expect(segmento).toBeVisible()
+  expect(await radio(segmento)).toBe(await radio(page.getByLabel('Correo')))
+})
