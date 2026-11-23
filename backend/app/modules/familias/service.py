@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import Select, and_, or_, select, text
@@ -34,12 +35,19 @@ from app.modules.familias.schemas import (
 EVENTO_UBICACION = declarar_evento("familia.ubicacion_cambiada")
 EVENTO_ANONIMIZADA = declarar_evento("familia.anonimizada")
 
-ORDEN = {
+ORDEN: dict[str, Any] = {
     "created_at": Familia.created_at,
     "titular_nombre": Familia.titular_nombre,
     "ciudad": Familia.ciudad,
     "estado": Familia.estado,
 }
+
+
+def conectar_orden(nombre: str, expresion: Any) -> None:
+    """Un orden del listado que sabe otro dominio: `urgencia` (los dias de mora, DEU-75) se
+    lo conecta cartera al importarse, porque cartera ya importa familias. Sin conectar, pedirlo
+    falla como cualquier orden desconocido."""
+    ORDEN[nombre] = expresion
 
 
 def consulta_listado(

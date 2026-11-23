@@ -769,3 +769,15 @@ def estado_cuenta(db: Session, familia_id: UUID, max_cuotas: int = 24) -> dict[s
         "cuotas": cuotas,
         "pagos": pagos,
     }
+
+
+# DEU-75: el listado de familias se ordena por urgencia, los dias de mora de la cuota abierta mas
+# atrasada (`dias_mora` lo pone al dia `revisar_mora`). Sin cuotas abiertas, cero.
+familias.conectar_orden(
+    "urgencia",
+    select(func.coalesce(func.max(Cuota.dias_mora), 0))
+    .join(Contrato, Contrato.id == Cuota.contrato_id)
+    .where(Contrato.familia_id == Familia.id, Cuota.estado.in_(EstadoCuota.ABIERTAS))
+    .correlate(Familia)
+    .scalar_subquery(),
+)

@@ -15,7 +15,7 @@ from app.integrations import geocodificacion
 from app.modules.afiliaciones.models import PeludoSolicitud, SolicitudAfiliacion
 from app.modules.archivos.models import Archivo
 from app.modules.auth.models import Sesion, Usuario
-from app.modules.cartera.models import EventoPasarela, Pago
+from app.modules.cartera.models import Cuota, EventoPasarela, Pago
 from app.modules.catalogos.models import Ciudad
 from app.modules.catalogos.service import cargar
 from app.modules.clinica.models import HistoriaClinica
@@ -1028,3 +1028,28 @@ async def test_la_base_rechaza_un_cuarto_contacto_vigente(db):
                 )
             )
             await db.flush()
+
+
+async def test_el_listado_se_ordena_por_urgencia(client: AsyncClient, db, headers):
+    """DEU-75: Ana Ruiz, con 80 dias de mora, salia la ultima del listado. `-urgencia` pone
+    primero la cuota abierta mas atrasada; una pagada no cuenta y sin cuotas abiertas es cero."""
+    dias = {"Mora larga": 80, "Mora corta": 5, "Al dia": 0}
+    for nombre, mora in dias.items():
+        familia, contrato = await fabricas.afiliada(db, hoy())
+        familia.titular_nombre = nombre
+        db.add(
+            Cuota(
+                contrato_id=contrato.id,
+                periodo="2020-01",
+                fecha_vencimiento=hoy() - timedelta(days=mora),
+                valor=1000,
+                estado="pendiente" if mora else "pagada",
+                valor_pagado=0 if mora else 1000,
+                dias_mora=mora,
+            )
+        )
+    await db.commit()
+    resp = await client.get("/api/v1/familias", params={"orden": "-urgencia"}, headers=headers)
+    assert resp.status_code == 200, resp.text
+    nombres = [f["titular_nombre"] for f in resp.json()["items"] if f["titular_nombre"] in dias]
+    assert nombres == ["Mora larga", "Mora corta", "Al dia"]
