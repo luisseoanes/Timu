@@ -147,6 +147,28 @@ describe('CarteraPage', () => {
     await waitFor(() => expect(renovado).toBe('c2'))
   })
 
+  it('cambia el orden de la bandeja, y en «Por renovar» no ofrece el saldo (DEU-79)', async () => {
+    const ordenes: (string | null)[] = []
+    server.use(
+      http.get(RUTA, ({ request }) => {
+        ordenes.push(new URL(request.url).searchParams.get('orden'))
+        return pagina([CONTRATO])
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<CarteraPage />)
+    // Con la sesión cargada la bandeja va dentro de sus pestañas: antes se vuelve a montar.
+    await screen.findByRole('tab', { name: 'Contratos' })
+    const orden = await screen.findByRole('combobox', { name: 'Ordenar contratos' })
+    expect(orden).toHaveDisplayValue('Más atrasados primero')
+    expect(ordenes[0]).toBeNull()
+    await user.selectOptions(orden, 'Mayor saldo vencido primero')
+    await waitFor(() => expect(ordenes.at(-1)).toBe('saldo'))
+    await user.click(screen.getByRole('button', { name: /^Por renovar/ }))
+    expect(screen.getByRole('combobox', { name: 'Ordenar contratos' })).toHaveDisplayValue('Renueva antes primero')
+    expect(screen.queryByRole('option', { name: 'Mayor saldo vencido primero' })).not.toBeInTheDocument()
+  })
+
   it('dice por qué la vista está vacía', async () => {
     server.use(http.get(RUTA, () => pagina([])))
     renderizar(<CarteraPage />, { ruta: '/panel/cartera?vista=por_renovar' })

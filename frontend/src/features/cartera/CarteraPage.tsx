@@ -76,11 +76,19 @@ function BandejaCartera() {
   const renueva = puede(usuario, 'renovar')
 
   const filtros = { q: q || undefined, ciudad: ciudad || undefined }
+  // El orden (DEU-79): sin elegir, lo más atrasado primero, o lo que renueva antes en «Por renovar».
+  const ordenes = [
+    { valor: '', label: vista === 'por_renovar' ? 'Renueva antes primero' : 'Más atrasados primero' },
+    ...(vista === 'por_renovar' ? [] : [{ valor: 'saldo', label: 'Mayor saldo vencido primero' }]),
+    { valor: 'titular', label: 'Por nombre del titular' },
+  ]
+  const orden = ordenes.find((o) => o.valor === params.get('orden'))?.valor ?? ''
   const recuentos = useRecuentosCartera(filtros)
   const contratos = useContratos({
     ...filtros,
     solo_mora: vista === 'en_mora' || undefined,
     por_renovar: vista === 'por_renovar' || undefined,
+    orden: (orden || undefined) as 'saldo' | 'titular' | undefined,
     limit: POR_PAGINA,
     offset,
   })
@@ -134,6 +142,13 @@ function BandejaCartera() {
           <option value="">Todas las ciudades</option>
           {ciudades.data?.map((c) => (
             <option key={c.nombre} value={c.nombre}>{c.nombre}</option>
+          ))}
+        </select>
+        <select className="input bandeja-filtro" value={orden} onChange={(e) => cambiar({ orden: e.target.value })} aria-label="Ordenar contratos">
+          {ordenes.map((o) => (
+            <option key={o.valor} value={o.valor}>
+              {o.label}
+            </option>
           ))}
         </select>
       </div>

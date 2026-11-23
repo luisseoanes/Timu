@@ -30,6 +30,8 @@ export interface FiltrosCartera {
   q?: string
   solo_mora?: boolean
   por_renovar?: boolean
+  /** Sin orden, lo más atrasado (o lo que renueva antes) primero (DEU-79). */
+  orden?: 'saldo' | 'titular'
   limit?: number
   offset?: number
 }

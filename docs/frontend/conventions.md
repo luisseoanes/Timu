@@ -150,6 +150,9 @@ resultado.
   nivel (`.tarjeta-cabeza > h2`) y el `h3` de sus apartados.
 - Un enlace dentro de una frase (sin clase, en `p`, `li`, `dd` o `span`) va subrayado: no se
   distingue solo por el color (WCAG 1.4.1, en `base.css`).
+- Cada espacio con sesión abre con «Saltar al contenido» (`SaltarAlContenido`), y dos acciones con el
+  mismo texto en una vista dicen de qué son tras su texto visible (en `sr-only`): «Ver la agenda: sáb
+  14 nov · …» (`LineaDelDia`).
 - Los objetivos táctiles miden 44 px en pantallas estrechas o táctiles (botones, campos, pestañas,
   segmentos, la cuenta) y nunca menos de 24 px (WCAG 2.5.8). Lo que se desplaza recibe el foco para
   poder moverlo con el teclado.
