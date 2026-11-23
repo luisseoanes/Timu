@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-18T00:00:00Z",
+  "generatedAt": "2026-11-23T00:50:07Z",
   "title": "Design System: TIMU",
   "extensions": {
     "colorMeta": {
@@ -634,6 +634,66 @@
           "#E2E3E7"
         ]
       },
+      "plan-verde-texto": {
+        "role": "neutral",
+        "displayName": "Texto sobre plan verde",
+        "canonical": "var(--marino-900)"
+      },
+      "plan-naranja-texto": {
+        "role": "neutral",
+        "displayName": "Texto sobre plan naranja",
+        "canonical": "var(--marino-900)"
+      },
+      "plan-azul-texto": {
+        "role": "neutral",
+        "displayName": "Texto sobre plan azul",
+        "canonical": "var(--blanco)"
+      },
+      "ruta-recorrida": {
+        "role": "neutral",
+        "displayName": "Marino de lo recorrido",
+        "canonical": "var(--marino-900)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#A0A1AF",
+          "#C4C4CD"
+        ]
+      },
+      "ruta-pendiente": {
+        "role": "neutral",
+        "displayName": "Gris de lo pendiente",
+        "canonical": "var(--marino-400)",
+        "tonalRamp": [
+          "#111537",
+          "#282E53",
+          "#41445F",
+          "#5F6275",
+          "#707387",
+          "#85889D",
+          "#A0A1AF",
+          "#C4C4CD"
+        ]
+      },
+      "linea-aliadas": {
+        "role": "primary",
+        "displayName": "Verde de la red",
+        "canonical": "var(--verde-500)",
+        "tonalRamp": [
+          "#2E4200",
+          "#415800",
+          "#587000",
+          "#769116",
+          "#98B833",
+          "#C1D485",
+          "#E5EDCC",
+          "#F3F6E7"
+        ]
+      },
       "serie-1": {
         "role": "primary",
         "displayName": "Serie 1",
@@ -692,36 +752,6 @@
           "#85889D",
           "#C4C4CD",
           "#E2E3E7"
-        ]
-      },
-      "plan-verde-texto": {
-        "role": "neutral",
-        "displayName": "Texto sobre plan verde",
-        "canonical": "var(--marino-900)"
-      },
-      "plan-naranja-texto": {
-        "role": "neutral",
-        "displayName": "Texto sobre plan naranja",
-        "canonical": "var(--marino-900)"
-      },
-      "plan-azul-texto": {
-        "role": "neutral",
-        "displayName": "Texto sobre plan azul",
-        "canonical": "var(--blanco)"
-      },
-      "linea-aliadas": {
-        "role": "primary",
-        "displayName": "Verde de la red",
-        "canonical": "var(--verde-500)",
-        "tonalRamp": [
-          "#2E4200",
-          "#415800",
-          "#587000",
-          "#769116",
-          "#98B833",
-          "#C1D485",
-          "#E5EDCC",
-          "#F3F6E7"
         ]
       }
     },
@@ -789,6 +819,11 @@
         "name": "halo-intercambio",
         "value": "0 0 0 6px var(--accion-suave-fondo-hover)",
         "purpose": "La estación de la clínica de TIMU en «La red TIMU», la única de intercambio, de la que sale el ramal a casa."
+      },
+      {
+        "name": "mensaje-destacado",
+        "value": "0 0 0 2px var(--foco)",
+        "purpose": "La burbuja desde la que se abrió una conversación en Mensajes; anillo de estado, no profundidad."
       }
     ],
     "motion": [
@@ -832,7 +867,7 @@
       {
         "name": "movil",
         "value": "900px",
-        "purpose": "Barra inferior; listado o ficha; formularios a una columna; controles de 44 px. En el acceso, el panel de marca pasa a franja con el logo compacto y la línea sin rótulos, y el formulario baja debajo."
+        "purpose": "Barra inferior; listado o ficha; formularios a una columna; controles de 44 px. En el acceso, el panel de marca pasa a franja con el logo compacto y la línea sin rótulos, y el formulario baja debajo. Pestañas, segmentos, el círculo de la cuenta y el tramo plegado suben a 44 px (también con puntero grueso)."
       },
       {
         "name": "barra-publica",
@@ -1142,11 +1177,19 @@
       "description": "La fila del listado resume lo que prellena la plantilla, con cada apartado y su artículo; la ficha dice cuánto se ha usado (solo cuentan las consultas firmadas y vigentes) y para qué tipo de atención es, lee sus apartados en el orden de la consulta, con el texto hasta 75ch, y dice lo que deja en blanco. La consulta de una visita ofrece «Para esta visita» y «Generales», nunca las de otra atención; sin visita, todas y sin agrupar.",
       "html": "<div class=\"ds-plantilla\"><p class=\"ds-fila\"><strong>Vacunación anual</strong><span>Prellena el motivo de consulta y el tratamiento</span></p><p class=\"ds-datos\"><span>Prellena 2 de 5 apartados</span><span>Usada en 12 consultas firmadas</span><span>Para consulta domiciliaria</span></p><dl class=\"ds-lectura\"><div><dt>Motivo de consulta</dt><dd>Refuerzo anual de vacunas.</dd></div><div><dt>Tratamiento</dt><dd>Aplicar la vacuna del calendario.</dd></div></dl><p class=\"ds-nota\">Deja en blanco la anamnesis, el examen físico y el diagnóstico.</p></div>",
       "css": ".ds-plantilla { display: grid; gap: var(--e4); font-family: var(--fuente); font-size: var(--t-cuerpo); } .ds-fila { display: grid; gap: 2px; margin: 0; color: var(--texto-suave); } .ds-fila strong { color: var(--texto-titulo); } .ds-lectura { display: grid; gap: var(--e4); margin: 0; } .ds-lectura dt { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; color: var(--texto-suave); } .ds-lectura dd { max-width: 75ch; margin: 2px 0 0; color: var(--texto-titulo); white-space: pre-wrap; } .ds-nota { margin: 0; font-size: var(--t-menor); color: var(--texto-suave); } .ds-datos { display: flex; flex-wrap: wrap; gap: var(--e1) var(--e4); margin: 0; color: var(--texto-suave); }"
+    },
+    {
+      "name": "Menú de acciones",
+      "kind": "custom",
+      "refersTo": "btn-icono",
+      "description": "Tres puntos junto a la única acción de una fila: lo de vez en cuando, con lo destructivo en rojo y los submenús con su flecha.",
+      "html": "<div class=\"ds-menu-demo\"><button class=\"ds-menu-disparador\" aria-label=\"Más acciones de Rocky\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><circle cx=\"5\" cy=\"12\" r=\"1.6\"/><circle cx=\"12\" cy=\"12\" r=\"1.6\"/><circle cx=\"19\" cy=\"12\" r=\"1.6\"/></svg></button><ul class=\"ds-menu\" role=\"menu\"><li class=\"ds-menu-item ds-menu-sub\" role=\"menuitem\">Asignar a… <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 6l6 6-6 6\"/></svg></li><li class=\"ds-menu-item\" role=\"menuitem\">Iniciar</li><li class=\"ds-menu-item ds-menu-peligro\" role=\"menuitem\">Dar de baja</li></ul></div>",
+      "css": ".ds-menu-demo { display: grid; justify-items: end; gap: 6px; width: 240px; } .ds-menu-disparador { width: 40px; height: 40px; display: inline-grid; place-items: center; border: 0; border-radius: var(--r-campo); background: none; color: var(--texto-suave); cursor: pointer; transition: background var(--duracion) var(--curva), color var(--duracion) var(--curva); } .ds-menu-disparador:hover { background: var(--superficie-hundida); color: var(--texto-titulo); } .ds-menu-disparador:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; } .ds-menu { list-style: none; margin: 0; padding: 4px; min-width: 200px; background: var(--superficie); border-radius: var(--r-tarjeta); box-shadow: var(--sombra-3); font: 400 14px/1.55 var(--fuente); } .ds-menu-item { display: flex; align-items: center; padding: 8px 12px; border-radius: var(--r-campo); color: var(--texto); cursor: pointer; } .ds-menu-item:hover { background: var(--superficie-seleccion); color: var(--texto-titulo); } .ds-menu-sub { justify-content: space-between; gap: 12px; } .ds-menu-peligro, .ds-menu-peligro:hover { color: var(--texto-error); }"
     }
   ],
   "narrative": {
     "northStar": "La línea de metro",
-    "overview": "Cada familia es una línea de metro. Su plan se dibuja como una línea del color del plan cuyas estaciones son cuotas, preventivos y servicios: hechas, próxima o vencidas. El mundo visual es la señalética del Metro de Medellín con la paleta de TIMU: una barra superior marina con los módulos y el activo subrayado en verde, superficies blancas planas sobre un lienzo cálido, y símbolos geométricos simples (líneas, círculos, cuadrados) que se leen de un vistazo. La interfaz es de trabajo: densa, sin decoración, pensada para quien la usa ocho horas al día en escritorio y para el médico en ruta con el celular. En el portal, la misma línea es el inicio de la familia: abierta en «Hoy», como el «usted está aquí» de un plano de metro.\n\nLa densidad viene de la información, no del adorno. No hay sombras en lo que está quieto, ni bordes de adorno, ni degradados; la jerarquía la dan el tamaño del tipo, el peso, el marino del título frente al marino suave del texto, y el único verde lleno de la acción principal. La geometría de la línea (8 px, esquinas de pastilla, estaciones de 24 px) es el elemento que identifica el producto y el que más se reutiliza: aparece entera en la ficha y en miniatura en cada fila del listado.\n\nSolo hay tema claro, por decisión de producto (`color-scheme: light`). El logo es el SVG del vector de TIMU (`MarcaTimu`): completo con su lema, o compacto donde el lema no se leería. Los títulos de 20 px o más van en GeosansLight y todo lo demás en Inter.",
+    "overview": "**Creative North Star: \"La línea de metro\"**\n\nCada familia es una línea de metro. Su plan se dibuja como una línea del color del plan cuyas estaciones son cuotas, preventivos y servicios: hechas, próxima o vencidas. El mundo visual es la señalética del Metro de Medellín con la paleta de TIMU: una barra superior marina con los módulos y el activo subrayado en verde, superficies blancas planas sobre un lienzo cálido, y símbolos geométricos simples (líneas, círculos, cuadrados) que se leen de un vistazo. La interfaz es de trabajo: densa, sin decoración, pensada para quien la usa ocho horas al día en escritorio y para el médico en ruta con el celular. En el portal, la misma línea es el inicio de la familia: abierta en «Hoy», como el «usted está aquí» de un plano de metro.\n\nLa densidad viene de la información, no del adorno. No hay sombras en lo que está quieto, ni bordes de adorno, ni degradados; la jerarquía la dan el tamaño del tipo, el peso, el marino del título frente al marino suave del texto, y el único verde lleno de la acción principal. La geometría de la línea (8 px, esquinas de pastilla, estaciones de 24 px) es el elemento que identifica el producto y el que más se reutiliza: aparece entera en la ficha y en miniatura en cada fila del listado.\n\nSolo hay tema claro, por decisión de producto (`color-scheme: light`). El logo es el SVG del vector de TIMU (`MarcaTimu`): completo con su lema, o compacto donde el lema no se leería. Los títulos de 20 px o más van en GeosansLight y todo lo demás en Inter.",
     "keyCharacteristics": [
       "Barra de marca marina de 64 px; módulo activo con un subrayado verde de 4 px.",
       "Superficies blancas planas sobre lienzo `superficie-lienzo`; sombra solo en lo que flota.",
@@ -1158,252 +1201,255 @@
     "rules": [
       {
         "name": "La regla de los roles",
-        "section": "colors",
-        "body": "Fuera de `tokens.css` no se escribe un color ni se nombra un paso de la paleta: solo roles. Un rol nuevo llega con su par en `@pares`. Lo hace cumplir `frontend/src/test/tokens.test.ts` (sin `#hex`, `rgb()`, `oklch()` ni nombres de color en `src`, también en `style={{}}` y atributos SVG; ninguna `var(--…)` sin definir; cada par llega a su mínimo)."
+        "body": "Fuera de `tokens.css` no se escribe un color ni se nombra un paso de la paleta: solo roles. Un rol nuevo llega con su par en `@pares`. Lo hace cumplir `frontend/src/test/tokens.test.ts` (sin `#hex`, `rgb()`, `oklch()` ni nombres de color en `src`, también en `style={{}}` y atributos SVG; ninguna `var(--…)` sin definir; cada par llega a su mínimo).",
+        "section": "colors"
       },
       {
         "name": "La regla del verde único",
-        "section": "colors",
-        "body": "Un solo botón principal (verde lleno) por vista; el resto son suaves, secundarias o planas (regla 2 de la sección 11 del manual). En la ficha de una familia, el principal es la acción de la próxima estación y nombra lo que hace."
+        "body": "Un solo botón principal (verde lleno) por vista; el resto son suaves, secundarias o planas (regla 2 de la sección 11 del manual). En la ficha de una familia, el principal es la acción de la próxima estación y nombra lo que hace.",
+        "section": "colors"
       },
       {
         "name": "La regla de plan contra estado",
-        "section": "colors",
-        "body": "El plan es identidad: un cuadrado de 12 px del color del plan (`marcador-plan`) y el nombre al lado en texto, o la línea de la familia. El estado es una pastilla tintada con texto oscuro e icono. El color del plan sale del campo `color` del catálogo (`data-color`), nunca del nombre del plan. Donde el plan se elige (el registro en línea), la opción lleva el borde de 2 px del color del plan y, elegida, se llena de él con su par de texto (`plan-verde-texto` y `plan-naranja-texto` marino, `plan-azul-texto` blanco, en `@pares` a 4.5)."
+        "body": "El plan es identidad: un cuadrado de 12 px del color del plan (`marcador-plan`) y el nombre al lado en texto, o la línea de la familia. El estado es una pastilla tintada con texto oscuro e icono. El color del plan sale del campo `color` del catálogo (`data-color`), nunca del nombre del plan. Donde el plan se elige (el registro en línea), la opción lleva el borde de 2 px del color del plan y, elegida, se llena de él con su par de texto (`plan-verde-texto` y `plan-naranja-texto` marino, `plan-azul-texto` blanco, en `@pares` a 4.5).",
+        "section": "colors"
       },
       {
         "name": "La regla de la señal doble",
-        "section": "colors",
-        "body": "El estado nunca se comunica solo con color (WCAG 1.4.1): el distintivo lleva icono por tono (`check`, `alerta`, `info`, `cerrar`, `menos`), la estación vencida lleva el icono de alerta, y la fila del listado dice «N vencidas» en texto junto a la miniatura."
+        "body": "El estado nunca se comunica solo con color (WCAG 1.4.1): el distintivo lleva icono por tono (`check`, `alerta`, `info`, `cerrar`, `menos`), la estación vencida lleva el icono de alerta, y la fila del listado dice «N vencidas» en texto junto a la miniatura.",
+        "section": "colors"
       },
       {
         "name": "La regla de la escala fija",
-        "section": "typography",
-        "body": "El tipo se mide en rem con los siete pasos de `tokens.css`; una interfaz de trabajo no escala el tipo con la ventana (nada de `clamp()` ni `vw` en tamaños de letra). En pantallas táctiles o por debajo de 900 px, campos y buscadores suben a 1rem para que iOS no amplíe la página al enfocar. La única excepción es `--t-portada`, el titular de la web pública, que se presenta en vez de trabajar: crece de 40 a 58 px con la ventana. Ningún otro tamaño de la web pública escala, y nada del panel, el portal ni la clínica aliada usa `--t-portada`."
+        "body": "El tipo se mide en rem con los siete pasos de `tokens.css`; una interfaz de trabajo no escala el tipo con la ventana (nada de `clamp()` ni `vw` en tamaños de letra). En pantallas táctiles o por debajo de 900 px, campos y buscadores suben a 1rem para que iOS no amplíe la página al enfocar. La única excepción es `--t-portada`, el titular de la web pública, que se presenta en vez de trabajar: crece de 40 a 58 px con la ventana. Ningún otro tamaño de la web pública escala, y nada del panel, el portal ni la clínica aliada usa `--t-portada`.",
+        "section": "typography"
       },
       {
         "name": "La regla de las cifras tabulares",
-        "section": "typography",
-        "body": "Importes, fechas, totales y contadores llevan `.numero` (`font-variant-numeric: tabular-nums`) donde se comparan en columna o se actualizan."
+        "body": "Importes, fechas, totales y contadores llevan `.numero` (`font-variant-numeric: tabular-nums`) donde se comparan en columna o se actualizan.",
+        "section": "typography"
       },
       {
         "name": "La regla de la etiqueta que nombra",
-        "section": "typography",
-        "body": "La etiqueta en mayúsculas nombra un dato o un bloque de datos; es el título de lo que tiene debajo, nunca una línea decorativa encima de otro título. Vale también en la web pública, donde más tienta (decidido con el usuario el 2026-11-18): ni el álbum, ni las secciones, ni la cabecera de un plan llevan antetítulo; lo que diría pasa al título o a la frase. Sí nombran lo de debajo las etiquetas de Misión y Visión, las de cada dato de contacto, las de las condiciones de un plan y las de cada grupo de enlaces del pie."
+        "body": "La etiqueta en mayúsculas nombra un dato o un bloque de datos; es el título de lo que tiene debajo, nunca una línea decorativa encima de otro título. Vale también en la web pública, donde más tienta (decidido con el usuario el 2026-11-18): ni el álbum, ni las secciones, ni la cabecera de un plan llevan antetítulo; lo que diría pasa al título o a la frase. Sí nombran lo de debajo las etiquetas de Misión y Visión, las de cada dato de contacto, las de las condiciones de un plan y las de cada grupo de enlaces del pie.",
+        "section": "typography"
       },
       {
         "name": "La regla del contenedor",
-        "section": "layout",
-        "body": "Lo que cambia de forma según el sitio que tiene lo decide su contenedor, no la ventana: junto al listado, la ficha es estrecha en un escritorio ancho. La `tabla-apilable` se apila con una container query por debajo de 640 px de su `.scroll-x`, y la línea de la familia pasa a vertical cuando mide que sus paradas no caben con su rótulo (y siempre por debajo de 600 px de ventana)."
+        "body": "Lo que cambia de forma según el sitio que tiene lo decide su contenedor, no la ventana: junto al listado, la ficha es estrecha en un escritorio ancho. La `tabla-apilable` se apila con una container query por debajo de 640 px de su `.scroll-x`, y la línea de la familia pasa a vertical cuando mide que sus paradas no caben con su rótulo (y siempre por debajo de 600 px de ventana).",
+        "section": "layout"
       },
       {
         "name": "La regla del formulario anclado arriba",
-        "section": "layout",
-        "body": "Un formulario cuyo contenido crece al elegir (un aviso que aparece, una etiqueta que cambia) se ancla arriba, no se centra en el alto: centrado, lo que aparece debajo empuja hacia arriba la opción que se acaba de tocar. En el acceso es `arriba`, que usa la encuesta; el ingreso, de alto fijo, sigue centrado."
+        "body": "Un formulario cuyo contenido crece al elegir (un aviso que aparece, una etiqueta que cambia) se ancla arriba, no se centra en el alto: centrado, lo que aparece debajo empuja hacia arriba la opción que se acaba de tocar. En el acceso es `arriba`, que usa la encuesta; el ingreso, de alto fijo, sigue centrado.",
+        "section": "layout"
       },
       {
         "name": "La regla de la barra que deja su alto",
-        "section": "layout",
-        "body": "Una barra fija abajo que tapa el contenido le reserva su alto al desplazar: `scroll-padding-bottom` en la raíz mientras la barra está (160 px en el registro), además del relleno inferior del contenido, para que lo que el navegador trae a la vista o recibe el foco no quede debajo (WCAG 2.4.11). Si la vista ya no necesita la barra, la barra deja de ser fija."
+        "body": "Una barra fija abajo que tapa el contenido le reserva su alto al desplazar: `scroll-padding-bottom` en la raíz mientras la barra está (160 px en el registro), además del relleno inferior del contenido, para que lo que el navegador trae a la vista o recibe el foco no quede debajo (WCAG 2.4.11). Si la vista ya no necesita la barra, la barra deja de ser fija.",
+        "section": "layout"
       },
       {
         "name": "La regla de sin desborde",
-        "section": "layout",
-        "body": "Ninguna ruta desborda en horizontal a 375, 768, 900 ni 1280 px, ni tiene texto con contraste insuficiente según axe-core; las rutas con pestañas se comprueban pestaña por pestaña. Lo vigila `frontend/e2e-stack/responsive.spec.ts`, cuya lista `PENDIENTES` (deuda de los módulos sin rediseñar) solo puede encoger."
+        "body": "Ninguna ruta desborda en horizontal a 375, 768, 900 ni 1280 px, ni tiene un fallo de WCAG 2.2 A o AA según axe-core (desde R4-CIE-02, todas sus reglas, no solo el contraste), ni encabezados que salten un nivel (el título de una tarjeta de primer nivel es un h2); las rutas con pestañas se comprueban pestaña por pestaña, y las que abren una ficha desde la URL, con la ficha abierta. Lo vigila `frontend/e2e-stack/responsive.spec.ts`, sin lista de excepciones: un fallo se arregla.",
+        "section": "layout"
       },
       {
         "name": "La regla de lo que flota",
-        "section": "elevation",
-        "body": "Sombra solo para lo que tapa a otra cosa y desaparece al cerrarse. Un panel, una tarjeta o una barra nunca la llevan."
+        "body": "Sombra solo para lo que tapa a otra cosa y desaparece al cerrarse. Un panel, una tarjeta o una barra nunca la llevan.",
+        "section": "elevation"
       },
       {
         "name": "La regla de las capas",
-        "section": "elevation",
-        "body": "Todo `z-index` sale de `--capa-*`; lo comprueba `tokens.test.ts`, y `frontend/e2e-stack/recorridos.spec.ts` comprueba que menús y ventanas abiertas quedan por encima de las barras fijas."
-      },
-      {
-        "name": "La regla del estado dicho",
-        "section": "components",
-        "body": "El estado del plan se le dice a la familia con sus palabras: una pastilla (Activo, Cuotas vencidas, «En pausa» con tono de aviso, Cancelado) y al lado una frase que explica por qué y qué hacer («Tus 3 cuotas vencidas pausaron el plan. Al pagar, Luna y Michi recuperan sus beneficios.»). La pastilla y la frase usan la misma palabra; el panel conserva la del equipo («congelada»). Los cupos del plan se dicen de frente («le quedan 4 de 6 este año», «sin tope de usos este mes»), nunca «ilimitado». Si se puede agendar o no lo decide el plan, y la línea dice por qué antes de ofrecerlo."
-      },
-      {
-        "name": "La regla de hoy a la vista",
-        "section": "components",
-        "body": "En el portal, «Hoy» está en la primera pantalla del celular: lo hecho se pliega y lo vencido se agrupa en vez de crecer una estación por cuota o por vacuna."
-      },
-      {
-        "name": "La regla del número de casa",
-        "section": "components",
-        "body": "En una dirección colombiana, «# 100-12» se lee como una unidad: no se parte entre dos líneas (`partirDireccion` y `.sin-cortes`); si no cabe, baja entero. Leído a pleno sol, «100-» arriba y «12» abajo parecen dos cifras."
-      },
-      {
-        "name": "La regla de la acción de quien recorre",
-        "section": "components",
-        "body": "La acción de estado de una parada es verde solo para quien hace la ruta. Quien coordina también puede avanzarla, pero como secundaria: en su vista la acción principal es planear."
+        "body": "Todo `z-index` sale de `--capa-*`; lo comprueba `tokens.test.ts`, y `frontend/e2e-stack/recorridos.spec.ts` comprueba que menús y ventanas abiertas quedan por encima de las barras fijas.",
+        "section": "elevation"
       },
       {
         "name": "La regla de las series que se distinguen",
-        "section": "components",
-        "body": "El manual pone el azul en segundo lugar: verde, azul, naranja y marino. Antes del 2026-11-15 las series 1 y 2 eran el verde-600 y el naranja-600, casi iguales para quien no distingue el rojo del verde (ΔE 2,7, medido con el validador de la skill `dataviz`), y el Inicio usaba la 1 y la 3 como excepción. Ahora un gráfico de dos series usa la 1 y la 2 (verde y azul, ΔE 20,4) sin excepción; uno de una serie, la 1. El rojo nunca es una serie."
+        "body": "El manual pone el azul en segundo lugar: verde, azul, naranja y marino. Antes del 2026-11-15 las series 1 y 2 eran el verde-600 y el naranja-600, casi iguales para quien no distingue el rojo del verde (ΔE 2,7, medido con el validador de la skill `dataviz`), y el Inicio usaba la 1 y la 3 como excepción. Ahora un gráfico de dos series usa la 1 y la 2 (verde y azul, ΔE 20,4) sin excepción; uno de una serie, la 1. El rojo nunca es una serie.",
+        "section": "components"
+      },
+      {
+        "name": "La regla del número de casa",
+        "body": "En una dirección colombiana, «# 100-12» se lee como una unidad: no se parte entre dos líneas (`partirDireccion` y `.sin-cortes`); si no cabe, baja entero. Leído a pleno sol, «100-» arriba y «12» abajo parecen dos cifras.",
+        "section": "components"
+      },
+      {
+        "name": "La regla de la acción de quien recorre",
+        "body": "La acción de estado de una parada es verde solo para quien hace la ruta. Quien coordina también puede avanzarla, pero como secundaria: en su vista la acción principal es planear.",
+        "section": "components"
       },
       {
         "name": "La regla de una sola redacción",
-        "section": "components",
-        "body": "Un preventivo se escribe igual en la bandeja, la estación y la autorización: «Luna · Antirrábica canina, refuerzo» (`pedido`). La dosis es «dosis N» en la serie inicial y «refuerzo» después, sin número: «dosis 1, refuerzo» se leía como dos cosas a la vez."
+        "body": "Un preventivo se escribe igual en la bandeja, la estación y la autorización: «Luna · Antirrábica canina, refuerzo» (`pedido`). La dosis es «dosis N» en la serie inicial y «refuerzo» después, sin número: «dosis 1, refuerzo» se leía como dos cosas a la vez.",
+        "section": "components"
       },
       {
         "name": "La regla del verde de quien espera",
-        "section": "components",
-        "body": "En la ficha de un interesado, si su conversación espera a un asesor, el verde es «Enviar» (contestarle) y «Pasar a <etapa>» queda suave; si no, el verde es pasar a la etapa siguiente que dice la API (`siguiente_etapa`; el panel no copia el embudo) y «Enviar» queda secundario."
+        "body": "En la ficha de un interesado, si su conversación espera a un asesor, el verde es «Enviar» (contestarle) y «Pasar a <etapa>» queda suave; si no, el verde es pasar a la etapa siguiente que dice la API (`siguiente_etapa`; el panel no copia el embudo) y «Enviar» queda secundario.",
+        "section": "components"
       },
       {
         "name": "La regla de lo que se deshace",
-        "section": "components",
-        "body": "Lo reversible que no sale del registro (desactivar un plan, una regla o una clínica) va en el menú de tres puntos y se hace sin preguntar. Lo que no se deshace, o cuyo efecto alcanza a otros (anular una remisión, desactivar a alguien o cambiarle el perfil, que cierran sus sesiones, apagar una ciudad), se confirma en una ventana que dice ese efecto: en `btn-peligro` si quita algo, en verde si es el camino normal. Deshacerlo (activar, encender) es directo."
+        "body": "Lo reversible que no sale del registro (desactivar un plan, una regla o una clínica) va en el menú de tres puntos y se hace sin preguntar. Lo que no se deshace, o cuyo efecto alcanza a otros (anular una remisión, desactivar a alguien o cambiarle el perfil, que cierran sus sesiones, apagar una ciudad), se confirma en una ventana que dice ese efecto: en `btn-peligro` si quita algo, en verde si es el camino normal. Deshacerlo (activar, encender) es directo.",
+        "section": "components"
       },
       {
         "name": "La regla de la regla leída antes de guardarla",
-        "section": "components",
-        "body": "Quien escribe una regla la lee como la leerá el equipo antes de guardarla: la frase de arriba del editor la arma la API con el borrador (`/reglas/describir`), no el panel, y queda a la vista mientras se escribe. El control y la frase dicen lo mismo («al menos», «como mucho», «igual a», «más de», «menos de», «distinto de»), y un dato del catálogo se nombra, nunca por su código."
+        "body": "Quien escribe una regla la lee como la leerá el equipo antes de guardarla: la frase de arriba del editor la arma la API con el borrador (`/reglas/describir`), no el panel, y queda a la vista mientras se escribe. El control y la frase dicen lo mismo («al menos», «como mucho», «igual a», «más de», «menos de», «distinto de»), y un dato del catálogo se nombra, nunca por su código.",
+        "section": "components"
       },
       {
         "name": "La regla de las palabras de la API",
-        "section": "components",
-        "body": "El panel no muestra códigos del backend: la API dice cada cosa en palabras (`condicion_texto`, `accion_texto`, `retirada`, los grupos de usuarios, de quién es una remisión y si venció) y los estados llegan a la vista por `Distintivo` con su nombre. El panel no deduce nada de un código ni copia una regla del backend para decidir qué mostrar."
+        "body": "El panel no muestra códigos del backend: la API dice cada cosa en palabras (`condicion_texto`, `accion_texto`, `retirada`, los grupos de usuarios, de quién es una remisión y si venció) y los estados llegan a la vista por `Distintivo` con su nombre. El panel no deduce nada de un código ni copia una regla del backend para decidir qué mostrar.",
+        "section": "components"
       },
       {
-        "name": "La regla del enlace que se dice de entrada",
-        "section": "components",
-        "body": "El acceso no pide una contraseña con un enlace que no sirve: lo dice la API al abrirlo, y la pantalla responde a lo que dijo. El panel no deduce el estado de un enlace ni deja escribir dos veces la clave para enterarse después."
+        "name": "La regla del estado dicho",
+        "body": "El estado del plan se le dice a la familia con sus palabras: una pastilla (Activo, Cuotas vencidas, «En pausa» con tono de aviso, Cancelado) y al lado una frase que explica por qué y qué hacer («Tus 3 cuotas vencidas pausaron el plan. Al pagar, Luna y Michi recuperan sus beneficios.»). La pastilla y la frase usan la misma palabra; el panel conserva la del equipo («congelada»). Los cupos del plan se dicen de frente («le quedan 4 de 6 este año», «sin tope de usos este mes»), nunca «ilimitado». Si se puede agendar o no lo decide el plan, y la línea dice por qué antes de ofrecerlo.",
+        "section": "components"
       },
       {
-        "name": "La regla de la frase que le habla a quien llega",
-        "section": "components",
-        "body": "El panel de marca dice una frase a la persona que llega, no vende la plataforma: ni funciones con icono, ni antetítulo. La frase cambia con la pantalla (la activación le da la bienvenida a la familia) y el título del formulario la saluda por su nombre cuando la API lo sabe."
+        "name": "La regla de hoy a la vista",
+        "body": "En el portal, «Hoy» está en la primera pantalla del celular: lo hecho se pliega y lo vencido se agrupa en vez de crecer una estación por cuota o por vacuna.",
+        "section": "components"
       },
       {
         "name": "La regla del código como prueba",
-        "section": "components",
-        "body": "La clínica no ve las remisiones por usar, ni las busca: solo abre la que la familia trae, por su código. El código es la prueba de que la familia se presentó, y lo que se ve de ella es lo justo para atenderla (titular, últimos dígitos del documento, la mascota): ni contacto, ni dirección, ni cartera, ni historia."
+        "body": "La clínica no ve las remisiones por usar, ni las busca: solo abre la que la familia trae, por su código. El código es la prueba de que la familia se presentó, y lo que se ve de ella es lo justo para atenderla (titular, últimos dígitos del documento, la mascota): ni contacto, ni dirección, ni cartera, ni historia.",
+        "section": "components"
       },
       {
         "name": "La regla de la cifra antes del compromiso",
-        "section": "components",
-        "body": "Lo que cubre TIMU y lo que paga la familia se ve antes de reportar, no al terminar: lo calcula la API con la misma cuenta del reporte, sobre el valor que se está escribiendo. El panel no copia la regla de cobertura ni el tope para adelantar una cifra; si la API no respondió, lo dice en vez de estimar."
+        "body": "Lo que cubre TIMU y lo que paga la familia se ve antes de reportar, no al terminar: lo calcula la API con la misma cuenta del reporte, sobre el valor que se está escribiendo. El panel no copia la regla de cobertura ni el tope para adelantar una cifra; si la API no respondió, lo dice en vez de estimar.",
+        "section": "components"
       },
       {
-        "name": "La regla del veredicto como título",
-        "section": "components",
-        "body": "Lo que una verificación concluye es el `h1` de la página, con su icono, no una etiqueta ni un distintivo encima de otro título: quien verifica lee primero la respuesta. Lo que la sostiene (de quién es, el código, cuándo se emitió) va debajo como ficha."
+        "name": "La regla del enlace que se dice de entrada",
+        "body": "El acceso no pide una contraseña con un enlace que no sirve: lo dice la API al abrirlo, y la pantalla responde a lo que dijo. El panel no deduce el estado de un enlace ni deja escribir dos veces la clave para enterarse después.",
+        "section": "components"
       },
       {
-        "name": "La regla de la huella entera",
-        "section": "components",
-        "body": "Un código, una huella o un número que alguien compara con otro documento se muestra entero: se parte de línea si no cabe, nunca se recorta con «…» ni se abrevia."
-      },
-      {
-        "name": "La regla del enlace en palabras propias",
-        "section": "components",
-        "body": "Una página a la que se llega desde un enlace dice lo que pasó con sus palabras y qué hacer («Esta encuesta no está disponible», «No encontramos este carnet»), nunca el `detail` del servidor: quien llega no pidió nada todavía y no sabe qué es un token. Solo un fallo pasajero muestra su causa, junto a «Reintentar»."
-      },
-      {
-        "name": "La regla del plan de frente",
-        "section": "components",
-        "body": "El plan se elige en su color y con todo lo que cubre a la vista antes de pagar: opciones del color del catálogo, la elegida abierta con cada servicio, su carencia y lo que no cubre, y la comparación a un toque dentro de la misma ficha. Nunca un `<select>` de planes, ni las condiciones en letra pequeña al final o detrás de un enlace."
-      },
-      {
-        "name": "La regla de lo que el catálogo no dice",
-        "section": "components",
-        "body": "Lo que se le muestra a quien se afilia (precio, lo que cubre cada servicio, carencia, exclusiones, términos, el número de WhatsApp) sale de la API; si la API no lo da, no se muestra: ni un texto por defecto, ni «ilimitado», ni un enlace vacío. Para que aparezca, TIMU lo escribe en el catálogo (Administración → Planes)."
-      },
-      {
-        "name": "La regla del ahorro que se sostiene",
-        "section": "components",
-        "body": "Una promesa de ahorro (en la frase, en una opción) solo se dice si el dato de la API la sostiene para lo que se está eligiendo: sin descuento en ningún periodo, la frase no habla de ahorrar y ninguna opción dice «Ahorras»."
-      },
-      {
-        "name": "La regla de lo igual una vez",
-        "section": "components",
-        "body": "En una comparación, lo que es igual en todas las opciones se dice una sola vez, a todo el ancho y con «igual en los N»; las columnas quedan para lo que cambia, y la diferencia salta a la vista."
+        "name": "La regla de la frase que le habla a quien llega",
+        "body": "El panel de marca dice una frase a la persona que llega, no vende la plataforma: ni funciones con icono, ni antetítulo. La frase cambia con la pantalla (la activación le da la bienvenida a la familia) y el título del formulario la saluda por su nombre cuando la API lo sabe.",
+        "section": "components"
       },
       {
         "name": "La regla de la foto con pie",
-        "section": "components",
-        "body": "Solo las fotos reales del equipo de TIMU llevan pie, y el pie dice lo que se ve («Consulta en nuestra clínica»). Una foto de banco (las de Nosotros) va sin pie y no se le atribuye nada a TIMU: un pie sobre ella diría que es TIMU sin serlo. Nunca imágenes de plantilla ni de la web anterior."
+        "body": "Solo las fotos reales del equipo de TIMU llevan pie, y el pie dice lo que se ve («Consulta en nuestra clínica»). Una foto de banco (las de Nosotros) va sin pie y no se le atribuye nada a TIMU: un pie sobre ella diría que es TIMU sin serlo. Nunca imágenes de plantilla ni de la web anterior.",
+        "section": "components"
       },
       {
         "name": "La regla del plano",
-        "section": "components",
-        "body": "Lo que la web pública dibuja como sistema (la red de aliadas, los servicios de un plan) se dibuja como una línea de metro del sistema: 8 px, estaciones de 24 px, tramo que empieza y acaba en una estación, y una sola de intercambio con halo. El color dice de quién es la línea: el del plan para un plan, `linea-aliadas` para la red."
+        "body": "Lo que la web pública dibuja como sistema (la red de aliadas, los servicios de un plan) se dibuja como una línea de metro del sistema: 8 px, estaciones de 24 px, tramo que empieza y acaba en una estación, y una sola de intercambio con halo. El color dice de quién es la línea: el del plan para un plan, `linea-aliadas` para la red.",
+        "section": "components"
       },
       {
         "name": "La regla del verde que arma",
-        "section": "components",
-        "body": "En la portada el único verde lleno es el de «Arma tu plan» («Ver mis planes»); en la página de un plan, «Afiliar a mi peludo con <plan>». La afiliación de la barra va en contorno y el envío del contacto en secundario."
+        "body": "En la portada el único verde lleno es el de «Arma tu plan» («Ver mis planes»); en la página de un plan, «Afiliar a mi peludo con <plan>». La afiliación de la barra va en contorno y el envío del contacto en secundario.",
+        "section": "components"
+      },
+      {
+        "name": "La regla del plan de frente",
+        "body": "El plan se elige en su color y con todo lo que cubre a la vista antes de pagar: opciones del color del catálogo, la elegida abierta con cada servicio, su carencia y lo que no cubre, y la comparación a un toque dentro de la misma ficha. Nunca un `<select>` de planes, ni las condiciones en letra pequeña al final o detrás de un enlace.",
+        "section": "components"
+      },
+      {
+        "name": "La regla de lo que el catálogo no dice",
+        "body": "Lo que se le muestra a quien se afilia (precio, lo que cubre cada servicio, carencia, exclusiones, términos, el número de WhatsApp) sale de la API; si la API no lo da, no se muestra: ni un texto por defecto, ni «ilimitado», ni un enlace vacío. Para que aparezca, TIMU lo escribe en el catálogo (Administración → Planes).",
+        "section": "components"
+      },
+      {
+        "name": "La regla del ahorro que se sostiene",
+        "body": "Una promesa de ahorro (en la frase, en una opción) solo se dice si el dato de la API la sostiene para lo que se está eligiendo: sin descuento en ningún periodo, la frase no habla de ahorrar y ninguna opción dice «Ahorras».",
+        "section": "components"
+      },
+      {
+        "name": "La regla de lo igual una vez",
+        "body": "En una comparación, lo que es igual en todas las opciones se dice una sola vez, a todo el ancho y con «igual en los N»; las columnas quedan para lo que cambia, y la diferencia salta a la vista.",
+        "section": "components"
+      },
+      {
+        "name": "La regla del veredicto como título",
+        "body": "Lo que una verificación concluye es el `h1` de la página, con su icono, no una etiqueta ni un distintivo encima de otro título: quien verifica lee primero la respuesta. Lo que la sostiene (de quién es, el código, cuándo se emitió) va debajo como ficha.",
+        "section": "components"
+      },
+      {
+        "name": "La regla de la huella entera",
+        "body": "Un código, una huella o un número que alguien compara con otro documento se muestra entero: se parte de línea si no cabe, nunca se recorta con «…» ni se abrevia.",
+        "section": "components"
+      },
+      {
+        "name": "La regla del enlace en palabras propias",
+        "body": "Una página a la que se llega desde un enlace dice lo que pasó con sus palabras y qué hacer («Esta encuesta no está disponible», «No encontramos este carnet»), nunca el `detail` del servidor: quien llega no pidió nada todavía y no sabe qué es un token. Solo un fallo pasajero muestra su causa, junto a «Reintentar».",
+        "section": "components"
       }
     ],
     "dos": [
-      "Do usa solo roles de `tokens.css` en componentes, vistas y `style={{}}`; si falta uno, añade el paso (si hace falta), el rol y su par en `@pares`.",
-      "Do deja un solo botón verde lleno por vista y haz suaves o secundarias las demás acciones.",
-      "Do acompaña todo estado de texto e icono además del color (distintivo, estación vencida, «N vencidas»).",
-      "Do dibuja el plan como identidad: cuadrado de 12 px o línea de 8 px del color del catálogo, con el nombre en texto al lado.",
-      "Do usa la escala fija en rem, `.numero` en cifras que se comparan, y etiquetas de 12 px en mayúsculas espaciadas para nombrar datos.",
-      "Do decide los cambios de forma por el ancho del contenedor (`tabla-apilable`, la línea), no por el de la ventana.",
-      "Do saca todo `z-index` de `--capa-*` y toda sombra de `--sombra-3`, solo en lo que flota.",
-      "Do mantén los controles en 40 px y 44 px en táctil, con foco azul visible de 2 px.",
-      "Do en el portal, abre la línea en «Hoy», pliega lo hecho y agrupa lo vencido, y deja que `accionPrincipal` elija la única acción verde de la línea.",
-      "Do acompaña el estado del plan, para la familia, de una frase que diga por qué y qué hacer.",
-      "Do escribe lo vencido de una bandeja con icono, fecha o importe y la palabra, y cada preventivo con la misma redacción (`pedido`, `dosis`) en todas partes.",
-      "Do confirma lo que no se deshace diciendo su alcance («Enviar ahora a 3 familias»): en verde si es el camino normal, con `btn-peligro` si anula (cancelar, marcar como perdido).",
-      "Do di la dirección de un mensaje en palabras («Escribió», «Le escribimos a») y los teléfonos con `telefono()`.",
-      "Do lleva lo reversible al menú de tres puntos, y en una confirmación nombra en el botón de cancelar lo que se conserva («Mantenerla», «Mantener el acceso», «Dejarlo activo»).",
-      "Do muestra lo que la API dice en palabras (`condicion_texto`, `accion_texto`, estados con nombre) y los importes en dólares con `dolares()`.",
-      "Do en un aviso o una frase que nombra un teléfono, escríbelo con `telefono()` y envuélvelo en `.sin-cortes`: «300 123 4567» no se parte entre dos líneas.",
-      "Do en el acceso, pregunta a la API si un enlace sirve antes de pedir la contraseña, y ante uno que no sirve ofrece «Pedir un enlace nuevo» como el verde.",
-      "Do muestra lo que cuesta algo a quien se compromete antes de que se comprometa, con la cifra que calcula la API para lo que escribió (en la aliada, lo que cubre TIMU y lo que paga la familia antes de «Reportar atención»).",
-      "Do deja la ayuda de un campo fuera de su `label`, como hermana enlazada con `aria-describedby`.",
-      "Do en un mostrador que atiende a una persona tras otra, al terminar vacía el campo de entrada y devuélvele el foco.",
-      "Do haz del veredicto de una verificación el `h1`, con su icono, y deja debajo lo que lo sostiene.",
-      "Do ancla arriba un formulario que crece al elegir, para que lo que aparece no mueva la opción tocada.",
-      "Do tras una respuesta, di qué pasa ahora según lo que devuelve la API («Alguien del equipo TIMU te va a contactar…»), sin prometer una hora.",
-      "Do deja elegir un plan con opciones en su color y abre la elegida con todo lo que cubre, su carencia y lo que no cubre antes de pedir el pago; la comparación, dentro de la misma ficha.",
-      "Do en una comparación, di una vez lo que es igual en todas las opciones («igual en los 3») y deja las columnas para lo que cambia; apilada, cada valor lleva su opción con su marcador.",
-      "Do a una barra fija abajo resérvale su alto al desplazar (`scroll-padding-bottom`) y quítala de fija cuando la vista ya no la necesita.",
-      "Do muestra a quien se afilia solo lo que da el catálogo de la API; lo que falta se escribe en Administración → Planes, no en la pantalla.",
-      "Do en la web pública, pon un pie en pastilla marina solo a las fotos reales del equipo de TIMU, y deja sin pie las de banco.",
-      "Do dibuja la red de aliadas y los servicios de un plan como una línea de metro de 8 px con estaciones de 24 px, con una sola estación de intercambio.",
-      "Do en la web pública, centra el contenido de cada sección a 1200 px con la sección a todo el ancho, y deja el verde lleno a «Arma tu plan» o a la afiliación del plan.",
-      "Do resume en palabras, en la fila de un listado, lo que hace cada registro («Prellena el motivo de consulta y el tratamiento»), y dentro de una frase nombra los apartados de la consulta con su artículo (`enFrase`)."
+      "**Do** usa solo roles de `tokens.css` en componentes, vistas y `style={{}}`; si falta uno, añade el paso (si hace falta), el rol y su par en `@pares`.",
+      "**Do** deja un solo botón verde lleno por vista y haz suaves o secundarias las demás acciones.",
+      "**Do** acompaña todo estado de texto e icono además del color (distintivo, estación vencida, «N vencidas»).",
+      "**Do** dibuja el plan como identidad: cuadrado de 12 px o línea de 8 px del color del catálogo, con el nombre en texto al lado.",
+      "**Do** usa la escala fija en rem, `.numero` en cifras que se comparan, y etiquetas de 12 px en mayúsculas espaciadas para nombrar datos.",
+      "**Do** decide los cambios de forma por el ancho del contenedor (`tabla-apilable`, la línea), no por el de la ventana.",
+      "**Do** saca todo `z-index` de `--capa-*` y toda sombra de `--sombra-3`, solo en lo que flota.",
+      "**Do** mantén los controles en 40 px y 44 px en táctil, con foco azul visible de 2 px.",
+      "**Do** en el portal, abre la línea en «Hoy», pliega lo hecho y agrupa lo vencido, y deja que `accionPrincipal` elija la única acción verde de la línea.",
+      "**Do** acompaña el estado del plan, para la familia, de una frase que diga por qué y qué hacer.",
+      "**Do** escribe lo vencido de una bandeja con icono, fecha o importe y la palabra, y cada preventivo con la misma redacción (`pedido`, `dosis`) en todas partes.",
+      "**Do** confirma lo que no se deshace diciendo su alcance («Enviar ahora a 3 familias»): en verde si es el camino normal, con `btn-peligro` si anula (cancelar, marcar como perdido).",
+      "**Do** di la dirección de un mensaje en palabras («Escribió», «Le escribimos a») y los teléfonos con `telefono()`.",
+      "**Do** lleva lo reversible al menú de tres puntos, y en una confirmación nombra en el botón de cancelar lo que se conserva («Mantenerla», «Mantener el acceso», «Dejarlo activo»).",
+      "**Do** muestra lo que la API dice en palabras (`condicion_texto`, `accion_texto`, estados con nombre) y los importes en dólares con `dolares()`.",
+      "**Do** en un aviso o una frase que nombra un teléfono, escríbelo con `telefono()` y envuélvelo en `.sin-cortes`: «300 123 4567» no se parte entre dos líneas.",
+      "**Do** en el acceso, pregunta a la API si un enlace sirve antes de pedir la contraseña, y ante uno que no sirve ofrece «Pedir un enlace nuevo» como el verde.",
+      "**Do** muestra lo que cuesta algo a quien se compromete antes de que se comprometa, con la cifra que calcula la API para lo que escribió (en la aliada, lo que cubre TIMU y lo que paga la familia antes de «Reportar atención»).",
+      "**Do** deja la ayuda de un campo fuera de su `label`, como hermana enlazada con `aria-describedby`.",
+      "**Do** en un mostrador que atiende a una persona tras otra, al terminar vacía el campo de entrada y devuélvele el foco.",
+      "**Do** haz del veredicto de una verificación el `h1`, con su icono, y deja debajo lo que lo sostiene.",
+      "**Do** ancla arriba un formulario que crece al elegir, para que lo que aparece no mueva la opción tocada.",
+      "**Do** tras una respuesta, di qué pasa ahora según lo que devuelve la API («Alguien del equipo TIMU te va a contactar…»), sin prometer una hora.",
+      "**Do** deja elegir un plan con opciones en su color y abre la elegida con todo lo que cubre, su carencia y lo que no cubre antes de pedir el pago; la comparación, dentro de la misma ficha.",
+      "**Do** en una comparación, di una vez lo que es igual en todas las opciones («igual en los 3») y deja las columnas para lo que cambia; apilada, cada valor lleva su opción con su marcador.",
+      "**Do** a una barra fija abajo resérvale su alto al desplazar (`scroll-padding-bottom`) y quítala de fija cuando la vista ya no la necesita.",
+      "**Do** muestra a quien se afilia solo lo que da el catálogo de la API; lo que falta se escribe en Administración → Planes, no en la pantalla.",
+      "**Do** en la web pública, pon un pie en pastilla marina solo a las fotos reales del equipo de TIMU, y deja sin pie las de banco.",
+      "**Do** dibuja la red de aliadas y los servicios de un plan como una línea de metro de 8 px con estaciones de 24 px, con una sola estación de intercambio.",
+      "**Do** en la web pública, centra el contenido de cada sección a 1200 px con la sección a todo el ancho, y deja el verde lleno a «Arma tu plan» o a la afiliación del plan.",
+      "**Do** deja a la vista una sola acción por fila, la que le toca a quien mira, y lleva el resto al menú de tres puntos, con lo destructivo en rojo y confirmado en su ventana.",
+      "**Do** subraya un enlace que va dentro de una frase; un enlace que es control por sí mismo lleva su clase.",
+      "**Do** muestra la espera de una pantalla que carga dentro de su layout, con el esqueleto de tres líneas, sin quitar la barra ni la navegación.",
+      "**Do** resume en palabras, en la fila de un listado, lo que hace cada registro («Prellena el motivo de consulta y el tratamiento»), y dentro de una frase nombra los apartados de la consulta con su artículo (`enFrase`)."
     ],
     "donts": [
-      "Don't escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.",
-      "Don't pongas sombra, borde de adorno ni degradado en paneles, tarjetas o barras.",
-      "Don't pongas una etiqueta en mayúsculas encima de un título como antetítulo: la etiqueta nombra el dato o el bloque que tiene debajo.",
-      "Don't deduzcas el color de un plan de su nombre ni uses el color de plan como estado.",
-      "Don't uses verde o naranja de marca como texto sobre claro (regla 1 del manual); sobre marino (la barra o el panel de marca del acceso) solo blanco, marino-200, verde-500 y naranja-500 (regla 6), más el translúcido `borde-sobre-marca` para lo que es tramo o hilo.",
-      "Don't recolorees el logo ni lo dibujes con texto: va el SVG de `MarcaTimu`, a color o en blanco (sección 13 del manual).",
-      "Don't uses los patrones de siluetas de la marca como decoración en las pantallas de trabajo (panel, portal, clínica aliada): son para las páginas públicas y de venta, donde la marca se presenta. En una pantalla de trabajo compiten con los datos.",
-      "Don't resuelvas la línea con scroll horizontal ni con una ventana de «Anteriores» y «Siguientes»: escondían una cuota vencida.",
-      "Don't añadas un tema oscuro ni uses GeosansLight por debajo de 20 px, en texto corrido, tablas o botones.",
-      "Don't uses «+» para «Más» en la navegación: se lee como crear.",
-      "Don't uses el triángulo de alerta para un estado que no está vencido: «Por autorizar» lleva la llave.",
-      "Don't muestres un código del backend a la vista (`dias_mora gte 25`, `borrador`, `aliada`): si la API no lo dice en palabras, se arregla en la API.",
-      "Don't confirmes en verde lo que anula o desactiva, ni pongas un interruptor o una casilla suelta que apague algo sin decir qué deja de pasar.",
-      "Don't pongas en el panel de marca un antetítulo en pastilla, una tarjeta de vidrio (`backdrop-filter`) ni sombra, ni una lista de funciones con icono: es marino plano con el logo, la frase y la línea.",
-      "Don't pidas una contraseña con un enlace del que no sabes si sirve, ni digas que venció después de que la persona la escribió dos veces.",
-      "Don't metas la ayuda de un campo dentro de su `label`: se vuelve parte de su nombre.",
-      "Don't pintes ceros sobre un vacío: un mes sin atenciones dice que no las hubo en una frase, sin cuatro cifras a cero.",
-      "Don't le listes a la clínica aliada las remisiones por usar: abre solo la del código que trae la familia.",
-      "Don't recortes ni abrevies una huella o un código que se compara con otro documento: se muestra entero, aunque se parta de línea.",
-      "Don't muestres el `detail` del servidor en una página a la que se llega desde un enlace: di lo que pasó en palabras propias y qué hacer.",
-      "Don't pongas el veredicto de una verificación como etiqueta o distintivo sobre otro título.",
-      "Don't pongas los planes en un `<select>` ni las condiciones (carencia, exclusiones) en letra pequeña al final: se ven con el plan, antes de pagar.",
-      "Don't inventes lo que la API no da (una condición por defecto, «ilimitado», un enlace de términos vacío, un número de contacto): sin el dato, no se muestra.",
-      "Don't prometas ahorro si ningún periodo lo trae: la frase y las opciones solo hablan de ahorrar cuando el dato lo sostiene.",
-      "Don't uses la plantilla pública anterior (`.publica-tarjeta`): se retiró con el registro en línea; las páginas públicas usan el marco de la web pública (`MarcoPublico`, `.publica`), el acceso, la columna de la verificación o el marco del registro.",
-      "Don't pongas un antetítulo en mayúsculas sobre el titular del álbum, una sección o la cabecera de un plan: lo que diría va al título o a la frase.",
-      "Don't pongas un pie a una foto de banco ni uses fotos de plantilla o de la web anterior.",
-      "Don't uses `--t-portada` ni un tamaño que escale con la ventana fuera del titular de la web pública."
+      "**Don't** escribas un color a mano ni nombres un paso de la paleta fuera de `tokens.css`.",
+      "**Don't** pongas sombra, borde de adorno ni degradado en paneles, tarjetas o barras.",
+      "**Don't** pongas una etiqueta en mayúsculas encima de un título como antetítulo: la etiqueta nombra el dato o el bloque que tiene debajo.",
+      "**Don't** deduzcas el color de un plan de su nombre ni uses el color de plan como estado.",
+      "**Don't** uses verde o naranja de marca como texto sobre claro (regla 1 del manual); sobre marino (la barra o el panel de marca del acceso) solo blanco, marino-200, verde-500 y naranja-500 (regla 6), más el translúcido `borde-sobre-marca` para lo que es tramo o hilo.",
+      "**Don't** recolorees el logo ni lo dibujes con texto: va el SVG de `MarcaTimu`, a color o en blanco (sección 13 del manual).",
+      "**Don't** uses los patrones de siluetas de la marca como decoración en las pantallas de trabajo (panel, portal, clínica aliada): son para las páginas públicas y de venta, donde la marca se presenta. En una pantalla de trabajo compiten con los datos.",
+      "**Don't** resuelvas la línea con scroll horizontal ni con una ventana de «Anteriores» y «Siguientes»: escondían una cuota vencida.",
+      "**Don't** añadas un tema oscuro ni uses GeosansLight por debajo de 20 px, en texto corrido, tablas o botones.",
+      "**Don't** uses «+» para «Más» en la navegación: se lee como crear.",
+      "**Don't** uses el triángulo de alerta para un estado que no está vencido: «Por autorizar» lleva la llave.",
+      "**Don't** muestres un código del backend a la vista (`dias_mora gte 25`, `borrador`, `aliada`): si la API no lo dice en palabras, se arregla en la API.",
+      "**Don't** confirmes en verde lo que anula o desactiva, ni pongas un interruptor o una casilla suelta que apague algo sin decir qué deja de pasar.",
+      "**Don't** pongas en el panel de marca un antetítulo en pastilla, una tarjeta de vidrio (`backdrop-filter`) ni sombra, ni una lista de funciones con icono: es marino plano con el logo, la frase y la línea.",
+      "**Don't** pidas una contraseña con un enlace del que no sabes si sirve, ni digas que venció después de que la persona la escribió dos veces.",
+      "**Don't** metas la ayuda de un campo dentro de su `label`: se vuelve parte de su nombre.",
+      "**Don't** pintes ceros sobre un vacío: un mes sin atenciones dice que no las hubo en una frase, sin cuatro cifras a cero.",
+      "**Don't** le listes a la clínica aliada las remisiones por usar: abre solo la del código que trae la familia.",
+      "**Don't** recortes ni abrevies una huella o un código que se compara con otro documento: se muestra entero, aunque se parta de línea.",
+      "**Don't** muestres el `detail` del servidor en una página a la que se llega desde un enlace: di lo que pasó en palabras propias y qué hacer.",
+      "**Don't** pongas el veredicto de una verificación como etiqueta o distintivo sobre otro título.",
+      "**Don't** pongas los planes en un `<select>` ni las condiciones (carencia, exclusiones) en letra pequeña al final: se ven con el plan, antes de pagar.",
+      "**Don't** inventes lo que la API no da (una condición por defecto, «ilimitado», un enlace de términos vacío, un número de contacto): sin el dato, no se muestra.",
+      "**Don't** prometas ahorro si ningún periodo lo trae: la frase y las opciones solo hablan de ahorrar cuando el dato lo sostiene.",
+      "**Don't** uses la plantilla pública anterior (`.publica-tarjeta`): se retiró con el registro en línea; las páginas públicas usan el marco de la web pública (`MarcoPublico`, `.publica`), el acceso, la columna de la verificación o el marco del registro.",
+      "**Don't** pongas un antetítulo en mayúsculas sobre el titular del álbum, una sección o la cabecera de un plan: lo que diría va al título o a la frase.",
+      "**Don't** pongas un pie a una foto de banco ni uses fotos de plantilla o de la web anterior.",
+      "**Don't** uses `--t-portada` ni un tamaño que escale con la ventana fuera del titular de la web pública."
     ]
   }
 }

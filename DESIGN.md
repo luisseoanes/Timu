@@ -291,7 +291,9 @@ la manada»), con lo que de ella se edita en Administración. La plantilla públ
 (`MarcoPublico`). La
 clínica aliada tiene su espacio rediseñado: Mi clínica (R3-ALI-01), el mostrador donde valida el
 código de una remisión, reporta la atención y ve lo atendido en el mes.
-Ningún módulo del panel queda ya en la maqueta anterior; lo que falta para cerrar el rediseño está
+Cada perfil del equipo ve solo sus módulos y su propio Inicio (el
+administrador, lo que falta configurar; el médico, su jornada); Mensajes y Encuestas son módulos
+propios. Ningún módulo del panel queda ya en la maqueta anterior; lo que falta para cerrar el rediseño está
 en [`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md). El color, la tipografía, el logo y la voz los fija el
 [manual de marca](docs/manual-de-marca.md); aquí se dice cómo se aplican en la interfaz y se
 remite al manual donde él es la autoridad.
@@ -354,7 +356,10 @@ texto, 3 controles e indicadores, 7 para los distintivos de estado).
 
 ### Secondary
 - **Azul TIMU** (`foco`, `texto-enlace`): anillo de foco y enlaces. Es el color de la
-  navegación y la información, no de la acción.
+  navegación y la información, no de la acción. Un enlace dentro de una frase (sin clase, dentro de
+  `p`, `li`, `dd` o `span`) va además subrayado con 1 px, para distinguirse sin el color (WCAG
+  1.4.1); los que son controles por sí mismos (botones planos, navegación, filas) llevan clase y no
+  se subrayan.
 
 ### Tertiary
 - **Naranja TIMU** (`plan-naranja`, `estado-alerta-*`): la línea de un plan naranja y los
@@ -571,7 +576,11 @@ px; dentro de un panel 20–24 px; entre filas de un listado 12 px de relleno co
 
 **Zonas táctiles.** Botones, campos, buscadores, botones de icono y cupos (`.cupo`, también los
 filtros de una campaña) miden 40 px y suben a 44 px
-por debajo de 900 px o con puntero grueso. Todo corte «por debajo de 900 px» se escribe
+por debajo de 900 px o con puntero grueso. Con la misma condición suben a 44 px las pestañas, cada
+opción de un selector segmentado, el círculo de la cuenta y el botón del tramo plegado de una línea
+(«N hechas», «Ver cada una»). Los enlaces seguidos de una línea de detalle de bandeja miden al menos
+24 px de alto, y los teléfonos de la lista de contacto 32 px (44 en táctil), para no tocar el de al
+lado (WCAG 2.5.8). Todo corte «por debajo de 900 px» se escribe
 `max-width: 899px`, el complemento exacto del `min-width: 900px` de la barra: a 900 justos todo el
 sistema está ya en escritorio.
 
@@ -619,6 +628,8 @@ una ventana quede por encima de ella.
   arriba.
 - **Halo de la próxima** (`box-shadow: 0 0 0 3px var(--indicador-seleccion)`): la estación
   próxima de la línea. Sobre marino (la línea del acceso), el halo es `indicador-sobre-marca`.
+- **Mensaje destacado** (`box-shadow: 0 0 0 2px var(--foco)`): en la conversación que se abre
+  desde Mensajes, la burbuja de la que se partió. Es un anillo de estado, no profundidad.
 - **Halo de intercambio** (`box-shadow: 0 0 0 6px var(--accion-suave-fondo-hover)`): la estación de
   la clínica de TIMU en «La red TIMU», la única de intercambio. No es estado: marca de dónde sale
   el ramal a casa.
@@ -687,7 +698,10 @@ Firmes y planos; el color dice la jerarquía, no la forma.
 
 #### Cards / Containers
 - **Corner Style:** panel (12 px) para las columnas del listado y la ficha; tarjeta (8 px) para
-  métricas, indicadores y avisos.
+  indicadores y avisos.
+- **Título:** el de una tarjeta de primer nivel es un `h2` en su cabecera (`.tarjeta-cabeza > h2`),
+  con el aspecto de encabezado de bloque (Inter, 16 px, 600), no GeosansLight; sus apartados son
+  `h3`. El `h1` es el de la página.
 - **Background:** blanco sobre el lienzo.
 - **Shadow Strategy:** ninguna (ver Elevation & Depth).
 - **Border:** ninguno en los paneles; el hilo `borde` separa filas y bloques dentro de ellos.
@@ -705,6 +719,9 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   enlazada con `aria-describedby`. El buscador es el mismo control con icono, para que junto a
   un `select` sean un solo tipo de control.
 - **Focus:** borde azul y anillo de 1 px azul, sin contorno extra.
+- **Solo lectura:** un campo que se ve pero no se cambia (el código de una plantilla de WhatsApp
+  al editar su texto) lleva fondo `superficie-hundida` y texto suave, como el deshabilitado, pero
+  se puede seleccionar y copiar.
 - **Error / Disabled:** `aria-invalid` pone el borde (y el anillo al enfocar) en rojo de error;
   deshabilitado, fondo de lienzo y texto suave. El error de un campo va debajo de él en
   `texto-error` a peso normal (`.campo > .error`, 13 px), enlazado con `aria-describedby`: la
@@ -727,6 +744,9 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   paneles sin degradado.
 - **Formulario:** rejilla de dos columnas con 16 px; una a 900 px o menos. Casillas y radios de
   18 px con `accent-color` verde hondo.
+- **Campo con su acción** (`campo-con-accion`): un campo de hasta 360 px y su botón en una línea,
+  alineados abajo para que el botón quede a la altura del campo y no de la etiqueta; el error baja a
+  su fila. Lo usan «Buscar» en Supresión de datos y «Guardar» del tope de la IA, en secundario.
 
 #### Navigation
 - **Barra de marca:** marino noche, 64 px, fija. Marca en texto blanco a la izquierda; módulos
@@ -782,7 +802,7 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   la cabecera) en la misma voz que la cabecera de columna. Las acciones bajan a una fila propia.
   La cabecera sigue en el DOM para los lectores de pantalla.
 - Hoy la usan las pestañas de Familias, las bandejas (Tareas, Cartera, Preventivos,
-  Conversaciones, Remisiones, Usuarios y los eventos de la pasarela), los mensajes de Campañas,
+  Conversaciones, Remisiones, Usuarios y los eventos de la pasarela), Mensajes,
   los convenios de una clínica, la liquidación, los beneficios de un plan y las consultas de la IA; las tablas de los demás módulos la adoptan en su
   unidad de la hoja de ruta.
 
@@ -796,6 +816,28 @@ Firmes y planos; el color dice la jerarquía, no la forma.
   lienzo. Si falla, un aviso blanco con esquina de panel, icono de error, título de 16 px y el
   botón para reintentar. El esqueleto es una barra del color de pista que respira
   (opacidad 1 → 0.45, 1.2 s).
+- **Mientras llega una pantalla** (`CargandoPantalla`): el código va partido por espacio y por
+  módulo (la portada no descarga el panel), y lo que se ve mientras llega es el mismo esqueleto de
+  tres líneas de una consulta que carga, con «Cargando…» para lectores de pantalla. Va dentro del
+  layout (`AppLayout`, `PortalLayout`): la barra de marca y la navegación no desaparecen al cambiar
+  de módulo.
+
+#### Menú de acciones (tres puntos)
+Lo que una fila o una ficha hace de vez en cuando, fuera de la vista y junto a la única acción que
+le toca.
+- **Disparador:** botón plano de icono con los tres puntos (18 px) y un nombre que dice de qué es
+  («Más acciones de Rocky»). Abre un menú de Radix (DropdownMenu, no modal) alineado al final, con
+  la forma de «Más» (blanco, esquina de tarjeta, sombra flotante, elemento resaltado en verde
+  tenue).
+- **Elementos:** lo destructivo en rojo de error (`menu-item-peligro`: «Dar de baja» una mascota,
+  «Cancelar preventivo») y confirma en su ventana; lo reversible se hace sin preguntar (ver la regla
+  de lo que se deshace). Un elemento que no aplica queda deshabilitado en texto suave, y el actual
+  va en marino y 700.
+- **Submenú:** un elemento que abre otra lista lleva la flecha a la derecha, lejos del texto
+  («Asignar a…» en Tareas, con «Sin asignar» y quienes ven el área; quien ya la tiene, marcado y
+  deshabilitado, y quien mira con «(tú)»).
+- Lo usan las filas de Tareas, Preventivos y Mascotas de una familia, y las fichas de plantillas,
+  clínicas, planes, reglas e interesados.
 
 #### Bandejas (componente común: Tareas, Cartera, Preventivos, Conversaciones, Remisiones y Usuarios)
 Lo que hay por resolver, en una `tabla-apilable` a todo el ancho de un panel blanco.
@@ -837,7 +879,21 @@ Lo que hay por resolver, en una `tabla-apilable` a todo el ancho de un panel bla
 - **Línea del día** (`LineaDelDia`): la gramática de la línea de la ruta, marina, en un panel. Lo
   vencido agrupado arriba con un ejemplo («El más atrasado: Ana Ruiz, 84 días»), la marca de Hoy y
   lo que viene; cada estación lleva su acción. La primera acción es el único verde de la vista;
-  las de consulta («Ver», «Ver la agenda») nunca lo llevan.
+  las de consulta («Ver», «Ver la agenda») nunca lo llevan. Una parada de ruta cuya franja ya pasó
+  sin empezarse va antes de Hoy como vencida («Su franja terminó a las 9:00 · …»).
+- **Un Inicio por perfil:** Gerencia, el tablero entero (periodo, ciudad, exportar y la franja de
+  seis). Comercial, Atención al cliente y Operaciones, dos o tres cifras de su área, que llenan la
+  fila (`data-cuantas`; en el celular, la tercera baja a lo ancho), y la línea con solo su trabajo,
+  ordenada por lo vencido de su área. El médico, «Tu jornada»: sin cifras, la línea con las
+  consultas sin firmar, sus tareas vencidas y sus paradas (las atrasadas antes de Hoy) y sus tareas.
+  El administrador, «Lo que falta configurar».
+- **Lo que falta configurar** (`inicio-config`): una lista de filas con el icono en un cuadrado
+  (`fila-icono`), el título y qué deja de pasar en texto suave («Sin ella no sale por WhatsApp…»), y
+  la acción que lleva a su pestaña de Administración («Registrarla», «Ver las plantillas»,
+  «Completar los datos»). Lo que bloquea lleva el triángulo con el tinte de aviso; lo demás, el
+  icono de usuario. Todas las acciones son suaves e iguales: son del mismo peso, y la vista no tiene
+  verde (decidido con el usuario el 2026-11-20). Sin nada pendiente, «Todo está configurado.». En
+  un contenedor de 600 px o menos la acción baja bajo su texto, a lo ancho.
 
 **La regla de las series que se distinguen.** El manual pone el azul en segundo lugar: verde,
 azul, naranja y marino. Antes del 2026-11-15 las series 1 y 2 eran el verde-600 y el naranja-600,
@@ -880,7 +936,9 @@ vertical siempre: es una lista que se recorre de arriba abajo.
 - **Estaciones:** 24 px con borde de 4 px. Hecha: llena de marino. La que toca: anillo marino con
   halo verde hondo de 3 px. Pendiente: contorno gris.
 - **Estados:** los del camino normal (en curso, en camino, en sitio, próxima) van en tono
-  informativo; la alerta queda para lo que la merece, como lo que falta por rutear.
+  informativo; la alerta queda para lo que la merece, como lo que falta por rutear. La parada que
+  toca y nadie empezó cuando su franja ya pasó dice «Atrasada» (aviso) en vez de «Próxima»: así la
+  ve también quien coordina.
 - **La que toca, abierta:** hora (o «Llegó …») y franja acordada, estado, la dirección en Inter
   600 de 24 px (es casi toda cifras y se lee a pleno sol), complemento y barrio, familia (enlace
   a su ficha) y mascota con especie, edad y peso, el servicio y sus observaciones, y sus
@@ -971,13 +1029,22 @@ Servicios hereda el listado con ficha; Tareas, la tabla apilable.
   llena de marino con el check, el obligatorio que falta en contorno marino con «Obligatorio» en
   tono de aviso, el opcional en contorno gris. En atención abre en el primero que falta y, al
   guardarlo, pasa al siguiente; con un paso abierto, el único verde es «Guardar paso».
-- **Tareas:** la tarea con su estado al lado y debajo su área y a quién afecta, con enlaces; lo
+- **Tareas:** vistas «Mis tareas» (la de entrada si hay propias; si no, «Sin asignar»), «Pedidas
+  por mí», «Sin asignar», «Vencidas» y «Todas». Cada fila: la tarea con su estado al lado y debajo
+  su área, quién la pidió («Pedida por Luisa Gómez (Comercial)») o de dónde salió si es automática,
+  y a quién afecta, con enlaces; la descripción en una sola línea (el texto entero en su título). Lo
   vencido con icono y la palabra («jue 5 nov · vencida»), nunca solo en rojo.
+- **Una sola acción por tarea:** a la vista, suave, la que le toca a quien mira: «Tomar» si nadie la
+  tiene, «Cerrar» si es suya, «Ver la conversación» si viene del asistente de WhatsApp (se cierra
+  sola al terminarla). El resto (asignarla con el submenú «Asignar a…», iniciarla, cerrarla, ver la
+  familia) va en el menú de tres puntos. Solo se asigna a quien ve el área de la tarea; una de otra
+  área, en «Pedidas por mí», se sigue sin acciones.
 
 #### Cartera y Preventivos
 Dos bandejas de trabajo: cada fila dice a quién, cuánto o qué, desde cuándo, y lleva la única
 acción que le toca.
-- **Cartera:** vistas «En mora» (la de entrada), «Por renovar» (contratos en su ventana de 90 días)
+- **Cartera:** vistas «Vencidas» (la de entrada: toda cuota vencida; «en mora» es el estado del
+  contrato desde el día 5, y el Inicio lleva aquí con «Ver las vencidas»), «Por renovar» (contratos en su ventana de 90 días)
   y «Todos», en una fila de tres en el celular. Cada fila: el titular, que lleva a la pestaña
   Cartera de su familia, con el plan como cuadrado y nombre, el número de contrato y la ciudad
   debajo; lo que debe, vencido con icono o «Al día» en suave; la cuota con su periodicidad («$
@@ -1067,8 +1134,14 @@ porque el verde es de la ficha.
   enviar ahora confirma en una ventana que dice a cuántas («Enviar ahora a 3 familias», que los
   mensajes no se retiran, la plantilla y el segmento) con «Volver» y el verde. «Cancelar campaña»
   va en rojo plano y confirma con `btn-peligro` y «Mantenerla».
-- **Mensajes:** una tabla apilable con el mensaje, la dirección en palabras («Escribió» o «Le
-  escribimos a») y el celular con `telefono()` debajo, cuándo y el estado; nunca una flecha sola.
+- **Mensajes** (módulo propio): una tabla apilable con el mensaje, la dirección
+  en palabras («Escribió» o «Le escribimos a») y el celular con `telefono()` debajo, cuándo y el
+  estado; nunca una flecha sola. Encima, el buscador («Buscar en el mensaje o el número», se lleva
+  la fila), «Quién escribió», el estado y «Desde» y «Hasta» con su etiqueta encima, a su ancho. El
+  texto del mensaje es un botón de 44 px que se lee como la fila (subrayado al pasar) y abre la
+  conversación en una ventana, con las mismas burbujas (`BurbujaMensaje`, en `src/components/`),
+  desplazable dentro (hasta `min(60vh, 560px)`) y con el mensaje del que se partió a la vista,
+  rodeado por el anillo de foco de 2 px y con `aria-current`.
   Los enlaces de un solo uso llegan ya tapados de la API (`token=[oculto]`): el panel no muestra
   credenciales en un registro. Las bajas, en el rail.
 
@@ -1083,7 +1156,8 @@ registro en listado con ficha, abierto en la URL (`?clinica=`, `?plan=`, `?regla
 Comercial, «Nueva clínica», «Nuevo plan» y «Nueva regla» son verdes solo sin ficha abierta (con
 ella, suaves).
 - **Remisiones:** bandeja con «Por usar» (la de entrada, la que vence antes primero),
-  «Utilizadas», «Anuladas» y «Todas», con su recuento de la API; «Emitir remisión» es el verde.
+  «Utilizadas», «Vencidas» (las que vencieron sin usarse y liberaron el cupo), «Anuladas» y «Todas»,
+  con su recuento de la API; solo «Por usar» tiene acciones; «Emitir remisión» es el verde.
   Cada fila: el titular y la mascota («Jorge Ramirez · Rocky», enlace a la familia) con el código y
   el motivo debajo; la clínica; lo que cubre (`cobertura()`: «80 % hasta $ 200.000»); y cuándo
   vence. La vencida (lo dice la API, `vencida`) lleva icono y «Venció el 4 nov» con la gramática de
@@ -1102,7 +1176,11 @@ ella, suaves).
 - **Liquidación:** el período (Desde y Hasta) en una fila de dos campos de hasta 180 px, que en el
   celular reparten el ancho; la tabla apilable con una fila por clínica (NIT debajo del nombre) y
   un `tfoot` de total en 700 marino sobre un hilo de 2 px, que apilada es un bloque más. Las
-  columnas de cifras van a la derecha. «Descargar CSV» es suave: la vista no tiene verde.
+  columnas de cifras van a la derecha. «Descargar CSV» es suave: la vista no tiene verde. Cada
+  clínica abre debajo el detalle de sus atenciones, el mismo del CSV: su nombre es un botón de 44 px
+  en 600 marino con una flecha suave que gira al abrir (`aria-expanded`), y el detalle es una fila
+  sobre `superficie-hundida` con su propia tabla apilable (remisión, atendida y beneficio a la
+  izquierda; valor, lo que cubre TIMU y lo que paga la familia a la derecha).
 - **Usuarios:** bandeja con «Equipo», «Clínicas aliadas», «Familias» e «Inactivos» (la API agrupa y
   cuenta), buscador y una nota fija encima: cambiar el perfil o desactivar cierra sus sesiones al
   instante. Cada fila: el nombre con el correo y el teléfono debajo; el perfil como lista que se
@@ -1169,6 +1247,17 @@ ella, suaves).
   decimales en el costo de una consulta) y la barra del presupuesto; los prompts, cada versión con
   su distintivo de estado, «Correr casos» en plano de acción y «Activar» suave, y las instrucciones
   plegadas. Un solo verde: «Cargar versiones iniciales» sin prompts, «Nueva versión» con ellos.
+  El tope mensual se cambia ahí mismo («Tope mensual (US$)» y «Guardar» en secundario, en un campo
+  con su acción), con la nota de que al llegar al tope la IA se apaga hasta el mes siguiente.
+- **Plantillas de WhatsApp:** una nota encima dice que Meta aprueba cada plantilla y que al marcar
+  aprobada la versión más reciente pasa a ser la que se envía. «Editar texto», en plano de acción,
+  solo en la versión más reciente de cada una; abre «Editar «Aviso de mora»» con la descripción de
+  lo que pasa («El texto nuevo queda como versión 3, en borrador. Hasta que Meta lo apruebe…») y el
+  código de solo lectura, porque cambiarlo sería otra plantilla.
+- **Supresión de datos:** el documento y «Buscar» en un campo con su acción; la familia encontrada
+  en una fila con sus mascotas y su estado, «Ya anonimizada» (neutro) o «Contrato vigente» (aviso,
+  con la frase de quién lo cancela antes) cuando no se puede. Anonimizar confirma en una ventana
+  «Anonimizar a <titular>» que dice que no se recupera, con «No anonimizar» y `btn-peligro`.
 - **Eventos de la pasarela:** bandeja con «Con error» (la de entrada), «Procesados» y «Todos» en
   una fila de tres; cada evento en palabras («Cambio en un pago», «Wompi»), el error debajo en rojo,
   el estado con su distintivo y «Reprocesar» suave en los que no se procesaron.
@@ -1230,6 +1319,21 @@ toca, lleva su acción debajo. La familia no tiene por qué leer un diagrama.
   las dos. Hover en verde tenue.
 - En la ficha, sin foto, la huella va en el mismo círculo a 56 px, no en un hueco vacío.
 
+#### Los avisos del plan y la urgencia
+- **En pausa:** con cuotas vencidas, el panel del plan del inicio y la pestaña «Su plan» de cada
+  peludo llevan debajo de la frase lo que sigue disponible y lo que no (`aviso_pausa`, lo escribe el
+  backend) en un `portal-aviso` (13 px, hasta 70 ch); los beneficios dejan de llevar el check de
+  disponibles.
+- **Sin poder afiliar otro peludo:** si la API da un motivo (`motivo_sin_alta`), Peludos y «Agregar
+  un peludo» no ofrecen el formulario ni el verde: dicen el motivo en un aviso y, si la familia
+  debe, «Ir a tus pagos» al lado.
+- **«Escríbenos por WhatsApp» es un enlace:** en cualquier texto del portal, también los que llegan
+  del backend (`ConWhatsApp`), la frase enlaza al WhatsApp que guarda Administración → Datos de
+  TIMU; sin número guardado queda como texto.
+- **La urgencia:** en la ventana de hablar con un veterinario, antes del formulario y separada 16 px
+  de su primer campo, «¿Es una urgencia? Llámanos al …» con el primer teléfono de TIMU (con `telefono()`)
+  como enlace `tel:`; sin teléfono, el enlace de WhatsApp.
+
 **La regla del estado dicho.** El estado del plan se le dice a la familia con sus palabras: una
 pastilla (Activo, Cuotas vencidas, «En pausa» con tono de aviso, Cancelado) y al lado una frase
 que explica por qué y qué hacer («Tus 3 cuotas vencidas pausaron el plan. Al pagar, Luna y Michi
@@ -1266,7 +1370,9 @@ y la mascota.
 - **La línea de estado:** la remisión abierta empieza bajo un hilo, con 20 px arriba y 16 entre
   bloques. Primero el distintivo y debajo, a 8 px, la frase, con el mismo ritmo en todos los
   estados y anchos: «Por usar» (ok) «Se puede atender hasta el 16 dic.»; «Vencida» (peligro, con
-  icono) «Venció el … y ya no se puede usar. La familia puede pedirle una nueva a TIMU.»;
+  icono) «Venció el … y ya no se puede usar para atender. Lo atendido hasta ese día se puede
+  reportar hasta el …» (o, vencida sin usarse y pasado ese plazo, «Venció el … sin usarse y ya pasó
+  el plazo para reportar.», sin botón de reporte), y «La familia puede pedirle una nueva a TIMU.»;
   «Atendida» (neutro, con el check) «Ya se reportó: la atención fue el …»; «Anulada» (neutro)
   «TIMU la anuló y ya no se puede usar.». La línea es `role="status"`.
 - **La remisión abierta:** la mascota como `h2` de 24 px (GeosansLight, marino) con «· Canino,
@@ -1750,6 +1856,12 @@ token. Solo un fallo pasajero muestra su causa, junto a «Reintentar».
   estaciones de 24 px, con una sola estación de intercambio.
 - **Do** en la web pública, centra el contenido de cada sección a 1200 px con la sección a todo el
   ancho, y deja el verde lleno a «Arma tu plan» o a la afiliación del plan.
+- **Do** deja a la vista una sola acción por fila, la que le toca a quien mira, y lleva el resto al
+  menú de tres puntos, con lo destructivo en rojo y confirmado en su ventana.
+- **Do** subraya un enlace que va dentro de una frase; un enlace que es control por sí mismo lleva
+  su clase.
+- **Do** muestra la espera de una pantalla que carga dentro de su layout, con el esqueleto de tres
+  líneas, sin quitar la barra ni la navegación.
 - **Do** resume en palabras, en la fila de un listado, lo que hace cada registro («Prellena el
   motivo de consulta y el tratamiento»), y dentro de una frase nombra los apartados de la consulta
   con su artículo (`enFrase`).
