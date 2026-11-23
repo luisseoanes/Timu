@@ -37,13 +37,16 @@ con `R3-PUB-03` (2026-11-17), la encuesta y la verificación del carnet. Con `R3
 registro en línea: **R3 está completa**. Con `R3-PUB-04` (2026-11-18), la portada pública de
 `timu.com.co`, que la amplió a petición del usuario.
 
-### Dónde se retoma (2026-11-21, revisión por perfiles cerrada)
+### Dónde se retoma (2026-11-23, deuda del cierre hecha)
 
 Para la sesión siguiente, que no tiene la conversación anterior: todo lo decidido está en esta
 hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
 
-- **El techo del revisor (`DEU-28`–`DEU-70`) y la deuda decidida están hechos**, salvo lo que la
-  tabla de [deuda decidida](rediseno/deuda.md) marca como pendiente: `DEU-27` (va en `R4-CIE-03`).
+- **La deuda que dejó el cierre (`DEU-71`–`DEU-83`) está hecha** (lote del 2026-11-23, decidido por el
+  usuario con las opciones y la recomendación de cada una; `DEU-76` y `DEU-78`, sobre bocetos), salvo
+  volver a sembrar staging (`DEU-81`), que va después del push para que siembre con el código nuevo.
+- **El techo del revisor (`DEU-28`–`DEU-70`) y la deuda decidida están hechos**; `DEU-27` se cerró
+  en `R4-CIE-03`.
   `DEU-14` (la siembra gruesa) se terminó el 2026-11-18: la operación de demostración ya lleva
   vacunas y desparasitaciones en ruta y citas en la clínica. `DEU-E` espera a TIMU. `DEU-8` (el editor de reglas por
   campos) se cerró el 2026-11-17 y `DEU-15` (las plantillas de consulta, editables y sembradas), el
@@ -265,7 +268,7 @@ Viven en dos anexos de `docs/rediseno/`, separados de esta hoja el 2026-11-16:
 
 ### Orden de lo que sigue
 
-El orden vigente está en [«Dónde se retoma»](#dónde-se-retoma-2026-11-21-revisión-por-perfiles-cerrada). El primero, confirmado por
+El orden vigente está en [«Dónde se retoma»](#dónde-se-retoma-2026-11-23-deuda-del-cierre-hecha). El primero, confirmado por
 el usuario el 2026-11-12, empezaba por lo que más se usa desde el celular (Rutas, Clínica y el portal)
 y ya está hecho.
 
