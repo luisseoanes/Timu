@@ -646,11 +646,13 @@ def listar_contratos(
     q: str | None = None,
     solo_mora: bool = False,
     por_renovar: bool = False,
+    orden: str | None = None,
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[dict[str, Any]], int]:
     """Contratos con su saldo vencido y dias de mora (de la cuota abierta mas antigua), los mas
-    atrasados primero; los que estan por renovar, los que vencen antes primero."""
+    atrasados primero; los que estan por renovar, los que vencen antes primero. `orden` cambia
+    eso (DEU-79): `saldo`, el mayor saldo vencido primero; `titular`, por nombre."""
     dia = hoy()
     stmt, vencidas = _cartera(estado=estado, ciudad=ciudad, q=q)
     if solo_mora:
@@ -658,12 +660,15 @@ def listar_contratos(
     if por_renovar:
         stmt = stmt.where(_por_renovar())
     total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
-    orden = (
-        (Contrato.fecha_renovacion, Contrato.numero)
-        if por_renovar
-        else (vencidas.c.desde.asc().nulls_last(), Contrato.numero)
-    )
-    filas = db.execute(stmt.order_by(*orden).limit(limit).offset(offset)).all()
+    if orden == "saldo":
+        clausulas: tuple[Any, ...] = (vencidas.c.saldo.desc().nulls_last(), Contrato.numero)
+    elif orden == "titular":
+        clausulas = (Familia.titular_nombre, Contrato.numero)
+    elif por_renovar:
+        clausulas = (Contrato.fecha_renovacion, Contrato.numero)
+    else:
+        clausulas = (vencidas.c.desde.asc().nulls_last(), Contrato.numero)
+    filas = db.execute(stmt.order_by(*clausulas).limit(limit).offset(offset)).all()
     # Los planes de cada contrato de la pagina: uno por peludo, sin repetir.
     planes_de: dict[UUID, dict[str, str]] = {}
     for contrato_id, nombre, color in db.execute(

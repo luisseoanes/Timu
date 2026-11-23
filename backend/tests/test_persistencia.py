@@ -1210,6 +1210,8 @@ _LISTADOS = (
     "/api/v1/pendientes",
     "/api/v1/cartera/contratos?solo_mora=true",
     "/api/v1/cartera/contratos?por_renovar=true",
+    "/api/v1/cartera/contratos?orden=saldo",
+    "/api/v1/cartera/contratos?orden=titular",
     "/api/v1/cartera/contratos/recuentos",
     "/api/v1/encuestas",
     "/api/v1/comercial/interesados",

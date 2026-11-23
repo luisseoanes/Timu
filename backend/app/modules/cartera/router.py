@@ -1,7 +1,7 @@
 """6.2 / 6.4 Cartera: contratos, cuotas, pagos, cobro recurrente y eventos de la pasarela."""
 
 from decimal import Decimal
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -76,11 +76,12 @@ async def listar_contratos(
     q: str | None = None,
     solo_mora: bool = False,
     por_renovar: bool = False,
+    orden: Literal["saldo", "titular"] | None = None,
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ) -> Page[ContratoListado]:
     """Cartera para gestionar: los contratos mas atrasados primero, o los que estan por renovar
-    (los que vencen antes primero)."""
+    (los que vencen antes primero); `orden` pone primero el mayor saldo vencido o va por nombre."""
     filas, total = await db.run_sync(
         lambda s: service.listar_contratos(
             s,
@@ -89,6 +90,7 @@ async def listar_contratos(
             q=q,
             solo_mora=solo_mora,
             por_renovar=por_renovar,
+            orden=orden,
             limit=limit,
             offset=offset,
         )

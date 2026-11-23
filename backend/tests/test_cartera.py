@@ -568,6 +568,31 @@ async def test_listado_de_cartera_los_mas_atrasados_primero(client: AsyncClient,
     assert [c["familia_id"] for c in solo["items"]] == [str(moroso.id)]
 
 
+async def test_la_bandeja_cambia_de_orden(client: AsyncClient, db, headers):
+    """DEU-79: la bandeja solo iba de los mas atrasados a los menos. Ahora tambien por mayor
+    saldo vencido y por nombre del titular."""
+    zoe, _ = await fabricas.afiliada(db, hoy() - timedelta(days=40), telefono="+573001000001")
+    abel, _ = await fabricas.afiliada(db, hoy() - timedelta(days=100), telefono="+573001000002")
+    zoe.titular_nombre, abel.titular_nombre = "Zoe Zuluaga", "Abel Arango"
+    await db.run_sync(service.generar_cuotas, hoy())
+    await db.commit()
+
+    async def ids(**params) -> list[str]:
+        resp = await client.get("/api/v1/cartera/contratos", params=params, headers=headers)
+        assert resp.status_code == 200, resp.text
+        return [c["familia_id"] for c in resp.json()["items"]]
+
+    # Abel debe mas cuotas: es el mas atrasado y el de mayor saldo; por nombre tambien va primero.
+    assert await ids() == [str(abel.id), str(zoe.id)]
+    assert await ids(orden="saldo") == [str(abel.id), str(zoe.id)]
+    assert await ids(orden="titular") == [str(abel.id), str(zoe.id)]
+    zoe.titular_nombre = "Aaron Zuluaga"
+    await db.commit()
+    assert await ids(orden="titular") == [str(zoe.id), str(abel.id)]
+    resp = await client.get("/api/v1/cartera/contratos", params={"orden": "x"}, headers=headers)
+    assert resp.status_code == 422
+
+
 async def test_la_bandeja_separa_la_mora_de_lo_que_esta_por_renovar(
     client: AsyncClient, db, headers
 ):
