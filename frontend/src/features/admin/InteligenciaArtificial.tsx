@@ -21,6 +21,7 @@ import {
   useSembrarPrompts,
   type EvaluacionPrompt,
 } from './api'
+import { agruparPorMotivo } from './agrupar'
 
 const USOS: Record<string, string> = {
   comercial_guion: 'Atención comercial por WhatsApp',
@@ -185,50 +186,74 @@ export function InteligenciaArtificial() {
           <h2>Últimas consultas</h2>
         </div>
         <Consulta consulta={consultas} cargando="Cargando…" error="No fue posible cargar las consultas." vacio="Aún no se ha consultado la IA." estaVacio={(d) => d.length === 0}>
-          {(d) => (
-            <div className="scroll-x">
-              <table className="tabla tabla-apilable bandeja-tabla">
-                <thead>
-                  <tr>
-                    <th>Uso</th>
-                    <th>Cuándo</th>
-                    <th>Resultado</th>
-                    <th>Tokens (entrada / salida)</th>
-                    <th>Costo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {d.slice(0, 30).map((q) => (
-                    <tr key={q.id}>
-                      <td className="principal" data-etiqueta="Uso">
-                        {USOS[q.prompt_codigo] ?? q.prompt_codigo}
-                        {q.prompt_version && (
-                          <div className="bandeja-detalle">
-                            <span className="numero">Versión {q.prompt_version}</span>
-                          </div>
-                        )}
-                        {q.error && <div className="error">{q.error}</div>}
-                      </td>
-                      <td data-etiqueta="Cuándo">
-                        <span className="numero sin-cortes">{fechaHora(q.created_at)}</span>
-                      </td>
-                      <td data-etiqueta="Resultado">
-                        <Distintivo dominio="consulta_ia" valor={q.estado} />
-                      </td>
-                      <td data-etiqueta="Tokens (entrada / salida)">
-                        <span className="numero sin-cortes">
-                          {q.tokens_entrada} / {q.tokens_salida}
-                        </span>
-                      </td>
-                      <td data-etiqueta="Costo">
-                        <span className="numero sin-cortes">{dolares(q.costo_usd, 4)}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {(d) => {
+            const recientes = d.slice(0, 30)
+            // Un error que se repite en varias consultas se dice una vez, encima (DEU-73); en la
+            // fila solo queda el que es de ella sola.
+            const errores = agruparPorMotivo(recientes, (q) => q.error, (q) => q.id)
+            const repetido = new Set(errores.filter((g) => g.nombres.length > 1).map((g) => g.motivo))
+            return (
+              <div className="pila">
+                {repetido.size > 0 && (
+                  <ul className="ia-errores">
+                    {errores
+                      .filter((g) => repetido.has(g.motivo))
+                      .map((g) => (
+                        <li key={g.motivo} className="aviso-error">
+                          <Icono nombre="alerta" size={16} />
+                          <span>
+                            {g.motivo}
+                            <span className="sin-cortes"> · {g.nombres.length} consultas</span>
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
+                )}
+                <div className="scroll-x">
+                  <table className="tabla tabla-apilable bandeja-tabla">
+                    <thead>
+                      <tr>
+                        <th>Uso</th>
+                        <th>Cuándo</th>
+                        <th>Resultado</th>
+                        <th>Tokens (entrada / salida)</th>
+                        <th>Costo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recientes.map((q) => (
+                        <tr key={q.id}>
+                          <td className="principal" data-etiqueta="Uso">
+                            {USOS[q.prompt_codigo] ?? q.prompt_codigo}
+                            {q.prompt_version && (
+                              <div className="bandeja-detalle">
+                                <span className="numero">Versión {q.prompt_version}</span>
+                              </div>
+                            )}
+                            {q.error && !repetido.has(q.error) && <div className="error">{q.error}</div>}
+                          </td>
+                          <td data-etiqueta="Cuándo">
+                            <span className="numero sin-cortes">{fechaHora(q.created_at)}</span>
+                          </td>
+                          <td data-etiqueta="Resultado">
+                            <Distintivo dominio="consulta_ia" valor={q.estado} />
+                          </td>
+                          <td data-etiqueta="Tokens (entrada / salida)">
+                            <span className="numero sin-cortes">
+                              {q.tokens_entrada} / {q.tokens_salida}
+                            </span>
+                          </td>
+                          <td data-etiqueta="Costo">
+                            <span className="numero sin-cortes">{dolares(q.costo_usd, 4)}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          }}
         </Consulta>
       </section>
       <NuevoPrompt abierto={nuevo} onCerrar={() => setNuevo(false)} />
@@ -268,14 +293,27 @@ function FilaPrompt({ prompt: p }: { prompt: PromptRead }) {
         <pre className="codigo bloque-codigo">{p.sistema}</pre>
       </details>
       {evaluacion && (
-        <p className={aprobado ? 'aviso-ok' : 'aviso-error'} role="status">
-          {evaluacion.aprobados} de {evaluacion.total} casos aprobados
-          {!aprobado &&
-            evaluacion.detalle
-              .filter((x) => !x.aprobado)
-              .map((x) => ` · ${x.caso}: ${x.motivo}`)
-              .join('')}
-        </p>
+        <div className={aprobado ? 'aviso-ok' : 'aviso-error'} role="status">
+          {/* Cada motivo una vez, con los casos que fallaron por él (DEU-73). */}
+          <div className="ia-casos">
+            <p>
+              {evaluacion.aprobados} de {evaluacion.total} casos aprobados
+            </p>
+            {!aprobado && (
+              <ul>
+                {agruparPorMotivo(evaluacion.detalle.filter((x) => !x.aprobado), (x) => x.motivo, (x) => x.caso).map((g) => (
+                  <li key={g.motivo}>
+                    {g.motivo}
+                    <span className="ia-casos-cuales">
+                      {' · '}
+                      {g.nombres.length === 1 ? g.nombres[0] : `${g.nombres.length} casos: ${g.nombres.join(', ')}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       )}
       {(evaluar.isError || activar.isError) && (
         <p className="error" role="alert">

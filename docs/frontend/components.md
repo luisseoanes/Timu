@@ -276,7 +276,8 @@ líneas antes de apretar el texto.
 
 Bloque informativo dentro de una tarjeta, o resultado de una acción en las páginas de acceso.
 `.aviso-alerta` es lo que pide actuar sin ser un error (en la encuesta: qué hacer si es urgente).
-Una condición que exige acción va con su botón. El icono no encoge (`flex-shrink: 0`) y el texto va
+Una condición que exige acción va con su botón. El texto de un aviso y el de `.error` no pasan de `60ch` (unos 70 caracteres por línea); una lista
+de fallos dice cada motivo una vez, con lo que falló por él (`agruparPorMotivo`, en Administración). El icono no encoge (`flex-shrink: 0`) y el texto va
 en un solo elemento: el aviso es flex, y un `span` suelto (un teléfono con `.sin-cortes`) pasaría a
 ser otra columna.
 

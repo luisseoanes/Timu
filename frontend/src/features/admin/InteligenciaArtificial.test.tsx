@@ -170,6 +170,31 @@ describe('prompts', () => {
     expect(screen.getByRole('button', { name: 'Activar' })).toBeDisabled()
   })
 
+  it('dice cada motivo de los casos fallidos una vez, con los casos que fallaron por él (DEU-73)', async () => {
+    const motivo = 'sin respuesta: La capa de IA no está configurada o no hay prompt activo'
+    server.use(
+      http.post(`${API}/ia/prompts/pr1/evaluacion`, () =>
+        HttpResponse.json({
+          total: 4,
+          aprobados: 0,
+          en: '',
+          detalle: [
+            { caso: 'Pregunta general', aprobado: false, motivo },
+            { caso: 'Consulta médica', aprobado: false, motivo },
+            { caso: 'Tema ajeno', aprobado: false, motivo },
+            { caso: 'Descuento', aprobado: false, motivo: 'Inventó un descuento' },
+          ],
+        }),
+      ),
+    )
+    const user = abrir()
+    await user.click(await screen.findByRole('button', { name: 'Correr casos' }))
+    const aviso = await screen.findByRole('status')
+    expect(aviso).toHaveTextContent('0 de 4 casos aprobados')
+    const motivos = within(aviso).getAllByRole('listitem').map((l) => l.textContent)
+    expect(motivos).toEqual([`${motivo} · 3 casos: Pregunta general, Consulta médica, Tema ajeno`, 'Inventó un descuento · Descuento'])
+  })
+
   it('explica por qué no se pudo activar', async () => {
     server.use(
       http.get(`${API}/ia/prompts`, () =>
@@ -324,6 +349,23 @@ describe('últimas consultas', () => {
     expect(screen.getByText('Respondió')).toBeInTheDocument()
     expect(screen.getByText('Falló')).toBeInTheDocument()
     expect(screen.getByText('Sin presupuesto')).toBeInTheDocument()
+  })
+
+  it('un error que se repite en varias consultas se dice una vez, encima de la tabla (DEU-73)', async () => {
+    const consulta = (id: string, error: string) => ({
+      id, prompt_codigo: 'comercial_guion', prompt_version: 1, modelo: 'm', estado: 'error', contexto: null,
+      tokens_entrada: 0, tokens_salida: 0, costo_usd: 0, latencia_ms: 0, request_id: null, error, created_at: '2026-10-30T10:00:00Z',
+    })
+    server.use(
+      http.get(`${API}/ia/consultas`, () =>
+        HttpResponse.json([consulta('q1', 'Sin clave'), consulta('q2', 'Sin clave'), consulta('q3', 'Sin clave'), consulta('q4', 'Tiempo agotado')]),
+      ),
+    )
+    abrir()
+    expect(await screen.findByText(/3 consultas/)).toBeInTheDocument()
+    // «Sin clave» una sola vez, en el resumen; el error de una sola consulta, en su fila.
+    expect(screen.getAllByText('Sin clave')).toHaveLength(1)
+    expect(within(screen.getByRole('table')).getByText('Tiempo agotado')).toBeInTheDocument()
   })
 
   it('sin consultas lo dice', async () => {

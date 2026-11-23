@@ -244,7 +244,7 @@ textarea.input { min-height: 0; padding-block: var(--e2); }
   font-size: var(--t-menor);
 }
 .aviso b { color: var(--estado-info-texto); }
-.error { color: var(--texto-error); font-size: var(--t-menor); }
+.error { max-width: 60ch; color: var(--texto-error); font-size: var(--t-menor); }
 
 /* ============================================================
    Modal (Radix Dialog). El comportamiento lo pone Radix; el
