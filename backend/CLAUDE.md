@@ -51,15 +51,13 @@ los registros que agregan dominios (`app/models.py`, `app/transiciones.py`), en 
 - **Un schema que leen dos routers va en `<dominio>/schemas.py`**, con sus `Literal` (al revés se
   cierra un import circular).
 - **Inyecciones entre dominios** (el de abajo no importa al de arriba; el de arriba le conecta al
-  importarse, y sin conectar falla):
-  - `comunicaciones` no depende de nadie: `app/workers/tasks/comunicaciones.py` le conecta los
-    entrantes (`conectar_entrantes`).
-  - `tareas` ← `servicios`: `tareas.conectar_servicios` para nombrar cada tarea.
-  - `servicios` ← `preventivos`: `servicios.conectar_al_cambiar_estado` (ver
-    `docs/flujo-de-la-visita.md`).
-  - `cartera` ← `aliadas`: `cartera.conectar_al_cancelar` corta la vigencia de las remisiones por usar.
-  - `catalogos` ← `clinica`: `catalogos.conectar_campos_de_la_consulta` (`lo_registra_la_consulta`).
-  - `reglas` ← `planes`: `reglas.conectar_planes` da los planes al editor de reglas y a su validación.
+  importarse, y sin conectar falla; detalle en [arquitectura](../docs/backend/arquitectura.md)):
+  `comunicaciones` no depende de nadie (`app/workers/tasks/comunicaciones.py` le da
+  `conectar_entrantes`); `tareas` ← `servicios` (`conectar_servicios`, para nombrar cada tarea);
+  `servicios` ← `preventivos` (`conectar_al_cambiar_estado`, ver `docs/flujo-de-la-visita.md`);
+  `cartera` ← `aliadas` (`conectar_al_cancelar` corta la vigencia de las remisiones por usar);
+  `catalogos` ← `clinica` (`conectar_campos_de_la_consulta`, `lo_registra_la_consulta`); `reglas` ←
+  `planes` (`conectar_planes` da los planes al editor de reglas y a su validación).
 - **La traza de mensajes tapa los tokens de un solo uso** (`MensajeRead`); un script que necesite uno
   lo lee de la base con `sesion_worker`.
 - **Cada evento de reglas declara lo que da y lo que admite**: su contexto es una dataclass en

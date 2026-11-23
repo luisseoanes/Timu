@@ -1,47 +1,42 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Lo transversal del repositorio. Las reglas de cada lado viven junto a su código y se cargan al
+trabajar allí: [`backend/CLAUDE.md`](backend/CLAUDE.md) (una línea por regla; el porqué, en
+[`docs/backend/`](docs/backend/)) y [`frontend/CLAUDE.md`](frontend/CLAUDE.md). Un cambio que cruza los
+dos lados (un schema nuevo, una regla de sesión) lee los dos.
 
 ## Qué es este repositorio
 
-TIMU, plataforma de gestión veterinaria por afiliación. **La única fuente de verdad de lo que
-hay que construir es el documento de requerimientos de TIMU**:
-[`docs/documento-requerimientos-funcionales.md`](docs/documento-requerimientos-funcionales.md),
-copia literal del PDF (`~/Descargas/documento-requerimientos-funcionales.pdf`); no se edita.
-La propuesta (`docs/propuesta-timu-puntos-15-19.md`) responde a ese documento. El antiguo
-backlog por unidades se retiró el 2026-11-19 porque se había alejado de los requisitos: su
-trabajo abierto está en [`docs/pendiente-en-el-codigo.md`](docs/pendiente-en-el-codigo.md).
+TIMU, plataforma de gestión veterinaria por afiliación. **La única fuente de verdad de lo que hay que
+construir es el [documento de requerimientos](docs/documento-requerimientos-funcionales.md)**, copia
+literal del PDF (`~/Descargas/documento-requerimientos-funcionales.pdf`) que no se edita; la
+[propuesta](docs/propuesta-timu-puntos-15-19.md) le responde.
 
-El código y la documentación citan los dos documentos así:
-
-- Requisito por número (`6.10`, `6.16`) o sección por número (`Sección 8`, `Sección 14`): el
-  documento de requerimientos. La propuesta repite los números `6.x` en su tabla B y
-  reutiliza los números 15 a 19 porque responde a esos puntos, pero lo que se pide está en
-  el documento de requerimientos.
-- Sección por letra (`sección A`, `Sección C`): los apartados A a E de la sección 15 de la
-  propuesta.
-
-Al implementar algo, parte del requisito del documento (cita su número en el código y en el
-commit) y no de un resumen intermedio. El frontend está en rediseño con la marca real de TIMU:
-sus unidades (`R0-…` a `R4-…`) están en
-[`docs/hoja-de-ruta-rediseno.md`](docs/hoja-de-ruta-rediseno.md), la identidad en
-[`docs/manual-de-marca.md`](docs/manual-de-marca.md), el sistema de diseño en
-[`DESIGN.md`](DESIGN.md) y el contexto de producto en [`PRODUCT.md`](PRODUCT.md). El diseño lo
-gobierna la skill del repositorio (`/impeccable`,
-en `.claude/skills/`, con su hook en `.claude/settings.json`). Lo que falta fuera del código
-para cerrar un requisito (sandbox de Wompi, plantillas de Meta, decisiones de TIMU) está en
-[`docs/pendientes-externos.md`](docs/pendientes-externos.md). Allí, un **valor provisional** sigue pendiente
-aunque funcione: no se marca resuelto hasta que se informe explícitamente que TIMU dio el valor
-oficial.
+- **Cómo se citan.** Un requisito (`6.10`) o una sección por número (`Sección 8`): el documento de
+  requerimientos (la propuesta repite los `6.x` en su tabla B y los números 15 a 19 porque responde a
+  esos puntos, pero lo que se pide está en el documento). Una sección por letra (`sección A` a `E`): la
+  sección 15 de la propuesta.
+- **Al implementar, se parte del requisito del documento**, no de un resumen intermedio, y se cita su
+  número en el código y en el commit.
+- **Lo que falta.** Dentro del código, [`docs/pendiente-en-el-codigo.md`](docs/pendiente-en-el-codigo.md)
+  (el antiguo backlog por unidades se retiró el 2026-11-19 porque se había alejado de los requisitos).
+  Fuera (sandbox de Wompi, plantillas de Meta, decisiones de TIMU),
+  [`docs/pendientes-externos.md`](docs/pendientes-externos.md): allí **un valor provisional sigue
+  pendiente aunque funcione**, y no se marca resuelto hasta que se informe explícitamente que TIMU dio
+  el valor oficial.
+- **Diseño.** El frontend se rediseñó con la marca real de TIMU por unidades (`R0-…` a `R4-…`, en la
+  [hoja de ruta](docs/hoja-de-ruta-rediseno.md)). La identidad está en el
+  [manual de marca](docs/manual-de-marca.md), el sistema en [`DESIGN.md`](DESIGN.md) y el producto en
+  [`PRODUCT.md`](PRODUCT.md). Lo gobierna la skill `/impeccable` (`.claude/skills/`, con su hook en
+  `.claude/settings.json`).
 
 ## Comandos
 
 ```bash
-# Todo el stack (api, worker, beat, db, pgbouncer, redis, almacenamiento S3, web) en un solo comando.
-# El servicio `inicializar` migra, carga catálogos, crea admin@timu.co / cambiar123 y el
-# bucket antes de que arranquen api, worker y beat. No hace falta copiar ningún .env:
-# backend/.env.example es la base y backend/.env (si existe) la sobrescribe.
-# Puertos del host ocupados por otro proyecto → .env de la raíz (ver .env.example).
+# Todo el stack (api, worker, beat, db, pgbouncer, redis, almacenamiento S3, web). `inicializar` migra,
+# carga catálogos, crea admin@timu.co / cambiar123 y el bucket antes de api, worker y beat. Sin copiar
+# ningún .env: backend/.env.example es la base y backend/.env (si existe) la sobrescribe. Puertos del
+# host ocupados por otro proyecto → .env de la raíz (ver .env.example).
 docker compose up --build
 docker compose exec api python -m scripts.datos_demo   # usuarios, familias, ruta… de prueba (solo local; solo crea lo que falta)
 docker compose exec api python -m scripts.operacion_demo   # después: ocho semanas de operación (~5 min; si ya sembró, nada)
@@ -51,9 +46,8 @@ docker compose up -d api              # tras cambiar backend/.env.example: el en
                                       # --reload no lo recarga (worker y beat, si leen la variable)
 docker compose up -d --build -V       # tras traer dependencias nuevas: el código va montado, las librerías
                                       # van en la imagen, y -V renueva el node_modules anónimo de `web`
-                                      # `exec api` trabaja en /app, que es backend/ montado: un script de prueba
-                                      # copiado ahí aparece en el repositorio; cópialo al /tmp del contenedor
-                                      # y córrelo con `exec -T -w /app -e PYTHONPATH=/app api python /tmp/x.py`
+# `exec api` trabaja en /app, que es backend/ montado: un script de prueba copiado ahí aparece en el
+# repositorio. Va al /tmp del contenedor: `exec -T -w /app -e PYTHONPATH=/app api python /tmp/x.py`
 
 # Backend sin Docker
 cd backend && pip install -r requirements-dev.txt
@@ -84,19 +78,16 @@ gh run watch <id> --exit-status --interval 60 && gh run view <id> --json jobs --
 - `npm run verificar 2>&1 | tail` o `pytest | tail` devuelven el código de `tail`, no el de la prueba:
   guarda el log, mira el `$?` del propio comando y lee el resultado en el log.
 - `docker compose down -v` no baja `db-test` (va en el perfil `test`): sigue arriba con su base efímera.
-
-### Prueba de carga
-
-Mide el volumen proyectado a 12 meses (Sección 14) y mete datos sintéticos, así que se corre en
-un proyecto aparte: procedimiento en [`docs/prueba-de-carga.md`](docs/prueba-de-carga.md). El CI
-corre una versión reducida en el job del stack.
+- **Prueba de carga**: mide el volumen proyectado a 12 meses (Sección 14) y mete datos sintéticos, así
+  que se corre en un proyecto aparte ([`docs/prueba-de-carga.md`](docs/prueba-de-carga.md)). El CI corre
+  una versión reducida en el job del stack.
 
 ## Entorno de desarrollo: un solo comando
 
-**Desde un clon limpio, `docker compose up --build` deja el stack completo funcionando,
-sin pasos manuales ni ficheros que copiar.** Es una invariante del proyecto: ningún
-cambio —de infraestructura, backend, frontend o dependencias— se da por terminado si la
-rompe, y el compose se actualiza en el mismo cambio que lo hace necesario.
+**Desde un clon limpio, `docker compose up --build` deja el stack completo funcionando, sin pasos
+manuales ni ficheros que copiar.** Es una invariante: ningún cambio (de infraestructura, backend,
+frontend o dependencias) se da por terminado si la rompe, y el compose se actualiza en el mismo cambio
+que lo hace necesario.
 
 | Si el cambio… | …también tiene que |
 | --- | --- |
@@ -107,9 +98,8 @@ rompe, y el compose se actualiza en el mismo cambio que lo hace necesario.
 | añade un servicio | ir en el compose con `healthcheck` si otros dependen de él, `depends_on` con condición (`service_healthy`, `service_completed_successfully`), puerto del host configurable (`TIMU_<SERVICIO>_PORT`, documentado en el `.env.example` de la raíz) y `profiles` si no es del día a día (como `db-test` y `respaldos`). |
 | toca un Dockerfile, el contexto de build o la estructura de directorios que montan los volúmenes | comprobarse con `--build`, no con la imagen que ya estaba. |
 
-Cómo se verifica cuando el cambio toca cualquiera de esas filas. Se usa un proyecto
-aparte para no borrar los datos del habitual, y hay que pararlo antes porque comparten
-puertos:
+Si el cambio toca alguna de esas filas, se verifica en un proyecto aparte (para no borrar los datos del
+habitual, que se para antes porque comparten puertos):
 
 ```bash
 docker compose stop
@@ -121,156 +111,123 @@ docker compose -p timu-verificacion down -v --rmi local
 docker compose up -d
 ```
 
-Si no se ha hecho esta comprobación, se dice explícitamente al entregar el cambio. El
-job **Stack con un solo comando** de `.github/workflows/ci.yml` repite lo mismo en cada
-empuje a `main` y bloquea el release si falla, pero para entonces el commit ya está en
-`main`: la verificación local es la que evita romperlo.
+Si no se hizo, se dice explícitamente al entregar el cambio. El job **Stack con un solo comando** de
+`ci.yml` repite lo mismo en cada empuje a `main` y bloquea el release, pero para entonces el commit ya
+está en `main`: la verificación local es la que evita romperlo.
 
 ## Staging en Railway: cada empuje verde se despliega solo
 
-Railway (proyecto `timu`, entorno `staging`) despliega `api`, `worker` y `web` desde `main` en
-cuanto el CI de ese commit sale en verde («Wait for CI»). Detalle, configuración de cada servicio y
-cómo volver a sembrar: [`docs/despliegue-staging.md`](docs/despliegue-staging.md).
+Railway (proyecto `timu`, entorno `staging`) despliega `api`, `worker` y `web` desde `main` en cuanto el
+CI de ese commit sale en verde («Wait for CI»). Configuración de cada servicio y cómo volver a sembrar:
+[`docs/despliegue-staging.md`](docs/despliegue-staging.md).
 
-- **Las migraciones llegan a staging solas**: el *pre-deploy* de la API corre `inicializar`. Nunca se
-  aplican a mano allí, y se escriben como si hubiera datos reales: una que solo funciona sobre una base
-  vacía rompe el despliegue.
+- **Las migraciones llegan solas** (el *pre-deploy* de la API corre `inicializar`): nunca a mano, y
+  escritas como si hubiera datos reales; una que solo funciona sobre una base vacía rompe el despliegue.
 - **Una variable que `Settings` exige desplegado se pone en Railway antes de empujar** el cambio que la
   pide; si no, `inicializar` no arranca.
 - **El panel de staging es el compilado** (`frontend/Dockerfile.despliegue`, Caddy): un cambio que toca
   su build, el `Caddyfile` o cómo llega a `/api` se prueba con esa imagen, no con `npm run dev`.
-- **Tras empujar, se comprueba también el despliegue** de los servicios que el cambio toca (`railway
-  deployment list -p <proyecto> -s <servicio> -e staging --json`, con el id del proyecto de
-  [`docs/despliegue-staging.md`](docs/despliegue-staging.md): sin `-p` responde «No linked project
-  found»; o el panel de Railway): un despliegue fallido deja staging en la versión anterior sin que
-  el CI lo diga.
-
-## Dónde está cada cosa
-
-Este fichero es lo transversal. Las reglas de cada lado viven junto a su código y se
-cargan al trabajar allí:
-
-- [`backend/CLAUDE.md`](backend/CLAUDE.md): las reglas del backend en una línea cada una
-  (arquitectura, persistencia, migraciones y pruebas); el porqué y el detalle de cada una, en
-  [`docs/backend/`](docs/backend/).
-- [`frontend/CLAUDE.md`](frontend/CLAUDE.md): arquitectura del panel, sesión en el
-  navegador, estilos y pruebas con MSW.
-
-Un cambio que cruza los dos lados (un schema nuevo, una regla de sesión) lee los dos.
+- **Tras empujar se comprueba el despliegue** de los servicios que el cambio toca (`railway deployment
+  list -p <proyecto> -s <servicio> -e staging --json`, con el id del proyecto de `despliegue-staging.md`:
+  sin `-p` responde «No linked project found»; o el panel de Railway). Uno fallido deja staging en la
+  versión anterior sin que el CI lo diga.
 
 ## Estándares de calidad (Secciones 3 y 4)
 
-El documento de requerimientos exige una solución modular que crezca sin reemplazar su
-base, y escalabilidad, seguridad, integridad, trazabilidad, interoperabilidad, capacidad de
-integración y sostenibilidad. [`docs/estandares-calidad.md`](docs/estandares-calidad.md)
-traduce cada uno a reglas, dice qué guarda las hace cumplir y lista la deuda que queda.
-**Un cambio que toque una de sus tablas cumple la regla o cierra la deuda; no relaja la
+El documento pide una solución modular que crezca sin reemplazar su base, con escalabilidad, seguridad,
+integridad, trazabilidad, interoperabilidad, capacidad de integración y sostenibilidad.
+[`docs/estandares-calidad.md`](docs/estandares-calidad.md) traduce cada una a reglas, con su guarda y la
+deuda que queda. **Un cambio que toque una de sus tablas cumple la regla o cierra la deuda; no relaja la
 guarda.** Las tres que más se tropiezan:
 
-- **Capas**: `core` y `schemas` no importan ningún dominio, `integrations` solo la base, y
-  un dominio no importa `api` ni `workers` (salvo su `router.py`, que usa `app.api.deps`).
-  Ninguna dependencia nueva entre dominios puede cerrar un ciclo: se invierte con un evento
-  del outbox o inyectando la función, como `comunicaciones.conectar_entrantes`.
-- **Eventos**: todo nombre que se publica o se escucha se declara con `declarar_evento` en el
-  dominio que lo emite.
-- **Dependencias**: ninguna vulnerabilidad publicada en lo que se despliega; si no hay versión
-  corregida, `--ignore-vuln` en el job con motivo y fecha (en las herramientas de npm,
-  `EXCEPCIONES` de `.github/scripts/auditar-npm.mjs`).
+- **Capas**: `core` y `schemas` no importan ningún dominio, `integrations` solo la base, y un dominio no
+  importa `api` ni `workers` (salvo su `router.py`, que usa `app.api.deps`). Ninguna dependencia nueva
+  entre dominios cierra un ciclo: se invierte con un evento del outbox o inyectando la función, como
+  `comunicaciones.conectar_entrantes`.
+- **Eventos**: todo nombre que se publica o se escucha se declara con `declarar_evento` en el dominio que
+  lo emite.
+- **Dependencias**: ninguna vulnerabilidad publicada en lo que se despliega; sin versión corregida,
+  `--ignore-vuln` en el job con motivo y fecha (en las herramientas de npm, `EXCEPCIONES` de
+  `.github/scripts/auditar-npm.mjs`).
 
 ## Invariante: el CI ejecuta todas las pruebas, y todas pasan
 
-Ninguna prueba existe sin que el CI la ejecute en cada empuje a `main`, y ningún cambio
-se da por terminado si la deja fuera, saltada o en rojo. Lo vigilan guardas que forman
-parte de las propias suites; ninguno se desactiva:
+Ninguna prueba existe sin que el CI la ejecute en cada empuje a `main`, y ningún cambio se da por
+terminado si la deja fuera, saltada o en rojo. Lo vigilan guardas que forman parte de las propias
+suites, y ninguna se desactiva:
 
 | Guarda | Qué hace fallar |
 | --- | --- |
-| `backend/tests/conftest.py` (`pytest_sessionfinish`) | Cualquier prueba saltada o `xfail` en el backend. |
-| `backend/tests/conftest.py` (`pytest_collection_modifyitems`) | Una prueba `unit` que usa la base, o una con las dos marcas. |
-| `backend/tests/conftest.py` (`esquema`) y `backend/tests/test_persistencia.py` | Que la suite se conecte con un rol que salta las protecciones de la base (superusuario o `BYPASSRLS`): las pruebas usan `timu_app`, como la aplicación. |
-| `backend/tests/test_persistencia.py` y `backend/tests/test_migraciones.py` | Que el modelo y la base dejen de decir lo mismo: una clave primaria sin UUIDv7, un enum o un `CHECK` sin migración, un conjunto cerrado como texto libre, una referencia a catálogo sin clave foránea, un grafo de estados o un trigger de auditoría o inmutabilidad que falte, una tabla de negocio con `DELETE`, una tabla sin RLS o una política distinta de la matriz de `permisos_db.py`, un valor por defecto de servidor que el modelo no declara, una migración que no se revierte, una consulta de un listado o de una tarea del beat que recorre entera una tabla que crece, una llave de `publico` que ninguna política usa, un `restaurar.sh` que cree el rol distinto de las migraciones, o un ciclo de llaves foráneas sin `use_alter` (`test_los_modelos_se_ordenan_sin_ciclos`). |
+| `backend/tests/conftest.py` | Una prueba saltada o `xfail` (`pytest_sessionfinish`); una `unit` que usa la base o una con las dos marcas (`pytest_collection_modifyitems`); y, con `test_persistencia.py`, una suite conectada con un rol que salta las protecciones de la base (superusuario o `BYPASSRLS`): las pruebas usan `timu_app`, como la aplicación (`esquema`). |
+| `backend/tests/test_persistencia.py` y `test_migraciones.py` | Que el modelo y la base dejen de decir lo mismo. Cada regla de «Persistencia» de `backend/CLAUDE.md` nombra su prueba (UUIDv7, enums y `CHECK`, conjuntos cerrados, claves foráneas a catálogos, grafos de estados, triggers de auditoría e inmutabilidad, `DELETE`, RLS y la matriz de `permisos_db.py`, caminos calientes de listados y del beat). Además: un valor por defecto de servidor que el modelo no declara, una migración que no se revierte, una llave de `publico` que ninguna política usa, un `restaurar.sh` que crea el rol distinto de las migraciones y un ciclo de llaves foráneas sin `use_alter` (`test_los_modelos_se_ordenan_sin_ciclos`). |
 | `backend/tests/test_suite.py` | Una prueba del backend fuera de `tests/test_*.py`. |
-| `backend/tests/test_base_tecnica.py` (`test_cada_ajuste_de_la_configuracion_esta_en_el_env_de_ejemplo`) | Un ajuste de `Settings` que no aparece en `backend/.env.example` (salvo los `*_OVERRIDE`). |
-| `backend/tests/test_arquitectura.py` | Una capa que importa de otra superior, un dominio que usa el router de otro, una dependencia entre dominios que cierra un ciclo nuevo, una entrada de `CICLOS_CONOCIDOS` que ya no hace falta, o un import de `app` dentro de una función. |
-| `backend/tests/test_permisos.py` (`test_la_guarda_recorre_todas_las_rutas_de_la_api`) | Que la guarda de permisos deje de ver rutas que publica el OpenAPI (pasó al subir a FastAPI 0.162: `app.routes` ya no las lista). |
-| Job **Vulnerabilidades conocidas** de `ci.yml` | Una dependencia de la API, el worker o el panel con una vulnerabilidad publicada; en las herramientas de npm, una alta o crítica fuera de las excepciones de `.github/scripts/auditar-npm.mjs` (con motivo y fecha, solo sin versión corregida), o una excepción que ya no hace falta. |
-| `frontend/src/test/tokens.test.ts` | Un color escrito a mano en `frontend/src` fuera de `styles/tokens.css` (`#hex`, `rgb()`, `oklch()`, un nombre de color, también en `style={{}}` y en atributos SVG), un `var(--…)` que no está definido, un `z-index` que no sale de la escala `--capa-*`, o un radio o el espaciado de una etiqueta escritos a mano en lugar de `--r-…` y `--tracking-etiqueta`. |
-| `frontend/e2e-stack/responsive.spec.ts` | Una ruta que, a 375, 768, 900 o 1280 px, desborda en horizontal o tiene un fallo de WCAG 2.2 A o AA según axe-core (contraste, nombre con el texto visible, enlaces solo por color, tamaño de los objetivos, teclado…), encabezados que saltan un nivel (un h1 seguido de un h3), o una pantalla de `App.tsx` que el recorrido no abre. Con `pestanas: true` mide cada pestaña y con `fichas` cada ficha que la pantalla abre desde la URL (`?plan=`), con un registro de `datos_demo`; ante un 429 espera a `Retry-After` y vuelve a cargar, y si persiste falla en vez de medir una pantalla de error. Un fallo se arregla: la lista de deuda `PENDIENTES` se retiró vacía en `R4-CIE-01`. |
-| `frontend/e2e-stack/recorridos.spec.ts` (ficha de familia) | Barras o línea pintadas sobre una ventana abierta, un control que se estira junto a un campo con ayuda, el pie de una ventana recortado, o más de una acción verde llena por pestaña. |
-| `frontend/src/test/arquitectura.test.ts` y `no-restricted-imports` de ESLint | Un import a un fichero interno de otro dominio del panel (por alias o por ruta relativa), un `index.ts` que reexporta algo ajeno, la base o `auth`/`catalogos` dependiendo de un dominio, un espacio de entrada importado fuera de `App.tsx`, o un ciclo entre dominios. |
+| `backend/tests/test_base_tecnica.py` | Un ajuste de `Settings` que no está en `backend/.env.example`, salvo los `*_OVERRIDE` (`test_cada_ajuste_de_la_configuracion_esta_en_el_env_de_ejemplo`). |
+| `backend/tests/test_arquitectura.py` | Una capa que importa de otra superior, un dominio que usa el router de otro, una dependencia entre dominios que cierra un ciclo nuevo, una entrada de `CICLOS_CONOCIDOS` que ya no hace falta o un import de `app` dentro de una función. |
+| `backend/tests/test_permisos.py` | Que la guarda de permisos deje de ver rutas que publica el OpenAPI (`test_la_guarda_recorre_todas_las_rutas_de_la_api`: pasó al subir a FastAPI 0.162, cuando `app.routes` dejó de listarlas). |
+| Job **Vulnerabilidades conocidas** de `ci.yml` | Una dependencia de la API, el worker o el panel con una vulnerabilidad publicada; en las herramientas de npm, una alta o crítica fuera de `EXCEPCIONES` de `.github/scripts/auditar-npm.mjs` (con motivo y fecha, solo sin versión corregida), o una excepción que ya no hace falta. |
+| `frontend/src/test/tokens.test.ts` | Un color escrito a mano en `frontend/src` fuera de `styles/tokens.css` (`#hex`, `rgb()`, `oklch()` o un nombre, también en `style={{}}` y en atributos SVG), un `var(--…)` sin definir, un `z-index` fuera de la escala `--capa-*`, o un radio o el espaciado de una etiqueta escritos a mano en lugar de `--r-…` y `--tracking-etiqueta`. |
+| `frontend/e2e-stack/responsive.spec.ts` | Una ruta que a 375, 768, 900 o 1280 px desborda en horizontal, tiene un fallo de WCAG 2.2 A o AA según axe-core (contraste, nombre con el texto visible, enlaces solo por color, tamaño de los objetivos, teclado…) o salta un nivel de encabezado; o una pantalla de `App.tsx` que el recorrido no abre. Mide cada pestaña (`pestanas: true`) y cada ficha que la pantalla abre desde la URL (`fichas`, con un registro de `datos_demo`); ante un 429 espera a `Retry-After` y vuelve a cargar, y si persiste falla en vez de medir una pantalla de error. Sin lista de excepciones: un fallo se arregla. |
+| `frontend/e2e/publicas.spec.ts` | La encuesta, la verificación del carnet o el registro en línea que, con la API interceptada, desbordan o tienen un fallo de WCAG 2.2 A o AA a 375 o 1280 px. |
+| `frontend/e2e-stack/recorridos.spec.ts` (ficha de familia) | Barras o línea pintadas sobre una ventana abierta, un control que se estira junto a un campo con ayuda, el pie de una ventana recortado o más de una acción verde llena por pestaña. |
+| `frontend/src/test/arquitectura.test.ts` y `no-restricted-imports` de ESLint | Un import a un fichero interno de otro dominio del panel (por alias o por ruta relativa), un `index.ts` que reexporta algo ajeno, la base o `auth`/`catalogos` dependiendo de un dominio, un espacio de entrada importado fuera de `App.tsx` o un ciclo entre dominios. |
 | `frontend/src/test/suite.test.ts` | Una prueba del panel fuera de los patrones de Vitest (`src/**/*.{test,spec}.ts(x)`) o de Playwright (`e2e/`, `e2e-stack/`), o desactivada con `.only`, `.skip`, `.todo` o `.fixme`. |
-| `frontend/src/test/setup.ts` | Una petición del panel que ninguna prueba simuló con MSW: la prueba falla en lugar de seguir en verde con un error de red que nadie miró. Los catálogos comunes van en `frontend/src/test/handlers.ts`. Al terminar cada prueba, antes de restaurar los handlers, deja salir y responder lo que ya estaba en vuelo: si no, se lo cobraba a la siguiente. |
-| `forbidOnly` en `frontend/playwright.config.ts` y `frontend/playwright.stack.config.ts` | Un `.only` en e2e cuando corre en CI. |
+| `frontend/src/test/setup.ts` | Una petición que ninguna prueba simuló con MSW: la prueba falla en lugar de seguir en verde con un error de red que nadie miró (los catálogos comunes van en `src/test/handlers.ts`). Al terminar cada prueba deja salir y responder lo que estaba en vuelo antes de restaurar los handlers; si no, se lo cobraba a la siguiente. |
+| `forbidOnly` de `frontend/playwright.config.ts` y `playwright.stack.config.ts` | Un `.only` en e2e cuando corre en CI. |
 | Umbrales de cobertura | Que la cobertura baje del mínimo (abajo). |
 | Umbrales `count>0` de `infra/carga/recorrido.js` | Una prueba de carga que no llegó a hacer peticiones: sin muestras, k6 da por cumplido cualquier umbral de tiempos. |
-| Mínimos de `backend/scripts/operacion_demo.py` (`MINIMOS`) | Una siembra de la operación por debajo de sus mínimos (rutas, visitas, encuestas respondidas, remisiones atendidas…): `Cliente.post` solo avisa de un error y sigue, así que sin esto un cambio en la API podría vaciar la operación sin que nadie lo viera. |
+| `MINIMOS` de `backend/scripts/operacion_demo.py` | Una siembra de la operación por debajo de sus mínimos (rutas, visitas, encuestas respondidas, remisiones atendidas…): `Cliente.post` solo avisa de un error y sigue, y sin esto un cambio en la API podría vaciar la operación sin que nadie lo viera. |
 
 Reglas que mantienen esto vivo:
 
-- **Los pasos de pruebas del CI corren las suites enteras**: `pytest`,
-  `npm run test:coverage`, `npm run test:e2e` y, en el job del stack, `npm run test:e2e:stack`,
-  sin `-m`, `-k`, rutas ni filtros. Para ir rápido en local se filtra; el CI nunca. La única
-  excepción, decidida a propósito, es la prueba de carga: el CI corre el mismo escenario con
-  menos volumen, usuarios y duración, y la completa se corre en local.
-- **Hay dos e2e y no se sustituyen**: `e2e/` intercepta la API y prueba el panel aislado,
-  rápido y determinista; `e2e-stack/` recorre panel, portal y clínica aliada contra el stack
-  real con los usuarios de `scripts.datos_demo`, en el job «Stack con un solo comando». Un
-  recorrido nuevo que dependa de datos los crea `datos_demo`, no la prueba.
-  - Una sola sesión por perfil (`e2e-stack/sesiones.setup.ts`): ingreso y renovación comparten un
-    límite de 10 por minuto y por IP. Hay un usuario por perfil (Sección 12) y cada pantalla o
-    recorrido va con el perfil que la usa; con los ocho perfiles van 9 ingresos de 10.
-  - Un recorrido busca lo que dejó `datos_demo` por su identidad (el motivo, el nombre), nunca el
-    primero del listado, y la ruta de la médica con `rutaDemo` (`e2e-stack/datos.ts`). Si falla con
-    «datos_demo no dejó ninguna ruta», vuelve a sembrar `datos_demo` hoy.
-  - El detalle de los límites y los datos: [`docs/frontend/e2e-stack.md`](docs/frontend/e2e-stack.md).
-- **Una prueba que no puede pasar se arregla o se borra**, con la razón en el cuerpo del
-  commit. No se salta, no se marca `xfail` y no se comenta.
-- **Un tipo de prueba nuevo llega cableado al CI en el mismo cambio**: un runner, una
-  carpeta fuera de los patrones, un proyecto de Playwright o un servicio que necesiten
-  las pruebas. Ese cambio actualiza también `ci.yml`, el guarda correspondiente y esta
-  tabla. Si no, esas pruebas no las corre nadie.
-- **Todo cambio de comportamiento llega con sus pruebas**, y toda corrección con la
-  prueba que habría detectado el fallo. Esa prueba debe fallar sin el arreglo.
-- **Antes de empujar se corre en local lo que el cambio toca**. No hay pull requests,
-  así que el CI llega cuando el commit ya está en `main`.
+- **El CI corre las suites enteras**: `pytest`, `npm run test:coverage`, `npm run test:e2e` y, en el job
+  del stack, `npm run test:e2e:stack`, sin `-m`, `-k`, rutas ni filtros. En local se filtra para ir
+  rápido; el CI nunca. La única excepción, a propósito, es la prueba de carga: el CI corre el mismo
+  escenario con menos volumen, usuarios y duración, y la completa se corre en local.
+- **Hay dos e2e y no se sustituyen**: `e2e/` intercepta la API y prueba el panel aislado, rápido y
+  determinista; `e2e-stack/` recorre panel, portal y clínica aliada contra el stack real con los
+  usuarios de `scripts.datos_demo`, en el job «Stack con un solo comando». Un recorrido nuevo que
+  dependa de datos los crea `datos_demo`, no la prueba. Una sola sesión por perfil (ingreso y renovación
+  comparten un límite de 10 por minuto y por IP; con los ocho perfiles van 9), y un recorrido busca lo que dejó `datos_demo` por su identidad, nunca el
+  primero del listado (la ruta de la médica, con `rutaDemo`; si falla con «datos_demo no dejó ninguna
+  ruta», se vuelve a sembrar hoy). El detalle: [`docs/frontend/e2e-stack.md`](docs/frontend/e2e-stack.md).
+- **Una prueba que no puede pasar se arregla o se borra**, con la razón en el cuerpo del commit. No se
+  salta, no se marca `xfail` y no se comenta.
+- **Un tipo de prueba nuevo llega cableado al CI en el mismo cambio** (un runner, una carpeta fuera de
+  los patrones, un proyecto de Playwright o un servicio que necesiten), con `ci.yml`, su guarda y esta
+  tabla actualizados. Si no, esas pruebas no las corre nadie.
+- **Todo cambio de comportamiento llega con sus pruebas**, y toda corrección con la prueba que habría
+  detectado el fallo, que falla sin el arreglo.
+- **Antes de empujar se corre en local lo que el cambio toca**: no hay pull requests, y el CI llega
+  cuando el commit ya está en `main`.
 
-Umbrales de cobertura: backend **91%** combinando líneas y ramas (`--cov-fail-under` en
-`pytest.ini`; la cobertura de ramas está activada en `pyproject.toml`), y panel **90%**
-de líneas, sentencias y funciones y **80%** de ramas (`vitest.config.ts`).
-Están justo por debajo de lo medido para que no se degraden solos, no como objetivo.
-Cuando la cobertura sube, se suben en el mismo commit; bajarlos requiere una razón
-escrita en el cuerpo del commit. La del backend varía unos 0,5 puntos entre ejecuciones del
-mismo código: una subida menor no obliga a subir su umbral (subirlo a ras de lo medido haría
-fallar el CI por azar). La cobertura del backend se mide con
-`concurrency = greenlet` porque los servicios corren dentro de `db.run_sync`. Sin eso,
-coverage deja de contar las líneas posteriores a la primera consulta y el informe miente.
+**Umbrales de cobertura**: backend **91 %** combinando líneas y ramas (`--cov-fail-under` en
+`pytest.ini`; las ramas, activadas en `pyproject.toml`), y panel **90 %** de líneas, sentencias y
+funciones y **80 %** de ramas (`vitest.config.ts`). Están justo por debajo de lo medido para que no se
+degraden solos, no como objetivo: cuando la cobertura sube, se suben en el mismo commit, y bajarlos
+requiere una razón en el cuerpo del commit. La del backend varía unos 0,5 puntos entre ejecuciones del
+mismo código, así que una subida menor no obliga a subir el umbral (a ras de lo medido, el CI fallaría
+por azar). Se mide con `concurrency = greenlet` porque los servicios corren dentro de `db.run_sync`: sin
+eso, coverage deja de contar las líneas posteriores a la primera consulta y el informe miente.
 
-`.github/workflows/ci.yml` ejecuta formato, análisis estático (con las reglas de seguridad
-`S` de Ruff), tipos, todas las pruebas, la auditoría de vulnerabilidades y el job del
-stack; el release depende de todos ellos, así que no sale una versión sin la batería
-completa.
+`.github/workflows/ci.yml` ejecuta formato, análisis estático (con las reglas de seguridad `S` de Ruff),
+tipos, todas las pruebas, la auditoría de vulnerabilidades y el job del stack; el release depende de
+todos, así que no sale una versión sin la batería completa.
 
 ## Commits y publicación de versiones
 
-Todo está en [`CONTRIBUTING.md`](CONTRIBUTING.md): **léelo antes de cada commit**. Fija
-qué va en cada commit, el formato `tipo(scope): descripción`, la lista de scopes, la
-longitud, los pies permitidos (ningún `Co-Authored-By` ni enlace de sesión de Claude) y
-cómo `semantic-release` decide la versión. `commits-sin-convencion.mjs` no mide los 72
-caracteres: compruébalo con un comando que falle (exit ≠ 0) encadenado con `&&` antes de
-`git push`.
-
-Con mucho trabajo sin commit, los commits se construyen en un worktree aparte: cómo, con sus
-trampas (el enlace a `node_modules`, las versiones intermedias, los tipos por commit), en
-[`CONTRIBUTING.md` §2](CONTRIBUTING.md#tamaño). Para fundir un `--fixup` sin editor:
-`GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash --autostash origin/main`.
+Todo está en [`CONTRIBUTING.md`](CONTRIBUTING.md): **léelo antes de cada commit**. Fija qué va en cada
+commit, el formato `tipo(scope): descripción`, los scopes, la longitud, los pies permitidos (ningún
+`Co-Authored-By` ni enlace de sesión de Claude) y cómo `semantic-release` decide la versión.
+`commits-sin-convencion.mjs` no mide los 72 caracteres: compruébalo con un comando que falle (exit ≠ 0)
+encadenado con `&&` antes de `git push`. Con mucho trabajo sin commit, los commits se construyen en un
+worktree aparte, con sus trampas ([`CONTRIBUTING.md` §2](CONTRIBUTING.md#tamaño)). Para fundir un
+`--fixup` sin editor: `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash --autostash origin/main`.
 
 ## Convenciones de escritura
 
-Todo el repositorio está en español: identificadores de dominio (`familias`, `mascotas`,
-`cartera`), clases CSS en singular (`.tarjeta`, `.distintivo-alerta`), docstrings, mensajes
-de error de la API y commits (`feat(backend): …`). Los ficheros de `docs/` se nombran en
-**kebab-case** (`manual-de-marca.md`, `propuesta-timu-puntos-15-19.md`); el código sigue la
-convención de su lenguaje: `snake_case` en Python, `PascalCase` para los componentes de
-React. El código del backend evita tildes en
-docstrings y comentarios; el frontend y la documentación sí las usan. Sigue lo que ya haga
-cada fichero.
+Todo el repositorio está en español: identificadores de dominio (`familias`, `mascotas`, `cartera`),
+clases CSS en singular (`.tarjeta`, `.distintivo-alerta`), docstrings, mensajes de error de la API y
+commits (`feat(backend): …`). Los ficheros de `docs/` van en **kebab-case** (`manual-de-marca.md`); el
+código sigue la convención de su lenguaje (`snake_case` en Python, `PascalCase` en los componentes de
+React). El backend evita tildes en docstrings y comentarios; el frontend y la documentación sí las usan.
+Sigue lo que ya haga cada fichero.
