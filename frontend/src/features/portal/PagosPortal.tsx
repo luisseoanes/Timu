@@ -15,7 +15,7 @@ import { useMiCuenta, useMiPlan, useMisPagos, usePagarPortal } from './api'
 import { ConWhatsApp } from './Contacto'
 import { MarcasPlan } from './MarcasPlan'
 import { alPagar } from './plan'
-import { avisoDelPago } from './pagos'
+import { avisoDelPago, avisoPagoParcial, PAGO_EN_WOMPI } from './pagos'
 
 /**
  * R3-POR-02 Los pagos de la familia: cuánto debe y el único verde para pagarlo todo, cada cuota
@@ -83,6 +83,7 @@ export function PortalPagos() {
                         )}
                       </p>
                       {alPagar(plan.data) && <p>{alPagar(plan.data)}</p>}
+                      <p className="apagado">{PAGO_EN_WOMPI}</p>
                       <button className="btn btn-primario" type="button" disabled={pagar.isPending} onClick={() => iniciarPago()}>
                         Pagar {moneda(c.saldo_pendiente)}
                       </button>
@@ -90,11 +91,6 @@ export function PortalPagos() {
                   ) : (
                     <p>
                       <Insignia tono="ok">Al día</Insignia> No tienes nada por pagar.
-                    </p>
-                  )}
-                  {c.proximo_cobro && (
-                    <p className="apagado">
-                      Próximo cobro: <span className="numero">{moneda(c.proximo_cobro.valor)}</span> el {fechaCortaConDia(c.proximo_cobro.fecha)}
                     </p>
                   )}
                 </div>
@@ -106,6 +102,9 @@ export function PortalPagos() {
                 {porPagar(c.cuotas).length > 0 && (
                   <section className="bloque" aria-labelledby="cuotas-titulo">
                     <h3 id="cuotas-titulo">Cuotas por pagar</h3>
+                    {porPagar(c.cuotas).length > 1 && avisoPagoParcial(plan.data, c.cuotas) && (
+                      <p className="portal-aviso">{avisoPagoParcial(plan.data, c.cuotas)}</p>
+                    )}
                     <ul className="portal-lista">
                       {porPagar(c.cuotas).map((q) => (
                         <li key={q.id}>
@@ -126,6 +125,15 @@ export function PortalPagos() {
                         </li>
                       ))}
                     </ul>
+                  </section>
+                )}
+                {/* Lo que viene, aparte de lo que se debe: no es parte del saldo (DEU-77). */}
+                {c.proximo_cobro && (
+                  <section className="bloque" aria-labelledby="proximo-titulo">
+                    <h3 id="proximo-titulo">Próximo cobro</h3>
+                    <p className="apagado">
+                      <span className="numero">{moneda(c.proximo_cobro.valor)}</span> el {fechaCortaConDia(c.proximo_cobro.fecha)}
+                    </p>
                   </section>
                 )}
               </div>

@@ -606,6 +606,33 @@ describe('pagos', () => {
     expect(screen.getAllByRole('button', { name: 'Pagar esta' })[0]).toHaveClass('btn-plano')
   })
 
+  it('antes de pagar dice que el pago es en Wompi, y el próximo cobro va aparte de lo que se debe', async () => {
+    renderizar(<PortalPagos />)
+    const verde = await screen.findByRole('button', { name: /^Pagar \$\s75\.000$/ })
+    const saldo = verde.closest('.portal-saldo')!
+    expect(saldo).toHaveTextContent(/El pago se hace en Wompi/)
+    // DEU-77: el próximo cobro se leía junto al saldo, como si fuera parte de la deuda.
+    expect(saldo).not.toHaveTextContent(/Próximo cobro/)
+    const proximo = screen.getByRole('heading', { name: 'Próximo cobro' }).closest('section')!
+    expect(proximo).toHaveTextContent(/\$\s75\.000 el/)
+  })
+
+  it('con varias vencidas y el plan en pausa, avisa antes de «Pagar esta» que una sola no lo saca de la pausa', async () => {
+    const vencidas = [
+      { ...CUENTA.cuotas[0]!, dias_mora: 6 },
+      { ...CUENTA.cuotas[0]!, id: 'q2', periodo: '2026-10', dias_mora: 36 },
+    ]
+    server.use(
+      http.get(`${API}/portal/plan`, () => HttpResponse.json({ ...PLAN, estado: 'congelada' })),
+      http.get(`${API}/portal/estado-cuenta`, () =>
+        HttpResponse.json({ ...CUENTA, saldo_pendiente: '150000.00', saldo_vencido: '150000.00', cuotas: vencidas }),
+      ),
+    )
+    renderizar(<PortalPagos />)
+    const cuotas = (await screen.findByRole('heading', { name: 'Cuotas por pagar' })).closest('section')!
+    expect(await within(cuotas).findByText(/tu plan sigue en pausa hasta que pagues todas/)).toBeInTheDocument()
+  })
+
   it('un pago rechazado está en el historial diciendo que no se cobró', async () => {
     server.use(
       http.get(`${API}/portal/pagos`, () =>
