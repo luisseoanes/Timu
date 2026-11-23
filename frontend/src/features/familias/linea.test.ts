@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { EstacionRead } from '@/types'
 
-import { colorDeEstacion, colorDeLinea, esGrupoVencidas, esTramo, orientacion, paradas, recorrido, resumen, type Elemento } from './linea'
+import { colorDeEstacion, colorDeLinea, vencidasPorTipo, esGrupoVencidas, esTramo, orientacion, paradas, recorrido, resumen, type Elemento } from './linea'
 
 /** Cada elemento en una palabra: «hoy», «tramo», «vencidas» o la fecha y el estado de la parada. */
 const clave = (e: Elemento) => ('tipo' in e ? e.tipo : `${e.fecha} ${e.estado}`)
@@ -111,5 +111,17 @@ describe('el color de la línea con uno o varios planes (DEU-78)', () => {
     expect(colorDeEstacion(planes, [{ mascota: 'Luna' }, { mascota: 'Michi' }])).toBeUndefined()
     // Con un solo plan no hace falta: el punto ya va en el color de la línea.
     expect(colorDeEstacion([verde], [{ mascota: 'Luna' }])).toBeUndefined()
+  })
+})
+
+describe('lo vencido de una familia en dos señales (DEU-75)', () => {
+  it('cuenta aparte las cuotas, los preventivos y los servicios, con su tono', () => {
+    const v = (tipo: EstacionRead['tipo'], estado: EstacionRead['estado'] = 'vencida') => ({ tipo, estado })
+    expect(vencidasPorTipo([v('cuota'), v('cuota'), v('preventivo'), v('servicio'), v('preventivo', 'futura')])).toEqual([
+      { texto: '2 cuotas vencidas', tono: 'peligro' },
+      { texto: '1 preventivo vencido', tono: 'alerta' },
+      { texto: '1 servicio vencido', tono: 'alerta' },
+    ])
+    expect(vencidasPorTipo([v('cuota', 'hecha')])).toEqual([])
   })
 })

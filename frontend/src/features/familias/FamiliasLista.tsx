@@ -10,7 +10,7 @@ import { puede } from '@/lib/permisos'
 import type { EstadoAfiliacion, LineaFamiliaRead } from '@/types'
 
 import { useFamilias, useLineas } from './api'
-import { estacionesDelPerfil } from './linea'
+import { estacionesDelPerfil, vencidasPorTipo } from './linea'
 import { LineaMini } from './LineaFamilia'
 import { NuevaFamiliaModal } from './NuevaFamiliaModal'
 
@@ -24,6 +24,13 @@ const ESTADOS: { valor: EstadoAfiliacion; label: string }[] = [
 
 const POR_PAGINA = 25
 
+/** Los órdenes del listado (DEU-75, DEU-79). «Más urgentes» solo para quien ve la cartera. */
+const ORDENES = [
+  { valor: '-urgencia', label: 'Más urgentes primero', cartera: true },
+  { valor: '-created_at', label: 'Más recientes primero', cartera: false },
+  { valor: 'titular_nombre', label: 'Por nombre', cartera: false },
+]
+
 /**
  * El listado de familias, a la izquierda del panel de Familias. La búsqueda, el filtro y la
  * página viven en la URL: abrir una familia y volver no los pierde, y el buscador de la
@@ -36,7 +43,10 @@ export function FamiliasLista({ seleccionada }: { seleccionada?: string }) {
   const q = params.get('q') ?? ''
   const estado = (params.get('estado') ?? '') as EstadoAfiliacion | ''
   const offset = Number(params.get('desde') ?? 0)
-  const familias = useFamilias({ q: q || undefined, estado: estado || undefined, limit: POR_PAGINA, offset })
+  // Quien ve la cartera abre con lo más urgente (más días de mora) arriba; el resto, lo más reciente.
+  const ordenes = ORDENES.filter((o) => !o.cartera || puede(usuario, 'verCartera'))
+  const orden = ordenes.find((o) => o.valor === params.get('orden'))?.valor ?? ordenes[0].valor
+  const familias = useFamilias({ q: q || undefined, estado: estado || undefined, orden, limit: POR_PAGINA, offset })
   const lineas = useLineas(familias.data?.items.map((f) => f.id) ?? [])
   const porFamilia = new Map<string, LineaFamiliaRead>(lineas.data?.map((l) => [l.familia_id, l]))
   const sufijo = params.toString() ? `?${params}` : ''
@@ -89,6 +99,13 @@ export function FamiliasLista({ seleccionada }: { seleccionada?: string }) {
             </option>
           ))}
         </select>
+        <select className="input" value={orden} onChange={(e) => cambiar('orden', e.target.value)} aria-label="Ordenar familias">
+          {ordenes.map((o) => (
+            <option key={o.valor} value={o.valor}>
+              {o.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       <Consulta
@@ -106,7 +123,7 @@ export function FamiliasLista({ seleccionada }: { seleccionada?: string }) {
                 const planes = linea?.planes ?? []
                 const activas = f.mascotas?.filter((m) => m.activa).map((m) => m.nombre) ?? []
                 const delPerfil = linea ? estacionesDelPerfil(linea.estaciones, usuario) : []
-                const vencidas = delPerfil.filter((e) => e.estado === 'vencida').length
+                const vencidas = vencidasPorTipo(delPerfil)
                 return (
                   <li key={f.id} className="listado-fila" data-seleccionada={f.id === seleccionada}>
                     <span className="listado-fila-cabeza">
@@ -133,11 +150,16 @@ export function FamiliasLista({ seleccionada }: { seleccionada?: string }) {
                       )}
                       {activas.length > 0 && <span className="apagado">· {activas.join(', ')}</span>}
                     </span>
-                    {/* Lo vencido se dice en texto, no solo con el punto rojo de la miniatura. */}
-                    {vencidas > 0 && (
+                    {/* Lo vencido se dice en texto, no solo con el punto rojo de la miniatura; la
+                        cartera en rojo y los preventivos y servicios en aviso (DEU-75). */}
+                    {vencidas.length > 0 && (
                       <span className="familia-fila-vencidas">
-                        <Icono nombre="alerta" size={14} />
-                        {vencidas} {vencidas === 1 ? 'vencida' : 'vencidas'}
+                        {vencidas.map((v) => (
+                          <span key={v.texto} data-tono={v.tono}>
+                            <Icono nombre="alerta" size={14} />
+                            {v.texto}
+                          </span>
+                        ))}
                       </span>
                     )}
                     {linea && <LineaMini estaciones={delPerfil} planes={planes} />}

@@ -70,7 +70,45 @@ describe('Familias con la línea de metro', () => {
     expect(fila.querySelector('.marcador-plan')).toHaveAttribute('data-color', 'verde')
     expect(within(fila).getByRole('img')).toHaveAccessibleName(/^1 vencida, próxima: Cuota de diciembre el /)
     // Lo vencido se lee también sin distinguir el rojo del punto.
-    expect(within(fila).getByText('1 vencida')).toBeInTheDocument()
+    expect(within(fila).getByText('1 cuota vencida')).toBeInTheDocument()
+  })
+
+  it('lo vencido va en dos señales: la cartera en rojo y los preventivos en aviso (DEU-75)', async () => {
+    server.use(
+      http.get('*/api/v1/afiliaciones/lineas', () =>
+        HttpResponse.json([
+          {
+            ...LINEA,
+            estaciones: [
+              ...LINEA.estaciones,
+              estacion(-20, 'vencida', 'Vacuna', { tipo: 'preventivo', mascota: 'Luna' }),
+              estacion(-10, 'vencida', 'Desparasitación', { tipo: 'preventivo', mascota: 'Luna' }),
+            ],
+          },
+        ]),
+      ),
+    )
+    renderizar(<FamiliasPage />)
+    const fila = (await screen.findByRole('link', { name: FAMILIA.titular_nombre })).closest('li')!
+    expect((await within(fila).findByText('1 cuota vencida')).closest('[data-tono]')).toHaveAttribute('data-tono', 'peligro')
+    expect(within(fila).getByText('2 preventivos vencidos').closest('[data-tono]')).toHaveAttribute('data-tono', 'alerta')
+  })
+
+  it('quien ve la cartera abre el listado con lo más urgente arriba, y puede cambiar el orden (DEU-75)', async () => {
+    const ordenes: (string | null)[] = []
+    server.use(
+      http.get('*/api/v1/familias', ({ request }) => {
+        ordenes.push(new URL(request.url).searchParams.get('orden'))
+        return HttpResponse.json({ items: [FAMILIA], total: 1, limit: 25, offset: 0 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderizar(<FamiliasPage />)
+    // En la aplicación la pantalla no se pinta sin sesión (ProtectedRoute); aquí la sesión llega después.
+    await waitFor(() => expect(ordenes.at(-1)).toBe('-urgencia'))
+    expect(screen.getByRole('combobox', { name: 'Ordenar familias' })).toHaveDisplayValue('Más urgentes primero')
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Ordenar familias' }), 'Por nombre')
+    await waitFor(() => expect(ordenes.at(-1)).toBe('titular_nombre'))
   })
 
   it('una familia sin plan dibuja su línea en gris, no con el color de un plan', async () => {

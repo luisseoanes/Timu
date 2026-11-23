@@ -1123,7 +1123,10 @@
 .familia-fila-plan { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e1) var(--e3); font-size: var(--t-menor); color: var(--texto); }
 .familia-fila-marcador { display: inline-flex; align-items: center; gap: 6px; }
 /* Lo vencido en texto junto a la miniatura: el punto rojo no basta (WCAG 1.4.1). */
-.familia-fila-vencidas { display: inline-flex; align-items: center; gap: var(--e1); font-size: var(--t-menor); font-weight: 600; color: var(--texto-error); }
+/* Lo vencido de la fila en dos señales (DEU-75): la cartera en rojo, preventivos y servicios en aviso. */
+.familia-fila-vencidas { display: flex; flex-wrap: wrap; column-gap: var(--e3); row-gap: var(--e1); font-size: var(--t-menor); font-weight: 600; }
+.familia-fila-vencidas > span { display: inline-flex; align-items: center; gap: var(--e1); color: var(--texto-error); }
+.familia-fila-vencidas > span[data-tono="alerta"] { color: var(--estado-alerta-texto); }
 
 .ficha-abierta { display: grid; gap: var(--e5); padding: var(--e6); background: var(--superficie); border-radius: var(--r-panel); }
 .ficha-abierta > * { min-width: 0; }

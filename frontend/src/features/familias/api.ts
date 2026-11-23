@@ -22,6 +22,8 @@ export interface FiltrosFamilias {
   ciudad?: string
   estado?: EstadoAfiliacion
   incluir_bajas?: boolean
+  /** Campo de orden de la API; con «-» delante, descendente (`-urgencia`, DEU-75). */
+  orden?: string
   limit?: number
   offset?: number
 }

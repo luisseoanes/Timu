@@ -35,6 +35,23 @@ export function colorDeEstacion(
   return colores.size === 1 ? unico : undefined
 }
 
+/**
+ * Lo vencido de una familia, en dos señales (DEU-75): las cuotas, que son la cartera, en rojo; los
+ * preventivos y los servicios, en el tono de aviso. Juntas en un solo «N vencidas» rojo, casi todas
+ * las filas del listado salían en rojo y el rojo dejaba de avisar.
+ */
+export function vencidasPorTipo(estaciones: Pick<EstacionRead, 'tipo' | 'estado'>[]): { texto: string; tono: 'peligro' | 'alerta' }[] {
+  const cuenta = (tipo: EstacionRead['tipo']) => estaciones.filter((e) => e.tipo === tipo && e.estado === 'vencida').length
+  const senales: { texto: string; tono: 'peligro' | 'alerta' }[] = []
+  const cuotas = cuenta('cuota')
+  const preventivos = cuenta('preventivo')
+  const servicios = cuenta('servicio')
+  if (cuotas) senales.push({ texto: `${cuotas} ${cuotas === 1 ? 'cuota vencida' : 'cuotas vencidas'}`, tono: 'peligro' })
+  if (preventivos) senales.push({ texto: `${preventivos} ${preventivos === 1 ? 'preventivo vencido' : 'preventivos vencidos'}`, tono: 'alerta' })
+  if (servicios) senales.push({ texto: `${servicios} ${servicios === 1 ? 'servicio vencido' : 'servicios vencidos'}`, tono: 'alerta' })
+  return senales
+}
+
 export type EstadoParada = EstacionRead['estado']
 
 export interface Parada {
