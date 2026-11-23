@@ -1744,19 +1744,6 @@
 .aliada-remision-quien h2 > span { font-family: var(--fuente); font-size: var(--t-cuerpo); color: var(--texto-suave); }
 .aliada-remision-quien p { color: var(--texto); }
 
-/* Lo que cuesta, lo que cubre TIMU y lo que paga la familia: celdas iguales en una fila, separadas
-   por hilos; a todo el ancho del formulario, así el hilo cae en el hueco entre sus dos columnas. */
-.aliada-cifras { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 1px; margin: 0; background: var(--borde); border: 1px solid var(--borde); border-radius: var(--r-tarjeta); overflow: hidden; }
-.aliada-cifras > div { padding: var(--e3); background: var(--superficie); }
-.aliada-cifras dt { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; color: var(--texto-suave); }
-.aliada-cifras dd { margin: var(--e1) 0 0; font-size: var(--t-cifra); font-weight: 600; color: var(--texto-titulo); }
-/* Estrecho (el celular, la columna de lo atendido), cada cifra es una fila de libro de cuentas:
-   la etiqueta a la izquierda y el importe a la derecha, en columna para cuadrar. */
-@container (max-width: 479px) {
-  .aliada-cifras { grid-auto-flow: row; grid-auto-columns: auto; }
-  .aliada-cifras > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e3); }
-  .aliada-cifras dd { margin: 0; font-size: var(--t-titulo); }
-}
 .aliada-atendidas { container-type: inline-size; }
 
 .aliada-reporte { padding-top: var(--e5); border-top: 1px solid var(--borde); }

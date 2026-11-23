@@ -223,7 +223,7 @@ function Reparto({
   hecho?: boolean
 }) {
   return (
-    <dl className="aliada-cifras">
+    <dl className="cifras">
       {atencion && (
         <div>
           <dt>Valor de la atención</dt>

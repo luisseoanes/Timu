@@ -65,7 +65,7 @@ export function Atendidas() {
           <>
             {/* Sin atenciones, la frase basta: cuatro ceros no dicen nada más. */}
             {a.atenciones > 0 && (
-            <dl className="aliada-cifras">
+            <dl className="cifras">
               <div>
                 <dt>Atenciones</dt>
                 <dd className="numero">{a.atenciones}</dd>

@@ -474,6 +474,21 @@ a.fila:hover strong { color: var(--texto-enlace); }
 /* En una ventana de agendar, las franjas en columnas iguales: las horas quedan alineadas. */
 .cupos-rejilla { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
+/* --- Fila de cifras: dos a cuatro importes que se leen juntos (lo que cuesta, lo que cubre TIMU y lo
+   que paga la familia; lo gastado en IA y lo que queda), celdas iguales separadas por hilos. Nació en
+   Mi clínica y es común desde DEU-72. A todo el ancho de un formulario, el hilo cae en su hueco. */
+.cifras { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 1px; margin: 0; background: var(--borde); border: 1px solid var(--borde); border-radius: var(--r-tarjeta); overflow: hidden; }
+.cifras > div { padding: var(--e3); background: var(--superficie); }
+.cifras dt { font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: var(--tracking-etiqueta); text-transform: uppercase; color: var(--texto-suave); }
+.cifras dd { margin: var(--e1) 0 0; font-size: var(--t-cifra); font-weight: 600; color: var(--texto-titulo); }
+/* Estrecho (el celular, la columna de lo atendido), cada cifra es una fila de libro de cuentas:
+   la etiqueta a la izquierda y el importe a la derecha, en columna para cuadrar. */
+@container (max-width: 479px) {
+  .cifras { grid-auto-flow: row; grid-auto-columns: auto; }
+  .cifras > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e3); }
+  .cifras dd { margin: 0; font-size: var(--t-titulo); }
+}
+
 /* --- Saltar al contenido (DEU-79): fuera de la vista hasta que recibe el foco --- */
 .saltar-contenido {
   position: absolute; left: var(--e3); top: var(--e3); z-index: var(--capa-menu);

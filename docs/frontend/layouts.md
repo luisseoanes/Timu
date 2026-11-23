@@ -350,10 +350,10 @@ lo ya hecho a la derecha.
   y la raza en texto suave, el titular con los últimos dígitos del documento, y la ficha de datos.
   Vencida y sin usar, un botón plano abre el mismo reporte para lo atendido hasta el día en que
   venció, con «Validar» todavía de verde. Si se puede usar, el reporte (`.aliada-reporte`) en el formulario de dos columnas, con el reparto
-  (`.aliada-cifras`, dos celdas separadas por hilos) entre el valor y el resumen y el verde abajo a
+  (`.cifras`, dos celdas separadas por hilos) entre el valor y el resumen y el verde abajo a
   la derecha (a todo el ancho y de 48 px en el celular).
 - **Lo atendido** (`Atendidas`): el título con el mes al lado (`?mes=` en la URL), cuatro cifras
-  (`.aliada-cifras`, en una fila, o en filas de libro de cuentas en un contenedor estrecho; sin
+  (`.cifras`, en una fila, o en filas de libro de cuentas en un contenedor estrecho; sin
   atenciones no se pintan) y la lista con hilo (`.aliada-atendidas-lista`).
 
 ## Inicio — `.inicio` («La línea de hoy»)

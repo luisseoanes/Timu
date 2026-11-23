@@ -1426,7 +1426,7 @@ y la mascota.
   en 13 px suave, la fecha y el motivo, y el valor, lo que cubrió TIMU y el código. Sin atenciones,
   una frase sola: «Todavía no hay atenciones reportadas este mes. Al reportar una, aparece aquí con
   lo que cubre TIMU.», o «No se reportaron atenciones en octubre de 2026.» en un mes pasado.
-- **Las cifras** (`.aliada-cifras`): dos a cuatro importes que se leen juntos, en celdas blancas
+- **Las cifras** (`.cifras`, común desde que la usa también el tope de la IA): dos a cuatro importes que se leen juntos, en celdas blancas
   iguales en fila, separadas por hilos de 1 px (el fondo `borde` asoma por el hueco), con borde de
   1 px y esquina de tarjeta. Cada celda, 12 px de relleno: la etiqueta de 12 px en mayúsculas
   espaciadas y suave, y la cifra en 24 px y 600, marino, `.numero`. Ocupan el ancho de lo que
