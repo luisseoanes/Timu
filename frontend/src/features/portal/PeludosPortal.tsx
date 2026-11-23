@@ -8,7 +8,7 @@ import { Icono } from '@/components/Icono'
 import { Pestanas } from '@/components/Pestanas'
 import { useEspecies, useNombreTipoServicio } from '@/features/catalogos'
 import { mensajeError } from '@/lib/errores'
-import { edad, fecha, fechaCorta, hoyISO, moneda, peso } from '@/lib/formato'
+import { edad, fechaCompacta, fechaCorta, hoyISO, moneda, peso } from '@/lib/formato'
 import type { MascotaRead } from '@/types'
 
 import { AgendarModal } from './Agenda'
@@ -263,7 +263,7 @@ function CarnetPortal({ mascotaId }: { mascotaId: string }) {
                 <span>
                   <strong>{p.nombre}</strong>
                   <span className="apagado">
-                    Dosis {p.dosis} · el {fecha(p.fecha_programada)}
+                    Dosis {p.dosis} · el {fechaCompacta(p.fecha_programada)}
                   </span>
                 </span>
                 <Insignia tono="info">Programada</Insignia>
@@ -274,7 +274,7 @@ function CarnetPortal({ mascotaId }: { mascotaId: string }) {
                 <span>
                   <strong>{a.nombre}</strong>
                   <span className="apagado">
-                    Dosis {a.dosis} · aplicada el {fecha(a.fecha_aplicacion)}
+                    Dosis {a.dosis} · aplicada el {a.fecha_aplicacion ? fechaCompacta(a.fecha_aplicacion) : '—'}
                     {a.aplicado_por ? ` por ${a.aplicado_por}` : ''}
                     {a.peso_kg ? ` · pesaba ${peso(a.peso_kg)}` : ''}
                   </span>
@@ -304,7 +304,7 @@ function HistoriaPortal({ mascotaId }: { mascotaId: string }) {
           <ol className="historial">
             {d.map((e) => (
               <li key={e.id}>
-                <span className="historial-fecha numero">{fecha(e.fecha)}</span>
+                <span className="historial-fecha numero">{fechaCompacta(e.fecha)}</span>
                 <div>
                   <strong>{e.motivo}</strong>
                   {e.diagnostico && <p>Diagnóstico: {e.diagnostico}</p>}

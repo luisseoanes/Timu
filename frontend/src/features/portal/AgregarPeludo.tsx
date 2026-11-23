@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { Icono } from '@/components/Icono'
 import { mensajeError } from '@/lib/errores'
-import { fecha, hoyISO, moneda } from '@/lib/formato'
+import { fechaCompacta, hoyISO, moneda } from '@/lib/formato'
 import type { AltaPeludoRead, Periodicidad } from '@/types'
 
 import { useAgregarPeludo, useAltasPeludo, useCotizacionAlta, useMiPlan, usePlanesAlta } from './api'
@@ -180,7 +180,7 @@ function FormularioAlta() {
         )}
         {cot && (
           <p className="ancho" role="status" aria-label="Valor del peludo nuevo">
-            Desde el {fecha(cot.hasta)} tu afiliación pasa de {moneda(cot.valor_periodo_actual)} a{' '}
+            Desde el {fechaCompacta(cot.hasta)} tu afiliación pasa de {moneda(cot.valor_periodo_actual)} a{' '}
             <strong className="numero">{moneda(cot.valor_periodo_nuevo)}</strong> {CADA[cot.periodicidad]}. Hoy pagas{' '}
             <strong className="numero">{moneda(cot.valor_ajuste)}</strong> por los días que quedan del periodo
             {cot.cuotas_adelantadas > 0 && ' y la diferencia de la próxima cuota, que ya emitimos con el valor anterior'}.

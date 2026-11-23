@@ -248,7 +248,7 @@ describe('mascotas', () => {
     expect(await screen.findByRole('heading', { name: 'Luna' })).toBeInTheDocument()
     expect((await screen.findAllByText('Aplicada')).length).toBe(2)
     expect(screen.getByText(/por Dra\. Paula Gómez · pesaba 8,4 kg/)).toBeInTheDocument()
-    expect(screen.getByText('Polivalente').closest('li')).toHaveTextContent('el 01/12/2026')
+    expect(screen.getByText('Polivalente').closest('li')).toHaveTextContent('Dosis 2 · el 1 dic')
     expect(screen.queryByText(/no tiene vacunas/)).not.toBeInTheDocument()
   })
 
