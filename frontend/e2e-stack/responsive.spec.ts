@@ -380,6 +380,9 @@ for (const perfil of [null, 'atencion', 'admin', 'gerencia', 'comercial', 'opera
         if (ruta.pestanas) expect(pestanas.length, 'la pantalla tiene pestañas').toBeGreaterThan(0)
         for (const pestana of pestanas.length > 0 ? pestanas : [null]) {
           if (pestana) {
+            // Cada pestaña se mide a cuatro anchos con axe (unos 5 s): como las fichas, suma su
+            // tiempo. Con el límite fijo, Administración (nueve pestañas) iba a 28 s de 30 en el CI.
+            test.info().setTimeout(test.info().timeout + 8_000)
             await page.setViewportSize({ width: ANCHOS[ANCHOS.length - 1], height: ALTO })
             await cargarConDatos(page, fallosApi, async (reintento) => {
               if (reintento) {
