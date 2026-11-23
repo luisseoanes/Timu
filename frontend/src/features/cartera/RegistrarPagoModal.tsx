@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 import { Modal } from '@/components/Modal'
 import { mensajeError } from '@/lib/errores'
 import { moneda } from '@/lib/formato'
@@ -33,6 +35,15 @@ export function RegistrarPagoModal({
   onCerrar: () => void
 }) {
   const elegida = cuotas.find((q) => q.id === cuotaId)
+  // El campo es numérico («91500»): debajo se lee como moneda mientras se escribe (DEU-80).
+  const inicial = elegida ? String(saldoDe(elegida)) : ''
+  const [valor, setValor] = useState(inicial)
+  // La ventana se monta antes de elegir la cuota: al elegirla (o cambiarla), su saldo es el valor.
+  const [deLaCuota, setDeLaCuota] = useState(inicial)
+  if (inicial !== deLaCuota) {
+    setDeLaCuota(inicial)
+    setValor(inicial)
+  }
   const registrar = useRegistrarPago()
 
   function guardar(e: React.FormEvent<HTMLFormElement>) {
@@ -85,12 +96,22 @@ export function RegistrarPagoModal({
             step="1"
             required
             inputMode="numeric"
-            defaultValue={elegida ? saldoDe(elegida) : undefined}
-            aria-describedby={elegida ? 'pago-saldo' : undefined}
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            aria-describedby={valor || elegida ? 'pago-saldo' : undefined}
           />
-          {elegida && (
+          {(valor || elegida) && (
             <small id="pago-saldo" className="campo-ayuda">
-              Le faltan <span className="numero">{moneda(saldoDe(elegida))}</span> a esta cuota.
+              {Number(valor) > 0 && (
+                <>
+                  Se registran <span className="numero">{moneda(valor)}</span>.{' '}
+                </>
+              )}
+              {elegida && (
+                <>
+                  Le faltan <span className="numero">{moneda(saldoDe(elegida))}</span> a esta cuota.
+                </>
+              )}
             </small>
           )}
         </div>

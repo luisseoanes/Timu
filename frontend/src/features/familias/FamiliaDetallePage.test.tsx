@@ -238,7 +238,13 @@ describe('FamiliaDetallePage', () => {
     await user.click(await screen.findByRole('button', { name: 'Registrar pago de cuota septiembre' }))
     const modal = await screen.findByRole('dialog', { name: 'Registrar pago' })
     expect(within(modal).getByLabelText('Cuota')).toHaveValue('q1')
-    expect(within(modal).getByLabelText('Valor (COP)')).toHaveValue(89000)
+    const valor = within(modal).getByLabelText('Valor (COP)')
+    expect(valor).toHaveValue(89000)
+    // DEU-80: el campo numérico dice «89000»; la ayuda lo dice como moneda, mientras se escribe.
+    expect(valor).toHaveAccessibleDescription(/^Se registran \$\s89\.000\. Le faltan \$\s89\.000 a esta cuota\.$/)
+    await user.clear(valor)
+    await user.type(valor, '50000')
+    expect(valor).toHaveAccessibleDescription(/^Se registran \$\s50\.000\./)
   })
 
   it('una cuota vencida también se paga desde su estación en la línea', async () => {
