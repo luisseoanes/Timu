@@ -22,7 +22,7 @@ const ESTADO_LEIDO: Record<Estacion['estado'], string> = {
   futura: '',
 }
 
-function Parada({ e, principal }: { e: Estacion; principal: boolean }) {
+function Parada({ e, principal, repetida }: { e: Estacion; principal: boolean; repetida: boolean }) {
   return (
     <li className="inicio-parada" data-estado={e.estado}>
       <span className="inicio-parada-punto" aria-hidden="true">
@@ -40,6 +40,9 @@ function Parada({ e, principal }: { e: Estacion; principal: boolean }) {
         {e.accion && (
           <Link className={principal ? 'btn btn-primario' : 'btn btn-secundario'} to={e.accion.to}>
             {e.accion.texto}
+            {/* Cuatro «Ver» y seis «Ver la agenda» se leían iguales (DEU-79): una acción que se
+                repite en la línea dice de qué estación es, después de su texto visible. */}
+            {repetida && <span className="sr-only">: {e.hora ? `${e.hora} · ` : ''}{e.titulo}</span>}
           </Link>
         )}
       </div>
@@ -65,18 +68,20 @@ export function LineaDelDia({
   despues: Estacion[]
   cierre: string
 }) {
-  const principal = [...antes, ...despues].find((e) => e.accion && !e.accion.secundaria)?.clave
+  const todas = [...antes, ...despues]
+  const principal = todas.find((e) => e.accion && !e.accion.secundaria)?.clave
+  const repetida = (e: Estacion) => todas.filter((o) => o.accion?.texto === e.accion?.texto).length > 1
   return (
     <ol className="inicio-linea" aria-label={etiqueta}>
       {antes.map((e) => (
-        <Parada key={e.clave} e={e} principal={e.clave === principal} />
+        <Parada key={e.clave} e={e} principal={e.clave === principal} repetida={repetida(e)} />
       ))}
       <li className="inicio-linea-hoy">
         <span className="inicio-linea-hoy-marca" aria-hidden="true" />
         <span>Hoy · {fechaCortaConDia(hoy)}</span>
       </li>
       {despues.map((e) => (
-        <Parada key={e.clave} e={e} principal={e.clave === principal} />
+        <Parada key={e.clave} e={e} principal={e.clave === principal} repetida={repetida(e)} />
       ))}
       {despues.length === 0 && (
         <li className="inicio-parada" data-estado="futura">

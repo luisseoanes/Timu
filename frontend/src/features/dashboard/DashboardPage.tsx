@@ -370,7 +370,8 @@ function LineaEquipo({ rol }: { rol: Rol | undefined }) {
             hora: fechaCortaConDia(dia),
             titulo: plural(delDia.length, 'servicio agendado', 'servicios agendados'),
             detalle: tipos.join(' · '),
-            accion: { texto: 'Ver la agenda', to: '/panel/servicios', secundaria: true },
+            // La agenda de ese día, no la de hoy (DEU-79).
+            accion: { texto: 'Ver la agenda', to: `/panel/servicios?desde=${dia}&hasta=${dia}`, secundaria: true },
           })
         }
         if (total > items.length) {

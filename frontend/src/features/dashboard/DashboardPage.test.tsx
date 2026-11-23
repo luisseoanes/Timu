@@ -295,13 +295,16 @@ describe('La línea del día', () => {
         'Vencido: 1 servicio de hoy sin atenderEl primero estaba para las 6:00 a. m.Ver los servicios',
         expect.stringMatching(/^Hoy/),
         'Lo siguiente: 11:00 a. m.Consulta domiciliaria · MaxAna Ruiz · Medellín · Sara DíazVer',
-        'sáb 14 nov1 servicio agendadoConsulta domiciliariaVer la agenda',
-        'Y 1 servicio agendado másVer la agenda',
+        'sáb 14 nov1 servicio agendadoConsulta domiciliariaVer la agenda: sáb 14 nov · 1 servicio agendado',
+        'Y 1 servicio agendado másVer la agenda: Y 1 servicio agendado más',
       ])
       expect(within(linea).getByRole('link', { name: 'Ver' })).toHaveAttribute('href', '/panel/servicios/s1')
-      for (const agenda of within(linea).getAllByRole('link', { name: 'Ver la agenda' })) {
-        expect(agenda).toHaveClass('btn-secundario')
-      }
+      // DEU-79: las acciones que se repiten dicen de qué estación son, tras su texto visible, y la
+      // agenda de un día abre ese día.
+      const delDia = within(linea).getByRole('link', { name: 'Ver la agenda: sáb 14 nov · 1 servicio agendado' })
+      expect(delDia).toHaveAttribute('href', '/panel/servicios?desde=2026-11-14&hasta=2026-11-14')
+      const resto = within(linea).getByRole('link', { name: 'Ver la agenda: Y 1 servicio agendado más' })
+      for (const agenda of [delDia, resto]) expect(agenda).toHaveClass('btn-secundario')
     } finally {
       vi.useRealTimers()
     }
