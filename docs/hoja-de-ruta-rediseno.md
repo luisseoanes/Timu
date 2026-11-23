@@ -28,8 +28,8 @@ actualiza aquí.
 | R1 — Fundaciones | 7 | 7 | 0 | 0 |
 | R2 — Panel del equipo | 10 | 10 | 0 | 0 |
 | R3 — Familias, aliada y páginas públicas | 7 | 7 | 0 | 0 |
-| R4 — Cierre | 4 | 2 | 0 | 2 |
-| **Total** | **32** | **30** | **0** | **2** |
+| R4 — Cierre | 4 | 3 | 0 | 1 |
+| **Total** | **32** | **31** | **0** | **1** |
 
 Al cierre de `R2-PAN-10` (2026-11-15) el panel del equipo está rediseñado entero, y con `R3-PUB-01`
 (el mismo día) también el acceso. Con `R3-ALI-01` (2026-11-16), el espacio de la clínica aliada, y
@@ -58,13 +58,15 @@ hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
   al cliente, el portal y la clínica aliada sin encontrar nada más. Los huecos de requisito que
   salieron están en [lo que falta en el código](pendiente-en-el-codigo.md).
   `R4-CIE-02` (auditoría y crítica) se cerró el 2026-11-21 ([lo que se hizo](rediseno/auditoria-r4-cie-02.md)).
-  **Lo siguiente es `R4-CIE-03`**, preguntando al usuario antes de empezar.
+  `R4-CIE-03` (documentación final) se cerró el 2026-11-22 (ver su fila).
+  **Lo siguiente es `R4-CIE-04`** (umbrales de cobertura), preguntando al usuario antes de empezar.
 - **La portada pública de `timu.com.co` está hecha: `R3-PUB-04`** (2026-11-18). Antes de publicarla
   en el dominio quedan cosas de TIMU, en [pendientes externos](pendientes-externos.md): los valores
   provisionales sacados de la web vieja, el permiso de las personas de las fotos del equipo, la
   licencia de las fotos de las piezas y volver a alojar la política de datos.
-- **Los push van al cerrar cada unidad o lote**, no por commit (decidido con el usuario el
-  2026-11-16), después de la batería local completa.
+- **Un solo push al final de la sesión, cuando lo indica el usuario** (decidido el 2026-11-22; antes,
+  al cerrar cada unidad o lote), después de la batería local completa. Los commits se siguen haciendo
+  uno a uno.
 - **`R1-CMP-02` y `R1-CMP-03` están cerrados** (2026-11-21): el primero sin orden común por columnas
   (ver su fila) y el segundo con la revisión de los vacíos de R3 hecha en `R4-CIE-02`.
 - **El mapa de las rutas (6.7) es una unidad aparte, fuera del cierre del rediseño** (decidido con
@@ -234,7 +236,7 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 | --- | --- | --- | --- |
 | `R4-CIE-01` | Recorrido completo | La lista de rutas pendientes de `R0-QAA-02` está vacía (desde `R2-PAN-10`) y se elimina. El recorrido cubre todas las rutas a los cuatro anchos (375, 768, 900 y 1280 px). | Hecho (2026-11-19): `PENDIENTES` y su prueba se retiraron, y un fallo hace fallar el barrido. Además, decidido con el usuario, el barrido mide abiertas las fichas que cada pantalla abre desde la URL (plantilla, ruta, campaña, clínica aliada, interesado, plan y regla), con un registro de `datos_demo` buscado por su nombre: en el celular son lo que se ve al tocar una fila, y no eran una ruta propia. |
 | `R4-CIE-02` | Auditoría | `/impeccable audit` en cada espacio y `/impeccable critique` en el panel y el portal. Se corrigen todos los hallazgos P0 y P1; los P2 y P3 quedan como deuda escrita. | Hecho (2026-11-21): auditoría de los cuatro espacios (17/20) y crítica del panel (25/40) y del portal (24/40), con sus seis P1 de la auditoría y sus seis de las críticas corregidos, y los P2 que eligió el usuario (encabezados, táctiles de 44 px, el paquete partido, «Dar de baja» en el menú). El barrido pide ahora todas las reglas WCAG 2.2 A y AA y que los encabezados no salten un nivel. Detalle en [auditoría y crítica](rediseno/auditoria-r4-cie-02.md); lo que queda, en la deuda (`DEU-71` a `DEU-82`). |
-| `R4-CIE-03` | Documentación final | La skill refresca `DESIGN.md`. Se reescriben `docs/frontend/` (componentes, plantillas y convenciones) y la sección 15 del manual. El `CLAUDE.md` describe las guardas definitivas, y los tres `CLAUDE.md` se condensan (el del backend pasa de 35 KB) sin perder ninguna regla: lo que sea historia o explicación larga va a `docs/`. | Pendiente. Adelantado el 2026-11-16: el `CLAUDE.md` del backend pasó de 36 KB a 14 KB (el detalle, en `docs/backend/`) y el detalle de la e2e del stack salió del de la raíz (`docs/frontend/e2e-stack.md`). |
+| `R4-CIE-03` | Documentación final | La skill refresca `DESIGN.md`. Se reescriben `docs/frontend/` (componentes, plantillas y convenciones) y la sección 15 del manual. El `CLAUDE.md` describe las guardas definitivas, y los tres `CLAUDE.md` se condensan (el del backend pasa de 35 KB) sin perder ninguna regla: lo que sea historia o explicación larga va a `docs/`. | Hecho (2026-11-22). Adelantado el 2026-11-16: el `CLAUDE.md` del backend pasó de 36 KB a 14 KB (el detalle, en `docs/backend/`) y el detalle de la e2e del stack salió del de la raíz (`docs/frontend/e2e-stack.md`). El 2026-11-22: `DESIGN.md` con los componentes por espacio (comunes, panel, portal, clínica aliada y páginas públicas) y refrescado por el documentador desde el código, con su sidecar regenerado entero (`DEU-27`); `docs/frontend/` y la sección 15 del manual, contrastados con el código, sin la historia del rediseño; las piezas que ninguna pantalla usaba, quitadas (`AnilloProgreso`, `.accesos`, `.linea-tiempo`, `.metricas`, `.detalle-cabeza`); y los tres `CLAUDE.md` condensados (la raíz de 22,3 a 20,5 KB, con la guarda de `e2e/publicas.spec.ts` que faltaba; el frontend de 14,8 a 8,4 KB, con sus trampas enteras en `docs/frontend/trampas.md`), con cada una de sus 255 unidades y su destino en el [inventario](rediseno/inventario-claude-md.md), revisado por el usuario. El documentador anotó `DEU-83` (Supresión, `btn-peligro` en la fila). |
 | `R4-CIE-04` | Umbrales de cobertura | Los umbrales de `vitest.config.ts` se ajustan a lo medido, según la regla del `CLAUDE.md`. | Pendiente |
 
 ## Mientras dura el rediseño
