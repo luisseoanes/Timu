@@ -43,8 +43,9 @@ Para la sesión siguiente, que no tiene la conversación anterior: todo lo decid
 hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
 
 - **La deuda que dejó el cierre (`DEU-71`–`DEU-83`) está hecha** (lote del 2026-11-23, decidido por el
-  usuario con las opciones y la recomendación de cada una; `DEU-76` y `DEU-78`, sobre bocetos), salvo
-  volver a sembrar staging (`DEU-81`), que va después del push para que siembre con el código nuevo.
+  usuario con las opciones y la recomendación de cada una; `DEU-76` y `DEU-78`, sobre bocetos), con
+  local y staging vueltos a sembrar (`DEU-81`). Lo siguiente es `R4-CIE-04` (umbrales de cobertura),
+  preguntando al usuario antes de empezar.
 - **El techo del revisor (`DEU-28`–`DEU-70`) y la deuda decidida están hechos**; `DEU-27` se cerró
   en `R4-CIE-03`.
   `DEU-14` (la siembra gruesa) se terminó el 2026-11-18: la operación de demostración ya lleva
