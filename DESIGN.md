@@ -1163,6 +1163,13 @@ Lo que se toca poco, con los dos patrones ya construidos: lo que hay por resolve
 registro en listado con ficha, abierto en la URL (`?clinica=`, `?plan=`, `?regla=`). Como en
 Comercial, «Nueva clínica», «Nuevo plan» y «Nueva regla» son verdes solo sin ficha abierta (con
 ella, suaves).
+- **El índice de Administración:** sus diez secciones en cuatro apartados (Equipo; Planes y
+  catálogos; Automatizaciones; TIMU y privacidad), como los ajustes de una aplicación: una columna
+  de 232 px a la izquierda, fija al desplazar, con el título de cada apartado en etiqueta y sus
+  secciones como enlaces de 40 px; la abierta en blanco, en marino y 600 (`aria-current`), sin
+  borde de color. Desde 1180 px; por debajo, un selector «Sección» con los apartados como grupos,
+  encima de la sección, para no quitarle ancho a sus fichas. Cada sección tiene su dirección
+  (`?pestana=`), y una ficha pedida por enlace (`?plan=`) completa la suya.
 - **Remisiones:** bandeja con «Por usar» (la de entrada, la que vence antes primero),
   «Utilizadas», «Vencidas» (las que vencieron sin usarse y liberaron el cupo), «Anuladas» y «Todas»,
   con su recuento de la API; solo «Por usar» tiene acciones; «Emitir remisión» es el verde.

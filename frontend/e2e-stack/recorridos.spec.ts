@@ -172,8 +172,8 @@ test.describe('administración en reglas', () => {
 
   test('una regla nueva se escribe por campos y la API la dice en palabras antes de guardar', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto('/panel/admin')
-    await page.getByRole('tab', { name: 'Reglas' }).click()
+    // A 390 px el índice de Administración es un selector: la sección se abre por su dirección.
+    await page.goto('/panel/admin?pestana=reglas')
     await page.getByRole('button', { name: 'Nueva regla' }).click()
     const ventana = page.getByRole('dialog', { name: 'Nueva regla' })
     await ventana.getByLabel('Cuándo se revisa').selectOption('servicio.elegibilidad')

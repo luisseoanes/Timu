@@ -128,7 +128,6 @@ function describir(borradores: unknown[], respuesta = { condicion_texto: 'Días 
 async function abrirFicha(ruta = '/panel/admin?regla=rg1', titulo = REGLA.nombre) {
   const user = userEvent.setup()
   renderizar(<AdminPage />, { ruta })
-  await user.click(await screen.findByRole('tab', { name: 'Reglas' }))
   const ficha = await screen.findByRole('region', { name: 'Regla abierta' })
   await within(ficha).findByRole('heading', { level: 2, name: titulo })
   return { user, ficha }
@@ -138,7 +137,7 @@ async function abrirFicha(ruta = '/panel/admin?regla=rg1', titulo = REGLA.nombre
 async function abrirNueva() {
   const user = userEvent.setup()
   renderizar(<AdminPage />)
-  await user.click(await screen.findByRole('tab', { name: 'Reglas' }))
+  await user.click(await screen.findByRole('link', { name: 'Reglas' }))
   await user.click(await screen.findByRole('button', { name: 'Nueva regla' }))
   const modal = await screen.findByRole('dialog', { name: 'Nueva regla' })
   await user.selectOptions(await within(modal).findByLabelText('Cuándo se revisa'), 'servicio.elegibilidad')
@@ -158,7 +157,7 @@ describe('Administración: reglas', () => {
     )
     const user = userEvent.setup()
     renderizar(<AdminPage />)
-    await user.click(await screen.findByRole('tab', { name: 'Reglas' }))
+    await user.click(await screen.findByRole('link', { name: 'Reglas' }))
     // El grupo, por el nombre del evento que da la API.
     expect(
       await screen.findByText((_, el) => el?.classList.contains('servicios-dia-rotulo') === true && el.textContent === 'Avisos escalonados de mora · 1'),
@@ -452,6 +451,6 @@ describe('Administración: reglas', () => {
     server.use(...base, http.get(`${API}/reglas`, () => HttpResponse.json([REGLA])))
     renderizar(<AdminPage />, { ruta: '/panel/admin?regla=rg1' })
     expect(await screen.findByRole('heading', { level: 2, name: REGLA.nombre })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Reglas' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('link', { name: 'Reglas' })).toHaveAttribute('aria-current', 'page')
   })
 })

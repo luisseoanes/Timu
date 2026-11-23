@@ -25,8 +25,8 @@ const PLAN = {
 
 async function abrirPlan() {
   const user = userEvent.setup()
+  // La URL abre la ficha en su sección: pulsar «Planes» en el índice volvería al listado.
   renderizar(<AdminPage />, { ruta: '/panel/admin?plan=p1' })
-  await user.click(await screen.findByRole('tab', { name: 'Planes' }))
   const titulo = await screen.findByRole('heading', { level: 2, name: 'Colita Feliz' })
   return { user, ficha: titulo.closest('section')! }
 }

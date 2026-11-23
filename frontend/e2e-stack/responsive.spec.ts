@@ -22,7 +22,9 @@ import { sesion, type Perfil } from './sesiones'
  * no está en el DOM hasta que se elige. La clave de un fallo lleva entonces la pestaña
  * (`familias/:id#Cartera@375:desborde`). Cada pantalla rediseñada la activa al cerrarse. Una ruta
  * con `fichas` se mide además con cada ficha que abre desde la URL (`admin?plan@375:desborde`):
- * en el celular es lo que se ve al tocar una fila, y no es una ruta propia (R4-CIE-01).
+ * en el celular es lo que se ve al tocar una fila, y no es una ruta propia (R4-CIE-01). Una ruta
+ * con `secciones` (un índice, como Administración desde DEU-76) se mide con cada sección abierta
+ * desde su dirección (`admin?pestana=ia@375:desborde`).
  *
  * Una medida solo vale si la pantalla cargó sus datos. Con un 429 (el límite de la API es por
  * usuario, y el barrido hace muchas peticiones con el mismo) o un 5xx, la pantalla pinta un
@@ -49,6 +51,8 @@ interface Ruta {
   pestanas?: boolean
   /** Las fichas que la pantalla abre desde la URL, por su nombre, con un registro de datos_demo. */
   fichas?: (page: Page) => Promise<Record<string, string>>
+  /** Las secciones de un índice, por su `?pestana=`: cada una se mide abierta (ver arriba). */
+  secciones?: string[]
 }
 
 const SIN_REGISTRO = '00000000-0000-7000-8000-000000000000'
@@ -209,12 +213,12 @@ const RUTAS: Ruta[] = [
   },
   { app: 'encuestas', perfil: 'atencion', url: '/panel/encuestas' },
   { app: 'mensajes', perfil: 'atencion', url: '/panel/mensajes' },
-  // Con sus nueve pestañas: configura y nada más (Sección 12).
+  // Con sus diez secciones en un índice (DEU-76): configura y nada más (Sección 12).
   {
     app: 'admin',
     perfil: 'admin',
     url: '/panel/admin',
-    pestanas: true,
+    secciones: ['usuarios', 'planes', 'catalogos', 'reglas', 'plantillas', 'guion', 'encuestas', 'ia', 'timu', 'supresion'],
     fichas: async (page) => {
       const planes = await pedir<{ id: string; codigo: string }[]>(page, '/planes')
       const reglas = await pedir<{ id: string; codigo: string }[]>(page, '/reglas')
@@ -393,6 +397,16 @@ for (const perfil of [null, 'atencion', 'admin', 'gerencia', 'comercial', 'opera
             })
           }
           await medir(page, pestana ? `${ruta.app}#${pestana}` : ruta.app, encontrados)
+        }
+
+        for (const seccion of ruta.secciones ?? []) {
+          // Como cada pestaña: se mide a cuatro anchos con axe y suma su tiempo.
+          test.info().setTimeout(test.info().timeout + 8_000)
+          await page.setViewportSize({ width: ANCHOS[ANCHOS.length - 1], height: ALTO })
+          await cargarConDatos(page, fallosApi, async (reintento) => {
+            await (reintento ? page.reload() : page.goto(`${url}?pestana=${seccion}`))
+          })
+          await medir(page, `${ruta.app}?pestana=${seccion}`, encontrados)
         }
 
         const fichas = ruta.fichas ? await ruta.fichas(page) : {}

@@ -110,8 +110,10 @@ WhatsApp siguen en sus pestañas, cada una en su fichero (`CampanasPage.tsx` sol
 En Aliadas la pestaña Clínicas y convenios es un listado con ficha (`/aliadas?clinica=`):
 la ficha dice sus datos, sus convenios en tabla apilable (beneficio y plan, lo que cubre, la tarifa y
 la vigencia) y las remisiones que tiene por usar. «Nuevo convenio» es la verde, para administración;
-activar o desactivar la clínica va en el menú. Una clínica recién registrada abre su ficha. En
-Administración, Planes (`?plan=`) y Reglas (`?regla=`) siguen el mismo patrón. El plan dice lo que paga
+activar o desactivar la clínica va en el menú. Una clínica recién registrada abre su ficha.
+Administración no lleva pestañas sino un índice (`.admin`, `AdminPage.tsx`): cuatro apartados a la
+izquierda desde 1180 px y, por debajo, un selector encima de la sección; cada sección se abre por
+`?pestana=`. En ella, Planes (`?plan=`) y Reglas (`?regla=`) siguen el mismo patrón. El plan dice lo que paga
 cada peludo, el pago por periodo, sus beneficios y dónde se vende, con «Editar plan» en verde. Las
 reglas van agrupadas por el evento que las evalúa, y la abierta dice en palabras cuándo aplica y qué
 hace (lo genera el motor del backend) y se prueba ahí mismo, con un campo por cada dato que mira la

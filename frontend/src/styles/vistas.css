@@ -2078,6 +2078,35 @@
   .plan-cuerpo { padding: var(--e7) var(--e4) var(--e8); }
 }
 
+/* --- Administración (DEU-76): un índice con cuatro apartados y la sección abierta ----------
+   Como los ajustes de una aplicación: todas las secciones a la vista, sin desplazar. Por debajo
+   de 1180 px (el corte de la barra y de las bandejas) el índice es un selector encima de la
+   sección: a 900 px sus 256 px dejaban sin sitio la ficha de un plan y la de una regla. */
+.admin { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: var(--e6); align-items: start; }
+.admin-seccion { min-width: 0; }
+.admin-indice {
+  position: sticky; top: calc(var(--alto-barra) + var(--e4));
+  display: grid; gap: var(--e5);
+}
+.admin-indice-titulo {
+  margin: 0 0 var(--e1); padding-inline: var(--e3);
+  font-size: var(--t-etiqueta); font-weight: 700; letter-spacing: var(--tracking-etiqueta);
+  text-transform: uppercase; color: var(--texto-suave);
+}
+.admin-indice ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.admin-indice a {
+  display: flex; align-items: center; min-height: 40px; padding: var(--e2) var(--e3);
+  border-radius: var(--r-campo); color: var(--texto); font-size: var(--t-cuerpo); text-decoration: none;
+}
+.admin-indice a:hover { color: var(--texto-titulo); background: var(--superficie); }
+.admin-indice a[aria-current="page"] { background: var(--superficie); color: var(--texto-titulo); font-weight: 600; }
+.admin-indice-movil { display: none; }
+@media (max-width: 1179px) {
+  .admin { grid-template-columns: minmax(0, 1fr); gap: var(--e4); }
+  .admin-indice { display: none; }
+  .admin-indice-movil { display: grid; }
+}
+
 /* --- Zonas táctiles de 44 px que faltaban (auditoría de R4-CIE-02) -------------------------
    La regla común (componentes.css) cubre botones y campos; las pestañas, los segmentos de las
    bandejas, el círculo de la cuenta y «Ver cada una» de la línea medían 24–40 px en el celular.

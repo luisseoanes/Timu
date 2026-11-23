@@ -21,6 +21,27 @@ beforeEach(() => {
 })
 
 describe('AdminPage', () => {
+  it('el índice agrupa las diez secciones en cuatro apartados y marca la abierta (DEU-76)', async () => {
+    renderizar(<AdminPage />, { ruta: '/panel/admin' })
+    const indice = await screen.findByRole('navigation', { name: 'Secciones de administración' })
+    const apartado = (titulo: string) => within(indice).getByRole('list', { name: titulo })
+    const nombres = (titulo: string) => within(apartado(titulo)).getAllByRole('link').map((l) => l.textContent)
+    expect(nombres('Equipo')).toEqual(['Usuarios'])
+    expect(nombres('Planes y catálogos')).toEqual(['Planes', 'Catálogos'])
+    expect(nombres('Automatizaciones')).toEqual(['Reglas', 'Plantillas de WhatsApp', 'Guion del asistente', 'Encuestas', 'Inteligencia artificial'])
+    expect(nombres('TIMU y privacidad')).toEqual(['Datos de TIMU', 'Supresión de datos'])
+    expect(within(indice).getByRole('link', { name: 'Usuarios' })).toHaveAttribute('aria-current', 'page')
+    expect(within(indice).getByRole('link', { name: 'Supresión de datos' })).toHaveAttribute('href', '/panel/admin?pestana=supresion')
+  })
+
+  it('en el celular el índice es un selector que abre la sección (DEU-76)', async () => {
+    const user = userEvent.setup()
+    renderizar(<AdminPage />, { ruta: '/panel/admin' })
+    await user.selectOptions(await screen.findByRole('combobox', { name: 'Sección' }), 'Supresión de datos')
+    expect(await screen.findByLabelText('Documento del titular')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Supresión de datos' })).toHaveAttribute('aria-current', 'page')
+  })
+
   it('cambia el perfil de un usuario, y no deja cambiarse ni desactivarse a sí mismo', async () => {
     let cambio: unknown = null
     server.use(
@@ -165,7 +186,7 @@ describe('AdminPage', () => {
     )
     const user = userEvent.setup()
     renderizar(<AdminPage />)
-    await user.click(await screen.findByRole('tab', { name: 'Planes' }))
+    await user.click(await screen.findByRole('link', { name: 'Planes' }))
     await user.click(await screen.findByRole('link', { name: 'Colita Feliz' }))
     const ficha = screen.getByRole('region', { name: 'Plan abierto' })
     const beneficio = (await within(ficha).findByText('6 al año')).closest('tr')!
@@ -187,7 +208,7 @@ describe('AdminPage', () => {
     )
     const user = userEvent.setup()
     renderizar(<AdminPage />)
-    await user.click(await screen.findByRole('tab', { name: 'Inteligencia artificial' }))
+    await user.click(await screen.findByRole('link', { name: 'Inteligencia artificial' }))
     expect(await screen.findByText(/^US\$\s12,50$/)).toBeInTheDocument()
     const activar = await screen.findByRole('button', { name: 'Activar' })
     expect(activar).toBeDisabled()

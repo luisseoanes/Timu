@@ -40,7 +40,7 @@ async function abrir(datos: DatosTimuRead = DATOS) {
   server.use(...base, http.get(`${API}/institucional`, () => HttpResponse.json(datos)))
   const user = userEvent.setup()
   renderizar(<AdminPage />, { ruta: '/panel/admin' })
-  await user.click(await screen.findByRole('tab', { name: 'Datos de TIMU' }))
+  await user.click(await screen.findByRole('link', { name: 'Datos de TIMU' }))
   const ficha = (await screen.findByRole('heading', { name: 'Lo que dice la portada de TIMU' })).closest('section')!
   return { user, ficha }
 }
@@ -103,7 +103,7 @@ describe('Administración: datos de TIMU', () => {
     server.use(...base, http.get(`${API}/institucional`, () => HttpResponse.json({ detail: 'caído' }, { status: 500 })))
     const user = userEvent.setup()
     renderizar(<AdminPage />, { ruta: '/panel/admin' })
-    await user.click(await screen.findByRole('tab', { name: 'Datos de TIMU' }))
+    await user.click(await screen.findByRole('link', { name: 'Datos de TIMU' }))
     expect(await screen.findByText(/No fue posible consultar los datos de TIMU/)).toBeInTheDocument()
   })
 })

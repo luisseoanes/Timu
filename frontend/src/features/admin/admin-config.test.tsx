@@ -24,11 +24,10 @@ const PLAN = {
   ],
 }
 
-/** Abre la ficha de un registro de una pestaña (`?plan=p1`, `?regla=rg1`) y espera a su título. */
-async function abrirFicha(pestana: string, ruta: string, region: string, titulo: string) {
+/** Abre la ficha de un registro desde la URL (`?plan=p1`, `?regla=rg1`), que lleva a su sección, y espera a su título. */
+async function abrirFicha(ruta: string, region: string, titulo: string) {
   const user = userEvent.setup()
   renderizar(<AdminPage />, { ruta })
-  await user.click(await screen.findByRole('tab', { name: pestana }))
   const ficha = await screen.findByRole('region', { name: region })
   await within(ficha).findByRole('heading', { level: 2, name: titulo })
   return { user, ficha }
@@ -37,7 +36,7 @@ async function abrirFicha(pestana: string, ruta: string, region: string, titulo:
 async function abrirPestana(nombre: string) {
   const user = userEvent.setup()
   renderizar(<AdminPage />)
-  await user.click(await screen.findByRole('tab', { name: nombre }))
+  await user.click(await screen.findByRole('link', { name: nombre }))
   return user
 }
 
@@ -64,7 +63,7 @@ describe('Administración: planes', () => {
         HttpResponse.json([{ ...PLAN, exclusiones: 'Excluye preexistencias.', terminos_url: 'https://timu.com.co/terminos' }]),
       ),
     )
-    const { ficha } = await abrirFicha('Planes', '/panel/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
+    const { ficha } = await abrirFicha('/panel/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
     const condiciones = within(ficha).getByRole('region', { name: 'Condiciones que ve quien se afilia' })
     expect(condiciones).toHaveTextContent('Sin escribir: el registro no la muestra.')
     expect(condiciones).toHaveTextContent('Excluye preexistencias.')
@@ -95,7 +94,7 @@ describe('Administración: planes', () => {
       http.put(`${API}/planes/p1/tarifas`, registrar('tarifas')),
       http.put(`${API}/planes/p1/beneficios`, registrar('beneficios')),
     )
-    const { user, ficha } = await abrirFicha('Planes', '/panel/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
+    const { user, ficha } = await abrirFicha('/panel/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
     await user.click(within(ficha).getByRole('button', { name: 'Editar plan' }))
     const modal = await screen.findByRole('dialog')
     expect(within(modal).getByLabelText('4 o más (c/u)')).toHaveValue(24000)
@@ -158,7 +157,7 @@ describe('Administración: planes', () => {
         return HttpResponse.json(PLAN)
       }),
     )
-    const { user, ficha } = await abrirFicha('Planes', '/panel/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
+    const { user, ficha } = await abrirFicha('/panel/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
     await user.click(within(ficha).getByRole('button', { name: 'Editar plan' }))
     const modal = await screen.findByRole('dialog')
     await user.click(within(modal).getByLabelText('Bogotá'))
@@ -223,7 +222,7 @@ describe('Administración: planes', () => {
         return HttpResponse.json({ ...PLAN, activo: false })
       }),
     )
-    const { user, ficha } = await abrirFicha('Planes', '/panel/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
+    const { user, ficha } = await abrirFicha('/panel/admin?plan=p1', 'Plan abierto', 'Colita Feliz')
     await user.click(within(ficha).getByRole('button', { name: 'Más acciones con Colita Feliz' }))
     await user.click(await screen.findByRole('menuitem', { name: 'Desactivar plan' }))
     await waitFor(() => expect(cambio).toEqual({ activo: false }))
@@ -287,10 +286,10 @@ describe('Administración: lo que abre la URL', () => {
     const user = userEvent.setup()
     renderizar(<AdminPage />, { ruta: '/panel/admin?plan=p1' })
     expect(await screen.findByRole('heading', { level: 2, name: 'Colita Feliz' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Planes' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('link', { name: 'Planes' })).toHaveAttribute('aria-current', 'page')
     await user.click(screen.getByRole('link', { name: 'Volver a los planes' }))
     expect(await screen.findByText(/Abre un plan para ver/)).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Planes' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('link', { name: 'Planes' })).toHaveAttribute('aria-current', 'page')
   })
 
   it('al dejar la pestaña, la URL deja de pedir su ficha', async () => {
@@ -298,9 +297,9 @@ describe('Administración: lo que abre la URL', () => {
     const user = userEvent.setup()
     renderizar(<AdminPage />, { ruta: '/panel/admin?plan=p1' })
     await screen.findByRole('heading', { level: 2, name: 'Colita Feliz' })
-    await user.click(screen.getByRole('tab', { name: 'Usuarios' }))
-    expect(screen.getByRole('tab', { name: 'Usuarios' })).toHaveAttribute('aria-selected', 'true')
-    await user.click(screen.getByRole('tab', { name: 'Planes' }))
+    await user.click(screen.getByRole('link', { name: 'Usuarios' }))
+    expect(screen.getByRole('link', { name: 'Usuarios' })).toHaveAttribute('aria-current', 'page')
+    await user.click(screen.getByRole('link', { name: 'Planes' }))
     expect(await screen.findByText(/Abre un plan para ver/)).toBeInTheDocument()
   })
 })
