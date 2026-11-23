@@ -180,7 +180,7 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [PRODUCT.md](PRODUCT.md) | Contexto de producto para diseñar: quién usa cada espacio, desde qué dispositivo y para qué |
 | [docs/manual-de-marca.md](docs/manual-de-marca.md) | Identidad de TIMU (color, tipografía, logo y voz) y su ampliación para la plataforma: roles, contrastes, reglas de uso |
 | [docs/hoja-de-ruta-rediseno.md](docs/hoja-de-ruta-rediseno.md) | Rediseño de la interfaz con la marca: unidades, estado, dónde se retoma, decisiones y siguiente paso |
-| [docs/rediseno/](docs/rediseno/) | Anexos de la hoja: la [deuda decidida](docs/rediseno/deuda.md), las [notas de cierre](docs/rediseno/notas-de-cierre.md) de cada unidad y los bocetos de cada superficie |
-| [docs/frontend/](docs/frontend/) | Cómo se construye el panel: componentes, plantillas de página, convenciones, la e2e contra el stack y cómo se capturan las pantallas para el revisor final |
+| [docs/rediseno/](docs/rediseno/) | Anexos de la hoja: la [deuda decidida](docs/rediseno/deuda.md), las [notas de cierre](docs/rediseno/notas-de-cierre.md) de cada unidad, la [auditoría y crítica de R4-CIE-02](docs/rediseno/auditoria-r4-cie-02.md), el [inventario de los CLAUDE.md](docs/rediseno/inventario-claude-md.md) y los bocetos de cada superficie |
+| [docs/frontend/](docs/frontend/) | Cómo se construye el panel: componentes, plantillas de página, convenciones, las trampas conocidas, la e2e contra el stack y cómo se capturan las pantallas para el revisor final |
 | [infra/respaldos/README.md](infra/respaldos/README.md) | Respaldo y restauración de la base |
 | `CLAUDE.md`, `backend/CLAUDE.md`, `frontend/CLAUDE.md` | Reglas para Claude Code, una línea cada una; también sirven de guía técnica, con el detalle en `docs/` |

@@ -76,3 +76,12 @@ son relativas a `frontend/`. Una trampa nueva se añade aquí.
   `ENOENT … .trace`. `test:e2e` y `test:e2e:stack`, uno detrás de otro.
 - Si el hook de diseño no devuelve nada (ni siquiera «No deterministic…»), pasa el detector a mano:
   `.claude/skills/impeccable/scripts/impeccable detect --json <fichero>`.
+- Un componente que se monta antes de recibir sus datos (una ventana cerrada, que Radix pinta al
+  abrirse) no ve en su `useState` inicial lo que llega después: sincroniza el estado cuando cambia la
+  prop, como `RegistrarPagoModal` con la cuota elegida. Antes, un `defaultValue` lo tapaba.
+- Una pantalla que cambia de forma con la sesión (Cartera: sin usuario pinta la bandeja sola, con él
+  la mete en sus pestañas) se vuelve a montar al llegar `/auth/me`: un elemento capturado antes queda
+  suelto y `user.selectOptions` no dispara nada. Espera a algo que solo existe con sesión (la pestaña).
+- En `e2e/`, el comodín que responde `[]` revienta una pantalla que espera un objeto (`items`, un
+  estado de cuenta): simula esas rutas con su forma. Un patrón con `?` no captura una URL con
+  parámetros (`/familias?orden=…`): usa una función, `page.route((url) => url.pathname === …)`.

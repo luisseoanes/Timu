@@ -37,7 +37,7 @@ frontend/src/
   api/client.ts      El único cliente de la API: sesión por cookie, renovación y errores
   components/        Piezas compartidas sin lógica de dominio (Modal, Consulta, CargandoPantalla,
                      Pestanas, Paginacion, Distintivo e Insignia, Icono, MarcaTimu, MenuCuenta,
-                     FotoEditable, BurbujaMensaje y AccesoLayout)
+                     FotoEditable, BurbujaMensaje, AccesoLayout y SaltarAlContenido)
   features/<dominio>/  Pantallas y consultas por dominio (auth, familias, dashboard, …)
   layouts/           AppLayout: barra marina, barra inferior en el celular y cabecera
   lib/               errores, permisos, formato, estados, enlaces y descargas

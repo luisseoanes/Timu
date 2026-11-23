@@ -57,7 +57,8 @@ los registros que agregan dominios (`app/models.py`, `app/transiciones.py`), en 
   `servicios` ← `preventivos` (`conectar_al_cambiar_estado`, ver `docs/flujo-de-la-visita.md`);
   `cartera` ← `aliadas` (`conectar_al_cancelar` corta la vigencia de las remisiones por usar);
   `catalogos` ← `clinica` (`conectar_campos_de_la_consulta`, `lo_registra_la_consulta`); `reglas` ←
-  `planes` (`conectar_planes` da los planes al editor de reglas y a su validación).
+  `planes` (`conectar_planes` da los planes al editor de reglas y a su validación); `familias` ←
+  `cartera` (`conectar_orden`, el orden `urgencia` del listado por días de mora).
 - **La traza de mensajes tapa los tokens de un solo uso** (`MensajeRead`); un script que necesite uno
   lo lee de la base con `sesion_worker`.
 - **Cada evento de reglas declara lo que da y lo que admite**: su contexto es una dataclass en

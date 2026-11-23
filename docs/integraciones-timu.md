@@ -53,6 +53,8 @@ La plataforma se publicará en timu.com.co, reemplazando la web actual; WhatsApp
 
 ### 3.1 WhatsApp
 
+> **Corrección del 22 de noviembre de 2026** (pendiente de pasar al Word cuando TIMU elija la ruta): la verificación de la empresa en Meta no es necesaria para empezar; sin ella, Meta deja escribir hasta a 250 personas distintas al día. Y la opción A no se conecta directamente desde la cuenta de TIMU: Meta exige un socio autorizado (*Solution Partner* o *Tech Provider*). A TIMU se le enviaron las rutas que quedan (la A con 360dialog, recomendada, la B y la C); el detalle técnico está en [integraciones](integraciones.md) y en [lo que falta en el código](pendiente-en-el-codigo.md).
+
 **Para qué sirve.** WhatsApp es el canal principal de TIMU con las familias (requisito 6.19), y la plataforma lo usa en casi todos sus procesos: recordatorios, avisos de la ruta, encuestas, el bot comercial y las campañas (requisitos 6.11, 6.17, 6.18, 6.20 y 6.21). La conexión ya está programada; falta conectar la cuenta de TIMU y decidir con qué número.
 
 #### Lo que la plataforma ya hace con WhatsApp

@@ -135,6 +135,9 @@ Reglas que atraviesan todo el backend:
   importarse qué campos llena la consulta firmada (`catalogos.conectar_campos_de_la_consulta`), y el
   catálogo de tipos dice en cada paso si lo registra la consulta (`lo_registra_la_consulta`), para
   que el panel no copie la tabla; sin conectar, el catálogo de tipos falla.
+- **`familias` no importa `cartera`** (que importa familias): `cartera/service.py` le conecta al
+  importarse el orden `urgencia` del listado (`familias.conectar_orden`: los días de mora de la cuota
+  abierta más atrasada, DEU-75); sin conectar, pedir ese orden falla como cualquier orden desconocido.
 - **Las cadenas que la API devuelve para mostrarse tal cual llevan tildes** (nombres y fórmulas
   de `dashboard/definiciones`); la regla de evitarlas es para docstrings y comentarios. Los
   mensajes de error aún no las llevan: es deuda, no la norma.
