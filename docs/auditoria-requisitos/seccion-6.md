@@ -250,25 +250,43 @@ los exige por sí mismos, pero describen el proceso que la plataforma sustituye.
 
 ## 6.12. Afiliación y creación automática de usuarios
 
+**Auditado el 2026-11-24.**
+
+**Lo que hay:**
+- El registro en línea (`backend/app/modules/afiliaciones/registro.py`) va así: la familia elige la
+  ciudad, sus peludos y el plan de cada uno, deja su contacto y paga; con el pago aprobado recibe el
+  enlace del formulario, y al completarlo se crean o completan la ficha, sus peludos y contactos,
+  el contrato con su evidencia de aceptación, la cuota pagada, el calendario preventivo y el acceso
+  al portal.
+- Lo prueba de punta a punta, con la pasarela simulada,
+  `test_el_formulario_crea_la_familia_la_afiliacion_y_abre_la_sesion`
+  (`backend/tests/test_registro.py:228`).
+- Desde el panel, Comercial afilia a una familia que ya existe (`AfiliarModal`), con enlace de
+  pago o pago manual (`POST /afiliaciones/{id}/pago-manual`).
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.12-01 | Conectar formulario → pago → afiliación → contrato → creación de perfil | Exige | Sin auditar | Sin pasarela de pruebas (Wompi) no hay prueba de punta a punta; el pago manual no tiene pantalla ([lo que falta](../pendiente-en-el-codigo.md)). |
-| 6.12-02 | El formulario alimenta automáticamente el perfil de familia | Exige | Sin auditar | |
-| 6.12-03 | … el perfil de mascota | Exige | Sin auditar | |
-| 6.12-04 | … el plan | Exige | Sin auditar | |
-| 6.12-05 | … los datos de contacto | Exige | Sin auditar | |
-| 6.12-06 | … la información preventiva | Exige | Sin auditar | |
-| 6.12-07 | … la información necesaria para programación | Exige | Sin auditar | |
+| 6.12-01 | Conectar formulario → pago → afiliación → contrato → creación de perfil | Exige | Parcial | La cadena está hecha y probada contra la pasarela simulada (arriba). Falta la prueba contra el sandbox de Wompi de TIMU (Externo: [pendientes externos](../pendientes-externos.md#requisito-61-con-el-612)). Y **el equipo no ve los registros en línea**: la API los lista (`GET /afiliaciones`; `test_comercial_lista_los_registros_que_aun_no_tienen_familia`, `backend/tests/test_registro.py:310`), pero ninguna pantalla los usa. Un registro que paga fuera de la pasarela o que no completa el formulario no lo puede terminar nadie desde el panel; solo llega una tarea comercial a las 48 horas (`:546`). Es la fila 6.12 de [lo que falta](../pendiente-en-el-codigo.md), que habla del pago manual: el panel sí tiene pago manual, pero solo para afiliar una familia que ya existe (`frontend/src/features/familias/AfiliarModal.tsx:33`). |
+| 6.12-02 | El formulario alimenta automáticamente el perfil de familia | Exige | Cumple | Titular, documento, barrio, dirección y complemento (misma prueba); un documento que ya existe completa su ficha sin sobrescribirla (`test_un_documento_existente_completa_su_ficha`, `backend/tests/test_registro.py:349`). |
+| 6.12-03 | … el perfil de mascota | Exige | Cumple | Nombre (que se corrige en el formulario), especie, sexo, fecha de nacimiento y peso de cada peludo (misma prueba). |
+| 6.12-04 | … el plan | Exige | Cumple | El plan de cada peludo, elegido antes de pagar, entra al contrato con el valor que calcula el backend (misma prueba; `test_el_valor_lo_calcula_el_backend_y_no_hay_familia_hasta_el_formulario`, `:151`). |
+| 6.12-05 | … los datos de contacto | Exige | Cumple | Celular, correo y contactos adicionales (misma prueba), con lo dado antes de pagar ya puesto en el formulario (`frontend/src/features/publico/CompletarRegistroPage.tsx:191`). |
+| 6.12-06 | … la información preventiva | Exige | Falta | El formulario no pregunta nada preventivo (`frontend/src/features/publico/CompletarRegistroPage.tsx`: titular, dirección, contactos, clave y, por peludo, nombre, raza, sexo, nacimiento y peso). El calendario que se crea sale solo del esquema de la especie y de la fecha de nacimiento (`calendario_inicial`, `backend/app/modules/preventivos/service.py:66`), sin saber qué recibió ya la mascota: a una perra vacunada el mes pasado se le programa la vacuna igual. La prueba solo afirma que hay preventivos (`preventivos > 0`). Lo mismo en 6.13. |
+| 6.12-07 | … la información necesaria para programación | Exige | Cumple | Barrio, dirección y complemento (misma prueba), y la dirección se geocodifica para la ruta por el camino del formulario (`backend/app/modules/familias/service.py:466`). Ese camino no tiene una prueba propia de la geocodificación; la del panel, sí (6.1-05). |
+
+**Lo que hay que decidir:**
+- 6.12-01: dónde ve y termina el equipo un registro en línea.
+- 6.12-06: qué datos preventivos pide la afiliación y cómo ajustan el calendario (junto con 6.13).
 
 ## 6.13. Alimentación automática del calendario preventivo
 
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.13-01 | Lo dado en la afiliación alimenta el calendario: última desparasitación | Exige | Sin auditar | |
-| 6.13-02 | … producto utilizado | Exige | Sin auditar | |
-| 6.13-03 | … fecha | Exige | Sin auditar | |
-| 6.13-04 | … peso | Exige | Sin auditar | |
-| 6.13-05 | … vacunación | Exige | Sin auditar | |
+| 6.13-01 | Lo dado en la afiliación alimenta el calendario: última desparasitación | Exige | Sin auditar | Visto al auditar 6.12-06: la afiliación no lo pregunta. |
+| 6.13-02 | … producto utilizado | Exige | Sin auditar | Visto al auditar 6.12-06: la afiliación no lo pregunta. |
+| 6.13-03 | … fecha | Exige | Sin auditar | Visto al auditar 6.12-06: la afiliación no lo pregunta. |
+| 6.13-04 | … peso | Exige | Sin auditar | Visto al auditar 6.12-06: la afiliación pide el peso (6.12-03), pero el calendario no lo usa. |
+| 6.13-05 | … vacunación | Exige | Sin auditar | Visto al auditar 6.12-06: la afiliación no lo pregunta. |
 | 6.13-06 | Calcular o identificar la fecha correspondiente | Exige | Sin auditar | |
 | 6.13-07 | Generar las tareas necesarias | Exige | Sin auditar | |
 

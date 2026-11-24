@@ -57,7 +57,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Bloque | Requisitos | Fichero | Estado |
 | --- | --- | --- | --- |
-| 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [seccion-6.md](seccion-6.md) | 6.10, 6.23 y 6.1 auditados; 6.12, sin auditar |
+| 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [seccion-6.md](seccion-6.md) | Auditado (2026-11-24) |
 | 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [seccion-6.md](seccion-6.md) | Sin auditar |
 | 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [seccion-6.md](seccion-6.md) | Sin auditar |
 | 4. Lo clínico | 6.14, 6.15, 6.17 | [seccion-6.md](seccion-6.md) | Sin auditar |
@@ -71,13 +71,21 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 28 | 0 | 8 | 3 | 2 | 0 | 0 | 5 | 221 |
+| 6 | 267 | 33 | 0 | 9 | 4 | 2 | 0 | 0 | 5 | 214 |
 
 ## Preguntas para TIMU
 
 Lo que el documento deja abierto y solo TIMU puede aclarar. Se juntan aquí para mandarlas por
 tandas, sin esperar al final de la auditoría.
 
+### Primera tanda (bloque 1, 2026-11-24)
+
 - **6.23-05.** El documento pide los estados «Cancelado» y «Retirado». ¿En qué se diferencian para
   TIMU? Por ejemplo: ¿«Cancelado» lo decide TIMU (por mora, por política) y «Retirado» es la familia
   que se va por decisión propia? ¿O «Retirado» es el integrante que sale de un plan grupal (6.3)?
+- **6.12-06 y 6.13.** ¿Qué preguntan hoy en su formulario de afiliación sobre vacunas y
+  desparasitaciones (producto, fecha, peso)? ¿Nos pueden compartir ese formulario, y los demás que
+  usen hoy con las familias? Con eso se decide qué pide la afiliación y qué formularios tiene que
+  recibir la plataforma (6.1-27).
+- **6.1-03.** ¿Quiénes de una familia necesitan entrar al portal? Hoy entra solo el titular, y hasta
+  tres contactos más quedan registrados pero sin acceso.
