@@ -14,9 +14,9 @@ no se tratan igual:
 No se usan las imágenes del tema de WordPress de la web actual (`bg-featured-title.jpg`,
 `fancy-image-cat.jpg`, `service-single-03.jpg`).
 
-Pendiente, en `docs/pendientes-externos.md`: que las personas de las fotos del equipo acepten
-aparecer en la web pública (Ley 1581: la imagen es un dato personal) y que TIMU confirme que la
-licencia de las fotos de las piezas permite usarlas en la web.
+Permisos (resuelto el 2026-11-24, en `docs/pendientes-externos.md`): las personas de las fotos
+del equipo dieron su permiso para aparecer en la web pública (Ley 1581: la imagen es un dato
+personal), y TIMU tiene la licencia de las fotos de las piezas.
 
 | Fichero | Origen | Qué muestra |
 | --- | --- | --- |

@@ -66,8 +66,9 @@ hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
   el 2026-11-24 (ver sus filas).
 - **La portada pública de `timu.com.co` está hecha: `R3-PUB-04`** (2026-11-18). Antes de publicarla
   en el dominio quedan cosas de TIMU, en [pendientes externos](pendientes-externos.md): los valores
-  provisionales sacados de la web vieja, el permiso de las personas de las fotos del equipo, la
-  licencia de las fotos de las piezas y volver a alojar la política de datos.
+  provisionales sacados de la web vieja y volver a alojar la política de datos. El permiso de las
+  personas de las fotos del equipo y la licencia de las fotos de las piezas están resueltos
+  (2026-11-24).
 - **Un solo push al final de la sesión, cuando lo indica el usuario** (decidido el 2026-11-22; antes,
   al cerrar cada unidad o lote), después de la batería local completa. Los commits se siguen haciendo
   uno a uno.

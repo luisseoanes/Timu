@@ -250,9 +250,10 @@ cerró ([deuda.md](deuda.md)). Una nota abierta nueva se añade aquí, en el apa
 
 - **No se publica en el dominio sin lo de TIMU** ([pendientes externos](../pendientes-externos.md)):
   confirmar los valores provisionales sacados de la web vieja (misión cortada, horario del sábado
-  contradictorio, aliadas vigentes, adicionales y topes), el permiso de las personas de las fotos del
-  equipo, la licencia de las fotos de las piezas impresas, el WhatsApp de contacto y volver a alojar
-  la política de datos, cuyo enlace actual muere con WordPress.
+  contradictorio, aliadas vigentes, adicionales y topes), ~~el permiso de las personas de las fotos
+  del equipo, la licencia de las fotos de las piezas impresas~~ (resueltos el 2026-11-24), el
+  WhatsApp de contacto y volver a alojar la política de datos, cuyo enlace actual muere con
+  WordPress.
 - **Lo que el revisor no vio**: ningún estado en movimiento, y el envío real del contacto (sus dos
   capturas se simularon para no crear un interesado en la base local; lo cubren las pruebas).
 - **Sin usar del material**: el logo con animales en color y los patrones de siluetas del `.ai` y

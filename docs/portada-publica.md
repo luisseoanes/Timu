@@ -62,9 +62,10 @@ En local, `datos_demo` siembra lo que dice hoy la web de TIMU (`backend/scripts/
 ver [datos de demostración](datos-de-demostracion.md)). Desplegado, todo empieza vacío y lo escribe
 Administración. **Antes de publicarla en el dominio** hace falta lo de TIMU, en
 [pendientes externos](pendientes-externos.md): confirmar esos valores (la misión está cortada, el
-horario de los sábados se contradice), las aliadas vigentes y sus logos, el permiso de las personas
-de las fotos del equipo, la licencia de las fotos de las piezas impresas, el WhatsApp real y volver
-a alojar la política de datos, cuyo enlace actual muere con WordPress. Las fotos y su procedencia:
+horario de los sábados se contradice), las aliadas vigentes y sus logos, el WhatsApp real y volver
+a alojar la política de datos, cuyo enlace actual muere con WordPress. El permiso de las personas
+de las fotos del equipo y la licencia de las fotos de las piezas impresas están resueltos
+(2026-11-24). Las fotos y su procedencia:
 `frontend/src/assets/portada/README.md`.
 
 ## Dónde se prueba
