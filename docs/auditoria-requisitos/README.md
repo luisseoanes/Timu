@@ -57,7 +57,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Bloque | Requisitos | Fichero | Estado |
 | --- | --- | --- | --- |
-| 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [seccion-6.md](seccion-6.md) | 6.10 y 6.23 auditados; 6.1 y 6.12, sin auditar |
+| 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [seccion-6.md](seccion-6.md) | 6.10, 6.23 y 6.1 auditados; 6.12, sin auditar |
 | 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [seccion-6.md](seccion-6.md) | Sin auditar |
 | 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [seccion-6.md](seccion-6.md) | Sin auditar |
 | 4. Lo clínico | 6.14, 6.15, 6.17 | [seccion-6.md](seccion-6.md) | Sin auditar |
@@ -71,7 +71,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 6 | 0 | 4 | 3 | 2 | 0 | 0 | 4 | 248 |
+| 6 | 267 | 28 | 0 | 8 | 3 | 2 | 0 | 0 | 5 | 221 |
 
 ## Preguntas para TIMU
 

@@ -6,35 +6,54 @@ de la evidencia son relativas a la raíz del repositorio.
 
 ## 6.1. Gestión de familias, usuarios y mascotas
 
+**Auditado el 2026-11-24.**
+
+**Lo que hay:**
+- La ficha de la familia del panel (`frontend/src/features/familias/FamiliaDetallePage.tsx:46`)
+  tiene una cabecera con el plan de cada peludo, el estado y la ciudad; la línea de la familia; un
+  resumen de mascotas y de cartera; y las pestañas Datos, Mascotas, Cartera, Servicios, Documentos,
+  Comunicaciones e Historial, cada una según el perfil (Sección 12).
+- La mascota tiene su ficha en una ventana (`frontend/src/features/familias/FichaMascota.tsx:29`)
+  con sus datos, su foto, su plan, sus servicios del mes y los enlaces a su historia clínica (solo el
+  médico) y a su carnet.
+- Las pruebas del panel están en `frontend/src/features/familias/FamiliaDetallePage.test.tsx`
+  (citadas por la línea de su `it`); las del backend, donde se indica.
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.1-01 | Crear y administrar un perfil integral de cada familia | Exige | Sin auditar | |
-| 6.1-02 | Familia: datos de contacto | Exige | Sin auditar | |
-| 6.1-03 | Familia: usuarios asociados | Exige | Sin auditar | |
-| 6.1-04 | Familia: mascotas asociadas | Exige | Sin auditar | |
-| 6.1-05 | Familia: dirección | Exige | Sin auditar | |
-| 6.1-06 | Familia: zona/sector | Exige | Sin auditar | |
-| 6.1-07 | Familia: plan contratado | Exige | Sin auditar | |
-| 6.1-08 | Familia: estado de afiliación | Exige | Sin auditar | |
-| 6.1-09 | Familia: estado de pagos | Exige | Sin auditar | |
-| 6.1-10 | Familia: servicios utilizados mensualmente | Exige | Sin auditar | |
-| 6.1-11 | Familia: servicios pendientes mensualmente | Exige | Sin auditar | |
-| 6.1-12 | Familia: historial de comunicaciones | Exige | Sin auditar | |
-| 6.1-13 | Familia: historial de atención | Exige | Sin auditar | |
-| 6.1-14 | Familia: documentos asociados | Exige | Sin auditar | |
-| 6.1-15 | Cada mascota con un perfil individual asociado a su familia | Exige | Sin auditar | |
-| 6.1-16 | Mascota: nombre | Exige | Sin auditar | |
-| 6.1-17 | Mascota: especie | Exige | Sin auditar | |
-| 6.1-18 | Mascota: sexo | Exige | Sin auditar | |
-| 6.1-19 | Mascota: edad/fecha de nacimiento | Exige | Sin auditar | |
-| 6.1-20 | Mascota: raza | Exige | Sin auditar | |
-| 6.1-21 | Mascota: peso | Exige | Sin auditar | |
-| 6.1-22 | Mascota: información preventiva | Exige | Sin auditar | |
-| 6.1-23 | Mascota: plan asociado | Exige | Sin auditar | |
-| 6.1-24 | Mascota: historial de servicios | Exige | Sin auditar | |
-| 6.1-25 | Mascota: historia clínica | Exige | Sin auditar | |
-| 6.1-26 | Mascota: documentos y archivos | Exige | Sin auditar | |
-| 6.1-27 | **Requerimiento crítico**: lo obtenido por formularios se registra automáticamente en el perfil correspondiente, sin volver a digitar lo que el usuario ya dio | Exige | Sin auditar | |
+| 6.1-01 | Crear y administrar un perfil integral de cada familia | Exige | Cumple | La ficha de arriba; se crea, edita, cambia de estado y da de baja (`test_crear_y_listar_familia`, `backend/tests/test_familias.py:54`; `test_baja_logica_oculta_pero_conserva`, `:166`; panel `:94`, `:336`, `:356` y `:584`). |
+| 6.1-02 | Familia: datos de contacto | Exige | Cumple | Titular, documento, celular en E.164 y correo (`backend/app/modules/familias/models.py:47`), y hasta tres contactos adicionales (`ContactoFamilia`, `:135`; `test_contactos_adicionales_como_mucho_tres_y_la_baja_libera_su_lugar`, `backend/tests/test_familias.py:965`; panel `:681`). |
+| 6.1-03 | Familia: usuarios asociados | Exige | Por decidir | Lo que hay: el titular, que es el único con cuenta en el portal (`usuario_portal_id`, `backend/app/modules/familias/models.py:75`), y hasta tres contactos adicionales sin acceso. El documento llama «usuarios» a los integrantes de la familia (6.2, 6.3), y aquí solo uno puede entrar. Hay que decidir si los contactos cuentan como usuarios asociados o si cada integrante necesita su propio acceso. |
+| 6.1-04 | Familia: mascotas asociadas | Exige | Cumple | `Familia.mascotas`; alta y baja (`test_ciclo_de_mascota`, `backend/tests/test_familias.py:223`; panel `:627`). |
+| 6.1-05 | Familia: dirección | Exige | Cumple | Dirección, complemento y coordenadas, geocodificadas al guardar (`backend/app/modules/familias/models.py:58`; `test_guardar_direccion_programa_geocodificacion` y siguientes, `backend/tests/test_familias.py:405` a `:438`; panel `:373`). |
+| 6.1-06 | Familia: zona/sector | Exige | Cumple | El barrio, obligatorio (`backend/app/modules/familias/models.py:57`, `CHECK barrio_no_vacio`; panel `:373`). Es **texto libre**: la misma zona puede quedar escrita de varias formas. Se revisa en 6.7 (rutas por zona) y en 6.16 (segmentar por zona). |
+| 6.1-07 | Familia: plan contratado | Exige | Cumple | El plan de cada peludo en la cabecera y en el estado de cuenta (`test_estado_de_cuenta`, `backend/tests/test_cartera.py:221`; panel `:129` y `:1104`). |
+| 6.1-08 | Familia: estado de afiliación | Exige | Cumple | `Familia.estado` en la cabecera, con su historial (`test_historial_de_estados`, `backend/tests/test_familias.py:186`; panel `:584`). Los estados en sí, en 6.23. |
+| 6.1-09 | Familia: estado de pagos | Exige | Cumple | El resumen de cartera (cuota, próximo cobro y vencido) y la pestaña Cartera (`test_estado_de_cuenta`; panel `:122` y `:196`). |
+| 6.1-10 | Familia: servicios utilizados mensualmente | Exige | Cumple | La pestaña Servicios abre en el mes en curso, con lo utilizado aparte y el cupo consumido de cada peludo (`GET /servicios/resumen`, `backend/app/modules/servicios/router.py:356`; `test_el_resumen_separa_utilizados_y_pendientes_en_el_rango`, `backend/tests/test_servicios.py:811`, y `:847`; panel `:457` y `:496`). |
+| 6.1-11 | Familia: servicios pendientes mensualmente | Exige | Cumple | Igual que 10, con lo pendiente aparte y lo abierto de una atención (mismas pruebas). |
+| 6.1-12 | Familia: historial de comunicaciones | Exige | Cumple | La pestaña Comunicaciones, enviado y recibido (`test_traza_por_familia`, `backend/tests/test_comunicaciones.py:216`; panel `:758` y `:790`). |
+| 6.1-13 | Familia: historial de atención | Exige | Parcial | Lo atendido en casa, en la clínica y en las clínicas aliadas (las remisiones crean su servicio) sale en Servicios → Utilizados, en cualquier rango (6.1-10). **Las orientaciones virtuales (6.17) no salen en ninguna parte de la ficha**, aunque se guardan con la familia (`backend/app/modules/clinica/models.py:146`). La pestaña «Historial» no es esto: dice qué datos de la ficha cambiaron (`FamiliaDetallePage.tsx:262`). |
+| 6.1-14 | Familia: documentos asociados | Exige | Parcial | La pestaña Documentos, con lo subido y lo generado (contrato, comprobantes), y con lo que la familia ve en el portal (panel `:986`, `:999` y `:1037`). Pero **ninguna prueba del backend sube ni lista un documento**: el panel se prueba con la API simulada, y el backend solo aparece en las matrices de permisos y rendimiento (`backend/tests/test_permisos.py:249`, `backend/tests/test_persistencia.py:1252`). |
+| 6.1-15 | Cada mascota con un perfil individual asociado a su familia | Exige | Cumple | La ficha de la mascota (arriba); la base no deja que cambie de familia (`test_mascota_no_cambia_de_familia`, `backend/tests/test_familias.py:256`; panel `:843`). |
+| 6.1-16 | Mascota: nombre | Exige | Cumple | `test_ciclo_de_mascota`; panel `:874`. |
+| 6.1-17 | Mascota: especie | Exige | Cumple | Del catálogo, con llave foránea (`test_especie_fuera_del_catalogo`, `backend/tests/test_familias.py:144`; panel `:112`). |
+| 6.1-18 | Mascota: sexo | Exige | Cumple | Enum de la base (`backend/app/modules/familias/models.py:115`); panel `:874`. El listado de Mascotas enseña el valor crudo («hembra») en vez de «Hembra», un detalle de presentación. |
+| 6.1-19 | Mascota: edad/fecha de nacimiento | Exige | Cumple | Fecha de nacimiento, que no puede ser futura (`test_fecha_de_nacimiento_futura`, `backend/tests/test_familias.py:267`; `:277`). No hay forma de dar solo una edad aproximada cuando la familia no sabe la fecha. |
+| 6.1-20 | Mascota: raza | Exige | Cumple | `backend/tests/test_familias.py:295`; panel `:874`. |
+| 6.1-21 | Mascota: peso | Exige | Cumple | `test_ciclo_de_mascota` (edita el peso); `:295`. |
+| 6.1-22 | Mascota: información preventiva | Exige | Cumple | Desde su ficha se abre su carnet, con los perfiles que lo ven (panel `:843` y `:866`). El carnet en sí, en 6.15. |
+| 6.1-23 | Mascota: plan asociado | Exige | Cumple | Su plan y lo que paga, y el cambio de plan desde la ficha (panel `:843` y `:1104`). |
+| 6.1-24 | Mascota: historial de servicios | Exige | Cumple | Sus servicios del mes en la ficha y la pestaña Servicios filtrada por ella, en cualquier rango (panel `:843` y `:520`). |
+| 6.1-25 | Mascota: historia clínica | Exige | Cumple | Enlace a su historia, solo para el médico (panel `:843` y `:866`). La historia en sí, en 6.14. |
+| 6.1-26 | Mascota: documentos y archivos | Exige | Parcial | Un documento se ata a una mascota de la familia (clave compuesta, `backend/app/modules/documentos/models.py:27`) y la pestaña Documentos filtra por ella (panel `:986`). No están en la ficha de la mascota, y les falta la prueba del backend, como a 14. |
+| 6.1-27 | **Requerimiento crítico**: lo obtenido por formularios se registra automáticamente en el perfil correspondiente, sin volver a digitar lo que el usuario ya dio | Exige | Parcial | **Sí**: el registro en línea crea o completa la ficha, sus peludos, sus contactos y su afiliación con lo que la familia escribe (`test_el_formulario_crea_la_familia_la_afiliacion_y_abre_la_sesion`, `backend/tests/test_registro.py:228`; `test_un_documento_existente_completa_su_ficha`, `:349`), y el formulario que sigue al pago trae lo que dio antes de pagar (`frontend/src/features/publico/CompletarRegistroPage.tsx:191`). **No**: (a) el bot comercial pregunta la ciudad y los peludos y manda el enlace `/afiliacion` sin ellos (`backend/app/modules/comercial/conversacion.py:342`), así que la familia los vuelve a escribir, aunque la portada ya abre la afiliación con lo elegido; (b) Comercial no tiene cómo convertir un interesado en familia, y el equipo vuelve a digitar su nombre, celular, correo y ciudad en «Nueva familia»; (c) `POST /formularios/familia` (`backend/app/modules/afiliaciones/router.py:254`), que crea o completa la ficha desde un formulario público, no lo usa ninguna pantalla ni ningún formulario externo: queda huérfano, con sus pruebas (`backend/tests/test_familias.py:460`). Los otros formularios del documento (la autorización de 6.9 y la encuesta de 6.20) se auditan allí. |
+
+**Lo que hay que decidir:**
+- 6.1-03: qué es un «usuario asociado» (¿basta con los contactos o cada integrante necesita
+  acceso?).
+- 6.1-27: cómo pasa a la ficha lo que la familia le dijo al bot o al asesor, y qué se hace con
+  `POST /formularios/familia`: o lo alimenta algún formulario de TIMU o se retira.
 
 ## 6.2. Gestión de cartera
 
