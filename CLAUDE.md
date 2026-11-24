@@ -54,7 +54,7 @@ cd backend && pip install -r requirements-dev.txt
 uvicorn app.main:app --reload
 
 docker compose up -d db-test        # PostgreSQL de pruebas (puerto 5433, perfil `test`: el up general no la levanta). Sin esto, pytest aborta.
-pytest                              # suite completa, con cobertura y umbral del 91%
+pytest                              # suite completa, con cobertura y umbral del 92%
 pytest -m unit                      # sólo lo que no toca la base de datos
 pytest tests/test_alcance.py::test_una_familia_solo_se_ve_a_si_misma   # una sola prueba
 ruff format . && ruff check . && mypy app
@@ -200,13 +200,13 @@ Reglas que mantienen esto vivo:
 - **Antes de empujar se corre en local lo que el cambio toca**: no hay pull requests, y el CI llega
   cuando el commit ya está en `main`.
 
-**Umbrales de cobertura**: backend **91 %** combinando líneas y ramas (`--cov-fail-under` en
-`pytest.ini`; las ramas, activadas en `pyproject.toml`), y panel **90 %** de líneas, sentencias y
-funciones y **80 %** de ramas (`vitest.config.ts`). Están justo por debajo de lo medido para que no se
-degraden solos, no como objetivo: cuando la cobertura sube, se suben en el mismo commit, y bajarlos
-requiere una razón en el cuerpo del commit. La del backend varía unos 0,5 puntos entre ejecuciones del
-mismo código, así que una subida menor no obliga a subir el umbral (a ras de lo medido, el CI fallaría
-por azar). Se mide con `concurrency = greenlet` porque los servicios corren dentro de `db.run_sync`: sin
+**Umbrales de cobertura**: backend **92 %** combinando líneas y ramas (`--cov-fail-under` en
+`pytest.ini`; las ramas, activadas en `pyproject.toml`), y panel **93 %** de líneas, **92 %** de
+sentencias, **91 %** de funciones y **83 %** de ramas (`vitest.config.ts`). Están justo por debajo
+de lo medido para que no se degraden solos, no como objetivo: cuando la cobertura sube, se suben en
+el mismo commit, y bajarlos requiere una razón en el cuerpo del commit. La del backend varía unos 0,5
+puntos entre ejecuciones del mismo código, así que una subida menor no obliga a subir el umbral (a
+ras de lo medido, el CI fallaría por azar). Se mide con `concurrency = greenlet` porque los servicios corren dentro de `db.run_sync`: sin
 eso, coverage deja de contar las líneas posteriores a la primera consulta y el informe miente.
 
 `.github/workflows/ci.yml` ejecuta formato, análisis estático (con las reglas de seguridad `S` de Ruff),
