@@ -28,24 +28,27 @@ actualiza aquí.
 | R1 — Fundaciones | 7 | 7 | 0 | 0 |
 | R2 — Panel del equipo | 10 | 10 | 0 | 0 |
 | R3 — Familias, aliada y páginas públicas | 7 | 7 | 0 | 0 |
-| R4 — Cierre | 4 | 3 | 0 | 1 |
-| **Total** | **32** | **31** | **0** | **1** |
+| R4 — Cierre | 4 | 4 | 0 | 0 |
+| **Total** | **32** | **32** | **0** | **0** |
 
 Al cierre de `R2-PAN-10` (2026-11-15) el panel del equipo está rediseñado entero, y con `R3-PUB-01`
 (el mismo día) también el acceso. Con `R3-ALI-01` (2026-11-16), el espacio de la clínica aliada, y
 con `R3-PUB-03` (2026-11-17), la encuesta y la verificación del carnet. Con `R3-PUB-02` (2026-11-17), el
 registro en línea: **R3 está completa**. Con `R3-PUB-04` (2026-11-18), la portada pública de
-`timu.com.co`, que la amplió a petición del usuario.
+`timu.com.co`, que la amplió a petición del usuario. Con `R4-CIE-04` (2026-11-24), los umbrales de
+cobertura: **R4 está completa y el rediseño, cerrado**.
 
-### Dónde se retoma (2026-11-23, deuda del cierre hecha)
+### Dónde se retoma (2026-11-24, rediseño cerrado)
 
 Para la sesión siguiente, que no tiene la conversación anterior: todo lo decidido está en esta
 hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
 
+- **El rediseño está cerrado: las 32 unidades, de `R0` a `R4`, están hechas.** La última fue
+  `R4-CIE-04` (umbrales de cobertura, 2026-11-24). **Lo siguiente es el mapa de las rutas (6.7)**,
+  una unidad aparte (ver abajo), preguntando al usuario antes de empezar.
 - **La deuda que dejó el cierre (`DEU-71`–`DEU-83`) está hecha** (lote del 2026-11-23, decidido por el
   usuario con las opciones y la recomendación de cada una; `DEU-76` y `DEU-78`, sobre bocetos), con
-  local y staging vueltos a sembrar (`DEU-81`). Lo siguiente es `R4-CIE-04` (umbrales de cobertura),
-  preguntando al usuario antes de empezar.
+  local y staging vueltos a sembrar (`DEU-81`).
 - **El techo del revisor (`DEU-28`–`DEU-70`) y la deuda decidida están hechos**; `DEU-27` se cerró
   en `R4-CIE-03`.
   `DEU-14` (la siembra gruesa) se terminó el 2026-11-18: la operación de demostración ya lleva
@@ -53,17 +56,14 @@ hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
   campos) se cerró el 2026-11-17 y `DEU-15` (las plantillas de consulta, editables y sembradas), el
   2026-11-18: el usuario la eligió antes que `DEU-14` porque es la única que cerraba un hueco del
   producto (6.14) y porque así las consultas en clínica de `DEU-14` ya parten de plantillas.
-- **Lo siguiente lo decide el usuario: R3 está completa y la deuda decidida, cerrada.** Queda el
-  cierre `R4` (recorrido, auditoría, documentación y umbrales). **Recomendado** (2026-11-18):
-  `R4-CIE-01` a `R4-CIE-04` en orden; la demostración ya recorre todos los casos. `R4-CIE-01` se
-  cerró el 2026-11-19; sigue `R4-CIE-02`. Se le pregunta al usuario antes de empezar cada una.
-  Estuvo en pausa del 2026-11-20 al 2026-11-21 mientras el usuario revisaba el panel perfil por
+- **El cierre `R4` se hizo en orden** (recomendado el 2026-11-18): `R4-CIE-01` se
+  cerró el 2026-11-19. Estuvo en pausa del 2026-11-20 al 2026-11-21 mientras el usuario revisaba el panel perfil por
   perfil. **La revisión terminó el 2026-11-21**: el usuario revisó por su cuenta Médicos, Atención
   al cliente, el portal y la clínica aliada sin encontrar nada más. Los huecos de requisito que
   salieron están en [lo que falta en el código](pendiente-en-el-codigo.md).
   `R4-CIE-02` (auditoría y crítica) se cerró el 2026-11-21 ([lo que se hizo](rediseno/auditoria-r4-cie-02.md)).
-  `R4-CIE-03` (documentación final) se cerró el 2026-11-22 (ver su fila).
-  **Lo siguiente es `R4-CIE-04`** (umbrales de cobertura), preguntando al usuario antes de empezar.
+  `R4-CIE-03` (documentación final) se cerró el 2026-11-22 y `R4-CIE-04` (umbrales de cobertura),
+  el 2026-11-24 (ver sus filas).
 - **La portada pública de `timu.com.co` está hecha: `R3-PUB-04`** (2026-11-18). Antes de publicarla
   en el dominio quedan cosas de TIMU, en [pendientes externos](pendientes-externos.md): los valores
   provisionales sacados de la web vieja, el permiso de las personas de las fotos del equipo, la
@@ -241,7 +241,7 @@ Todo se diseña primero para el móvil. Las familias suelen llegar desde un enla
 | `R4-CIE-01` | Recorrido completo | La lista de rutas pendientes de `R0-QAA-02` está vacía (desde `R2-PAN-10`) y se elimina. El recorrido cubre todas las rutas a los cuatro anchos (375, 768, 900 y 1280 px). | Hecho (2026-11-19): `PENDIENTES` y su prueba se retiraron, y un fallo hace fallar el barrido. Además, decidido con el usuario, el barrido mide abiertas las fichas que cada pantalla abre desde la URL (plantilla, ruta, campaña, clínica aliada, interesado, plan y regla), con un registro de `datos_demo` buscado por su nombre: en el celular son lo que se ve al tocar una fila, y no eran una ruta propia. |
 | `R4-CIE-02` | Auditoría | `/impeccable audit` en cada espacio y `/impeccable critique` en el panel y el portal. Se corrigen todos los hallazgos P0 y P1; los P2 y P3 quedan como deuda escrita. | Hecho (2026-11-21): auditoría de los cuatro espacios (17/20) y crítica del panel (25/40) y del portal (24/40), con sus seis P1 de la auditoría y sus seis de las críticas corregidos, y los P2 que eligió el usuario (encabezados, táctiles de 44 px, el paquete partido, «Dar de baja» en el menú). El barrido pide ahora todas las reglas WCAG 2.2 A y AA y que los encabezados no salten un nivel. Detalle en [auditoría y crítica](rediseno/auditoria-r4-cie-02.md); lo que queda, en la deuda (`DEU-71` a `DEU-82`). |
 | `R4-CIE-03` | Documentación final | La skill refresca `DESIGN.md`. Se reescriben `docs/frontend/` (componentes, plantillas y convenciones) y la sección 15 del manual. El `CLAUDE.md` describe las guardas definitivas, y los tres `CLAUDE.md` se condensan (el del backend pasa de 35 KB) sin perder ninguna regla: lo que sea historia o explicación larga va a `docs/`. | Hecho (2026-11-22). Adelantado el 2026-11-16: el `CLAUDE.md` del backend pasó de 36 KB a 14 KB (el detalle, en `docs/backend/`) y el detalle de la e2e del stack salió del de la raíz (`docs/frontend/e2e-stack.md`). El 2026-11-22: `DESIGN.md` con los componentes por espacio (comunes, panel, portal, clínica aliada y páginas públicas) y refrescado por el documentador desde el código, con su sidecar regenerado entero (`DEU-27`); `docs/frontend/` y la sección 15 del manual, contrastados con el código, sin la historia del rediseño; las piezas que ninguna pantalla usaba, quitadas (`AnilloProgreso`, `.accesos`, `.linea-tiempo`, `.metricas`, `.detalle-cabeza`); y los tres `CLAUDE.md` condensados (la raíz de 22,3 a 20,5 KB, con la guarda de `e2e/publicas.spec.ts` que faltaba; el frontend de 14,8 a 8,4 KB, con sus trampas enteras en `docs/frontend/trampas.md`), con cada una de sus 255 unidades y su destino en el [inventario](rediseno/inventario-claude-md.md), revisado por el usuario. El documentador anotó `DEU-83` (Supresión, `btn-peligro` en la fila). |
-| `R4-CIE-04` | Umbrales de cobertura | Los umbrales de `vitest.config.ts` se ajustan a lo medido, según la regla del `CLAUDE.md`. | Pendiente |
+| `R4-CIE-04` | Umbrales de cobertura | Los umbrales de `vitest.config.ts` se ajustan a lo medido, según la regla del `CLAUDE.md`. | Hecho (2026-11-24), con los valores aprobados por el usuario. El panel, medido dos veces con el código de ese día (iguales salvo 0,01 puntos en ramas): 93,25 % de líneas, 92,50 % de sentencias, 91,95 % de funciones y 83,79 % de ramas, así que sus umbrales pasan de 90/90/90/80 a 93/92/91/83. A petición del usuario se subió también el del backend: medido en 93,00 % en dos ejecuciones, pasa de 91 % a 92 %, con un punto de margen porque varía unos 0,5 puntos entre ejecuciones. El `CLAUDE.md` de la raíz dice las cifras nuevas. |
 
 ## Mientras dura el rediseño
 
@@ -269,7 +269,7 @@ Viven en dos anexos de `docs/rediseno/`, separados de esta hoja el 2026-11-16:
 
 ### Orden de lo que sigue
 
-El orden vigente está en [«Dónde se retoma»](#dónde-se-retoma-2026-11-23-deuda-del-cierre-hecha). El primero, confirmado por
+El orden vigente está en [«Dónde se retoma»](#dónde-se-retoma-2026-11-24-rediseño-cerrado). El primero, confirmado por
 el usuario el 2026-11-12, empezaba por lo que más se usa desde el celular (Rutas, Clínica y el portal)
 y ya está hecho.
 
