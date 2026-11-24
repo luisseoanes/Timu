@@ -24,6 +24,9 @@ literal del PDF (`~/Descargas/documento-requerimientos-funcionales.pdf`) que no 
   [`docs/pendientes-externos.md`](docs/pendientes-externos.md): allí **un valor provisional sigue
   pendiente aunque funcione**, y no se marca resuelto hasta que se informe explícitamente que TIMU dio
   el valor oficial.
+- **Lo que cumple y lo que no.** La [auditoría del documento](docs/auditoria-requisitos/README.md)
+  (empezada el 2026-11-24) contrasta cada obligación con el código, con su evidencia: su README dice
+  el método, el orden por bloques y por dónde va. Hasta cerrarla, se audita sin arreglar.
 - **Diseño.** El frontend se rediseñó con la marca real de TIMU por unidades (`R0-…` a `R4-…`, en la
   [hoja de ruta](docs/hoja-de-ruta-rediseno.md)). La identidad está en el
   [manual de marca](docs/manual-de-marca.md), el sistema en [`DESIGN.md`](DESIGN.md) y el producto en
