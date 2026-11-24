@@ -401,13 +401,35 @@ el código (la propuesta y [integraciones para TIMU](../integraciones-timu.md)).
 
 ## 6.23. Estados de afiliación
 
+**Auditado el 2026-11-24.**
+
+**Lo que hay:**
+- El estado de afiliación tiene cinco valores (`backend/app/core/enums.py:19`): `prospecto`,
+  `activa`, `en_mora`, `congelada` y `cancelada`. Vive en el contrato y la familia lo copia de su
+  contrato vigente (`_sincronizar_familia`, `backend/app/modules/cartera/service.py:249`).
+- Los tres primeros cambios los deciden las reglas `cartera.estado`, con días editables en
+  Administración: en mora a los 5 días, congelada a los 30 y activa al ponerse al día
+  (`backend/app/modules/reglas/datos.py:27`; `reevaluar_estado`, `backend/app/modules/cartera/service.py:258`).
+- La cancelación la hace `cartera.cancelar` (`backend/app/modules/cartera/service.py:525`), sola o
+  dentro de la baja de la familia.
+- **Reproducido el 2026-11-24 contra `db-test`**, con una prueba temporal que no quedó en el
+  repositorio. Una familia con una visita a domicilio agendada y su calendario preventivo, tras
+  cancelar su contrato, conserva el servicio en `agendado`, que sigue saliendo en `por_rutear` (lo
+  que se propone al planear la ruta del día), y sus preventivos siguen en la bandeja.
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.23-01 | Estado «Activo» (como mínimo) | Exige | Sin auditar | |
-| 6.23-02 | Estado «Moroso» | Exige | Sin auditar | |
-| 6.23-03 | Estado «Congelado» | Exige | Sin auditar | |
-| 6.23-04 | Estado «Cancelado» | Exige | Sin auditar | |
-| 6.23-05 | Estado «Retirado» | Exige | Sin auditar | |
-| 6.23-06 | Los cambios de estado afectan automáticamente los procesos relacionados | Exige | Sin auditar | |
-| 6.23-07 | Un usuario cancelado deja de aparecer en tareas preventivas y procesos activos | Ejemplo | Sin auditar | |
-| 6.23-08 | Un usuario congelado tiene los servicios suspendidos según las reglas configuradas | Ejemplo | Sin auditar | |
+| 6.23-01 | Estado «Activo» (como mínimo) | Exige | Cumple | `activa`. Se vuelve a él al ponerse al día (`test_estados_por_dias_de_mora_y_reactivacion`, `backend/tests/test_cartera.py:87`). |
+| 6.23-02 | Estado «Moroso» | Exige | Cumple | `en_mora`, por regla a los 5 días de mora (misma prueba). |
+| 6.23-03 | Estado «Congelado» | Exige | Cumple | `congelada`, por regla a los 30 días: no genera cuotas ni avisos de mora y avisa a la familia (misma prueba; `test_congelada_no_genera_cuotas`, `backend/tests/test_cartera.py:69`). |
+| 6.23-04 | Estado «Cancelado» | Exige | Cumple | `cancelada`: anula las cuotas futuras, apaga la tarjeta y corta las remisiones por usar (`test_baja_de_familia_cancela_contrato_y_tarjeta`, `backend/tests/test_cartera.py:526`; `test_contrato_por_api_se_crea_renueva_y_cancela`, `:629`). |
+| 6.23-05 | Estado «Retirado» | Exige | Falta | No existe. El indicador «Retiros» del dashboard cuenta los contratos `cancelada` (`backend/app/modules/dashboard/service.py:77`), y «retirar» solo existe para un peludo que sale de un plan de varios (`contratos.retirar_mascota`, 6.3). El documento no dice en qué se diferencia de «Cancelado»: pregunta para TIMU (en el [README](README.md#preguntas-para-timu)). |
+| 6.23-06 | Los cambios de estado afectan automáticamente los procesos relacionados | Exige | Parcial | **Lo que sí se ve afectado**: las cuotas y la tarjeta; los avisos de mora, que el proceso diario no manda a una afiliación cancelada ni congelada (`backend/app/modules/cartera/service.py:383` y `:399`); agendar, que se rechaza en mora, congelada o sin contrato (`backend/app/modules/servicios/service.py:98`); los recordatorios de preventivos, que solo reciben los contratos vigentes (`backend/app/modules/preventivos/service.py:437`); los segmentos de campañas (`backend/app/modules/campanas/segmentos.py:27`); y las remisiones al cancelar. **Lo que no**: las visitas ya agendadas, la bandeja de preventivos y las tareas abiertas (ver 07 y 08). El docstring de `familias.cambiar_estado` (`backend/app/modules/familias/service.py:182`) dice que «cartera y servicios se enganchan aquí para propagar sus efectos», pero la función no llama a nada. |
+| 6.23-07 | Un usuario cancelado deja de aparecer en tareas preventivas y procesos activos | Ejemplo | **Contradice** | Reproducido (arriba). La bandeja de preventivos no filtra por afiliación ni por baja: `_de_la_bandeja` y `_condicion_vista` solo miran el preventivo (`backend/app/modules/preventivos/service.py:138` y `:153`). Tampoco filtra por `Mascota.activa`, así que un peludo retirado también sigue en ella. Sus visitas agendadas siguen en `por_rutear` (`backend/app/modules/rutas/service.py:98`), que solo mira el servicio, y llegan a la ruta. Sus preventivos quedan `programado` y sus tareas siguen abiertas: el listado de tareas no mira a la familia (`backend/app/modules/tareas/service.py:93`). Hay que decidir cuáles de esas tareas se cierran y cuáles no (una de cobro de lo vencido quizá deba seguir). |
+| 6.23-08 | Un usuario congelado tiene los servicios suspendidos según las reglas configuradas | Ejemplo | Parcial | Cuándo se congela lo dice una regla editable (6.23-03), y no se le agenda nada nuevo, ni en el panel ni en el portal (`test_elegibilidad_explica_los_motivos`, `backend/tests/test_servicios.py:123`; `test_el_plan_dice_por_que_no_se_puede_agendar`, `backend/tests/test_portal.py:698`). Pero lo ya agendado no se suspende: sigue en `por_rutear`, por el mismo camino que 07, y no se reprodujo con una congelada porque el código no mira el estado. Además, qué se suspende está fijo en el código y no sale de ninguna regla. Qué sigue disponible en pausa lo tiene que decir TIMU ([pendientes externos](../pendientes-externos.md), «Qué sigue disponible con el plan en pausa o en mora»). |
+
+**Lo que hay que decidir:**
+- Qué es «Retirado» frente a «Cancelado» (pregunta para TIMU).
+- Al cancelar o congelar, qué pasa con lo que ya está en marcha: las visitas agendadas (¿se
+  cancelan, se suspenden o se avisa al equipo?), los preventivos programados y las tareas abiertas.
+  Junto con 6.10 y 6.8, es la misma pregunta: los cambios de estado no se propagan a los procesos.
