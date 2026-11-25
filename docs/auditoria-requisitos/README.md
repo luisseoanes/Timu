@@ -57,12 +57,12 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Bloque | Requisitos | Fichero | Estado |
 | --- | --- | --- | --- |
-| 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [seccion-6.md](seccion-6.md) | Auditado (2026-11-24) |
-| 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [seccion-6.md](seccion-6.md) | Sin auditar |
-| 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [seccion-6.md](seccion-6.md) | Sin auditar |
-| 4. Lo clínico | 6.14, 6.15, 6.17 | [seccion-6.md](seccion-6.md) | Sin auditar |
-| 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [seccion-6.md](seccion-6.md) | Sin auditar |
-| 6. Clínicas aliadas | 6.22 | [seccion-6.md](seccion-6.md) | Sin auditar |
+| 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [bloque-1-estados-y-ciclo-de-vida](bloque-1-estados-y-ciclo-de-vida.md) | Auditado (2026-11-24) |
+| 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | Sin auditar |
+| 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | Sin auditar |
+| 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | Sin auditar |
+| 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | Sin auditar |
+| 6. Clínicas aliadas | 6.22 | [bloque-6-clinicas-aliadas](bloque-6-clinicas-aliadas.md) | Sin auditar |
 | 7. Transversales | 7, 8, 12, 13 | por extraer | Sin extraer |
 | 8. Técnicas y externas | 9, 10, 11, 14, y 1 a 5 | por extraer | Sin extraer |
 | Anexo | Lo que prometió la [propuesta](../propuesta-timu-puntos-15-19.md) (tabla B, sección E) | por extraer | Sin extraer |
