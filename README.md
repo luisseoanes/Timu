@@ -161,6 +161,7 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [docs/documento-requerimientos-funcionales.md](docs/documento-requerimientos-funcionales.md) | Lo que TIMU pidió, copia literal del PDF y única fuente de verdad: los requisitos que cita el código (6.10, Sección 8…) |
 | [docs/propuesta-timu-puntos-15-19.md](docs/propuesta-timu-puntos-15-19.md) | Contrato funcional: la propuesta que responde a ese documento (secciones A a E) |
 | [docs/pendiente-en-el-codigo.md](docs/pendiente-en-el-codigo.md) | Lo que falta en el código, con el requisito que lo pide: la lista del trabajo abierto |
+| [docs/auditoria-requisitos/](docs/auditoria-requisitos/README.md) | Auditoría de cumplimiento del documento de requerimientos (desde el 2026-11-24): cada obligación con su veredicto y su evidencia, por bloques, y las preguntas para TIMU |
 | [docs/pendientes-externos.md](docs/pendientes-externos.md) | Lo que falta fuera del código para cerrar un requisito: sandbox de Wompi, plantillas de Meta, decisiones de TIMU y sus valores provisionales |
 | [docs/estandares-calidad.md](docs/estandares-calidad.md) | Cada estándar de calidad pedido (Secciones 3 y 4) traducido a reglas, con la prueba que las hace cumplir y la deuda que queda |
 | [docs/integraciones.md](docs/integraciones.md) | Cada servicio externo: qué hace, variables, dónde vive en el código, estado de validación y lo decidido con TIMU |
@@ -168,6 +169,7 @@ infra/carga/       escenario de k6 de la prueba de carga
 | [docs/costos-infraestructura.md](docs/costos-infraestructura.md) | Estimación de costos de tres nubes, integraciones e IA (10 de noviembre de 2026) |
 | [docs/prueba-de-carga.md](docs/prueba-de-carga.md) | Cómo correr la prueba de carga con el volumen a 12 meses |
 | [docs/despliegue-staging.md](docs/despliegue-staging.md) | Staging en Railway: autodeploy desde `main` con el CI en verde, configuración de cada servicio, migraciones y cómo volver a sembrar |
+| [docs/perfiles-y-permisos.md](docs/perfiles-y-permisos.md) | Qué ve y qué hace cada perfil del equipo (Sección 12), en la API, en la base y en el panel |
 | [docs/flujo-de-la-visita.md](docs/flujo-de-la-visita.md) | Cómo se atiende una visita en casa: estados de la parada y del servicio, pasos de cada tipo y la consulta como registro |
 | [docs/portal-familias.md](docs/portal-familias.md) | Qué ve y qué hace la familia en el portal, de dónde sale cada dato y lo que dice la API para que el panel no copie reglas del backend |
 | [docs/portada-publica.md](docs/portada-publica.md) | La portada y la página de cada plan: de dónde sale cada sección (lo que edita Administración), las reglas de la red de aliadas, del contacto a Comercial, las direcciones viejas y lo que falta de TIMU para publicarla |
