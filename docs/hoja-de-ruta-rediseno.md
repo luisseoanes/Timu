@@ -44,8 +44,11 @@ Para la sesión siguiente, que no tiene la conversación anterior: todo lo decid
 hoja, en `pendientes-externos.md` y en los `CLAUDE.md`.
 
 - **El rediseño está cerrado: las 32 unidades, de `R0` a `R4`, están hechas.** La última fue
-  `R4-CIE-04` (umbrales de cobertura, 2026-11-24). **Lo siguiente es el mapa de las rutas (6.7)**,
-  una unidad aparte (ver abajo), preguntando al usuario antes de empezar.
+  `R4-CIE-04` (umbrales de cobertura, 2026-11-24). **Fuera del rediseño, lo siguiente es la
+  [auditoría del documento de requerimientos](auditoria-requisitos/README.md)** (decidido por el
+  usuario el 2026-11-24): se audita entera antes de arreglar nada, y su README dice por qué bloque va.
+  El mapa de las rutas (6.7) va después, como unidad aparte (ver abajo), preguntando al usuario
+  antes de empezar.
 - **La deuda que dejó el cierre (`DEU-71`–`DEU-83`) está hecha** (lote del 2026-11-23, decidido por el
   usuario con las opciones y la recomendación de cada una; `DEU-76` y `DEU-78`, sobre bocetos), con
   local y staging vueltos a sembrar (`DEU-81`).

@@ -13,6 +13,10 @@ otros documentos. Un punto nuevo se añade aquí, con su requisito y su estado.
 Empezó con el trabajo abierto que registraba el antiguo backlog por unidades, retirado el 2026-11-19
 porque se había alejado del documento de requerimientos.
 
+**Mientras dura la [auditoría del documento](auditoria-requisitos/README.md)** (desde el 2026-11-24),
+lo que falta frente al documento se anota en su matriz, no aquí: dos listas de lo mismo se separan
+con el tiempo. Al cerrarla se decide si esta lista se funde con la matriz.
+
 | Requisito | Qué falta | Estado |
 | --- | --- | --- |
 | 6.5 | Los días bloqueados de la agenda («Bloquear un día» en Servicios) no se ven ni se deshacen: no hay listado ni baja, y uno bloqueado por error deja la agenda sin cupos ese día. Encontrado en la revisión por perfiles del 2026-11-20. | Pendiente: decidir con el usuario |
