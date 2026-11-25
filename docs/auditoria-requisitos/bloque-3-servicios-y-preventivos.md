@@ -106,20 +106,49 @@ Las rutas de la evidencia son relativas a la raíz del repositorio.
 
 ## 6.7. Gestión de rutas domiciliarias
 
+**Auditado el 2026-11-25.**
+
+Las filas 02 a 09 son las «variables como…» del documento. Se extrajeron como Exige y aquí pasan a
+Ejemplo, como manda el método («como»). Se auditan igual.
+
+**Lo que hay:**
+- Operaciones pide la planificación del día para una ciudad, con quiénes salen a campo, y el
+  worker la resuelve (`solicitar`, `backend/app/modules/rutas/service.py:65`; `planificar`,
+  `:142`). Toma los servicios domiciliarios y preventivos agendados de ese día, sin ruta, y los
+  reparte en una ruta por persona con OR-Tools. El optimizador respeta la franja de llegada de
+  cada servicio (la hora agendada más 60 minutos), su duración, la jornada (7:00 a 19:00) y un
+  máximo de 8 atenciones (`backend/app/core/config.py:120`). Lo que no cabe queda sin asignar,
+  con su motivo.
+- Los tiempos entre casas salen de la matriz de Google, guardada en caché y con un tope diario. Sin
+  clave, se estiman en línea recta (`distancias.matriz`, `backend/app/modules/rutas/distancias.py:71`).
+  La llamada usa la Distance Matrix API, que la clave de TIMU no admite: hasta pasarla a la Routes
+  API, las rutas caerían siempre a la estimación (fila 6.7 de [lo que falta](../pendiente-en-el-codigo.md)).
+- En campo, la ruta se arranca, cada parada se avisa como «en camino», se marca la llegada y la
+  salida, y se omite con motivo. Operaciones agrega una parada en caliente donde menos tiempo suma.
+  Cada parada abre la navegación del celular («Cómo llegar»,
+  `frontend/src/features/rutas/AccionesParada.tsx:61`).
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.7-01 | Organizar y optimizar servicios domiciliarios | Exige | Sin auditar | |
-| 6.7-02 | Variable: ubicación | Exige | Sin auditar | |
-| 6.7-03 | Variable: zona | Exige | Sin auditar | |
-| 6.7-04 | Variable: tipo de servicio | Exige | Sin auditar | |
-| 6.7-05 | Variable: duración estimada | Exige | Sin auditar | |
-| 6.7-06 | Variable: disponibilidad | Exige | Sin auditar | |
-| 6.7-07 | Variable: franja horaria | Exige | Sin auditar | |
-| 6.7-08 | Variable: profesional asignado | Exige | Sin auditar | |
-| 6.7-09 | Variable: orden de desplazamiento | Exige | Sin auditar | |
-| 6.7-10 | Visualizar usuarios/servicios en un mapa | Exige | Sin auditar | Unidad aparte, con Google Maps ([pendientes externos](../pendientes-externos.md#mapa-de-las-rutas-requisito-67-r2-pan-06)). |
-| 6.7-11 | Proponer una secuencia de atención que optimice desplazamientos, considerando ubicación y duración | Exige | Sin auditar | |
-| 6.7-12 | Duración aproximada por tipo de servicio para calcular bloques horarios coherentes | Exige | Sin auditar | |
+| 6.7-01 | Organizar y optimizar servicios domiciliarios | Exige | Cumple | La planificación y la ejecución de arriba (`test_planificar_agrupa_ordena_y_reporta_lo_que_no_cabe`, `backend/tests/test_rutas.py:189`; `test_dos_tecnicos_se_reparten_la_carga`, `:207`; `test_ejecucion_mueve_el_servicio_y_cierra_la_ruta`, `:264`; `test_en_campo_se_omite_una_parada_y_operaciones_agrega_otra`, `:502`; panel `RutasPage.test.tsx:122` a `:329`). Dos salvedades: con la clave de TIMU los tiempos serían en línea recta (arriba), y lo que espera autorización puede entrar a la ruta (6.6-09). |
+| 6.7-02 | Variable: ubicación | Ejemplo | Cumple | Las coordenadas de la familia, geocodificadas al guardar su dirección (6.1-05). Sin ellas, el servicio queda sin asignar, «sin ubicación» (`planificar`, `:159`; `test_planificar_agrupa_ordena_y_reporta_lo_que_no_cabe`). |
+| 6.7-03 | Variable: zona | Ejemplo | Parcial | La zona (el barrio, que es texto libre, 6.1-06) se muestra en cada parada, pero no entra en la planificación: se planea por ciudad, y la cercanía la dan las coordenadas. No se puede organizar por zonas, por ejemplo el norte los lunes. |
+| 6.7-04 | Variable: tipo de servicio | Ejemplo | Cumple | Solo entran las modalidades que se atienden en casa, domiciliaria y preventiva (`MODALIDADES_EN_CASA`, `:34`), y cada una con la duración de su tipo (05). Las pruebas planean consultas domiciliarias (`test_planificar_agrupa_ordena_y_reporta_lo_que_no_cabe`). |
+| 6.7-05 | Variable: duración estimada | Ejemplo | Cumple | La de su tipo de servicio (`_duracion`, `:121`), que el optimizador suma a cada visita (`test_optimizador_respeta_ventanas`, `backend/tests/test_rutas.py:35`). Que TIMU no la pueda cambiar, en 12. |
+| 6.7-06 | Variable: disponibilidad | Ejemplo | Cumple | Las personas que Operaciones elige para el día, activas y de un perfil que sale a campo (`test_solo_se_planea_en_ciudades_habilitadas_y_con_quien_sale_a_campo`, `:157`), dentro de la jornada y con su máximo de atenciones (`test_optimizador_respeta_capacidad_y_descarta_lo_imposible`, `:51`). La jornada y el máximo son variables de entorno, iguales para todos: no hay horario por persona (6.5-09). |
+| 6.7-07 | Variable: franja horaria | Ejemplo | Cumple | La atención empieza entre la hora agendada y 60 minutos después (`_visita`, `:130`; `test_optimizador_respeta_ventanas`), y a la familia se le avisa esa franja al planear (`test_planificar_avisa_la_ventana_de_llegada`, `:216`). |
+| 6.7-08 | Variable: profesional asignado | Ejemplo | Cumple | Una ruta por persona, y cada servicio queda con quien lo atiende (`test_dos_tecnicos_se_reparten_la_carga`; `test_listado_de_rutas_por_dia_ciudad_y_responsable`, `:420`). Es un resultado de la planificación, no un dato que respete: si la familia tiene su médico de siempre, el optimizador no lo sabe. |
+| 6.7-09 | Variable: orden de desplazamiento | Ejemplo | Cumple | Cada parada lleva su orden y su llegada estimada, se recalcula al omitir, y una parada nueva se inserta donde menos tiempo agrega (`test_omitir_renumera_y_libera_el_servicio`, `:345`; `test_agregar_inserta_donde_menos_cuesta`, `:360`; `test_insercion_mas_barata_respeta_lo_recorrido`, `:64`). |
+| 6.7-10 | Visualizar usuarios/servicios en un mapa | Exige | Falta | No hay mapa: la ruta es una línea de paradas, y cada una abre la navegación del celular. El mapa con Google Maps es una unidad aparte que TIMU eligió y sigue sin construir ([pendientes externos](../pendientes-externos.md#mapa-de-las-rutas-requisito-67-r2-pan-06); fila 6.7 de [lo que falta](../pendiente-en-el-codigo.md)). |
+| 6.7-11 | Proponer una secuencia de atención que optimice desplazamientos, considerando ubicación y duración | Exige | Cumple | La secuencia de cada ruta minimiza el tiempo con la matriz de la ciudad, la duración de cada visita y las franjas (`optimizar`, `backend/app/integrations/routing.py:48`; las pruebas de 01, 05 y 09). Con la clave de TIMU sería en línea recta hasta pasar a la Routes API. |
+| 6.7-12 | Duración aproximada por tipo de servicio para calcular bloques horarios coherentes | Exige | Parcial | Cada tipo tiene su duración (`duracion_min`, `backend/app/modules/catalogos/models.py:51`), y con ella se parten las franjas en bloques (`disponibilidad`, `backend/app/modules/servicios/service.py:337`; `test_disponibilidad_descuenta_lo_agendado`, «bloques de 45 minutos», `backend/tests/test_servicios.py:79`) y se arma la ruta (05). **Pero TIMU no la puede establecer**: está en el código (`TIPOS_SERVICIO`, `backend/app/modules/catalogos/datos.py:264`) y Administración solo apaga un tipo (6.5-15). Los bloques de la agenda no cuentan el desplazamiento entre casas: con capacidad 1, ofrece 9:00 y 9:45 en dos puntos de la ciudad, y es la franja de llegada de la ruta la que absorbe el trayecto. |
+
+**Lo que hay que decidir:**
+- 10: el mapa (unidad aparte, ya decidida con Google Maps).
+- 12: que la duración de cada tipo se edite en Administración (con 6.5-15).
+- 03 y 08: si la planificación tiene que respetar zonas y el médico de cada familia.
+- La jornada y el máximo de atenciones, iguales para todos y fijos en variables de entorno: si
+  cambian por persona o por día.
 
 ## 6.8. Gestión de servicios preventivos
 

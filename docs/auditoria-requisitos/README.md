@@ -69,7 +69,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | --- | --- | --- | --- |
 | 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [bloque-1-estados-y-ciclo-de-vida](bloque-1-estados-y-ciclo-de-vida.md) | Auditado (2026-11-24) |
 | 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | Auditado (2026-11-25) |
-| 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | En curso: 6.5 y 6.6 auditados (2026-11-25) |
+| 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | En curso: 6.5 a 6.7 auditados (2026-11-25) |
 | 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | Sin auditar |
 | 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | Sin auditar |
 | 6. Clínicas aliadas | 6.22 | [bloque-6-clinicas-aliadas](bloque-6-clinicas-aliadas.md) | Sin auditar |
@@ -81,7 +81,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 55 | 0 | 27 | 13 | 6 | 0 | 0 | 12 | 154 |
+| 6 | 267 | 64 | 0 | 29 | 14 | 6 | 0 | 0 | 12 | 142 |
 
 ## Problemas de diseño que van apareciendo
 
@@ -142,6 +142,12 @@ suyos o amplía los que ya están.
    la familia, y solo se exige para salir en ruta o atender. Antes de eso, «Confirmar agenda» lo
    pasa a `agendado` sin ella, y el planificador lo mete en una ruta (reproducido el 2026-11-25).
    Obligaciones: 6.5-02, 6.5-11, 6.5-15 y 6.6-09 (junto con 6.10-03).
+10. **Lo que TIMU tendría que poder ajustar está en el código o en variables de entorno.** El
+    motor de reglas y las tarifas se editan sin desplegar, pero otras cosas no: el flujo de cada
+    tipo de servicio (su duración, si requiere autorización y sus pasos) y los tipos nuevos; los
+    tramos de peludos y su máximo; la ventana de renovación de 90 días; y la jornada y el máximo de
+    atenciones de una ruta. Las Secciones 3 y 4 piden reglas que se modifiquen sin reconstruir la
+    plataforma. Obligaciones: 6.3-09, 6.5-15 y 6.7-12 (y lo fijo de 6.4-02 y 6.7-06).
 
 ## Preguntas para TIMU
 
