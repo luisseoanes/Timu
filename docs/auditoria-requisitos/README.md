@@ -69,7 +69,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | --- | --- | --- | --- |
 | 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [bloque-1-estados-y-ciclo-de-vida](bloque-1-estados-y-ciclo-de-vida.md) | Auditado (2026-11-24) |
 | 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | Auditado (2026-11-25) |
-| 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | Sin auditar |
+| 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | En curso: 6.5 auditado (2026-11-25) |
 | 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | Sin auditar |
 | 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | Sin auditar |
 | 6. Clínicas aliadas | 6.22 | [bloque-6-clinicas-aliadas](bloque-6-clinicas-aliadas.md) | Sin auditar |
@@ -81,7 +81,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 48 | 0 | 16 | 9 | 4 | 0 | 0 | 12 | 178 |
+| 6 | 267 | 54 | 0 | 24 | 9 | 5 | 0 | 0 | 12 | 163 |
 
 ## Problemas de diseño que van apareciendo
 
@@ -98,8 +98,10 @@ suyos o amplía los que ya están.
    guardan que se la contactó, qué respondió o que no contestó; «no autorizado» se resuelve de tres
    formas distintas; y el portal le dice «Confirmada» a una cita que nadie confirmó. En cartera,
    queda lo que la plataforma le escribe a la familia, pero no que alguien del equipo la llamó ni
-   qué prometió. Obligaciones: 6.10-02, 6.10-05, 6.10-09, 6.10-10, 6.2-20, y por revisar en el
-   bloque 3: 6.5-02, 6.5-13, 6.8-12 y 6.8-13.
+   qué prometió. Al programar, lo que la familia pide sin fecha no queda en ninguna parte, la
+   autorización del servicio es la del médico y no la de la familia, y no hay confirmación.
+   Obligaciones: 6.10-02, 6.10-05, 6.10-09, 6.10-10, 6.2-20, 6.5-02, 6.5-03, 6.5-11, 6.5-13, y por
+   revisar en el bloque 3: 6.8-12 y 6.8-13.
 3. **Lo que la familia ya dio no siempre llega a su ficha.** El bot comercial pregunta la ciudad y
    los peludos y no los pasa al registro; Comercial no convierte un interesado en familia; la
    afiliación no pregunta lo preventivo y el calendario no sabe qué recibió ya la mascota; y
@@ -126,8 +128,9 @@ suyos o amplía los que ya están.
 7. **Lo que se registra no se ve.** La base guarda cada aviso de mora con su regla, cada cambio
    de valor de un contrato (`cambios_plan`) y la auditoría de cada cambio del contrato, pero
    ninguna pantalla ni ruta los lee: el Historial de la familia solo muestra los cambios de su
-   ficha. La trazabilidad existe solo para quien consulta la base. Obligaciones: 6.2-20, 6.3-07,
-   6.4-06 y 6.4-07.
+   ficha. Lo mismo con la historia de estados de un servicio: la ficha solo dice el motivo del
+   último cambio. La trazabilidad existe solo para quien consulta la base. Obligaciones: 6.2-20,
+   6.3-07, 6.4-06, 6.4-07 y 6.5-14.
 
 ## Preguntas para TIMU
 
@@ -174,3 +177,11 @@ tandas, sin esperar al final de la auditoría.
   ¿las familias ya afiliadas conservan el suyo hasta renovar?
 - **6.4.** ¿Qué pasa si una familia no renueva: se renueva sola, se cancela, o sigue pagando? Hoy
   sigue pagando pero no puede agendar servicios.
+
+### Tercera tanda (bloque 3, en curso)
+
+- **6.5-07.** Un beneficio con cupo «al año» (por ejemplo, cuatro consultas en la clínica), ¿se
+  cuenta por año calendario o por año de afiliación? Hoy es el calendario: quien se afilia en
+  noviembre usa su cupo en noviembre y diciembre, y tiene otro completo en enero.
+- **6.5-06.** ¿Los beneficios tienen periodo de carencia (días desde la afiliación antes de poder
+  usarlos)? ¿Cuáles y de cuántos días?
