@@ -68,7 +68,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | Bloque | Requisitos | Fichero | Estado |
 | --- | --- | --- | --- |
 | 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [bloque-1-estados-y-ciclo-de-vida](bloque-1-estados-y-ciclo-de-vida.md) | Auditado (2026-11-24) |
-| 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | Sin auditar |
+| 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | En curso: 6.2 auditado (2026-11-25) |
 | 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | Sin auditar |
 | 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | Sin auditar |
 | 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | Sin auditar |
@@ -81,7 +81,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 33 | 0 | 9 | 4 | 2 | 0 | 0 | 5 | 214 |
+| 6 | 267 | 45 | 0 | 14 | 6 | 3 | 0 | 0 | 5 | 194 |
 
 ## Problemas de diseño que van apareciendo
 
@@ -93,16 +93,30 @@ suyos o amplía los que ya están.
    cancelada sigue en la ruta, en la bandeja de preventivos y con sus tareas abiertas; una
    congelada conserva lo que ya tenía agendado; un peludo retirado sigue en la bandeja. El docstring
    de `familias.cambiar_estado` promete unos enganches que no existen. Obligaciones: 6.23-06,
-   6.23-07 y 6.23-08.
+   6.23-07, 6.23-08 y 6.2-05.
 2. **No se registra la gestión con la familia.** Ni el servicio, ni el pendiente, ni el preventivo
    guardan que se la contactó, qué respondió o que no contestó; «no autorizado» se resuelve de tres
-   formas distintas; y el portal le dice «Confirmada» a una cita que nadie confirmó. Obligaciones:
-   6.10-02, 6.10-05, 6.10-09, 6.10-10, y por revisar en el bloque 3: 6.5-02, 6.5-13, 6.8-12 y 6.8-13.
+   formas distintas; y el portal le dice «Confirmada» a una cita que nadie confirmó. En cartera,
+   queda lo que la plataforma le escribe a la familia, pero no que alguien del equipo la llamó ni
+   qué prometió. Obligaciones: 6.10-02, 6.10-05, 6.10-09, 6.10-10, 6.2-20, y por revisar en el
+   bloque 3: 6.5-02, 6.5-13, 6.8-12 y 6.8-13.
 3. **Lo que la familia ya dio no siempre llega a su ficha.** El bot comercial pregunta la ciudad y
    los peludos y no los pasa al registro; Comercial no convierte un interesado en familia; la
    afiliación no pregunta lo preventivo y el calendario no sabe qué recibió ya la mascota; y
    `POST /formularios/familia` no lo alimenta nadie. Obligaciones: 6.1-27, 6.12-06, y por revisar en
    el bloque 3: 6.13.
+4. **Lo automático le habla a la familia, no al equipo.** La cartera le escribe sola a la familia
+   (avisos de mora, congelamiento, reactivación), pero al equipo no le crea tareas ni alertas: la
+   mora de una familia sin tarjeta no deja ninguna tarea, el motor no deja que una regla de cartera
+   cree una ni avise al equipo, y nadie se entera de un congelamiento. Las dos tareas que sí
+   existen son del cobro con tarjeta guardada, y ninguna pantalla registra una tarjeta. Mientras las
+   plantillas de mora no estén aprobadas en Meta, la mora solo la ve quien entra al panel (el Inicio
+   y la bandeja). Obligaciones: 6.2-01, 6.2-09 y 6.2-10.
+5. **El periodo congelado no tiene política.** Congelada, la afiliación deja de emitir cuotas,
+   pero la emisión retoma desde la última emitida: al reactivarse se cobran de golpe los meses
+   congelados, ya vencidos, y la familia vuelve a congelarse al día siguiente (reproducido el
+   2026-11-25). Ni el código ni el documento dicen si esos meses se cobran, se perdonan o corren la
+   renovación. Obligaciones: 6.2-05, 6.2-06 y 6.2-14 (junto con 6.23-03 y 6.23-08).
 
 ## Preguntas para TIMU
 
