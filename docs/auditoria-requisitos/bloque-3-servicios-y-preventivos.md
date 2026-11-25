@@ -234,12 +234,35 @@ Ejemplo, como manda el método («como»). Se auditan igual.
 
 ## 6.13. Alimentación automática del calendario preventivo
 
+**Auditado el 2026-11-25.**
+
+Las filas 01 a 05 son los datos que el documento da «como» ejemplo: se extrajeron como Exige y aquí
+pasan a Ejemplo, como manda el método. Se auditan igual.
+
+**Lo que hay:**
+- **El calendario se crea solo al afiliar**: al completarse el registro en línea o la afiliación
+  desde el panel (`_calendario_preventivo`, `backend/app/modules/afiliaciones/service.py:415`), al
+  agregar un peludo con el contrato vigente (`backend/app/modules/afiliaciones/ciclo.py:61`) y a
+  pedido (`backend/app/modules/preventivos/router.py:217`). El contrato directo
+  (`POST /cartera/contratos`) no lo crea, pero ninguna pantalla lo usa.
+- **Sale solo del esquema de la especie y de la fecha de nacimiento** (`fechas_esquema`,
+  `backend/app/modules/preventivos/service.py:44`). Un cachorro recibe la serie desde su edad
+  mínima. Un adulto, o uno sin fecha de nacimiento, recibe cada refuerzo el día de la afiliación.
+- **Ni la afiliación en línea ni el alta del panel preguntan nada preventivo.** Piden, por peludo,
+  nombre, especie, raza, sexo, nacimiento, peso y si está esterilizado (`MascotaBase`,
+  `backend/app/modules/familias/schemas.py:20`; 6.12-06).
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.13-01 | Lo dado en la afiliación alimenta el calendario: última desparasitación | Exige | Sin auditar | Visto al auditar 6.12-06: la afiliación no lo pregunta. |
-| 6.13-02 | … producto utilizado | Exige | Sin auditar | Visto al auditar 6.12-06: la afiliación no lo pregunta. |
-| 6.13-03 | … fecha | Exige | Sin auditar | Visto al auditar 6.12-06: la afiliación no lo pregunta. |
-| 6.13-04 | … peso | Exige | Sin auditar | Visto al auditar 6.12-06: la afiliación pide el peso (6.12-03), pero el calendario no lo usa. |
-| 6.13-05 | … vacunación | Exige | Sin auditar | Visto al auditar 6.12-06: la afiliación no lo pregunta. |
-| 6.13-06 | Calcular o identificar la fecha correspondiente | Exige | Sin auditar | |
-| 6.13-07 | Generar las tareas necesarias | Exige | Sin auditar | |
+| 6.13-01 | Lo dado en la afiliación alimenta el calendario: última desparasitación | Ejemplo | Falta | La afiliación no lo pregunta (arriba), y el calendario no tiene de dónde tomarlo. |
+| 6.13-02 | … producto utilizado | Ejemplo | Falta | Igual que 01. Además, la próxima fecha depende del esquema y no del producto (6.8-05). |
+| 6.13-03 | … fecha | Ejemplo | Falta | Igual que 01. |
+| 6.13-04 | … peso | Ejemplo | Parcial | La afiliación pide el peso y lo guarda en la ficha (6.12-03), pero el calendario no lo usa: ni en las fechas ni como dato del preventivo. El peso de cada desparasitación se anota al aplicarla (6.8-09). |
+| 6.13-05 | … vacunación | Ejemplo | Falta | Igual que 01. |
+| 6.13-06 | Calcular o identificar la fecha correspondiente | Exige | Parcial | Calcula las fechas del esquema desde la edad (`test_cachorro_recibe_la_serie_y_el_adulto_un_refuerzo`, `backend/tests/test_preventivos.py:53`; `test_fechas_esquema_respeta_la_edad_minima`, `:754`). **Sin la última aplicación, a todo adulto le programa cada refuerzo el día que se afilia**: la misma prueba lo afirma (`refuerzo.fecha_programada == HOY`, `:64`). A una perra vacunada el mes pasado se le vuelve a programar la vacuna, y corregirlo deja mal la serie (6.8-06). La prueba del registro solo afirma que hay preventivos (`preventivos > 0`, `backend/tests/test_registro.py:266`). |
+| 6.13-07 | Generar las tareas necesarias | Exige | Parcial | Lo programado llega al equipo como el trabajo de la bandeja de preventivos y su recuento en el Inicio (6.8-01 y 6.8-11), no como tareas. Nada genera la tarea de pedirle a la familia el carnet o lo aplicado antes de afiliarse, que es lo que haría falta mientras la afiliación no lo pregunte. |
+
+**Lo que hay que decidir:**
+- 01 a 06: qué preventivo pregunta la afiliación y cómo ajusta el calendario (con 6.12-06 y el
+  formulario que comparta TIMU, primera tanda de preguntas). Es el problema de diseño 3.
+- 07: si mientras tanto la afiliación crea una tarea para pedir el carnet.

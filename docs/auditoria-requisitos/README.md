@@ -69,7 +69,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | --- | --- | --- | --- |
 | 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [bloque-1-estados-y-ciclo-de-vida](bloque-1-estados-y-ciclo-de-vida.md) | Auditado (2026-11-24) |
 | 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | Auditado (2026-11-25) |
-| 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | En curso: 6.5 a 6.9 auditados (2026-11-25) |
+| 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | Auditado (2026-11-25) |
 | 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | Sin auditar |
 | 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | Sin auditar |
 | 6. Clínicas aliadas | 6.22 | [bloque-6-clinicas-aliadas](bloque-6-clinicas-aliadas.md) | Sin auditar |
@@ -81,7 +81,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 76 | 0 | 35 | 14 | 7 | 0 | 0 | 12 | 123 |
+| 6 | 267 | 76 | 0 | 38 | 18 | 7 | 0 | 0 | 12 | 116 |
 
 ## Problemas de diseño que van apareciendo
 
@@ -109,8 +109,9 @@ suyos o amplía los que ya están.
    `POST /formularios/familia` no lo alimenta nadie. Lo que la mascota recibió fuera (otra clínica,
    antes de afiliarse) no tiene cómo registrarse: aplicarlo pide una autorización para algo ya
    hecho, y cancelarlo termina su serie. Y el formulario con el que TIMU pide autorizar un
-   preventivo no existe: la familia agenda en el portal o le dice al equipo. Obligaciones: 6.1-27,
-   6.12-06, 6.8-06, 6.9-01, y por revisar en el bloque 3: 6.13.
+   preventivo no existe: la familia agenda en el portal o le dice al equipo. Sin lo preventivo de
+   la afiliación, a todo adulto se le programa cada refuerzo el día que se afilia. Obligaciones:
+   6.1-27, 6.12-06, 6.8-06, 6.9-01, 6.13-01 a 6.13-06.
 4. **Lo automático le habla a la familia, no al equipo.** La cartera le escribe sola a la familia
    (avisos de mora, congelamiento, reactivación), pero al equipo no le crea tareas ni alertas: la
    mora de una familia sin tarjeta no deja ninguna tarea, el motor no deja que una regla de cartera
@@ -199,7 +200,7 @@ tandas, sin esperar al final de la auditoría.
 - **6.4.** ¿Qué pasa si una familia no renueva: se renueva sola, se cancela, o sigue pagando? Hoy
   sigue pagando pero no puede agendar servicios.
 
-### Tercera tanda (bloque 3, en curso)
+### Tercera tanda (bloque 3, 2026-11-25)
 
 - **6.5-07.** Un beneficio con cupo «al año» (por ejemplo, cuatro consultas en la clínica), ¿se
   cuenta por año calendario o por año de afiliación? Hoy es el calendario: quien se afilia en
@@ -210,3 +211,12 @@ tandas, sin esperar al final de la auditoría.
   repite cada uno? ¿A los gatos también se les hace desparasitación externa?
 - **6.8-14.** Cuando la familia dice «ahora no» a una vacuna o una desparasitación, ¿para cuándo se
   vuelve a ofrecer? ¿Y si dice que no la quiere nunca?
+- **6.9.** ¿Cómo es hoy su formulario de autorización de preventivos: qué pregunta, lo llena la
+  familia en línea y alguien del equipo lo revisa antes de agendar? (Va con la pregunta de los
+  formularios de la primera tanda.)
+- **6.6.** ¿Qué pendientes deja hoy una atención (laboratorio, ecografía, procedimiento,
+  control)? Cuando el plan no lo cubre del todo, ¿cómo se le dice a la familia lo que paga
+  (valor, copago, descuento)?
+- **6.5-09 y 6.7.** ¿Necesitan llevar la disponibilidad de cada médico (horarios, días libres), o
+  basta con cuántas atenciones caben en cada franja? ¿Organizan las rutas por zonas, o cada
+  familia tiene un médico fijo?
