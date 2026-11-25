@@ -27,6 +27,16 @@ fiel y se audita sobre él.**
 5. **Al arreglar, cada obligación queda atada a la prueba que lleva su ID**, y una guarda hará
    fallar el CI si una fila «Cumple» no apunta a una prueba que existe: así un arreglo posterior
    no afloja uno anterior sin que se vea.
+6. **Lo que se sospecha grave se reproduce**, no se da por bueno leyendo el código. La prueba
+   temporal se escribe en el scratchpad, se copia a `backend/tests/` solo para correrla
+   (`pytest tests/<fichero> -s --no-cov`; sin `db-test` arriba no corre) y se borra en el mismo
+   comando: no queda en el repositorio. La fila dice que se reprodujo, contra qué y con qué fecha.
+   En la fase de arreglos, esa reproducción es la prueba que falla sin el arreglo.
+7. **Cómo se trabaja con el usuario** (decidido el 2026-11-24): se audita sin pararse a preguntar,
+   salvo que un requisito admita dos lecturas y el veredicto dependa de cuál es la buena. Por cada
+   requisito, un commit y un resumen corto (recuento y hallazgos graves). Al cerrar cada bloque, la
+   tanda de preguntas para TIMU. Las decisiones se toman al final, agrupadas por problema de diseño
+   (abajo), no requisito a requisito.
 
 ### Tipo de cada obligación
 
@@ -72,6 +82,27 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | 6 | 267 | 33 | 0 | 9 | 4 | 2 | 0 | 0 | 5 | 214 |
+
+## Problemas de diseño que van apareciendo
+
+Hallazgos de varios requisitos que tienen la misma causa. Se arreglan con una sola pieza, no
+requisito a requisito, y son la base de la sesión de decisiones del final. Cada bloque añade los
+suyos o amplía los que ya están.
+
+1. **Los cambios de estado no se propagan a los procesos que dependen de ellos.** Una familia
+   cancelada sigue en la ruta, en la bandeja de preventivos y con sus tareas abiertas; una
+   congelada conserva lo que ya tenía agendado; un peludo retirado sigue en la bandeja. El docstring
+   de `familias.cambiar_estado` promete unos enganches que no existen. Obligaciones: 6.23-06,
+   6.23-07 y 6.23-08.
+2. **No se registra la gestión con la familia.** Ni el servicio, ni el pendiente, ni el preventivo
+   guardan que se la contactó, qué respondió o que no contestó; «no autorizado» se resuelve de tres
+   formas distintas; y el portal le dice «Confirmada» a una cita que nadie confirmó. Obligaciones:
+   6.10-02, 6.10-05, 6.10-09, 6.10-10, y por revisar en el bloque 3: 6.5-02, 6.5-13, 6.8-12 y 6.8-13.
+3. **Lo que la familia ya dio no siempre llega a su ficha.** El bot comercial pregunta la ciudad y
+   los peludos y no los pasa al registro; Comercial no convierte un interesado en familia; la
+   afiliación no pregunta lo preventivo y el calendario no sabe qué recibió ya la mascota; y
+   `POST /formularios/familia` no lo alimenta nadie. Obligaciones: 6.1-27, 6.12-06, y por revisar en
+   el bloque 3: 6.13.
 
 ## Preguntas para TIMU
 
