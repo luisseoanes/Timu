@@ -58,8 +58,9 @@ uvicorn app.main:app --reload
 
 docker compose up -d db-test        # PostgreSQL de pruebas (puerto 5433, perfil `test`: el up general no la levanta). Sin esto, pytest aborta.
 pytest                              # suite completa, con cobertura y umbral del 92%
-pytest -m unit                      # sólo lo que no toca la base de datos
-pytest tests/test_alcance.py::test_una_familia_solo_se_ve_a_si_misma   # una sola prueba
+pytest -m unit --no-cov             # sólo lo que no toca la base de datos
+pytest tests/test_alcance.py::test_una_familia_solo_se_ve_a_si_misma --no-cov   # una sola prueba
+                                    # Sin --no-cov, una parte de la suite sale con 1 aunque pase: el umbral mide toda la app
 ruff format . && ruff check . && mypy app
 python scripts/generar_tipos_frontend.py   # regenera frontend/src/types/api.ts desde el OpenAPI; no se edita a mano.
                                            # Solo exporta los schemas de su lista ESQUEMAS: uno nuevo se añade ahí
