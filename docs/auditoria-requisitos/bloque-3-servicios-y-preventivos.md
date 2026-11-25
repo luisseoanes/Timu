@@ -152,24 +152,59 @@ Ejemplo, como manda el método («como»). Se auditan igual.
 
 ## 6.8. Gestión de servicios preventivos
 
+**Auditado el 2026-11-25.**
+
+**Lo que hay:**
+- **El calendario de cada mascota** sale de los esquemas de su especie, que Administración edita
+  (`EsquemaPreventivo`, `backend/app/modules/catalogos/models.py:59`; `calendario_inicial`,
+  `backend/app/modules/preventivos/service.py:66`). Un cachorro recibe la serie y un adulto, un
+  refuerzo. Hay siete esquemas sembrados (`backend/app/modules/catalogos/datos.py:316`): polivalente,
+  antirrábica y desparasitación interna para perros y gatos, y desparasitación externa solo para
+  perros. Los tipos de preventivo son tres: vacuna, desparasitación interna y externa
+  (`TipoPreventivo`, `backend/app/core/enums.py:327`).
+- **Cada preventivo está `programado`, `aplicado` o `cancelado`.** Requiere la autorización de la
+  familia (6.9) antes de aplicarse.
+- **La bandeja de Preventivos los agrupa por familia** (`bandeja`, `:195`), con el teléfono, en las
+  vistas «por autorizar», «por agendar», «agendados» y «todos». Las dos primeras toman lo que
+  vence en los próximos 30 días (`VENTANA_BANDEJA_DIAS`, `:133`).
+- **Cada día a las 9:00, a la familia se le recuerda por WhatsApp** lo que se acerca en los próximos
+  7 días, una sola vez y en un solo mensaje (`agenda_diaria`, `:468`). Lo ya vencido no se recuerda.
+- **Agendar un preventivo crea su visita** (`agendar`, `:520`). Lo que pasa en la visita le pasa al
+  preventivo: completarla lo aplica con el producto, el lote y el peso del paso, y programa la
+  dosis siguiente (`_seguir_servicio`, `:555`).
+- **Reproducido el 2026-11-25 contra `db-test`**, con una prueba temporal que no quedó en el
+  repositorio. Un perro adulto, en un plan que solo incluye la consulta domiciliaria, recibe cuatro
+  preventivos (polivalente, antirrábica y las dos desparasitaciones), y la bandeja pide autorizar
+  los cuatro. La familia dice que no a la antirrábica, y queda `cancelada`. Volver a calendarizar
+  no la crea de nuevo, así que la mascota se queda sin antirrábica.
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.8-01 | Identificar automáticamente usuarios próximos a recibir preventivos incluidos o asociados a su plan | Exige | Sin auditar | |
-| 6.8-02 | Servicio inicial: desparasitación interna | Exige | Sin auditar | |
-| 6.8-03 | Servicio inicial: desparasitación externa | Exige | Sin auditar | |
-| 6.8-04 | Servicio inicial: vacunación | Exige | Sin auditar | |
-| 6.8-05 | Servicio inicial: Bravecto u otros productos preventivos | Exige | Sin auditar | |
-| 6.8-06 | Registrar última aplicación | Exige | Sin auditar | |
-| 6.8-07 | Registrar producto | Exige | Sin auditar | |
-| 6.8-08 | Registrar fecha | Exige | Sin auditar | |
-| 6.8-09 | Registrar peso cuando sea pertinente | Exige | Sin auditar | |
-| 6.8-10 | Determinar próxima fecha | Exige | Sin auditar | |
-| 6.8-11 | Generar alerta | Exige | Sin auditar | |
-| 6.8-12 | Contactar a la familia | Exige | Sin auditar | |
-| 6.8-13 | Registrar respuesta | Exige | Sin auditar | Visto al auditar 6.10: el preventivo solo tiene `programado`, `aplicado` y `cancelado`; no guarda que se contactó ni qué respondió la familia. |
-| 6.8-14 | Reprogramar si no desea el servicio | Exige | Sin auditar | |
-| 6.8-15 | Incorporar a ruta cuando sea autorizado | Exige | Sin auditar | |
-| 6.8-16 | Actualizar automáticamente la próxima fecha una vez realizado el servicio | Exige | Sin auditar | |
+| 6.8-01 | Identificar automáticamente usuarios próximos a recibir preventivos incluidos o asociados a su plan | Exige | Parcial | **Identifica a los próximos**: en la bandeja (`test_la_bandeja_agrupa_por_familia_con_el_siguiente_paso`, `backend/tests/test_preventivos.py:452`; panel `PreventivosPage.test.tsx:66`), en el Inicio (`DashboardPage.test.tsx:244`) y en el recordatorio (`test_agenda_diaria_avisa_una_sola_vez`, `:221`). **Pero por el esquema de la especie, no por el plan**: ni el calendario, ni la bandeja, ni el recordatorio miran si el plan incluye ese preventivo (reproducido, arriba). Al agendarlo, la elegibilidad lo rechaza (6.5-06), y para entonces ya se le pidió la autorización a la familia. Además, la bandeja sigue mostrando los de una familia cancelada (6.23-07, Contradice). |
+| 6.8-02 | Servicio inicial: desparasitación interna | Exige | Cumple | Esquemas para perros y gatos, que se agendan como «Desparasitación» y se aplican con el peso (`test_la_desparasitacion_en_visita_lleva_el_peso_al_carnet`, `backend/tests/test_preventivos.py:401`). |
+| 6.8-03 | Servicio inicial: desparasitación externa | Exige | Cumple | Esquema mensual para perros (`can_desp_externa`, `backend/app/modules/catalogos/datos.py:347`), que entra al calendario (reproducido, arriba) y se agenda como la interna. Para gatos no hay esquema sembrado; Administración lo puede crear (`test_esquema_nuevo_desde_el_catalogo_sin_desplegar`, `:67`). |
+| 6.8-04 | Servicio inicial: vacunación | Exige | Cumple | La serie del cachorro y el refuerzo del adulto (`test_cachorro_recibe_la_serie_y_el_adulto_un_refuerzo`, `:53`), con su tipo de servicio y sus pasos (`test_completar_la_visita_aplica_el_preventivo`, `:378`). |
+| 6.8-05 | Servicio inicial: Bravecto u otros productos preventivos | Exige | Parcial | Bravecto se puede anotar como el producto de una desparasitación externa (el producto es texto libre). Pero **la próxima fecha la da el esquema, no el producto**: el externo sembrado es cada 30 días, y Bravecto dura unas 12 semanas. Un esquema nuevo solo aplica a las mascotas que se calendaricen después. No hay un tipo para otros productos preventivos fuera de los tres. |
+| 6.8-06 | Registrar última aplicación | Exige | Cumple | Al aplicarlo queda `aplicado`, con fecha, producto, lote y quién (`aplicar`, `backend/app/modules/preventivos/service.py:359`). Se registra desde la visita o sin visita, por el médico (`test_aplicar_reprograma_la_serie_desde_la_fecha_real`, `backend/tests/test_preventivos.py:118`; `test_completar_la_visita_aplica_el_preventivo`; panel `PreventivosPage.test.tsx:154`). **Lo aplicado fuera** (otra clínica, antes de afiliarse) se registra mal: aplicarlo exige la autorización de la familia para algo ya hecho, y la alternativa que usan las pruebas, cancelarlo con «la familia lo aplicó en otra clínica» (`:512`), termina su serie (14). Va con 6.13. |
+| 6.8-07 | Registrar producto | Exige | Cumple | Obligatorio al aplicar, con el lote (el paso «Aplicación», `backend/app/modules/catalogos/datos.py:255`; `test_ciclo_de_vacunacion`, `backend/tests/test_servicios.py:161`). Es texto libre, sin catálogo de productos. |
+| 6.8-08 | Registrar fecha | Exige | Cumple | La de aplicación, nunca futura, y la base no deja un `aplicado` sin ella (`CHECK aplicado_con_fecha`, `backend/app/modules/preventivos/models.py:26`; `test_aplicar_reprograma_la_serie_desde_la_fecha_real`). |
+| 6.8-09 | Registrar peso cuando sea pertinente | Exige | Cumple | Opcional en la desparasitación. Va al carnet y, si es el más reciente, a la ficha de la mascota (`test_la_desparasitacion_en_visita_lleva_el_peso_al_carnet`; `test_el_peso_de_la_aplicacion_pasa_a_la_ficha_si_es_el_mas_reciente`, `:578`; `test_un_peso_imposible_no_se_registra`, `:188`). |
+| 6.8-10 | Determinar próxima fecha | Exige | Cumple | Desde la fecha real de aplicación, con el intervalo de la serie o del refuerzo del esquema (`test_aplicar_reprograma_la_serie_desde_la_fecha_real`). Depende del esquema y no del producto (05). |
+| 6.8-11 | Generar alerta | Exige | Cumple | A la familia, el recordatorio de 7 días, que sale cuando su plantilla esté aprobada en Meta (`test_la_agenda_junta_los_peludos_de_una_familia_en_un_mensaje`, `:235`; `test_agenda_sin_plantilla_no_marca_como_avisado`, `:283`). Al equipo, la bandeja, con lo vencido incluido, y el Inicio con los preventivos por autorizar (`DashboardPage.test.tsx:244`). Lo vencido no se le recuerda a la familia (`test_la_agenda_no_recuerda_lo_ya_vencido`, `:267`). |
+| 6.8-12 | Contactar a la familia | Exige | Parcial | Lo automático es el recordatorio. Para lo demás, la bandeja da el teléfono de cada familia, y el contacto se hace fuera de la plataforma, que no deja escribirle desde el panel (problema de diseño 8). Que se la contactó no queda en ninguna parte (13). |
+| 6.8-13 | Registrar respuesta | Exige | Parcial | Solo dos respuestas: autorizó o no autorizó, con quién la registró, cuándo y por qué medio (`autorizar`, `backend/app/modules/preventivos/service.py:320`; `test_rechazo_de_la_familia_cancela`, `backend/tests/test_preventivos.py:146`; panel `PreventivosPage.test.tsx:91`). No caben «no contestó», «más adelante» ni «ya se lo pusieron». Es el problema de diseño 2. |
+| 6.8-14 | Reprogramar si no desea el servicio | Exige | **Contradice** | **Reproducido** (arriba). Si la familia no lo quiere ahora, el panel solo ofrece «No autorizó» o cancelarlo con un motivo. Las dos cosas lo dejan `cancelado` (`:320` y `:425`), y la dosis siguiente solo nace al aplicar (`aplicar`, `:359`): **la serie de ese esquema se acaba**. Volver a calendarizar tampoco la recupera, porque cuenta como programado cualquier esquema que la mascota ya tuvo (`calendario_inicial`, `:66`). No hay cómo mover la fecha de un preventivo; solo se reprograma su visita, una vez agendada. |
+| 6.8-15 | Incorporar a ruta cuando sea autorizado | Exige | Cumple | Lo autorizado se agenda desde la bandeja como una visita en casa (modalidad preventiva), que entra a la ruta (6.7-04), y la visita nace autorizada (`test_agendar_crea_el_servicio`, `:307`; `test_la_visita_de_un_preventivo_autorizado_nace_autorizada`, `:354`; panel `PreventivosPage.test.tsx:110`). La API deja agendar uno sin autorizar, y su visita puede llegar a la ruta por el atajo de 6.6-09. |
+| 6.8-16 | Actualizar automáticamente la próxima fecha una vez realizado el servicio | Exige | Cumple | Completar la visita aplica el preventivo con lo registrado en su paso y programa la dosis siguiente (`test_completar_la_visita_aplica_el_preventivo`; `_seguir_servicio`, `backend/app/modules/preventivos/service.py:555`). |
+
+**Lo que hay que decidir:**
+- 14: que «no lo quiere ahora» mueva la fecha en vez de cancelar, y qué pasa con la serie cuando de
+  verdad no lo quiere.
+- 01: que el calendario, la bandeja y el recordatorio miren lo que incluye el plan.
+- 05: que la próxima fecha pueda depender del producto (Bravecto), y qué otros productos maneja
+  TIMU.
+- 06, 12 y 13: cómo se registra lo aplicado fuera y la respuesta de la familia (con 6.13 y el
+  problema de diseño 2).
 
 ## 6.9. Autorización de servicios preventivos
 

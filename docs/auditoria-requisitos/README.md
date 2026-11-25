@@ -69,7 +69,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | --- | --- | --- | --- |
 | 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [bloque-1-estados-y-ciclo-de-vida](bloque-1-estados-y-ciclo-de-vida.md) | Auditado (2026-11-24) |
 | 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | Auditado (2026-11-25) |
-| 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | En curso: 6.5 a 6.7 auditados (2026-11-25) |
+| 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | En curso: 6.5 a 6.8 auditados (2026-11-25) |
 | 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | Sin auditar |
 | 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | Sin auditar |
 | 6. Clínicas aliadas | 6.22 | [bloque-6-clinicas-aliadas](bloque-6-clinicas-aliadas.md) | Sin auditar |
@@ -81,7 +81,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 64 | 0 | 29 | 14 | 6 | 0 | 0 | 12 | 142 |
+| 6 | 267 | 75 | 0 | 33 | 14 | 7 | 0 | 0 | 12 | 126 |
 
 ## Problemas de diseño que van apareciendo
 
@@ -93,19 +93,22 @@ suyos o amplía los que ya están.
    cancelada sigue en la ruta, en la bandeja de preventivos y con sus tareas abiertas; una
    congelada conserva lo que ya tenía agendado; un peludo retirado sigue en la bandeja. El docstring
    de `familias.cambiar_estado` promete unos enganches que no existen. Obligaciones: 6.23-06,
-   6.23-07, 6.23-08 y 6.2-05.
+   6.23-07, 6.23-08, 6.2-05 y 6.8-01.
 2. **No se registra la gestión con la familia.** Ni el servicio, ni el pendiente, ni el preventivo
    guardan que se la contactó, qué respondió o que no contestó; «no autorizado» se resuelve de tres
    formas distintas; y el portal le dice «Confirmada» a una cita que nadie confirmó. En cartera,
    queda lo que la plataforma le escribe a la familia, pero no que alguien del equipo la llamó ni
    qué prometió. Al programar, lo que la familia pide sin fecha no queda en ninguna parte, la
    autorización del servicio es la del médico y no la de la familia, y no hay confirmación.
-   Obligaciones: 6.10-02, 6.10-05, 6.10-09, 6.10-10, 6.2-20, 6.5-02, 6.5-03, 6.5-11, 6.5-13, y por
-   revisar en el bloque 3: 6.8-12 y 6.8-13.
+   En los preventivos, la familia solo puede autorizar o no: «más adelante» o «no contestó» no
+   caben. Obligaciones: 6.10-02, 6.10-05, 6.10-09, 6.10-10, 6.2-20, 6.5-02, 6.5-03, 6.5-11,
+   6.5-13, 6.8-12 y 6.8-13.
 3. **Lo que la familia ya dio no siempre llega a su ficha.** El bot comercial pregunta la ciudad y
    los peludos y no los pasa al registro; Comercial no convierte un interesado en familia; la
    afiliación no pregunta lo preventivo y el calendario no sabe qué recibió ya la mascota; y
-   `POST /formularios/familia` no lo alimenta nadie. Obligaciones: 6.1-27, 6.12-06, y por revisar en
+   `POST /formularios/familia` no lo alimenta nadie. Lo que la mascota recibió fuera (otra clínica,
+   antes de afiliarse) no tiene cómo registrarse: aplicarlo pide una autorización para algo ya
+   hecho, y cancelarlo termina su serie. Obligaciones: 6.1-27, 6.12-06, 6.8-06, y por revisar en
    el bloque 3: 6.13.
 4. **Lo automático le habla a la familia, no al equipo.** La cartera le escribe sola a la familia
    (avisos de mora, congelamiento, reactivación), pero al equipo no le crea tareas ni alertas: la
@@ -136,7 +139,7 @@ suyos o amplía los que ya están.
    pantalla lo usa: ni la ficha, ni la bandeja de cartera, ni un pendiente. Lo que la plataforma
    no manda sola, el equipo lo escribe fuera, por WhatsApp. Va junto con la fila de 6.17 y 6.19 de
    [lo que falta](../pendiente-en-el-codigo.md) (WhatsApp en coexistencia). Obligaciones: 6.3-08,
-   6.6-05, y el hueco de 6.2-11.
+   6.6-05, 6.8-12, y el hueco de 6.2-11.
 9. **La autorización es una marca que se revisa tarde.** El servicio que la requiere se programa
    primero: toma su fecha y su cupo, y después espera. La autorización es la del médico, no la de
    la familia, y solo se exige para salir en ruta o atender. Antes de eso, «Confirmar agenda» lo
@@ -202,3 +205,7 @@ tandas, sin esperar al final de la auditoría.
   noviembre usa su cupo en noviembre y diciembre, y tiene otro completo en enero.
 - **6.5-06.** ¿Los beneficios tienen periodo de carencia (días desde la afiliación antes de poder
   usarlos)? ¿Cuáles y de cuántos días?
+- **6.8-05.** ¿Qué productos preventivos aplican (Bravecto, pipetas, collares…) y cada cuánto se
+  repite cada uno? ¿A los gatos también se les hace desparasitación externa?
+- **6.8-14.** Cuando la familia dice «ahora no» a una vacuna o una desparasitación, ¿para cuándo se
+  vuelve a ofrecer? ¿Y si dice que no la quiere nunca?
