@@ -69,7 +69,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | --- | --- | --- | --- |
 | 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [bloque-1-estados-y-ciclo-de-vida](bloque-1-estados-y-ciclo-de-vida.md) | Auditado (2026-11-24) |
 | 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | Auditado (2026-11-25) |
-| 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | En curso: 6.5 auditado (2026-11-25) |
+| 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | En curso: 6.5 y 6.6 auditados (2026-11-25) |
 | 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | Sin auditar |
 | 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | Sin auditar |
 | 6. Clínicas aliadas | 6.22 | [bloque-6-clinicas-aliadas](bloque-6-clinicas-aliadas.md) | Sin auditar |
@@ -81,7 +81,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 54 | 0 | 24 | 9 | 5 | 0 | 0 | 12 | 163 |
+| 6 | 267 | 55 | 0 | 27 | 13 | 6 | 0 | 0 | 12 | 154 |
 
 ## Problemas de diseño que van apareciendo
 
@@ -113,8 +113,8 @@ suyos o amplía los que ya están.
    cree una ni avise al equipo, y nadie se entera de un congelamiento ni del retiro de un peludo
    de un contrato. Las dos tareas que sí existen son del cobro con tarjeta guardada, y ninguna
    pantalla registra una tarjeta. Mientras las plantillas de mora no estén aprobadas en Meta, la
-   mora solo la ve quien entra al panel (el Inicio y la bandeja). Obligaciones: 6.2-01, 6.2-09,
-   6.2-10 y 6.3-06.
+   mora solo la ve quien entra al panel (el Inicio y la bandeja). Tampoco crea tarea un pendiente
+   de una atención. Obligaciones: 6.2-01, 6.2-09, 6.2-10, 6.3-06 y 6.6-04.
 5. **El periodo congelado no tiene política.** Congelada, la afiliación deja de emitir cuotas,
    pero la emisión retoma desde la última emitida: al reactivarse se cobran de golpe los meses
    congelados, ya vencidos, y la familia vuelve a congelarse al día siguiente (reproducido el
@@ -128,9 +128,20 @@ suyos o amplía los que ya están.
 7. **Lo que se registra no se ve.** La base guarda cada aviso de mora con su regla, cada cambio
    de valor de un contrato (`cambios_plan`) y la auditoría de cada cambio del contrato, pero
    ninguna pantalla ni ruta los lee: el Historial de la familia solo muestra los cambios de su
-   ficha. Lo mismo con la historia de estados de un servicio: la ficha solo dice el motivo del
-   último cambio. La trazabilidad existe solo para quien consulta la base. Obligaciones: 6.2-20,
-   6.3-07, 6.4-06, 6.4-07 y 6.5-14.
+   ficha. Lo mismo con la historia de estados de un servicio, de la que la ficha solo dice el
+   motivo del último cambio, y con la de un pendiente. La trazabilidad existe solo para quien
+   consulta la base. Obligaciones: 6.2-20, 6.3-07, 6.4-06, 6.4-07, 6.5-14 y 6.6-08.
+8. **El equipo no puede escribirle a una familia desde el panel.** La API tiene cómo mandar una
+   plantilla o un texto (`POST /comunicaciones/mensajes/plantilla` y `/texto`), pero ninguna
+   pantalla lo usa: ni la ficha, ni la bandeja de cartera, ni un pendiente. Lo que la plataforma
+   no manda sola, el equipo lo escribe fuera, por WhatsApp. Va junto con la fila de 6.17 y 6.19 de
+   [lo que falta](../pendiente-en-el-codigo.md) (WhatsApp en coexistencia). Obligaciones: 6.3-08,
+   6.6-05, y el hueco de 6.2-11.
+9. **La autorización es una marca que se revisa tarde.** El servicio que la requiere se programa
+   primero: toma su fecha y su cupo, y después espera. La autorización es la del médico, no la de
+   la familia, y solo se exige para salir en ruta o atender. Antes de eso, «Confirmar agenda» lo
+   pasa a `agendado` sin ella, y el planificador lo mete en una ruta (reproducido el 2026-11-25).
+   Obligaciones: 6.5-02, 6.5-11, 6.5-15 y 6.6-09 (junto con 6.10-03).
 
 ## Preguntas para TIMU
 

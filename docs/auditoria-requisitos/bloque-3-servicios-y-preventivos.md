@@ -63,17 +63,46 @@ Las rutas de la evidencia son relativas a la raíz del repositorio.
 
 ## 6.6. Gestión de pendientes derivados de una atención
 
+**Auditado el 2026-11-25.**
+
+**Lo que hay:**
+- El médico registra un pendiente desde la ficha del servicio que atiende (`crear_pendiente`,
+  `backend/app/modules/servicios/service.py:606`). Lleva una descripción en texto libre y si
+  requiere la autorización de la familia (`Pendiente`, `backend/app/modules/servicios/models.py:121`).
+  No dice qué servicio es.
+- Atención al cliente lo gestiona en Servicios → Pendientes (`frontend/src/features/servicios/ServiciosPage.tsx:70`).
+  Registra si la familia lo autorizó o no, y por qué medio. Después lo pasa a gestión y lo marca
+  resuelto, con su resolución. La lista dice la descripción, un enlace al servicio de origen y el
+  estado; ni la familia ni la mascota.
+- La API deja agendar un servicio atado a un pendiente autorizado (`pendiente_id` en
+  `POST /servicios`, `backend/app/modules/servicios/router.py:393`). El panel no lo usa: ni el alta
+  de un servicio ni la gestión del pendiente lo mandan.
+- **Reproducido el 2026-11-25 contra `db-test`**, con una prueba temporal que no quedó en el
+  repositorio. Una vacunación, que requiere autorización, nace `pendiente_autorizacion`. «Confirmar
+  agenda», el botón verde de su ficha, la pasa a `agendado` sin autorizarla (200). Desde ahí entra
+  en lo que se propone para la ruta, y el planificador la mete en la ruta del médico. Al llegar, él
+  no puede salir hacia ella (422, «requiere autorización registrada»).
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.6-01 | Registrar el pendiente (laboratorio, ecografía, procedimiento, control, seguimiento) asociado a la mascota | Exige | Sin auditar | La fila 6.6 de [lo que falta en el código](../pendiente-en-el-codigo.md) dice que es texto libre. |
-| 6.6-02 | Identificar cobertura según el plan | Exige | Sin auditar | |
-| 6.6-03 | Determinar condiciones y/o valor aplicable | Exige | Sin auditar | |
-| 6.6-04 | Generar tarea para el equipo | Exige | Sin auditar | |
-| 6.6-05 | Facilitar la comunicación con la familia | Exige | Sin auditar | |
-| 6.6-06 | Registrar autorización o rechazo | Exige | Sin auditar | |
-| 6.6-07 | Iniciar programación únicamente cuando corresponda | Exige | Sin auditar | |
-| 6.6-08 | Mantener trazabilidad | Exige | Sin auditar | |
-| 6.6-09 | **No enviar automáticamente a ruta o agenda un servicio que aún requiere autorización o validación de disponibilidad** | Exige | Sin auditar | Visto al auditar 6.10: un servicio con `requiere_autorizacion` puede pasar de `solicitado` a `agendado` sin autorización; solo se le impide pasar a `en_ruta` o `en_atencion` (`backend/app/modules/servicios/service.py:453`). Revisar si eso es «enviar a la agenda». |
+| 6.6-01 | Registrar el pendiente (laboratorio, ecografía, procedimiento, control, seguimiento) asociado a la mascota | Exige | Parcial | Se registra desde la atención, con su descripción y si requiere autorización (`test_pendiente_no_avanza_sin_autorizacion`, `backend/tests/test_servicios.py:271`; panel `ServicioDetallePage.test.tsx:267` y `servicios.test.tsx:228`), y sale en la pestaña Servicios de la familia (6.1-11). Va atado a la mascota solo a través de su servicio de origen: si ese servicio era para toda la familia, el pendiente no tiene mascota. **Es texto libre**: no dice si es un laboratorio, una ecografía o un control, ni a qué tipo de servicio corresponde, y de eso dependen 02, 03 y 07 (la fila 6.6 de [lo que falta](../pendiente-en-el-codigo.md)). |
+| 6.6-02 | Identificar cobertura según el plan | Exige | Falta | Sin tipo de servicio no hay con qué mirar el plan. La cobertura solo se comprueba si el pendiente se agenda como servicio (6.5-06), después de que la familia ya autorizó. Además, laboratorio, ecografía y procedimiento no existen como tipos de servicio (`TIPOS_SERVICIO`, `backend/app/modules/catalogos/datos.py:264`): no se pueden agendar ni comprobar. |
+| 6.6-03 | Determinar condiciones y/o valor aplicable | Exige | Falta | Nada calcula un valor. El beneficio tiene cobertura, copago y tope por episodio, pero solo se usan para decírselos a la familia (`backend/app/modules/planes/service.py:294`); el único cálculo de lo cubierto es el de las remisiones a una clínica aliada (`backend/app/modules/aliadas/service.py:327`, 6.22). |
+| 6.6-04 | Generar tarea para el equipo | Exige | Falta | Crear un pendiente no crea ninguna tarea ni publica nada a lo que una regla pueda engancharse. Lo que hay es la lista de Servicios → Pendientes, que se abre en «pendiente de autorización». No tiene responsable ni vencimiento, y no sale en Tareas ni en el Inicio. |
+| 6.6-05 | Facilitar la comunicación con la familia | Exige | Falta | No se le dice nada a la familia, que tampoco ve sus pendientes en el portal. Desde la lista de pendientes no se ve ni a quién llamar: hay que abrir el servicio de origen. Y el equipo no puede escribirle desde el panel (6.2-11). |
+| 6.6-06 | Registrar autorización o rechazo | Exige | Cumple | Con quién la tomó, cuándo y por qué medio (WhatsApp, llamada, en persona, portal o correo), y sin autorización no avanza (`autorizar_pendiente`, `backend/app/modules/servicios/service.py:631`; `test_pendiente_no_avanza_sin_autorizacion`; `test_pendiente_rechazado_no_se_agenda`, `backend/tests/test_servicios.py:303`; panel `ServiciosPage.gestion.test.tsx:227` y `:244`). Lo registra el equipo, por lo que la familia le dijo. |
+| 6.6-07 | Iniciar programación únicamente cuando corresponda | Exige | Parcial | La API solo deja agendar un servicio atado a un pendiente autorizado o en gestión (`backend/app/modules/servicios/router.py:393`; `test_pendiente_rechazado_no_se_agenda`). Pero **el panel no agenda desde un pendiente**: la gestión solo ofrece pasar a gestión y marcar resuelto, y el alta de un servicio no manda `pendiente_id`. El servicio que se agenda después no queda atado a su pendiente. Autorizar no inicia nada, y ninguna prueba agenda un pendiente autorizado. |
+| 6.6-08 | Mantener trazabilidad | Exige | Parcial | El pendiente guarda quién lo autorizó, cuándo, por qué medio y cómo se resolvió, y la base audita cada cambio. El servicio que sale de él lo apunta (`pendiente_origen_id`), pero solo si se agendó por la API (07). Ninguna pantalla muestra la historia del pendiente (problema de diseño 7). |
+| 6.6-09 | **No enviar automáticamente a ruta o agenda un servicio que aún requiere autorización o validación de disponibilidad** | Exige | **Contradice** | **Reproducido** (arriba). El grafo deja pasar de `pendiente_autorizacion` a `agendado` (`backend/app/modules/servicios/state_machine.py:16`), y `cambiar_estado` solo exige la autorización para salir en ruta o atender (`backend/app/modules/servicios/service.py:453`). La ficha ofrece ese paso como su acción principal, «Confirmar agenda», a cualquier perfil (`frontend/src/features/servicios/FichaServicio.tsx:181`). Lo que se propone para la ruta solo mira el estado (`por_rutear`, `backend/app/modules/rutas/service.py:98`), y el planificador la mete en la ruta sola. Y antes de eso, mientras espera la autorización, la cita ya está en la agenda con su fecha y ocupa un cupo (6.5-02). |
+
+**Lo que hay que decidir:**
+- 01 a 03: que el pendiente diga qué servicio es (un tipo del catálogo, con laboratorio, ecografía y
+  procedimiento), para que se mire su cobertura y su valor antes de pedirle la autorización a la
+  familia.
+- 04, 05 y 07: la tarea que crea, cómo se le comunica a la familia, y que se agende desde el propio
+  pendiente.
+- 09: que nada que espere autorización llegue a `agendado` ni a una ruta, y si mientras espera
+  ocupa un cupo.
 
 ## 6.7. Gestión de rutas domiciliarias
 
