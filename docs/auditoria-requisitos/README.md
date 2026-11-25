@@ -68,7 +68,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | Bloque | Requisitos | Fichero | Estado |
 | --- | --- | --- | --- |
 | 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [bloque-1-estados-y-ciclo-de-vida](bloque-1-estados-y-ciclo-de-vida.md) | Auditado (2026-11-24) |
-| 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | En curso: 6.2 auditado (2026-11-25) |
+| 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | En curso: 6.2 y 6.3 auditados (2026-11-25) |
 | 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | Sin auditar |
 | 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | Sin auditar |
 | 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | Sin auditar |
@@ -81,7 +81,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 45 | 0 | 14 | 6 | 3 | 0 | 0 | 5 | 194 |
+| 6 | 267 | 45 | 0 | 14 | 8 | 3 | 0 | 0 | 12 | 185 |
 
 ## Problemas de diseño que van apareciendo
 
@@ -108,10 +108,11 @@ suyos o amplía los que ya están.
 4. **Lo automático le habla a la familia, no al equipo.** La cartera le escribe sola a la familia
    (avisos de mora, congelamiento, reactivación), pero al equipo no le crea tareas ni alertas: la
    mora de una familia sin tarjeta no deja ninguna tarea, el motor no deja que una regla de cartera
-   cree una ni avise al equipo, y nadie se entera de un congelamiento. Las dos tareas que sí
-   existen son del cobro con tarjeta guardada, y ninguna pantalla registra una tarjeta. Mientras las
-   plantillas de mora no estén aprobadas en Meta, la mora solo la ve quien entra al panel (el Inicio
-   y la bandeja). Obligaciones: 6.2-01, 6.2-09 y 6.2-10.
+   cree una ni avise al equipo, y nadie se entera de un congelamiento ni del retiro de un peludo
+   de un contrato. Las dos tareas que sí existen son del cobro con tarjeta guardada, y ninguna
+   pantalla registra una tarjeta. Mientras las plantillas de mora no estén aprobadas en Meta, la
+   mora solo la ve quien entra al panel (el Inicio y la bandeja). Obligaciones: 6.2-01, 6.2-09,
+   6.2-10 y 6.3-06.
 5. **El periodo congelado no tiene política.** Congelada, la afiliación deja de emitir cuotas,
    pero la emisión retoma desde la última emitida: al reactivarse se cobran de golpe los meses
    congelados, ya vencidos, y la familia vuelve a congelarse al día siguiente (reproducido el
@@ -134,3 +135,16 @@ tandas, sin esperar al final de la auditoría.
   recibir la plataforma (6.1-27).
 - **6.1-03.** ¿Quiénes de una familia necesitan entrar al portal? Hoy entra solo el titular, y hasta
   tres contactos más quedan registrados pero sin acceso.
+
+### Segunda tanda (bloque 2, en curso)
+
+- **6.3. Necesitamos que TIMU aclare qué es un «plan grupal».** ¿Es la afiliación de una familia
+  con varios peludos, en la que cada uno paga menos según cuántos son (como la escala de precios
+  de hoy)? ¿O es un plan que agrupa a varias personas o familias, por ejemplo de una empresa o de
+  un grupo familiar con varios titulares? Si es lo segundo, ¿cómo funciona hoy: quién paga, cómo
+  se reparte el valor y qué pasa cuando alguien sale? Hasta que respondan, 6.3 queda «Por
+  decidir» y se audita con las dos lecturas.
+- **6.3, si es la familia con varios peludos.** Cuando un peludo sale del plan (fallece, se da en
+  adopción), ¿desde cuándo cambia lo que paga la familia? ¿Se le devuelve o se le abona lo que ya
+  pagó del periodo en curso? Hoy cambia desde la siguiente cuota y no se devuelve nada: en un pago
+  anual, puede ser casi un año.

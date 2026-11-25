@@ -75,17 +75,61 @@ los exige por sí mismos, pero describen el proceso que la plataforma sustituye.
 
 ## 6.3. Cambios en planes grupales
 
+**Auditado el 2026-11-25, con dos lecturas.**
+
+**El documento no dice qué es un «plan grupal», y el veredicto depende de eso.** El usuario decidió
+el 2026-11-25 auditarlo con las dos lecturas y pedirle a TIMU que lo aclare
+([preguntas para TIMU](README.md#preguntas-para-timu)):
+
+- **Lectura A, la del código: una familia con varios peludos.** Cada peludo tiene su plan, y todos
+  pagan la tarifa de su plan para el número total de peludos, aunque estén en planes distintos. Hay
+  tarifa de 1 a 4; desde 4, la de 4; como máximo, 10 (`planes.cotizar`,
+  `backend/app/modules/planes/service.py:168`). El «integrante» es un peludo: retirarlo
+  (`contratos.retirar_mascota`, `backend/app/modules/cartera/contratos.py:245`) pasa a los demás a
+  la tarifa del nuevo número desde la siguiente cuota. Los precios por número de peludos son los de
+  TIMU ([pendientes externos](../pendientes-externos.md), «Precios de los planes»).
+- **Lectura B, la del texto: varias personas o familias bajo un mismo plan** (un plan de empresa,
+  un grupo familiar con varios titulares). El documento llama «usuario» a la persona, nunca a la
+  mascota: «identificar usuario y mascota» (6.5), «segmentar usuarios y mascotas» y «Grupo
+  familiar» (6.16). No existe: un contrato es de una sola familia (`familia_vigente`,
+  `backend/app/modules/cartera/models.py:58`), y los contactos adicionales no tienen plan ni acceso
+  (6.1-03).
+
+Con la lectura B todas las filas son Falta. Por eso cada fila es **Por decidir**, salvo donde las
+dos lecturas dan lo mismo, y la evidencia es la de la lectura A.
+
+**Lo que hay (lectura A):**
+- El alta y la baja de un peludo con el contrato vigente las orquesta
+  `backend/app/modules/afiliaciones/ciclo.py` (`dar_de_baja_mascota`, `:75`). La baja la hace el equipo desde la ficha, con un motivo; el portal
+  no deja retirar un peludo.
+- Cada cambio de valor queda en `cambios_plan` (`CambioPlan`, `backend/app/modules/planes/models.py:185`),
+  con su tipo (`cambio_plan`, `mascota_alta` o `mascota_baja`), el valor anterior y el nuevo, la
+  fecha, quién lo hizo y la regla, si la hubo. La tabla no cambia una vez escrita, salvo `aplicado`
+  (`INMUTABLES`, `backend/app/core/auditoria.py:53`).
+- **Reproducido el 2026-11-25 contra `db-test`**, con una prueba temporal que no quedó en el
+  repositorio. En un contrato anual de dos peludos ($840.000 al año), 40 días después se retira uno
+  por la API. El contrato pasa a $480.000 desde la siguiente cuota anual; la ya emitida sigue en
+  $840.000, sin ajuste ni saldo a favor. Queda el registro `mascota_baja` (valores, fecha y quién,
+  sin regla), y no se crea ninguna tarea ni sale ningún mensaje.
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.3-01 | Gestionar usuarios vinculados a planes grupales | Exige | Sin auditar | |
-| 6.3-02 | Al retirarse un integrante: identificar el cambio | Exige | Sin auditar | |
-| 6.3-03 | … actualizar la composición del grupo | Exige | Sin auditar | |
-| 6.3-04 | … aplicar la regla correspondiente | Exige | Sin auditar | |
-| 6.3-05 | … actualizar el valor a pagar | Exige | Sin auditar | |
-| 6.3-06 | … generar alerta o tarea | Exige | Sin auditar | |
-| 6.3-07 | … registrar la modificación | Exige | Sin auditar | |
-| 6.3-08 | … facilitar la comunicación al usuario | Exige | Sin auditar | |
-| 6.3-09 | Las reglas se pueden modificar después sin reconstruir la plataforma | Exige | Sin auditar | |
+| 6.3-01 | Gestionar usuarios vinculados a planes grupales | Exige | Por decidir | **A: Cumple.** Se agregan y se retiran peludos, cada uno con su plan, y la composición se ve en la pestaña Cartera, con lo que paga cada uno (`frontend/src/features/familias/CarteraFamilia.tsx:78`). Pruebas: `test_con_dos_peludos_cada_uno_paga_la_tarifa_de_dos_aunque_esten_en_planes_distintos` (`backend/tests/test_planes.py:275`), `test_desde_cuatro_peludos_todos_pagan_la_tarifa_de_cuatro_y_el_maximo_es_diez` (`:298`), `test_el_cambio_de_plan_de_un_peludo_no_cambia_el_de_los_demas` (`:513`), y en el panel `FamiliaDetallePage.test.tsx:627`, `:1077` y `:1104`. **B: Falta.** |
+| 6.3-02 | Al retirarse un integrante: identificar el cambio | Exige | Por decidir | **A: Cumple.** El retiro es una acción explícita del equipo, con su motivo (`POST /mascotas/{id}/baja`, `backend/app/modules/afiliaciones/router.py:245`), y queda como `mascota_baja` (reproducido, arriba). No hay otro camino: si la familia avisa por WhatsApp o en el portal, alguien del equipo tiene que hacerlo. **B: Falta.** |
+| 6.3-03 | … actualizar la composición del grupo | Exige | Por decidir | **A: Cumple.** La línea del peludo queda inactiva, con su fecha de baja (`AfiliacionMascota`, `backend/app/modules/cartera/models.py:94`, con `CHECK baja_coherente`), y el contrato solo cuenta los vigentes (`contratos.lineas`, `backend/app/modules/cartera/contratos.py:38`). Prueba: `test_un_peludo_mas_baja_la_tarifa_de_todos_desde_la_siguiente_cuota` (`backend/tests/test_planes.py:555`). No se puede retirar el último peludo sin cancelar el contrato (`test_el_unico_peludo_no_se_retira_sin_cancelar_el_contrato`, `:588`). **B: Falta.** |
+| 6.3-04 | … aplicar la regla correspondiente | Exige | Por decidir | **A: Parcial.** La regla de precio se aplica sola: la tarifa del nuevo número de peludos, que edita el administrador (09). **Cómo se aplica el retiro, en cambio, está fijo en el código y no consulta ninguna regla**: siempre «desde la siguiente cuota», sin devolver nada del periodo en curso (`_recalcular`, `backend/app/modules/cartera/contratos.py:159`, con `modo="proxima_cuota"`). En un contrato anual, la familia paga hasta casi un año por el peludo que ya salió (reproducido). El cambio de plan sí tiene regla (`plan.cambio`, con prorrateo o desde el periodo siguiente), y el alta desde el portal cobra el ajuste prorrateado (`backend/app/modules/afiliaciones/altas.py:96`). El alta desde el panel, según el código, no cobra nada hasta la siguiente cuota (`contratos.agregar_mascota`, `:218`): **la misma regla no se aplica igual según quién haga el cambio.** **B: Falta.** |
+| 6.3-05 | … actualizar el valor a pagar | Exige | Por decidir | **A: Cumple.** El contrato y cada peludo pasan a la tarifa del nuevo número, y el valor por periodo se recalcula, también con el descuento de periodo largo cuando queda un solo peludo (`test_un_peludo_mas_baja_la_tarifa_de_todos_desde_la_siguiente_cuota`, que retira y vuelve a $35.500; `test_trimestral_con_un_peludo_y_sin_descuento_al_sumar_otro`, `backend/tests/test_planes.py:608`). Las cuotas ya emitidas no cambian (04). **B: Falta.** |
+| 6.3-06 | … generar alerta o tarea | Exige | Falta | **A y B: Falta.** El retiro no crea ninguna tarea ni alerta (reproducido). Tampoco se puede configurar: no hay evento de reglas para el retiro (el de `plan.mascota` se retiró en la migración 0033, `backend/app/modules/reglas/motor.py:157`). Es el problema de diseño 4. |
+| 6.3-07 | … registrar la modificación | Exige | Por decidir | **A: Parcial.** Queda registrado: el `mascota_baja` de `cambios_plan` (valores, fecha y quién, y no cambia una vez escrito), la línea inactiva del peludo con su auditoría, y su baja con el motivo (reproducido). **Pero nadie lo puede ver**: ninguna ruta lee `cambios_plan`, y el Historial de la familia solo muestra los cambios de su ficha (`familias.historial`, `backend/app/modules/familias/service.py:210`). Y ninguna prueba afirma el registro de un retiro; la que hay es la del alta (`test_un_peludo_mas_baja_la_tarifa_de_todos_desde_la_siguiente_cuota`). **B: Falta.** |
+| 6.3-08 | … facilitar la comunicación al usuario | Exige | Falta | **A y B: Falta.** El retiro no le dice nada a la familia (no hay plantilla para él; reproducido), y el equipo no puede escribirle desde su ficha (6.2-11). Lo que paga desde ahora solo lo ve si entra al portal (lo de cada peludo al mes, `frontend/src/features/portal/PeludosPortal.tsx:339`). |
+| 6.3-09 | Las reglas se pueden modificar después sin reconstruir la plataforma | Exige | Por decidir | **A: Parcial.** **Se cambian sin desplegar**: las tarifas por número de peludos, por periodo y por ciudad (`test_el_administrador_cambia_tarifas_y_ciudades_sin_borrar_nada`, `backend/tests/test_planes.py:341`) y la regla del cambio de plan (`test_cambio_al_proximo_ciclo_por_regla`, `:491`). **Fijo en el código**: cómo se aplica un retiro (04); el máximo de 10 peludos (`MAX_PELUDOS`, `backend/app/modules/planes/service.py:75`); y que el descuento de periodo largo no se acumule con el de cantidad (`:203`). **Fijo en la base**: los cuatro tramos (`PELUDOS_CON_DESCUENTO`, `:76`, y el `CHECK peludos_rango`, `backend/app/modules/planes/models.py:102`), así que un quinto tramo necesita una migración. La propuesta respondió «Cumple» con el motor de reglas, pero el retiro no pasa por él. **B: Falta.** |
+
+**Lo que hay que decidir:**
+- Qué es un plan grupal (pregunta para TIMU). Con la lectura B hay que construirlo entero.
+- Con la lectura A: qué regla aplica al retirar un peludo (¿desde cuándo, se devuelve lo pagado del
+  periodo en curso?) y que la decida una regla editable, como el cambio de plan. Y que el alta cobre
+  igual desde el panel que desde el portal.
+- Qué tarea, alerta o mensaje deja un retiro, y dónde se ve lo que queda en `cambios_plan`.
 
 ## 6.4. Renovación anual
 
