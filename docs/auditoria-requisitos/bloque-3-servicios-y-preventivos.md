@@ -208,11 +208,29 @@ Ejemplo, como manda el método («como»). Se auditan igual.
 
 ## 6.9. Autorización de servicios preventivos
 
+**Auditado el 2026-11-25.**
+
+**Lo que hay:**
+- **No hay un formulario de autorización.** La autorización llega por dos caminos.
+  - El equipo la registra en la bandeja por lo que la familia le dijo, con el medio: WhatsApp,
+    teléfono, en persona, portal o «formulario», que es una opción de la lista sin formulario
+    detrás (`backend/app/modules/preventivos/router.py:99`).
+  - La familia agenda la visita de un preventivo concreto en el portal, y agendarla cuenta como su
+    autorización, con el medio «portal» (`agendar_desde_el_portal`,
+    `backend/app/modules/preventivos/service.py:803`).
+- **El recordatorio de 7 días** (6.8-11) dice el titular, los peludos, los preventivos y la fecha.
+  No lleva un enlace para autorizar ni para agendar.
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.9-01 | Autorización de la familia **mediante formulario** antes de determinados preventivos | Exige | Sin auditar | |
-| 6.9-02 | Flujo: el sistema identifica el servicio próximo → comunicación → formulario de autorización → revisión → autorización/reprogramación → programación → realización | Exige | Sin auditar | |
-| 6.9-03 | Lo que da la familia queda registrado y asociado a la mascota | Exige | Sin auditar | |
+| 6.9-01 | Autorización de la familia **mediante formulario** antes de determinados preventivos | Exige | Parcial | **Lo que hay**: sin autorización registrada, un preventivo que la requiere no se aplica (`test_sin_autorizacion_no_se_aplica`, `backend/tests/test_preventivos.py:105`). Qué esquemas la requieren lo decide cada esquema (`requiere_autorizacion`). **Lo que falta es el formulario**: la familia no llena nada. O le dice algo al equipo, que lo anota, o agenda en el portal, donde solo elige la visita y una observación (`test_la_familia_agenda_un_preventivo_concreto`, `backend/tests/test_portal.py:729`). Si agendar en el portal cuenta como el formulario es una equivalencia por decidir, y qué debe preguntar el formulario de TIMU ya está en la primera tanda de preguntas (6.12-06 y 6.13). |
+| 6.9-02 | Flujo: el sistema identifica el servicio próximo → comunicación → formulario de autorización → revisión → autorización/reprogramación → programación → realización | Exige | Parcial | Están la identificación (6.8-01, sin mirar el plan), la comunicación (el recordatorio, sin enlace), la autorización, la programación (la visita) y la realización (la visita completada aplica el preventivo, 6.8-16). **Faltan** el formulario (01) y la revisión: lo que la familia agenda en el portal queda autorizado sin que nadie lo revise. **La reprogramación va al revés**: «no» cancela el preventivo y termina su serie (6.8-14, Contradice). |
+| 6.9-03 | Lo que da la familia queda registrado y asociado a la mascota | Exige | Cumple | La autorización o el rechazo quedan en el preventivo, que es de la mascota: quién los registró (el usuario del equipo o el de la familia en el portal), cuándo y por qué medio (`autorizar`, `backend/app/modules/preventivos/service.py:320`; `test_flujo_http_autorizar_y_aplicar`, `backend/tests/test_preventivos.py:166`; `test_autorizar_varios_es_todo_o_nada`, `:512`; `test_la_familia_agenda_un_preventivo_concreto`). La observación del portal va a la visita. Hoy la familia no da más que eso: lo que pregunte el formulario (01) no tiene dónde quedar. |
+
+**Lo que hay que decidir:**
+- 01 y 02: si agendar en el portal es el formulario o hace falta uno que pregunte algo (el estado de
+  la mascota, lo aplicado fuera, el consentimiento), con su enlace en el recordatorio y una
+  revisión del equipo. Depende de los formularios que comparta TIMU.
 
 ## 6.13. Alimentación automática del calendario preventivo
 
