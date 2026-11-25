@@ -133,12 +133,49 @@ dos lecturas dan lo mismo, y la evidencia es la de la lectura A.
 
 ## 6.4. Renovación anual
 
+**Auditado el 2026-11-25.**
+
+**Lo que hay:**
+- El contrato nace con su fecha de renovación, un año después del inicio
+  (`backend/app/modules/cartera/service.py:92`). Cada día a las 6:30, `detectar_renovaciones`
+  (`:483`) evalúa las reglas `cartera.renovacion` de los contratos vigentes a los que les faltan 90
+  días o menos (`VENTANA_RENOVACION_DIAS`, `:480`, fija en el código). La regla sembrada crea a 30
+  días la tarea comercial «Gestionar renovación del contrato» (`renovacion_30_dias`,
+  `backend/app/modules/reglas/datos.py:70`).
+- La vista «Por renovar» de la bandeja y el Inicio de Comercial muestran esos contratos; Comercial
+  los renueva con un botón.
+- **Renovar solo mueve la fecha un año** (`renovar`, `backend/app/modules/cartera/service.py:515`).
+  La ventana se lo dice así a Comercial: «se extiende un año con el mismo plan y la misma cuota»
+  (`frontend/src/features/cartera/CarteraPage.tsx:291`).
+- **No renovar tampoco cambia nada, salvo agendar.** Con la fecha vencida, la familia no puede
+  pedir servicios («El plan venció… y no se renovó», `backend/app/modules/servicios/service.py:96`;
+  en el portal, `test_el_plan_dice_por_que_no_se_puede_agendar`, `backend/tests/test_portal.py:698`).
+  Pero el contrato sigue vigente: las cuotas solo miran el estado (`GENERAN_CUOTAS`,
+  `backend/app/modules/cartera/service.py:53`), así que se le siguen emitiendo (la del segundo año de
+  un anual sale sin renovar, 6.2, d), cobrando y avisando de mora. Ningún proceso mira la fecha
+  vencida.
+- **Reproducido el 2026-11-25 contra `db-test`**, con una prueba temporal que no quedó en el
+  repositorio. Un contrato de $40.000 al mes a 25 días de su renovación genera la tarea. El
+  administrador sube la tarifa a $50.000 y Comercial renueva por la API. La fecha pasa al año
+  siguiente y el valor sigue en $40.000. La tarea sigue abierta, no sale ningún mensaje, y el único
+  rastro es la fila de auditoría del contrato (`fecha_renovacion`, antes y después), que el
+  Historial de la familia no muestra. Después se agrega un peludo, y el contrato entero pasa a la
+  lista nueva: $90.000 (2 × $45.000), no $70.000.
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.4-01 | Identificar automáticamente usuarios que cumplen un año en el plan | Exige | Sin auditar | |
-| 6.4-02 | Generar alerta | Exige | Sin auditar | |
-| 6.4-03 | Aplicar la regla de actualización correspondiente | Exige | Sin auditar | |
-| 6.4-04 | Actualizar condiciones económicas | Exige | Sin auditar | |
-| 6.4-05 | Generar tarea de comunicación | Exige | Sin auditar | |
-| 6.4-06 | Registrar la renovación | Exige | Sin auditar | |
-| 6.4-07 | Mantener trazabilidad | Exige | Sin auditar | |
+| 6.4-01 | Identificar automáticamente usuarios que cumplen un año en el plan | Exige | Cumple | El proceso diario, la vista «Por renovar», con los que vencen antes primero, y el Inicio de Comercial (`test_renovacion_genera_una_tarea`, `backend/tests/test_cartera.py:238`; `test_la_bandeja_separa_la_mora_de_lo_que_esta_por_renovar`, `:596`; panel `CarteraPage.test.tsx:121` y `DashboardPage.test.tsx:349`). Va por contrato, no por peludo: uno que entró después cumple el año en la fecha del contrato. |
+| 6.4-02 | Generar alerta | Exige | Cumple | El Inicio de Comercial dice cuántos contratos están por renovar y cuál es el primero (`frontend/src/features/dashboard/DashboardPage.tsx:293`; `DashboardPage.test.tsx:349`), y la vista «Por renovar» lleva su recuento. La ventana de 90 días es fija en el código. Al equipo no le llega ninguna alerta cuando la fecha pasa sin renovar, ni la familia recibe ningún aviso. |
+| 6.4-03 | Aplicar la regla de actualización correspondiente | Exige | Falta | No hay ninguna regla de actualización. `cartera.renovacion` solo admite crear una tarea (`backend/app/modules/reglas/acciones.py:98`), y `renovar` no consulta ninguna regla (`backend/app/modules/cartera/service.py:515`). |
+| 6.4-04 | Actualizar condiciones económicas | Exige | **Contradice** | **La renovación conserva a propósito las condiciones**: «con el mismo plan y la misma cuota» (`CarteraPage.tsx:291`; reproducido, el valor sigue en $40.000 con la tarifa ya en $50.000). **La lista de precios nueva sí llega al contrato, pero cuando no toca**: cada vez que entra o sale un peludo o uno cambia de plan, el contrato entero se vuelve a cotizar con las tarifas de ese día (`_recalcular`, `backend/app/modules/cartera/contratos.py:159`, que llama a `planes.cotizar`; reproducido, el peludo que ya estaba pasa a la tarifa nueva). Dos familias con el mismo plan pagan distinto según si tocaron su contrato después de un cambio de precios, y al retirar un peludo el que queda pasa a la tarifa nueva aunque nadie le cambió nada. No basta con añadir una actualización al renovar: hay que decidir también qué precio conserva cada peludo al entrar o salir otro (6.3-04). |
+| 6.4-05 | Generar tarea de comunicación | Exige | Cumple | La tarea «Gestionar renovación del contrato» para Comercial, a 30 días, una por cada fecha de renovación (`clave`, `backend/app/modules/cartera/service.py:509`), con sus días, su área y su prioridad editables (`test_renovacion_genera_una_tarea`). Renovar no la cierra (reproducido): Comercial puede llamar a una familia que ya renovó. No hay mensaje para la familia, que no tiene plantilla. |
+| 6.4-06 | Registrar la renovación | Exige | Parcial | **Lo que queda es la fecha nueva** (`test_renovacion_genera_una_tarea`; `test_contrato_por_api_se_crea_renueva_y_cancela`, `backend/tests/test_cartera.py:629`) y la fila genérica de auditoría del contrato (reproducido). No hay un registro de la renovación con sus condiciones, quién la hizo y cuándo que se pueda ver: ninguna ruta lee la auditoría del contrato. **Y la renovación no la lee nadie más que la agenda**: renovado o no, el contrato se cobra igual (arriba). |
+| 6.4-07 | Mantener trazabilidad | Exige | Parcial | La base audita cada cambio del contrato, con quién, cuándo, la petición y el antes y el después (`Auditable`; `test_cada_tabla_auditable_e_inmutable_tiene_su_trigger`, `backend/tests/test_persistencia.py:676`), y la renovación deja su fila (reproducido). Pero esa traza solo la lee quien consulte la base: el Historial de la familia muestra los cambios de su ficha y nada del contrato (`familias.historial`, `backend/app/modules/familias/service.py:210`). Es el problema de diseño 7. |
+
+**Lo que hay que decidir:**
+- Qué es renovar para TIMU: con qué regla se actualiza el precio (¿la lista vigente, un porcentaje,
+  el IPC?), si cambia algo más (los beneficios, la carencia) y qué pasa si la familia no renueva
+  (¿se cancela, se congela, sigue igual?).
+- Qué precio conserva cada peludo cuando la lista cambia y entra o sale otro (con 6.3-04).
+- Que renovar cierre su tarea y deje un registro que se vea, y que avisar a la familia sea parte de
+  la renovación.

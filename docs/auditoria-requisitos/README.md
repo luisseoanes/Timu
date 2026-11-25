@@ -68,7 +68,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | Bloque | Requisitos | Fichero | Estado |
 | --- | --- | --- | --- |
 | 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [bloque-1-estados-y-ciclo-de-vida](bloque-1-estados-y-ciclo-de-vida.md) | Auditado (2026-11-24) |
-| 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | En curso: 6.2 y 6.3 auditados (2026-11-25) |
+| 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | Auditado (2026-11-25) |
 | 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | Sin auditar |
 | 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | Sin auditar |
 | 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | Sin auditar |
@@ -81,7 +81,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 45 | 0 | 14 | 8 | 3 | 0 | 0 | 12 | 185 |
+| 6 | 267 | 48 | 0 | 16 | 9 | 4 | 0 | 0 | 12 | 178 |
 
 ## Problemas de diseño que van apareciendo
 
@@ -118,6 +118,16 @@ suyos o amplía los que ya están.
    congelados, ya vencidos, y la familia vuelve a congelarse al día siguiente (reproducido el
    2026-11-25). Ni el código ni el documento dicen si esos meses se cobran, se perdonan o corren la
    renovación. Obligaciones: 6.2-05, 6.2-06 y 6.2-14 (junto con 6.23-03 y 6.23-08).
+6. **La renovación es solo una fecha.** Renovar mueve `fecha_renovacion` un año y nada más: no
+   aplica ninguna regla, no actualiza el precio, no deja un registro que se vea y no cierra su
+   tarea. El precio, en cambio, se vuelve a cotizar con la lista del día cada vez que entra o sale
+   un peludo. Y no renovar solo impide agendar: la familia con el plan vencido sigue recibiendo
+   cuotas, cobros y avisos de mora. Obligaciones: 6.4-03, 6.4-04, 6.4-06 y 6.3-04.
+7. **Lo que se registra no se ve.** La base guarda cada aviso de mora con su regla, cada cambio
+   de valor de un contrato (`cambios_plan`) y la auditoría de cada cambio del contrato, pero
+   ninguna pantalla ni ruta los lee: el Historial de la familia solo muestra los cambios de su
+   ficha. La trazabilidad existe solo para quien consulta la base. Obligaciones: 6.2-20, 6.3-07,
+   6.4-06 y 6.4-07.
 
 ## Preguntas para TIMU
 
@@ -136,7 +146,7 @@ tandas, sin esperar al final de la auditoría.
 - **6.1-03.** ¿Quiénes de una familia necesitan entrar al portal? Hoy entra solo el titular, y hasta
   tres contactos más quedan registrados pero sin acceso.
 
-### Segunda tanda (bloque 2, en curso)
+### Segunda tanda (bloque 2, 2026-11-25)
 
 - **6.3. Necesitamos que TIMU aclare qué es un «plan grupal».** ¿Es la afiliación de una familia
   con varios peludos, en la que cada uno paga menos según cuántos son (como la escala de precios
@@ -148,3 +158,19 @@ tandas, sin esperar al final de la auditoría.
   adopción), ¿desde cuándo cambia lo que paga la familia? ¿Se le devuelve o se le abona lo que ya
   pagó del periodo en curso? Hoy cambia desde la siguiente cuota y no se devuelve nada: en un pago
   anual, puede ser casi un año.
+- **6.2. La política de mora.** Hoy, de forma provisional, se avisa a la familia el día 1, el 5, el
+  15 y el 25 después del vencimiento, la afiliación pasa a «en mora» el día 5 y se congela el día
+  30. ¿Son esos los momentos de TIMU? ¿Después del congelamiento llega un momento en que se
+  cancela? ¿Y qué dice cada aviso? (Hay que registrar esos textos en Meta.)
+- **6.2-02.** ¿Cuántos días antes del vencimiento recuerdan hoy el pago, y qué le dicen a la
+  familia?
+- **6.2-05 y 6.2-06.** Mientras una afiliación está congelada, ¿se siguen causando sus cuotas?
+  Cuando la familia se pone al día, ¿paga solo lo que debía al congelarse o también los meses
+  congelados? ¿La fecha de renovación se corre por el tiempo congelado?
+- **6.2-10.** ¿Qué tareas les genera hoy su plataforma de cobro, para quién y en qué momento? ¿Y
+  alguna familia paga hoy con débito automático a una tarjeta, o todas pagan cada cuota?
+- **6.4.** ¿Cómo se actualiza hoy el precio al renovar: con la lista de precios vigente, un
+  porcentaje fijo, el IPC? ¿Cambia algo más (beneficios, carencias)? Cuando TIMU sube los precios,
+  ¿las familias ya afiliadas conservan el suyo hasta renovar?
+- **6.4.** ¿Qué pasa si una familia no renueva: se renueva sola, se cancela, o sigue pagando? Hoy
+  sigue pagando pero no puede agendar servicios.
