@@ -21,7 +21,8 @@ fiel y se audita sobre él.**
 2. **La unidad es la obligación atómica**: cada cosa que el documento pide, con un ID
    (`6.10-05`) y su texto. Un requisito tiene varias.
 3. **Ningún «Cumple» sin evidencia**: el `fichero:línea` que lo hace y la prueba que lo afirma, o
-   la comprobación contra el stack, con fecha. Sin prueba, como mucho «Parcial».
+   una comprobación con fecha, contra el stack o contra `db-test` con una prueba temporal (como en
+   el punto 6). Sin prueba, como mucho «Parcial».
 4. **Los agentes solo buscan evidencia** (en lectura); ningún veredicto suyo entra sin que se
    verifique en el código, y «Contradice» y «Parcial» se revisan con el usuario.
 5. **Al arreglar, cada obligación queda atada a la prueba que lleva su ID**, y una guarda hará
@@ -33,10 +34,11 @@ fiel y se audita sobre él.**
    comando: no queda en el repositorio. La fila dice que se reprodujo, contra qué y con qué fecha.
    En la fase de arreglos, esa reproducción es la prueba que falla sin el arreglo.
 7. **Cómo se trabaja con el usuario** (decidido el 2026-11-24): se audita sin pararse a preguntar,
-   salvo que un requisito admita dos lecturas y el veredicto dependa de cuál es la buena. Por cada
-   requisito, un commit y un resumen corto (recuento y hallazgos graves). Al cerrar cada bloque, la
-   tanda de preguntas para TIMU. Las decisiones se toman al final, agrupadas por problema de diseño
-   (abajo), no requisito a requisito.
+   salvo que un requisito admita dos lecturas y el veredicto dependa de cuál es la buena. Si la
+   respuesta es de TIMU, la fila queda «Por decidir» y su evidencia da el veredicto de cada lectura
+   (6.3 y 6.16-07). Por cada requisito, un commit y un resumen corto (recuento y hallazgos graves).
+   Al cerrar cada bloque, la tanda de preguntas para TIMU. Las decisiones se toman al final,
+   agrupadas por problema de diseño (abajo), no requisito a requisito.
 
 ### Tipo de cada obligación
 
@@ -82,6 +84,9 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | 6 | 267 | 146 | 0 | 60 | 27 | 8 | 0 | 1 | 14 | 11 |
+
+De las «Falta», 4 son obligaciones opcionales, que no incumplen el documento: 6.11-04, 05, 07 y 09
+(lo que el bot comercial no pregunta).
 
 ## Problemas de diseño que van apareciendo
 
