@@ -138,12 +138,15 @@ suyos o amplía los que ya están.
    ficha. Lo mismo con la historia de estados de un servicio, de la que la ficha solo dice el
    motivo del último cambio, y con la de un pendiente. La trazabilidad existe solo para quien
    consulta la base. Obligaciones: 6.2-20, 6.3-07, 6.4-06, 6.4-07, 6.5-14 y 6.6-08.
-8. **El equipo no puede escribirle a una familia desde el panel.** La API tiene cómo mandar una
-   plantilla o un texto (`POST /comunicaciones/mensajes/plantilla` y `/texto`), pero ninguna
-   pantalla lo usa: ni la ficha, ni la bandeja de cartera, ni un pendiente. Lo que la plataforma
-   no manda sola, el equipo lo escribe fuera, por WhatsApp. Va junto con la fila de 6.17 y 6.19 de
-   [lo que falta](../pendiente-en-el-codigo.md) (WhatsApp en coexistencia). Obligaciones: 6.3-08,
-   6.6-05, 6.8-12, y el hueco de 6.2-11.
+8. **El equipo solo le escribe a quien acaba de escribir, y solo desde Comercial.** Desde el
+   panel, lo único que deja escribirle a alguien es la bandeja de conversaciones de Comercial: el
+   asesor contesta, dentro de las 24 horas, a quien escribió y pasó a un asesor. Ni la ficha, ni la
+   bandeja de cartera o la de preventivos, ni un pendiente dejan escribirle a la familia. Atención
+   al cliente no tiene ninguna forma de hacerlo. La API tiene cómo mandar una plantilla o un texto
+   (`POST /comunicaciones/mensajes/plantilla` y `/texto`), pero ninguna pantalla lo usa. Lo demás,
+   el equipo lo escribe fuera, por WhatsApp. Va junto con la fila de 6.17 y 6.19 de [lo que
+   falta](../pendiente-en-el-codigo.md) (WhatsApp en coexistencia). Obligaciones: 6.3-08, 6.6-05,
+   6.8-12, y el hueco de 6.2-11.
 9. **La autorización es una marca que se revisa tarde.** El servicio que la requiere se programa
    primero: toma su fecha y su cupo, y después espera. La autorización es la del médico, no la de
    la familia, y solo se exige para salir en ruta o atender. Antes de eso, «Confirmar agenda» lo
