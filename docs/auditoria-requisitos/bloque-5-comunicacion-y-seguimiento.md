@@ -242,12 +242,32 @@ corrección del 22 de noviembre.
 
 ## 6.21. Seguimiento post atención
 
+**Auditado el 2026-11-27.**
+
+**Lo que hay:**
+- **El seguimiento es una encuesta de otro tipo** (6.20). Si la configuración del tipo de atención
+  dice a cuántos días (de 1 a 180), al completarse el servicio se programa para esa fecha
+  (`programar`, `backend/app/modules/encuestas/service.py:65`). Sale por WhatsApp con la plantilla
+  «Seguimiento después del servicio», con un enlace en el que la familia dice cómo sigue la mascota:
+  bien, con una duda o con una novedad, y un comentario.
+- **Una novedad crea una tarea de prioridad alta** para servicio al cliente, y una duda, una de
+  prioridad media. Las dos llevan lo que respondió y el contexto de la atención (`_alertar`, `:229`).
+- **En el panel solo se edita la configuración general** (`frontend/src/features/campanas/Encuestas.tsx`),
+  así que el seguimiento va tras todas las atenciones o tras ninguna. La API admite una por tipo de
+  atención (`PUT /encuestas/configuracion`), pero ninguna pantalla la usa. Solo `operacion_demo`
+  la configura, en local y en staging: en producción no habrá ninguna, y sin ella no sale ningún
+  seguimiento.
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.21-01 | Generar automáticamente un seguimiento a la familia tras determinadas atenciones | Exige | Sin auditar | |
-| 6.21-02 | Configurar cuándo se realiza | Exige | Sin auditar | |
-| 6.21-03 | Enviar comunicación | Exige | Sin auditar | |
-| 6.21-04 | Registrar respuesta | Exige | Sin auditar | |
-| 6.21-05 | Generar alerta si la familia manifiesta una novedad | Exige | Sin auditar | |
-| 6.21-06 | Crear tarea para el equipo | Exige | Sin auditar | |
-| 6.21-07 | Mantener trazabilidad | Exige | Sin auditar | |
+| 6.21-01 | Generar automáticamente un seguimiento a la familia tras determinadas atenciones | Exige | Parcial | Se genera solo y se puede limitar a ciertos tipos de atención (`test_seguimiento_segun_el_tipo_de_atencion`, `backend/tests/test_encuestas.py:89`). Pero esa elección solo se hace por la API: desde el panel es tras todas o tras ninguna. Una atención que no es un servicio no tiene seguimiento: la orientación virtual (6.17-06). |
+| 6.21-02 | Configurar cuándo se realiza | Exige | Cumple | A cuántos días del servicio, en Administración (`test_configuracion_general_y_por_tipo_se_reemplaza`, `:321`; panel `CampanasPage.secciones.test.tsx:498`). |
+| 6.21-03 | Enviar comunicación | Exige | Cumple | Por WhatsApp, a su fecha, con el nombre de la mascota y el enlace (`enviar_pendientes`, `backend/app/modules/encuestas/service.py:97`; `test_el_seguimiento_pregunta_como_sigue_y_una_duda_deja_tarea`, `backend/tests/test_encuestas.py:171`). Como la encuesta, sin la plantilla aprobada se queda pendiente, y no tiene otro canal. |
+| 6.21-04 | Registrar respuesta | Exige | Cumple | Cómo sigue, más el comentario, con su fecha y su canal (mismas pruebas; `test_el_seguimiento_que_va_bien_no_deja_tarea_y_una_novedad_si`, `:192`). Contestar en el chat, en lugar del enlace, no cuenta como respuesta del seguimiento (`test_un_numero_por_whatsapp_no_responde_el_seguimiento`, `:230`). |
+| 6.21-05 | Generar alerta si la familia manifiesta una novedad | Exige | Cumple | La tarea de prioridad alta, que vence ese día (`test_el_seguimiento_que_va_bien_no_deja_tarea_y_una_novedad_si`). |
+| 6.21-06 | Crear tarea para el equipo | Exige | Cumple | Para servicio al cliente, con la atención, la fecha, quién atendió, lo que respondió y su comentario. La duda también deja una (`test_el_seguimiento_pregunta_como_sigue_y_una_duda_deja_tarea`). |
+| 6.21-07 | Mantener trazabilidad | Exige | Cumple | El seguimiento queda con su servicio, sus fechas, su respuesta y su tarea (`tarea_id`), y el mensaje en las comunicaciones de la familia. Sale en Encuestas con su insignia (panel `CampanasPage.test.tsx:132`). No llega a la historia clínica de la mascota (6.14-09). |
+
+**Lo que hay que decidir:**
+- 01: que el panel configure el seguimiento por tipo de atención, y tras qué atenciones lo quiere
+  TIMU.
