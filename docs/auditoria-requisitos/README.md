@@ -70,7 +70,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [bloque-1-estados-y-ciclo-de-vida](bloque-1-estados-y-ciclo-de-vida.md) | Auditado (2026-11-24) |
 | 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | Auditado (2026-11-25) |
 | 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | Auditado (2026-11-25) |
-| 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | En curso: 6.14 y 6.15 auditados (2026-11-27) |
+| 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | Auditado (2026-11-27) |
 | 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | Sin auditar |
 | 6. Clínicas aliadas | 6.22 | [bloque-6-clinicas-aliadas](bloque-6-clinicas-aliadas.md) | Sin auditar |
 | 7. Transversales | 7, 8, 12, 13 | por extraer | Sin extraer |
@@ -81,7 +81,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 89 | 0 | 43 | 19 | 7 | 0 | 0 | 13 | 96 |
+| 6 | 267 | 96 | 0 | 44 | 20 | 7 | 0 | 0 | 13 | 87 |
 
 ## Problemas de diseño que van apareciendo
 
@@ -120,7 +120,8 @@ suyos o amplía los que ya están.
    de un contrato. Las dos tareas que sí existen son del cobro con tarjeta guardada, y ninguna
    pantalla registra una tarjeta. Mientras las plantillas de mora no estén aprobadas en Meta, la
    mora solo la ve quien entra al panel (el Inicio y la bandeja). Tampoco crea tarea un pendiente
-   de una atención. Obligaciones: 6.2-01, 6.2-09, 6.2-10, 6.3-06 y 6.6-04.
+   de una atención, ni deja seguimiento una orientación virtual. Obligaciones: 6.2-01, 6.2-09,
+   6.2-10, 6.3-06, 6.6-04 y 6.17-06.
 5. **El periodo congelado no tiene política.** Congelada, la afiliación deja de emitir cuotas,
    pero la emisión retoma desde la última emitida: al reactivarse se cobran de golpe los meses
    congelados, ya vencidos, y la familia vuelve a congelarse al día siguiente (reproducido el
@@ -159,6 +160,12 @@ suyos o amplía los que ya están.
     otra consulta, sin vínculo con la que los originó. Un procedimiento, una orden de examen o un
     pendiente son texto dentro de un apartado, y no hay kardex. Solo la fórmula médica es una
     orden con datos. Obligaciones: 6.6-01, 6.14-07, 6.14-08, 6.14-09, 6.14-11 y 6.14-12.
+12. **Lo que cubre el plan solo se mira al agendar un servicio.** La elegibilidad de `agendar`
+    comprueba el beneficio y su cupo, aunque mal contado (6.5-07) y sin la carencia. En los demás
+    sitios nadie mira el plan: ni el calendario preventivo y su bandeja, que piden autorizar
+    preventivos que el plan no incluye; ni el pendiente de una atención, que no dice qué servicio
+    es; ni la orientación virtual, que se acepta sin el beneficio y sin contar su cupo.
+    Obligaciones: 6.5-06, 6.6-02, 6.8-01 y 6.17-01.
 
 ## Preguntas para TIMU
 
@@ -227,9 +234,12 @@ tandas, sin esperar al final de la auditoría.
   basta con cuántas atenciones caben en cada franja? ¿Organizan las rutas por zonas, o cada
   familia tiene un médico fijo?
 
-### Cuarta tanda (bloque 4, en curso)
+### Cuarta tanda (bloque 4, 2026-11-27)
 
 - **6.14.** ¿Cómo llevan hoy la historia clínica: en papel, en otro programa? ¿Hospitalizan o
   dejan pacientes en observación? Si es así, ¿cómo registran hoy lo que se le administra a cada
   uno (el kardex)? ¿Y los procedimientos, las órdenes de examen y las evoluciones: son una
   anotación de la consulta o un registro aparte?
+- **6.17.** ¿La orientación virtual tiene un tope por plan? ¿Cómo llegan hoy esas consultas (por
+  WhatsApp, por llamada) y cómo les hacen seguimiento? ¿El médico debe responder siempre con
+  textos aprobados, o solo las consultas frecuentes y el resto con sus palabras?

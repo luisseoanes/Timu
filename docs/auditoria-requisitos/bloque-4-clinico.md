@@ -85,14 +85,42 @@ Las rutas de la evidencia son relativas a la raíz del repositorio.
 
 ## 6.17. Atención veterinaria virtual
 
+**Auditado el 2026-11-27.**
+
+**Lo que hay:**
+- **La solicitud de orientación** (`SolicitudVirtual`, `backend/app/modules/clinica/models.py:134`)
+  la manda la familia desde el portal, o la registra el médico en el panel con su canal (portal,
+  WhatsApp o panel) y su prioridad. Pide un plan vigente y la mascota activa (`solicitar_virtual`,
+  `backend/app/modules/clinica/service.py:543`).
+- **El médico la toma de una cola, lo urgente primero, y la responde** con una respuesta tipo
+  aprobada por el equipo médico, cuyas variables completa (`responder`, `:592`). La respuesta queda
+  como una consulta virtual firmada en la historia de la mascota y le llega a la familia: como texto
+  si la ventana de WhatsApp está abierta, o como aviso con plantilla si no.
+- **La IA le puede preparar un borrador al médico**, que nunca se envía. Lo arma con la especie, la
+  raza, la edad, el peso y el motivo, no con la historia (`borrador_veterinario`,
+  `backend/app/modules/ia/service.py:347`).
+- **Toda respuesta sale de una plantilla aprobada**: el médico no escribe una propia. Solo
+  `datos_demo` siembra una, en local y en staging. En producción no habrá ninguna, y no se podrá
+  responder hasta que el equipo cree y apruebe la primera.
+- **Reproducido el 2026-11-27 contra `db-test`**, con una prueba temporal que no quedó en el
+  repositorio. Con un plan que no incluye la orientación virtual se aceptan tres solicitudes
+  seguidas. Responder y cerrar una no deja ninguna tarea ni encuesta de seguimiento.
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.17-01 | Registrar solicitudes de orientación | Exige | Sin auditar | |
-| 6.17-02 | Asociar la conversación al paciente | Exige | Sin auditar | |
-| 6.17-03 | Consultar antecedentes | Exige | Sin auditar | |
-| 6.17-04 | Consultar historial | Exige | Sin auditar | |
-| 6.17-05 | Registrar la atención | Exige | Sin auditar | |
-| 6.17-06 | Generar seguimiento | Exige | Sin auditar | |
-| 6.17-07 | Guardar la interacción | Exige | Sin auditar | |
-| 6.17-08 | Plantillas y respuestas estructuradas, aprobadas por el equipo médico, para consultas frecuentes | Opcional | Sin auditar | |
-| 6.17-09 | La herramienta apoya al profesional y no sustituye el criterio médico veterinario | Exige | Sin auditar | |
+| 6.17-01 | Registrar solicitudes de orientación | Exige | Cumple | Desde el portal y desde el panel, con cola por prioridad (`test_ciclo_virtual_queda_en_la_historia`, `backend/tests/test_clinica.py:507`; `test_cola_prioriza_lo_urgente`, `:569`; `test_virtual_requiere_plan_vigente`, `:584`; portal `PortalPages.secciones.test.tsx:132`). Dos salvedades. **No mira lo que cubre el plan**: ni si incluye la orientación ni su cupo (reproducido, arriba). Y lo que llega por WhatsApp no crea la solicitud sola: el médico la registra a mano. |
+| 6.17-02 | Asociar la conversación al paciente | Exige | Parcial | La solicitud es de la mascota, y su respuesta queda en la historia de esa mascota. Pero la conversación son una pregunta y una respuesta: otra pregunta de la familia es otra solicitud. Los mensajes de WhatsApp quedan con la familia, no con la mascota ni con la solicitud (`Mensaje.familia_id`, `backend/app/modules/comunicaciones/models.py:65`). |
+| 6.17-03 | Consultar antecedentes | Exige | Cumple | El médico abre la historia completa y el carnet de la mascota desde Clínica (`test_el_medico_busca_la_mascota_sin_abrir_familias`, `backend/tests/test_clinica.py:363`; panel `clinica.test.tsx:48`). Desde la solicitud no hay enlace a ellos mientras la atiende, solo a la consulta ya respondida, y el borrador de la IA no los usa. |
+| 6.17-04 | Consultar historial | Exige | Cumple | La historia lista todas las consultas de la mascota, también las virtuales (`test_ciclo_virtual_queda_en_la_historia`). En la ficha de la familia, las orientaciones virtuales no salen (6.1-13). |
+| 6.17-05 | Registrar la atención | Exige | Cumple | Consulta virtual firmada, con el motivo, el diagnóstico (opcional), la respuesta como tratamiento y las notas internas, quién y cuándo (`test_ciclo_virtual_queda_en_la_historia`; `test_respuesta_virtual_va_por_texto_si_la_ventana_esta_abierta`, `:545`; panel `clinica.test.tsx:391`). |
+| 6.17-06 | Generar seguimiento | Exige | Falta | Responder y cerrar no deja nada después (reproducido, arriba). La orientación no es un servicio, así que no le llega la encuesta (6.20) ni el seguimiento posterior (6.21), y no crea ninguna tarea. Tampoco gasta el cupo del beneficio. |
+| 6.17-07 | Guardar la interacción | Exige | Cumple | La solicitud guarda el motivo, la respuesta y la plantilla de la que salió, quién la tomó y cuándo, y el borrador de la IA. El mensaje enviado queda en las comunicaciones de la familia (`test_respuesta_virtual_va_por_texto_si_la_ventana_esta_abierta`). Lo que la familia escriba por WhatsApp fuera de eso no queda con la solicitud (02). |
+| 6.17-08 | Plantillas y respuestas estructuradas, aprobadas por el equipo médico, para consultas frecuentes | Opcional | Cumple | Las respuestas tipo, con variables, pasan de borrador a aprobada o retirada, y la aprueba un médico (`aprobar_respuesta`, `backend/app/modules/clinica/service.py:677`; `test_respuesta_con_variables_mal_declaradas`, `backend/tests/test_clinica.py:499`; panel `ClinicaPage.pestanas.test.tsx:342`). **Va más allá de lo que dice el documento**: no son una ayuda para las consultas frecuentes sino la única forma de responder. Cualquier médico aprueba, también la que él mismo escribió. Una plantilla que solo diga `{{1}}` permitiría responder libre, pero eso ya no es una respuesta aprobada. |
+| 6.17-09 | La herramienta apoya al profesional y no sustituye el criterio médico veterinario | Exige | Cumple | El borrador de la IA no se envía nunca: queda en la solicitud para que el médico lo lea (`test_borrador_para_el_profesional_nunca_se_envia`, `backend/tests/test_ia.py:273`). La respuesta la elige, la completa y la firma el médico. |
+
+**Lo que hay que decidir:**
+- 08: si toda respuesta tiene que salir de una plantilla aprobada, como hoy, o solo las de
+  consultas frecuentes, como dice el documento. Y quién aprueba.
+- 06: qué seguimiento deja una orientación virtual (con 6.20 y 6.21).
+- 01: si la orientación consume un beneficio del plan, con su cupo.
+- 02: si la conversación de WhatsApp se ata a la mascota o a la solicitud.
