@@ -41,7 +41,7 @@ literal del PDF (`~/Descargas/documento-requerimientos-funcionales.pdf`) que no 
 # ningún .env: backend/.env.example es la base y backend/.env (si existe) la sobrescribe. Puertos del
 # host ocupados por otro proyecto → .env de la raíz (ver .env.example).
 docker compose up --build
-docker compose exec api python -m scripts.datos_demo   # usuarios, familias, ruta… de prueba (solo local; solo crea lo que falta)
+docker compose exec api python -m scripts.datos_demo   # usuarios, familias, ruta… de prueba (local y staging, nunca producción; solo crea lo que falta)
 docker compose exec api python -m scripts.operacion_demo   # después: ocho semanas de operación (~5 min; si ya sembró, nada)
                                       # Qué deja cada uno, cómo se amplían y sus límites: docs/datos-de-demostracion.md
 docker compose run --rm inicializar   # tras traer una migración nueva, sin reiniciar el stack

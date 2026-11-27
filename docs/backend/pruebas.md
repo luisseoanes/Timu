@@ -32,7 +32,7 @@ Trampas conocidas:
 - **Nunca dos `pytest` a la vez contra `db-test`**: el fixture `esquema` borra y recrea el esquema al arrancar y rompe la otra ejecución. Vale también para un subagente: el 2026-11-18 el revisor final de la skill lanzó `pytest tests/test_clinica.py` con la suite completa en marcha, y esa suite hubo que repetirla entera. Al encargarle algo mientras corre, se le prohíbe en el encargo.
 - Dentro de una prueba todo comparte transacción y `created_at`: no se compara orden por fecha de creación; se comparan conjuntos.
 - Clientes de terceros: se sustituye `httpx.Client` por uno con `httpx.MockTransport` (fixture `red` en `tests/test_integraciones.py`); tareas de Celery con la sesión de la prueba: fixture `en_worker` en `tests/conftest.py`.
-- Tras `await db.commit()` los objetos ORM caducan: leer un atributo en una prueba async da `MissingGreenlet`. Guarda los ids antes del `commit`.
+- Tras `await db.commit()` los objetos ORM caducan: leer un atributo en una prueba async da `MissingGreenlet`. Guarda los ids antes del `commit`. Pasa lo mismo tras una petición de la prueba que falla (un 4xx revierte la sesión que comparte con la prueba): guarda los ids antes de la petición, como `Ids` en `tests/test_servicios.py`.
 - asyncpg no acepta dos sentencias en un mismo `text()`: una `db.execute` por sentencia.
 - Un servicio (o cualquier fila con estado) en un estado avanzado se inserta ya en él: el trigger de transiciones solo valida `UPDATE` (ver `_atendido` en `tests/test_encuestas.py`).
 - `mypy` del CI cubre solo `app/`. Los scripts de datos pasan sin errores y se comprueban a mano al tocarlos: `mypy scripts/datos_demo.py scripts/operacion_demo.py`.

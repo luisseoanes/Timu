@@ -124,6 +124,10 @@ Reglas que atraviesan todo el backend:
 - **`tareas` no importa `servicios`** (que crea tareas): `servicios/service.py` le conecta al
   importarse cómo describir sus servicios (`tareas.conectar_servicios`) para nombrar cada tarea
   de la bandeja; sin conectar, el listado falla.
+- **`tareas` no importa `reglas`** (que importa tareas): `reglas/service.py` le conecta al
+  importarse cómo nombrar sus reglas (`tareas.conectar_origenes`), para que la bandeja diga qué
+  regla creó cada tarea automática. Es la única inyección que no falla sin conectar: la bandeja
+  sale sin el nombre de la regla.
 - **`servicios` no importa `preventivos`** (que agenda sus visitas): `preventivos/service.py` le
   conecta al importarse qué hacer cuando la visita de un preventivo se autoriza, se completa o se
   cancela (`servicios.conectar_al_cambiar_estado`, ver `docs/flujo-de-la-visita.md`); sin

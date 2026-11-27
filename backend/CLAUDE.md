@@ -58,7 +58,9 @@ los registros que agregan dominios (`app/models.py`, `app/transiciones.py`), en 
   `cartera` ← `aliadas` (`conectar_al_cancelar` corta la vigencia de las remisiones por usar);
   `catalogos` ← `clinica` (`conectar_campos_de_la_consulta`, `lo_registra_la_consulta`); `reglas` ←
   `planes` (`conectar_planes` da los planes al editor de reglas y a su validación); `familias` ←
-  `cartera` (`conectar_orden`, el orden `urgencia` del listado por días de mora).
+  `cartera` (`conectar_orden`, el orden `urgencia` del listado por días de mora); `tareas` ←
+  `reglas` (`conectar_origenes`, para decir qué regla creó cada tarea; sin conectar no falla: la
+  bandeja sale sin el nombre de la regla).
 - **La traza de mensajes tapa los tokens de un solo uso** (`MensajeRead`); un script que necesite uno
   lo lee de la base con `sesion_worker`.
 - **Cada evento de reglas declara lo que da y lo que admite**: su contexto es una dataclass en
@@ -200,7 +202,8 @@ servicio necesita `del_medico(db, servicio_id, medico)`. Las trampas conocidas, 
 - Para ver que una prueba de RLS falla sin el arreglo, quita la matriz **y** la migración: la base de
   pruebas se crea con las migraciones, y con la migración puesta la prueba sigue pasando.
 - Dentro de una prueba todo comparte `created_at`: se comparan conjuntos, no órdenes por fecha.
-- Tras `await db.commit()` los objetos ORM caducan (`MissingGreenlet`): guarda los ids antes.
+- Tras `await db.commit()`, o tras una petición de la prueba que falla (4xx), los objetos ORM
+  caducan (`MissingGreenlet`): guarda los ids antes.
 - Una fila con estado avanzado se inserta ya en él: el trigger de transiciones solo valida `UPDATE`.
 - `mypy` del CI cubre solo `app/`: los scripts de datos se comprueban a mano
   (`mypy scripts/datos_demo.py scripts/operacion_demo.py`).
