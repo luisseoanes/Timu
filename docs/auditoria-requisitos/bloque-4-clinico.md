@@ -50,15 +50,38 @@ Las rutas de la evidencia son relativas a la raíz del repositorio.
 
 ## 6.15. Carnet preventivo digital
 
+**Auditado el 2026-11-27.**
+
+**Lo que hay:**
+- **El carnet de cada mascota** (`carnet`, `backend/app/modules/preventivos/service.py:626`) separa
+  lo aplicado, lo vencido (programado con fecha pasada) y lo próximo. Nada programado figura como
+  aplicado.
+- **Lo ven** el médico y Atención en el panel, y la familia en el portal, solo los de sus
+  mascotas.
+- **El PDF tiene una tabla por tipo** (`backend/app/modules/preventivos/documento.py:18`):
+  - Vacunación: vacuna, dosis, fecha, producto, lote, próxima y quién aplicó.
+  - Desparasitación interna y externa: fecha, peso, producto, lote, próxima y quién aplicó.
+  - Lo pendiente, aparte.
+- **Cada PDF lleva un código.** Con él un tercero lo verifica sin entrar al sistema, y ve lo que el
+  carnet decía al emitirse (`emitir_carnet`, `:670`; `verificar_carnet`, `:705`).
+- **Reproducido el 2026-11-27 contra `db-test`**, con una prueba temporal que no quedó en el
+  repositorio. Un perro adulto afiliado ayer tiene los cuatro refuerzos programados para el día de
+  la afiliación (6.13-06). Hoy su carnet, y la verificación pública que vería otra clínica o un
+  hotel canino, los dice vencidos: polivalente, antirrábica y las dos desparasitaciones.
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.15-01 | Registro preventivo por mascota que permite consultar: vacunaciones | Exige | Sin auditar | |
-| 6.15-02 | … desparasitación interna | Exige | Sin auditar | |
-| 6.15-03 | … desparasitación externa | Exige | Sin auditar | |
-| 6.15-04 | … productos utilizados | Exige | Sin auditar | |
-| 6.15-05 | … fechas | Exige | Sin auditar | |
-| 6.15-06 | … próximas fechas | Exige | Sin auditar | |
-| 6.15-07 | Se alimenta, cuando corresponda, de los servicios realizados desde las rutas preventivas | Exige | Sin auditar | |
+| 6.15-01 | Registro preventivo por mascota que permite consultar: vacunaciones | Exige | Cumple | Su tabla, con la dosis y si es refuerzo (`test_carnet_separa_aplicado_vencido_y_proximo`, `backend/tests/test_preventivos.py:531`; `test_carnet_de_sus_mascotas`, `backend/tests/test_portal.py:179`; panel `PreventivosPage.test.tsx:207`). |
+| 6.15-02 | … desparasitación interna | Exige | Cumple | Su tabla, con el peso de cada una (`test_el_carnet_lleva_el_peso_de_cada_desparasitacion`, `backend/tests/test_preventivos.py:553`). |
+| 6.15-03 | … desparasitación externa | Exige | Cumple | Su tabla, armada igual que la interna (`filas_seccion`, `backend/app/modules/preventivos/documento.py:40`), y en lo pendiente (`test_carnet_separa_aplicado_vencido_y_proximo`, con una externa vencida). |
+| 6.15-04 | … productos utilizados | Exige | Cumple | Producto y lote de cada aplicación (`test_completar_la_visita_aplica_el_preventivo`, `backend/tests/test_preventivos.py:378`; panel `PreventivosPage.test.tsx:207`, «Drontal · 8,4 kg · aplicó…»). |
+| 6.15-05 | … fechas | Exige | Cumple | La de aplicación de cada uno y la programada de lo pendiente (`test_carnet_separa_aplicado_vencido_y_proximo`; `test_la_verificacion_dice_lo_pendiente_como_el_carnet_impreso`, `:710`). |
+| 6.15-06 | … próximas fechas | Exige | Parcial | La columna «Próxima» de cada aplicación y la sección de lo pendiente (mismas pruebas). Pero **solo son ciertas para lo que se aplicó en la plataforma**: a un adulto le marca vencido lo que pudo recibir antes de afiliarse, también en la verificación que ve un tercero (reproducido, arriba; la causa es 6.13-06). Y lo que la familia no autorizó desaparece sin próxima fecha (6.8-14). |
+| 6.15-07 | Se alimenta, cuando corresponda, de los servicios realizados desde las rutas preventivas | Exige | Cumple | Completar la visita de un preventivo lo aplica con el producto, el lote y el peso de su paso, y pasa al carnet (`test_completar_la_visita_aplica_el_preventivo`; `test_la_desparasitacion_en_visita_lleva_el_peso_al_carnet`, `:401`). Desde la ruta, registrar la atención de una vacunación lleva al servicio (panel `RutasPage.test.tsx:283`). |
+
+**Lo que hay que decidir:**
+- 06: qué dice el carnet mientras no se sepa lo que la mascota recibió antes de afiliarse (con
+  6.13). Hoy le dice «vencido» a un tercero.
 
 ## 6.17. Atención veterinaria virtual
 

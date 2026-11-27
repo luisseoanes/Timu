@@ -70,7 +70,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [bloque-1-estados-y-ciclo-de-vida](bloque-1-estados-y-ciclo-de-vida.md) | Auditado (2026-11-24) |
 | 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | Auditado (2026-11-25) |
 | 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | Auditado (2026-11-25) |
-| 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | En curso: 6.14 auditado (2026-11-27) |
+| 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | En curso: 6.14 y 6.15 auditados (2026-11-27) |
 | 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | Sin auditar |
 | 6. Clínicas aliadas | 6.22 | [bloque-6-clinicas-aliadas](bloque-6-clinicas-aliadas.md) | Sin auditar |
 | 7. Transversales | 7, 8, 12, 13 | por extraer | Sin extraer |
@@ -81,7 +81,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 83 | 0 | 42 | 19 | 7 | 0 | 0 | 13 | 103 |
+| 6 | 267 | 89 | 0 | 43 | 19 | 7 | 0 | 0 | 13 | 96 |
 
 ## Problemas de diseño que van apareciendo
 
@@ -110,8 +110,9 @@ suyos o amplía los que ya están.
    antes de afiliarse) no tiene cómo registrarse: aplicarlo pide una autorización para algo ya
    hecho, y cancelarlo termina su serie. Y el formulario con el que TIMU pide autorizar un
    preventivo no existe: la familia agenda en el portal o le dice al equipo. Sin lo preventivo de
-   la afiliación, a todo adulto se le programa cada refuerzo el día que se afilia. Obligaciones:
-   6.1-27, 6.12-06, 6.8-06, 6.9-01, 6.13-01 a 6.13-06.
+   la afiliación, a todo adulto se le programa cada refuerzo el día que se afilia, y al día
+   siguiente su carnet, también el que verifica un tercero, lo dice vencido (reproducido el
+   2026-11-27). Obligaciones: 6.1-27, 6.12-06, 6.8-06, 6.9-01, 6.13-01 a 6.13-06 y 6.15-06.
 4. **Lo automático le habla a la familia, no al equipo.** La cartera le escribe sola a la familia
    (avisos de mora, congelamiento, reactivación), pero al equipo no le crea tareas ni alertas: la
    mora de una familia sin tarjeta no deja ninguna tarea, el motor no deja que una regla de cartera
