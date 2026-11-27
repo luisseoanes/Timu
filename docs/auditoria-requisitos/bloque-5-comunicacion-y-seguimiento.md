@@ -66,23 +66,45 @@ Las rutas de la evidencia son relativas a la raíz del repositorio.
 
 ## 6.16. Segmentación
 
+**Auditado el 2026-11-27.**
+
+**Lo que hay:**
+- **Un segmento es una combinación de filtros sobre las familias** (`FiltrosSegmento`,
+  `backend/app/modules/campanas/segmentos.py:30`). Todos deben cumplirse, y nunca entra una familia
+  dada de baja. Los filtros:
+  - de la familia: ciudad, estado de afiliación y origen;
+  - del contrato: plan, días de mora, fecha de afiliación y renovación;
+  - de los peludos: especie, mínimo de peludos, edad, preventivo vencido o por vencer y su tipo;
+  - del barrio, y de los días sin un servicio completado.
+- **Comercial lo arma en Campañas** (`frontend/src/features/campanas/FormFiltros.tsx`), lo guarda
+  con nombre y ve cuántas familias alcanza, con una muestra de 20 (`previsualizar`, `:166`).
+- **Solo se usa para mandar campañas** (6.18): nada más lee un segmento.
+- **Comprobado el 2026-11-27 contra `db-test`**, con una prueba temporal que no quedó en el
+  repositorio: los filtros de plan, estado y mínimo de peludos, que ninguna prueba del backend
+  afirmaba, cuentan bien.
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.16-01 | Segmentar usuarios y mascotas por: edad | Ejemplo | Sin auditar | |
-| 6.16-02 | … especie | Ejemplo | Sin auditar | |
-| 6.16-03 | … plan | Ejemplo | Sin auditar | |
-| 6.16-04 | … ciudad | Ejemplo | Sin auditar | |
-| 6.16-05 | … zona | Ejemplo | Sin auditar | |
-| 6.16-06 | … estado de afiliación | Ejemplo | Sin auditar | |
-| 6.16-07 | … grupo familiar | Ejemplo | Sin auditar | |
-| 6.16-08 | … servicios | Ejemplo | Sin auditar | |
-| 6.16-09 | … condiciones preventivas | Ejemplo | Sin auditar | |
-| 6.16-10 | … otros criterios definidos posteriormente | Exige | Sin auditar | |
-| 6.16-11 | La segmentación sirve para campañas | Exige | Sin auditar | |
-| 6.16-12 | … comunicaciones | Exige | Sin auditar | |
-| 6.16-13 | … seguimiento | Exige | Sin auditar | |
-| 6.16-14 | … reportes | Exige | Sin auditar | |
-| 6.16-15 | … acciones comerciales | Exige | Sin auditar | |
+| 6.16-01 | Segmentar usuarios y mascotas por: edad | Ejemplo | Cumple | La edad de sus peludos, en años cumplidos (`test_segmentar_por_zona_edad_y_preventivos`, `backend/tests/test_campanas.py:70`; panel `CampanasPage.secciones.test.tsx:346`). Se segmentan familias, no mascotas: el resultado es la familia que tiene alguna. |
+| 6.16-02 | … especie | Ejemplo | Cumple | `test_filtros_combinables`, `:57`; panel `:346`. |
+| 6.16-03 | … plan | Ejemplo | Cumple | El de cualquiera de sus peludos con el contrato vigente (comprobado, arriba; panel `CampanasPage.secciones.test.tsx:300`). |
+| 6.16-04 | … ciudad | Ejemplo | Cumple | `test_filtros_combinables`. |
+| 6.16-05 | … zona | Ejemplo | Cumple | El barrio, sin distinguir mayúsculas ni espacios de más (`test_segmentar_por_zona_edad_y_preventivos`). Como el barrio es texto libre (6.1-06), un mismo barrio escrito de dos formas son dos zonas. |
+| 6.16-06 | … estado de afiliación | Ejemplo | Cumple | Comprobado (arriba), y en un segmento guardado (`test_segmento_guardado_muestra_su_alcance`, `:119`). |
+| 6.16-07 | … grupo familiar | Ejemplo | Por decidir | Depende de qué es un «grupo familiar», la misma pregunta que 6.3. **Si es la familia con varios peludos: Cumple**, con el mínimo de peludos (comprobado, arriba). **Si son las personas de la familia o un grupo de familias: Falta**: no hay con qué segmentar. |
+| 6.16-08 | … servicios | Ejemplo | Parcial | Solo «sin un servicio completado en los últimos N días» (`:148`; `test_filtros_combinables`). No se puede segmentar por qué servicio recibió, ni por lo que tiene agendado o pendiente. |
+| 6.16-09 | … condiciones preventivas | Ejemplo | Cumple | Preventivo vencido o que vence en N días, y de qué tipo (`test_segmentar_por_zona_edad_y_preventivos`). Arrastra lo de 6.13: un adulto aparece con todo vencido el día después de afiliarse (6.15-06). |
+| 6.16-10 | … otros criterios definidos posteriormente | Exige | Parcial | Ya hay más de los que pide: días de mora, origen, fecha de afiliación, renovación y días sin servicio. Pero un criterio nuevo lo añade un desarrollador en `FiltrosSegmento` y en `consulta` (`:58`); TIMU no lo puede definir. Es el problema de diseño 10. |
+| 6.16-11 | La segmentación sirve para campañas | Exige | Cumple | La campaña toma un segmento guardado o sus propios filtros (`test_campana_se_valida_contra_la_plantilla`, `:146`; `test_previsualizacion_con_exclusiones`, `:161`; panel `CampanasPage.secciones.test.tsx:276`). |
+| 6.16-12 | … comunicaciones | Exige | Cumple | Las comunicaciones masivas son las campañas, también las recurrentes (`test_campana_recurrente_se_repite_sola`, `:307`). |
+| 6.16-13 | … seguimiento | Exige | Falta | Un segmento no crea tareas ni una lista de familias para seguir: solo da el total y una muestra de 20. |
+| 6.16-14 | … reportes | Exige | Falta | No se exporta la lista de un segmento, y el dashboard no filtra por segmento (solo por ciudad, Sección 8). Lo único descargable es la lista de destinatarios de una campaña ya enviada (`test_resultados_y_exportacion`, `:254`). |
+| 6.16-15 | … acciones comerciales | Exige | Parcial | Sirve para las campañas comerciales a las familias. Pero **los interesados del embudo no se pueden segmentar**: el segmento solo lee familias (`consulta`, `:58`), así que una acción comercial a quien aún no se afilió no pasa por aquí. |
+
+**Lo que hay que decidir:**
+- 07: qué es un grupo familiar (con 6.3, pregunta para TIMU).
+- 13 a 15: si un segmento tiene que poder crear tareas, exportarse y alcanzar a los interesados.
+- 08: por qué servicios se segmenta.
 
 ## 6.18. Comunicaciones masivas y campañas
 

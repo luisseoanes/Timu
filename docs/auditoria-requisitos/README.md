@@ -71,7 +71,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | Auditado (2026-11-25) |
 | 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | Auditado (2026-11-25) |
 | 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | Auditado (2026-11-27) |
-| 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | En curso: 6.11 auditado (2026-11-27) |
+| 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | En curso: 6.11 y 6.16 auditados (2026-11-27) |
 | 6. Clínicas aliadas | 6.22 | [bloque-6-clinicas-aliadas](bloque-6-clinicas-aliadas.md) | Sin auditar |
 | 7. Transversales | 7, 8, 12, 13 | por extraer | Sin extraer |
 | 8. Técnicas y externas | 9, 10, 11, 14, y 1 a 5 | por extraer | Sin extraer |
@@ -81,7 +81,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 106 | 0 | 48 | 24 | 7 | 0 | 0 | 13 | 69 |
+| 6 | 267 | 115 | 0 | 51 | 26 | 7 | 0 | 0 | 14 | 54 |
 
 ## Problemas de diseño que van apareciendo
 
@@ -154,7 +154,7 @@ suyos o amplía los que ya están.
     tipo de servicio (su duración, si requiere autorización y sus pasos) y los tipos nuevos; los
     tramos de peludos y su máximo; la ventana de renovación de 90 días; y la jornada y el máximo de
     atenciones de una ruta. Las Secciones 3 y 4 piden reglas que se modifiquen sin reconstruir la
-    plataforma. Obligaciones: 6.3-09, 6.5-15 y 6.7-12 (y lo fijo de 6.4-02 y 6.7-06).
+    plataforma. Obligaciones: 6.3-09, 6.5-15, 6.7-12 y 6.16-10 (y lo fijo de 6.4-02 y 6.7-06).
 11. **Lo clínico son consultas sueltas y texto libre.** La historia es una lista de consultas
     firmadas, bien protegida, pero sin episodios: una evolución, un control o un seguimiento son
     otra consulta, sin vínculo con la que los originó. Un procedimiento, una orden de examen o un
@@ -191,12 +191,13 @@ tandas, sin esperar al final de la auditoría.
 
 ### Segunda tanda (bloque 2, 2026-11-25)
 
-- **6.3. Necesitamos que TIMU aclare qué es un «plan grupal».** ¿Es la afiliación de una familia
-  con varios peludos, en la que cada uno paga menos según cuántos son (como la escala de precios
-  de hoy)? ¿O es un plan que agrupa a varias personas o familias, por ejemplo de una empresa o de
-  un grupo familiar con varios titulares? Si es lo segundo, ¿cómo funciona hoy: quién paga, cómo
-  se reparte el valor y qué pasa cuando alguien sale? Hasta que respondan, 6.3 queda «Por
-  decidir» y se audita con las dos lecturas.
+- **6.3 y 6.16-07. Necesitamos que TIMU aclare qué es un «plan grupal»** (y, con él, el «grupo
+  familiar» por el que se segmenta). ¿Es la afiliación de una familia con varios peludos, en la que
+  cada uno paga menos según cuántos son (como la escala de precios de hoy)? ¿O es un plan que
+  agrupa a varias personas o familias, por ejemplo de una empresa o de un grupo familiar con
+  varios titulares? Si es lo segundo, ¿cómo funciona hoy: quién paga, cómo se reparte el valor y
+  qué pasa cuando alguien sale? Hasta que respondan, 6.3 y 6.16-07 quedan «Por decidir» y se
+  auditan con las dos lecturas.
 - **6.3, si es la familia con varios peludos.** Cuando un peludo sale del plan (fallece, se da en
   adopción), ¿desde cuándo cambia lo que paga la familia? ¿Se le devuelve o se le abona lo que ya
   pagó del periodo en curso? Hoy cambia desde la siguiente cuota y no se devuelve nada: en un pago
