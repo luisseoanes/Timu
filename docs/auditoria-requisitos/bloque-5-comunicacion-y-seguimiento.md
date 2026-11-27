@@ -193,23 +193,52 @@ corrección del 22 de noviembre.
 
 ## 6.20. Encuestas de satisfacción
 
+**Auditado el 2026-11-27.**
+
+**Lo que hay:**
+- **Es un módulo propio** (`backend/app/modules/encuestas/`). Al completarse un servicio
+  (`backend/app/workers/tasks/encuestas.py:15`) se programa su encuesta (`programar`,
+  `backend/app/modules/encuestas/service.py:65`), con la configuración de su tipo de atención o la
+  general: si se envía, cuántas horas después, con qué plantilla y desde qué puntaje se alerta
+  (`ConfiguracionEncuesta`).
+- **Cada 15 minutos salen las que ya tocan** (`enviar_pendientes`, `:97`), por WhatsApp, con un
+  enlace público de un solo uso.
+- **La familia responde con un puntaje de 1 a 5 y un comentario**, en el enlace o contestando el
+  número en el chat. Un puntaje en el umbral o por debajo crea una tarea de prioridad alta para
+  servicio al cliente, con el contexto de la atención (`_alertar`, `:229`).
+- **La encuesta guarda** el servicio, la familia, el responsable (el profesional del servicio), las
+  fechas y la respuesta.
+- **Gerencia ve el resumen del periodo** (`resumen`, `:299`): enviadas, respondidas, tasa,
+  promedio, por responsable y por tipo de atención, y el indicador de satisfacción del dashboard.
+  Atención y Gerencia ven las respuestas en Encuestas (`frontend/src/features/campanas/Encuestas.tsx:25`).
+- **Reproducido el 2026-11-27 contra `db-test`**, con una prueba temporal que no quedó en el
+  repositorio. Un médico firma la consulta de un servicio en la clínica, que se completa. El
+  servicio no tiene profesional, porque solo lo asigna la ruta, y su encuesta queda sin
+  responsable.
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.20-01 | Un flujo independiente | Exige | Sin auditar | |
-| 6.20-02 | Al culminar un servicio o atención, activar automáticamente una comunicación a la familia por WhatsApp u otro canal | Exige | Sin auditar | |
-| 6.20-03 | Flujo: servicio realizado → cierre de atención → envío automático → respuesta → registro → análisis | Exige | Sin auditar | |
-| 6.20-04 | Respuesta asociada a la familia | Exige | Sin auditar | |
-| 6.20-05 | … a la mascota | Exige | Sin auditar | |
-| 6.20-06 | … al servicio | Exige | Sin auditar | |
-| 6.20-07 | … a la fecha | Exige | Sin auditar | |
-| 6.20-08 | … al profesional, cuando corresponda | Exige | Sin auditar | |
-| 6.20-09 | Consultar la información posteriormente | Exige | Sin auditar | |
-| 6.20-10 | Exportarla a Excel u otro formato | Exige | Sin auditar | La fila 6.20 de [lo que falta](../pendiente-en-el-codigo.md) dice que no existe. |
-| 6.20-11 | Medir satisfacción | Exige | Sin auditar | |
-| 6.20-12 | … experiencia | Exige | Sin auditar | |
-| 6.20-13 | … calidad percibida | Exige | Sin auditar | |
-| 6.20-14 | … posibles inconformidades | Exige | Sin auditar | |
-| 6.20-15 | … oportunidades de mejora | Exige | Sin auditar | |
+| 6.20-01 | Un flujo independiente | Exige | Cumple | Su módulo, su configuración por tipo de atención y sus tareas del worker (`test_completar_el_servicio_programa_la_encuesta`, `backend/tests/test_encuestas.py:75`; `test_configuracion_general_y_por_tipo_se_reemplaza`, `:321`; panel `CampanasPage.secciones.test.tsx:498`). |
+| 6.20-02 | Al culminar un servicio o atención, activar automáticamente una comunicación a la familia por WhatsApp u otro canal | Exige | Parcial | Al completarse un servicio sale sola, a la hora configurada (`test_envio_solo_cuando_llega_la_hora`, `:103`). Sin la plantilla aprobada se queda pendiente (`test_sin_plantilla_queda_pendiente`, `:113`), y no hay otro canal: no sale por correo. **Una atención que no es un servicio no la recibe**: la orientación virtual (6.17-06). |
+| 6.20-03 | Flujo: servicio realizado → cierre de atención → envío automático → respuesta → registro → análisis | Exige | Cumple | El servicio completado la programa, sale sola, se responde por enlace o por WhatsApp, queda registrada y entra al resumen (`test_respuesta_por_enlace`, `:122`; `test_respuesta_por_whatsapp`, `:238`; `test_resumen_por_responsable`, `:275`). |
+| 6.20-04 | Respuesta asociada a la familia | Exige | Cumple | `familia_id` (`backend/app/modules/encuestas/models.py:43`; `test_respuesta_por_enlace`). |
+| 6.20-05 | … a la mascota | Exige | Cumple | A través de su servicio, que es de una mascota (`servicio_id`, único por tipo de encuesta). Un servicio para toda la familia no tiene mascota. La encuesta no la nombra al leerla (`EncuestaRead`), ni la lista de respuestas la muestra. |
+| 6.20-06 | … al servicio | Exige | Cumple | `servicio_id` (`test_completar_el_servicio_programa_la_encuesta`), con un enlace al servicio desde la lista. |
+| 6.20-07 | … a la fecha | Exige | Cumple | Cuándo se programó, se envió y se respondió, y la fecha del servicio en el enlace (`test_respuesta_por_enlace`). |
+| 6.20-08 | … al profesional, cuando corresponda | Exige | Parcial | Es el profesional del servicio al completarse (`programar`, `:65`; `test_resumen_por_responsable`), y ese solo lo asigna la ruta (`backend/app/modules/rutas/service.py:498`). **En una consulta en la clínica la encuesta queda sin profesional**, aunque la consulta la haya firmado un médico (reproducido, arriba), y su promedio cae en «sin asignar». La lista de respuestas no dice quién atendió. |
+| 6.20-09 | Consultar la información posteriormente | Exige | Cumple | La lista de respuestas, con las calificaciones bajas aparte, y el resumen del periodo (`test_listado_de_encuestas_combina_filtros`, `:303`; panel `CampanasPage.test.tsx:132`; `CampanasPage.secciones.test.tsx:461` y `:478`). La lista no deja filtrar por fechas ni por profesional, aunque la API filtra por responsable. |
+| 6.20-10 | Exportarla a Excel u otro formato | Exige | Falta | No hay exportación de las respuestas ([lo que falta](../pendiente-en-el-codigo.md), fila 6.20). El dashboard exporta su indicador de satisfacción, que es un promedio (Sección 8). |
+| 6.20-11 | Medir satisfacción | Exige | Cumple | El puntaje de 1 a 5, el promedio, la tasa de respuesta, y el promedio por responsable y por tipo de atención (`test_resumen_por_responsable`). |
+| 6.20-12 | … experiencia | Exige | Parcial | La misma y única pregunta: no hay una dimensión de experiencia (la puntualidad, el trato, la explicación) aparte de la satisfacción. Solo el comentario libre la puede decir. |
+| 6.20-13 | … calidad percibida | Exige | Parcial | Como 12. |
+| 6.20-14 | … posibles inconformidades | Exige | Cumple | Un puntaje en el umbral o por debajo crea una tarea de prioridad alta con el contexto, y la lista filtra las calificaciones bajas (`test_calificacion_baja_crea_tarea_con_contexto`, `backend/tests/test_encuestas.py:145`; panel `CampanasPage.secciones.test.tsx:478`). |
+| 6.20-15 | … oportunidades de mejora | Exige | Parcial | Solo el comentario libre, que no se clasifica ni entra al resumen: para encontrarlas hay que leer las respuestas una a una. |
+
+**Lo que hay que decidir:**
+- 10: la exportación (ya en [lo que falta](../pendiente-en-el-codigo.md)).
+- 08: de dónde sale el profesional cuando no hay ruta (el que firma la consulta).
+- 12, 13 y 15: si la encuesta pregunta algo más que un puntaje, y qué (pregunta para TIMU).
+- 02: si la orientación virtual también se encuesta.
 
 ## 6.21. Seguimiento post atención
 
