@@ -146,19 +146,50 @@ Las rutas de la evidencia son relativas a la raíz del repositorio.
 
 ## 6.19. Comunicación por WhatsApp
 
+**Auditado el 2026-11-27.**
+
 Pide a la propuesta que **indique** cada cosa: se audita que lo que se le dijo a TIMU sea verdad en
-el código (la propuesta y [integraciones para TIMU](../integraciones-timu.md)).
+el código. Lo que se le dijo está en la [propuesta](../propuesta-timu-puntos-15-19.md) (tabla B y
+sección C) y en la sección 3.1 de [integraciones para TIMU](../integraciones-timu.md), con su
+corrección del 22 de noviembre.
+
+**Lo que hay:**
+- **La plataforma habla directo con la Cloud API de Meta** (`backend/app/integrations/whatsapp.py:37`,
+  `graph.facebook.com`). Manda plantillas aprobadas y, dentro de las 24 horas desde el último
+  mensaje de la persona, texto libre (`encolar_texto`, `backend/app/modules/comunicaciones/service.py:237`).
+- **Por el webhook recibe los mensajes y los estados de entrega**, y comprueba la firma de Meta
+  (`X-Hub-Signature-256`, `whatsapp.py:24`).
+- **Cada mensaje entrante se guarda con la familia de ese número**, si la hay (`_registrar_entrante`,
+  `service.py:417`). Después pasa a quien lo atiende: la encuesta, si es su respuesta, o el bot
+  comercial (6.11).
+- **Las plantillas se escriben en el panel en versiones que no se editan** (`crear_version_plantilla`,
+  `:86`). Su paso a «aprobada» lo marca Administración a mano, después de aprobarla en Meta
+  (`cambiar_estado_plantilla`, `:112`): la plataforma no las envía a Meta ni se entera si Meta
+  cambia su estado después. Las que manda el código se declaran (`declarar_plantilla`), y el Inicio
+  del administrador dice cuáles faltan.
+- **Reproducido el 2026-11-27 contra `db-test`**, con una prueba temporal que no quedó en el
+  repositorio. Una familia afiliada escribe y pide un asesor, y el asesor le contesta desde la
+  bandeja de Comercial. La ficha de la familia muestra los dos mensajes de ella y los dos del bot,
+  pero no el del asesor: es el único de la conversación que se guarda sin la familia
+  (`backend/app/modules/comercial/router.py:290`, que no le pasa `familia_id`).
 
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.19-01 | Qué integración con WhatsApp ofrece | Propuesta | Sin auditar | |
-| 6.19-02 | Si utiliza WhatsApp Business Platform/API | Propuesta | Sin auditar | |
-| 6.19-03 | Qué funcionalidades permite | Propuesta | Sin auditar | |
-| 6.19-04 | Qué costos adicionales genera | Propuesta | Sin auditar | |
-| 6.19-05 | Qué límites existen | Propuesta | Sin auditar | |
-| 6.19-06 | Qué automatizaciones permite | Propuesta | Sin auditar | |
-| 6.19-07 | Cómo se gestionan las plantillas | Propuesta | Sin auditar | |
-| 6.19-08 | Cómo queda registrada la conversación | Propuesta | Sin auditar | |
+| 6.19-01 | Qué integración con WhatsApp ofrece | Propuesta | Cumple | Se dijo la Cloud API oficial de Meta, «integración directa, sin intermediarios», y es lo que hay en el código. La corrección del 22 de noviembre le dijo a TIMU que la ruta recomendada, la del número actual en coexistencia, necesita un socio de Meta (360dialog). Con ella deja de ser directa y el conector cambia ([lo que falta](../pendiente-en-el-codigo.md), fila 6.17 y 6.19). |
+| 6.19-02 | Si utiliza WhatsApp Business Platform/API | Propuesta | Cumple | La Cloud API de WhatsApp Business Platform (`whatsapp.py:37`). |
+| 6.19-03 | Qué funcionalidades permite | Propuesta | Parcial | Son verdad: los avisos con plantillas, la regla de las 24 horas (`test_texto_libre_solo_dentro_de_la_ventana`, `backend/tests/test_comunicaciones.py:364`), el bot comercial (6.11), la encuesta por WhatsApp (6.20), los estados de entrega (`test_estados_de_entrega_avanzan_sin_retroceder`, `:273`), las bajas (`test_pedir_baja_excluye_de_envios_masivos`, `:386`), la firma de Meta (`test_webhook_valida_firma_de_meta`, `:345`), los tokens tapados (`test_el_equipo_no_lee_los_tokens_de_los_enlaces_de_un_solo_uso`, `:238`) y los enlaces que salen también por correo. **No es verdad, para una familia, que «cada conversación queda en la ficha»**: la respuesta del asesor no llega (reproducido, arriba; ver 08). Lo multimedia se anota con el tipo que da Meta («[image]», «[audio]»), no «[imagen]» como dice el documento. |
+| 6.19-04 | Qué costos adicionales genera | Propuesta | Externo | Las tarifas son de Meta, que las revisa cada trimestre, y no se comprueban en el código: se verifican en la web antes de volver a mandarle el documento a TIMU. Lo que sí es del código: la plataforma no estima ni limita lo que gasta ([lo que falta](../pendiente-en-el-codigo.md), fila 6.18 y 6.19, que TIMU tiene que elegir). |
+| 6.19-05 | Qué límites existen | Propuesta | Cumple | Los que se dijeron son de Meta: las 24 horas, que el código respeta (`ventana_abierta`, `service.py:177`), y las 250 personas al día sin verificar la empresa. La plataforma reparte el envío de las campañas por minuto, pero no lleva la cuenta de ese tope diario: pasado el tope, los mensajes fallan en Meta y quedan como fallidos (`test_fallo_reportado_por_meta`, `:292`). |
+| 6.19-06 | Qué automatizaciones permite | Propuesta | Cumple | Avisos de acceso, afiliación, cartera, preventivos, ruta, encuesta, seguimiento y orientación virtual, el bot comercial y las campañas, cada uno auditado en su requisito. Que cada plantilla que manda el código esté declarada lo vigila `test_cada_plantilla_que_envia_el_codigo_esta_declarada` (`:529`). |
+| 6.19-07 | Cómo se gestionan las plantillas | Propuesta | Cumple | Como se dijo: el equipo prepara los textos y los registra en Meta, y en la plataforma cada versión pasa por revisión y se activa solo aprobada (`test_version_nueva_vuelve_a_borrador`, `:74`; `test_no_se_activa_sin_aprobacion`, `:137`; `test_aprobar_el_texto_nuevo_lo_pone_en_uso`, `:101`). Que esté aprobada en Meta lo marca una persona. Si Meta pausa o rechaza después una plantilla, por su calidad, la plataforma no se entera y sus envíos fallan. |
+| 6.19-08 | Cómo queda registrada la conversación | Propuesta | **Contradice** | Se le dijo a TIMU que «cada conversación queda en la ficha del interesado o de la familia». **Para una familia no es así**: lo que el asesor le contesta se guarda sin la familia, y su ficha no lo muestra (reproducido, arriba). Lo que la familia escribe y lo que le manda la plataforma sí quedan (`test_entrante_se_asocia_a_la_familia_una_sola_vez`, `:312`; `test_traza_por_familia`, `:216`). De la multimedia solo queda que llegó, y lo que el equipo escriba desde la aplicación en coexistencia no se recoge (dicho así a TIMU; fila 6.17 y 6.19 de [lo que falta](../pendiente-en-el-codigo.md)). Nada de la conversación se ata a la mascota (6.17-02). |
+
+**Lo que hay que decidir:**
+- 08: que la respuesta del asesor quede con la familia, y que la conversación se pueda atar a la
+  mascota (con 6.17-02).
+- 07: si la plataforma consulta en Meta el estado de sus plantillas.
+- 05 y 04: el tope de gasto (ya en manos de TIMU) y si la plataforma respeta el tope diario de
+  Meta.
 
 ## 6.20. Encuestas de satisfacción
 

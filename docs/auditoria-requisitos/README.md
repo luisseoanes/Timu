@@ -71,7 +71,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | Auditado (2026-11-25) |
 | 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | Auditado (2026-11-25) |
 | 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | Auditado (2026-11-27) |
-| 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | En curso: 6.11, 6.16 y 6.18 auditados (2026-11-27) |
+| 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | En curso: 6.11, 6.16, 6.18 y 6.19 auditados (2026-11-27) |
 | 6. Clínicas aliadas | 6.22 | [bloque-6-clinicas-aliadas](bloque-6-clinicas-aliadas.md) | Sin auditar |
 | 7. Transversales | 7, 8, 12, 13 | por extraer | Sin extraer |
 | 8. Técnicas y externas | 9, 10, 11, 14, y 1 a 5 | por extraer | Sin extraer |
@@ -81,7 +81,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 126 | 0 | 53 | 26 | 7 | 0 | 0 | 14 | 41 |
+| 6 | 267 | 131 | 0 | 54 | 26 | 8 | 0 | 1 | 14 | 33 |
 
 ## Problemas de diseño que van apareciendo
 
@@ -173,7 +173,10 @@ suyos o amplía los que ya están.
     respuesta a una encuesta, lo atiende el bot comercial. Una familia afiliada que escribe por su
     mascota recibe el menú de planes y acaba en una tarea comercial (reproducido el 2026-11-27).
     La orientación virtual por WhatsApp la tiene que registrar el médico a mano, y nada lleva lo
-    que escribe un cliente a servicio al cliente. Obligaciones: 6.11-02 y 6.17-01.
+    que escribe un cliente a servicio al cliente. Y cuando un asesor le contesta a una familia, su
+    respuesta se guarda sin la familia y no sale en su ficha, aunque a TIMU se le dijo que cada
+    conversación queda en ella (reproducido el 2026-11-27). Obligaciones: 6.11-02, 6.17-01 y
+    6.19-08.
 
 ## Preguntas para TIMU
 
