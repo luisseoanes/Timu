@@ -108,21 +108,41 @@ Las rutas de la evidencia son relativas a la raíz del repositorio.
 
 ## 6.18. Comunicaciones masivas y campañas
 
+**Auditado el 2026-11-27.**
+
+**Lo que hay:**
+- **Una campaña** (`backend/app/modules/campanas/service.py`) toma un segmento guardado o sus
+  propios filtros (6.16), una plantilla de WhatsApp aprobada y activa, y la fuente de cada variable:
+  el titular, la ciudad, el nombre de la mascota, el plan o un texto fijo (`_validar`, `:53`).
+- **Antes de enviar**, muestra cuántas familias alcanza, cuántas se excluyen por haber pedido no
+  recibir más y cómo se verá el mensaje. Se manda ahora o se programa, una vez o cada día, semana o
+  mes.
+- **El envío va a un ritmo que no sature a Meta y respeta las bajas** (`despachar`, `:232`).
+- **De cada ejecución queda la lista de destinatarios**, con su estado y su motivo de exclusión, y
+  el resultado: enviados, entregados, leídos, respondidos (cualquier mensaje suyo en las 72 horas
+  siguientes) y fallidos. La lista se descarga en CSV (`resultados`, `:363`; `detalle`, `:395`).
+- **Solo sale por WhatsApp**: la campaña rechaza cualquier otro canal (`:56`), aunque la plataforma
+  manda correos para otras cosas.
+
 | ID | Pide | Tipo | Veredicto | Evidencia y hallazgo |
 | --- | --- | --- | --- | --- |
-| 6.18-01 | Crear campañas dirigidas a segmentos específicos | Exige | Sin auditar | |
-| 6.18-02 | Campañas preventivas | Ejemplo | Sin auditar | |
-| 6.18-03 | Recordatorios | Ejemplo | Sin auditar | |
-| 6.18-04 | Comunicaciones comerciales | Ejemplo | Sin auditar | |
-| 6.18-05 | Información institucional | Ejemplo | Sin auditar | |
-| 6.18-06 | Campañas por especie | Ejemplo | Sin auditar | |
-| 6.18-07 | Campañas por zona | Ejemplo | Sin auditar | |
-| 6.18-08 | Campañas por plan | Ejemplo | Sin auditar | |
-| 6.18-09 | Seleccionar audiencia | Exige | Sin auditar | |
-| 6.18-10 | Crear mensaje | Exige | Sin auditar | |
-| 6.18-11 | Enviar por los canales disponibles | Exige | Sin auditar | |
-| 6.18-12 | Registrar interacción cuando la integración lo permita | Exige | Sin auditar | |
-| 6.18-13 | Mantener trazabilidad | Exige | Sin auditar | |
+| 6.18-01 | Crear campañas dirigidas a segmentos específicos | Exige | Cumple | `test_campana_se_valida_contra_la_plantilla`, `backend/tests/test_campanas.py:146`; `test_solo_comercial_o_admin_crean_campanas`, `:172`; panel `CampanasPage.test.tsx:94` y `CampanasPage.secciones.test.tsx:276`. |
+| 6.18-02 | Campañas preventivas | Ejemplo | Cumple | Con los filtros de preventivo vencido o por vencer (6.16-09; panel `CampanasPage.secciones.test.tsx:346`). Lo vencido arrastra lo de 6.13: un adulto recién afiliado aparece con todo vencido. |
+| 6.18-03 | Recordatorios | Ejemplo | Cumple | Programadas y recurrentes (`test_campana_programada_a_futuro`, `:293`; `test_campana_recurrente_se_repite_sola`, `:307`; panel `CampanasPage.secciones.test.tsx:180`). Aparte están los recordatorios automáticos de preventivos y de mora (6.8-11 y 6.2). |
+| 6.18-04 | Comunicaciones comerciales | Ejemplo | Parcial | A las familias, sí. A los interesados del embudo, que aún no son familia, no: el segmento solo alcanza familias (6.16-15). |
+| 6.18-05 | Información institucional | Ejemplo | Cumple | Cualquier plantilla aprobada a cualquier segmento, también a todas las familias (`test_filtros_combinables`, `:57`, sin filtros). |
+| 6.18-06 | Campañas por especie | Ejemplo | Cumple | 6.16-02. |
+| 6.18-07 | Campañas por zona | Ejemplo | Cumple | 6.16-05, con el barrio en texto libre. |
+| 6.18-08 | Campañas por plan | Ejemplo | Cumple | 6.16-03. |
+| 6.18-09 | Seleccionar audiencia | Exige | Cumple | Por segmento o por filtros, con la vista previa y las exclusiones (`test_previsualizacion_con_exclusiones`, `:161`; `test_envio_al_ritmo_permitido_y_respetando_bajas`, `:199`; `test_baja_posterior_a_congelar_la_audiencia_tambien_se_respeta`, `:219`). |
+| 6.18-10 | Crear mensaje | Exige | Cumple | El texto es una plantilla de WhatsApp, como exige Meta para escribirle primero a alguien. Administración la escribe en el panel, en versiones que no se editan, y la campaña elige la plantilla y llena sus variables (`test_campana_se_valida_contra_la_plantilla`; panel `CampanasPage.secciones.test.tsx:262`). La aprobación ocurre en Meta y se copia a mano (6.19-07). Con varios peludos, la variable «mascota» nombra solo al primero (`_variables`, `:97`). |
+| 6.18-11 | Enviar por los canales disponibles | Exige | Parcial | Solo WhatsApp (`:56`). El correo es un canal que la plataforma ya usa (`CanalComunicacion.EMAIL`), pero una campaña no puede usarlo. Lo que cuesta cada mensaje no tiene tope en la plataforma ([lo que falta](../pendiente-en-el-codigo.md), fila 6.18 y 6.19). |
+| 6.18-12 | Registrar interacción cuando la integración lo permita | Exige | Cumple | Entregado y leído, con los estados que manda Meta, y respondido (`test_resultados_y_exportacion`, `backend/tests/test_campanas.py:254`; panel `CampanasPage.secciones.test.tsx:141`). «Respondido» es cualquier mensaje de esa persona en las 72 horas siguientes, conteste o no a la campaña. |
+| 6.18-13 | Mantener trazabilidad | Exige | Cumple | Cada ejecución, cada destinatario con su estado o su motivo de exclusión y su mensaje, y la lista en CSV (`test_resultados_y_exportacion`; `test_cancelar_detiene_lo_pendiente`, `:238`; panel `CampanasPage.secciones.test.tsx:159` y `:230`). |
+
+**Lo que hay que decidir:**
+- 11: si las campañas tienen que poder salir por correo.
+- 04: si las campañas alcanzan a los interesados (con 6.16-15).
 
 ## 6.19. Comunicación por WhatsApp
 
