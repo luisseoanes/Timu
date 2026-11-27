@@ -70,7 +70,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 | 1. Estados y ciclo de vida | 6.10, 6.23, 6.1, 6.12 | [bloque-1-estados-y-ciclo-de-vida](bloque-1-estados-y-ciclo-de-vida.md) | Auditado (2026-11-24) |
 | 2. Cartera, planes y renovación | 6.2, 6.3, 6.4 | [bloque-2-cartera-planes-y-renovacion](bloque-2-cartera-planes-y-renovacion.md) | Auditado (2026-11-25) |
 | 3. Servicios y preventivos | 6.5, 6.6, 6.7, 6.8, 6.9, 6.13 | [bloque-3-servicios-y-preventivos](bloque-3-servicios-y-preventivos.md) | Auditado (2026-11-25) |
-| 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | Sin auditar |
+| 4. Lo clínico | 6.14, 6.15, 6.17 | [bloque-4-clinico](bloque-4-clinico.md) | En curso: 6.14 auditado (2026-11-27) |
 | 5. Comunicación y seguimiento | 6.11, 6.16, 6.18, 6.19, 6.20, 6.21 | [bloque-5-comunicacion-y-seguimiento](bloque-5-comunicacion-y-seguimiento.md) | Sin auditar |
 | 6. Clínicas aliadas | 6.22 | [bloque-6-clinicas-aliadas](bloque-6-clinicas-aliadas.md) | Sin auditar |
 | 7. Transversales | 7, 8, 12, 13 | por extraer | Sin extraer |
@@ -81,7 +81,7 @@ Por dependencia, no por número: lo que todo lo demás usa va primero.
 
 | Sección | Obligaciones | Cumple | Equivalente | Parcial | Falta | Contradice | Decidido | Externo | Por decidir | Sin auditar |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 6 | 267 | 76 | 0 | 38 | 18 | 7 | 0 | 0 | 12 | 116 |
+| 6 | 267 | 83 | 0 | 42 | 19 | 7 | 0 | 0 | 13 | 103 |
 
 ## Problemas de diseño que van apareciendo
 
@@ -153,6 +153,11 @@ suyos o amplía los que ya están.
     tramos de peludos y su máximo; la ventana de renovación de 90 días; y la jornada y el máximo de
     atenciones de una ruta. Las Secciones 3 y 4 piden reglas que se modifiquen sin reconstruir la
     plataforma. Obligaciones: 6.3-09, 6.5-15 y 6.7-12 (y lo fijo de 6.4-02 y 6.7-06).
+11. **Lo clínico son consultas sueltas y texto libre.** La historia es una lista de consultas
+    firmadas, bien protegida, pero sin episodios: una evolución, un control o un seguimiento son
+    otra consulta, sin vínculo con la que los originó. Un procedimiento, una orden de examen o un
+    pendiente son texto dentro de un apartado, y no hay kardex. Solo la fórmula médica es una
+    orden con datos. Obligaciones: 6.6-01, 6.14-07, 6.14-08, 6.14-09, 6.14-11 y 6.14-12.
 
 ## Preguntas para TIMU
 
@@ -220,3 +225,10 @@ tandas, sin esperar al final de la auditoría.
 - **6.5-09 y 6.7.** ¿Necesitan llevar la disponibilidad de cada médico (horarios, días libres), o
   basta con cuántas atenciones caben en cada franja? ¿Organizan las rutas por zonas, o cada
   familia tiene un médico fijo?
+
+### Cuarta tanda (bloque 4, en curso)
+
+- **6.14.** ¿Cómo llevan hoy la historia clínica: en papel, en otro programa? ¿Hospitalizan o
+  dejan pacientes en observación? Si es así, ¿cómo registran hoy lo que se le administra a cada
+  uno (el kardex)? ¿Y los procedimientos, las órdenes de examen y las evoluciones: son una
+  anotación de la consulta o un registro aparte?
